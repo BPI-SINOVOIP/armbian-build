@@ -21,7 +21,8 @@ if test -e ${devtype} ${devnum} ${prefix}armbianEnv.txt; then
 	#env import -t ${ramdisk_addr_r} ${filesize}
 fi
 
-setenv bootargs 'rootfstype=ext4 root=/dev/mmcblk1p2 rw rootwait'
+#setenv bootargs 'rootfstype=ext4 root=/dev/mmcblk1p2 rw rootwait'
+setenv bootargs 'rootfstype=ext4 root=/dev/mmcblk1p2 rw rootwait board=bpi-m6 loglevel=8 tz_enable vppta chipid=43111a82aee08964 cma=343932928@1509949440'
 mmc list
 fatload mmc 1:1 0x4b800000 dtb/synaptics/vs680-a0-evk.dtb
 fatload mmc 1:1 0x04c80000 Image
