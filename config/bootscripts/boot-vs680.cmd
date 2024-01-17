@@ -2,10 +2,12 @@
 #
 # Please edit /boot/armbianEnv.txt to set supported parameters
 #
+setenv initrd_high 0xffffffffffffffff
 
 setenv overlay_error "false"
 # default values
-setenv rootdev "/dev/mmcblk0p1"
+setenv rootdev "/dev/mmcblk1p2"
+setenv loglevel "1"
 setenv verbosity "1"
 setenv console "both"
 setenv bootlogo "false"
@@ -13,20 +15,45 @@ setenv rootfstype "ext4"
 setenv docker_optimizations "on"
 setenv earlycon "off"
 
+setenv devtype "mmc"
+setenv devnum "1:1"
+setenv ramdisk_addr_r 0x0ca00000
+
 echo "Boot script loaded from ${devtype} ${devnum}"
 
 if test -e ${devtype} ${devnum} ${prefix}armbianEnv.txt; then
-	echo "skip load ${devtype} ${devnum} ${ramdisk_addr_r} ${prefix}armbianEnv.txt"
-	#load ${devtype} ${devnum} ${ramdisk_addr_r} ${prefix}armbianEnv.txt
-	#env import -t ${ramdisk_addr_r} ${filesize}
+	echo "BPI: load ${devtype} ${devnum} ${ramdisk_addr_r} ${prefix}armbianEnv.txt"
+	load ${devtype} ${devnum} ${ramdisk_addr_r} ${prefix}armbianEnv.txt
+	env import -t ${ramdisk_addr_r} ${filesize}
+	echo loglevel=${verbosity}
+	echo bootlogo=${bootlogo}
+	echo rootdev=${rootdev}
+	echo rootfstype=${rootfstype}
+	echo usbstoragequirks=${usbstoragequirks}
 fi
 
+setenv initrd_high 0xffffffffffffffff
+
 #setenv bootargs 'rootfstype=ext4 root=/dev/mmcblk1p2 rw rootwait'
-setenv bootargs 'rootfstype=ext4 root=/dev/mmcblk1p2 rw rootwait board=bpi-m6 loglevel=8 tz_enable vppta chipid=43111a82aee08964 cma=343932928@1509949440'
+#setenv bootargs 'rootfstype=ext4 root=/dev/mmcblk1p2 rw rootwait board=bpi-m6 loglevel=8 tz_enable vppta chipid=43111a82aee08964 cma=343932928@1509949440'
+
+setenv bootargs "rootfstype=${rootfstype} root=${rootdev} rw rootwait board=bpi-m6 loglevel=${verbosity} tz_enable vppta chipid=43111a82aee08964 cma=343932928@1509949440 ${bootopts}"
+echo bootargs=${bootargs}
+
 mmc list
-fatload mmc 1:1 0x4b800000 dtb/synaptics/vs680-a0-evk.dtb
-fatload mmc 1:1 0x04c80000 Image
-booti 0x04c80000 - 0x4b800000
+
+echo "fatload mmc 1:1 0x15a00000 dtb/synaptics/vs680-a0-bpi-m6.dtb"
+fatload mmc 1:1 0x15a00000 dtb/synaptics/vs680-a0-bpi-m6.dtb
+
+echo "fatload mmc 1:1 0x0ca00000 uInitrd"
+fatload mmc 1:1 0x0ca00000 uInitrd
+
+echo "fatload mmc 1:1 0x04a80000 Image"
+fatload mmc 1:1 0x04a80000 Image
+
+#booti 0x04a80000 - 0x15a00000
+echo "booti 0x04a80000 0x0ca00000 0x15a00000"
+booti 0x04a80000 0x0ca00000 0x15a00000
 
 
 # Recompile with:
