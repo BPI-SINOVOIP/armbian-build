@@ -61,3 +61,5 @@ unzip
 vnstat
 wget
 wireless-regdb
+net-tools
+vim
