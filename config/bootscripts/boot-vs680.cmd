@@ -42,8 +42,8 @@ echo bootargs=${bootargs}
 
 mmc list
 
-echo "fatload mmc 1:1 0x15a00000 dtb/synaptics/vs680-a0-bpi-m6.dtb"
-fatload mmc 1:1 0x15a00000 dtb/synaptics/vs680-a0-bpi-m6.dtb
+echo "fatload mmc 1:1 0x15a00000 dtb/synaptics/vs680-a0-bananapi-m6.dtb"
+fatload mmc 1:1 0x15a00000 dtb/synaptics/vs680-a0-bananapi-m6.dtb
 
 echo "fatload mmc 1:1 0x0ca00000 uInitrd"
 fatload mmc 1:1 0x0ca00000 uInitrd
