@@ -16,10 +16,11 @@ setenv docker_optimizations "on"
 setenv earlycon "off"
 
 setenv devtype "mmc"
-setenv devnum "1:1"
+#setenv devnum "1:1"
+echo "devnum=${devnum}"
 setenv ramdisk_addr_r 0x0ca00000
 
-echo "Boot script loaded from ${devtype} ${devnum}"
+echo "BPI:20240425 support SD/EMMC: Boot script loaded from ${devtype} ${devnum}"
 
 if test -e ${devtype} ${devnum} ${prefix}armbianEnv.txt; then
 	echo "BPI: load ${devtype} ${devnum} ${ramdisk_addr_r} ${prefix}armbianEnv.txt"
@@ -30,6 +31,8 @@ if test -e ${devtype} ${devnum} ${prefix}armbianEnv.txt; then
 	echo rootdev=${rootdev}
 	echo rootfstype=${rootfstype}
 	echo usbstoragequirks=${usbstoragequirks}
+else
+	echo "BPI: skip load ${devtype} ${devnum} ${ramdisk_addr_r} ${prefix}armbianEnv.txt"
 fi
 
 setenv initrd_high 0xffffffffffffffff
@@ -37,19 +40,19 @@ setenv initrd_high 0xffffffffffffffff
 #setenv bootargs 'rootfstype=ext4 root=/dev/mmcblk1p2 rw rootwait'
 #setenv bootargs 'rootfstype=ext4 root=/dev/mmcblk1p2 rw rootwait board=bpi-m6 loglevel=8 tz_enable vppta chipid=43111a82aee08964 cma=343932928@1509949440'
 
-setenv bootargs "rootfstype=${rootfstype} root=${rootdev} rw rootwait board=bpi-m6 loglevel=${verbosity} tz_enable vppta chipid=43111a82aee08964 cma=343932928@1509949440 ${bootopts}"
+setenv bootargs "console=ttyS0,115200n8 console=tty1 rootfstype=${rootfstype} root=${rootdev} rw rootwait board=bpi-m6 loglevel=${verbosity} tz_enable vppta chipid=43111a82aee08964 cma=343932928@1509949440 ${bootopts}"
 echo bootargs=${bootargs}
 
 mmc list
 
-echo "fatload mmc 1:1 0x15a00000 dtb/synaptics/vs680-a0-bananapi-m6.dtb"
-fatload mmc 1:1 0x15a00000 dtb/synaptics/vs680-a0-bananapi-m6.dtb
+echo "load ${devtype} ${devnum} 0x15a00000 dtb/synaptics/vs680-a0-bananapi-m6.dtb"
+load ${devtype} ${devnum} 0x15a00000 dtb/synaptics/vs680-a0-bananapi-m6.dtb
 
-echo "fatload mmc 1:1 0x0ca00000 uInitrd"
-fatload mmc 1:1 0x0ca00000 uInitrd
+echo "load ${devtype} ${devnum} 0x0ca00000 uInitrd"
+load ${devtype} ${devnum} 0x0ca00000 uInitrd
 
-echo "fatload mmc 1:1 0x04a80000 Image"
-fatload mmc 1:1 0x04a80000 Image
+echo "load ${devtype} ${devnum} 0x04a80000 Image"
+load ${devtype} ${devnum} 0x04a80000 Image
 
 #booti 0x04a80000 - 0x15a00000
 echo "booti 0x04a80000 0x0ca00000 0x15a00000"
