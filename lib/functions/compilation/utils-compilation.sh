@@ -37,7 +37,8 @@ grab_version() {
 # returns path to toolchain that satisfies <expression>
 #
 find_toolchain() {
-	[[ "${SKIP_EXTERNAL_TOOLCHAINS}" == "yes" ]] && {
+
+	[[ "${SKIP_EXTERNAL_TOOLCHAINS}" == "yes" ]] && [[ "${USER_EXTERNAL_TOOLCHAINS}" != "yes" ]] && {
 		echo "/usr/bin"
 		return
 	}
