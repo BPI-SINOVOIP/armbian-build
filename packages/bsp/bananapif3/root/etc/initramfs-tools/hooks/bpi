@@ -1,0 +1,6 @@
+#!/bin/sh
+echo cp /usr/lib/firmware/esos.elf "${DESTDIR}/usr/lib/firmware"
+ls -al "${DESTDIR}/usr/lib/firmware"
+cp /usr/lib/firmware/esos.elf "${DESTDIR}/usr/lib/firmware"
+ls -al "${DESTDIR}/usr/lib/firmware"
+exit 0
