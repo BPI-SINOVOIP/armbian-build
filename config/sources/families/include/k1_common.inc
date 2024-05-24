@@ -105,6 +105,50 @@ if [[ "${QEMU_UBOOT_BOOTCONFIG}" != "" ]]; then
 fi
 
 
+function pre_install_distribution_specific__add_spacemit_packages() {
+	# If we're skipping the Armbian repo, and on Debian, we'll install Debian version of Wifi/BT-related firmware.
+	if [[ "${SKIP_ARMBIAN_REPO}" != "yes" ]]; then
+		display_alert "SKIP_ARMBIAN_REPO is set to" "${SKIP_ARMBIAN_REPO} - for Armbian" "info"
+		if [[ "${DISTRIBUTION}" == "Debian" ]]; then
+			display_alert "Installing Debian-sourced vim" "Debian::bspacemiT::${BOARD}" "info"
+			do_with_retries 3 chroot_sdcard_apt_get_update
+			chroot_sdcard_apt_get_install vim
+		fi
+		if [[ "${DISTRIBUTION}" == "Ubuntu" ]]; then
+			display_alert "Installing Ubuntu-sourced vim" "Ubuntu::spacemiT::${BOARD}" "info"
+			if [[ ${BUILD_DESKTOP} == "yes" ]] && [[ ${DESKTOP_ENVIRONMENT} = "gnome" ]]; then
+				display_alert "BUILD_DESKTOP=y ${DESKTOP_ENVIRONMENT}" "Ubuntu::spacemiT::${BOARD}" "info"
+				if [[ "${RELEASE}" == "mantic" ]]; then
+				display_alert "Installing mantic packages" "Ubuntu::spacemiT::${BOARD}" "info"
+	echo "BPI: pre_install_distribution_specific__add_spacemit_packages --- START ---"
+	IN=$SRC/packages/bsp/bananapif3/hw/hw.tgz
+	MNTDIR=$SDCARD
+	  echo "tar xvf $IN --keep-directory-symlink -C $MNTDIR"
+	  tar xvf $IN --keep-directory-symlink -C $MNTDIR
+	echo "BPI: pre_install_distribution_specific__add_spacemit_packages ---  END ---"
+				echo "BPI:chroot_sdcard find /etc/apt"
+				chroot_sdcard find /etc/apt
+				#chroot_sdcard cp -a /etc/apt/keyrings/bianbu-archive-keyring.gpg /etc/apt/trusted.gpg.d
+				echo chroot_sdcard rm -f /etc/apt/sources.list.d/armbian*
+				chroot_sdcard rm -f /etc/apt/sources.list.d/armbian*
+				chroot_sdcard find /etc/apt
+				do_with_retries 3 chroot_sdcard_apt_get_update
+				chroot_sdcard apt-get update
+
+				chroot_sdcard apt-get --allow-downgrades -y install initramfs-tools
+				chroot_sdcard apt-get --allow-downgrades -y install vim bianbu-esos img-gpu-powervr k1x-vpu-firmware k1x-cam spacemit-uart-bt spacemit-modules-usrload
+
+				#chroot_sdcard_apt_get_install vim bianbu-esos img-gpu-powervr k1x-vpu-firmware k1x-cam spacemit-uart-bt spacemit-modules-usrload
+				chroot_sdcard apt-get --allow-downgrades -y upgrade
+				fi
+			fi
+		fi
+	else
+		## disable armbian repository
+		echo mv "${SDCARD}"/etc/apt/sources.list.d/armbian.list "${SDCARD}"/etc/apt/sources.list.d/armbian.list.disabled
+	fi
+}
+
 function family_tweaks_bsp() {
 	echo "BPI: family_tweaks_bsp --- START ---"
 	for IN in `ls $SRC/packages/bsp/bananapif3/*.tgz` ; do
