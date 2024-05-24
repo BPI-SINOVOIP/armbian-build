@@ -11,6 +11,7 @@ declare -g SKIP_BOOTSPLASH="yes"                     # No splash.
 declare -g UEFI_GRUB_TIMEOUT=${UEFI_GRUB_TIMEOUT:-3} # Default 3-seconds timeout for GRUB menu.
 declare -g BOARD_FIRMWARE_INSTALL="-full"            # Install full firmware for UEFI boards
 declare -g DISTRO_GENERIC_KERNEL=no
+SKIP_ARMBIAN_REPO=yes
 
 
 #[[ $ATF_COMPILE != "no" && -z $ATF_COMPILER ]] && ATF_COMPILER="riscv64-linux-gnu-"
@@ -107,7 +108,7 @@ fi
 
 function pre_install_distribution_specific__add_spacemit_packages() {
 	# If we're skipping the Armbian repo, and on Debian, we'll install Debian version of Wifi/BT-related firmware.
-	if [[ "${SKIP_ARMBIAN_REPO}" != "yes" ]]; then
+	if [[ "${SKIP_ARMBIAN_REPO}" == "yes" ]]; then
 		display_alert "SKIP_ARMBIAN_REPO is set to" "${SKIP_ARMBIAN_REPO} - for Armbian" "info"
 		if [[ "${DISTRIBUTION}" == "Debian" ]]; then
 			display_alert "Installing Debian-sourced vim" "Debian::bspacemiT::${BOARD}" "info"
@@ -135,11 +136,11 @@ function pre_install_distribution_specific__add_spacemit_packages() {
 				do_with_retries 3 chroot_sdcard_apt_get_update
 				chroot_sdcard apt-get update
 
-				chroot_sdcard apt-get --allow-downgrades -y install initramfs-tools
+				#chroot_sdcard apt-get --allow-downgrades -y install initramfs-tools
 				chroot_sdcard apt-get --allow-downgrades -y install vim bianbu-esos img-gpu-powervr k1x-vpu-firmware k1x-cam spacemit-uart-bt spacemit-modules-usrload
 
 				#chroot_sdcard_apt_get_install vim bianbu-esos img-gpu-powervr k1x-vpu-firmware k1x-cam spacemit-uart-bt spacemit-modules-usrload
-				chroot_sdcard apt-get --allow-downgrades -y upgrade
+				#chroot_sdcard apt-get --allow-downgrades -y upgrade
 				fi
 			fi
 		fi
