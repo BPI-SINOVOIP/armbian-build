@@ -134,13 +134,16 @@ function pre_install_distribution_specific__add_spacemit_packages() {
 				chroot_sdcard rm -f /etc/apt/sources.list.d/armbian*
 				chroot_sdcard find /etc/apt
 				do_with_retries 3 chroot_sdcard_apt_get_update
+				chroot_sdcard apt-mark hold libc6 libc-bin
 				chroot_sdcard apt-get update
+				chroot_sdcard apt-mark showhold
 
 				#chroot_sdcard apt-get --allow-downgrades -y install initramfs-tools
 				chroot_sdcard apt-get --allow-downgrades -y install vim bianbu-esos img-gpu-powervr k1x-vpu-firmware k1x-cam spacemit-uart-bt spacemit-modules-usrload
 
 				#chroot_sdcard_apt_get_install vim bianbu-esos img-gpu-powervr k1x-vpu-firmware k1x-cam spacemit-uart-bt spacemit-modules-usrload
-				#chroot_sdcard apt-get --allow-downgrades -y upgrade
+				chroot_sdcard apt-get --allow-downgrades -y upgrade
+				chroot_sdcard apt-get --allow-downgrades -y install gstreamer1.0-plugins-bad chromium-browser-stable ffmpegthumbnailer glmark2-es2-wayland
 				fi
 			fi
 		fi
