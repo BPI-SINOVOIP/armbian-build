@@ -1,0 +1,2 @@
+deb http://archive.spacemit.com/bianbu-ports/ mantic-porting/snapshots/v1.0rc1 main universe multiverse restricted
+deb http://archive.spacemit.com/bianbu-ports/ mantic-spacemit/snapshots/v1.0rc1 main universe multiverse restricted

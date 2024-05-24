@@ -1,0 +1,7 @@
+Package: *
+Pin: release o=Spacemit, n=mantic-porting
+Pin-Priority: 1100
+
+Package: *
+Pin: release o=Spacemit, n=mantic-spacemit
+Pin-Priority: 1200
