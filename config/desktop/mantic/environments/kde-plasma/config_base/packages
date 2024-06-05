@@ -39,7 +39,6 @@ foomatic-db-compressed-ppds
 gdebi
 ghostscript-x
 gist
-gnome-orca
 gnome-disk-utility
 gnome-screenshot
 gnome-user-docs-de
@@ -143,7 +142,6 @@ wswiss
 x11-apps
 x11-utils
 x11-xserver-utils
-xapp
 xapps-common
 xarchiver
 xbacklight
