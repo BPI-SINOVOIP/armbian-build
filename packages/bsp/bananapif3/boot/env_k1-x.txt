@@ -8,6 +8,7 @@ loglevel=8
 stderr=serial
 stdin=serial,usbkbd
 stdout=serial
+workqueue.default_affinity_scope=system
 
 //partitions/mtdparts/mtdids would set while flashing env.bin
 
@@ -18,16 +19,28 @@ nor_rootfstype=squashfs
 // eMMC/SDCard rootfs device
 mmc_rootfstype=ext4
 
-// Get "rootfs" partition number in decimal, and set var "mmc_root"
-// Variable "boot_devnum" is set during board_lat_init()
-set_mmc_root=if part number mmc ${boot_devnum} rootfs rootfs_part; then \
-             setexpr rootfs_part ${rootfs_part} + 0; \
-             else setenv rootfs_part 2; fi\
-             setenv mmc_root "/dev/mmcblk${boot_devnum}p${rootfs_part}";
+// rootfs part number must less than 99
+rootfs_part_to_ul=echo "set rootfs_part to ul"; setexpr temp_num_0 ${rootfs_part} / a;\
+                    setexpr temp_num_1 ${rootfs_part} % a;\
+                    setenv rootfs_part ${temp_num_0}${temp_num_1};
 
-set_nvme_root=part number nvme ${boot_devnum} rootfs rootfs_part; \
+// Get "rootfs" partition number in decimal, and set var "blk_root"
+// Variable "boot_devnum" is set during board_lat_init()
+set_rootfs_env=if test "${bootfs_devname}" = mmc; then \
+                    setenv blk_root "/dev/mmcblk${boot_devnum}p${rootfs_part}"; \
+                elif test "${bootfs_devname}" = nvme; then \
+                    setenv blk_root "/dev/nvme${boot_devnum}n1p${rootfs_part}"; \
+                else echo "not define rootfs part at this blk device, add to env"; \
+                fi;
+get_rootfs_env=if part number ${bootfs_devname} ${boot_devnum} rootfs rootfs_part; then \
              setexpr rootfs_part ${rootfs_part} + 0; \
-             setenv nvme_root "/dev/nvme${boot_devnum}n1p${rootfs_part}";
+             else setenv rootfs_part 2; fi \	     
+             if test ${rootfs_part} > 9 ; then run rootfs_part_to_ul;fi; \
+             echo "get rootfs_part index:${rootfs_part}";
+
+set_mmc_root=run get_rootfs_env; run set_rootfs_env;
+
+set_nor_root=run get_rootfs_env; run set_rootfs_env;
 
 //override here, otherwise gen random addr and save to eeprom by uboot
 //ethaddr=fe:fe:fe:22:22:01
@@ -40,19 +53,14 @@ gatewayip=10.0.92.1
 net_data_path=net_flash_file/net_flash_file/
 
 preboot=
-kernel_addr_r=0x10000000
-ramdisk_addr=0x20000000
 ramdisk_size=-
 ramdisk_combo=-
-#knl_name=Image.itb
 knl_name=Image
 #ramdisk_name=initramfs-generic.img
-#ramdisk_name=uInitrd
-#ramdisk_name=initrd.img-6.1.15-legacy-k1
-ramdisk_name=initramfs-generic.img
+#ramdisk_name=initrd.img-6.1.15
+ramdisk_name=initrd.img-6.1.15-legacy-k1
 dtb_dir=dtb/spacemit
-dtb_name=dtb/spacemit/k1-x_evb.dtb
-dtb_addr=0x1F000000
+dtb_name=k1-x_evb.dtb
 splashfile=bianbu.bmp
 mdio_intf=
 phyaddr0=1
@@ -60,7 +68,7 @@ phy_link_time=10000
 netdev=eth0
 
 // Common boot args
-commonargs=setenv bootargs earlycon=${earlycon} earlyprintk console=tty1 console=${console} loglevel=${loglevel} clk_ignore_unused swiotlb=65536 rdinit=${init}
+commonargs=setenv bootargs board=bpi-f3 earlycon=${earlycon} earlyprintk console=tty1 console=${console} loglevel=${loglevel} clk_ignore_unused swiotlb=65536 rdinit=${init} workqueue.default_affinity_scope=${workqueue.default_affinity_scope}
 
 //detect product_name from env and select dtb file to load
 dtb_env=if test -n "${product_name}"; then \
@@ -79,7 +87,7 @@ dtb_env=if test -n "${product_name}"; then \
                 elif test "${product_name}" = k1_MINI-PC; then \
                     setenv dtb_name ${dtb_dir}/k1-x_MINI-PC.dtb; \
                 else \
-                    echo "falling to default dtb: ${dtb_dir}/${product_name}.dtb"; \
+                    echo "match dtb by product_name: ${dtb_dir}/${product_name}.dtb"; \
                     setenv dtb_name  ${dtb_dir}/${product_name}.dtb; \
                 fi; \
             fi;
@@ -107,10 +115,10 @@ loaddtb=echo "Loading dtb..."; \
             fi;
 
 // Nor+ssd boot combo
-set_nor_args=setenv bootargs ${bootargs} mtdparts=${mtdparts} root=${nvme_root} rootfstype=ext4
-nor_boot=echo "Try to boot from NVMe ..."; \
+set_nor_args=setenv bootargs ${bootargs} mtdparts=${mtdparts} root=${blk_root} rootfstype=ext4
+nor_boot=echo "Try to boot from ${bootfs_devname}${boot_devnum} ..."; \
          run commonargs; \
-         run set_nvme_root; \
+         run set_nor_root; \
          run set_nor_args; \
          run detect_dtb; \
          run loadknl; \
@@ -122,9 +130,9 @@ nor_boot=echo "Try to boot from NVMe ..."; \
 //##############################################################################
 // eMMC/SDCard boot
 //##############################################################################
-set_mmc_args=setenv bootargs "${bootargs}" root=${mmc_root} rootwait rootfstype=${mmc_rootfstype} board=bpi-f3;
+set_mmc_args=setenv bootargs "${bootargs}" root=${blk_root} rootwait rootfstype=${mmc_rootfstype};
 
-mmc_boot=echo "Try to boot from MMC${boot_devnum} ..."; \
+mmc_boot=echo "Try to boot from ${bootfs_devname}${boot_devnum} ..."; \
          run commonargs; \
          run set_mmc_root; \
          run set_mmc_args; \
@@ -168,3 +176,6 @@ bootmenu_7="recovery from usb"=run flash_from_usb
 bootmenu_8="recovery from mmc"=run flash_from_mmc
 bootmenu_9="recovery from net"=run flash_from_net
 
+fdtfile=sifive/hifive-unmatched-a00.dtb
+rootdev=UUID=d213df4f-932b-4ff9-a0d4-98e4378aa508
+rootfstype=ext4

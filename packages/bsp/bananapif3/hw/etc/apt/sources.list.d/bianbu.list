@@ -1,2 +1,10 @@
-deb http://archive.spacemit.com/bianbu-ports/ mantic-porting/snapshots/v1.0rc1 main universe multiverse restricted
-deb http://archive.spacemit.com/bianbu-ports/ mantic-spacemit/snapshots/v1.0rc1 main universe multiverse restricted
+# mantic-spacemit/snapshots/v1.0.12
+deb http://archive.spacemit.com/bianbu-ports/ mantic-spacemit/snapshots/v1.0.12 main universe multiverse restricted
+#deb-src http://archive.spacemit.com/bianbu-ports/ mantic-spacemit/snapshots/v1.0.12 main universe multiverse restricted
+# mantic-porting/snapshots/v1.0.12
+deb http://archive.spacemit.com/bianbu-ports/ mantic-porting/snapshots/v1.0.12 main universe multiverse restricted
+#deb-src http://archive.spacemit.com/bianbu-ports/ mantic-porting/snapshots/v1.0.12 main universe multiverse restricted
+# mantic-customization/snapshots/v1.0.12
+deb http://archive.spacemit.com/bianbu-ports/ mantic-customization/snapshots/v1.0.12 main universe multiverse restricted
+#deb-src http://archive.spacemit.com/bianbu-ports/ mantic-customization/snapshots/v1.0.12 main universe multiverse restricted
+

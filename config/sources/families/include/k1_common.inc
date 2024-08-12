@@ -9,6 +9,7 @@
 declare -g SERIALCON="${SERIALCON:-tty1}"            # Consistent serial console device unlikely on UEFI arch pair. Customize if otherwise.
 declare -g SKIP_BOOTSPLASH="yes"                     # No splash.
 declare -g UEFI_GRUB_TIMEOUT=${UEFI_GRUB_TIMEOUT:-3} # Default 3-seconds timeout for GRUB menu.
+declare -g INSTALL_ARMBIAN_FIRMWARE="no"            # Install full firmware for UEFI boards
 declare -g BOARD_FIRMWARE_INSTALL="-full"            # Install full firmware for UEFI boards
 declare -g DISTRO_GENERIC_KERNEL=no
 SKIP_ARMBIAN_REPO=yes
@@ -58,11 +59,17 @@ case "${BRANCH}" in
 
 	current)
 
+		#
+		ATFBRANCH='branch:v1.3-k1-dev'
+		BOOTBRANCH='branch:v2022.10-k1-dev'
+		#
 		declare -g DISTRO_GENERIC_KERNEL=no
-		declare -g LINUXCONFIG="linux-uefi-${LINUXFAMILY}-${BRANCH}"
+		declare -g LINUXCONFIG="linux-${LINUXFAMILY}-${BRANCH}"
 		declare -g KERNEL_MAJOR_MINOR="6.6"                       # Major and minor versions of this kernel. For mainline caching.
-		declare -g KERNELBRANCH="branch:linux-6.6.y"              # Branch or tag to build from. It should match MAJOR_MINOR
-		declare -g KERNELPATCHDIR="uefi-${LINUXFAMILY}-${BRANCH}" # Might be empty.
+		declare -g KERNELSOURCE='https://github.com/BPI-SINOVOIP/pi-linux.git'
+		declare -g KERNELBRANCH="branch:linux-6.6.36-k1"              # Branch or tag to build from. It should match MAJOR_MINOR
+		#declare -g KERNELPATCHDIR="uefi-${LINUXFAMILY}-${BRANCH}" # Might be empty.
+		declare -g KERNELPATCHDIR="legacy" # Might be empty.
 		;;
 
 	edge)
