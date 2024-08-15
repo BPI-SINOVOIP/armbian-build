@@ -1,3 +1,0 @@
-knl_name=vmlinuz-6.1.15
-ramdisk_name=initrd.img-6.1.15
-dtb_dir=spacemit/6.1.15

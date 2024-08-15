@@ -1,9 +1,8 @@
-Mon Aug 12 12:26:23 PM CST 2024
+Wed Aug 14 11:01:44 PM CST 2024
 ===============================
-file from bianbu v1.12
+file from bianbu v1.0.12
 ===============================
--rw-r--r-- 1 pi pi  262266 Aug  2 16:16 bianbu.bmp
--rw-r--r-- 1 pi pi      79 Aug  2 21:03 env_k1-x.txt
--rw-r--r-- 1 pi pi 6740035 Aug  2 21:45 initrd.img-6.1.15
+-rw-r--r-- 1 pi pi 262266 Aug  2 16:16 bianbu.bmp
+-rw-r--r-- 1 pi pi   7562 Aug 14 23:00 env_k1-x.txt
 ===============================
 but real env_k1-x.txt will from armbian (modify from BPI) 

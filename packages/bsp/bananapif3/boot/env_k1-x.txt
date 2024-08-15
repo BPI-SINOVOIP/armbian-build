@@ -59,6 +59,7 @@ knl_name=Image
 #ramdisk_name=initramfs-generic.img
 #ramdisk_name=initrd.img-6.1.15
 ramdisk_name=initrd.img-6.1.15-legacy-k1
+ramdisk_name2=initrd.img-6.6.36-current-k1
 dtb_dir=dtb/spacemit
 dtb_name=k1-x_evb.dtb
 splashfile=bianbu.bmp
@@ -100,6 +101,10 @@ loadknl=echo "Loading kernel..."; \
 loadramdisk=echo "Loading ramdisk ..."; \
             if load ${bootfs_devname} ${boot_devnum}:${bootfs_part} ${ramdisk_addr} ${ramdisk_name}; then \
                 size ${bootfs_devname} ${boot_devnum}:${bootfs_part} ${ramdisk_name}; \
+                setenv ramdisk_size ${filesize}; \
+                setenv ramdisk_combo ${ramdisk_addr}:${ramdisk_size}; \
+            elif load ${bootfs_devname} ${boot_devnum}:${bootfs_part} ${ramdisk_addr} ${ramdisk_name2}; then \
+                size ${bootfs_devname} ${boot_devnum}:${bootfs_part} ${ramdisk_name2}; \
                 setenv ramdisk_size ${filesize}; \
                 setenv ramdisk_combo ${ramdisk_addr}:${ramdisk_size}; \
             else \
