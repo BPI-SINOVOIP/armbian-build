@@ -1,0 +1,11 @@
+modprobe amp_bm
+modprobe vpu
+modprobe syna_drm
+modprobe pvrsrvkm
+modprobe isp
+modprobe vvcam_vb
+modprobe vvcam_isp
+modprobe vvcam_video
+modprobe vvcam_isp_subdev
+modprobe synap
+modprobe hrx_v4l2

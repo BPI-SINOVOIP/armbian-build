@@ -55,6 +55,7 @@ sudo
 unattended-upgrades
 unicode-data
 unzip
+vim
 vnstat
 wget
 wireless-regdb
