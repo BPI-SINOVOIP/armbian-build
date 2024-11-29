@@ -6,7 +6,7 @@
 # This file is a part of the Armbian Build Framework
 # https://github.com/armbian/build/
 #
-UBOOT_TARGET_MAP=";;dts/${BOARD}-u-boot.dts boot0_sdcard.fex boot_package.fex"
+UBOOT_TARGET_MAP=";;boot0_sdcard.fex boot_package.fex"
 LINUXFAMILY=sunxi64
 ARCH=arm64
 SERIALCON=ttyAS0

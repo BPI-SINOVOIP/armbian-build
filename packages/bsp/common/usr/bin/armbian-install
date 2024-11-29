@@ -47,7 +47,7 @@ BOOTLOADER="${CWD}/${DEVICE_TYPE}/bootloader"
 [ ! -d ${BOOTLOADER} ] && echo -e "### Board installation issue: Directory ${BOOTLOADER} does not exist or is not accessible!\n" && exit 1
 
 # bpi, reserve 20MB for sunxi legacy
-if [[ $BOARDFAMILY == sun50iw9-bpi-legacy ]]; then
+if [[ $BOARDFAMILY == sun50iw9-bpi-legacy || $BOARDFAMILY == sun55iw3-bpi-legacy ]]; then
 	FIRSTSECTOR=40960
 else
 	FIRSTSECTOR=32768
