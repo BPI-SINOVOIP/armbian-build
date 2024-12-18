@@ -32,9 +32,9 @@ else
         setenv consoleargs "splash=verbose ${consoleargs}"
 fi
 
-#setenv bootcmd_load "load ${devtype} ${devnum} ${ocaaddr} ${prefix}${ocabin};load ${devtype} ${devnum} ${codaddr} ${prefix}${codbin};load ${devtype} ${devnum} 0x48080000 ${prefix}Image;load ${devtype} ${devnum} 0x48000000 ${prefix}dtb/renesas/${fdtfile}"
+#setenv bootcmd_load "load ${devtype} ${devnum} ${ocaaddr} ${prefix}${ocabin};load ${devtype} ${devnum} ${codaddr} ${prefix}${codbin};load ${devtype} ${devnum} 0x48080000 ${prefix}Image;load ${devtype} ${devnum} 0x48000000 ${prefix}dtb/${fdtfile}"
 
-setenv bootcmd_load "load ${devtype} ${devnum} 0x48080000 ${prefix}Image;load ${devtype} ${devnum} 0x48000000 ${prefix}dtb/renesas/${fdtfile};load ${devtype} ${devnum} 0x50000000 ${prefix}uInitrd"
+setenv bootcmd_load "load ${devtype} ${devnum} 0x48080000 ${prefix}Image;load ${devtype} ${devnum} 0x48000000 ${prefix}dtb/${fdtfile};load ${devtype} ${devnum} 0x50000000 ${prefix}uInitrd"
 
 setenv bootargs "root=${rootdev} rootwait rootfstype=${rootfstype} ${consoleargs} consoleblank=0 loglevel=${verbosity} fsck.mode=force fsck.repair=yes net.ifnames=0 board=${board} ${extraargs}"
 
