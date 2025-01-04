@@ -1,0 +1,4 @@
+modprobe amp_bm
+modprobe vpu
+modprobe syna_drm
+modprobe pvrsrvkm
