@@ -4,27 +4,31 @@ POWER_STATE="/sys/devices/virtual/misc/sunxi-bluetooth/rf-ctrl/power_state"
 
 . /usr/local/bin/board.sh
 
-if [ "$BOARD" != "bpi-m4zero" ]; then
-        exit
-fi
-
 #/usr/sbin/rfkill block bluetooth
 #/bin/sleep 2
 #/usr/sbin/rfkill unblock bluetooth
-
-/usr/bin/killall hciattach
 
 echo 0 > $POWER_STATE
 /usr/bin/sleep 1
 echo 1 > $POWER_STATE
 
-# Delay
-/usr/bin/sleep 1
-
-# aic8800
-#/usr/bin/hciattach -n -s 115200 /dev/ttyAS1 any 1500000 flow nosleep
-
-# cyw43455
-/usr/local/bin/hciattach -n -s 115200 /dev/ttyAS1 bcm43xx 1500000 flow nosleep
+case $BOARD in
+	bpi-m4zero)
+		/usr/bin/killall hciattach
+		/usr/bin/sleep 1
+		# aic8800
+		#/usr/bin/hciattach -n -s 115200 /dev/ttyAS1 any 1500000 flow nosleep
+		# k019&k016
+		/usr/local/bin/hciattach -n -s 115200 /dev/ttyAS1 bcm43xx 1500000 flow nosleep
+		;;
+	bpi-f5)
+		/usr/bin/killall rtk_hciattach
+		/usr/bin/sleep 1
+		/usr/local/bin/rtk_hciattach -n -s 115200 ttyAS1 rtk_h5
+		;;
+	*)
+		echo -e "$BOARD is not support"
+		;;
+esac
 
 /usr/bin/sleep 1

@@ -39,11 +39,12 @@ fi
 # mmc 0 is always mapped to device u-boot (2016.09+) was loaded from
 if test "${devtype}" = "mmc"; then part uuid mmc 0:1 partuuid; fi
 
-setenv bootargs "root=${rootdev} rootwait rootfstype=${rootfstype} clk_ignore_unused initcall_debug=0 ${consoleargs} consoleblank=0 no_console_suspend loglevel=${verbosity} cma=64M serialno=${snum} fsck.mode=force fsck.repair=yes net.ifnames=0 board=${board} ubootpart=${partuuid} disp_reserve=${disp_reserve} ${extraargs} ${extraboardargs}"
+setenv bootargs "root=${rootdev} rootwait rootfstype=${rootfstype} clk_ignore_unused ${consoleargs} consoleblank=0 no_console_suspend loglevel=${verbosity} cma=64M serialno=${snum} fsck.mode=force fsck.repair=yes net.ifnames=0 board=${board} ubootpart=${partuuid} ${extraargs} ${extraboardargs}"
 
 if test "${docker_optimizations}" = "on"; then setenv bootargs "${bootargs} cgroup_enable=memory swapaccount=1"; fi
 
-load ${devtype} ${devnum} ${fdt_addr_r} ${prefix}dtb/allwinner/${fdtfile}
+echo "Applying kernel provided DT ${fdtfile}"
+load ${devtype} ${devnum} ${fdt_addr_r} ${prefix}dtb/${fdtfile}
 fdt addr ${fdt_addr_r}
 fdt resize 65536
 
