@@ -53,15 +53,18 @@ case "${BRANCH}" in
 		declare -g LINUXCONFIG="linux-${LINUXFAMILY}-${BRANCH}"
 		declare -g KERNEL_MAJOR_MINOR="6.1"                      # Major and minor versions of this kernel. For mainline caching.
 		declare -g KERNELSOURCE='https://github.com/BPI-SINOVOIP/pi-linux.git'
-		declare -g KERNELBRANCH="branch:linux-6.1.15-k1"             # Branch or tag to build from. It should match MAJOR_MINOR
+		#declare -g KERNELBRANCH="branch:linux-6.1.15-k1"             # Branch or tag to build from. It should match MAJOR_MINOR
+		declare -g KERNELBRANCH="branch:linux-6.1.15-k1-dev"             # Branch or tag to build from. It should match MAJOR_MINOR
 		declare -g KERNELPATCHDIR="legacy" # Might be empty.
 		;;
 
 	current)
 
 		#
-		ATFBRANCH='branch:v1.3-k1-dev'
-		BOOTBRANCH='branch:v2022.10-k1-dev'
+		#ATFBRANCH='branch:v1.3-k1-dev'
+		ATFBRANCH='branch:v1.3-k1-v2.0'
+		#BOOTBRANCH='branch:v2022.10-k1-dev'
+		BOOTBRANCH='branch:v2022.10-k1-v2.0'
 		#
 		declare -g DISTRO_GENERIC_KERNEL=no
 		declare -g LINUXCONFIG="linux-${LINUXFAMILY}-${BRANCH}"

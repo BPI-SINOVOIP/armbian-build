@@ -36,7 +36,7 @@ gtk2-engines
 gtk2-engines-murrine
 gtk2-engines-pixbuf
 gvfs-backends
-hplip
+#hplip
 inputattach
 inxi
 keyutils
@@ -75,7 +75,7 @@ p7zip-full
 pamix
 pasystray
 pavucontrol
-pavumeter
+#pavumeter
 #policykit-1
 polkitd
 #printer-driver-all
