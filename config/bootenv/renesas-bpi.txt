@@ -1,0 +1,5 @@
+verbosity=8
+bootlogo=false
+console=both
+debug_uart=ttySC0
+board=
