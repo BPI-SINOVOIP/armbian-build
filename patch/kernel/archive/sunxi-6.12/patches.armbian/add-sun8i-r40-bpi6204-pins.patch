@@ -1,0 +1,54 @@
+From: Armbian <armbian@armbian.com>
+Subject: [PATCH] arm: dts: sun8i-r40: Add UART PH pins and EMAC pins for BPI-6204
+
+Add missing pin definitions for BPI-6204/CS6202 compatibility:
+- uart3_ph_pins (PH0, PH1)
+- uart4_ph_pins (PH4, PH5)
+- uart6_pi_pins (PI12, PI13)
+- emac_mii_pins for 10/100M Ethernet
+
+Signed-off-by: Armbian <armbian@armbian.com>
+---
+ arch/arm/boot/dts/allwinner/sun8i-r40.dtsi | 32 +++++++++++++++++++++++
+ 1 file changed, 32 insertions(+)
+
+--- a/arch/arm/boot/dts/allwinner/sun8i-r40.dtsi
++++ b/arch/arm/boot/dts/allwinner/sun8i-r40.dtsi
+@@ -769,6 +769,38 @@
+ 			uart7_pi_pins: uart7-pi-pins {
+ 				pins = "PI20", "PI21";
+ 				function = "uart7";
+ 			};
++
++			/omit-if-no-ref/
++			uart3_ph_pins: uart3-ph-pins {
++				pins = "PH0", "PH1";
++				function = "uart3";
++			};
++
++			/omit-if-no-ref/
++			uart4_ph_pins: uart4-ph-pins {
++				pins = "PH4", "PH5";
++				function = "uart4";
++			};
++
++			/omit-if-no-ref/
++			uart6_pi_pins: uart6-pi-pins {
++				pins = "PI12", "PI13";
++				function = "uart6";
++			};
++
++			/omit-if-no-ref/
++			emac_mii_pins: emac-mii-pins {
++				pins = "PH8", "PH9", "PH10", "PH11",
++				       "PH14", "PH15", "PH16", "PH17",
++				       "PH18", "PH19", "PH20", "PH21",
++				       "PH22", "PH23", "PH24", "PH25",
++				       "PH26";
++				function = "emac";
++			};
+ 		};
+ 
+ 		timer@1c20c00 {
+-- 
+2.39.2

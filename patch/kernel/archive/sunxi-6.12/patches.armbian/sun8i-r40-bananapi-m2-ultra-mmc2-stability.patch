@@ -1,0 +1,30 @@
+From: Local Patch <local@patch>
+Subject: [PATCH] ARM: dts: sun8i: r40: bananapi-m2-ultra: Limit eMMC to 25MHz for stability
+
+Limit the eMMC (mmc2) clock speed to 25MHz to ensure stable operation
+in Legacy Mode. Although throughput is lower (~20MB/s), this guarantees
+stability. Also explicitly declare 1.8V is not supported as a safety
+precaution.
+
+Signed-off-by: Local Patch <local@patch>
+---
+ arch/arm/boot/dts/allwinner/sun8i-r40-bananapi-m2-ultra.dts | 8 ++++++++
+ 1 file changed, 8 insertions(+)
+
+--- a/arch/arm/boot/dts/allwinner/sun8i-r40-bananapi-m2-ultra.dts
++++ b/arch/arm/boot/dts/allwinner/sun8i-r40-bananapi-m2-ultra.dts
+@@ -211,6 +211,14 @@
+ 	bus-width = <8>;
+ 	non-removable;
+ 	status = "okay";
++
++	/* 1. Core solution: Limit physical clock speed. */
++	/* Cap the max frequency at 25MHz to ensure stable operation in Legacy Mode. */
++	/* Although throughput is lower (~20MB/s), this guarantees stability. */
++	max-frequency = <25000000>;
++
++	/* 2. Safety precaution: Explicitly declare 1.8V is not supported. */
++	no-1-8-v;
+ };
+ 
+ &ohci1 {

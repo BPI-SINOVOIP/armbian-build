@@ -1,0 +1,22 @@
+From: Armbian <armbian@armbian.com>
+Subject: [PATCH] arm: dts: allwinner: Add BPI-6204 to Makefile
+Date: Fri, 27 Dec 2024 00:00:00 +0000
+
+Add sun8i-r40-bpi-6204.dtb to the Makefile build list for ARM 32-bit.
+The DTS file is provided via dts-directories configuration.
+
+Signed-off-by: Armbian <armbian@armbian.com>
+---
+ arch/arm/boot/dts/allwinner/Makefile | 1 +
+ 1 file changed, 1 insertion(+)
+
+--- a/arch/arm/boot/dts/allwinner/Makefile
++++ b/arch/arm/boot/dts/allwinner/Makefile
+@@ -253,6 +253,7 @@ dtb-$(CONFIG_MACH_SUN8I) += \
+ 	sun8i-r16-nintendo-super-nes-classic.dtb \
+ 	sun8i-r16-parrot.dtb \
+ 	sun8i-r40-bananapi-m2-ultra.dtb \
++	sun8i-r40-bpi-6204.dtb \
+ 	sun8i-r40-oka40i-c.dtb \
+ 	sun8i-s3-elimo-initium.dtb \
+ 	sun8i-s3-lichee-zero-plus.dtb \

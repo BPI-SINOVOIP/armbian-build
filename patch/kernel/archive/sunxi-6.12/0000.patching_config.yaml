@@ -12,8 +12,10 @@ config:
   # .dts files in these directories will be copied as-is to the build tree; later ones overwrite earlier ones.
   # This is meant to provide a way to "add a board DTS" without having to null-patch them in.
   dts-directories:
-    # will copy patch/kernel/archive/meson64-MAJOR.MINOR/dt-boards/*.dts to arch/arm64/boot/dts/allwinner
+    # ARM64 sunxi boards (H616, H618, etc.) - uses dt/ directory
     - { source: "dt", target: "arch/arm64/boot/dts/allwinner" }
+    # ARM32 sunxi boards (sun8i-r40, etc.) - uses dt-arm32/ directory
+    - { source: "dt-arm32", target: "arch/arm/boot/dts/allwinner" }
 
   # every file in these directories will be copied as-is to the build tree; later ones overwrite earlier ones
   # This is meant as a way to have overlays, bare, in a directory, without having to null-patch them in.
@@ -27,6 +29,8 @@ config:
   # No more Makefile patching needed, yay!
   auto-patch-dt-makefile:
     - { directory: "arch/arm64/boot/dts/allwinner", config-var: "CONFIG_ARCH_SUNXI" }
+    # ARM32 sunxi boards
+    - { directory: "arch/arm/boot/dts/allwinner", config-var: "CONFIG_ARCH_SUNXI" }
 
   # configuration for when applying patches to git / auto-rewriting patches (development cycle helpers)
   patches-to-git:

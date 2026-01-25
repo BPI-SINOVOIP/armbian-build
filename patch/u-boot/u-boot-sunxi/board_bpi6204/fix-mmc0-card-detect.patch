@@ -1,0 +1,24 @@
+Fix MMC0 card detect for BPI-6204 board
+
+The BPI-6204 board (based on CS6202/CS6204) does not have the standard
+card detect GPIO (PH13) connected for the SD card slot. Replace the
+cd-gpios property with broken-cd to allow MMC0 to work correctly
+even without GPIO-based card detection.
+
+This patch modifies the U-Boot DTS used by Bananapi_M2_Ultra_defconfig
+to use broken-cd instead of the PH13 GPIO for card detection.
+
+diff --git a/arch/arm/dts/sun8i-r40-bananapi-m2-ultra.dts b/arch/arm/dts/sun8i-r40-bananapi-m2-ultra.dts
+index e3d67670..abcd1234 100644
+--- a/arch/arm/dts/sun8i-r40-bananapi-m2-ultra.dts
++++ b/arch/arm/dts/sun8i-r40-bananapi-m2-ultra.dts
+@@ -176,7 +176,8 @@
+ &mmc0 {
+ 	vmmc-supply = <&reg_dcdc1>;
+ 	bus-width = <4>;
+-	cd-gpios = <&pio 7 13 GPIO_ACTIVE_LOW>; /* PH13 */
++	/* BPI-6204: No CD GPIO connected, use broken-cd */
++	broken-cd;
+ 	status = "okay";
+ };
+ 
