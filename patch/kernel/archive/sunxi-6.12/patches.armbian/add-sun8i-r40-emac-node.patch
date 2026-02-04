@@ -1,0 +1,71 @@
+From: Armbian <armbian@armbian.com>
+Subject: [PATCH] arm: dts: sun8i-r40: Add EMAC controller and SRAM nodes
+
+Add EMAC (10/100M Ethernet) support for Allwinner R40/V40 SoC.
+The kernel already has the sun4i-emac driver, but the dtsi was missing
+the necessary node definitions.
+
+This patch adds:
+- sram_a section in system-control with emac_sram for EMAC DMA
+- emac controller node (ethernet@1c0b000)
+- emac_mdio node for PHY communication
+
+This enables the second ethernet interface on boards like
+BPI-6204/CS6202 which have both GMAC (gigabit) and EMAC (10/100M).
+
+Signed-off-by: Armbian <armbian@armbian.com>
+---
+ arch/arm/boot/dts/allwinner/sun8i-r40.dtsi | 32 ++++++++++++++++++++++
+ 1 file changed, 32 insertions(+)
+
+--- a/arch/arm/boot/dts/allwinner/sun8i-r40.dtsi
++++ b/arch/arm/boot/dts/allwinner/sun8i-r40.dtsi
+@@ -285,6 +285,20 @@
+ 			#size-cells = <1>;
+ 			ranges;
+ 
++			sram_a: sram@0 {
++				compatible = "mmio-sram";
++				reg = <0x00000000 0xc000>;
++				#address-cells = <1>;
++				#size-cells = <1>;
++				ranges = <0 0x00000000 0xc000>;
++
++				emac_sram: sram-section@8000 {
++					compatible = "allwinner,sun4i-a10-sram-a3-a4";
++					reg = <0x8000 0x4000>;
++					status = "disabled";
++				};
++			};
++
+ 			sram_c: sram@1d00000 {
+ 				compatible = "mmio-sram";
+ 				reg = <0x01d00000 0xd0000>;
+@@ -1088,6 +1102,24 @@
+ 			};
+ 		};
+ 
++		emac: ethernet@1c0b000 {
++			compatible = "allwinner,sun4i-a10-emac";
++			reg = <0x01c0b000 0x1000>;
++			interrupts = <GIC_SPI 55 IRQ_TYPE_LEVEL_HIGH>;
++			clocks = <&ccu CLK_BUS_EMAC>;
++			resets = <&ccu RST_BUS_EMAC>;
++			allwinner,sram = <&emac_sram 1>;
++			status = "disabled";
++		};
++
++		emac_mdio: mdio@1c0b080 {
++			compatible = "allwinner,sun4i-a10-mdio";
++			reg = <0x01c0b080 0x14>;
++			#address-cells = <1>;
++			#size-cells = <0>;
++			status = "disabled";
++		};
++
+ 		mbus: dram-controller@1c62000 {
+ 			compatible = "allwinner,sun8i-r40-mbus";
+ 			reg = <0x01c62000 0x1000>;
+-- 
+2.39.2
+
