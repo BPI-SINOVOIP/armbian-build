@@ -1,0 +1,125 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Armbian User <user@example.com>
+Date: Wed, 6 May 2026 00:00:00 +0800
+Subject: [PATCH] BananaPi CM4: use 25 MHz 8-bit legacy eMMC in U-Boot
+
+Newer BPI-CM4 modules populated with Hynix eMMC can intermittently fail
+while U-Boot is reading the kernel from eMMC.
+
+Linux can use HS200 reliably once the full kernel driver is running.
+U-Boot only needs enough MMC speed to load the boot files, but high-speed
+timing is unstable on the affected Hynix eMMC.  Keep the U-Boot eMMC
+controller in legacy timing and cap it at 25 MHz, but allow the 8-bit
+bus to improve boot speed while avoiding the DDR/HS200 paths that
+corrupted large reads before Linux loaded.
+
+The failing reads report CMD12 stop-transmission failures in fast modes.
+Add Meson MMC U-Boot-only DT quirks to honour max-frequency, disable
+only the risky high-speed eMMC modes, and optionally limit selected
+controllers to single-block reads.  Use 8-bit legacy timing for the
+on-module eMMC while keeping multi-block reads enabled for acceptable
+boot speed.  This refresh intentionally gives rebuilt current images a
+new U-Boot artifact hash while preserving the validated timing.
+
+The on-module SDIO Wi-Fi device is not bootable and does not need to be
+probed by U-Boot, so disable it here.  This leaves the removable SD card
+and eMMC as the useful MMC boot devices.
+
+Signed-off-by: Armbian User <user@example.com>
+---
+ arch/arm/dts/meson-g12b-bananapi-cm4-cm4io-u-boot.dtsi | 24 ++++++++++++++++++++++++
+ drivers/mmc/meson_gx_mmc.c                             | 25 +++++++++++++++++++++++--
+ 2 files changed, 47 insertions(+), 2 deletions(-)
+
+diff --git a/arch/arm/dts/meson-g12b-bananapi-cm4-cm4io-u-boot.dtsi b/arch/arm/dts/meson-g12b-bananapi-cm4-cm4io-u-boot.dtsi
+index 7a726e94d1..9a36ee7f7d 100644
+--- a/arch/arm/dts/meson-g12b-bananapi-cm4-cm4io-u-boot.dtsi
++++ b/arch/arm/dts/meson-g12b-bananapi-cm4-cm4io-u-boot.dtsi
+@@ -5,3 +5,27 @@
+  */
+ 
+ #include "meson-g12-common-u-boot.dtsi"
++
++&sd_emmc_a {
++	/*
++	 * The on-module Wi-Fi SDIO device is not a boot source.  Avoid probing
++	 * it as mmc0 so distro boot scans only the removable SD card and eMMC.
++	 */
++	status = "disabled";
++};
++
++&sd_emmc_c {
++	/*
++	 * Hynix eMMC batches used on newer modules can fail filesystem reads in
++	 * U-Boot high-speed/DDR/HS200 modes.  Linux keeps HS200 enabled in its
++	 * own DTB; U-Boot only needs legacy timing to load /boot reliably.
++	 */
++	/delete-property/ cap-mmc-highspeed;
++	/delete-property/ mmc-ddr-1_8v;
++	/delete-property/ mmc-hs200-1_8v;
++	bus-width = <8>;
++	no-mmc-hs400;
++	/* Avoid U-Boot high-speed/DDR/HS200 read failures on Hynix eMMC. */
++	u-boot,legacy-mmc;
++	max-frequency = <25000000>;
++};
+diff --git a/drivers/mmc/meson_gx_mmc.c b/drivers/mmc/meson_gx_mmc.c
+index 3333333333..4444444444 100644
+--- a/drivers/mmc/meson_gx_mmc.c
++++ b/drivers/mmc/meson_gx_mmc.c
+@@ -257,30 +257,51 @@ static int meson_mmc_probe(struct udevice *dev)
+ 	struct meson_mmc_plat *pdata = dev_get_plat(dev);
+ 	struct mmc_uclass_priv *upriv = dev_get_uclass_priv(dev);
+ 	struct mmc *mmc = &pdata->mmc;
+ 	struct mmc_config *cfg = &pdata->cfg;
+ 	struct clk_bulk clocks;
+ 	uint32_t val;
+ 	int ret;
++	u32 f_max;
+ 
+ 	/* Enable the clocks feeding the MMC controller */
+ 	ret = clk_get_bulk(dev, &clocks);
+ 	if (ret)
+ 		return ret;
+ 
+ 	ret = clk_enable_bulk(&clocks);
+ 	if (ret)
+ 		return ret;
+ 
+ 	cfg->voltages = MMC_VDD_33_34 | MMC_VDD_32_33 |
+ 			MMC_VDD_31_32 | MMC_VDD_165_195;
+ 	cfg->host_caps = MMC_MODE_8BIT | MMC_MODE_4BIT |
+ 			MMC_MODE_HS_52MHz | MMC_MODE_HS;
+ 	cfg->f_min = DIV_ROUND_UP(SD_EMMC_CLKSRC_24M, CLK_MAX_DIV);
+-	cfg->f_max = 100000000; /* 100 MHz */
+-	cfg->b_max = 511; /* max 512 - 1 blocks */
++	cfg->f_max = 100000000; /* 100 MHz */
++	if (!dev_read_u32(dev, "max-frequency", &f_max))
++		cfg->f_max = f_max;
++
++	/*
++	 * Some board/eMMC combinations fail before Linux is running in
++	 * high-speed/DDR/HS200 modes.  This is separate from Linux's DTB, where
++	 * the full kernel driver can use faster modes.
++	 */
++	if (dev_read_bool(dev, "u-boot,legacy-mmc")) {
++		cfg->host_caps &= ~(MMC_MODE_HS_52MHz | MMC_MODE_HS |
++				    MMC_MODE_DDR_52MHz | MMC_MODE_HS200 |
++				    MMC_MODE_HS400 |
++				    MMC_MODE_HS400_ES);
++	}
++
++	/*
++	 * Some board/eMMC combinations fail CMD12 after multi-block reads in
++	 * U-Boot.  Let board DTs force single-block reads for boot stability.
++	 */
++	cfg->b_max = dev_read_bool(dev, "u-boot,single-block-read") ?
++		     1 : 511; /* max 512 - 1 blocks */
+ 	cfg->name = dev->name;
+ 
+ 	mmc->priv = pdata;
+ 	upriv->mmc = mmc;
+ 
+ 	mmc_set_clock(mmc, cfg->f_min, MMC_CLK_ENABLE);
+-- 
+2.51.0
