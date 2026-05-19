@@ -88,6 +88,12 @@ function create_new_rootfs_cache_via_debootstrap() {
 	debootstrap_bin="${debootstrap_wanted_dir}/mmdebstrap"
 
 	run_host_command_logged chmod a+x "${debootstrap_bin}"
+	if [[ "${DISTRIBUTION}" == "Ubuntu" && "${RELEASE}" == "resolute" ]]; then
+		# Ubuntu 26.04 ships /usr/bin/env from rust-coreutils by default.
+		# Under qemu-user it can panic while mmdebstrap asks apt to run dpkg via
+		# env. Use the GNU coreutils variant that is also present in resolute.
+		sed -i "s#Dir::Bin::dpkg=env#Dir::Bin::dpkg=/usr/bin/gnuenv#g" "${debootstrap_bin}"
+	fi
 	display_alert "mmdebstrap version" "'${debootstrap_version}' for ${debootstrap_bin}" "info"
 
 	display_alert "Installing base system with ${#AGGREGATED_PACKAGES_DEBOOTSTRAP[@]} packages" "Stage 1/1" "info"
