@@ -130,6 +130,10 @@ function create_new_rootfs_cache_via_debootstrap() {
 	# that don't belong to any extracted package.
 	mkdir -p "${SDCARD}/etc/apt/apt.conf.d"
 	echo 'APT::Sandbox::User "root";' > "${SDCARD}/etc/apt/apt.conf.d/99-armbian-sandbox"
+	cat > "${SDCARD}/etc/apt/apt.conf.d/99-armbian-no-contents-indexes" <<- EOF
+	Acquire::IndexTargets::deb::Contents-deb::DefaultEnabled "false";
+	Acquire::IndexTargets::deb::Contents-udeb::DefaultEnabled "false";
+	EOF
 
 	deploy_qemu_binary_to_chroot "${SDCARD}" "rootfs" # undeployed near the end of this function
 
