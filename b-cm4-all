@@ -6,8 +6,7 @@ cd "$(dirname "$0")"
 BOARD="${BOARD:-bananapicm4io}"
 BOARD_IMAGE_NAME="${BOARD_IMAGE_NAME:-Bananapicm4io}"
 DESKTOP_ENVIRONMENT="${DESKTOP_ENVIRONMENT:-xfce}"
-DESKTOP_ENVIRONMENT_CONFIG_NAME="${DESKTOP_ENVIRONMENT_CONFIG_NAME:-config_base}"
-DESKTOP_APPGROUPS_SELECTED="${DESKTOP_APPGROUPS_SELECTED:-}"
+DESKTOP_TIER="${DESKTOP_TIER:-mid}"
 KERNEL_CONFIGURE="${KERNEL_CONFIGURE:-no}"
 EXTRA_COMPILE_ARGS="${EXTRA_COMPILE_ARGS:-}"
 COMPRESS="${COMPRESS:-yes}"
@@ -37,8 +36,8 @@ usage() {
 
 	Environment overrides:
 	  BOARD, BOARD_IMAGE_NAME, BRANCHES, RELEASES, IMAGE_TYPES
-	  DESKTOP_ENVIRONMENT, DESKTOP_ENVIRONMENT_CONFIG_NAME
-	  KERNEL_CONFIGURE, EXTRA_COMPILE_ARGS, COMPRESS, STOP_ON_FAIL, INCLUDE_CSC
+	  DESKTOP_ENVIRONMENT, DESKTOP_TIER, KERNEL_CONFIGURE
+	  EXTRA_COMPILE_ARGS, COMPRESS, STOP_ON_FAIL, INCLUDE_CSC
 
 	Examples:
 	  $0 list
@@ -133,7 +132,14 @@ read_default_releases() {
 
 desktop_supported() {
 	local release="$1"
-	[[ -d "config/desktop/${release}/environments/${DESKTOP_ENVIRONMENT}" ]]
+	if [[ -d "config/desktop" ]]; then
+		[[ -d "config/desktop/${release}/environments/${DESKTOP_ENVIRONMENT}" ]]
+		return
+	fi
+
+	# Newer Armbian builds validate desktop availability through configng's
+	# YAML definitions during the build, not through config/desktop files.
+	return 0
 }
 
 shell_quote() {
@@ -173,9 +179,8 @@ make_command() {
 			cmd+=(
 				"BUILD_DESKTOP=yes"
 				"BUILD_MINIMAL=no"
-				"DESKTOP_APPGROUPS_SELECTED=${DESKTOP_APPGROUPS_SELECTED}"
 				"DESKTOP_ENVIRONMENT=${DESKTOP_ENVIRONMENT}"
-				"DESKTOP_ENVIRONMENT_CONFIG_NAME=${DESKTOP_ENVIRONMENT_CONFIG_NAME}"
+				"DESKTOP_TIER=${DESKTOP_TIER}"
 			)
 			;;
 		*)
