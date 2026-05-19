@@ -1,0 +1,340 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+
+cd "$(dirname "$0")"
+
+BOARD="${BOARD:-bananapicm4io}"
+BOARD_IMAGE_NAME="${BOARD_IMAGE_NAME:-Bananapicm4io}"
+DESKTOP_ENVIRONMENT="${DESKTOP_ENVIRONMENT:-xfce}"
+DESKTOP_ENVIRONMENT_CONFIG_NAME="${DESKTOP_ENVIRONMENT_CONFIG_NAME:-config_base}"
+DESKTOP_APPGROUPS_SELECTED="${DESKTOP_APPGROUPS_SELECTED:-}"
+KERNEL_CONFIGURE="${KERNEL_CONFIGURE:-no}"
+EXTRA_COMPILE_ARGS="${EXTRA_COMPILE_ARGS:-}"
+COMPRESS="${COMPRESS:-yes}"
+STOP_ON_FAIL="${STOP_ON_FAIL:-no}"
+INCLUDE_CSC="${INCLUDE_CSC:-no}"
+IMAGE_TYPES="${IMAGE_TYPES:-minimal standard desktop}"
+
+usage() {
+	cat <<-EOF
+	Usage: $0 [build|list|dry-run] [options]
+
+	Build the Banana Pi CM4IO image matrix supported by this Armbian tree.
+
+	Actions:
+	  build       Run all selected builds. This is the default.
+	  list        Print the selected matrix.
+	  dry-run     Print compile.sh commands without running them.
+
+	Options:
+	  --branch LIST       Override branches, for example: "current edge"
+	  --release LIST      Override releases, for example: "trixie noble"
+	  --type LIST         Override image types: "minimal standard desktop"
+	  --include-csc       Include csc releases and pass EXPERT=yes
+	  --no-compress       Do not create/test .img.xz after each build
+	  --stop-on-fail      Stop at the first failed build
+	  -h, --help          Show this help
+
+	Environment overrides:
+	  BOARD, BOARD_IMAGE_NAME, BRANCHES, RELEASES, IMAGE_TYPES
+	  DESKTOP_ENVIRONMENT, DESKTOP_ENVIRONMENT_CONFIG_NAME
+	  KERNEL_CONFIGURE, EXTRA_COMPILE_ARGS, COMPRESS, STOP_ON_FAIL, INCLUDE_CSC
+
+	Examples:
+	  $0 list
+	  $0 dry-run --release "trixie noble"
+	  $0 build --release trixie --branch current
+	  INCLUDE_CSC=yes $0 build
+	EOF
+}
+
+action="build"
+while (($#)); do
+	case "$1" in
+		build | list | dry-run)
+			action="$1"
+			;;
+		--branch | --branches)
+			shift
+			BRANCHES="${1:?missing branch list}"
+			;;
+		--release | --releases)
+			shift
+			RELEASES="${1:?missing release list}"
+			;;
+		--type | --types)
+			shift
+			IMAGE_TYPES="${1:?missing image type list}"
+			;;
+		--include-csc)
+			INCLUDE_CSC="yes"
+			;;
+		--no-compress)
+			COMPRESS="no"
+			;;
+		--stop-on-fail)
+			STOP_ON_FAIL="yes"
+			;;
+		-h | --help)
+			usage
+			exit 0
+			;;
+		*)
+			printf 'Unknown argument: %s\n\n' "$1" >&2
+			usage >&2
+			exit 2
+			;;
+	esac
+	shift
+done
+
+board_conf="config/boards/${BOARD}.conf"
+if [[ ! -f "${board_conf}" ]]; then
+	printf 'Board config not found: %s\n' "${board_conf}" >&2
+	exit 1
+fi
+
+read_board_branches() {
+	sed -nE 's/^[[:space:]]*(declare[[:space:]]+-g[[:space:]]+)?KERNEL_TARGET="?([^"#]+)"?.*/\2/p' "${board_conf}" |
+		head -n 1 |
+		tr ',' ' ' |
+		xargs
+}
+
+release_supported_for_arm64() {
+	local release="$1"
+	local support_file="config/distributions/${release}/support"
+	local arch_file="config/distributions/${release}/architectures"
+
+	[[ -f "${support_file}" && -f "${arch_file}" ]] || return 1
+	grep -qw arm64 "${arch_file}" || return 1
+
+	local support
+	support="$(<"${support_file}")"
+	[[ "${support}" == "supported" ]] && return 0
+	[[ "${INCLUDE_CSC}" == "yes" && "${support}" == "csc" ]] && return 0
+	return 1
+}
+
+read_default_releases() {
+	local dir release order support arch
+
+	for dir in config/distributions/*; do
+		[[ -d "${dir}" ]] || continue
+		release="${dir##*/}"
+		release_supported_for_arm64 "${release}" || continue
+
+		order="$(<"${dir}/order")"
+		support="$(<"${dir}/support")"
+		arch="$(<"${dir}/architectures")"
+		printf '%s\t%s\t%s\t%s\n' "${order}" "${release}" "${support}" "${arch}"
+	done | sort -n | awk '{print $2}'
+}
+
+desktop_supported() {
+	local release="$1"
+	[[ -d "config/desktop/${release}/environments/${DESKTOP_ENVIRONMENT}" ]]
+}
+
+shell_quote() {
+	printf '%q ' "$@"
+}
+
+make_command() {
+	local branch="$1"
+	local release="$2"
+	local image_type="$3"
+	local cmd=(
+		./compile.sh build
+		"BOARD=${BOARD}"
+		"BRANCH=${branch}"
+		"KERNEL_CONFIGURE=${KERNEL_CONFIGURE}"
+		"RELEASE=${release}"
+	)
+	local extra_args=()
+
+	if [[ -n "${EXTRA_COMPILE_ARGS}" ]]; then
+		read -r -a extra_args <<< "${EXTRA_COMPILE_ARGS}"
+		cmd+=("${extra_args[@]}")
+	fi
+
+	if [[ "${INCLUDE_CSC}" == "yes" ]]; then
+		cmd+=("EXPERT=yes")
+	fi
+
+	case "${image_type}" in
+		minimal)
+			cmd+=("BUILD_DESKTOP=no" "BUILD_MINIMAL=yes")
+			;;
+		standard)
+			cmd+=("BUILD_DESKTOP=no" "BUILD_MINIMAL=no")
+			;;
+		desktop)
+			cmd+=(
+				"BUILD_DESKTOP=yes"
+				"BUILD_MINIMAL=no"
+				"DESKTOP_APPGROUPS_SELECTED=${DESKTOP_APPGROUPS_SELECTED}"
+				"DESKTOP_ENVIRONMENT=${DESKTOP_ENVIRONMENT}"
+				"DESKTOP_ENVIRONMENT_CONFIG_NAME=${DESKTOP_ENVIRONMENT_CONFIG_NAME}"
+			)
+			;;
+		*)
+			printf 'Unknown image type: %s\n' "${image_type}" >&2
+			return 2
+			;;
+	esac
+
+	shell_quote "${cmd[@]}"
+	printf '\n'
+}
+
+find_latest_image() {
+	local release="$1"
+	local branch="$2"
+	local image_type="$3"
+	local path
+
+	find output/images -maxdepth 1 -type f -name "Armbian-*_${BOARD_IMAGE_NAME}_${release}_${branch}_*.img" -print0 2>/dev/null |
+		while IFS= read -r -d '' path; do
+			case "${image_type}" in
+				minimal)
+					[[ "${path}" == *_minimal.img ]] || continue
+					;;
+				standard)
+					[[ "${path}" != *_minimal.img && "${path}" != *_desktop.img ]] || continue
+					;;
+				desktop)
+					[[ "${path}" == *_desktop.img ]] || continue
+					;;
+			esac
+			stat -c '%Y %n' "${path}"
+		done |
+		sort -nr |
+		head -n 1 |
+		cut -d' ' -f2-
+}
+
+compress_image() {
+	local img="$1"
+	local xzfile="${img}.xz"
+	local tmp="${xzfile}.tmp"
+
+	[[ "${COMPRESS}" == "yes" ]] || return 0
+	[[ -f "${img}" ]] || return 0
+
+	if [[ -f "${xzfile}" && "${xzfile}" -nt "${img}" ]]; then
+		printf 'compression: keeping current %s\n' "${xzfile}"
+	else
+		printf 'compression: creating %s\n' "${xzfile}"
+		rm -f "${tmp}"
+		xz -T0 -c "${img}" > "${tmp}"
+		xz -t "${tmp}"
+		mv -f "${tmp}" "${xzfile}"
+	fi
+
+	sha256sum "${img}" > "${img}.sha"
+	sha256sum "${xzfile}" > "${xzfile}.sha"
+}
+
+run_one() {
+	local branch="$1"
+	local release="$2"
+	local image_type="$3"
+	local log="$4"
+	local cmd status img
+
+	cmd="$(make_command "${branch}" "${release}" "${image_type}")"
+	printf '\n==> %s %s %s\n' "${branch}" "${release}" "${image_type}"
+	printf '+ %s\n' "${cmd}"
+
+	set +e
+	bash -lc "${cmd}" 2>&1 | tee "${log}"
+	status=${PIPESTATUS[0]}
+	set -e
+
+	if ((status == 0)); then
+		img="$(find_latest_image "${release}" "${branch}" "${image_type}")"
+		if [[ -n "${img}" ]]; then
+			compress_image "${img}"
+			printf 'image: %s\n' "${img}"
+			[[ -f "${img}.xz" ]] && printf 'xz: %s\n' "${img}.xz"
+		else
+			printf 'warning: build passed but no matching image found\n' >&2
+		fi
+	fi
+
+	return "${status}"
+}
+
+BRANCHES="${BRANCHES:-$(read_board_branches)}"
+RELEASES="${RELEASES:-$(read_default_releases | xargs)}"
+
+if [[ -z "${BRANCHES}" || -z "${RELEASES}" ]]; then
+	printf 'No build matrix selected. BRANCHES="%s" RELEASES="%s"\n' "${BRANCHES}" "${RELEASES}" >&2
+	exit 1
+fi
+
+run_id="$(date -u +%Y%m%dT%H%M%SZ)"
+log_dir="output/cm4-matrix/${run_id}"
+
+total=0
+failed=0
+skipped=0
+
+if [[ "${action}" == "build" ]]; then
+	mkdir -p "${log_dir}"
+	printf 'branch\trelease\ttype\tstatus\tlog\n' > "${log_dir}/summary.tsv"
+fi
+
+for branch in ${BRANCHES}; do
+	for release in ${RELEASES}; do
+		if ! release_supported_for_arm64 "${release}"; then
+			printf 'skip: %s/%s is not selected as supported for arm64\n' "${branch}" "${release}" >&2
+			((skipped += 1))
+			continue
+		fi
+
+		for image_type in ${IMAGE_TYPES}; do
+			if [[ "${image_type}" == "desktop" ]] && ! desktop_supported "${release}"; then
+				printf 'skip: %s/%s desktop has no %s desktop config\n' "${branch}" "${release}" "${DESKTOP_ENVIRONMENT}" >&2
+				((skipped += 1))
+				continue
+			fi
+
+			((total += 1))
+			case "${action}" in
+				list)
+					printf '%s\t%s\t%s\n' "${branch}" "${release}" "${image_type}"
+					;;
+				dry-run)
+					make_command "${branch}" "${release}" "${image_type}"
+					;;
+				build)
+					log="${log_dir}/${BOARD}-${branch}-${release}-${image_type}.log"
+					if run_one "${branch}" "${release}" "${image_type}" "${log}"; then
+						printf '%s\t%s\t%s\tok\t%s\n' "${branch}" "${release}" "${image_type}" "${log}" >> "${log_dir}/summary.tsv"
+					else
+						status=$?
+						((failed += 1))
+						printf '%s\t%s\t%s\tfailed:%s\t%s\n' "${branch}" "${release}" "${image_type}" "${status}" "${log}" >> "${log_dir}/summary.tsv"
+						if [[ "${STOP_ON_FAIL}" == "yes" ]]; then
+							printf 'stopping after failure, summary: %s\n' "${log_dir}/summary.tsv" >&2
+							exit "${status}"
+						fi
+					fi
+					;;
+			esac
+		done
+	done
+done
+
+case "${action}" in
+	list | dry-run)
+		printf '\nselected builds: %s, skipped: %s\n' "${total}" "${skipped}" >&2
+		;;
+	build)
+		printf '\nsummary: %s\n' "${log_dir}/summary.tsv"
+		printf 'selected builds: %s, failed: %s, skipped: %s\n' "${total}" "${failed}" "${skipped}"
+		((failed == 0))
+		;;
+esac
