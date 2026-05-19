@@ -10,6 +10,7 @@ DESKTOP_TIER="${DESKTOP_TIER:-mid}"
 KERNEL_CONFIGURE="${KERNEL_CONFIGURE:-no}"
 EXTRA_COMPILE_ARGS="${EXTRA_COMPILE_ARGS:-}"
 COMPRESS="${COMPRESS:-yes}"
+KEEP_RAW="${KEEP_RAW:-yes}"
 STOP_ON_FAIL="${STOP_ON_FAIL:-no}"
 INCLUDE_LAMOBO="${INCLUDE_LAMOBO:-yes}"
 ALL_BRANCHES="${ALL_BRANCHES:-no}"
@@ -38,6 +39,7 @@ usage() {
 	  --all-branches     Build every branch listed by each board config
 	  --no-lamobo        Do not include lamobo-r1
 	  --no-compress      Do not create/test .img.xz after each build
+	  --remove-raw       Remove raw .img after tested .img.xz is created
 	  --skip-existing    Skip a build if a matching .img or .img.xz already exists
 	  --stop-on-fail     Stop at the first failed build
 	  -h, --help         Show this help
@@ -46,7 +48,7 @@ usage() {
 	  BOARDS, RELEASES, IMAGE_TYPES, BRANCHES, ALL_BRANCHES
 	  DESKTOP_ENVIRONMENT, DESKTOP_TIER, KERNEL_CONFIGURE
 	  EXTRA_COMPILE_ARGS, COMPRESS, STOP_ON_FAIL, INCLUDE_LAMOBO
-	  EXPERT, DOWNLOAD_MIRROR, CUSTOM_UBUNTU_MIRROR_PORTS, SKIP_EXISTING
+	  KEEP_RAW, EXPERT, DOWNLOAD_MIRROR, CUSTOM_UBUNTU_MIRROR_PORTS, SKIP_EXISTING
 
 	Examples:
 	  $0 list
@@ -85,6 +87,9 @@ while (($#)); do
 			;;
 		--no-compress)
 			COMPRESS="no"
+			;;
+		--remove-raw)
+			KEEP_RAW="no"
 			;;
 		--skip-existing)
 			SKIP_EXISTING="yes"
@@ -277,16 +282,44 @@ find_latest_image() {
 		cut -d' ' -f2-
 }
 
+find_latest_image_artifact() {
+	local board="$1"
+	local release="$2"
+	local branch="$3"
+	local image_type="$4"
+	local board_image_name="${board^}"
+	local path image_path
+
+	find output/images -maxdepth 1 -type f \
+		\( -name "Armbian-*_${board_image_name}_${release}_${branch}_*.img" -o \
+		-name "Armbian-*_${board_image_name}_${release}_${branch}_*.img.xz" \) \
+		-print0 2>/dev/null |
+		while IFS= read -r -d '' path; do
+			image_path="${path%.xz}"
+			case "${image_type}" in
+				server | standard)
+					[[ "${image_path}" != *_minimal.img && "${image_path}" != *_desktop.img && "${image_path}" != *_xfce_desktop.img ]] || continue
+					;;
+				desktop)
+					[[ "${image_path}" == *_desktop.img || "${image_path}" == *_xfce_desktop.img ]] || continue
+					;;
+			esac
+			stat -c '%Y %n' "${path}"
+		done |
+		sort -nr |
+		head -n 1 |
+		cut -d' ' -f2-
+}
+
 matching_image_exists() {
 	local board="$1"
 	local release="$2"
 	local branch="$3"
 	local image_type="$4"
-	local img
+	local artifact
 
-	img="$(find_latest_image "${board}" "${release}" "${branch}" "${image_type}")"
-	[[ -n "${img}" ]] || return 1
-	[[ -f "${img}" || -f "${img}.xz" ]]
+	artifact="$(find_latest_image_artifact "${board}" "${release}" "${branch}" "${image_type}")"
+	[[ -n "${artifact}" && -f "${artifact}" ]]
 }
 
 compress_image() {
@@ -307,8 +340,14 @@ compress_image() {
 		mv -f "${tmp}" "${xzfile}"
 	fi
 
-	sha256sum "${img}" > "${img}.sha"
 	sha256sum "${xzfile}" > "${xzfile}.sha"
+
+	if [[ "${KEEP_RAW}" == "yes" ]]; then
+		sha256sum "${img}" > "${img}.sha"
+	else
+		printf 'compression: removing raw %s\n' "${img}"
+		rm -f "${img}" "${img}.sha"
+	fi
 }
 
 run_one() {
@@ -337,7 +376,7 @@ run_one() {
 		img="$(find_latest_image "${board}" "${release}" "${branch}" "${image_type}")"
 		if [[ -n "${img}" ]]; then
 			compress_image "${img}"
-			printf 'image: %s\n' "${img}"
+			[[ -f "${img}" ]] && printf 'image: %s\n' "${img}"
 			[[ -f "${img}.xz" ]] && printf 'xz: %s\n' "${img}.xz"
 		else
 			printf 'warning: build passed but no matching image found\n' >&2
