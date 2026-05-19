@@ -242,10 +242,11 @@ function create_new_rootfs_cache_via_debootstrap() {
 		# Ubuntu Jammy armhf. Keep the desktop image build strict while
 		# dropping only non-essential package names that would abort the DE
 		# installation before any desktop packages are installed.
-		if [[ -f "${SDCARD}/usr/share/armbian-config/desktops/yaml/common.yaml" ]]; then
-			run_host_command_logged sed -i -E \
+		local desktop_common_yaml="${SDCARD}/usr/share/armbian-config/desktops/yaml/common.yaml"
+		if [[ -f "${desktop_common_yaml}" ]]; then
+			sed -i -E \
 				'/^[[:space:]]*-[[:space:]]*(pipewire-libcamera|gstreamer1\.0-libcamera|glmark2-x11|glmark2-es2-x11)([[:space:]]|$)/d' \
-				"${SDCARD}/usr/share/armbian-config/desktops/yaml/common.yaml"
+				"${desktop_common_yaml}"
 		fi
 		chroot_sdcard "SUDO_USER= DEBIAN_FRONTEND=noninteractive DIALOG=read armbian-config --api module_desktops install de=${DESKTOP_ENVIRONMENT} tier=${DESKTOP_TIER:-mid} mode=build"
 	fi
