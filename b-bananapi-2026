@@ -1,0 +1,429 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+
+cd "$(dirname "$0")"
+
+RELEASES="${RELEASES:-bookworm trixie jammy noble resolute}"
+IMAGE_TYPES="${IMAGE_TYPES:-server desktop}"
+DESKTOP_ENVIRONMENT="${DESKTOP_ENVIRONMENT:-xfce}"
+DESKTOP_TIER="${DESKTOP_TIER:-mid}"
+KERNEL_CONFIGURE="${KERNEL_CONFIGURE:-no}"
+EXTRA_COMPILE_ARGS="${EXTRA_COMPILE_ARGS:-}"
+COMPRESS="${COMPRESS:-yes}"
+STOP_ON_FAIL="${STOP_ON_FAIL:-no}"
+INCLUDE_LAMOBO="${INCLUDE_LAMOBO:-yes}"
+ALL_BRANCHES="${ALL_BRANCHES:-no}"
+EXPERT="${EXPERT:-yes}"
+DOWNLOAD_MIRROR="${DOWNLOAD_MIRROR:-bfsu}"
+SKIP_EXISTING="${SKIP_EXISTING:-no}"
+
+usage() {
+	cat <<-EOF
+	Usage: $0 [build|list|dry-run] [options]
+
+	Build the 2026 Banana Pi release matrix.
+
+	Default matrix:
+	  Boards:   all config/boards/bananapi* plus lamobo-r1 when INCLUDE_LAMOBO=yes
+	  Releases: Debian 12 bookworm, Debian 13 trixie,
+	            Ubuntu 22.04 jammy, Ubuntu 24.04 noble, Ubuntu 26.04 resolute
+	  Images:   server desktop
+	  Branch:   preferred per board: current, else edge, else vendor, else legacy
+
+	Options:
+	  --board LIST       Override board ids, for example: "bananapicm4io bananapim5"
+	  --release LIST     Override releases
+	  --type LIST        Override image types: "server desktop"
+	  --branch LIST      Override branches for all boards
+	  --all-branches     Build every branch listed by each board config
+	  --no-lamobo        Do not include lamobo-r1
+	  --no-compress      Do not create/test .img.xz after each build
+	  --skip-existing    Skip a build if a matching .img or .img.xz already exists
+	  --stop-on-fail     Stop at the first failed build
+	  -h, --help         Show this help
+
+	Environment overrides:
+	  BOARDS, RELEASES, IMAGE_TYPES, BRANCHES, ALL_BRANCHES
+	  DESKTOP_ENVIRONMENT, DESKTOP_TIER, KERNEL_CONFIGURE
+	  EXTRA_COMPILE_ARGS, COMPRESS, STOP_ON_FAIL, INCLUDE_LAMOBO
+	  EXPERT, DOWNLOAD_MIRROR, CUSTOM_UBUNTU_MIRROR_PORTS, SKIP_EXISTING
+
+	Examples:
+	  $0 list
+	  $0 dry-run --board bananapicm4io --release resolute
+	  DOWNLOAD_MIRROR=bfsu $0 build --board bananapicm4io --release resolute --type server
+	EOF
+}
+
+action="build"
+while (($#)); do
+	case "$1" in
+		build | list | dry-run)
+			action="$1"
+			;;
+		--board | --boards)
+			shift
+			BOARDS="${1:?missing board list}"
+			;;
+		--release | --releases)
+			shift
+			RELEASES="${1:?missing release list}"
+			;;
+		--type | --types)
+			shift
+			IMAGE_TYPES="${1:?missing image type list}"
+			;;
+		--branch | --branches)
+			shift
+			BRANCHES="${1:?missing branch list}"
+			;;
+		--all-branches)
+			ALL_BRANCHES="yes"
+			;;
+		--no-lamobo)
+			INCLUDE_LAMOBO="no"
+			;;
+		--no-compress)
+			COMPRESS="no"
+			;;
+		--skip-existing)
+			SKIP_EXISTING="yes"
+			;;
+		--stop-on-fail)
+			STOP_ON_FAIL="yes"
+			;;
+		-h | --help)
+			usage
+			exit 0
+			;;
+		*)
+			printf 'Unknown argument: %s\n\n' "$1" >&2
+			usage >&2
+			exit 2
+			;;
+	esac
+	shift
+done
+
+find_board_file() {
+	local board="$1"
+	local suffix
+	for suffix in conf csc eos; do
+		if [[ -f "config/boards/${board}.${suffix}" ]]; then
+			printf '%s\n' "config/boards/${board}.${suffix}"
+			return 0
+		fi
+	done
+	return 1
+}
+
+read_board_name() {
+	sed -nE 's/^BOARD_NAME="?([^"]+)"?.*/\1/p' "$1" | head -n 1
+}
+
+read_board_family() {
+	sed -nE 's/^BOARDFAMILY="?([^"]+)"?.*/\1/p' "$1" | head -n 1
+}
+
+read_board_branches() {
+	sed -nE 's/^[[:space:]]*(declare[[:space:]]+-g[[:space:]]+)?KERNEL_TARGET="?([^"#]+)"?.*/\2/p' "$1" |
+		head -n 1 |
+		tr ',' ' ' |
+		xargs
+}
+
+preferred_branches() {
+	local board_file="$1"
+	local branches="$2"
+
+	if [[ -n "${BRANCHES:-}" ]]; then
+		printf '%s\n' "${BRANCHES}"
+		return
+	fi
+
+	if [[ "${ALL_BRANCHES}" == "yes" ]]; then
+		printf '%s\n' "${branches}"
+		return
+	fi
+
+	local preferred
+	for preferred in current edge vendor legacy; do
+		if grep -qw "${preferred}" <<< "${branches}"; then
+			printf '%s\n' "${preferred}"
+			return
+		fi
+	done
+
+	printf 'No usable branch found in %s\n' "${board_file}" >&2
+	return 1
+}
+
+board_arch() {
+	local family="$1"
+
+	case "${family}" in
+		sun6i | sun7i | sun8i | mt7623)
+			printf 'armhf\n'
+			;;
+		spacemit)
+			printf 'riscv64\n'
+			;;
+		*)
+			printf 'arm64\n'
+			;;
+	esac
+}
+
+release_supports_arch() {
+	local release="$1"
+	local arch="$2"
+	local arch_file="config/distributions/${release}/architectures"
+
+	[[ -f "${arch_file}" ]] || return 1
+	grep -qw "${arch}" "${arch_file}"
+}
+
+default_boards() {
+	local path id
+
+	for path in config/boards/bananapi*.conf config/boards/bananapi*.csc config/boards/bananapi*.eos; do
+		[[ -f "${path}" ]] || continue
+		id="${path#config/boards/}"
+		printf '%s\n' "${id%.*}"
+	done
+
+	if [[ "${INCLUDE_LAMOBO}" == "yes" ]]; then
+		for path in config/boards/lamobo-r1.conf config/boards/lamobo-r1.csc config/boards/lamobo-r1.eos; do
+			[[ -f "${path}" ]] || continue
+			id="${path#config/boards/}"
+			printf '%s\n' "${id%.*}"
+		done
+	fi
+}
+
+shell_quote() {
+	printf '%q ' "$@"
+}
+
+make_command() {
+	local board="$1"
+	local branch="$2"
+	local release="$3"
+	local image_type="$4"
+	local cmd=(
+		./compile.sh build
+		"BOARD=${board}"
+		"BRANCH=${branch}"
+		"KERNEL_CONFIGURE=${KERNEL_CONFIGURE}"
+		"RELEASE=${release}"
+		"EXPERT=${EXPERT}"
+		"DOWNLOAD_MIRROR=${DOWNLOAD_MIRROR}"
+	)
+	local extra_args=()
+
+	if [[ -n "${CUSTOM_UBUNTU_MIRROR_PORTS:-}" ]]; then
+		cmd+=("CUSTOM_UBUNTU_MIRROR_PORTS=${CUSTOM_UBUNTU_MIRROR_PORTS}")
+	fi
+
+	if [[ -n "${EXTRA_COMPILE_ARGS}" ]]; then
+		read -r -a extra_args <<< "${EXTRA_COMPILE_ARGS}"
+		cmd+=("${extra_args[@]}")
+	fi
+
+	case "${image_type}" in
+		server | standard)
+			cmd+=("BUILD_DESKTOP=no" "BUILD_MINIMAL=no")
+			;;
+		desktop)
+			cmd+=(
+				"BUILD_DESKTOP=yes"
+				"BUILD_MINIMAL=no"
+				"DESKTOP_ENVIRONMENT=${DESKTOP_ENVIRONMENT}"
+				"DESKTOP_TIER=${DESKTOP_TIER}"
+			)
+			;;
+		*)
+			printf 'Unknown image type: %s\n' "${image_type}" >&2
+			return 2
+			;;
+	esac
+
+	shell_quote "${cmd[@]}"
+	printf '\n'
+}
+
+find_latest_image() {
+	local board="$1"
+	local release="$2"
+	local branch="$3"
+	local image_type="$4"
+	local board_image_name="${board^}"
+	local path
+
+	find output/images -maxdepth 1 -type f -name "Armbian-*_${board_image_name}_${release}_${branch}_*.img" -print0 2>/dev/null |
+		while IFS= read -r -d '' path; do
+			case "${image_type}" in
+				server | standard)
+					[[ "${path}" != *_minimal.img && "${path}" != *_desktop.img && "${path}" != *_xfce_desktop.img ]] || continue
+					;;
+				desktop)
+					[[ "${path}" == *_desktop.img || "${path}" == *_xfce_desktop.img ]] || continue
+					;;
+			esac
+			stat -c '%Y %n' "${path}"
+		done |
+		sort -nr |
+		head -n 1 |
+		cut -d' ' -f2-
+}
+
+matching_image_exists() {
+	local board="$1"
+	local release="$2"
+	local branch="$3"
+	local image_type="$4"
+	local img
+
+	img="$(find_latest_image "${board}" "${release}" "${branch}" "${image_type}")"
+	[[ -n "${img}" ]] || return 1
+	[[ -f "${img}" || -f "${img}.xz" ]]
+}
+
+compress_image() {
+	local img="$1"
+	local xzfile="${img}.xz"
+	local tmp="${xzfile}.tmp"
+
+	[[ "${COMPRESS}" == "yes" ]] || return 0
+	[[ -f "${img}" ]] || return 0
+
+	if [[ -f "${xzfile}" && "${xzfile}" -nt "${img}" ]]; then
+		printf 'compression: keeping current %s\n' "${xzfile}"
+	else
+		printf 'compression: creating %s\n' "${xzfile}"
+		rm -f "${tmp}"
+		xz -T0 -c "${img}" > "${tmp}"
+		xz -t "${tmp}"
+		mv -f "${tmp}" "${xzfile}"
+	fi
+
+	sha256sum "${img}" > "${img}.sha"
+	sha256sum "${xzfile}" > "${xzfile}.sha"
+}
+
+run_one() {
+	local board="$1"
+	local branch="$2"
+	local release="$3"
+	local image_type="$4"
+	local log="$5"
+	local cmd status img
+
+	if [[ "${SKIP_EXISTING}" == "yes" ]] && matching_image_exists "${board}" "${release}" "${branch}" "${image_type}"; then
+		printf 'skip-existing: %s %s %s %s\n' "${board}" "${branch}" "${release}" "${image_type}"
+		return 0
+	fi
+
+	cmd="$(make_command "${board}" "${branch}" "${release}" "${image_type}")"
+	printf '\n==> %s %s %s %s\n' "${board}" "${branch}" "${release}" "${image_type}"
+	printf '+ %s\n' "${cmd}"
+
+	set +e
+	bash -lc "${cmd}" 2>&1 | tee "${log}"
+	status=${PIPESTATUS[0]}
+	set -e
+
+	if ((status == 0)); then
+		img="$(find_latest_image "${board}" "${release}" "${branch}" "${image_type}")"
+		if [[ -n "${img}" ]]; then
+			compress_image "${img}"
+			printf 'image: %s\n' "${img}"
+			[[ -f "${img}.xz" ]] && printf 'xz: %s\n' "${img}.xz"
+		else
+			printf 'warning: build passed but no matching image found\n' >&2
+		fi
+	fi
+
+	return "${status}"
+}
+
+BOARDS="${BOARDS:-$(default_boards | sort -u | xargs)}"
+
+if [[ -z "${BOARDS}" ]]; then
+	printf 'No boards selected\n' >&2
+	exit 1
+fi
+
+run_id="$(date -u +%Y%m%dT%H%M%SZ)"
+log_dir="output/bananapi-2026/${run_id}"
+
+total=0
+failed=0
+skipped=0
+
+if [[ "${action}" == "build" ]]; then
+	mkdir -p "${log_dir}"
+	printf 'board\tboard_status\tarch\tbranch\trelease\ttype\tstatus\tlog\n' > "${log_dir}/summary.tsv"
+fi
+
+for board in ${BOARDS}; do
+	board_file="$(find_board_file "${board}")" || {
+		printf 'skip: board config not found: %s\n' "${board}" >&2
+		((skipped += 1))
+		continue
+	}
+
+	board_status="${board_file##*.}"
+	board_name="$(read_board_name "${board_file}")"
+	family="$(read_board_family "${board_file}")"
+	arch="$(board_arch "${family}")"
+	board_branches="$(read_board_branches "${board_file}")"
+	selected_branches="$(preferred_branches "${board_file}" "${board_branches}")"
+
+	for branch in ${selected_branches}; do
+		for release in ${RELEASES}; do
+			if ! release_supports_arch "${release}" "${arch}"; then
+				printf 'skip: %s/%s %s does not support %s\n' "${board}" "${branch}" "${release}" "${arch}" >&2
+				((skipped += 1))
+				continue
+			fi
+
+			for image_type in ${IMAGE_TYPES}; do
+				((total += 1))
+				case "${action}" in
+					list)
+						printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\n' "${board}" "${board_status}" "${arch}" "${branch}" "${release}" "${image_type}" "${board_name}"
+						;;
+					dry-run)
+						make_command "${board}" "${branch}" "${release}" "${image_type}"
+						;;
+					build)
+						log="${log_dir}/${board}-${branch}-${release}-${image_type}.log"
+						if run_one "${board}" "${branch}" "${release}" "${image_type}" "${log}"; then
+							printf '%s\t%s\t%s\t%s\t%s\t%s\tok\t%s\n' "${board}" "${board_status}" "${arch}" "${branch}" "${release}" "${image_type}" "${log}" >> "${log_dir}/summary.tsv"
+						else
+							status=$?
+							((failed += 1))
+							printf '%s\t%s\t%s\t%s\t%s\t%s\tfailed:%s\t%s\n' "${board}" "${board_status}" "${arch}" "${branch}" "${release}" "${image_type}" "${status}" "${log}" >> "${log_dir}/summary.tsv"
+							if [[ "${STOP_ON_FAIL}" == "yes" ]]; then
+								printf 'stopping after failure, summary: %s\n' "${log_dir}/summary.tsv" >&2
+								exit "${status}"
+							fi
+						fi
+						;;
+				esac
+			done
+		done
+	done
+done
+
+case "${action}" in
+	list | dry-run)
+		printf '\nselected builds: %s, skipped: %s\n' "${total}" "${skipped}" >&2
+		;;
+	build)
+		printf '\nsummary: %s\n' "${log_dir}/summary.tsv"
+		printf 'selected builds: %s, failed: %s, skipped: %s\n' "${total}" "${failed}" "${skipped}"
+		((failed == 0))
+		;;
+esac
