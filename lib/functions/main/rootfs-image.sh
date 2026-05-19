@@ -15,6 +15,7 @@ function build_rootfs_and_image() {
 
 	mkdir -p "${SDCARD}/etc/apt/apt.conf.d"
 	cat > "${SDCARD}/etc/apt/apt.conf.d/99-armbian-no-contents-indexes" <<- EOF
+	Acquire::ForceIPv4 "true";
 	Acquire::IndexTargets::deb::Contents-deb::DefaultEnabled "false";
 	Acquire::IndexTargets::deb::Contents-udeb::DefaultEnabled "false";
 	EOF

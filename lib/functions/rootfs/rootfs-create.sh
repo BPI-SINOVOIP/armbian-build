@@ -131,6 +131,7 @@ function create_new_rootfs_cache_via_debootstrap() {
 	mkdir -p "${SDCARD}/etc/apt/apt.conf.d"
 	echo 'APT::Sandbox::User "root";' > "${SDCARD}/etc/apt/apt.conf.d/99-armbian-sandbox"
 	cat > "${SDCARD}/etc/apt/apt.conf.d/99-armbian-no-contents-indexes" <<- EOF
+	Acquire::ForceIPv4 "true";
 	Acquire::IndexTargets::deb::Contents-deb::DefaultEnabled "false";
 	Acquire::IndexTargets::deb::Contents-udeb::DefaultEnabled "false";
 	EOF
