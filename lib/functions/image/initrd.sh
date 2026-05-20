@@ -27,6 +27,7 @@ update_initramfs() {
 	local initrd_cache_current_manifest_filepath initrd_cache_last_manifest_filepath initrd_files_to_hash
 	local initrd_debug="" update_initramfs_cmd
 	local logging_filter=""
+	local skip_btrfs_initramfs_hook="no" btrfs_initramfs_hook="" disabled_btrfs_initramfs_hook=""
 	if [[ "${SHOW_DEBUG}" == "yes" ]]; then
 		initrd_debug="v"
 		# disabled; if debugging, we want the full output, even if it is huge.
@@ -40,6 +41,12 @@ update_initramfs() {
 		display_alert "Can't find kernel for version, here's what is in /lib/modules" "IMAGE_INSTALLED_KERNEL_VERSION: ${IMAGE_INSTALLED_KERNEL_VERSION}" "wrn"
 		SHOW_LOG=yes run_host_command_logged find "${chroot_target}/lib/modules"/ -maxdepth 1
 		exit_with_error "No kernel installed for the version" "${IMAGE_INSTALLED_KERNEL_VERSION}"
+	fi
+
+	btrfs_initramfs_hook="${chroot_target}/usr/share/initramfs-tools/hooks/btrfs"
+	if [[ "${DISTRIBUTION:-}" == "Ubuntu" && "${RELEASE:-}" == "resolute" && "${ROOTFS_TYPE:-ext4}" != "btrfs" && -x "${btrfs_initramfs_hook}" ]]; then
+		skip_btrfs_initramfs_hook="yes"
+		disabled_btrfs_initramfs_hook="${btrfs_initramfs_hook}.armbian-disabled"
 	fi
 
 	# Caching.
@@ -69,6 +76,9 @@ update_initramfs() {
 	find "${target_dir}" "${initrd_files_to_hash[@]}" -type f | parallel -X md5sum |
 		awk '{print $2 " - " $1}' |
 		sed -e "s|^${chroot_target}||g" | LC_ALL=C sort > "${initrd_cache_current_manifest_filepath}"
+	if [[ "${skip_btrfs_initramfs_hook}" == "yes" ]]; then
+		echo "/usr/share/initramfs-tools/hooks/btrfs - skipped for Ubuntu resolute qemu build" >> "${initrd_cache_current_manifest_filepath}"
+	fi
 
 	initrd_hash="$(md5sum "${initrd_cache_current_manifest_filepath}" | cut -d ' ' -f 1)" # hash of the hashes.
 	initrd_cache_key="initrd.img-${initrd_kern_ver}-${initrd_hash}"
@@ -104,7 +114,18 @@ update_initramfs() {
 		fi
 
 		display_alert "Updating initramfs..." "$update_initramfs_cmd" ""
-		chroot_custom_long_running "$chroot_target" "$update_initramfs_cmd" "${logging_filter}"
+		if [[ "${skip_btrfs_initramfs_hook}" == "yes" ]]; then
+			display_alert "Temporarily disabling btrfs initramfs hook" "Ubuntu resolute qemu build with ROOTFS_TYPE=${ROOTFS_TYPE:-ext4}" "info"
+			run_host_command_logged mv "${btrfs_initramfs_hook}" "${disabled_btrfs_initramfs_hook}"
+		fi
+		local update_initramfs_exit_code=0
+		chroot_custom_long_running "$chroot_target" "$update_initramfs_cmd" "${logging_filter}" || update_initramfs_exit_code=$?
+		if [[ "${skip_btrfs_initramfs_hook}" == "yes" && -e "${disabled_btrfs_initramfs_hook}" ]]; then
+			run_host_command_logged mv "${disabled_btrfs_initramfs_hook}" "${btrfs_initramfs_hook}"
+		fi
+		if [[ "${update_initramfs_exit_code}" != "0" ]]; then
+			return "${update_initramfs_exit_code}"
+		fi
 		display_alert "Updated initramfs." "${update_initramfs_cmd}" "info"
 
 		display_alert "Storing initrd in cache" "${initrd_cache_key}" "debug"                                              # notice there's no -p here: no need to touch LRU

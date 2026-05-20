@@ -45,6 +45,34 @@ function create_new_rootfs_cache_tarball() {
 	display_alert "rootfs cache created" "${cache_fname} [${cache_size}]" "info"
 }
 
+function prepare_resolute_gnu_coreutils_chroot_path() {
+	if [[ "${DISTRIBUTION}" != "Ubuntu" || "${RELEASE}" != "resolute" ]]; then
+		return 0
+	fi
+	if [[ ! -x "${SDCARD}/usr/bin/gnuenv" ]]; then
+		return 0
+	fi
+
+	# Ubuntu 26.04 defaults coreutils to rust-coreutils. Some tools panic under
+	# qemu-user during image creation, so prefer GNU-prefixed binaries while
+	# executing chroot build commands.
+	local gnu_path="${SDCARD}/usr/local/lib/armbian-gnu-coreutils"
+	display_alert "Preparing GNU coreutils shim" "Ubuntu resolute chroot PATH" "info"
+	mkdir -p "${gnu_path}"
+
+	local gnu_bin gnu_name plain_name
+	while IFS= read -r gnu_bin; do
+		gnu_name="$(basename "${gnu_bin}")"
+		plain_name="${gnu_name#gnu}"
+		[[ -n "${plain_name}" && "${plain_name}" != "${gnu_name}" ]] || continue
+		ln -sfn "/usr/bin/${gnu_name}" "${gnu_path}/${plain_name}"
+	done < <(find "${SDCARD}/usr/bin" -maxdepth 1 -type f -name 'gnu*' 2>/dev/null)
+
+	if [[ -x "${SDCARD}/usr/sbin/gnuchroot" ]]; then
+		ln -sfn "/usr/sbin/gnuchroot" "${gnu_path}/chroot"
+	fi
+}
+
 # create_new_rootfs_cache_via_debootstrap populates a root FS into
 # SDCARD using mmdebstrap configures locales and apt sources, installs
 # additional packages (and optionally desktop packages), performs chroot
@@ -160,6 +188,7 @@ function create_new_rootfs_cache_via_debootstrap() {
 
 
 	[[ ! -f "${SDCARD}/bin/bash" ]] && exit_with_error "mmdebstrap did not produce /bin/bash"
+	prepare_resolute_gnu_coreutils_chroot_path
 
 	# Done with mmdebstrap. Clean-up its litterbox.
 	display_alert "Cleaning up after mmdebstrap" "mmdebstrap cleanup" "info"
