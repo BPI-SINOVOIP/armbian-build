@@ -94,6 +94,12 @@ function create_new_rootfs_cache_via_debootstrap() {
 		# env. Use the GNU coreutils variant that is also present in resolute.
 		sed -i "s#Dir::Bin::dpkg=env#Dir::Bin::dpkg=/usr/bin/gnuenv#g" "${debootstrap_bin}"
 	fi
+	if [[ "${DISTRIBUTION}" == "Ubuntu" && "${RELEASE}" == "resolute" && "${ARCH}" == "riscv64" ]]; then
+		# Ubuntu 26.04 riscv64 packages may use newer ISA extensions than the
+		# default qemu-user CPU exposes. Keep this scoped to resolute/riscv64.
+		export QEMU_CPU="${QEMU_CPU:-max}"
+		display_alert "Using qemu CPU model" "${QEMU_CPU} for Ubuntu resolute riscv64" "info"
+	fi
 	display_alert "mmdebstrap version" "'${debootstrap_version}' for ${debootstrap_bin}" "info"
 
 	display_alert "Installing base system with ${#AGGREGATED_PACKAGES_DEBOOTSTRAP[@]} packages" "Stage 1/1" "info"
