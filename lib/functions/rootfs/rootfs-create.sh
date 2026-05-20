@@ -68,6 +68,156 @@ function prepare_resolute_gnu_coreutils_chroot_path() {
 		ln -sfn "/usr/bin/${gnu_name}" "${gnu_path}/${plain_name}"
 	done < <(find "${SDCARD}/usr/bin" -maxdepth 1 -type f -name 'gnu*' 2>/dev/null)
 
+	# A few tiny coreutils helpers are still prone to qemu-user crashes on
+	# Ubuntu resolute armhf during package postinst scripts. Keep these as
+	# shell wrappers so ucf/openssh can finish configuring reliably.
+	cat > "${gnu_path}/basename" <<'EOF'
+#!/bin/sh
+suffix=
+multiple=no
+zero=no
+while [ "$#" -gt 0 ]; do
+	case "$1" in
+		--)
+			shift
+			break
+			;;
+		-a|--multiple)
+			multiple=yes
+			shift
+			;;
+		-s|--suffix)
+			[ "$#" -ge 2 ] || {
+				echo "basename: option requires an argument -- s" >&2
+				exit 1
+			}
+			suffix="$2"
+			multiple=yes
+			shift 2
+			;;
+		--suffix=*)
+			suffix="${1#*=}"
+			multiple=yes
+			shift
+			;;
+		-z|--zero)
+			zero=yes
+			shift
+			;;
+		-*)
+			echo "basename: invalid option -- ${1#-}" >&2
+			exit 1
+			;;
+		*)
+			break
+			;;
+	esac
+done
+
+if [ "$#" -lt 1 ]; then
+	echo "basename: missing operand" >&2
+	exit 1
+fi
+
+emit_name() {
+	path="$1"
+	while [ "${path%/}" != "$path" ] && [ "$path" != "/" ]; do
+		path="${path%/}"
+	done
+	if [ -z "$path" ]; then
+		name="/"
+	else
+		name="${path##*/}"
+		[ -n "$name" ] || name="/"
+	fi
+	if [ -n "$suffix" ] && [ "$name" != "$suffix" ]; then
+		case "$name" in
+			*"$suffix") name="${name%"$suffix"}" ;;
+		esac
+	fi
+	if [ "$zero" = yes ]; then
+		printf '%s\0' "$name"
+	else
+		printf '%s\n' "$name"
+	fi
+}
+
+if [ "$multiple" = no ]; then
+	if [ "$#" -ge 2 ]; then
+		suffix="$2"
+	fi
+	emit_name "$1"
+	exit 0
+fi
+
+for path do
+	emit_name "$path"
+done
+EOF
+	chmod 0755 "${gnu_path}/basename"
+
+	cat > "${gnu_path}/dirname" <<'EOF'
+#!/bin/sh
+zero=no
+while [ "$#" -gt 0 ]; do
+	case "$1" in
+		--)
+			shift
+			break
+			;;
+		-z|--zero)
+			zero=yes
+			shift
+			;;
+		-*)
+			echo "dirname: invalid option -- ${1#-}" >&2
+			exit 1
+			;;
+		*)
+			break
+			;;
+	esac
+done
+
+if [ "$#" -lt 1 ]; then
+	echo "dirname: missing operand" >&2
+	exit 1
+fi
+
+emit_dir() {
+	path="$1"
+	while [ "${path%/}" != "$path" ] && [ "$path" != "/" ]; do
+		path="${path%/}"
+	done
+	if [ -z "$path" ]; then
+		dir="/"
+	else
+		case "$path" in
+			*/*)
+				dir="${path%/*}"
+				while [ "${dir%/}" != "$dir" ] && [ "$dir" != "/" ]; do
+					dir="${dir%/}"
+				done
+				[ -n "$dir" ] || dir="/"
+				;;
+			*)
+				dir="."
+				;;
+		esac
+	fi
+	if [ "$zero" = yes ]; then
+		printf '%s\0' "$dir"
+	else
+		printf '%s\n' "$dir"
+	fi
+}
+
+for path do
+	emit_dir "$path"
+done
+EOF
+	chmod 0755 "${gnu_path}/dirname"
+
 	if [[ -x "${SDCARD}/usr/sbin/gnuchroot" ]]; then
 		ln -sfn "/usr/sbin/gnuchroot" "${gnu_path}/chroot"
 	fi
