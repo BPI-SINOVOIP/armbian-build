@@ -139,7 +139,9 @@ function create_new_rootfs_cache_via_debootstrap() {
 	cat > "${SDCARD}/etc/apt/apt.conf.d/99-armbian-no-contents-indexes" <<- EOF
 	Acquire::ForceIPv4 "true";
 	Acquire::IndexTargets::deb::Contents-deb::DefaultEnabled "false";
+	Acquire::IndexTargets::deb::Contents-deb-legacy::DefaultEnabled "false";
 	Acquire::IndexTargets::deb::Contents-udeb::DefaultEnabled "false";
+	Acquire::IndexTargets::deb-src::Contents-dsc::DefaultEnabled "false";
 	EOF
 
 	deploy_qemu_binary_to_chroot "${SDCARD}" "rootfs" # undeployed near the end of this function

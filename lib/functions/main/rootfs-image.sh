@@ -17,7 +17,9 @@ function build_rootfs_and_image() {
 	cat > "${SDCARD}/etc/apt/apt.conf.d/99-armbian-no-contents-indexes" <<- EOF
 	Acquire::ForceIPv4 "true";
 	Acquire::IndexTargets::deb::Contents-deb::DefaultEnabled "false";
+	Acquire::IndexTargets::deb::Contents-deb-legacy::DefaultEnabled "false";
 	Acquire::IndexTargets::deb::Contents-udeb::DefaultEnabled "false";
+	Acquire::IndexTargets::deb-src::Contents-dsc::DefaultEnabled "false";
 	EOF
 
 	# deploy the qemu binary, no matter where the rootfs came from (built or cached)
