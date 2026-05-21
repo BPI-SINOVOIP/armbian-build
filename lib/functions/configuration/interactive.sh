@@ -285,7 +285,10 @@ function interactive_config_ask_release() {
 
 function interactive_config_ask_desktop_build() {
 	# don't show desktop option if we choose minimal build
-	[[ $HAS_VIDEO_OUTPUT == no || $BUILD_MINIMAL == yes ]] && BUILD_DESKTOP=no
+	if [[ $HAS_VIDEO_OUTPUT == no && ${ALLOW_HEADLESS_DESKTOP:-no} != yes ]]; then
+		BUILD_DESKTOP=no
+	fi
+	[[ $BUILD_MINIMAL == yes ]] && BUILD_DESKTOP=no
 
 	[[ -n ${BUILD_DESKTOP} ]] && return 0
 

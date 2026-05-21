@@ -210,6 +210,14 @@ shell_quote() {
 	printf '%q ' "$@"
 }
 
+board_has_no_video_output() {
+	local board="$1"
+	local board_file
+
+	board_file="$(find_board_file "${board}")" || return 1
+	grep -Eq '^[[:space:]]*HAS_VIDEO_OUTPUT="?no"?' "${board_file}"
+}
+
 make_command() {
 	local board="$1"
 	local branch="$2"
@@ -246,6 +254,9 @@ make_command() {
 				"DESKTOP_ENVIRONMENT=${DESKTOP_ENVIRONMENT}"
 				"DESKTOP_TIER=${DESKTOP_TIER}"
 			)
+			if board_has_no_video_output "${board}"; then
+				cmd+=("ALLOW_HEADLESS_DESKTOP=yes")
+			fi
 			;;
 		*)
 			printf 'Unknown image type: %s\n' "${image_type}" >&2
@@ -265,7 +276,7 @@ find_latest_image() {
 	local board_image_name="${board^}"
 	local path
 
-	find output/images -maxdepth 1 -type f -name "Armbian-*_${board_image_name}_${release}_${branch}_*.img" -print0 2>/dev/null |
+	find output/images -maxdepth 2 -type f -name "Armbian-*_${board_image_name}_${release}_${branch}_*.img" -print0 2>/dev/null |
 		while IFS= read -r -d '' path; do
 			case "${image_type}" in
 				server | standard)
@@ -290,7 +301,7 @@ find_latest_image_artifact() {
 	local board_image_name="${board^}"
 	local path image_path
 
-	find output/images -maxdepth 1 -type f \
+	find output/images -maxdepth 2 -type f \
 		\( -name "Armbian-*_${board_image_name}_${release}_${branch}_*.img" -o \
 		-name "Armbian-*_${board_image_name}_${release}_${branch}_*.img.xz" \) \
 		-print0 2>/dev/null |

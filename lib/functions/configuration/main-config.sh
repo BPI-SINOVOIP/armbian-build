@@ -297,7 +297,9 @@ function do_main_configuration() {
 
 	if [[ "$HAS_VIDEO_OUTPUT" == "no" ]]; then
 		PLYMOUTH="no"
-		[[ $BUILD_DESKTOP != "no" ]] && exit_with_error "HAS_VIDEO_OUTPUT is set to no. So we shouldn't build desktop environment"
+		if [[ $BUILD_DESKTOP != "no" && ${ALLOW_HEADLESS_DESKTOP:-no} != yes ]]; then
+			exit_with_error "HAS_VIDEO_OUTPUT is set to no. So we shouldn't build desktop environment"
+		fi
 	fi
 
 	# Make NETWORKING_STACK read-only, as further changes would make the whole thing inconsistent.
