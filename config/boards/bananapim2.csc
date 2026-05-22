@@ -1,4 +1,4 @@
-# A31s quad core 1Gb SoC Wifi
+# A31s quad core 1Gb SoC WiFi
 BOARD_NAME="Banana Pi M2"
 BOARD_VENDOR="sinovoip"
 BOARDFAMILY="sun6i"

@@ -1,0 +1,10 @@
+# Allwinner R16 quad core 1Gb SoC Wi-Fi/BT eMMC
+BOARD_NAME="Banana Pi M2 Magic"
+BOARD_VENDOR="sinovoip"
+BOARDFAMILY="sun8i"
+BOARD_MAINTAINER=""
+INTRODUCED="2017"
+BOOTCONFIG="Bananapi_m2m_defconfig"
+BOOT_FDT_FILE="allwinner/sun8i-r16-bananapi-m2m.dtb"
+KERNEL_TARGET="current,edge,legacy"
+KERNEL_TEST_TARGET="current"

@@ -1,0 +1,10 @@
+# Allwinner A40i/R40/V40 quad core 1Gb SoC SATA WiFi BT GBE
+BOARD_NAME="Banana Pi M2 Berry"
+BOARD_VENDOR="sinovoip"
+BOARDFAMILY="sun8i"
+BOARD_MAINTAINER=""
+INTRODUCED="2017"
+BOOTCONFIG="bananapi_m2_berry_defconfig"
+OVERLAY_PREFIX="sun8i-r40"
+KERNEL_TARGET="current,edge,legacy"
+KERNEL_TEST_TARGET="current"
