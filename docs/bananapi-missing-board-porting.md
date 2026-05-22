@@ -559,6 +559,60 @@ Remaining WIP risk:
 
 - The current Armbian board entry proves the BSP source, U-Boot package, kernel package, initramfs, and offline FAT boot layout paths, but still needs a boot test on real M4 hardware before it can enter the release matrix.
 
+## BPI-M6 VS680 WIP Implementation
+
+Implemented in this branch:
+
+- `config/boards/bananapim6.wip` adds Banana Pi M6 as a Synaptics VS680 legacy BSP board.
+- `config/sources/families/vs680.conf` restores the VS680 family path from older BPI Armbian work and adds safer packaging checks.
+- `config/bootscripts/boot-vs680.cmd` loads `dtb/synaptics/vs680-a0-bananapi-m6.dtb`, `uInitrd`, and `Image`.
+- `packages/blobs/vs680/bpi-m6-tzk-4MB.bin` is required for the VS680 boot image.
+- The U-Boot path uses `BPI-SINOVOIP/pi-u-boot`, branch `v2019.10-vs680-hdmi-rx`, with `vs680_oemboot_c05_defconfig`.
+- The kernel path uses `BPI-SINOVOIP/pi-linux`, branch `pi-5.4-vs680-hdmi-rx`, with Linux `5.4.195`.
+- PowerVR Rogue workspace support is disabled for now because the vendor module fails Armbian kernel packaging with unresolved trace/PVR symbols. This is acceptable for server smoke images, but not enough for a final desktop image.
+- The old optional VS680 AMP BSP archives were not imported; the family hook skips them cleanly when absent.
+
+Armbian smoke validation:
+
+- U-Boot package build passed:
+
+```bash
+./compile.sh uboot BOARD=bananapim6 BRANCH=legacy RELEASE=trixie EXPERT=yes
+```
+
+- Kernel package build passed:
+
+```bash
+./compile.sh kernel BOARD=bananapim6 BRANCH=legacy RELEASE=trixie EXPERT=yes KERNEL_CONFIGURE=no
+```
+
+- Kernel packaging produced `linux-image-legacy-vs680` with:
+  - `Source: linux-5.4.195`
+  - `Armbian-Kernel-Version: 5.4.195`
+- Trixie server image build passed:
+
+```bash
+./compile.sh build BOARD=bananapim6 BRANCH=legacy RELEASE=trixie BUILD_DESKTOP=no BUILD_MINIMAL=no KERNEL_CONFIGURE=no EXPERT=yes COMPRESS_OUTPUTIMAGE=xz
+```
+
+- Output image:
+  - `output/images/Armbian-unofficial_26.05.0-trunk_Bananapim6_trixie_legacy_5.4.195.img.xz`
+- SHA256:
+  - `44814f8c60d59edb1ebffa6772af0e9086ba0f1eb14d0cc08d4fdc2a723d32b4`
+- `xz -t` passed.
+- Offline boot layout check confirmed:
+  - `Image`
+  - `uInitrd`
+  - `boot.scr`
+  - `armbianEnv.txt`
+  - `dtb/synaptics/vs680-a0-bananapi-m6.dtb`
+- Raw image checks confirmed the VS680 TZK blob area at 512-byte offset and U-Boot area at 2 MiB offset are non-empty.
+
+Remaining WIP risk:
+
+- The current Armbian board entry proves the source selection, U-Boot package, kernel package, initramfs, boot script, and offline bootloader layout paths, but still needs a boot test on real M6 hardware before it can enter the release matrix.
+- Desktop images need separate PowerVR/AMP multimedia work after the server boot path is validated.
+
 ## BPI-RV2 Siflower Porting Assessment
 
 Checked BPI source:
@@ -623,6 +677,7 @@ Status: blocked for Armbian image build until a new `siflower-sf21h8898` RISC-V 
 | BPI-W2 | WIP Realtek RTD1296 BSP family and FAT boot layout added | Validate generated legacy image on real W2 hardware |
 | BPI-F2S | WIP Sunplus SP7021 BSP family and FAT boot layout added | Validate generated legacy image on real F2S hardware |
 | BPI-M4 plain | WIP Realtek RTD1395 BSP family and FAT boot layout added | Validate generated legacy image on real M4 hardware |
+| BPI-M6 | WIP Synaptics VS680 BSP family and TZK/U-Boot layout added | Validate generated legacy image on real M6 hardware |
 | BPI-RV2 | BPI has SF21H8898 OpenWrt BSP | Design new `siflower-sf21h8898` RISC-V family |
 | BPI-R3/R3 Mini/R64/R4 Lite/R4 Pro/W3 | WIP image builds now pass | Hardware boot validation before promotion |
 
@@ -670,6 +725,12 @@ Checked on 2026-05-22 after the R3 WIP build:
   - Vendor tree is Realtek RTD1395 with U-Boot 2015.7 and Linux 4.9.119.
   - It is not covered by existing `bananapim4berry` or `bananapim4zero`, which are Allwinner H618 boards.
   - It should share future Realtek vendor-family work with W2 where practical.
+- BPI-M6:
+  - BPI source: older BPI Armbian branch `v24.03.20`, `pi-linux`, and `pi-u-boot`.
+  - Vendor tree is Synaptics VS680 with U-Boot 2019.10 and Linux 5.4.195.
+  - This branch now adds `bananapim6.wip`, the VS680 family, the BPI boot script, and the required `bpi-m6-tzk-4MB.bin` boot blob.
+  - Trixie server smoke image now builds, passes `xz -t`, and contains the expected `/boot` files; hardware validation is still required.
+  - PowerVR/AMP desktop acceleration is not yet release-ready and should be handled after server boot is proven on hardware.
 - BPI-RV2:
   - BPI source: `BPI-RV2-SF21H8898-OPENWRT-24.10-BSP`
   - Vendor tree is RISC-V SF21H8898 with OpenWrt 6.6 DTS and FIT-image flow.

@@ -113,6 +113,7 @@ Already represented in this branch:
 - BPI-M3
 - BPI-M4 Berry / M4 Zero
 - BPI-M5 / M5 Pro
+- BPI-M6 as `.wip`
 - BPI-M64
 - BPI-M7
 - BPI-CM4IO
@@ -139,6 +140,7 @@ Needs support decision or porting investigation:
 | BPI-W2 | `BPI-W2-bsp` | Added as `.wip` | RTD1296 legacy BSP smoke image builds with FAT BPI boot layout; needs hardware validation |
 | BPI-W3 | `BPI-W3-BSP` | Added as `.wip` | RK3588 vendor smoke image builds; needs hardware boot validation |
 | BPI-M4 plain | `BPI-M4-bsp` | Added as `.wip` | RTD1395 legacy BSP smoke image builds with FAT BPI boot layout; needs hardware validation |
+| BPI-M6 | older BPI Armbian VS680 support, `pi-linux`, `pi-u-boot` | Added as `.wip` | VS680 legacy BSP smoke image builds with TZK plus U-Boot layout; needs hardware validation and desktop acceleration work |
 | BPI-R4 Lite / R4 Pro | `BPI-R4Lite-*`, `BPI-R4PRO-*` OpenWrt trees | Added as `.wip` | Filogic smoke image builds pass; needs hardware boot validation |
 | BPI-RV2 | `BPI-RV2-SF21H8898-*` | Missing | New Siflower SF21H8898 RISC-V family required |
 
@@ -230,6 +232,41 @@ Smoke validation:
 
 W3 remains outside the default release matrix until hardware boot validation confirms storage, Ethernet, display, and boot media behavior.
 
+## BPI-M6 WIP Result
+
+BPI-M6 was added as a `.wip` board using the older BPI Armbian VS680 work as the starting point, with current branch metadata and safer package hooks.
+
+Implementation:
+
+- Board file: `config/boards/bananapim6.wip`
+- Family: `config/sources/families/vs680.conf`
+- Boot script: `config/bootscripts/boot-vs680.cmd`
+- Kernel config: `config/kernel/linux-vs680-legacy.config`
+- Required boot blob: `packages/blobs/vs680/bpi-m6-tzk-4MB.bin`
+- U-Boot source: `https://github.com/BPI-SINOVOIP/pi-u-boot.git`, branch `v2019.10-vs680-hdmi-rx`
+- Kernel source: `https://github.com/BPI-SINOVOIP/pi-linux.git`, branch `pi-5.4-vs680-hdmi-rx`
+
+Smoke validation:
+
+- U-Boot package build passed for `BOARD=bananapim6 BRANCH=legacy RELEASE=trixie`.
+- Kernel package build passed for `BOARD=bananapim6 BRANCH=legacy RELEASE=trixie KERNEL_CONFIGURE=no`.
+- Trixie server image build passed for `BOARD=bananapim6 BRANCH=legacy RELEASE=trixie BUILD_DESKTOP=no`.
+- Kernel package metadata records:
+  - `Package: linux-image-legacy-vs680`
+  - `Source: linux-5.4.195`
+  - `Armbian-Kernel-Version: 5.4.195`
+- Generated image: `output/images/Armbian-unofficial_26.05.0-trunk_Bananapim6_trixie_legacy_5.4.195.img.xz`
+- SHA256: `44814f8c60d59edb1ebffa6772af0e9086ba0f1eb14d0cc08d4fdc2a723d32b4`
+- `xz -t` passed for the generated image.
+- Offline boot partition inspection confirmed `Image`, `uInitrd`, `boot.scr`, `armbianEnv.txt`, and `dtb/synaptics/vs680-a0-bananapi-m6.dtb`.
+- Raw image checks confirmed non-empty TZK data at 512-byte offset and U-Boot data at 2 MiB offset.
+
+Remaining WIP risk:
+
+- PowerVR Rogue workspace support is disabled in the kernel config because the vendor module fails modern Armbian packaging with unresolved trace/PVR symbols. This lets server images build, but desktop GPU acceleration still needs a separate port.
+- The large optional VS680 AMP BSP archives from the old BPI branch were not imported. The family hook now skips them cleanly when absent.
+- M6 remains outside the default release matrix until real hardware validation confirms UART, SD/eMMC boot, network, audio/video basics, and reset behavior.
+
 ## BPI-R4 Lite / R4 Pro WIP Result
 
 BPI-R4 Lite and BPI-R4 Pro were added as separate `.wip` boards on the `filogic` family. They do not reuse `bananapir4.csc`.
@@ -283,7 +320,7 @@ F2S remains outside the default release matrix until real hardware validation co
 
 ## BSP Porting Blockers And WIP
 
-BPI-W2, BPI-M4 plain, and BPI-F2S now have legacy BSP `.wip` entries. BPI-RV2 remains blocked because this branch still lacks a matching Siflower/SF21H8898 family.
+BPI-W2, BPI-M4 plain, BPI-M6, and BPI-F2S now have legacy BSP `.wip` entries. BPI-RV2 remains blocked because this branch still lacks a matching Siflower/SF21H8898 family.
 
 BPI-W2 WIP:
 
