@@ -66,6 +66,8 @@ These board configs are present in this branch now:
 | `bananapir3mini` | `wip` | `filogic` | `current` | Banana Pi R3 Mini |
 | `bananapir64` | `wip` | `filogic` | `current` | Banana Pi R64 |
 | `bananapir4` | `csc` | `filogic` | `current` | Banana Pi R4 |
+| `bananapir4lite` | `wip` | `filogic` | `current` | Banana Pi R4 Lite |
+| `bananapir4pro` | `wip` | `filogic` | `current` | Banana Pi R4 Pro 8X |
 | `bananapiw3` | `wip` | `rockchip-rk3588` | `vendor` | Banana Pi W3 |
 | `lamobo-r1` | `eos` | `sun7i` | `current,edge` | Lamobo R1 |
 
@@ -78,7 +80,7 @@ Important current findings:
 - `bananapiw3` was added as `.wip` after a successful Trixie server smoke build using the RK3588 vendor path derived from ArmSoM W3. It remains outside the default release matrix until hardware boot validation passes.
 - `bananapiw2` and `bananapif2s` were not added yet because the official BPI BSPs require new vendor families and old BPI boot layouts before Armbian can produce meaningful images for them.
 - BPI-M4 plain is not the same board as `bananapim4berry` or `bananapim4zero`. It is Realtek RTD1395 and needs a new Realtek vendor family before images are meaningful.
-- BPI-R4 Lite and BPI-R4 Pro are separate hardware from `bananapir4`; they need kernel DTB/overlay and U-Boot patch imports before any `.wip` board should be added.
+- BPI-R4 Lite and BPI-R4 Pro are separate hardware from `bananapir4`; both now have `.wip` smoke-build paths using newer filogic kernel branches and imported U-Boot support. They remain outside the default matrix until real hardware boot validation passes.
 - BPI-RV2 is a Siflower SF21H8898 RISC-V/OpenWrt board and needs a new architecture family, not just a board config.
 
 ## Missing-Board Investigation Plan
@@ -94,7 +96,7 @@ Sources to compare:
 
 Initial candidate families to check for missing or incomplete Armbian support:
 
-- MediaTek router boards not listed locally or not yet buildable. BPI-R64 now has a `.wip` smoke-build path; R4 Lite and R4 Pro require separate filogic board support with imported OpenWrt kernel/U-Boot patches.
+- MediaTek router boards not listed locally or not yet buildable. BPI-R64, R4 Lite, and R4 Pro now have `.wip` smoke-build paths; they need hardware validation before promotion.
 - Realtek or vendor BSP boards such as BPI-W2 and BPI-M4 plain if they cannot be supported by mainline.
 - Rockchip vendor BSP boards such as BPI-W3 where local Armbian support may be reusable from existing RK3588 board families.
 - Siflower/RISC-V boards such as BPI-RV2, which need a new `siflower-sf21h8898` family and OpenWrt-derived image flow.

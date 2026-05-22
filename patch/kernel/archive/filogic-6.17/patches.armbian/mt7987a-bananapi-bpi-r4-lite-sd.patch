@@ -1,0 +1,35 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Banana Pi Maintainers <support@banana-pi.org>
+Date: Fri, 22 May 2026 00:00:00 +0000
+Subject: arm64: dts: mediatek: build BPI-R4 Lite SD/eMMC composite DTBs
+
+The BPI-R4 Lite kernel branch carries the base board DTB and boot-media
+overlays, but Armbian's boot script expects one DTB file. Build composite
+SD and eMMC DTBs the same way the local BPI-R4 patch does.
+
+---
+ arch/arm64/boot/dts/mediatek/Makefile | 9 +++++++++
+ 1 file changed, 9 insertions(+)
+
+diff --git a/arch/arm64/boot/dts/mediatek/Makefile b/arch/arm64/boot/dts/mediatek/Makefile
+index 30318d79a271..a28d38e2b3d4 100644
+--- a/arch/arm64/boot/dts/mediatek/Makefile
++++ b/arch/arm64/boot/dts/mediatek/Makefile
+@@ -21,6 +21,15 @@ dtb-$(CONFIG_ARCH_MEDIATEK) += mt7986a-bananapi-bpi-r3-sd.dtbo
+ dtb-$(CONFIG_ARCH_MEDIATEK) += mt7986a-rfb.dtb
+ dtb-$(CONFIG_ARCH_MEDIATEK) += mt7986b-rfb.dtb
+ dtb-$(CONFIG_ARCH_MEDIATEK) += mt7987a-bananapi-bpi-r4-lite-1pcie-2L.dtbo
++mt7987a-bananapi-bpi-r4-lite-sd-dtbs := \
++	mt7987a-bananapi-bpi-r4-lite.dtb \
++	mt7987a-bananapi-bpi-r4-lite-sd.dtbo
++mt7987a-bananapi-bpi-r4-lite-emmc-dtbs := \
++	mt7987a-bananapi-bpi-r4-lite.dtb \
++	mt7987a-bananapi-bpi-r4-lite-emmc.dtbo
++
++dtb-$(CONFIG_ARCH_MEDIATEK) += mt7987a-bananapi-bpi-r4-lite-sd.dtb
++dtb-$(CONFIG_ARCH_MEDIATEK) += mt7987a-bananapi-bpi-r4-lite-emmc.dtb
+ dtb-$(CONFIG_ARCH_MEDIATEK) += mt7987a-bananapi-bpi-r4-lite-2pcie-1L.dtbo
+ dtb-$(CONFIG_ARCH_MEDIATEK) += mt7987a-bananapi-bpi-r4-lite-sd.dtbo
+ dtb-$(CONFIG_ARCH_MEDIATEK) += mt7987a-bananapi-bpi-r4-lite-emmc.dtbo
+--
+2.43.0

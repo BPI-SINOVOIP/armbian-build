@@ -120,6 +120,7 @@ Already represented in this branch:
 - BPI-R2 / R2 Pro / R4
 - BPI-R3 / R3 Mini as `.wip`
 - BPI-R64 as `.wip`
+- BPI-R4 Lite / R4 Pro as `.wip`
 - BPI-W3 as `.wip`
 - Banana Pi Pro
 - Lamobo R1
@@ -135,7 +136,7 @@ Needs support decision or porting investigation:
 | BPI-W2 | `BPI-W2-bsp` | Missing | RTD1296 vendor family and BPI boot layout required |
 | BPI-W3 | `BPI-W3-BSP` | Added as `.wip` | RK3588 vendor smoke image builds; needs hardware boot validation |
 | BPI-M4 plain | `BPI-M4-bsp` | Missing | RTD1395 vendor family required; not covered by M4 Berry/Zero |
-| BPI-R4 Lite / R4 Pro | `BPI-R4Lite-*`, `BPI-R4PRO-*` OpenWrt trees | Missing | Separate filogic boards; import kernel DTS/overlays and U-Boot patches before smoke build |
+| BPI-R4 Lite / R4 Pro | `BPI-R4Lite-*`, `BPI-R4PRO-*` OpenWrt trees | Added as `.wip` | Filogic smoke image builds pass; needs hardware boot validation |
 | BPI-RV2 | `BPI-RV2-SF21H8898-*` | Missing | New Siflower SF21H8898 RISC-V family required |
 
 ## Immediate Execution Result
@@ -226,9 +227,39 @@ Smoke validation:
 
 W3 remains outside the default release matrix until hardware boot validation confirms storage, Ethernet, display, and boot media behavior.
 
+## BPI-R4 Lite / R4 Pro WIP Result
+
+BPI-R4 Lite and BPI-R4 Pro were added as separate `.wip` boards on the `filogic` family. They do not reuse `bananapir4.csc`.
+
+R4 Lite implementation:
+
+- Board file: `config/boards/bananapir4lite.wip`
+- U-Boot: `mt7987a_bananapi_bpi-r4-lite-sdmmc_defconfig` from a local U-Boot v2025.04 patch.
+- Kernel: `frank-w/BPI-Router-Linux` branch `6.17-r4lite`
+- DTB package now contains:
+  - `mediatek/mt7987a-bananapi-bpi-r4-lite-sd.dtb`
+  - `mediatek/mt7987a-bananapi-bpi-r4-lite-emmc.dtb`
+
+R4 Pro implementation:
+
+- Board file: `config/boards/bananapir4pro.wip`
+- U-Boot: `mt7988a_bananapi_bpi-r4-pro-8x-sdmmc_defconfig` from a local U-Boot v2025.04 patch.
+- Kernel: `frank-w/BPI-Router-Linux` branch `6.19-mtkdts`
+- DTB package contains R4 Pro 8X SD/eMMC DTBs and overlays.
+
+Smoke validation:
+
+- U-Boot/ATF package build passed for both boards.
+- Trixie server image build passed for both boards:
+  - `output/images/Armbian-unofficial_26.05.0-trunk_Bananapir4lite_trixie_current_6.17.0-rc1.img.xz`
+  - `output/images/Armbian-unofficial_26.05.0-trunk_Bananapir4pro_trixie_current_6.19.0-rc1.img.xz`
+- `xz -t` passed for both generated images.
+
+Both boards remain outside the default release matrix until real hardware validation confirms bootloader layout, SD/eMMC boot, Ethernet, and reset behavior.
+
 ## BSP Porting Blockers
 
-BPI-W2, BPI-F2S, BPI-M4 plain, BPI-R4 Lite, BPI-R4 Pro, and BPI-RV2 were inspected against their official BPI BSP or OpenWrt repositories, but no `.wip` board files were added because they would not build through the existing Armbian family paths yet.
+BPI-W2, BPI-F2S, BPI-M4 plain, and BPI-RV2 were inspected against their official BPI BSP or OpenWrt repositories, but no `.wip` board files were added because they would not build through the existing Armbian family paths yet.
 
 BPI-W2 findings:
 
@@ -253,16 +284,6 @@ BPI-M4 plain findings:
 - Board files exist in the BSP: `rtd-1395-bananapi-m4-1GB.dts`, `rtd-1395-bananapi-m4-2GB.dts`, `rtd139x_bpi_defconfig`, and RTD1395 Banana Pi U-Boot defconfigs.
 - Existing `bananapim4berry` and `bananapim4zero` are Allwinner H618 boards and do not cover BPI-M4 plain.
 - Required next work: new `realtek-rtd1395` vendor family, ideally sharing boot layout code with the future W2 `realtek-rtd1296` family.
-
-BPI-R4 Lite / R4 Pro findings:
-
-- R4 Lite source: `BPI-R4Lite-OPENWRT-V24.10.0-Master-Devel` at `42f4c647`
-- R4 Pro source: `BPI-R4PRO-8X-OPENWRT-V24.10.0-Master-Devel` at `56e0e77a`
-- R4 Lite has MT7987 kernel DTS/overlays and BPI U-Boot/ATF patches in the OpenWrt tree.
-- R4 Pro 8X has MT7988A kernel DTS/overlays and a BPI-specific U-Boot patch in the OpenWrt tree.
-- Existing `bananapir4.csc` is only BPI-R4; these are separate boards.
-- The active `filogic/current` 6.12 DTB package does not contain R4 Lite or R4 Pro DTBs, and U-Boot does not contain their Banana Pi defconfigs.
-- Required next work: import the OpenWrt kernel DTS/overlay and U-Boot patches into the active `filogic` patchsets, then smoke build one server image per board.
 
 BPI-RV2 findings:
 

@@ -321,13 +321,64 @@ Local Armbian status:
 - Local U-Boot v2025.04 has generic MT7987 RFB defconfigs and BPI-R4 defconfigs, but no BPI-R4 Lite or BPI-R4 Pro defconfigs.
 - A newer cached Linux tree already has upstream-style R4 Pro DT sources under `arch/arm64/boot/dts/mediatek`, but the active `filogic/current` build uses the 6.12 DTB package where those files are not present.
 
-Why no `.wip` board was added yet:
+## R4 Lite / R4 Pro WIP Implementation
 
-- R4 Lite needs both MT7987 Banana Pi U-Boot support and kernel DTB support imported into the active filogic patchset.
-- R4 Pro needs its BPI-R4-Pro-specific U-Boot defconfig and kernel DTB/overlay set imported into the active filogic patchset.
-- These boards are separate hardware from BPI-R4 and should not reuse `bananapir4.csc` with only a different display name.
+Implemented in this branch:
 
-Status: separate board support is required. First implementation should import the OpenWrt U-Boot patches and kernel DTS/overlay set into `u-boot-filogic` and `archive/filogic-6.12`, then smoke build one Trixie server image for each board before adding them to any release matrix.
+- `config/sources/families/filogic.conf` now lets a board override kernel source branch, kernel major/minor, patch directory, and kernel config file while keeping the existing R4 defaults unchanged.
+- `config/boards/bananapir4lite.wip` adds BPI-R4 Lite as an MT7987 SDMMC board:
+  - `BOOTCONFIG="mt7987a_bananapi_bpi-r4-lite-sdmmc_defconfig"`
+  - `BOOT_FDT_FILE="mediatek/mt7987a-bananapi-bpi-r4-lite-sd.dtb"`
+  - `FILOGIC_SOC="mt7987"`
+  - `FILOGIC_BOOT_DEVICE="sdmmc"`
+  - `FILOGIC_KERNELBRANCH="branch:6.17-r4lite"`
+  - `FILOGIC_KERNEL_MAJOR_MINOR="6.17"`
+- `config/boards/bananapir4pro.wip` adds BPI-R4 Pro 8X as an MT7988 SDMMC board:
+  - `BOOTCONFIG="mt7988a_bananapi_bpi-r4-pro-8x-sdmmc_defconfig"`
+  - `BOOT_FDT_FILE="mediatek/mt7988a-bananapi-bpi-r4-pro-8x-sd.dtb"`
+  - `FILOGIC_KERNELBRANCH="branch:6.19-mtkdts"`
+  - `FILOGIC_KERNEL_MAJOR_MINOR="6.19"`
+- `patch/u-boot/u-boot-filogic/455-add-bpi-r4-pro-8x.patch` imports the R4 Pro U-Boot support.
+- `patch/u-boot/u-boot-filogic/456-add-bpi-r4-lite-sd-emmc.patch` imports the R4 Lite SD/eMMC U-Boot support.
+- `patch/kernel/archive/filogic-6.17/patches.armbian/mt7987a-bananapi-bpi-r4-lite-sd.patch` adds SD/eMMC composite DTB build targets for Armbian's single-DTB boot flow.
+
+Validation completed:
+
+- R4 Pro U-Boot/ATF package build passed:
+
+```bash
+./compile.sh uboot BOARD=bananapir4pro BRANCH=current RELEASE=trixie EXPERT=yes
+```
+
+- R4 Pro Trixie server smoke image build passed:
+
+```bash
+./compile.sh build BOARD=bananapir4pro BRANCH=current RELEASE=trixie BUILD_DESKTOP=no BUILD_MINIMAL=no KERNEL_CONFIGURE=no EXPERT=yes COMPRESS_OUTPUTIMAGE=xz
+```
+
+- R4 Pro output image:
+  - `output/images/Armbian-unofficial_26.05.0-trunk_Bananapir4pro_trixie_current_6.19.0-rc1.img.xz`
+- R4 Pro `xz -t` passed, and the DTB package contains R4 Pro 8X SD/eMMC DTBs.
+
+- R4 Lite U-Boot/ATF package build passed:
+
+```bash
+./compile.sh uboot BOARD=bananapir4lite BRANCH=current RELEASE=trixie EXPERT=yes
+```
+
+- R4 Lite Trixie server smoke image build passed:
+
+```bash
+./compile.sh build BOARD=bananapir4lite BRANCH=current RELEASE=trixie BUILD_DESKTOP=no BUILD_MINIMAL=no KERNEL_CONFIGURE=no EXPERT=yes COMPRESS_OUTPUTIMAGE=xz
+```
+
+- R4 Lite output image:
+  - `output/images/Armbian-unofficial_26.05.0-trunk_Bananapir4lite_trixie_current_6.17.0-rc1.img.xz`
+- R4 Lite `xz -t` passed, and the DTB package contains:
+  - `mediatek/mt7987a-bananapi-bpi-r4-lite-sd.dtb`
+  - `mediatek/mt7987a-bananapi-bpi-r4-lite-emmc.dtb`
+
+Keep R4 Lite and R4 Pro as `.wip` until real board boot tests confirm bootloader layout, SD/eMMC boot, Ethernet, reset, and UART behavior.
 
 ## BPI-M4 Plain RTD1395 Porting Assessment
 
@@ -404,9 +455,8 @@ Status: blocked for Armbian image build until a new `siflower-sf21h8898` RISC-V 
 | BPI-W2 | BPI has `BPI-W2-bsp`; RTD1296 sources found | Implement new `realtek-rtd1296` vendor family and BPI boot layout |
 | BPI-F2S | BPI has `BPI-F2S-bsp`; SP7021 sources found | Implement new `sunplus-sp7021` vendor family and BPI boot layout |
 | BPI-M4 plain | BPI has `BPI-M4-bsp`; RTD1395 sources found | Implement new `realtek-rtd1395` vendor family and BPI boot layout |
-| BPI-R4 Lite / R4 Pro | BPI has OpenWrt trees, local board missing | Import U-Boot and kernel DTS/overlay patches into active filogic family |
 | BPI-RV2 | BPI has SF21H8898 OpenWrt BSP | Design new `siflower-sf21h8898` RISC-V family |
-| BPI-R3/R3 Mini/R64/W3 | WIP image builds now pass | Hardware boot validation before promotion |
+| BPI-R3/R3 Mini/R64/R4 Lite/R4 Pro/W3 | WIP image builds now pass | Hardware boot validation before promotion |
 
 ## Second-Pass Candidate Findings
 
@@ -439,13 +489,13 @@ Checked on 2026-05-22 after the R3 WIP build:
 - BPI-R4 Lite:
   - BPI source: `BPI-R4Lite-OPENWRT-V24.10.0-Master-Devel`
   - Vendor tree contains MT7987 kernel DTS/overlay files plus U-Boot and ATF patches.
-  - Existing local `filogic/current` DTB package does not contain an R4 Lite DTB, and local U-Boot does not contain a Banana Pi R4 Lite defconfig.
-  - This is separate hardware from BPI-R4 and needs its own board file after kernel/U-Boot patches are imported.
+  - This branch now adds `bananapir4lite.wip`, local U-Boot support, and a 6.17-r4lite kernel patch for SD/eMMC composite DTBs.
+  - Trixie server smoke image now builds and passes `xz -t`; hardware validation is still required.
 - BPI-R4 Pro:
   - BPI source: `BPI-R4PRO-8X-OPENWRT-V24.10.0-Master-Devel`
   - Vendor tree contains MT7988A R4 Pro 8X DTS/overlay files plus a BPI-R4-Pro-specific U-Boot patch.
-  - A newer cached Linux tree has upstream-style R4 Pro DTS files, but active `filogic/current` 6.12 DTBs do not include them.
-  - This should be added as a separate board only after the active filogic kernel and U-Boot patchsets can build it.
+  - This branch now adds `bananapir4pro.wip`, local U-Boot support, and uses the 6.19-mtkdts kernel branch with R4 Pro 8X SD/eMMC DTBs.
+  - Trixie server smoke image now builds and passes `xz -t`; hardware validation is still required.
 - BPI-M4 plain:
   - BPI source: `BPI-M4-bsp`
   - Vendor tree is Realtek RTD1395 with U-Boot 2015.7 and Linux 4.9.119.
