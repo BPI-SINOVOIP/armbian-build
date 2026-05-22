@@ -613,6 +613,76 @@ Remaining WIP risk:
 - The current Armbian board entry proves the source selection, U-Boot package, kernel package, initramfs, boot script, and offline bootloader layout paths, but still needs a boot test on real M6 hardware before it can enter the release matrix.
 - Desktop images need separate PowerVR/AMP multimedia work after the server boot path is validated.
 
+## BPI-CM6 SpacemiT K1 WIP Implementation
+
+Source audit:
+
+- Official BPI CM6 images inspected locally under `/media/pi/SMCI/bpi/bpi-cm6`.
+- U-Boot source: `https://github.com/BPI-SINOVOIP/pi-u-boot.git`, branch `v2022.10-k1-v2.1`, checked commit `066cccd77f35e57d13363fea524a439759196dca`.
+- Kernel source: `https://github.com/BPI-SINOVOIP/pi-linux.git`, branch `linux-6.6.36-k1-cm6`, checked commit `0d0af0d895251383baee939d44e523699e31889f`.
+- The BPI kernel branch builds the CM6 DTB as `arch/riscv/boot/dts/spacemit/k1-x_deb1.dtb`.
+- The BPI U-Boot branch carries `configs/k1_defconfig`, `include/configs/k1-x.h`, and `board/spacemit/k1-x/k1-x.env` with the CM6 product/DTB selection.
+
+Official image layout observed:
+
+- GPT image with small bootloader partitions, a dedicated ext4 `/boot`, and rootfs.
+- U-Boot environment includes `product_name=k1-x_deb1`.
+- `/boot/env_k1-x.txt` selects Linux `vmlinuz-6.6.63`, `initrd.img-6.6.63`, and `spacemit/6.6.63/k1-x_deb1.dtb`.
+
+Implemented in this branch:
+
+- `config/boards/bananapicm6.wip` adds Banana Pi BPI-CM6 as a SpacemiT K1 legacy BSP board.
+- The board uses the existing `spacemit` family but overrides sources to the BPI CM6 U-Boot and kernel branches.
+- `patch/u-boot/legacy/u-boot-spacemit-k1-cm6/001-add-extlinux-boot.patch` adds an Armbian extlinux/boot script/EFI fallback path ahead of the vendor autoboot fallback.
+- `patch/u-boot/legacy/u-boot-spacemit-k1-cm6/002-fixup-circular-deps.patch` keeps the U-Boot tools build compatible with the current host toolchain.
+- The board sets `SRC_EXTLINUX=yes`, `BOOT_FDT_FILE=spacemit/k1-x_deb1.dtb`, and `SRC_CMDLINE` for `ttyS0`.
+
+Armbian smoke validation:
+
+- U-Boot package build passed:
+
+```bash
+./compile.sh uboot BOARD=bananapicm6 BRANCH=legacy RELEASE=trixie EXPERT=yes
+```
+
+- Kernel package build passed:
+
+```bash
+./compile.sh kernel BOARD=bananapicm6 BRANCH=legacy RELEASE=trixie EXPERT=yes KERNEL_CONFIGURE=no
+```
+
+- Kernel packaging produced `linux-image-legacy-spacemit` with:
+  - `Armbian-Kernel-Version: 6.6.36`
+  - `Architecture: riscv64`
+- Trixie server image build passed:
+
+```bash
+./compile.sh build BOARD=bananapicm6 BRANCH=legacy RELEASE=trixie BUILD_DESKTOP=no BUILD_MINIMAL=no KERNEL_CONFIGURE=no EXPERT=yes COMPRESS_OUTPUTIMAGE=xz
+```
+
+- Output image:
+  - `output/images/Armbian-unofficial_26.05.0-trunk_Bananapicm6_trixie_legacy_6.6.36.img.xz`
+- SHA256:
+  - `312742f70baf8f496ac3acb67b86d21fb395652eeb080aa3a65a1908c5cee7b6`
+- `xz -t` passed.
+- Offline boot layout check confirmed:
+  - `Image -> vmlinuz-6.6.36-legacy-spacemit`
+  - `uInitrd -> uInitrd-6.6.36-legacy-spacemit`
+  - `dtb -> dtb-6.6.36-legacy-spacemit`
+  - `extlinux/extlinux.conf`
+  - `dtb/spacemit/k1-x_deb1.dtb`
+- Raw image checks confirmed non-empty bootloader payloads at:
+  - block `0`: `bootinfo_emmc.bin`
+  - block `1`: `FSBL.bin`
+  - block `1280`: `fw_dynamic.itb`
+  - block `2048`: `u-boot.itb`
+
+Remaining WIP risk:
+
+- The current image proves package creation, extlinux content, DTB selection, and raw bootloader placement, but it still needs real CM6 boot testing.
+- The BPI reference image uses a different GPT bootloader partition layout. Hardware validation must confirm that the Armbian raw-offset layout works on CM6 eMMC/SD before this board can enter the release matrix.
+- Desktop images should wait until server boot, network, USB, storage, and reboot/shutdown behavior are confirmed on hardware.
+
 ## BPI-RV2 Siflower Porting Assessment
 
 Checked BPI source:
@@ -678,6 +748,7 @@ Status: blocked for Armbian image build until a new `siflower-sf21h8898` RISC-V 
 | BPI-F2S | WIP Sunplus SP7021 BSP family and FAT boot layout added | Validate generated legacy image on real F2S hardware |
 | BPI-M4 plain | WIP Realtek RTD1395 BSP family and FAT boot layout added | Validate generated legacy image on real M4 hardware |
 | BPI-M6 | WIP Synaptics VS680 BSP family and TZK/U-Boot layout added | Validate generated legacy image on real M6 hardware |
+| BPI-CM6 | WIP SpacemiT K1 BSP path and extlinux/raw bootloader layout added | Validate generated legacy image on real CM6 hardware |
 | BPI-RV2 | BPI has SF21H8898 OpenWrt BSP | Design new `siflower-sf21h8898` RISC-V family |
 | BPI-R3/R3 Mini/R64/R4 Lite/R4 Pro/W3 | WIP image builds now pass | Hardware boot validation before promotion |
 
@@ -731,6 +802,11 @@ Checked on 2026-05-22 after the R3 WIP build:
   - This branch now adds `bananapim6.wip`, the VS680 family, the BPI boot script, and the required `bpi-m6-tzk-4MB.bin` boot blob.
   - Trixie server smoke image now builds, passes `xz -t`, and contains the expected `/boot` files; hardware validation is still required.
   - PowerVR/AMP desktop acceleration is not yet release-ready and should be handled after server boot is proven on hardware.
+- BPI-CM6:
+  - BPI source: official CM6 images plus `pi-u-boot` branch `v2022.10-k1-v2.1` and `pi-linux` branch `linux-6.6.36-k1-cm6`.
+  - Vendor tree is SpacemiT K1 RISC-V with U-Boot 2022.10 and Linux 6.6.36.
+  - This branch now adds `bananapicm6.wip` and a CM6-specific U-Boot patch set for extlinux fallback.
+  - Trixie server smoke image now builds, passes `xz -t`, contains the expected `/boot` files, and has non-empty raw bootloader offsets; hardware validation is still required.
 - BPI-RV2:
   - BPI source: `BPI-RV2-SF21H8898-OPENWRT-24.10-BSP`
   - Vendor tree is RISC-V SF21H8898 with OpenWrt 6.6 DTS and FIT-image flow.

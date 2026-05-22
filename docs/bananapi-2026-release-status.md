@@ -114,6 +114,7 @@ Already represented in this branch:
 - BPI-M4 Berry / M4 Zero
 - BPI-M5 / M5 Pro
 - BPI-M6 as `.wip`
+- BPI-CM6 as `.wip`
 - BPI-M64
 - BPI-M7
 - BPI-CM4IO
@@ -141,6 +142,7 @@ Needs support decision or porting investigation:
 | BPI-W3 | `BPI-W3-BSP` | Added as `.wip` | RK3588 vendor smoke image builds; needs hardware boot validation |
 | BPI-M4 plain | `BPI-M4-bsp` | Added as `.wip` | RTD1395 legacy BSP smoke image builds with FAT BPI boot layout; needs hardware validation |
 | BPI-M6 | older BPI Armbian VS680 support, `pi-linux`, `pi-u-boot` | Added as `.wip` | VS680 legacy BSP smoke image builds with TZK plus U-Boot layout; needs hardware validation and desktop acceleration work |
+| BPI-CM6 | official BPI CM6 images, `pi-linux`, `pi-u-boot` | Added as `.wip` | SpacemiT K1 legacy BSP smoke image builds with extlinux and raw bootloader layout; needs hardware validation |
 | BPI-R4 Lite / R4 Pro | `BPI-R4Lite-*`, `BPI-R4PRO-*` OpenWrt trees | Added as `.wip` | Filogic smoke image builds pass; needs hardware boot validation |
 | BPI-RV2 | `BPI-RV2-SF21H8898-*` | Missing | New Siflower SF21H8898 RISC-V family required |
 
@@ -297,6 +299,43 @@ Smoke validation:
 
 Both boards remain outside the default release matrix until real hardware validation confirms bootloader layout, SD/eMMC boot, Ethernet, and reset behavior.
 
+## BPI-CM6 WIP Result
+
+BPI-CM6 was added as a `.wip` board using the existing `spacemit` family, but with BPI CM6-specific U-Boot and Linux branches. The implementation uses extlinux and the CM6 `k1-x_deb1.dtb`.
+
+Implementation:
+
+- Board file: `config/boards/bananapicm6.wip`
+- Family: `spacemit`
+- U-Boot source: `https://github.com/BPI-SINOVOIP/pi-u-boot.git`, branch `v2022.10-k1-v2.1`
+- Kernel source: `https://github.com/BPI-SINOVOIP/pi-linux.git`, branch `linux-6.6.36-k1-cm6`
+- Kernel DTB: `spacemit/k1-x_deb1.dtb`
+- Boot method: extlinux with `/boot/Image`, `/boot/uInitrd`, and `/boot/dtb/spacemit/k1-x_deb1.dtb`
+
+Smoke validation:
+
+- U-Boot package build passed for `BOARD=bananapicm6 BRANCH=legacy RELEASE=trixie`.
+- Kernel package build passed for `BOARD=bananapicm6 BRANCH=legacy RELEASE=trixie KERNEL_CONFIGURE=no`.
+- Trixie server image build passed for `BOARD=bananapicm6 BRANCH=legacy RELEASE=trixie BUILD_DESKTOP=no`.
+- Kernel package metadata records:
+  - `Package: linux-image-legacy-spacemit`
+  - `Armbian-Kernel-Version: 6.6.36`
+  - `Architecture: riscv64`
+- Generated image: `output/images/Armbian-unofficial_26.05.0-trunk_Bananapicm6_trixie_legacy_6.6.36.img.xz`
+- SHA256: `312742f70baf8f496ac3acb67b86d21fb395652eeb080aa3a65a1908c5cee7b6`
+- `xz -t` passed for the generated image.
+- Offline boot inspection confirmed `/boot/Image`, `/boot/uInitrd`, `/boot/dtb`, `extlinux/extlinux.conf`, and `spacemit/k1-x_deb1.dtb`.
+- Raw image checks confirmed non-empty CM6 bootloader data at:
+  - block `0`: `bootinfo_emmc.bin`
+  - block `1`: `FSBL.bin`
+  - block `1280`: `fw_dynamic.itb`
+  - block `2048`: `u-boot.itb`
+
+Remaining WIP risk:
+
+- The official BPI image uses a multi-partition GPT layout with separate bootloader and `/boot` partitions. The Armbian image uses the normal single root partition plus raw bootloader offsets used by the current `spacemit` family. Hardware validation must confirm that this layout boots CM6 reliably from the intended media.
+- CM6 remains outside the default release matrix until real hardware validation confirms serial console, SD/eMMC boot, network, USB, desktop basics, and shutdown/reboot behavior.
+
 ## BPI-F2S WIP Result
 
 BPI-F2S was added as a `.wip` board with a new Sunplus SP7021 legacy BSP family. The implementation builds the vendor U-Boot 2019.04 and Linux 5.4.35 trees from `BPI-F2S-bsp`, packages `u-boot.img`, `ISPBOOOT.BIN`, and the eMMC boot0 xboot gzip, and creates a FAT `/boot` partition matching the old BPI layout.
@@ -320,7 +359,7 @@ F2S remains outside the default release matrix until real hardware validation co
 
 ## BSP Porting Blockers And WIP
 
-BPI-W2, BPI-M4 plain, BPI-M6, and BPI-F2S now have legacy BSP `.wip` entries. BPI-RV2 remains blocked because this branch still lacks a matching Siflower/SF21H8898 family.
+BPI-W2, BPI-M4 plain, BPI-M6, BPI-CM6, and BPI-F2S now have legacy BSP `.wip` entries. BPI-RV2 remains blocked because this branch still lacks a matching Siflower/SF21H8898 family.
 
 BPI-W2 WIP:
 
