@@ -115,6 +115,7 @@ Already represented in this branch:
 - BPI-M5 / M5 Pro
 - BPI-M6 as `.wip`
 - BPI-CM6 as `.wip`
+- BPI-6204 as `.wip`
 - BPI-M64
 - BPI-M7
 - BPI-CM4IO
@@ -143,6 +144,7 @@ Needs support decision or porting investigation:
 | BPI-M4 plain | `BPI-M4-bsp` | Added as `.wip` | RTD1395 legacy BSP smoke image builds with FAT BPI boot layout; needs hardware validation |
 | BPI-M6 | older BPI Armbian VS680 support, `pi-linux`, `pi-u-boot` | Added as `.wip` | VS680 legacy BSP smoke image builds with TZK plus U-Boot layout; needs hardware validation and desktop acceleration work |
 | BPI-CM6 | official BPI CM6 images, `pi-linux`, `pi-u-boot` | Added as `.wip` | SpacemiT K1 legacy BSP smoke image builds with extlinux and raw bootloader layout; needs hardware validation |
+| BPI-6204 | local `bpi-cs6204-linux-6.12` BSP | Added as `.wip` | Allwinner R40 legacy smoke image builds with M2 Ultra U-Boot, BPI-6204 DTB, and conservative eMMC timing; needs hardware validation |
 | BPI-R4 Lite / R4 Pro | `BPI-R4Lite-*`, `BPI-R4PRO-*` OpenWrt trees | Added as `.wip` | Filogic smoke image builds pass; needs hardware boot validation |
 | BPI-RV2 | `BPI-RV2-SF21H8898-*` | Missing | New Siflower SF21H8898 RISC-V family required |
 
@@ -336,6 +338,29 @@ Remaining WIP risk:
 - The official BPI image uses a multi-partition GPT layout with separate bootloader and `/boot` partitions. The Armbian image uses the normal single root partition plus raw bootloader offsets used by the current `spacemit` family. Hardware validation must confirm that this layout boots CM6 reliably from the intended media.
 - CM6 remains outside the default release matrix until real hardware validation confirms serial console, SD/eMMC boot, network, USB, desktop basics, and shutdown/reboot behavior.
 
+## BPI-6204 WIP Result
+
+BPI-6204 was added as a `.wip` board using the existing Allwinner R40 `sun8i` legacy path. The board reuses the Banana Pi M2 Ultra U-Boot defconfig and adds a BPI-6204 kernel DTB plus an eMMC stability patch that disables DDR52 only for `sinovoip,bpi-6204`.
+
+Smoke validation:
+
+- U-Boot package build passed for `BOARD=bananapi6204 BRANCH=legacy RELEASE=trixie`.
+- Kernel package build passed for `BOARD=bananapi6204 BRANCH=legacy RELEASE=trixie KERNEL_CONFIGURE=no`.
+- Trixie server image build passed for `BOARD=bananapi6204 BRANCH=legacy RELEASE=trixie BUILD_DESKTOP=no`.
+- Generated image: `output/images/Armbian-unofficial_26.05.0-trunk_Bananapi6204_trixie_legacy_6.12.90.img.xz`
+- SHA256: `7afcde4755a8de4d2bef4723e30b8ca51f8dba0c216d3bd96552349ec6d14306`
+- `xz -t` passed for the generated image.
+- Offline boot layout check confirmed:
+  - raw U-Boot SPL header at 8 KiB (`eGON.BT0`)
+  - `fdtfile=allwinner/sun8i-r40-bpi-6204.dtb`
+  - `boot.scr`
+  - `zImage`
+  - `uInitrd`
+  - `dtb-6.12.90-legacy-sunxi/sun8i-r40-bpi-6204.dtb`
+  - installed kernel package hash `P5823`
+
+BPI-6204 remains outside the default release matrix until real hardware boot validation confirms SD boot, eMMC stability, Ethernet, UART, CAN, and reboot behavior.
+
 ## BPI-F2S WIP Result
 
 BPI-F2S was added as a `.wip` board with a new Sunplus SP7021 legacy BSP family. The implementation builds the vendor U-Boot 2019.04 and Linux 5.4.35 trees from `BPI-F2S-bsp`, packages `u-boot.img`, `ISPBOOOT.BIN`, and the eMMC boot0 xboot gzip, and creates a FAT `/boot` partition matching the old BPI layout.
@@ -359,7 +384,7 @@ F2S remains outside the default release matrix until real hardware validation co
 
 ## BSP Porting Blockers And WIP
 
-BPI-W2, BPI-M4 plain, BPI-M6, BPI-CM6, and BPI-F2S now have legacy BSP `.wip` entries. BPI-RV2 remains blocked because this branch still lacks a matching Siflower/SF21H8898 family.
+BPI-W2, BPI-M4 plain, BPI-M6, BPI-CM6, BPI-6204, and BPI-F2S now have legacy or vendor-derived `.wip` entries. BPI-RV2 remains blocked because this branch still lacks a matching Siflower/SF21H8898 family.
 
 BPI-W2 WIP:
 

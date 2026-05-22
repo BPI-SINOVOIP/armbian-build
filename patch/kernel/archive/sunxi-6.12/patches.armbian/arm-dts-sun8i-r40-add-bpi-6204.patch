@@ -1,0 +1,416 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: BPI-SINOVOIP <sinovoip@banana-pi.org>
+Date: Fri, 22 May 2026 12:00:00 +0800
+Subject: ARM: dts: sun8i-r40: add Banana Pi BPI-6204
+
+BPI-6204 is an Allwinner R40 based industrial control board derived from
+the Banana Pi M2 Ultra design. The board has eMMC on mmc2, no SD card
+detect GPIO on mmc0, additional UARTs, CAN over MCP2515 and board LEDs.
+
+Keep eMMC conservative in legacy 3.0V mode at 25 MHz. This matches the
+vendor BSP stability fix for boards that fail or hang when the R40 eMMC
+path enters DDR52 timing.
+
+---
+ arch/arm/boot/dts/allwinner/Makefile           |   1 +
+ .../boot/dts/allwinner/sun8i-r40-bpi-6204.dts  | 341 +++++++++++++++++
+ 2 files changed, 342 insertions(+)
+ create mode 100644 arch/arm/boot/dts/allwinner/sun8i-r40-bpi-6204.dts
+
+diff --git a/arch/arm/boot/dts/allwinner/Makefile b/arch/arm/boot/dts/allwinner/Makefile
+index 111111111111..222222222222 100644
+--- a/arch/arm/boot/dts/allwinner/Makefile
++++ b/arch/arm/boot/dts/allwinner/Makefile
+@@ -249,6 +249,7 @@ dtb-$(CONFIG_ARCH_SUNXI) += \
+ 	sun8i-r16-nintendo-super-nes-classic.dtb \
+ 	sun8i-r16-parrot.dtb \
+ 	sun8i-r40-bananapi-m2-ultra.dtb \
++	sun8i-r40-bpi-6204.dtb \
+ 	sun8i-r40-oka40i-c.dtb \
+ 	sun8i-s3-elimo-initium.dtb \
+ 	sun8i-s3-lichee-zero-plus.dtb \
+diff --git a/arch/arm/boot/dts/allwinner/sun8i-r40-bpi-6204.dts b/arch/arm/boot/dts/allwinner/sun8i-r40-bpi-6204.dts
+new file mode 100644
+index 000000000000..222222222222
+--- /dev/null
++++ b/arch/arm/boot/dts/allwinner/sun8i-r40-bpi-6204.dts
+@@ -0,0 +1,341 @@
++// SPDX-License-Identifier: (GPL-2.0+ OR MIT)
++/*
++ * Copyright (C) 2017 Chen-Yu Tsai <wens@csie.org>
++ * Copyright (C) 2017 Icenowy Zheng <icenowy@aosc.io>
++ *
++ * Device tree for BPI-6204, based on Banana Pi M2 Ultra / CS6202.
++ */
++
++/dts-v1/;
++#include "sun8i-r40.dtsi"
++#include "sun8i-r40-cpu-opp.dtsi"
++
++#include <dt-bindings/gpio/gpio.h>
++
++/ {
++	model = "BPI-6204";
++	compatible = "sinovoip,bpi-6204", "sinovoip,bpi-m2-ultra",
++		     "allwinner,sun8i-r40";
++
++	aliases {
++		ethernet0 = &gmac;
++		serial0 = &uart0;
++		spi1 = &spi1;
++	};
++
++	chosen {
++		stdout-path = "serial0:115200n8";
++	};
++
++	connector {
++		compatible = "hdmi-connector";
++		type = "a";
++
++		port {
++			hdmi_con_in: endpoint {
++				remote-endpoint = <&hdmi_out_con>;
++			};
++		};
++	};
++
++	leds {
++		compatible = "gpio-leds";
++
++		led-pwr {
++			label = "bpi6204:green:pwr";
++			gpios = <&pio 4 4 GPIO_ACTIVE_HIGH>; /* PE4 */
++			default-state = "on";
++		};
++
++		led-func {
++			label = "bpi6204:blue:func";
++			gpios = <&pio 1 3 GPIO_ACTIVE_HIGH>; /* PB3 */
++			default-state = "on";
++		};
++
++		led-run {
++			label = "bpi6204:green:run";
++			gpios = <&pio 4 6 GPIO_ACTIVE_HIGH>; /* PE6 */
++			linux,default-trigger = "heartbeat";
++		};
++
++		modem-power {
++			label = "bpi6204:4g-pwr";
++			gpios = <&pio 8 7 GPIO_ACTIVE_HIGH>; /* PI7 */
++			default-state = "on";
++		};
++	};
++
++	reg_vcc5v0: vcc5v0 {
++		compatible = "regulator-fixed";
++		regulator-name = "vcc5v0";
++		regulator-min-microvolt = <5000000>;
++		regulator-max-microvolt = <5000000>;
++	};
++
++	wifi_pwrseq: wifi-pwrseq {
++		compatible = "mmc-pwrseq-simple";
++		reset-gpios = <&pio 6 10 GPIO_ACTIVE_LOW>; /* PG10 */
++		clocks = <&ccu CLK_OUTA>;
++		clock-names = "ext_clock";
++		post-power-on-delay-ms = <500>;
++		power-off-delay-us = <500>;
++	};
++
++	clk8m: clk8m {
++		compatible = "fixed-clock";
++		#clock-cells = <0>;
++		clock-frequency = <8000000>;
++		clock-output-names = "clk8m";
++	};
++};
++
++&ahci {
++	ahci-supply = <&reg_dldo4>;
++	phy-supply = <&reg_eldo3>;
++	status = "okay";
++};
++
++&cpu0 {
++	cpu-supply = <&reg_dcdc2>;
++};
++
++&de {
++	status = "okay";
++};
++
++&ehci1 {
++	status = "okay";
++};
++
++&ehci2 {
++	status = "okay";
++};
++
++&gmac {
++	pinctrl-names = "default";
++	pinctrl-0 = <&gmac_rgmii_pins>;
++	phy-handle = <&phy1>;
++	phy-mode = "rgmii";
++	phy-supply = <&reg_dc1sw>;
++	status = "okay";
++};
++
++&gmac_mdio {
++	phy1: ethernet-phy@1 {
++		compatible = "ethernet-phy-ieee802.3-c22";
++		reg = <1>;
++	};
++};
++
++&hdmi {
++	status = "okay";
++};
++
++&hdmi_out {
++	hdmi_out_con: endpoint {
++		remote-endpoint = <&hdmi_con_in>;
++	};
++};
++
++&i2c0 {
++	status = "okay";
++
++	axp22x: pmic@34 {
++		compatible = "x-powers,axp221";
++		reg = <0x34>;
++		interrupt-parent = <&nmi_intc>;
++		interrupts = <0 IRQ_TYPE_LEVEL_LOW>;
++	};
++};
++
++#include "axp22x.dtsi"
++
++&i2c1 {
++	status = "okay";
++
++	eeprom: eeprom@50 {
++		compatible = "atmel,24c08";
++		reg = <0x50>;
++		pagesize = <16>;
++	};
++
++	rtc@68 {
++		compatible = "dallas,ds1340";
++		reg = <0x68>;
++	};
++
++	rtc@6f {
++		compatible = "isil,isl1208";
++		reg = <0x6f>;
++	};
++};
++
++&spi1 {
++	status = "okay";
++	clock-frequency = <100000000>;
++	#address-cells = <1>;
++	#size-cells = <0>;
++
++	can@1 {
++		compatible = "microchip,mcp2515";
++		reg = <1>;
++		clocks = <&clk8m>;
++		interrupt-parent = <&pio>;
++		interrupts = <7 2 IRQ_TYPE_LEVEL_LOW>; /* PH2 */
++		spi-max-frequency = <10000000>;
++		status = "okay";
++	};
++};
++
++&mmc0 {
++	vmmc-supply = <&reg_dcdc1>;
++	bus-width = <4>;
++	broken-cd;
++	status = "okay";
++};
++
++&mmc1 {
++	pinctrl-names = "default";
++	pinctrl-0 = <&mmc1_pg_pins>;
++	vmmc-supply = <&reg_dldo2>;
++	vqmmc-supply = <&reg_dldo1>;
++	mmc-pwrseq = <&wifi_pwrseq>;
++	bus-width = <4>;
++	non-removable;
++	status = "okay";
++};
++
++&mmc2 {
++	vmmc-supply = <&reg_dcdc1>;
++	vqmmc-supply = <&reg_dcdc1>;
++	bus-width = <8>;
++	non-removable;
++	max-frequency = <25000000>;
++	no-1-8-v;
++	status = "okay";
++};
++
++&ohci1 {
++	status = "okay";
++};
++
++&ohci2 {
++	status = "okay";
++};
++
++&pio {
++	pinctrl-names = "default";
++	vcc-pa-supply = <&reg_aldo2>;
++	vcc-pc-supply = <&reg_dcdc1>;
++	vcc-pd-supply = <&reg_dcdc1>;
++	vcc-pe-supply = <&reg_eldo1>;
++	vcc-pf-supply = <&reg_dcdc1>;
++	vcc-pg-supply = <&reg_dldo1>;
++};
++
++&reg_aldo2 {
++	regulator-always-on;
++	regulator-min-microvolt = <2500000>;
++	regulator-max-microvolt = <2500000>;
++	regulator-name = "vcc-pa";
++};
++
++&reg_aldo3 {
++	regulator-always-on;
++	regulator-min-microvolt = <2700000>;
++	regulator-max-microvolt = <3300000>;
++	regulator-name = "avcc";
++};
++
++&reg_dc1sw {
++	regulator-min-microvolt = <3000000>;
++	regulator-max-microvolt = <3000000>;
++	regulator-name = "vcc-gmac-phy";
++};
++
++&reg_dcdc1 {
++	regulator-always-on;
++	regulator-min-microvolt = <3000000>;
++	regulator-max-microvolt = <3000000>;
++	regulator-name = "vcc-3v0";
++};
++
++&reg_dcdc2 {
++	regulator-always-on;
++	regulator-min-microvolt = <1000000>;
++	regulator-max-microvolt = <1300000>;
++	regulator-name = "vdd-cpu";
++};
++
++&reg_dcdc3 {
++	regulator-always-on;
++	regulator-min-microvolt = <1000000>;
++	regulator-max-microvolt = <1300000>;
++	regulator-name = "vdd-sys";
++};
++
++&reg_dcdc5 {
++	regulator-always-on;
++	regulator-min-microvolt = <1500000>;
++	regulator-max-microvolt = <1500000>;
++	regulator-name = "vcc-dram";
++};
++
++&reg_dc5ldo {
++	regulator-always-on;
++	regulator-min-microvolt = <700000>;
++	regulator-max-microvolt = <1320000>;
++	regulator-name = "vdd-cpus";
++};
++
++&reg_dldo1 {
++	regulator-always-on;
++	regulator-min-microvolt = <1800000>;
++	regulator-max-microvolt = <3300000>;
++	regulator-name = "vcc-wifi-io";
++};
++
++&reg_eldo1 {
++	regulator-always-on;
++	regulator-min-microvolt = <3000000>;
++	regulator-max-microvolt = <3000000>;
++	regulator-name = "vcc-pe";
++};
++
++/*
++ * The WiFi chip needs both DLDO2 and DLDO3 powered at the same time so
++ * peak transmit current is available.
++ */
++&reg_dldo2 {
++	regulator-always-on;
++	regulator-min-microvolt = <3300000>;
++	regulator-max-microvolt = <3300000>;
++	regulator-name = "vcc-wifi";
++};
++
++&reg_dldo3 {
++	regulator-always-on;
++	regulator-min-microvolt = <3300000>;
++	regulator-max-microvolt = <3300000>;
++	regulator-name = "vcc-wifi-2";
++};
++
++&reg_dldo4 {
++	regulator-always-on;
++	regulator-min-microvolt = <2500000>;
++	regulator-max-microvolt = <2500000>;
++	regulator-name = "vdd2v5-sata";
++};
++
++&reg_eldo3 {
++	regulator-always-on;
++	regulator-min-microvolt = <1200000>;
++	regulator-max-microvolt = <1200000>;
++	regulator-name = "vdd1v2-sata";
++};
++
++&tcon_tv0 {
++	status = "okay";
++};
++
++&uart0 {
++	pinctrl-names = "default";
++	pinctrl-0 = <&uart0_pb_pins>;
++	status = "okay";
++};
++
++&uart3 {
++	pinctrl-names = "default";
++	pinctrl-0 = <&uart3_pg_pins>;
++	status = "okay";
++};
++
++&uart4 {
++	pinctrl-names = "default";
++	pinctrl-0 = <&uart4_pg_pins>;
++	status = "okay";
++};
++
++&uart5 {
++	pinctrl-names = "default";
++	pinctrl-0 = <&uart5_ph_pins>;
++	status = "okay";
++};
++
++&uart7 {
++	pinctrl-names = "default";
++	pinctrl-0 = <&uart7_pi_pins>;
++	status = "okay";
++};
++
++&usbphy {
++	usb1_vbus-supply = <&reg_vcc5v0>;
++	usb2_vbus-supply = <&reg_vcc5v0>;
++	status = "okay";
++};
+-- 
+Armbian
+

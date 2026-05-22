@@ -1,0 +1,26 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: BPI-SINOVOIP <sinovoip@banana-pi.org>
+Date: Fri, 22 May 2026 12:00:00 +0800
+Subject: mmc: sunxi-mmc: disable DDR52 on Banana Pi BPI-6204
+
+BPI-6204 uses the R40 eMMC controller and is stable with legacy timing
+but may report read/write errors or hang when DDR52 is enabled. Disable
+DDR52 only for the BPI-6204 machine compatible so other validated R40
+boards keep their existing timings.
+
+---
+ drivers/mmc/host/sunxi-mmc.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/mmc/host/sunxi-mmc.c b/drivers/mmc/host/sunxi-mmc.c
+index 111111111111..222222222222 100644
+--- a/drivers/mmc/host/sunxi-mmc.c
++++ b/drivers/mmc/host/sunxi-mmc.c
+@@ -1459,3 +1459,4 @@ static int sunxi_mmc_probe(struct platform_device *pdev)
+ 	    !of_machine_is_compatible("allwinner,sun7i-a20") &&
+-	    !of_machine_is_compatible("olimex,a64-olinuxino-2ge8g"))
++	    !of_machine_is_compatible("olimex,a64-olinuxino-2ge8g") &&
++	    !of_machine_is_compatible("sinovoip,bpi-6204"))
+ 		mmc->caps      |= MMC_CAP_1_8V_DDR | MMC_CAP_3_3V_DDR;
+-- 
+Armbian

@@ -61,6 +61,7 @@ These board configs are present in this branch now:
 | `bananapim5pro` | `conf` | `rk35xx` | `edge,vendor` | Banana Pi M5 Pro |
 | `bananapim6` | `wip` | `vs680` | `legacy` | Banana Pi M6 |
 | `bananapim64` | `csc` | `sun50iw1` | `current,edge,legacy` | Banana Pi M64 |
+| `bananapi6204` | `wip` | `sun8i` | `legacy` | Banana Pi BPI-6204 |
 | `bananapim7` | `conf` | `rockchip-rk3588` | `current,edge,vendor` | Banana Pi M7 |
 | `bananapip2zero` | `csc` | `sun8i` | `current,edge,legacy` | Banana Pi P2 Zero |
 | `bananapipro` | `csc` | `sun7i` | `current,edge,legacy` | Banana Pi Pro |
@@ -88,6 +89,7 @@ Important current findings:
 - `bananapif2s` now has a Sunplus SP7021 legacy BSP `.wip` path. Armbian U-Boot package, kernel package, and Trixie server smoke image builds pass with the BPI FAT boot layout; real hardware boot validation is still required before release inclusion.
 - `bananapim6` now has a Synaptics VS680 legacy BSP `.wip` path restored from older BPI Armbian work. U-Boot, kernel, and Trixie server smoke image builds pass with the VS680 TZK plus U-Boot image layout; real hardware boot validation and desktop acceleration remain required before release inclusion.
 - `bananapicm6` now has a SpacemiT K1 legacy BSP `.wip` path based on BPI CM6 U-Boot and kernel branches. U-Boot, kernel, and Trixie server smoke image builds pass with extlinux and raw bootloader offsets; real hardware boot validation is still required before release inclusion.
+- `bananapi6204` now has an Allwinner R40 `.wip` path derived from the M2 Ultra mainline U-Boot path plus a board-specific 6.12 DTB and conservative eMMC timing. U-Boot, kernel, and Trixie server smoke image builds pass; real BPI-6204 hardware validation is still required before release inclusion.
 - BPI-R4 Lite and BPI-R4 Pro are separate hardware from `bananapir4`; both now have `.wip` smoke-build paths using newer filogic kernel branches and imported U-Boot support. They remain outside the default matrix until real hardware boot validation passes.
 - BPI-RV2 is a Siflower SF21H8898 RISC-V/OpenWrt board. The BPI BSP currently provides NAND/NOR FIT `sysupgrade.bin` flow, not a normal Armbian SD/eMMC disk-image path, so it needs a new architecture family and a boot/image strategy before any `.wip` board config is useful.
 
@@ -108,6 +110,7 @@ Initial candidate families to check for missing or incomplete Armbian support:
 - Realtek and Sunplus vendor BSP boards such as BPI-W2, BPI-M4 plain, and BPI-F2S, now represented as legacy BSP `.wip` entries until hardware validation proves the old BPI boot layouts.
 - Synaptics VS680 vendor BSP boards such as BPI-M6, now represented as a legacy BSP `.wip` entry until real hardware validation and desktop multimedia acceleration are resolved.
 - SpacemiT K1 RISC-V module boards such as BPI-CM6, now represented as a legacy BSP `.wip` entry until real hardware validation confirms the vendor boot chain, eMMC, network, USB, and desktop basics.
+- Allwinner R40 industrial variants such as BPI-6204, now represented as a legacy `.wip` entry with the BPI BSP eMMC stability constraint carried into the Armbian kernel DTB/driver path.
 - Rockchip vendor BSP boards such as BPI-W3 where local Armbian support may be reusable from existing RK3588 board families.
 - Siflower/RISC-V boards such as BPI-RV2, which need a new `siflower-sf21h8898` family and an explicit decision between OpenWrt-derived FIT updater images and a newly ported Armbian raw disk-image boot path.
 - Older Allwinner variants whose local config exists only as `.csc` and may need legacy kernel/bootloader fallback.

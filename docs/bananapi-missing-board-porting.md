@@ -683,6 +683,71 @@ Remaining WIP risk:
 - The BPI reference image uses a different GPT bootloader partition layout. Hardware validation must confirm that the Armbian raw-offset layout works on CM6 eMMC/SD before this board can enter the release matrix.
 - Desktop images should wait until server boot, network, USB, storage, and reboot/shutdown behavior are confirmed on hardware.
 
+## BPI-6204 Allwinner R40 WIP Implementation
+
+Source audit:
+
+- Local BSP source: `/media/pi/SMCI/bpi/bpi-6204/bpi-cs6204-linux-6.12`
+- Vendor board DTS: `linux-6.12/arch/arm/boot/dts/allwinner/sun8i-r40-bpi-6204.dts`
+- Vendor notes describe BPI-6204 as an Allwinner R40 industrial board derived from the Banana Pi M2 Ultra design.
+- Vendor eMMC stability note: the R40 eMMC path is unstable when DDR52 is enabled on this hardware, so the stable path disables DDR52 and keeps eMMC in conservative legacy timing.
+
+Implemented in this branch:
+
+- `config/boards/bananapi6204.wip` adds Banana Pi BPI-6204 as a `sun8i` legacy board.
+- U-Boot reuses the existing mainline `Bananapi_M2_Ultra_defconfig`, which matches the R40 base boot path.
+- `patch/kernel/archive/sunxi-6.12/patches.armbian/arm-dts-sun8i-r40-add-bpi-6204.patch` adds `sun8i-r40-bpi-6204.dts` and the DTB target.
+- `patch/kernel/archive/sunxi-6.12/patches.armbian/drv-mmc-host-sunxi-mmc-disable-ddr52-bpi-6204.patch` disables DDR52 only when the machine compatible is `sinovoip,bpi-6204`.
+- The BPI-6204 patches are registered in both `series.armbian` and the active `series.conf` used by this kernel archive.
+
+Armbian smoke validation:
+
+- U-Boot package build passed:
+
+```bash
+./compile.sh uboot BOARD=bananapi6204 BRANCH=legacy RELEASE=trixie EXPERT=yes
+```
+
+- Kernel package build passed after forcing a clean kernel rebuild:
+
+```bash
+./compile.sh kernel BOARD=bananapi6204 BRANCH=legacy RELEASE=trixie EXPERT=yes KERNEL_CONFIGURE=no ARTIFACT_IGNORE_CACHE=yes CLEAN_LEVEL=make-kernel
+```
+
+- Kernel package version:
+  - `6.12.90-S2538-D9898-P5823-Cd5a5-H23bf-HK01ba-V014b-B8c04-R448a`
+- The generated DTB package contains:
+  - `boot/dtb-6.12.90-legacy-sunxi/sun8i-r40-bpi-6204.dtb`
+- Trixie server image build passed:
+
+```bash
+./compile.sh build BOARD=bananapi6204 BRANCH=legacy RELEASE=trixie BUILD_DESKTOP=no BUILD_MINIMAL=no KERNEL_CONFIGURE=no EXPERT=yes COMPRESS_OUTPUTIMAGE=xz
+```
+
+- Output image:
+  - `output/images/Armbian-unofficial_26.05.0-trunk_Bananapi6204_trixie_legacy_6.12.90.img.xz`
+- SHA256:
+  - `7afcde4755a8de4d2bef4723e30b8ca51f8dba0c216d3bd96552349ec6d14306`
+- `xz -t` passed.
+- Offline boot layout check confirmed:
+  - raw U-Boot SPL header at 8 KiB (`eGON.BT0`)
+  - `fdtfile=allwinner/sun8i-r40-bpi-6204.dtb`
+  - `boot.scr`
+  - `zImage`
+  - `uInitrd`
+  - `dtb-6.12.90-legacy-sunxi/sun8i-r40-bpi-6204.dtb`
+  - installed kernel package hash `P5823`
+
+Important fix from validation:
+
+- The first generated image had `armbianEnv.txt` pointing at the BPI-6204 DTB but no BPI-6204 DTB installed, because the new patches were initially added only to `series.armbian`.
+- `sunxi-6.12` uses the manually maintained `series.conf` for the active patch set, so the final implementation registers the patches there as well and rebuilds the kernel/image from a clean kernel tree.
+
+Remaining WIP risk:
+
+- The image proves U-Boot packaging, kernel DTB packaging, boot script selection, and conservative eMMC timing in the built artifacts.
+- Hardware validation is still required for SD boot, eMMC stability, Ethernet, UART, CAN, LEDs, and reboot/shutdown behavior before BPI-6204 can enter the public release matrix.
+
 ## BPI-RV2 Siflower Porting Assessment
 
 Checked BPI source:
@@ -749,6 +814,7 @@ Status: blocked for Armbian image build until a new `siflower-sf21h8898` RISC-V 
 | BPI-M4 plain | WIP Realtek RTD1395 BSP family and FAT boot layout added | Validate generated legacy image on real M4 hardware |
 | BPI-M6 | WIP Synaptics VS680 BSP family and TZK/U-Boot layout added | Validate generated legacy image on real M6 hardware |
 | BPI-CM6 | WIP SpacemiT K1 BSP path and extlinux/raw bootloader layout added | Validate generated legacy image on real CM6 hardware |
+| BPI-6204 | WIP Allwinner R40 path and conservative eMMC timing added | Validate generated legacy image on real BPI-6204 hardware |
 | BPI-RV2 | BPI has SF21H8898 OpenWrt BSP | Design new `siflower-sf21h8898` RISC-V family |
 | BPI-R3/R3 Mini/R64/R4 Lite/R4 Pro/W3 | WIP image builds now pass | Hardware boot validation before promotion |
 
@@ -807,6 +873,11 @@ Checked on 2026-05-22 after the R3 WIP build:
   - Vendor tree is SpacemiT K1 RISC-V with U-Boot 2022.10 and Linux 6.6.36.
   - This branch now adds `bananapicm6.wip` and a CM6-specific U-Boot patch set for extlinux fallback.
   - Trixie server smoke image now builds, passes `xz -t`, contains the expected `/boot` files, and has non-empty raw bootloader offsets; hardware validation is still required.
+- BPI-6204:
+  - BPI source: local `/media/pi/SMCI/bpi/bpi-6204/bpi-cs6204-linux-6.12`.
+  - Vendor tree is Allwinner R40 and close enough to the M2 Ultra boot path to reuse mainline `Bananapi_M2_Ultra_defconfig`.
+  - This branch now adds `bananapi6204.wip`, a BPI-6204 6.12 DTB patch, and an eMMC DDR52 disable patch keyed to `sinovoip,bpi-6204`.
+  - Trixie server smoke image now builds, passes `xz -t`, contains the expected `zImage`, `uInitrd`, `boot.scr`, and BPI-6204 DTB, and has a valid raw U-Boot SPL header; hardware validation is still required.
 - BPI-RV2:
   - BPI source: `BPI-RV2-SF21H8898-OPENWRT-24.10-BSP`
   - Vendor tree is RISC-V SF21H8898 with OpenWrt 6.6 DTS and FIT-image flow.
