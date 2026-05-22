@@ -85,7 +85,7 @@ Important current findings:
 - BPI-M4 plain is not the same board as `bananapim4berry` or `bananapim4zero`. It now has a Realtek RTD1395 legacy BSP `.wip` path. Armbian U-Boot, kernel, and Trixie server smoke image builds pass with the BPI FAT boot layout; real hardware boot validation is still required before release inclusion.
 - `bananapif2s` now has a Sunplus SP7021 legacy BSP `.wip` path. Armbian U-Boot package, kernel package, and Trixie server smoke image builds pass with the BPI FAT boot layout; real hardware boot validation is still required before release inclusion.
 - BPI-R4 Lite and BPI-R4 Pro are separate hardware from `bananapir4`; both now have `.wip` smoke-build paths using newer filogic kernel branches and imported U-Boot support. They remain outside the default matrix until real hardware boot validation passes.
-- BPI-RV2 is a Siflower SF21H8898 RISC-V/OpenWrt board and needs a new architecture family, not just a board config.
+- BPI-RV2 is a Siflower SF21H8898 RISC-V/OpenWrt board. The BPI BSP currently provides NAND/NOR FIT `sysupgrade.bin` flow, not a normal Armbian SD/eMMC disk-image path, so it needs a new architecture family and a boot/image strategy before any `.wip` board config is useful.
 
 ## Missing-Board Investigation Plan
 
@@ -103,7 +103,7 @@ Initial candidate families to check for missing or incomplete Armbian support:
 - MediaTek router boards not listed locally or not yet buildable. BPI-R64, R4 Lite, and R4 Pro now have `.wip` smoke-build paths; they need hardware validation before promotion.
 - Realtek and Sunplus vendor BSP boards such as BPI-W2, BPI-M4 plain, and BPI-F2S, now represented as legacy BSP `.wip` entries until hardware validation proves the old BPI boot layouts.
 - Rockchip vendor BSP boards such as BPI-W3 where local Armbian support may be reusable from existing RK3588 board families.
-- Siflower/RISC-V boards such as BPI-RV2, which need a new `siflower-sf21h8898` family and OpenWrt-derived image flow.
+- Siflower/RISC-V boards such as BPI-RV2, which need a new `siflower-sf21h8898` family and an explicit decision between OpenWrt-derived FIT updater images and a newly ported Armbian raw disk-image boot path.
 - Older Allwinner variants whose local config exists only as `.csc` and may need legacy kernel/bootloader fallback.
 - Local hardware-specific additions such as BPI-6204 if they are intended for the public Banana Pi release set.
 

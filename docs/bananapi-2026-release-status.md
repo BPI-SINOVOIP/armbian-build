@@ -336,5 +336,7 @@ BPI-RV2 findings:
 - Source: `BPI-RV2-SF21H8898-OPENWRT-24.10-BSP` at `320b851d`
 - BSP is RISC-V `ARCH:=riscv64`, `SUBTARGET:=sf21h8898`, with OpenWrt FIT-image flow.
 - Board files exist in the BSP: `sf21h8898-bpi-rv2.dtsi`, `sf21h8898-bpi-rv2-nand.dts`, `sf21h8898-bpi-rv2-nor.dts`, and BPI-RV2 NAND/NOR OpenWrt defconfigs.
+- The BSP emits FIT-based `sysupgrade.bin` artifacts using `KERNEL_LOADADDR=0x20000000`, lzma kernel payloads, `fitblk`, and NAND/NOR partition layouts. It does not describe a normal Armbian raw SD/eMMC image path.
+- The NAND path stores the root FIT in a UBI volume named `fit`; the NOR path stores the root FIT in the `firmware` partition at offset `0xa0000`.
 - This branch has no existing Siflower/SF21H8898 family, kernel support, or U-Boot support.
-- Required next work: new `siflower-sf21h8898` RISC-V vendor/OpenWrt-derived family and image writer.
+- Required next work: design a new `siflower-sf21h8898` RISC-V vendor/OpenWrt-derived family, decide whether the first release artifact is a FIT updater or a raw disk image, and locate/port the missing U-Boot/OpenSBI boot path before adding a `.wip` board config.

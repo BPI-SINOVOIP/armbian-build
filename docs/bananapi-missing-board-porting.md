@@ -578,6 +578,9 @@ What the BPI OpenWrt tree provides:
   - `Device/bpi-rv2-nand`
   - `Device/bpi-rv2-nor`
   - FIT image flow with lzma kernel and external static rootfs
+  - `KERNEL_LOADADDR := 0x20000000`
+  - `FILESYSTEMS := squashfs`
+  - generated payload is `sysupgrade.bin`, not a raw SD/eMMC disk image
 - Kernel DTS sources:
   - `sf_kernel/linux-6.6/arch/riscv/boot/dts/siflower/sf21h8898-bpi-rv2.dtsi`
   - `sf_kernel/linux-6.6/arch/riscv/boot/dts/siflower/sf21h8898-bpi-rv2-nand.dts`
@@ -585,12 +588,31 @@ What the BPI OpenWrt tree provides:
 - Board defconfigs:
   - `target/linux/siflower/sf21h8898_bpi-rv2-nand_def.config`
   - `target/linux/siflower/sf21h8898_bpi-rv2-nor_def.config`
+- Runtime/upgrade helpers:
+  - `package/utils/fitblk`
+  - `sf_kernel/linux-6.6/drivers/block/fitblk.c`
+  - `target/linux/siflower/sf21h8898/base-files/lib/upgrade/platform.sh`
+
+Boot layout details from the BSP:
+
+- NAND DTS compatible is `bananapi,bpi-rv2-nand`, with SPI NAND `fbl` at `0x0..0x20000` and a UBI partition starting at `0x20000`. The OpenWrt root disk points at the UBI volume named `fit`.
+- NOR DTS compatible is `bananapi,bpi-rv2-nor`, with SPI NOR partitions `bootloader` at `0x0..0x90000`, `factory` at `0x90000..0xa0000`, and `firmware` at `0xa0000..0x1000000`; the `firmware` partition is marked `denx,fit`.
+- The BSP network script maps NAND as LAN `eth0 eth1 eth2 eth3 eth5` and WAN `eth4`; the default/NOR path maps LAN `eth0 eth1 eth2 eth3 eth4` and WAN `eth5`.
+- The upgrade script requires OpenWrt metadata, copies `fitblk`, and writes to `PART_NAME=firmware`. It currently matches `bananapi,bpi-rv2`, while the DTS files expose `bananapi,bpi-rv2-nand` and `bananapi,bpi-rv2-nor`; this needs verification during porting.
 
 Local Armbian status:
 
 - This branch has no Siflower or SF21H8898 Armbian family.
 - Local cached kernels only contain the Siflower vendor prefix binding, not SF21H8898 SoC support or BPI-RV2 DTBs.
 - Local U-Boot trees do not contain BPI-RV2 or SF21H8898 board support.
+- The BPI BSP does not provide an obvious U-Boot/OpenSBI package path for Armbian-style raw SD/eMMC images. It appears to assume the vendor first-stage/bootloader is already present in NOR/NAND and then upgrades a FIT payload.
+
+Practical porting direction:
+
+1. First create a `siflower-sf21h8898` vendor family only after deciding whether the release target is OpenWrt-style NOR/NAND FIT update images or Armbian raw disk images.
+2. For an OpenWrt-style first milestone, import the vendor Linux 6.6 tree, BPI-RV2 NAND/NOR DTS files, `fitblk`, and a FIT payload writer. This would produce board-specific recovery/update artifacts, not the same format as the normal Armbian SD images.
+3. For a normal Armbian disk-image milestone, first locate or port SF21H8898 U-Boot/OpenSBI support and define a boot-media writer. Without this, an Armbian `.wip` board file would build nothing useful.
+4. Validate serial console, switch/port mapping, FIT root device handling, and NAND/NOR flashing before adding RV2 to any release matrix.
 
 Status: blocked for Armbian image build until a new `siflower-sf21h8898` RISC-V vendor/OpenWrt-derived family is designed. This should be treated as a separate architecture family, not a small board-file addition.
 
