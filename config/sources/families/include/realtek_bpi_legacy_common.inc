@@ -13,7 +13,7 @@ EXTRAWIFI="no"
 UBOOT_SKIP_MAKEFILE_VERSION="yes"
 UBOOT_VERSION_OVERRIDE="2015.07"
 SRC_LOADADDR="UIMAGE_LOADADDR=0x40008000"
-UBOOT_TARGET_MAP=";;u-boot-rtk/u-boot.bin:u-boot.bin"
+UBOOT_TARGET_MAP=";;u-boot-rtk/u-boot.bin:u-boot.bin rtk-pack/rtk/${REALTEK_BPI_VENDOR_BOARD}/configs/default/linux/uEnv.txt:uEnv.txt rtk-pack/rtk/${REALTEK_BPI_VENDOR_BOARD}/configs/default/linux/bluecore.audio:bluecore.audio"
 
 : "${REALTEK_BPI_BSP_REPO:?REALTEK_BPI_BSP_REPO is not set}"
 : "${REALTEK_BPI_BSP_BRANCH:?REALTEK_BPI_BSP_BRANCH is not set}"
@@ -81,6 +81,11 @@ function build_custom_uboot__realtek_bpi_legacy_bsp() {
 }
 
 function realtek_bpi_legacy_flatten_kernel_tree() {
+	local kernel_tree="${kernel_work_dir:-${PWD}}"
+	local previous_pwd="${PWD}"
+
+	cd "${kernel_tree}" || exit_with_error "Can't cd to Realtek kernel tree" "${kernel_tree}"
+
 	if [[ -d "linux-rtk" && ! -f ".realtek-bpi-kernel-root-ready" ]]; then
 		display_alert "${BOARD}" "flattening vendor linux-rtk tree for Armbian kernel build" "info"
 
@@ -99,10 +104,21 @@ function realtek_bpi_legacy_flatten_kernel_tree() {
 
 		run_host_command_logged touch ".realtek-bpi-kernel-root-ready"
 	fi
+
+	cd "${previous_pwd}" || exit_with_error "Can't restore working directory" "${previous_pwd}"
+}
+
+function kernel_copy_extra_sources__realtek_bpi_legacy_bsp() {
+	realtek_bpi_legacy_flatten_kernel_tree
 }
 
 function custom_kernel_config__realtek_bpi_legacy_bsp() {
 	realtek_bpi_legacy_flatten_kernel_tree
+
+	if [[ -n "${kernel_work_dir:-}" ]]; then
+		version="$(grab_version "${kernel_work_dir}")"
+		display_alert "${BOARD}" "using Realtek BSP kernel version after linux-rtk flatten" "${version}" "info"
+	fi
 }
 
 function custom_kernel_make_params__realtek_bpi_legacy_bsp() {
@@ -142,4 +158,61 @@ function write_uboot_platform() {
 	fi
 
 	dd if="${DIR}/u-boot.bin" of="${DEVICE}" bs=1K seek=40 conv=fsync,notrunc status=none
+}
+
+function realtek_bpi_legacy_vendor_linux_dir() {
+	local boot_dir="${MOUNT}/boot"
+	local vendor_board="${REALTEK_BPI_VENDOR_BOARD:-${REALTEK_BPI_BSP_BOARD}}"
+	echo "${boot_dir}/bananapi/${vendor_board}/linux"
+}
+
+function post_write_uboot_platform__realtek_bpi_copy_fat_boot_assets() {
+	if [[ -z "${MOUNT:-}" || ! -d "${MOUNT}/boot" ]]; then
+		return 0
+	fi
+
+	local vendor_linux_dir
+	vendor_linux_dir="$(realtek_bpi_legacy_vendor_linux_dir)"
+	display_alert "${BOARD}" "copying Realtek BPI FAT boot assets" "${vendor_linux_dir}" "info"
+	run_host_command_logged mkdir -p "${vendor_linux_dir}"
+
+	if [[ -f "${UBOOT_CHROOT_DIR}/uEnv.txt" ]]; then
+		run_host_command_logged cp -v "${UBOOT_CHROOT_DIR}/uEnv.txt" "${MOUNT}/boot/uEnv.txt"
+		run_host_command_logged cp -v "${UBOOT_CHROOT_DIR}/uEnv.txt" "${vendor_linux_dir}/uEnv.txt"
+	fi
+
+	if [[ -f "${UBOOT_CHROOT_DIR}/bluecore.audio" ]]; then
+		run_host_command_logged cp -v "${UBOOT_CHROOT_DIR}/bluecore.audio" "${vendor_linux_dir}/bluecore.audio"
+	fi
+}
+
+function pre_umount_final_image__realtek_bpi_vendor_boot_layout() {
+	local boot_dir="${MOUNT}/boot"
+	local vendor_linux_dir
+	vendor_linux_dir="$(realtek_bpi_legacy_vendor_linux_dir)"
+
+	[[ -d "${boot_dir}" ]] || exit_with_error "Realtek BSP boot directory is missing" "${boot_dir}"
+
+	display_alert "${BOARD}" "installing Realtek BPI FAT boot layout" "${vendor_linux_dir}" "info"
+	run_host_command_logged mkdir -p "${vendor_linux_dir}"
+
+	local kernel_source="${boot_dir}/${NAME_KERNEL}"
+	if [[ ! -f "${kernel_source}" ]]; then
+		kernel_source="$(find "${boot_dir}" -maxdepth 1 -type f -name "vmlinuz-*${LINUXFAMILY}" | head -n 1)"
+	fi
+	[[ -n "${kernel_source}" && -f "${kernel_source}" ]] || exit_with_error "Realtek BSP kernel file is missing" "${NAME_KERNEL}"
+	[[ -f "${boot_dir}/${NAME_INITRD}" ]] || exit_with_error "Realtek BSP initrd file is missing" "${boot_dir}/${NAME_INITRD}"
+
+	run_host_command_logged cp -v "${kernel_source}" "${vendor_linux_dir}/uImage"
+	run_host_command_logged cp -v "${boot_dir}/${NAME_INITRD}" "${vendor_linux_dir}/uInitrd"
+
+	local dtb_file dtb_source
+	for dtb_file in ${REALTEK_BPI_BOOT_DTB_FILES:-${BOOT_FDT_FILE}}; do
+		dtb_source="${boot_dir}/dtb/${dtb_file}"
+		if [[ ! -f "${dtb_source}" ]]; then
+			dtb_source="$(find "${boot_dir}" -path "*/${dtb_file}" -type f | head -n 1)"
+		fi
+		[[ -n "${dtb_source}" && -f "${dtb_source}" ]] || exit_with_error "Realtek BSP DTB file is missing" "${dtb_file}"
+		run_host_command_logged cp -v "${dtb_source}" "${vendor_linux_dir}/$(basename "${dtb_file}")"
+	done
 }

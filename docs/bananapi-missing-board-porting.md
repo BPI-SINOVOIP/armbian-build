@@ -238,8 +238,9 @@ Implemented in this branch:
 
 - `config/boards/bananapiw2.wip` adds Banana Pi W2 as a Realtek RTD1296 legacy BSP board.
 - `config/sources/families/realtek-rtd129x-bpi.conf` and the shared `realtek_bpi_legacy_common.inc` add custom Realtek BSP build hooks.
-- The U-Boot path builds the vendor monorepo through `./configure BPI-W2-720P && make u-boot`, then packages `u-boot-rtk/u-boot.bin`.
-- The kernel path uses the vendor Linux 4.9.119 tree under `linux-rtk`, with the vendor `rtd129x_bpi_defconfig`.
+- The U-Boot path builds the vendor monorepo through `./configure BPI-W2-720P && make u-boot`, then packages `u-boot-rtk/u-boot.bin`, vendor `uEnv.txt`, and `bluecore.audio`.
+- The kernel path uses the vendor Linux 4.9.119 tree under `linux-rtk`, with the vendor `rtd129x_bpi_defconfig`. The shared Realtek hook flattens `linux-rtk` before packaging and forces Armbian metadata to use kernel version `4.9.119` instead of the BSP monorepo top-level fallback `0`.
+- The image path uses a FAT `/boot` partition and installs the old BPI Realtek boot layout under `bananapi/bpi-w2/linux/`.
 - Host build fixes are carried as Armbian patches:
   - U-Boot host tools use the BSP-local libfdt headers instead of the system libfdt headers.
   - Linux dtc removes the duplicate `YYLTYPE yylloc` definition that fails with modern host toolchains.
@@ -265,11 +266,28 @@ Armbian smoke validation:
 
 - Kernel packaging produced `linux-image`, `linux-dtb`, and `linux-libc-dev` packages for `realtek-rtd129x-bpi`.
 - Linux headers are intentionally skipped for this 4.9 legacy BSP path.
+- Trixie server image build passed:
+
+```bash
+./compile.sh build BOARD=bananapiw2 BRANCH=legacy RELEASE=trixie BUILD_DESKTOP=no BUILD_MINIMAL=no KERNEL_CONFIGURE=no EXPERT=yes COMPRESS_OUTPUTIMAGE=xz
+```
+
+- Output image:
+  - `output/images/Armbian-unofficial_26.05.0-trunk_Bananapiw2_trixie_legacy_4.9.119.img.xz`
+- `xz -t` passed.
+- SHA256:
+  - `7ad63ba2b85b033a332bf3c84eb5f403378f14880bdb95a7191ba0c74a84dd8f`
+- Offline FAT boot layout check passed for:
+  - `uEnv.txt`
+  - `bananapi/bpi-w2/linux/uEnv.txt`
+  - `bananapi/bpi-w2/linux/bluecore.audio`
+  - `bananapi/bpi-w2/linux/uImage`
+  - `bananapi/bpi-w2/linux/uInitrd`
+  - `bananapi/bpi-w2/linux/rtd-1296-bananapi-w2-2GB.dtb`
 
 Remaining WIP risk:
 
-- The old BPI Realtek boot flow expects a FAT-style `uEnv.txt` layout under `bananapi/bpi-w2/linux/`.
-- The current Armbian board entry proves the BSP source, U-Boot package, and kernel package paths, but still needs a full image boot test on real W2 hardware before it can enter the release matrix.
+- The current Armbian board entry proves the BSP source, U-Boot package, kernel package, initramfs, and offline FAT boot layout paths, but still needs a boot test on real W2 hardware before it can enter the release matrix.
 
 ## F2S BSP Porting Assessment
 
@@ -491,8 +509,9 @@ Implemented in this branch:
 
 - `config/boards/bananapim4.wip` adds the plain Banana Pi M4 as a Realtek RTD1395 legacy BSP board.
 - `config/sources/families/realtek-rtd139x-bpi.conf` reuses the shared Realtek BSP hooks added for W2.
-- The U-Boot path builds the vendor monorepo through `./configure BPI-M4-720P && make u-boot`, then packages `u-boot-rtk/u-boot.bin`.
-- The kernel path uses the vendor Linux 4.9.119 tree under `linux-rtk`, with the vendor `rtd139x_bpi_defconfig`.
+- The U-Boot path builds the vendor monorepo through `./configure BPI-M4-720P && make u-boot`, then packages `u-boot-rtk/u-boot.bin`, vendor `uEnv.txt`, and `bluecore.audio`.
+- The kernel path uses the vendor Linux 4.9.119 tree under `linux-rtk`, with the vendor `rtd139x_bpi_defconfig`. The shared Realtek hook flattens `linux-rtk` before packaging and forces Armbian metadata to use kernel version `4.9.119` instead of the BSP monorepo top-level fallback `0`.
+- The image path uses a FAT `/boot` partition and installs the old BPI Realtek boot layout under `bananapi/bpi-m4/linux/`.
 - Host build fixes are carried as Armbian patches for the M4 U-Boot/libfdt and Linux dtc issues.
 
 Validation completed outside Armbian before integration:
@@ -516,11 +535,29 @@ Armbian smoke validation:
 
 - Kernel packaging produced `linux-image`, `linux-dtb`, and `linux-libc-dev` packages for `realtek-rtd139x-bpi`.
 - Linux headers are intentionally skipped for this 4.9 legacy BSP path.
+- Trixie server image build passed:
+
+```bash
+./compile.sh build BOARD=bananapim4 BRANCH=legacy RELEASE=trixie BUILD_DESKTOP=no BUILD_MINIMAL=no KERNEL_CONFIGURE=no EXPERT=yes COMPRESS_OUTPUTIMAGE=xz
+```
+
+- Output image:
+  - `output/images/Armbian-unofficial_26.05.0-trunk_Bananapim4_trixie_legacy_4.9.119.img.xz`
+- `xz -t` passed.
+- SHA256:
+  - `6276c598a46e63c2d769511c0538cc06bcd5646dfcacf161d514966d0ed6d25b`
+- Offline FAT boot layout check passed for:
+  - `uEnv.txt`
+  - `bananapi/bpi-m4/linux/uEnv.txt`
+  - `bananapi/bpi-m4/linux/bluecore.audio`
+  - `bananapi/bpi-m4/linux/uImage`
+  - `bananapi/bpi-m4/linux/uInitrd`
+  - `bananapi/bpi-m4/linux/rtd-1395-bananapi-m4-1GB.dtb`
+  - `bananapi/bpi-m4/linux/rtd-1395-bananapi-m4-2GB.dtb`
 
 Remaining WIP risk:
 
-- The old BPI Realtek boot flow expects `uEnv.txt`, `uImage`, `uInitrd`, DTB, and `bluecore.audio` under `bananapi/bpi-m4/linux/`.
-- The current Armbian board entry proves the BSP source, U-Boot package, and kernel package paths, but still needs a full image boot test on real M4 hardware before it can enter the release matrix.
+- The current Armbian board entry proves the BSP source, U-Boot package, kernel package, initramfs, and offline FAT boot layout paths, but still needs a boot test on real M4 hardware before it can enter the release matrix.
 
 ## BPI-RV2 Siflower Porting Assessment
 
@@ -561,9 +598,9 @@ Status: blocked for Armbian image build until a new `siflower-sf21h8898` RISC-V 
 
 | Candidate | Reason | First action |
 | --- | --- | --- |
-| BPI-W2 | WIP Realtek RTD1296 BSP family added | Build a full image candidate, then validate old BPI boot layout on hardware |
+| BPI-W2 | WIP Realtek RTD1296 BSP family and FAT boot layout added | Validate generated legacy image on real W2 hardware |
 | BPI-F2S | WIP Sunplus SP7021 BSP family and FAT boot layout added | Validate generated legacy image on real F2S hardware |
-| BPI-M4 plain | WIP Realtek RTD1395 BSP family added | Build a full image candidate, then validate old BPI boot layout on hardware |
+| BPI-M4 plain | WIP Realtek RTD1395 BSP family and FAT boot layout added | Validate generated legacy image on real M4 hardware |
 | BPI-RV2 | BPI has SF21H8898 OpenWrt BSP | Design new `siflower-sf21h8898` RISC-V family |
 | BPI-R3/R3 Mini/R64/R4 Lite/R4 Pro/W3 | WIP image builds now pass | Hardware boot validation before promotion |
 

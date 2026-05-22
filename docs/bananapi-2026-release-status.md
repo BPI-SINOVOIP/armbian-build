@@ -136,9 +136,9 @@ Needs support decision or porting investigation:
 | BPI-R3 | `BPI-R3-bsp`, `BPI-R3-bsp-5.15`, OpenWrt trees | Added as `.wip` | MT7986 filogic smoke image builds; needs hardware boot validation |
 | BPI-R3 Mini | `BPI-R3MINI-OPENWRT-V21.02.3` | Added as `.wip` | MT7986 eMMC smoke image builds; needs hardware boot validation |
 | BPI-R64 | `BPI-R64-BSP`, `BPI-R64-bsp-4.19`, `BPI-R64-bsp-5.4` | Added as `.wip` | MT7622 smoke image builds; needs hardware boot validation because legacy BSP boot layout differs |
-| BPI-W2 | `BPI-W2-bsp` | Added as `.wip` | RTD1296 legacy BSP build hooks added; old BPI boot layout needs hardware validation |
+| BPI-W2 | `BPI-W2-bsp` | Added as `.wip` | RTD1296 legacy BSP smoke image builds with FAT BPI boot layout; needs hardware validation |
 | BPI-W3 | `BPI-W3-BSP` | Added as `.wip` | RK3588 vendor smoke image builds; needs hardware boot validation |
-| BPI-M4 plain | `BPI-M4-bsp` | Added as `.wip` | RTD1395 legacy BSP build hooks added; old BPI boot layout needs hardware validation |
+| BPI-M4 plain | `BPI-M4-bsp` | Added as `.wip` | RTD1395 legacy BSP smoke image builds with FAT BPI boot layout; needs hardware validation |
 | BPI-R4 Lite / R4 Pro | `BPI-R4Lite-*`, `BPI-R4PRO-*` OpenWrt trees | Added as `.wip` | Filogic smoke image builds pass; needs hardware boot validation |
 | BPI-RV2 | `BPI-RV2-SF21H8898-*` | Missing | New Siflower SF21H8898 RISC-V family required |
 
@@ -294,8 +294,12 @@ BPI-W2 WIP:
 - Added family: `realtek-rtd129x-bpi`
 - Vendor U-Boot and kernel builds passed in the BSP tree after host-toolchain patches.
 - Armbian U-Boot package smoke build passed for `BOARD=bananapiw2 BRANCH=legacy RELEASE=trixie`.
-- Armbian kernel package smoke build passed for `BOARD=bananapiw2 BRANCH=legacy RELEASE=trixie KERNEL_CONFIGURE=no`.
-- Required next work: full image boot-layout validation, then real W2 boot validation for the old BPI Realtek boot layout.
+- Armbian kernel package smoke build passed for `BOARD=bananapiw2 BRANCH=legacy RELEASE=trixie KERNEL_CONFIGURE=no`; the package metadata now records `Source: linux-4.9.119` and `Armbian-Kernel-Version: 4.9.119`.
+- Armbian Trixie server smoke image passed with FAT boot layout and xz validation.
+- Generated image: `output/images/Armbian-unofficial_26.05.0-trunk_Bananapiw2_trixie_legacy_4.9.119.img.xz`
+- SHA256: `7ad63ba2b85b033a332bf3c84eb5f403378f14880bdb95a7191ba0c74a84dd8f`
+- Offline FAT boot layout validation confirmed `uEnv.txt`, `bluecore.audio`, `uImage`, `uInitrd`, and `rtd-1296-bananapi-w2-2GB.dtb` under `bananapi/bpi-w2/linux/`.
+- Required next work: real W2 boot validation for the old BPI Realtek boot layout.
 
 BPI-F2S WIP:
 
@@ -320,8 +324,12 @@ BPI-M4 plain WIP:
 - Added family: `realtek-rtd139x-bpi`
 - Vendor U-Boot and kernel builds passed in the BSP tree after host-toolchain patches.
 - Armbian U-Boot package smoke build passed for `BOARD=bananapim4 BRANCH=legacy RELEASE=trixie`.
-- Armbian kernel package smoke build passed for `BOARD=bananapim4 BRANCH=legacy RELEASE=trixie KERNEL_CONFIGURE=no`.
-- Required next work: full image boot-layout validation, then real M4 boot validation for the old BPI Realtek boot layout.
+- Armbian kernel package smoke build passed for `BOARD=bananapim4 BRANCH=legacy RELEASE=trixie KERNEL_CONFIGURE=no`; the package metadata now records `Source: linux-4.9.119` and `Armbian-Kernel-Version: 4.9.119`.
+- Armbian Trixie server smoke image passed with FAT boot layout and xz validation.
+- Generated image: `output/images/Armbian-unofficial_26.05.0-trunk_Bananapim4_trixie_legacy_4.9.119.img.xz`
+- SHA256: `6276c598a46e63c2d769511c0538cc06bcd5646dfcacf161d514966d0ed6d25b`
+- Offline FAT boot layout validation confirmed `uEnv.txt`, `bluecore.audio`, `uImage`, `uInitrd`, and both RTD1395 1GB/2GB DTBs under `bananapi/bpi-m4/linux/`.
+- Required next work: real M4 boot validation for the old BPI Realtek boot layout.
 
 BPI-RV2 findings:
 
