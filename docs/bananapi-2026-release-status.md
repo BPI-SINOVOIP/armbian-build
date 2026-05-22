@@ -134,9 +134,9 @@ Needs support decision or porting investigation:
 | BPI-R64 | `BPI-R64-BSP`, `BPI-R64-bsp-4.19`, `BPI-R64-bsp-5.4` | Added as `.wip` | MT7622 smoke image builds; needs hardware boot validation because legacy BSP boot layout differs |
 | BPI-W2 | `BPI-W2-bsp` | Missing | RTD1296 vendor family and BPI boot layout required |
 | BPI-W3 | `BPI-W3-BSP` | Added as `.wip` | RK3588 vendor smoke image builds; needs hardware boot validation |
-| BPI-M4 plain | `BPI-M4-bsp` | Ambiguous | Compare against existing `M4 Berry` / `M4 Zero` support |
-| BPI-R4 Lite / R4 Pro | `BPI-R4Lite-*`, `BPI-R4PRO-*` OpenWrt trees | Missing | Decide whether these are separate release boards |
-| BPI-RV2 | `BPI-RV2-SF21H8898-*` | Missing | Architecture/toolchain feasibility check required |
+| BPI-M4 plain | `BPI-M4-bsp` | Missing | RTD1395 vendor family required; not covered by M4 Berry/Zero |
+| BPI-R4 Lite / R4 Pro | `BPI-R4Lite-*`, `BPI-R4PRO-*` OpenWrt trees | Missing | Separate filogic boards; import kernel DTS/overlays and U-Boot patches before smoke build |
+| BPI-RV2 | `BPI-RV2-SF21H8898-*` | Missing | New Siflower SF21H8898 RISC-V family required |
 
 ## Immediate Execution Result
 
@@ -228,7 +228,7 @@ W3 remains outside the default release matrix until hardware boot validation con
 
 ## BSP Porting Blockers
 
-BPI-W2 and BPI-F2S were inspected against their official BPI BSP repositories, but no `.wip` board files were added because they would not build through the existing Armbian family paths yet.
+BPI-W2, BPI-F2S, BPI-M4 plain, BPI-R4 Lite, BPI-R4 Pro, and BPI-RV2 were inspected against their official BPI BSP or OpenWrt repositories, but no `.wip` board files were added because they would not build through the existing Armbian family paths yet.
 
 BPI-W2 findings:
 
@@ -245,3 +245,29 @@ BPI-F2S findings:
 - Board files exist in the BSP: `sp7021-bpi-f2s.dts`, `sp7021_bpi_f2s_defconfig`, and `sp7021_chipC_bpi-f2s_defconfig`.
 - This branch has no existing Sunplus/SP7021 family.
 - Required next work: new `sunplus-sp7021` vendor family, armhf vendor kernel packaging, xboot/`u-boot.img` packaging, and the old BPI FAT boot layout.
+
+BPI-M4 plain findings:
+
+- Source: `BPI-M4-bsp` at `25f5b88e`
+- BSP uses Realtek RTD1395 with U-Boot 2015.7 and Linux 4.9.119.
+- Board files exist in the BSP: `rtd-1395-bananapi-m4-1GB.dts`, `rtd-1395-bananapi-m4-2GB.dts`, `rtd139x_bpi_defconfig`, and RTD1395 Banana Pi U-Boot defconfigs.
+- Existing `bananapim4berry` and `bananapim4zero` are Allwinner H618 boards and do not cover BPI-M4 plain.
+- Required next work: new `realtek-rtd1395` vendor family, ideally sharing boot layout code with the future W2 `realtek-rtd1296` family.
+
+BPI-R4 Lite / R4 Pro findings:
+
+- R4 Lite source: `BPI-R4Lite-OPENWRT-V24.10.0-Master-Devel` at `42f4c647`
+- R4 Pro source: `BPI-R4PRO-8X-OPENWRT-V24.10.0-Master-Devel` at `56e0e77a`
+- R4 Lite has MT7987 kernel DTS/overlays and BPI U-Boot/ATF patches in the OpenWrt tree.
+- R4 Pro 8X has MT7988A kernel DTS/overlays and a BPI-specific U-Boot patch in the OpenWrt tree.
+- Existing `bananapir4.csc` is only BPI-R4; these are separate boards.
+- The active `filogic/current` 6.12 DTB package does not contain R4 Lite or R4 Pro DTBs, and U-Boot does not contain their Banana Pi defconfigs.
+- Required next work: import the OpenWrt kernel DTS/overlay and U-Boot patches into the active `filogic` patchsets, then smoke build one server image per board.
+
+BPI-RV2 findings:
+
+- Source: `BPI-RV2-SF21H8898-OPENWRT-24.10-BSP` at `320b851d`
+- BSP is RISC-V `ARCH:=riscv64`, `SUBTARGET:=sf21h8898`, with OpenWrt FIT-image flow.
+- Board files exist in the BSP: `sf21h8898-bpi-rv2.dtsi`, `sf21h8898-bpi-rv2-nand.dts`, `sf21h8898-bpi-rv2-nor.dts`, and BPI-RV2 NAND/NOR OpenWrt defconfigs.
+- This branch has no existing Siflower/SF21H8898 family, kernel support, or U-Boot support.
+- Required next work: new `siflower-sf21h8898` RISC-V vendor/OpenWrt-derived family and image writer.

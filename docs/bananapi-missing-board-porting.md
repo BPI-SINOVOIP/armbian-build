@@ -281,14 +281,132 @@ Why no `.wip` board was added yet:
 
 Status: blocked for image build until the `sunplus-sp7021` vendor family is implemented. Do not add a board file that cannot build.
 
+## R4 Lite / R4 Pro OpenWrt Porting Assessment
+
+Checked BPI sources:
+
+- R4 Lite repository: `https://github.com/BPI-SINOVOIP/BPI-R4Lite-OPENWRT-V24.10.0-Master-Devel`
+- R4 Lite checked commit: `42f4c647`
+- R4 Pro repository: `https://github.com/BPI-SINOVOIP/BPI-R4PRO-8X-OPENWRT-V24.10.0-Master-Devel`
+- R4 Pro checked commit: `56e0e77a`
+
+What the BPI OpenWrt trees provide:
+
+- R4 Lite kernel DTS and overlays:
+  - `target/linux/mediatek/files-6.6/arch/arm64/boot/dts/mediatek/mt7987a-bananapi-bpi-r4-lite.dts`
+  - `mt7987a-bananapi-bpi-r4-lite-sd.dtso`
+  - `mt7987a-bananapi-bpi-r4-lite-emmc.dtso`
+  - `mt7987a-bananapi-bpi-r4-lite-spim-nand.dtso`
+  - `mt7987a-bananapi-bpi-r4-lite-spim-nor.dtso`
+- R4 Lite U-Boot and ATF patches:
+  - `package/boot/uboot-mediatek/patches/999-add-bananapi-bpi-r4-lite.patch`
+  - `package/boot/arm-trusted-firmware-mediatek/patches/9999-mediatek-bananapi-bpi-r4-ite-atf-fixed.patch`
+- R4 Pro 8X kernel DTS and overlays:
+  - `target/linux/mediatek/files-6.6/arch/arm64/boot/dts/mediatek/mt7988a-bananapi-bpi-r4-pro-8x.dts`
+  - `mt7988a-bananapi-bpi-r4-pro-8x-sd.dtso`
+  - `mt7988a-bananapi-bpi-r4-pro-8x-emmc.dtso`
+  - `mt7988a-bananapi-bpi-r4-pro-8x-rtc.dtso`
+  - `mt7988a-bananapi-bpi-r4-pro-8x-wifi-mt7996a.dtso`
+- R4 Pro U-Boot and kernel patches:
+  - `package/boot/uboot-mediatek/patches/999-add-bananapi_bpi-r4-pro-8x.patch`
+  - `target/linux/mediatek/patches-6.6/999-9800-mt7988a-bananapi-bpi-r4pro-support-multiple-dsa-switch-fixed.patch`
+
+Local Armbian status:
+
+- Existing `bananapir4.csc` is MT7988A BPI-R4 only.
+- The current filogic DTB package contains BPI-R4 DTBs, but not R4 Lite or R4 Pro DTBs:
+  - `mediatek/mt7988a-bananapi-bpi-r4.dtb`
+  - `mediatek/mt7988a-bananapi-bpi-r4-sd.dtb`
+  - `mediatek/mt7988a-bananapi-bpi-r4-emmc.dtb`
+- Local U-Boot v2025.04 has generic MT7987 RFB defconfigs and BPI-R4 defconfigs, but no BPI-R4 Lite or BPI-R4 Pro defconfigs.
+- A newer cached Linux tree already has upstream-style R4 Pro DT sources under `arch/arm64/boot/dts/mediatek`, but the active `filogic/current` build uses the 6.12 DTB package where those files are not present.
+
+Why no `.wip` board was added yet:
+
+- R4 Lite needs both MT7987 Banana Pi U-Boot support and kernel DTB support imported into the active filogic patchset.
+- R4 Pro needs its BPI-R4-Pro-specific U-Boot defconfig and kernel DTB/overlay set imported into the active filogic patchset.
+- These boards are separate hardware from BPI-R4 and should not reuse `bananapir4.csc` with only a different display name.
+
+Status: separate board support is required. First implementation should import the OpenWrt U-Boot patches and kernel DTS/overlay set into `u-boot-filogic` and `archive/filogic-6.12`, then smoke build one Trixie server image for each board before adding them to any release matrix.
+
+## BPI-M4 Plain RTD1395 Porting Assessment
+
+Checked BPI source:
+
+- Repository: `https://github.com/BPI-SINOVOIP/BPI-M4-bsp`
+- Checked commit: `25f5b88e`
+
+What the BSP provides:
+
+- Realtek RTD1395 board DTS files:
+  - `linux-rtk/arch/arm64/boot/dts/realtek/rtd139x/rtd-1395-bananapi-m4-1GB.dts`
+  - `linux-rtk/arch/arm64/boot/dts/realtek/rtd139x/rtd-1395-bananapi-m4-2GB.dts`
+- Kernel defconfig:
+  - `linux-rtk/arch/arm64/configs/rtd139x_bpi_defconfig`
+- U-Boot defconfigs:
+  - `u-boot-rtk/configs/rtd1395_bananapi_defconfig`
+  - `u-boot-rtk/configs/rtd1395_sd_bananapi_defconfig`
+  - `u-boot-rtk/configs/rtd1395_emmc_bananapi_defconfig`
+  - `u-boot-rtk/configs/rtd1395_spi_bananapi_defconfig`
+- BSP generation uses U-Boot 2015.7 and Linux 4.9.119.
+- The BSP boot layout matches the old Realtek BPI style:
+  - boot files under `bananapi/bpi-m4/linux/`
+  - `uImage`, `uInitrd`, `rtd-1395-bananapi-m4-1GB.dtb` or `rtd-1395-bananapi-m4-2GB.dtb`, and `bluecore.audio`
+  - `scripts/bootloader.sh` writes `rtk-pack/rtk/bpi-m4/bin/u-boot.bin` at `bs=1k seek=40` and exports a 2 KiB-offset image.
+
+Local Armbian status:
+
+- Existing `bananapim4berry.conf` and `bananapim4zero.conf` are Allwinner H618 boards on `sun50iw9-bpi`.
+- BPI-M4 plain is Realtek RTD1395, so it is not covered by M4 Berry or M4 Zero.
+- Existing local Realtek support is `realtek-rtd1619b` for XpressReal T3, not RTD1395.
+
+Status: blocked for image build until a new `realtek-rtd1395` vendor family is implemented. The implementation should share as much Realtek boot layout code as possible with the future `realtek-rtd1296` W2 family, but the board is not equivalent to any existing M4 Berry/Zero entry.
+
+## BPI-RV2 Siflower Porting Assessment
+
+Checked BPI source:
+
+- Repository: `https://github.com/BPI-SINOVOIP/BPI-RV2-SF21H8898-OPENWRT-24.10-BSP`
+- Checked commit: `320b851d`
+
+What the BPI OpenWrt tree provides:
+
+- RISC-V target description:
+  - `target/linux/siflower/sf21h8898/target.mk`
+  - `ARCH:=riscv64`
+  - `SUBTARGET:=sf21h8898`
+  - `KERNELNAME:=Image`
+- OpenWrt image definitions:
+  - `target/linux/siflower/image/sf21h8898.mk`
+  - `Device/bpi-rv2-nand`
+  - `Device/bpi-rv2-nor`
+  - FIT image flow with lzma kernel and external static rootfs
+- Kernel DTS sources:
+  - `sf_kernel/linux-6.6/arch/riscv/boot/dts/siflower/sf21h8898-bpi-rv2.dtsi`
+  - `sf_kernel/linux-6.6/arch/riscv/boot/dts/siflower/sf21h8898-bpi-rv2-nand.dts`
+  - `sf_kernel/linux-6.6/arch/riscv/boot/dts/siflower/sf21h8898-bpi-rv2-nor.dts`
+- Board defconfigs:
+  - `target/linux/siflower/sf21h8898_bpi-rv2-nand_def.config`
+  - `target/linux/siflower/sf21h8898_bpi-rv2-nor_def.config`
+
+Local Armbian status:
+
+- This branch has no Siflower or SF21H8898 Armbian family.
+- Local cached kernels only contain the Siflower vendor prefix binding, not SF21H8898 SoC support or BPI-RV2 DTBs.
+- Local U-Boot trees do not contain BPI-RV2 or SF21H8898 board support.
+
+Status: blocked for Armbian image build until a new `siflower-sf21h8898` RISC-V vendor/OpenWrt-derived family is designed. This should be treated as a separate architecture family, not a small board-file addition.
+
 ## Next Candidates After Current WIP Batch
 
 | Candidate | Reason | First action |
 | --- | --- | --- |
 | BPI-W2 | BPI has `BPI-W2-bsp`; RTD1296 sources found | Implement new `realtek-rtd1296` vendor family and BPI boot layout |
 | BPI-F2S | BPI has `BPI-F2S-bsp`; SP7021 sources found | Implement new `sunplus-sp7021` vendor family and BPI boot layout |
-| BPI-R64 | WIP image builds now pass | Hardware boot validation before promotion |
-| BPI-R4 Lite / R4 Pro | BPI has OpenWrt trees, local board missing | Decide if release should treat these as separate boards |
+| BPI-M4 plain | BPI has `BPI-M4-bsp`; RTD1395 sources found | Implement new `realtek-rtd1395` vendor family and BPI boot layout |
+| BPI-R4 Lite / R4 Pro | BPI has OpenWrt trees, local board missing | Import U-Boot and kernel DTS/overlay patches into active filogic family |
+| BPI-RV2 | BPI has SF21H8898 OpenWrt BSP | Design new `siflower-sf21h8898` RISC-V family |
+| BPI-R3/R3 Mini/R64/W3 | WIP image builds now pass | Hardware boot validation before promotion |
 
 ## Second-Pass Candidate Findings
 
@@ -318,3 +436,22 @@ Checked on 2026-05-22 after the R3 WIP build:
   - BPI source: `BPI-F2S-bsp`
   - Vendor tree contains `sp7021-bpi-f2s.dts` and `sp7021_chipC_bpi-f2s_defconfig`.
   - No matching local Armbian family exists yet; this should be treated as a new legacy/vendor family with custom xboot/`u-boot.img` packaging.
+- BPI-R4 Lite:
+  - BPI source: `BPI-R4Lite-OPENWRT-V24.10.0-Master-Devel`
+  - Vendor tree contains MT7987 kernel DTS/overlay files plus U-Boot and ATF patches.
+  - Existing local `filogic/current` DTB package does not contain an R4 Lite DTB, and local U-Boot does not contain a Banana Pi R4 Lite defconfig.
+  - This is separate hardware from BPI-R4 and needs its own board file after kernel/U-Boot patches are imported.
+- BPI-R4 Pro:
+  - BPI source: `BPI-R4PRO-8X-OPENWRT-V24.10.0-Master-Devel`
+  - Vendor tree contains MT7988A R4 Pro 8X DTS/overlay files plus a BPI-R4-Pro-specific U-Boot patch.
+  - A newer cached Linux tree has upstream-style R4 Pro DTS files, but active `filogic/current` 6.12 DTBs do not include them.
+  - This should be added as a separate board only after the active filogic kernel and U-Boot patchsets can build it.
+- BPI-M4 plain:
+  - BPI source: `BPI-M4-bsp`
+  - Vendor tree is Realtek RTD1395 with U-Boot 2015.7 and Linux 4.9.119.
+  - It is not covered by existing `bananapim4berry` or `bananapim4zero`, which are Allwinner H618 boards.
+  - It should share future Realtek vendor-family work with W2 where practical.
+- BPI-RV2:
+  - BPI source: `BPI-RV2-SF21H8898-OPENWRT-24.10-BSP`
+  - Vendor tree is RISC-V SF21H8898 with OpenWrt 6.6 DTS and FIT-image flow.
+  - No local Siflower family, kernel support, or U-Boot support exists yet; this is a new family port.
