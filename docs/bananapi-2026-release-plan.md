@@ -52,6 +52,7 @@ These board configs are present in this branch now:
 | `bananapim2ultra` | `csc` | `sun8i` | `current,edge,legacy` | Banana Pi M2 Ultra |
 | `bananapim2zero` | `csc` | `sun8i` | `current,edge,legacy` | Banana Pi M2 Zero |
 | `bananapim3` | `csc` | `sun8i` | `current,edge,legacy` | Banana Pi M3 |
+| `bananapim4` | `wip` | `realtek-rtd139x-bpi` | `legacy` | Banana Pi M4 |
 | `bananapim4berry` | `conf` | `sun50iw9-bpi` | `current,edge` | BananaPi M4 Berry |
 | `bananapim4zero` | `conf` | `sun50iw9-bpi` | `current,edge` | BananaPi BPI-M4-Zero |
 | `bananapim5` | `conf` | `meson-sm1` | `current,edge` | Banana Pi M5 |
@@ -68,6 +69,7 @@ These board configs are present in this branch now:
 | `bananapir4` | `csc` | `filogic` | `current` | Banana Pi R4 |
 | `bananapir4lite` | `wip` | `filogic` | `current` | Banana Pi R4 Lite |
 | `bananapir4pro` | `wip` | `filogic` | `current` | Banana Pi R4 Pro 8X |
+| `bananapiw2` | `wip` | `realtek-rtd129x-bpi` | `legacy` | Banana Pi W2 |
 | `bananapiw3` | `wip` | `rockchip-rk3588` | `vendor` | Banana Pi W3 |
 | `lamobo-r1` | `eos` | `sun7i` | `current,edge` | Lamobo R1 |
 
@@ -78,8 +80,8 @@ Important current findings:
 - `bananapir3mini` was added as `.wip` after a successful Trixie server smoke build using an MT7986 eMMC U-Boot path. It remains outside the default release matrix until hardware boot validation passes.
 - `bananapir64` was added as `.wip` after a successful Trixie server smoke build using an MT7622 SDMMC U-Boot/ATF path. It remains outside the default release matrix until hardware boot validation confirms the modern ATF/FIP layout on real hardware.
 - `bananapiw3` was added as `.wip` after a successful Trixie server smoke build using the RK3588 vendor path derived from ArmSoM W3. It remains outside the default release matrix until hardware boot validation passes.
-- `bananapiw2` and `bananapif2s` were not added yet because the official BPI BSPs require new vendor families and old BPI boot layouts before Armbian can produce meaningful images for them.
-- BPI-M4 plain is not the same board as `bananapim4berry` or `bananapim4zero`. It is Realtek RTD1395 and needs a new Realtek vendor family before images are meaningful.
+- `bananapiw2` now has a Realtek RTD1296 legacy BSP `.wip` path. Armbian U-Boot and kernel package smoke builds pass; full image boot layout and real hardware boot validation are still required before release inclusion.
+- BPI-M4 plain is not the same board as `bananapim4berry` or `bananapim4zero`. It now has a Realtek RTD1395 legacy BSP `.wip` path. Armbian U-Boot and kernel package smoke builds pass; full image boot layout and real hardware boot validation are still required before release inclusion.
 - BPI-R4 Lite and BPI-R4 Pro are separate hardware from `bananapir4`; both now have `.wip` smoke-build paths using newer filogic kernel branches and imported U-Boot support. They remain outside the default matrix until real hardware boot validation passes.
 - BPI-RV2 is a Siflower SF21H8898 RISC-V/OpenWrt board and needs a new architecture family, not just a board config.
 
@@ -97,7 +99,7 @@ Sources to compare:
 Initial candidate families to check for missing or incomplete Armbian support:
 
 - MediaTek router boards not listed locally or not yet buildable. BPI-R64, R4 Lite, and R4 Pro now have `.wip` smoke-build paths; they need hardware validation before promotion.
-- Realtek or vendor BSP boards such as BPI-W2 and BPI-M4 plain if they cannot be supported by mainline.
+- Realtek or vendor BSP boards such as BPI-W2 and BPI-M4 plain, now represented as legacy BSP `.wip` entries until hardware validation proves the old BPI boot layout.
 - Rockchip vendor BSP boards such as BPI-W3 where local Armbian support may be reusable from existing RK3588 board families.
 - Siflower/RISC-V boards such as BPI-RV2, which need a new `siflower-sf21h8898` family and OpenWrt-derived image flow.
 - Older Allwinner variants whose local config exists only as `.csc` and may need legacy kernel/bootloader fallback.

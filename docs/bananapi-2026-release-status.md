@@ -121,7 +121,9 @@ Already represented in this branch:
 - BPI-R3 / R3 Mini as `.wip`
 - BPI-R64 as `.wip`
 - BPI-R4 Lite / R4 Pro as `.wip`
+- BPI-W2 as `.wip`
 - BPI-W3 as `.wip`
+- BPI-M4 plain as `.wip`
 - Banana Pi Pro
 - Lamobo R1
 
@@ -133,9 +135,9 @@ Needs support decision or porting investigation:
 | BPI-R3 | `BPI-R3-bsp`, `BPI-R3-bsp-5.15`, OpenWrt trees | Added as `.wip` | MT7986 filogic smoke image builds; needs hardware boot validation |
 | BPI-R3 Mini | `BPI-R3MINI-OPENWRT-V21.02.3` | Added as `.wip` | MT7986 eMMC smoke image builds; needs hardware boot validation |
 | BPI-R64 | `BPI-R64-BSP`, `BPI-R64-bsp-4.19`, `BPI-R64-bsp-5.4` | Added as `.wip` | MT7622 smoke image builds; needs hardware boot validation because legacy BSP boot layout differs |
-| BPI-W2 | `BPI-W2-bsp` | Missing | RTD1296 vendor family and BPI boot layout required |
+| BPI-W2 | `BPI-W2-bsp` | Added as `.wip` | RTD1296 legacy BSP build hooks added; old BPI boot layout needs hardware validation |
 | BPI-W3 | `BPI-W3-BSP` | Added as `.wip` | RK3588 vendor smoke image builds; needs hardware boot validation |
-| BPI-M4 plain | `BPI-M4-bsp` | Missing | RTD1395 vendor family required; not covered by M4 Berry/Zero |
+| BPI-M4 plain | `BPI-M4-bsp` | Added as `.wip` | RTD1395 legacy BSP build hooks added; old BPI boot layout needs hardware validation |
 | BPI-R4 Lite / R4 Pro | `BPI-R4Lite-*`, `BPI-R4PRO-*` OpenWrt trees | Added as `.wip` | Filogic smoke image builds pass; needs hardware boot validation |
 | BPI-RV2 | `BPI-RV2-SF21H8898-*` | Missing | New Siflower SF21H8898 RISC-V family required |
 
@@ -257,17 +259,21 @@ Smoke validation:
 
 Both boards remain outside the default release matrix until real hardware validation confirms bootloader layout, SD/eMMC boot, Ethernet, and reset behavior.
 
-## BSP Porting Blockers
+## BSP Porting Blockers And WIP
 
-BPI-W2, BPI-F2S, BPI-M4 plain, and BPI-RV2 were inspected against their official BPI BSP or OpenWrt repositories, but no `.wip` board files were added because they would not build through the existing Armbian family paths yet.
+BPI-W2 and BPI-M4 plain now have Realtek legacy BSP `.wip` entries. BPI-F2S and BPI-RV2 remain blocked because this branch still lacks matching Sunplus/SP7021 and Siflower/SF21H8898 families.
 
-BPI-W2 findings:
+BPI-W2 WIP:
 
 - Source: `BPI-W2-bsp` at `6e6aefc35`
 - BSP uses U-Boot 2015.7 and Linux 4.9.119 for RTD1296.
 - Board files exist in the BSP: `rtd-1296-bananapi-w2-2GB.dts`, `rtd129x_bpi_defconfig`, and RTD1296 Banana Pi U-Boot defconfigs.
-- Existing Armbian `realtek-rtd1619b` support is for XpressReal T3 and is not reusable as-is.
-- Required next work: new `realtek-rtd1296` vendor family, custom source hooks for the BSP monorepo, and BPI `bpi-bootsel` bootloader/image layout support.
+- Added board file: `config/boards/bananapiw2.wip`
+- Added family: `realtek-rtd129x-bpi`
+- Vendor U-Boot and kernel builds passed in the BSP tree after host-toolchain patches.
+- Armbian U-Boot package smoke build passed for `BOARD=bananapiw2 BRANCH=legacy RELEASE=trixie`.
+- Armbian kernel package smoke build passed for `BOARD=bananapiw2 BRANCH=legacy RELEASE=trixie KERNEL_CONFIGURE=no`.
+- Required next work: full image boot-layout validation, then real W2 boot validation for the old BPI Realtek boot layout.
 
 BPI-F2S findings:
 
@@ -277,13 +283,18 @@ BPI-F2S findings:
 - This branch has no existing Sunplus/SP7021 family.
 - Required next work: new `sunplus-sp7021` vendor family, armhf vendor kernel packaging, xboot/`u-boot.img` packaging, and the old BPI FAT boot layout.
 
-BPI-M4 plain findings:
+BPI-M4 plain WIP:
 
 - Source: `BPI-M4-bsp` at `25f5b88e`
 - BSP uses Realtek RTD1395 with U-Boot 2015.7 and Linux 4.9.119.
 - Board files exist in the BSP: `rtd-1395-bananapi-m4-1GB.dts`, `rtd-1395-bananapi-m4-2GB.dts`, `rtd139x_bpi_defconfig`, and RTD1395 Banana Pi U-Boot defconfigs.
 - Existing `bananapim4berry` and `bananapim4zero` are Allwinner H618 boards and do not cover BPI-M4 plain.
-- Required next work: new `realtek-rtd1395` vendor family, ideally sharing boot layout code with the future W2 `realtek-rtd1296` family.
+- Added board file: `config/boards/bananapim4.wip`
+- Added family: `realtek-rtd139x-bpi`
+- Vendor U-Boot and kernel builds passed in the BSP tree after host-toolchain patches.
+- Armbian U-Boot package smoke build passed for `BOARD=bananapim4 BRANCH=legacy RELEASE=trixie`.
+- Armbian kernel package smoke build passed for `BOARD=bananapim4 BRANCH=legacy RELEASE=trixie KERNEL_CONFIGURE=no`.
+- Required next work: full image boot-layout validation, then real M4 boot validation for the old BPI Realtek boot layout.
 
 BPI-RV2 findings:
 

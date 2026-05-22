@@ -14,6 +14,8 @@ function artifact_uboot_config_dump() {
 	artifact_input_variables[BOARD]="${BOARD}"
 	artifact_input_variables[BRANCH]="${BRANCH}"
 	artifact_input_variables[ARCH]="${ARCH}"
+	artifact_input_variables[UBOOT_SKIP_MAKEFILE_VERSION]="${UBOOT_SKIP_MAKEFILE_VERSION:-"no"}"
+	artifact_input_variables[UBOOT_VERSION_OVERRIDE]="${UBOOT_VERSION_OVERRIDE:-""}"
 }
 
 function artifact_uboot_prepare_version() {
@@ -37,6 +39,8 @@ function artifact_uboot_prepare_version() {
 	debug_var BOOTPATCHDIR
 	debug_var BOARD
 	debug_var BRANCH
+	debug_var UBOOT_SKIP_MAKEFILE_VERSION
+	debug_var UBOOT_VERSION_OVERRIDE
 
 	declare short_hash_size=4
 
@@ -47,7 +51,15 @@ function artifact_uboot_prepare_version() {
 	fi
 
 	declare -A GIT_INFO_UBOOT=([GIT_SOURCE]="${BOOTSOURCE}" [GIT_REF]="${BOOTBRANCH}")
-	memoize_cache_ttl=$uboot_git_cache_ttl_seconds run_memoized GIT_INFO_UBOOT "git2info" memoized_git_ref_to_info "include_makefile_body"
+	if [[ "${UBOOT_SKIP_MAKEFILE_VERSION:-"no"}" == "yes" ]]; then
+		display_alert "Skipping Makefile version for u-boot" "due to UBOOT_SKIP_MAKEFILE_VERSION=yes" "info"
+		memoize_cache_ttl=$uboot_git_cache_ttl_seconds run_memoized GIT_INFO_UBOOT "git2info" memoized_git_ref_to_info
+		GIT_INFO_UBOOT[MAKEFILE_VERSION]="${UBOOT_VERSION_OVERRIDE:-1}"
+		GIT_INFO_UBOOT[MAKEFILE_FULL_VERSION]="${UBOOT_VERSION_OVERRIDE:-1}"
+		GIT_INFO_UBOOT[MAKEFILE_CODENAME]=""
+	else
+		memoize_cache_ttl=$uboot_git_cache_ttl_seconds run_memoized GIT_INFO_UBOOT "git2info" memoized_git_ref_to_info "include_makefile_body"
+	fi
 	debug_dict GIT_INFO_UBOOT
 
 	# Sanity check, the SHA1 gotta be sane.

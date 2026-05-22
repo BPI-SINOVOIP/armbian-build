@@ -1,0 +1,21 @@
+# Realtek RTD1395 media board. This is the plain Banana Pi M4, not M4 Berry/Zero.
+BOARD_NAME="Banana Pi M4"
+BOARD_VENDOR="sinovoip"
+BOARDFAMILY="realtek-rtd139x-bpi"
+BOARD_MAINTAINER=""
+INTRODUCED="2019"
+
+KERNEL_TARGET="legacy"
+KERNEL_TEST_TARGET="legacy"
+BOOTCONFIG="rtd1395_bananapi_defconfig"
+BOOT_FDT_FILE="realtek/rtd139x/rtd-1395-bananapi-m4-2GB.dtb"
+SRC_EXTLINUX="no"
+SERIALCON="ttyS0"
+HAS_VIDEO_OUTPUT="yes"
+
+REALTEK_BPI_BSP_REPO="https://github.com/BPI-SINOVOIP/BPI-M4-bsp.git"
+REALTEK_BPI_BSP_BRANCH="commit:25f5b88ec4ba34029f964693dc34028b26e6c67c"
+REALTEK_BPI_BSP_BOARD="BPI-M4-720P"
+REALTEK_BPI_UBOOT_CROSS_COMPILE="toolchains/gcc-linaro-7.3.1-2018.05-x86_64_aarch64-linux-gnu/bin/aarch64-linux-gnu-"
+REALTEK_BPI_VENDOR_BOARD="bpi-m4"
+REALTEK_BPI_VENDOR_CHIP="RTD1395"
