@@ -2,11 +2,46 @@
 
 Branch: `bpi-v26.8.0-trunk`
 
-Date: 2026-05-22
+Date: 2026-05-23
 
 ## Rule
 
 Do not add a missing Banana Pi board file to the default release matrix until one server image can be built far enough to validate bootloader packaging and kernel DTB selection. A `.wip` board that is known to fail would make the 2026 matrix noisier without helping the release.
+
+## Current WIP Matrix Validation
+
+The WIP board track has now passed the full eligible server build matrix for:
+
+- Debian 12 `bookworm`
+- Debian 13 `trixie`
+- Ubuntu 22.04 `jammy`
+- Ubuntu 24.04 `noble`
+- Ubuntu 26.04 `resolute`
+
+Validated WIP boards:
+
+- `bananapir3`
+- `bananapir3mini`
+- `bananapir64`
+- `bananapir4lite`
+- `bananapir4pro`
+- `bananapiw2`
+- `bananapiw3`
+- `bananapim4`
+- `bananapif2s`
+- `bananapim6`
+- `bananapicm6`
+- `bananapi6204`
+
+Combined result after retry:
+
+- `output/bananapi-2026/20260522T144740Z/summary.tsv`
+- `output/bananapi-2026/20260522T182154Z/summary.tsv`
+- 59 eligible WIP server rows are `ok`.
+- `bananapicm6` Debian 12 `bookworm` is an expected skip because this branch does not support `riscv64` on `bookworm`.
+- The first run failures were host storage/cache exhaustion; the retry finished cleanly after Docker cache cleanup.
+
+This does not promote the boards out of `.wip`. Hardware validation is still required before adding any of these boards to the default release matrix, especially for boot media, UART, Ethernet, USB, reboot/shutdown, and display where applicable.
 
 ## BPI-R3 First Assessment
 

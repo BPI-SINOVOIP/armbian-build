@@ -2,7 +2,7 @@
 
 Branch: `bpi-v26.8.0-trunk`
 
-Last updated: 2026-05-22
+Last updated: 2026-05-23
 
 ## Plan Push
 
@@ -54,6 +54,30 @@ Result:
 - Selected builds: 12
 - Failed builds: 0
 - All 12 WIP targets were recognized and skipped via `SKIP_EXISTING=yes` because their Trixie server smoke images already exist in `output/images`.
+
+Controlled WIP full server matrix:
+
+```bash
+SKIP_EXISTING=yes KEEP_RAW=no ./b-bananapi-2026 build --board 'bananapir3 bananapir3mini bananapir64 bananapir4lite bananapir4pro bananapiw2 bananapiw3 bananapim4 bananapif2s bananapim6 bananapicm6 bananapi6204' --type server
+SKIP_EXISTING=yes KEEP_RAW=no ./b-bananapi-2026 build --board 'bananapir4lite bananapir4pro bananapiw2 bananapiw3 bananapim4 bananapif2s' --type server
+```
+
+Result:
+
+- First run log folder: `output/bananapi-2026/20260522T144740Z`
+- First run outer log: `output/bananapi-2026/wip-server-20260522T144740Z.log`
+- First run selected builds: 59
+- First run failed builds: 21
+- First run skipped builds: 1
+- The skipped build is the expected `bananapicm6` Debian 12 `bookworm` case because this tree does not support `bookworm` for `riscv64`.
+- The 21 failures were host resource failures from insufficient apt or Docker build cache space, not board-specific compile errors.
+- Retry log folder: `output/bananapi-2026/20260522T182154Z`
+- Retry outer log: `output/bananapi-2026/wip-server-retry-20260522T182154Z.log`
+- Retry selected builds: 30
+- Retry failed builds: 0
+- Combined result after retry: 59 eligible WIP server builds are `ok`.
+- The combined WIP server matrix now covers Debian 12 `bookworm`, Debian 13 `trixie`, Ubuntu 22.04 `jammy`, Ubuntu 24.04 `noble`, and Ubuntu 26.04 `resolute` for all eligible WIP boards.
+- The release helper compressed generated raw images to `.img.xz`, verified them with `xz -t`, wrote `.img.xz.sha`, and removed raw `.img` files because `KEEP_RAW=no`.
 
 Target releases:
 
@@ -224,7 +248,18 @@ find output/images/2026.05 -maxdepth 2 -type f -name '*.img.xz.sha' -print0 |
   ' _
 ```
 
-Because the existing 2026.05 release set is complete and passes file integrity checks, the next code work is not rebuilding these completed images. The next code work is to investigate and add missing board families in small branches/commits, starting with router/vendor BSP boards because they are the clearest gap versus BPI GitHub.
+Because the existing 2026.05 default release set is complete and passes file integrity checks, the default archived images do not need a blind rebuild. The WIP board expansion is now server-clean across the eligible five-OS matrix, so the next execution track is desktop images and then formal release packaging/reporting for the boards that pass.
+
+Current WIP server expansion status:
+
+| Board group | Releases | Type | Result |
+| --- | --- | --- | --- |
+| `bananapir3`, `bananapir3mini`, `bananapir64` | `bookworm`, `trixie`, `jammy`, `noble`, `resolute` | server | OK |
+| `bananapir4lite`, `bananapir4pro` | `bookworm`, `trixie`, `jammy`, `noble`, `resolute` | server | OK after retry |
+| `bananapiw2`, `bananapiw3`, `bananapim4`, `bananapif2s` | `bookworm`, `trixie`, `jammy`, `noble`, `resolute` | server | OK after retry |
+| `bananapim6`, `bananapi6204` | `bookworm`, `trixie`, `jammy`, `noble`, `resolute` | server | OK |
+| `bananapicm6` | `trixie`, `jammy`, `noble`, `resolute` | server | OK |
+| `bananapicm6` | `bookworm` | server | Expected skip: `riscv64` unsupported for Debian 12 in this tree |
 
 ## BPI-R3 WIP Result
 

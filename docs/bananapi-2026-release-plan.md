@@ -4,7 +4,7 @@ Branch: `bpi-v26.8.0-trunk`
 
 Repository: `git@github.com:BPI-SINOVOIP/armbian-build.git`
 
-Date: 2026-05-22
+Date: 2026-05-23
 
 ## Objective
 
@@ -123,6 +123,13 @@ Output of this step:
 - No full release build for a newly added board until one server image boots far enough to verify storage, network, and serial console.
 
 ## Execution Phases
+
+Current progress:
+
+- Phase 0 is complete and pushed.
+- Phase 1 is complete for the default release artifact audit and upstream/BPI coverage comparison.
+- Phase 2 server validation is complete for the added WIP boards across every eligible target OS.
+- The next active work is Phase 2 desktop validation, followed by formal packaging/reporting for the boards that pass.
 
 ### Phase 0: Push This Plan
 
@@ -259,8 +266,8 @@ The release is considered complete when:
 
 ## Immediate Next Actions After This Push
 
-1. Generate the board/release dry-run matrix.
-2. Audit `output/images` for existing complete and incomplete images.
-3. Compare Banana Pi board coverage against BPI-SINOVOIP GitHub and upstream Armbian.
-4. Start server-only builds with `SKIP_EXISTING=yes`.
-5. Fix first build failures by family, commit, push, and continue the matrix.
+1. Start desktop builds with `SKIP_EXISTING=yes KEEP_RAW=no`.
+2. Classify desktop failures as board-specific, desktop-stack-specific, or host-resource failures.
+3. Retry host-resource failures after cleanup.
+4. Keep `.wip` boards out of the default release set until hardware validation is complete.
+5. Update the release status document and push after each clean batch.
