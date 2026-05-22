@@ -61,9 +61,9 @@ BPI BSP ATF/U-Boot build details:
   - `fiptool create --soc-fw atf-mt/build_sdmmc/mt7986/release/bl31.bin --nt-fw u-boot-mt/build_sdmmc/u-boot.bin u-boot-mt/build_sdmmc/u-boot_sdmmc.fip`
   - `fiptool create --soc-fw atf-mt/build_emmc/mt7986/release/bl31.bin --nt-fw u-boot-mt/build_emmc/u-boot.bin u-boot-mt/build_emmc/u-boot_emmc.fip`
 
-## Current Blocker
+## Initial Blocker
 
-The current Armbian `filogic` family is R4/MT7988-specific:
+The original Armbian `filogic` family was R4/MT7988-specific:
 
 - `ATF_TARGET_MAP` is hardcoded to `PLAT=mt7988`.
 - `uboot_custom_postprocess()` copies `build/mt7988/release/bl2.img`.
@@ -73,27 +73,41 @@ The current Armbian `filogic` family is R4/MT7988-specific:
 
 Because of this, adding `config/boards/bananapir3.wip` alone would select the wrong ATF platform and produce a known-bad bootloader path.
 
-## Proposed R3 Implementation
+## R3 WIP Implementation
 
-1. Refactor `config/sources/families/filogic.conf` so board files can set SoC-specific variables:
-   - `FILOGIC_SOC=mt7988` or `mt7986`
-   - `FILOGIC_BOOT_DEVICE=sdmmc`
-   - `FILOGIC_DRAM_FLAGS`
-   - `FILOGIC_ATF_BUILD_DIR`
-   - `FILOGIC_UBOOT_FIP`
-2. Keep R4 behavior byte-for-byte equivalent after the refactor.
-3. Add `config/boards/bananapir3.wip` only after the family refactor is verified with an unchanged R4 build.
-4. Start R3 with SDMMC only:
-   - `BOOTCONFIG="mt7986a_bpir3_sd_defconfig"`
-   - likely `BOOT_FDT_FILE="mediatek/mt7986a-bananapi-bpi-r3-sd-nor.dtb"` for a flattened SD/NOR DTB if the kernel tree emits it
-   - `HAS_VIDEO_OUTPUT="no"`
-5. Build only one smoke image first:
+Implemented in this branch:
+
+- `config/sources/families/filogic.conf` now allows board files to override:
+  - `FILOGIC_SOC`
+  - `FILOGIC_BOOT_DEVICE`
+  - `FILOGIC_ATF_FLAGS`
+- Existing R4 defaults remain `mt7988`, `sdmmc`, and the previous R4 ATF flags.
+- `config/boards/bananapir3.wip` starts R3 with SDMMC only:
+  - `BOOTCONFIG="mt7986a_bpir3_sd_defconfig"`
+  - `BOOT_FDT_FILE="mediatek/mt7986a-bananapi-bpi-r3-sd-nor.dtb"`
+  - `FILOGIC_SOC="mt7986"`
+  - `FILOGIC_ATF_FLAGS="DRAM_USE_DDR4=1 HAVE_DRAM_OBJ_FILE=yes"`
+  - `HAS_VIDEO_OUTPUT="no"`
+
+Validation completed:
+
+- U-Boot/ATF package smoke build passed:
 
 ```bash
-./compile.sh build BOARD=bananapir3 BRANCH=current RELEASE=trixie BUILD_DESKTOP=no BUILD_MINIMAL=no KERNEL_CONFIGURE=no EXPERT=yes
+./compile.sh uboot BOARD=bananapir3 BRANCH=current RELEASE=trixie EXPERT=yes
 ```
 
-6. Only after the smoke image builds, add it to the 2026 release matrix.
+- Trixie server smoke image build passed:
+
+```bash
+./compile.sh build BOARD=bananapir3 BRANCH=current RELEASE=trixie BUILD_DESKTOP=no BUILD_MINIMAL=no KERNEL_CONFIGURE=no EXPERT=yes COMPRESS_OUTPUTIMAGE=xz
+```
+
+- Output image:
+  - `output/images/Armbian-unofficial_26.05.0-trunk_Bananapir3_trixie_current_6.12.82.img.xz`
+- `xz -t` passed for the generated image.
+
+Keep R3 as `.wip` until a real board boot test confirms UART, storage, Ethernet, and reset behavior. Do not add R3 to the default 2026 release matrix before that hardware validation.
 
 ## Next Candidates After R3
 

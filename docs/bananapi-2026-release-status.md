@@ -125,7 +125,7 @@ Needs support decision or porting investigation:
 | Candidate | BPI source found | Local board config | Proposed path |
 | --- | --- | --- | --- |
 | BPI-F2S | `BPI-F2S-bsp` | Missing | Assess vendor BSP first, then decide `.wip` or legacy-only |
-| BPI-R3 | `BPI-R3-bsp`, `BPI-R3-bsp-5.15`, OpenWrt trees | Missing | Prefer mainline/filogic if practical, else BSP import |
+| BPI-R3 | `BPI-R3-bsp`, `BPI-R3-bsp-5.15`, OpenWrt trees | Added as `.wip` | MT7986 filogic smoke image builds; needs hardware boot validation |
 | BPI-R3 Mini | `BPI-R3MINI-OPENWRT-V21.02.3` | Missing | OpenWrt/vendor reference first |
 | BPI-R64 | `BPI-R64-BSP`, `BPI-R64-bsp-4.19`, `BPI-R64-bsp-5.4` | Missing | Legacy/vendor path likely needed |
 | BPI-W2 | `BPI-W2-bsp` | Missing | Vendor BSP only unless mainline is practical |
@@ -169,3 +169,16 @@ find output/images/2026.05 -maxdepth 2 -type f -name '*.img.xz.sha' -print0 |
 ```
 
 Because the existing 2026.05 release set is complete and passes file integrity checks, the next code work is not rebuilding these completed images. The next code work is to investigate and add missing board families in small branches/commits, starting with router/vendor BSP boards because they are the clearest gap versus BPI GitHub.
+
+## BPI-R3 WIP Result
+
+BPI-R3 was added as a `.wip` board after refactoring the shared `filogic` family so board files can select the ATF SoC, boot device, and DRAM flags. The current R3 path uses MT7986 SDMMC boot with `mt7986a_bpir3_sd_defconfig`.
+
+Smoke validation:
+
+- U-Boot/ATF package build passed for `BOARD=bananapir3 BRANCH=current RELEASE=trixie`.
+- Trixie server image build passed for `BOARD=bananapir3 BRANCH=current RELEASE=trixie BUILD_DESKTOP=no`.
+- Generated image: `output/images/Armbian-unofficial_26.05.0-trunk_Bananapir3_trixie_current_6.12.82.img.xz`
+- `xz -t` passed for the generated image.
+
+R3 remains outside the default release matrix until hardware boot validation confirms storage, Ethernet, and reset behavior.
