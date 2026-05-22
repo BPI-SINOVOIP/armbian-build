@@ -805,6 +805,38 @@ Practical porting direction:
 
 Status: blocked for Armbian image build until a new `siflower-sf21h8898` RISC-V vendor/OpenWrt-derived family is designed. This should be treated as a separate architecture family, not a small board-file addition.
 
+## BPI GitHub Coverage Refresh
+
+Checked on 2026-05-22 after fetching upstream Armbian `main` at `869f0df25`
+and the public `BPI-SINOVOIP` GitHub repository list.
+
+Additional repositories that look like missing boards at first glance:
+
+- `bpi-cs6202`
+  - Checked commit: `913b4732b`.
+  - README title is `bpi-cs6204`, and the scripts build the same Allwinner R40/M2 Ultra U-Boot and Linux 5.4 family used by the BPI-6204 BSP.
+  - The DTS comments explicitly mention CS6204 reusing the CS6202 SD-card detect GPIO for CAN interrupt and keeping `broken-cd` for CS6202 compatibility.
+  - Current Armbian action: treat this as covered by `bananapi6204.wip` until BPI provides a separate CS6202 schematic/DT requirement. Do not add a duplicate board id that points at the BPI-6204 DTB.
+- `BPI-WiFi5-Siflower`
+  - Checked repository default branch `main` plus public README.
+  - Provides U-Boot, Linux 4.14, and OpenWrt 18.06 build commands for `sfa28_ac28` / `a28_bpi`.
+  - Flashing is documented as a web-interface firmware upgrade, not an SD/eMMC Debian/Ubuntu image.
+  - Current Armbian action: group with the Siflower/OpenWrt-style blocked work. It needs a Siflower family and an explicit router firmware artifact policy before it can enter this release.
+- `BPI-EAI80-bsp`
+  - Checked repository default branch `master`.
+  - Provides an Edgeless EAI80 AIoT/MCU SDK with `KelisSDK/ugelis` board files, not a Linux SBC boot stack.
+  - Current Armbian action: not applicable for Debian/Ubuntu image release.
+- `BPI-OM7-orbbec_reconstruction`
+  - Checked repository default branch `main`.
+  - README says it is tested on BPI-OM7, an integrated platform consisting of BPI-M7 plus an ORBBEC Gemini 2 camera, running Ubuntu 24.04.
+  - Current Armbian action: base OS remains `bananapim7`; this repository is an application stack, not a separate image target.
+
+Result: after the current WIP additions, the only clear Linux-system-capable
+BPI GitHub board without a local Armbian board entry is still BPI-RV2, and it
+is blocked by the Siflower/OpenWrt FIT-image boot model. BPI-WiFi5 is related
+but uses an older Siflower OpenWrt router flow rather than the requested
+Debian/Ubuntu raw image release model.
+
 ## Next Candidates After Current WIP Batch
 
 | Candidate | Reason | First action |
@@ -816,6 +848,7 @@ Status: blocked for Armbian image build until a new `siflower-sf21h8898` RISC-V 
 | BPI-CM6 | WIP SpacemiT K1 BSP path and extlinux/raw bootloader layout added | Validate generated legacy image on real CM6 hardware |
 | BPI-6204 | WIP Allwinner R40 path and conservative eMMC timing added | Validate generated legacy image on real BPI-6204 hardware |
 | BPI-RV2 | BPI has SF21H8898 OpenWrt BSP | Design new `siflower-sf21h8898` RISC-V family |
+| BPI-WiFi5 Router | BPI has older Siflower OpenWrt BSP | Decide whether router web-upgrade firmware belongs in the Armbian release scope |
 | BPI-R3/R3 Mini/R64/R4 Lite/R4 Pro/W3 | WIP image builds now pass | Hardware boot validation before promotion |
 
 ## Second-Pass Candidate Findings

@@ -89,6 +89,9 @@ Per-folder payload count:
 
 Compared local `config/boards` with upstream Armbian `main` board configs.
 
+Refreshed on 2026-05-22 after fetching upstream `main` at `869f0df25`
+(`build(deps): bump step-security/harden-runner from 2.19.3 to 2.19.4`).
+
 Local-only Banana Pi board files:
 
 - `bananapim2.csc`
@@ -101,6 +104,15 @@ Upstream-only Banana Pi board file:
 - `bananapim2.eos`
 
 Important conclusion: `P2 Zero` and `M2 Berry` are already present in this BPI release branch, while upstream Armbian does not currently have those board files in the same form.
+
+Additional BPI GitHub coverage refresh:
+
+- GitHub user `BPI-SINOVOIP` currently exposes 123 repositories through the public API.
+- `BPI-EAI80-bsp` is an Edgeless EAI80 AIoT/MCU SDK with `KelisSDK/ugelis` board files, not a Debian/Ubuntu SBC image target.
+- `BPI-OM7-orbbec_reconstruction` is an application repository for BPI-M7 plus an Orbbec Gemini 2 camera on Ubuntu 24.04, not a separate board image target.
+- `bpi-cs6202` currently has README title `bpi-cs6204`; its build scripts use Allwinner R40/M2 Ultra U-Boot, Linux 5.4, and the same CS6204/CS6202-compatible device-tree direction already covered by `bananapi6204.wip`.
+- `BPI-WiFi5-Siflower` is a Siflower WiFi router BSP using U-Boot, Linux 4.14, and OpenWrt 18.06 web-upgrade firmware. It belongs with the Siflower/OpenWrt-style blocked bucket, not the normal Armbian raw disk-image matrix.
+- `BPI-RV2-SF21H8898-OPENWRT-24.10-BSP` remains the only clear public BPI board repository that is both not represented by a local Armbian board and plausibly Linux-system capable, but it still lacks an Armbian raw-image boot path.
 
 ## BPI-SINOVOIP GitHub Coverage Check
 
@@ -147,6 +159,10 @@ Needs support decision or porting investigation:
 | BPI-6204 | local `bpi-cs6204-linux-6.12` BSP | Added as `.wip` | Allwinner R40 legacy smoke image builds with M2 Ultra U-Boot, BPI-6204 DTB, and conservative eMMC timing; needs hardware validation |
 | BPI-R4 Lite / R4 Pro | `BPI-R4Lite-*`, `BPI-R4PRO-*` OpenWrt trees | Added as `.wip` | Filogic smoke image builds pass; needs hardware boot validation |
 | BPI-RV2 | `BPI-RV2-SF21H8898-*` | Missing | New Siflower SF21H8898 RISC-V family required |
+| BPI-WiFi5 Router | `BPI-WiFi5-Siflower` | Missing | Siflower/OpenWrt 18.06 web-upgrade firmware path; blocked from normal Armbian raw-image matrix |
+| BPI-EAI80 | `BPI-EAI80-bsp` | Not applicable | AIoT/MCU SDK, not a Debian/Ubuntu SBC image target |
+| BPI-OM7 | `BPI-OM7-orbbec_reconstruction` | Covered by `bananapim7` base board | Application stack for M7 plus Orbbec camera, not a separate board image |
+| BPI-CS6202/CS6204 BSP | `bpi-cs6202` | Covered by `bananapi6204.wip` | Repository currently describes `bpi-cs6204` and matches the R40/CS6204 support already added |
 
 ## Immediate Execution Result
 
