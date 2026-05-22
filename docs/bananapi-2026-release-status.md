@@ -124,12 +124,12 @@ Needs support decision or porting investigation:
 
 | Candidate | BPI source found | Local board config | Proposed path |
 | --- | --- | --- | --- |
-| BPI-F2S | `BPI-F2S-bsp` | Missing | Assess vendor BSP first, then decide `.wip` or legacy-only |
+| BPI-F2S | `BPI-F2S-bsp` | Missing | SP7021 vendor/legacy family required |
 | BPI-R3 | `BPI-R3-bsp`, `BPI-R3-bsp-5.15`, OpenWrt trees | Added as `.wip` | MT7986 filogic smoke image builds; needs hardware boot validation |
-| BPI-R3 Mini | `BPI-R3MINI-OPENWRT-V21.02.3` | Missing | OpenWrt/vendor reference first |
-| BPI-R64 | `BPI-R64-BSP`, `BPI-R64-bsp-4.19`, `BPI-R64-bsp-5.4` | Missing | Legacy/vendor path likely needed |
-| BPI-W2 | `BPI-W2-bsp` | Missing | Vendor BSP only unless mainline is practical |
-| BPI-W3 | `BPI-W3-BSP` | Missing | Vendor BSP only unless mainline is practical |
+| BPI-R3 Mini | `BPI-R3MINI-OPENWRT-V21.02.3` | Missing | Kernel DT exists; U-Boot DTS/defconfig missing locally |
+| BPI-R64 | `BPI-R64-BSP`, `BPI-R64-bsp-4.19`, `BPI-R64-bsp-5.4` | Missing | Kernel DT exists; MT7622 U-Boot/family work required |
+| BPI-W2 | `BPI-W2-bsp` | Missing | RTD1296 vendor family required |
+| BPI-W3 | `BPI-W3-BSP` | Missing | RK3588 vendor sources found; compare with BPI-M7 path |
 | BPI-M4 plain | `BPI-M4-bsp` | Ambiguous | Compare against existing `M4 Berry` / `M4 Zero` support |
 | BPI-R4 Lite / R4 Pro | `BPI-R4Lite-*`, `BPI-R4PRO-*` OpenWrt trees | Missing | Decide whether these are separate release boards |
 | BPI-RV2 | `BPI-RV2-SF21H8898-*` | Missing | Architecture/toolchain feasibility check required |

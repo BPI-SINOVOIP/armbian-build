@@ -62,10 +62,14 @@ These board configs are present in this branch now:
 | `bananapipro` | `csc` | `sun7i` | `current,edge,legacy` | Banana Pi Pro |
 | `bananapir2` | `csc` | `mt7623` | `current` | Banana Pi R2 |
 | `bananapir2pro` | `csc` | `rockchip64` | `current,edge` | Banana Pi R2 Pro |
+| `bananapir3` | `wip` | `filogic` | `current` | Banana Pi R3 |
 | `bananapir4` | `csc` | `filogic` | `current` | Banana Pi R4 |
 | `lamobo-r1` | `eos` | `sun7i` | `current,edge` | Lamobo R1 |
 
-Important current finding: `bananapip2zero` and `bananapim2berry` are already present in this branch. They are not missing board files, but they still need release build and boot validation.
+Important current findings:
+
+- `bananapip2zero` and `bananapim2berry` are already present in this branch. They are not missing board files, but they still need release build and boot validation.
+- `bananapir3` was added as `.wip` after a successful Trixie server smoke build. It remains outside the default release matrix until hardware boot validation passes.
 
 ## Missing-Board Investigation Plan
 
@@ -80,8 +84,9 @@ Sources to compare:
 
 Initial candidate families to check for missing or incomplete Armbian support:
 
-- MediaTek router boards not listed locally, for example BPI-R3, BPI-R3 Mini, and BPI-R64 if suitable source is available.
-- Realtek or vendor BSP boards such as BPI-W2/W3 if they cannot be supported by mainline.
+- MediaTek router boards not listed locally, for example BPI-R3 Mini and BPI-R64 if suitable source is available.
+- Realtek or vendor BSP boards such as BPI-W2 if they cannot be supported by mainline.
+- Rockchip vendor BSP boards such as BPI-W3 where local Armbian support may be reusable from existing RK3588 board families.
 - Older Allwinner variants whose local config exists only as `.csc` and may need legacy kernel/bootloader fallback.
 - Local hardware-specific additions such as BPI-6204 if they are intended for the public Banana Pi release set.
 
