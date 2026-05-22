@@ -1,0 +1,17 @@
+# Mediatek MT7622A router board
+BOARD_NAME="Banana Pi R64"
+BOARD_VENDOR="sinovoip"
+BOARDFAMILY="filogic"
+BOARD_MAINTAINER=""
+INTRODUCED="2019"
+KERNEL_TARGET="current"
+KERNEL_TEST_TARGET="current"
+BOOTCONFIG="mt7622_bananapi_bpi-r64-sdmmc_defconfig"
+BOOT_FDT_FILE="mediatek/mt7622-bananapi-bpi-r64.dtb"
+SRC_EXTLINUX="yes"
+SRC_CMDLINE="console=ttyS0,115200n1 earlyprintk loglevel=8 initcall_debug=0 cgroup_enable=memory"
+HAS_VIDEO_OUTPUT="no"
+
+declare -g FILOGIC_SOC="mt7622"
+declare -g FILOGIC_BOOT_DEVICE="sdmmc"
+declare -g FILOGIC_FIP_NAME="u-boot_sdmmc.fip"

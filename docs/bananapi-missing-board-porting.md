@@ -167,13 +167,127 @@ Validation completed:
 
 Keep W3 as `.wip` until a real board boot test confirms storage, Ethernet, display, and boot media behavior.
 
-## Next Candidates After R3
+## R64 WIP Implementation
+
+Implemented in this branch:
+
+- `config/boards/bananapir64.wip` adds Banana Pi R64 as an MT7622 board on the existing `filogic` family.
+- `patch/u-boot/u-boot-filogic/454-add-bpi-r64-defconfig.patch` adds `mt7622_bananapi_bpi-r64-sdmmc_defconfig`, derived from the generic MT7622 RFB config but using the Banana Pi R64 device tree and prompt.
+- The kernel DTB already exists in the current filogic DTB package:
+  - `mediatek/mt7622-bananapi-bpi-r64.dtb`
+- The board sets:
+  - `BOOTCONFIG="mt7622_bananapi_bpi-r64-sdmmc_defconfig"`
+  - `BOOT_FDT_FILE="mediatek/mt7622-bananapi-bpi-r64.dtb"`
+  - `FILOGIC_SOC="mt7622"`
+  - `FILOGIC_BOOT_DEVICE="sdmmc"`
+  - `FILOGIC_FIP_NAME="u-boot_sdmmc.fip"`
+
+Validation completed:
+
+- U-Boot/ATF package smoke build passed:
+
+```bash
+./compile.sh uboot BOARD=bananapir64 BRANCH=current RELEASE=trixie EXPERT=yes
+```
+
+- Trixie server smoke image build passed:
+
+```bash
+./compile.sh build BOARD=bananapir64 BRANCH=current RELEASE=trixie BUILD_DESKTOP=no BUILD_MINIMAL=no KERNEL_CONFIGURE=no EXPERT=yes COMPRESS_OUTPUTIMAGE=xz
+```
+
+- Output image:
+  - `output/images/Armbian-unofficial_26.05.0-trunk_Bananapir64_trixie_current_6.12.82.img.xz`
+- `xz -t` and sha256 validation passed for the generated image.
+
+Important hardware note:
+
+- The legacy BPI-R64 BSP writes `preloader_bpi-r64_forsdcard-2k.img` at 2 KiB, `BPI-R64-atf.img` at 512 KiB, and `u-boot-mtk.bin` at 768 KiB.
+- This WIP Armbian path uses the current mtk-openwrt ATF/FIP layout (`bl2.img` plus `u-boot_sdmmc.fip`) from the shared `filogic` family.
+- Keep R64 as `.wip` until a real board boot test confirms the modern ATF/FIP layout, SDMMC boot, Ethernet, and reset behavior.
+
+## W2 BSP Porting Assessment
+
+Checked BPI source:
+
+- Repository: `https://github.com/BPI-SINOVOIP/BPI-W2-bsp`
+- Checked commit: `6e6aefc35`
+- Branches found: `master`, `rtk1296_gl`, `rtk1296_ow`
+
+What the BSP provides:
+
+- Realtek RTD1296 board DTS:
+  - `linux-rtk/arch/arm64/boot/dts/realtek/rtd129x/rtd-1296-bananapi-w2-2GB.dts`
+- Kernel defconfig:
+  - `linux-rtk/arch/arm64/configs/rtd129x_bpi_defconfig`
+- U-Boot defconfigs:
+  - `u-boot-rtk/configs/rtd1296_sd_bananapi_defconfig`
+  - `u-boot-rtk/configs/rtd1296_emmc_bananapi_defconfig`
+  - `u-boot-rtk/configs/rtd1296_spi_bananapi_defconfig`
+- BSP generation uses U-Boot 2015.7 and Linux 4.9.119.
+- The BSP expects the old BPI boot layout:
+  - boot files under `bananapi/bpi-w2/linux/`
+  - `uImage`, `uInitrd`, `rtd-1296-bananapi-w2-2GB.dtb`, and `bluecore.audio`
+  - root defaults to `/dev/mmcblk0p2`
+  - bootloader package `100MB/BPI-W2-720P-2k.img.gz`
+- `scripts/bootloader.sh` creates a 1 MiB temporary image, writes `rtk-pack/rtk/bpi-w2/bin/u-boot.bin` at `bs=1k seek=40`, then exports the 2 KiB-offset image used by `bpi-bootsel`.
+
+Why no `.wip` board was added yet:
+
+- The existing Armbian Realtek family is `realtek-rtd1619b` for XpressReal T3 with U-Boot 2024.01 and Linux 6.6; it is not directly reusable for RTD1296/W2.
+- The W2 BSP is a combined vendor monorepo with `u-boot-rtk`, `linux-rtk`, prebuilt boot assets, and BPI boot scripts. Armbian's normal `BOOTSOURCE` and `KERNELSOURCE` path expects separate source roots.
+- A useful W2 `.wip` board requires a new `realtek-rtd1296` vendor family with custom source fetch/build hooks, a bootloader writer matching the BPI `bpi-bootsel` image layout, and a boot partition layout compatible with the old BPI `uEnv.txt`.
+
+Status: blocked for image build until the `realtek-rtd1296` vendor family is implemented. Do not add a board file that cannot build.
+
+## F2S BSP Porting Assessment
+
+Checked BPI source:
+
+- Repository: `https://github.com/BPI-SINOVOIP/BPI-F2S-bsp`
+- Checked commit: `3eee97bd8`
+- Branches found: `master`, `sp-kernel-4.19.37`
+
+What the BSP provides:
+
+- Sunplus SP7021 board DTS:
+  - `linux-sp/arch/arm/boot/dts/sp7021-bpi-f2s.dts`
+  - `u-boot-sp/arch/arm/dts/sp7021-bpi-f2s.dts`
+- Kernel defconfig:
+  - `linux-sp/arch/arm/configs/sp7021_chipC_bpi-f2s_defconfig`
+- U-Boot defconfig:
+  - `u-boot-sp/configs/sp7021_bpi_f2s_defconfig`
+- BSP generation uses U-Boot 2019.4 and Linux 5.4.35.
+- `configure bpi-f2s` selects:
+  - `ARCH=arm`
+  - `UBOOT_CONFIG=sp7021_bpi_f2s_defconfig`
+  - `KERNEL_CONFIG=sp7021_chipC_bpi-f2s_defconfig`
+  - `KERNEL_DTB=sp7021-bpi-f2s.dtb`
+- The BSP expects the old BPI boot layout:
+  - FAT boot file `/ISPBOOOT.BIN` for xboot
+  - `u-boot.img`
+  - boot files under `bananapi/bpi-f2s/linux/`
+  - `uImage`, `uInitrd`, and `sp7021-bpi-f2s.dtb`
+- `scripts/bootloader.sh` writes `u-boot.img` at `bs=512 seek=34` and exports a 2 KiB-offset image.
+- The BSP also provides prebuilt common boot assets:
+  - `sp-pack/sp7021/common/bin/BPI-F2S-xboot-emmc-boot0-0k.img.gz`
+  - `sp-pack/sp7021/common/bin/ISPBOOOT.BIN`
+
+Why no `.wip` board was added yet:
+
+- This branch has no existing Sunplus/SP7021 Armbian family to inherit.
+- The BSP is armhf, vendor-kernel based, and uses a BPI-specific FAT boot layout rather than the standard Armbian extlinux/boot script path.
+- A useful F2S `.wip` board requires a new `sunplus-sp7021` vendor family, custom source fetch/build hooks for `u-boot-sp` and `linux-sp`, packaging for xboot/`u-boot.img`, and an image layout matching the BSP boot expectations.
+
+Status: blocked for image build until the `sunplus-sp7021` vendor family is implemented. Do not add a board file that cannot build.
+
+## Next Candidates After Current WIP Batch
 
 | Candidate | Reason | First action |
 | --- | --- | --- |
-| BPI-R64 | BPI has multiple BSP branches; mainline kernel DT exists locally | Create or import MT7622 family/U-Boot path before board file |
-| BPI-W2 | BPI has `BPI-W2-bsp`; RTD1296 sources found | Vendor BSP path; existing `realtek-rtd1619b` family is not directly reusable |
-| BPI-F2S | BPI has `BPI-F2S-bsp`; SP7021 sources found | New Sunplus SP7021 legacy/vendor family required |
+| BPI-W2 | BPI has `BPI-W2-bsp`; RTD1296 sources found | Implement new `realtek-rtd1296` vendor family and BPI boot layout |
+| BPI-F2S | BPI has `BPI-F2S-bsp`; SP7021 sources found | Implement new `sunplus-sp7021` vendor family and BPI boot layout |
+| BPI-R64 | WIP image builds now pass | Hardware boot validation before promotion |
 | BPI-R4 Lite / R4 Pro | BPI has OpenWrt trees, local board missing | Decide if release should treat these as separate boards |
 
 ## Second-Pass Candidate Findings
@@ -189,12 +303,12 @@ Checked on 2026-05-22 after the R3 WIP build:
 - BPI-R64:
   - BPI source: `BPI-R64-BSP`, `BPI-R64-bsp-4.19`, `BPI-R64-bsp-5.4`
   - Local kernel trees contain `mediatek/mt7622-bananapi-bpi-r64.dtb`.
-  - Local U-Boot only has generic `mt7622_rfb_defconfig`; this branch has no dedicated MT7622 Armbian family.
-  - First real work is an MT7622 bootloader/family assessment, not a board file.
+  - This branch now adds `bananapir64.wip` and a board-specific MT7622 U-Boot defconfig.
+  - Trixie server smoke image now builds and passes `xz -t` and sha256 validation; hardware validation is still required because the legacy BPI bootloader layout differs from the modern ATF/FIP layout used by this Armbian family.
 - BPI-W2:
   - BPI source: `BPI-W2-bsp`
   - Vendor tree contains `rtd-1296-bananapi-w2-2GB.dts` and `rtd129x_bpi_defconfig`.
-  - Existing local Realtek support is `realtek-rtd1619b`, so W2 needs a separate RTD1296 vendor path.
+  - Existing local Realtek support is `realtek-rtd1619b`, so W2 needs a separate RTD1296 vendor path with custom BSP source and bootloader packaging hooks.
 - BPI-W3:
   - BPI source: `BPI-W3-BSP`
   - Vendor tree contains `rk3588-bpi-w3.dts`, `BoardConfig-rk3588-bpi-w3.mk`, and `bananapi_w3_defconfig`.
@@ -203,4 +317,4 @@ Checked on 2026-05-22 after the R3 WIP build:
 - BPI-F2S:
   - BPI source: `BPI-F2S-bsp`
   - Vendor tree contains `sp7021-bpi-f2s.dts` and `sp7021_chipC_bpi-f2s_defconfig`.
-  - No matching local Armbian family exists yet; this should be treated as a new legacy/vendor family.
+  - No matching local Armbian family exists yet; this should be treated as a new legacy/vendor family with custom xboot/`u-boot.img` packaging.
