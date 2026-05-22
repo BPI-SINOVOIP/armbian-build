@@ -136,11 +136,36 @@ Needs support decision or porting investigation:
 
 ## Immediate Execution Result
 
-The current release artifact folder is complete by file count for the planned matrix. The next execution step is integrity validation:
+The current release artifact folder is complete by file count for the planned matrix.
+
+Integrity validation result:
+
+- Log folder: `output/bananapi-2026/integrity-20260522T050208Z-p4`
+- `xz -t` checked 248 `.img.xz` files.
+- `xz -t` errors: 0
+- Path-fixed sha256 validation checked 248 `.img.xz.sha` files.
+- sha256 errors: 0
+
+The plain `sha256sum -c` command is not usable directly from the release subfolders because the `.sha` files record `output/images/<filename>` paths while the final release files live in per-board folders under `output/images/2026.05/bpi-*`. The successful validation used the hash from each `.sha` file and verified the image with the same basename in that `.sha` file's directory.
+
+Validation commands used:
 
 ```bash
-find output/images/2026.05 -maxdepth 2 -type f -name '*.img.xz' -print0 | xargs -0 -n1 xz -t
-sha256sum -c <each .img.xz.sha>
+find output/images/2026.05 -maxdepth 2 -type f -name '*.img.xz' -print0 |
+  sort -z |
+  xargs -0 -n1 -P4 sh -c 'xz -t "$1"' _
+
+find output/images/2026.05 -maxdepth 2 -type f -name '*.img.xz.sha' -print0 |
+  sort -z |
+  xargs -0 -n1 -P4 sh -c '
+    sha="$1"
+    dir=$(dirname "$sha")
+    read -r expected recorded < "$sha"
+    file="$dir/$(basename "$recorded")"
+    actual_line=$(sha256sum "$file")
+    actual=${actual_line%% *}
+    test "$actual" = "$expected"
+  ' _
 ```
 
-After integrity validation, the next code work is not rebuilding existing completed images. The next code work is to investigate and add missing board families in small branches/commits, starting with router/vendor BSP boards because they are the clearest gap versus BPI GitHub.
+Because the existing 2026.05 release set is complete and passes file integrity checks, the next code work is not rebuilding these completed images. The next code work is to investigate and add missing board families in small branches/commits, starting with router/vendor BSP boards because they are the clearest gap versus BPI GitHub.
