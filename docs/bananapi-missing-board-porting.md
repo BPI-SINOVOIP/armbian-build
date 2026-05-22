@@ -304,13 +304,56 @@ What the BSP provides:
   - `sp-pack/sp7021/common/bin/BPI-F2S-xboot-emmc-boot0-0k.img.gz`
   - `sp-pack/sp7021/common/bin/ISPBOOOT.BIN`
 
-Why no `.wip` board was added yet:
+## F2S WIP Implementation
 
-- This branch has no existing Sunplus/SP7021 Armbian family to inherit.
-- The BSP is armhf, vendor-kernel based, and uses a BPI-specific FAT boot layout rather than the standard Armbian extlinux/boot script path.
-- A useful F2S `.wip` board requires a new `sunplus-sp7021` vendor family, custom source fetch/build hooks for `u-boot-sp` and `linux-sp`, packaging for xboot/`u-boot.img`, and an image layout matching the BSP boot expectations.
+Implemented in this branch:
 
-Status: blocked for image build until the `sunplus-sp7021` vendor family is implemented. Do not add a board file that cannot build.
+- `config/boards/bananapif2s.wip` adds Banana Pi F2S as a Sunplus SP7021 legacy BSP board.
+- `config/sources/families/sunplus-sp7021-bpi.conf` and `sunplus_sp7021_bpi_legacy_common.inc` add custom BSP build hooks for the vendor monorepo.
+- The U-Boot path builds through `./configure bpi-f2s`, `u-boot-sp`, and packages `u-boot.img`, `ISPBOOOT.BIN`, and `BPI-F2S-xboot-emmc-boot0-0k.img.gz`.
+- The kernel path uses the vendor Linux 5.4.35 tree under `linux-sp`, with `sp7021_chipC_bpi-f2s_defconfig` imported as the Armbian legacy kernel config.
+- `CONFIG_RD_GZIP=y` is enabled locally so Armbian's generated gzip initramfs can boot.
+- The image path uses a FAT `/boot` partition and installs the BPI boot layout:
+  - `/ISPBOOOT.BIN`
+  - `/uEnv.txt`
+  - `/bananapi/bpi-f2s/linux/uImage`
+  - `/bananapi/bpi-f2s/linux/uInitrd`
+  - `/bananapi/bpi-f2s/linux/sp7021-bpi-f2s.dtb`
+- U-Boot is written to the raw image at `bs=512 seek=34`, matching the BSP `scripts/bootloader.sh` layout.
+
+Validation completed outside Armbian before integration:
+
+- Vendor F2S U-Boot build passed and produced `u-boot-sp/u-boot.img`.
+- Vendor F2S kernel build passed and produced `uImage`, `zImage`, `sp7021-bpi-f2s.dtb`, and `sp7021-bpi-f2p.dtb`.
+
+Armbian smoke validation:
+
+- U-Boot package build passed:
+
+```bash
+./compile.sh uboot BOARD=bananapif2s BRANCH=legacy RELEASE=trixie EXPERT=yes
+```
+
+- Kernel package build passed:
+
+```bash
+./compile.sh kernel BOARD=bananapif2s BRANCH=legacy RELEASE=trixie EXPERT=yes KERNEL_CONFIGURE=no
+```
+
+- Trixie server smoke image build passed:
+
+```bash
+./compile.sh build BOARD=bananapif2s BRANCH=legacy RELEASE=trixie BUILD_DESKTOP=no BUILD_MINIMAL=no KERNEL_CONFIGURE=no EXPERT=yes COMPRESS_OUTPUTIMAGE=xz
+```
+
+- Output image:
+  - `output/images/Armbian-unofficial_26.05.0-trunk_Bananapif2s_trixie_legacy_0.img.xz`
+- `xz -t` passed.
+- FAT boot partition inspection confirmed `ISPBOOOT.BIN`, `uEnv.txt`, and the BPI `bananapi/bpi-f2s/linux/` boot files are present.
+- Image SHA-256:
+  - `abaa350847b2a1504376a287a76468cb73c1b3f1cef32c57816e66ec53527059`
+
+Keep F2S as `.wip` until a real board boot test confirms xboot, U-Boot, SD/eMMC root selection, Ethernet, UART, and reset behavior.
 
 ## R4 Lite / R4 Pro OpenWrt Porting Assessment
 
@@ -519,7 +562,7 @@ Status: blocked for Armbian image build until a new `siflower-sf21h8898` RISC-V 
 | Candidate | Reason | First action |
 | --- | --- | --- |
 | BPI-W2 | WIP Realtek RTD1296 BSP family added | Build a full image candidate, then validate old BPI boot layout on hardware |
-| BPI-F2S | BPI has `BPI-F2S-bsp`; SP7021 sources found | Implement new `sunplus-sp7021` vendor family and BPI boot layout |
+| BPI-F2S | WIP Sunplus SP7021 BSP family and FAT boot layout added | Validate generated legacy image on real F2S hardware |
 | BPI-M4 plain | WIP Realtek RTD1395 BSP family added | Build a full image candidate, then validate old BPI boot layout on hardware |
 | BPI-RV2 | BPI has SF21H8898 OpenWrt BSP | Design new `siflower-sf21h8898` RISC-V family |
 | BPI-R3/R3 Mini/R64/R4 Lite/R4 Pro/W3 | WIP image builds now pass | Hardware boot validation before promotion |
@@ -551,7 +594,8 @@ Checked on 2026-05-22 after the R3 WIP build:
 - BPI-F2S:
   - BPI source: `BPI-F2S-bsp`
   - Vendor tree contains `sp7021-bpi-f2s.dts` and `sp7021_chipC_bpi-f2s_defconfig`.
-  - No matching local Armbian family exists yet; this should be treated as a new legacy/vendor family with custom xboot/`u-boot.img` packaging.
+  - This branch now adds `bananapif2s.wip`, a `sunplus-sp7021-bpi` legacy family, xboot/`u-boot.img` packaging, FAT `/boot`, and the old BPI `bananapi/bpi-f2s/linux/` boot layout.
+  - Trixie server smoke image now builds, passes `xz -t`, and contains the expected FAT boot files; hardware validation is still required.
 - BPI-R4 Lite:
   - BPI source: `BPI-R4Lite-OPENWRT-V24.10.0-Master-Devel`
   - Vendor tree contains MT7987 kernel DTS/overlay files plus U-Boot and ATF patches.

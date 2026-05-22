@@ -117,6 +117,7 @@ Already represented in this branch:
 - BPI-M7
 - BPI-CM4IO
 - BPI-F3
+- BPI-F2S as `.wip`
 - BPI-R2 / R2 Pro / R4
 - BPI-R3 / R3 Mini as `.wip`
 - BPI-R64 as `.wip`
@@ -131,7 +132,7 @@ Needs support decision or porting investigation:
 
 | Candidate | BPI source found | Local board config | Proposed path |
 | --- | --- | --- | --- |
-| BPI-F2S | `BPI-F2S-bsp` | Missing | SP7021 vendor family and BPI xboot/FAT boot layout required |
+| BPI-F2S | `BPI-F2S-bsp` | Added as `.wip` | SP7021 legacy BSP smoke image builds with FAT BPI boot layout; needs hardware validation |
 | BPI-R3 | `BPI-R3-bsp`, `BPI-R3-bsp-5.15`, OpenWrt trees | Added as `.wip` | MT7986 filogic smoke image builds; needs hardware boot validation |
 | BPI-R3 Mini | `BPI-R3MINI-OPENWRT-V21.02.3` | Added as `.wip` | MT7986 eMMC smoke image builds; needs hardware boot validation |
 | BPI-R64 | `BPI-R64-BSP`, `BPI-R64-bsp-4.19`, `BPI-R64-bsp-5.4` | Added as `.wip` | MT7622 smoke image builds; needs hardware boot validation because legacy BSP boot layout differs |
@@ -259,9 +260,30 @@ Smoke validation:
 
 Both boards remain outside the default release matrix until real hardware validation confirms bootloader layout, SD/eMMC boot, Ethernet, and reset behavior.
 
+## BPI-F2S WIP Result
+
+BPI-F2S was added as a `.wip` board with a new Sunplus SP7021 legacy BSP family. The implementation builds the vendor U-Boot 2019.04 and Linux 5.4.35 trees from `BPI-F2S-bsp`, packages `u-boot.img`, `ISPBOOOT.BIN`, and the eMMC boot0 xboot gzip, and creates a FAT `/boot` partition matching the old BPI layout.
+
+Smoke validation:
+
+- U-Boot package build passed for `BOARD=bananapif2s BRANCH=legacy RELEASE=trixie`.
+- Kernel package build passed for `BOARD=bananapif2s BRANCH=legacy RELEASE=trixie KERNEL_CONFIGURE=no`.
+- Trixie server image build passed for `BOARD=bananapif2s BRANCH=legacy RELEASE=trixie BUILD_DESKTOP=no`.
+- Generated image: `output/images/Armbian-unofficial_26.05.0-trunk_Bananapif2s_trixie_legacy_0.img.xz`
+- `xz -t` passed.
+- FAT boot partition inspection confirmed:
+  - `ISPBOOOT.BIN`
+  - `uEnv.txt`
+  - `bananapi/bpi-f2s/linux/uImage`
+  - `bananapi/bpi-f2s/linux/uInitrd`
+  - `bananapi/bpi-f2s/linux/sp7021-bpi-f2s.dtb`
+- Image SHA-256: `abaa350847b2a1504376a287a76468cb73c1b3f1cef32c57816e66ec53527059`
+
+F2S remains outside the default release matrix until real hardware validation confirms xboot, U-Boot, SD/eMMC root selection, UART, Ethernet, and reset behavior.
+
 ## BSP Porting Blockers And WIP
 
-BPI-W2 and BPI-M4 plain now have Realtek legacy BSP `.wip` entries. BPI-F2S and BPI-RV2 remain blocked because this branch still lacks matching Sunplus/SP7021 and Siflower/SF21H8898 families.
+BPI-W2, BPI-M4 plain, and BPI-F2S now have legacy BSP `.wip` entries. BPI-RV2 remains blocked because this branch still lacks a matching Siflower/SF21H8898 family.
 
 BPI-W2 WIP:
 
@@ -275,13 +297,18 @@ BPI-W2 WIP:
 - Armbian kernel package smoke build passed for `BOARD=bananapiw2 BRANCH=legacy RELEASE=trixie KERNEL_CONFIGURE=no`.
 - Required next work: full image boot-layout validation, then real W2 boot validation for the old BPI Realtek boot layout.
 
-BPI-F2S findings:
+BPI-F2S WIP:
 
 - Source: `BPI-F2S-bsp` at `3eee97bd8`
 - BSP uses U-Boot 2019.4 and Linux 5.4.35 for Sunplus SP7021.
 - Board files exist in the BSP: `sp7021-bpi-f2s.dts`, `sp7021_bpi_f2s_defconfig`, and `sp7021_chipC_bpi-f2s_defconfig`.
-- This branch has no existing Sunplus/SP7021 family.
-- Required next work: new `sunplus-sp7021` vendor family, armhf vendor kernel packaging, xboot/`u-boot.img` packaging, and the old BPI FAT boot layout.
+- Added board file: `config/boards/bananapif2s.wip`
+- Added family: `sunplus-sp7021-bpi`
+- Vendor U-Boot and kernel builds passed in the BSP tree after the U-Boot dtc host-toolchain patch.
+- Armbian U-Boot package smoke build passed for `BOARD=bananapif2s BRANCH=legacy RELEASE=trixie`.
+- Armbian kernel package smoke build passed for `BOARD=bananapif2s BRANCH=legacy RELEASE=trixie KERNEL_CONFIGURE=no`.
+- Armbian Trixie server smoke image passed with FAT boot layout and xz validation.
+- Required next work: real F2S boot validation for xboot, SD/eMMC root selection, UART, Ethernet, and reset behavior.
 
 BPI-M4 plain WIP:
 
