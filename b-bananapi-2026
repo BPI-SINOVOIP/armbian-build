@@ -173,7 +173,7 @@ board_arch() {
 	local family="$1"
 
 	case "${family}" in
-		sun6i | sun7i | sun8i | mt7623)
+		sun6i | sun7i | sun8i | mt7623 | sunplus-sp7021-bpi)
 			printf 'armhf\n'
 			;;
 		spacemit)
