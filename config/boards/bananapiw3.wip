@@ -1,0 +1,11 @@
+# Rockchip RK3588 SoC octa core 8-32GB SBC with 2.5G Ethernet, eMMC, USB3 and NVMe
+source "${SRC}/config/boards/armsom-w3.csc"
+
+BOARD_NAME="Banana Pi W3"
+BOARD_VENDOR="sinovoip"
+BOARD_MAINTAINER=""
+BOOT_FDT_FILE="rockchip/rk3588-bananapi-w3.dtb"
+
+# Keep this WIP board on the vendor RK3588 path until real hardware validates
+# storage, network, display, and boot media behavior.
+KERNEL_TARGET="vendor"

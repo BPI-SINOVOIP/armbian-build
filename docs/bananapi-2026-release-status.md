@@ -27,6 +27,7 @@ Current selection:
 - Build jobs selected: 248
 - Skipped jobs: 1
 - Skip reason: `bananapif3/current bookworm` is skipped because Debian 12 `bookworm` does not support `riscv64` in this tree.
+- The release driver intentionally selects `.conf`, `.csc`, and `.eos` boards only. Newly added `.wip` boards are smoke-build candidates until hardware validation promotes them.
 
 Target releases:
 
@@ -117,6 +118,8 @@ Already represented in this branch:
 - BPI-CM4IO
 - BPI-F3
 - BPI-R2 / R2 Pro / R4
+- BPI-R3 / R3 Mini as `.wip`
+- BPI-W3 as `.wip`
 - Banana Pi Pro
 - Lamobo R1
 
@@ -126,10 +129,10 @@ Needs support decision or porting investigation:
 | --- | --- | --- | --- |
 | BPI-F2S | `BPI-F2S-bsp` | Missing | SP7021 vendor/legacy family required |
 | BPI-R3 | `BPI-R3-bsp`, `BPI-R3-bsp-5.15`, OpenWrt trees | Added as `.wip` | MT7986 filogic smoke image builds; needs hardware boot validation |
-| BPI-R3 Mini | `BPI-R3MINI-OPENWRT-V21.02.3` | Missing | Kernel DT exists; U-Boot DTS/defconfig missing locally |
+| BPI-R3 Mini | `BPI-R3MINI-OPENWRT-V21.02.3` | Added as `.wip` | MT7986 eMMC smoke image builds; needs hardware boot validation |
 | BPI-R64 | `BPI-R64-BSP`, `BPI-R64-bsp-4.19`, `BPI-R64-bsp-5.4` | Missing | Kernel DT exists; MT7622 U-Boot/family work required |
 | BPI-W2 | `BPI-W2-bsp` | Missing | RTD1296 vendor family required |
-| BPI-W3 | `BPI-W3-BSP` | Missing | RK3588 vendor sources found; compare with BPI-M7 path |
+| BPI-W3 | `BPI-W3-BSP` | Added as `.wip` | RK3588 vendor smoke image builds; needs hardware boot validation |
 | BPI-M4 plain | `BPI-M4-bsp` | Ambiguous | Compare against existing `M4 Berry` / `M4 Zero` support |
 | BPI-R4 Lite / R4 Pro | `BPI-R4Lite-*`, `BPI-R4PRO-*` OpenWrt trees | Missing | Decide whether these are separate release boards |
 | BPI-RV2 | `BPI-RV2-SF21H8898-*` | Missing | Architecture/toolchain feasibility check required |
@@ -182,3 +185,29 @@ Smoke validation:
 - `xz -t` passed for the generated image.
 
 R3 remains outside the default release matrix until hardware boot validation confirms storage, Ethernet, and reset behavior.
+
+## BPI-R3 Mini WIP Result
+
+BPI-R3 Mini was added as a `.wip` board on the same `filogic` family after extending the family to allow a board-specific FIP filename. The R3 Mini path uses MT7986 eMMC boot and a minimal U-Boot-local DTS because U-Boot v2025.04 does not carry a matching defconfig and the upstream Linux DTS requires newer bindings than this U-Boot tree provides.
+
+Smoke validation:
+
+- U-Boot/ATF package build passed for `BOARD=bananapir3mini BRANCH=current RELEASE=trixie`.
+- Trixie server image build passed for `BOARD=bananapir3mini BRANCH=current RELEASE=trixie BUILD_DESKTOP=no`.
+- Generated image: `output/images/Armbian-unofficial_26.05.0-trunk_Bananapir3mini_trixie_current_6.12.82.img.xz`
+- `xz -t` and sha256 validation passed for the generated image.
+
+R3 Mini remains outside the default release matrix until hardware boot validation confirms eMMC boot, network, and reset behavior.
+
+## BPI-W3 WIP Result
+
+BPI-W3 was added as a `.wip` board using the RK3588 vendor path inherited from `armsom-w3.csc`, with a Banana Pi W3 DT wrapper over `rk3588-armsom-w3.dts`.
+
+Smoke validation:
+
+- Trixie server image build passed for `BOARD=bananapiw3 BRANCH=vendor RELEASE=trixie BUILD_DESKTOP=no`.
+- Generated image: `output/images/Armbian-unofficial_26.05.0-trunk_Bananapiw3_trixie_vendor_6.1.115.img.xz`
+- `xz -t` and sha256 validation passed for the generated image.
+- The generated DTB package contains `rockchip/rk3588-bananapi-w3.dtb`.
+
+W3 remains outside the default release matrix until hardware boot validation confirms storage, Ethernet, display, and boot media behavior.

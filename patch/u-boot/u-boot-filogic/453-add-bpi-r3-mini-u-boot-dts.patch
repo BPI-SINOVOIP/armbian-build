@@ -1,0 +1,135 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Banana Pi -BPI <lionwang@sinovoip.com.cn>
+Date: Fri, 22 May 2026 16:20:00 +0800
+Subject: [PATCH] arm: dts: add Banana Pi R3 Mini eMMC U-Boot DTS
+
+The upstream Linux MT7986A R3 Mini DTS requires newer clock bindings than
+U-Boot v2025.04 carries. Add a small U-Boot-local DTS for early boot with
+UART and eMMC enabled so the Armbian WIP bootloader can be built without
+falling back to the full-size R3 device tree.
+
+Signed-off-by: Banana Pi -BPI <lionwang@sinovoip.com.cn>
+---
+ arch/arm/dts/Makefile                       |  1 +
+ arch/arm/dts/mt7986a-bpi-r3-mini-emmc.dts   | 98 +++++++++++++++++++++
+ 2 files changed, 99 insertions(+)
+ create mode 100644 arch/arm/dts/mt7986a-bpi-r3-mini-emmc.dts
+
+diff --git a/arch/arm/dts/Makefile b/arch/arm/dts/Makefile
+index 267b0179a5f2..111111111111 100644
+--- a/arch/arm/dts/Makefile
++++ b/arch/arm/dts/Makefile
+@@ -1139,6 +1139,7 @@ dtb-$(CONFIG_ARCH_MEDIATEK) += \
+ 	mt7981-sd-rfb.dtb \
+ 	mt7986a-bpi-r3-sd.dtb \
+ 	mt7986a-bpi-r3-emmc.dtb \
++	mt7986a-bpi-r3-mini-emmc.dtb \
+ 	mt7986a-rfb.dtb \
+ 	mt7986b-rfb.dtb \
+ 	mt7986a-sd-rfb.dtb \
+diff --git a/arch/arm/dts/mt7986a-bpi-r3-mini-emmc.dts b/arch/arm/dts/mt7986a-bpi-r3-mini-emmc.dts
+new file mode 100644
+index 000000000000..000000000002
+--- /dev/null
++++ b/arch/arm/dts/mt7986a-bpi-r3-mini-emmc.dts
+@@ -0,0 +1,98 @@
++// SPDX-License-Identifier: GPL-2.0
++/*
++ * Minimal U-Boot DTS for Banana Pi BPI-R3 Mini eMMC boot.
++ */
++
++/dts-v1/;
++#include "mt7986.dtsi"
++#include <dt-bindings/gpio/gpio.h>
++#include <dt-bindings/pinctrl/mt65xx.h>
++
++/ {
++	#address-cells = <1>;
++	#size-cells = <1>;
++	model = "BananaPi BPi-R3 Mini";
++	compatible = "bananapi,bpi-r3mini", "mediatek,mt7986";
++
++	chosen {
++		stdout-path = &uart0;
++		tick-timer = &timer0;
++	};
++
++	memory@40000000 {
++		device_type = "memory";
++		reg = <0x40000000 0x80000000>;
++	};
++
++	reg_1p8v: regulator-1p8v {
++		compatible = "regulator-fixed";
++		regulator-name = "fixed-1.8V";
++		regulator-min-microvolt = <1800000>;
++		regulator-max-microvolt = <1800000>;
++		regulator-boot-on;
++		regulator-always-on;
++	};
++
++	reg_3p3v: regulator-3p3v {
++		compatible = "regulator-fixed";
++		regulator-name = "fixed-3.3V";
++		regulator-min-microvolt = <3300000>;
++		regulator-max-microvolt = <3300000>;
++		regulator-boot-on;
++		regulator-always-on;
++	};
++};
++
++&uart0 {
++	status = "okay";
++};
++
++&pio {
++	mmc0_pins_default: mmc0default {
++		mux {
++			function = "flash";
++			groups = "emmc_51";
++		};
++
++		conf-cmd-dat {
++			pins = "EMMC_DATA_0", "EMMC_DATA_1",
++			       "EMMC_DATA_2", "EMMC_DATA_3",
++			       "EMMC_DATA_4", "EMMC_DATA_5",
++			       "EMMC_DATA_6", "EMMC_DATA_7",
++			       "EMMC_CMD";
++			input-enable;
++			drive-strength = <MTK_DRIVE_4mA>;
++			bias-pull-up = <MTK_PUPD_SET_R1R0_01>;
++		};
++
++		conf-clk {
++			pins = "EMMC_CK";
++			drive-strength = <MTK_DRIVE_6mA>;
++			bias-pull-down = <MTK_PUPD_SET_R1R0_10>;
++		};
++
++		conf-dsl {
++			pins = "EMMC_DSL";
++			bias-pull-down = <MTK_PUPD_SET_R1R0_10>;
++		};
++
++		conf-rst {
++			pins = "EMMC_RSTB";
++			drive-strength = <MTK_DRIVE_4mA>;
++			bias-pull-up = <MTK_PUPD_SET_R1R0_01>;
++		};
++	};
++};
++
++&mmc0 {
++	pinctrl-names = "default";
++	pinctrl-0 = <&mmc0_pins_default>;
++	bus-width = <8>;
++	max-frequency = <200000000>;
++	cap-mmc-highspeed;
++	cap-mmc-hw-reset;
++	vmmc-supply = <&reg_3p3v>;
++	vqmmc-supply = <&reg_1p8v>;
++	non-removable;
++	status = "okay";
++};
+-- 
+2.39.2
