@@ -13,6 +13,7 @@ COMPRESS="${COMPRESS:-yes}"
 KEEP_RAW="${KEEP_RAW:-yes}"
 STOP_ON_FAIL="${STOP_ON_FAIL:-no}"
 INCLUDE_LAMOBO="${INCLUDE_LAMOBO:-yes}"
+INCLUDE_WIP="${INCLUDE_WIP:-no}"
 ALL_BRANCHES="${ALL_BRANCHES:-no}"
 EXPERT="${EXPERT:-yes}"
 DOWNLOAD_MIRROR="${DOWNLOAD_MIRROR:-bfsu}"
@@ -38,6 +39,7 @@ usage() {
 	  --branch LIST      Override branches for all boards
 	  --all-branches     Build every branch listed by each board config
 	  --no-lamobo        Do not include lamobo-r1
+	  --include-wip      Include config/boards/bananapi*.wip in the default board list
 	  --no-compress      Do not create/test .img.xz after each build
 	  --remove-raw       Remove raw .img after tested .img.xz is created
 	  --skip-existing    Skip a build if a matching .img or .img.xz already exists
@@ -48,7 +50,8 @@ usage() {
 	  BOARDS, RELEASES, IMAGE_TYPES, BRANCHES, ALL_BRANCHES
 	  DESKTOP_ENVIRONMENT, DESKTOP_TIER, KERNEL_CONFIGURE
 	  EXTRA_COMPILE_ARGS, COMPRESS, STOP_ON_FAIL, INCLUDE_LAMOBO
-	  KEEP_RAW, EXPERT, DOWNLOAD_MIRROR, CUSTOM_UBUNTU_MIRROR_PORTS, SKIP_EXISTING
+	  INCLUDE_WIP, KEEP_RAW, EXPERT, DOWNLOAD_MIRROR
+	  CUSTOM_UBUNTU_MIRROR_PORTS, SKIP_EXISTING
 
 	Examples:
 	  $0 list
@@ -85,6 +88,9 @@ while (($#)); do
 		--no-lamobo)
 			INCLUDE_LAMOBO="no"
 			;;
+		--include-wip)
+			INCLUDE_WIP="yes"
+			;;
 		--no-compress)
 			COMPRESS="no"
 			;;
@@ -113,7 +119,7 @@ done
 find_board_file() {
 	local board="$1"
 	local suffix
-	for suffix in conf csc eos; do
+	for suffix in conf csc eos wip; do
 		if [[ -f "config/boards/${board}.${suffix}" ]]; then
 			printf '%s\n' "config/boards/${board}.${suffix}"
 			return 0
@@ -199,6 +205,14 @@ default_boards() {
 
 	if [[ "${INCLUDE_LAMOBO}" == "yes" ]]; then
 		for path in config/boards/lamobo-r1.conf config/boards/lamobo-r1.csc config/boards/lamobo-r1.eos; do
+			[[ -f "${path}" ]] || continue
+			id="${path#config/boards/}"
+			printf '%s\n' "${id%.*}"
+		done
+	fi
+
+	if [[ "${INCLUDE_WIP}" == "yes" ]]; then
+		for path in config/boards/bananapi*.wip; do
 			[[ -f "${path}" ]] || continue
 			id="${path#config/boards/}"
 			printf '%s\n' "${id%.*}"

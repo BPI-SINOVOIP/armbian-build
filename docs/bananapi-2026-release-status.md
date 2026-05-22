@@ -28,6 +28,19 @@ Current selection:
 - Skipped jobs: 1
 - Skip reason: `bananapif3/current bookworm` is skipped because Debian 12 `bookworm` does not support `riscv64` in this tree.
 - The release driver intentionally selects `.conf`, `.csc`, and `.eos` boards only. Newly added `.wip` boards are smoke-build candidates until hardware validation promotes them.
+- The release driver now accepts explicit `.wip` board ids and has `--include-wip` / `INCLUDE_WIP=yes` for WIP smoke-build batches. This keeps the default release matrix conservative while still allowing the new WIP boards to be built in a controlled batch.
+
+WIP selection smoke check:
+
+```bash
+./b-bananapi-2026 list --board 'bananapim6 bananapicm6 bananapi6204 bananapir4pro' --release trixie --type server
+./b-bananapi-2026 list --include-wip --release trixie --type server
+```
+
+Result:
+
+- Explicit WIP board selection works.
+- `--include-wip --release trixie --type server` selects 37 board entries, including `.conf`, `.csc`, `.eos`, and `.wip` boards.
 
 Target releases:
 
