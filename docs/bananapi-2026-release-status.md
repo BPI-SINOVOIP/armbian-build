@@ -42,6 +42,19 @@ Result:
 - Explicit WIP board selection works.
 - `--include-wip --release trixie --type server` selects 37 board entries, including `.conf`, `.csc`, `.eos`, and `.wip` boards.
 
+Controlled WIP smoke batch:
+
+```bash
+SKIP_EXISTING=yes ./b-bananapi-2026 build --board 'bananapir3 bananapir3mini bananapir64 bananapir4lite bananapir4pro bananapiw2 bananapiw3 bananapim4 bananapif2s bananapim6 bananapicm6 bananapi6204' --release trixie --type server
+```
+
+Result:
+
+- Log folder: `output/bananapi-2026/20260522T144522Z`
+- Selected builds: 12
+- Failed builds: 0
+- All 12 WIP targets were recognized and skipped via `SKIP_EXISTING=yes` because their Trixie server smoke images already exist in `output/images`.
+
 Target releases:
 
 - `bookworm`
