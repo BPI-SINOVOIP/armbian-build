@@ -1,0 +1,16 @@
+# UNISOC UIS7885 secure-boot PAC platform, vendor-hybrid WIP.
+BOARD_NAME="Banana Pi M2C"
+BOARD_VENDOR="sinovoip"
+BOARDFAMILY="unisoc-uis7885-bpi"
+BOARD_MAINTAINER="BPI-SINOVOIP"
+INTRODUCED="2026"
+
+KERNEL_TARGET="vendor"
+KERNEL_TEST_TARGET="vendor"
+SERIALCON="ttyS1"
+FULL_DESKTOP="yes"
+
+# The vendor Yocto/PAC flow supplies the signed boot chain, DTB, boot image,
+# rootfs, modem firmware, and partition manifest. This board must stay .wip
+# until an Armbian rootfs hybrid can be packed into that secure-boot layout
+# and booted on real BPI-M2C hardware.

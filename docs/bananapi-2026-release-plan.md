@@ -47,6 +47,7 @@ These board configs are present in this branch now:
 | `bananapim1plus` | `csc` | `sun7i` | `current,edge,legacy` | Banana Pi M1+ |
 | `bananapim2` | `csc` | `sun6i` | `current,legacy` | Banana Pi M2 |
 | `bananapim2berry` | `csc` | `sun8i` | `current,edge,legacy` | Banana Pi M2 Berry |
+| `bananapim2c` | `wip` | `unisoc-uis7885-bpi` | `vendor` | Banana Pi M2C |
 | `bananapim2magic` | `csc` | `sun8i` | `current,edge,legacy` | Banana Pi M2 Magic |
 | `bananapim2plus` | `conf` | `sun8i` | `current,edge,legacy` | Banana Pi M2+ |
 | `bananapim2pro` | `conf` | `meson-sm1` | `current,edge` | Banana Pi M2Pro |
@@ -92,6 +93,7 @@ Important current findings:
 - `bananapi6204` now has an Allwinner R40 `.wip` path derived from the M2 Ultra mainline U-Boot path plus a board-specific 6.12 DTB and conservative eMMC timing. U-Boot, kernel, and Trixie server smoke image builds pass; real BPI-6204 hardware validation is still required before release inclusion.
 - BPI-R4 Lite and BPI-R4 Pro are separate hardware from `bananapir4`; both now have `.wip` smoke-build paths using newer filogic kernel branches and imported U-Boot support. They remain outside the default matrix until real hardware boot validation passes.
 - BPI-RV2 is a Siflower SF21H8898 RISC-V/OpenWrt board. The BPI BSP currently provides NAND/NOR FIT `sysupgrade.bin` flow, not a normal Armbian SD/eMMC disk-image path, so it needs a new architecture family and a boot/image strategy before any `.wip` board config is useful.
+- `bananapim2c` is an unpublished UNISOC UIS7885 secure-boot/PAC platform. The current tracked entry is intentionally `.wip` and points to a vendor-hybrid flow; normal Armbian raw-image generation is blocked until a bootable Armbian rootfs can be packed into the signed PAC partition layout.
 
 ## Missing-Board Investigation Plan
 

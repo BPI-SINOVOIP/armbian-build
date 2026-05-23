@@ -160,6 +160,30 @@ Expected first board identity:
 
 Do not add this board to `b-bananapi-2026` default release selection until hardware boot validation passes.
 
+## Execution Result: 2026-05-23
+
+Vendor Yocto rebuild completed for all three known `uis7885-2h10` baselines:
+
+| Baseline | Log | PAC mtime | PAC bytes | Status |
+| --- | --- | --- | --- | --- |
+| `rls-25c-w26-07-2` | `/media/pi/SMCI/bpi/unisoc/logs/m2c_07_2_full_2026-05-23_171219.log` | `2026-05-23 17:31:41` | `1354412924` | `mkpac [PASS]` |
+| `rls-25c-w26-05-5` | `/media/pi/SMCI/bpi/unisoc/logs/m2c_05_5_full_2026-05-23_182046.log` | `2026-05-23 18:38:17` | `1354411095` | `mkpac [PASS]` |
+| `trunk-3-0-dev-w24-05-2-p1-2` | `/media/pi/SMCI/bpi/unisoc/logs/m2c_trunk_full_2026-05-23_185044.log` | `2026-05-23 19:14:11` | `1244445332` | `mkpac [PASS]` |
+
+Final staged release:
+
+- `/media/pi/SMCI/bpi/unisoc/release/bpi-m2c/20260523-final`
+- `summary.tsv` reports 15 staged artifacts and 0 missing artifacts per baseline.
+- `missing.tsv` contains only the header row.
+- `sha256sum -c SHA256SUMS` passed for every staged file in every baseline.
+
+Tracked Armbian side changes:
+
+- `config/boards/bananapim2c.wip` records the public board identity.
+- `config/sources/families/unisoc-uis7885-bpi.conf` deliberately guards normal Armbian raw-image builds because BPI-M2C is currently a vendor secure-boot/PAC target.
+- `tools/build-bpi-m2c-unisoc-yocto.sh` provides the repeatable local rebuild wrapper for the three vendor baselines.
+- `tools/stage-bpi-m2c-unisoc-release.sh` stages the final PAC and core signed artifacts without committing proprietary binaries.
+
 ### Phase 4: Hardware Validation
 
 Minimum boot validation:
@@ -179,4 +203,3 @@ dd if=/dev/mmcblk1 of=/dev/null bs=1M count=1000 status=progress
 ```
 
 Only after this passes should we expand toward Debian/Ubuntu Armbian-style releases.
-
