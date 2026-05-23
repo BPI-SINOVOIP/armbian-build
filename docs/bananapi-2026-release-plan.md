@@ -129,7 +129,8 @@ Current progress:
 - Phase 0 is complete and pushed.
 - Phase 1 is complete for the default release artifact audit and upstream/BPI coverage comparison.
 - Phase 2 server validation is complete for the added WIP boards across every eligible target OS.
-- The next active work is Phase 2 desktop validation, followed by formal packaging/reporting for the boards that pass.
+- Phase 2 desktop validation is complete for the added WIP boards across every eligible target OS.
+- The next active work is formal packaging/reporting for the boards that pass, plus hardware validation tracking before any `.wip` promotion.
 
 ### Phase 0: Push This Plan
 
@@ -266,8 +267,8 @@ The release is considered complete when:
 
 ## Immediate Next Actions After This Push
 
-1. Start desktop builds with `SKIP_EXISTING=yes KEEP_RAW=no`.
-2. Classify desktop failures as board-specific, desktop-stack-specific, or host-resource failures.
-3. Retry host-resource failures after cleanup.
-4. Keep `.wip` boards out of the default release set until hardware validation is complete.
-5. Update the release status document and push after each clean batch.
+1. Archive or publish the clean WIP server and desktop outputs separately from the default release set until hardware validation is complete.
+2. Keep `.wip` boards out of the default release set until each board has real hardware boot notes for storage, UART, network, reboot/shutdown, and display where applicable.
+3. Produce the next formal release report from `output/bananapi-2026/20260522T144740Z`, `output/bananapi-2026/20260522T182154Z`, and `output/bananapi-2026/20260522T205734Z`.
+4. Promote individual `.wip` boards only after hardware validation, not merely because their images build cleanly.
+5. Continue the BPI-RV2/Siflower investigation as a separate blocked-family porting track.

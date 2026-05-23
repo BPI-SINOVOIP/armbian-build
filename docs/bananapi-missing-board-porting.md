@@ -10,7 +10,7 @@ Do not add a missing Banana Pi board file to the default release matrix until on
 
 ## Current WIP Matrix Validation
 
-The WIP board track has now passed the full eligible server build matrix for:
+The WIP board track has now passed the full eligible server and XFCE desktop build matrices for:
 
 - Debian 12 `bookworm`
 - Debian 13 `trixie`
@@ -33,13 +33,22 @@ Validated WIP boards:
 - `bananapicm6`
 - `bananapi6204`
 
-Combined result after retry:
+Server result after retry:
 
 - `output/bananapi-2026/20260522T144740Z/summary.tsv`
 - `output/bananapi-2026/20260522T182154Z/summary.tsv`
 - 59 eligible WIP server rows are `ok`.
 - `bananapicm6` Debian 12 `bookworm` is an expected skip because this branch does not support `riscv64` on `bookworm`.
 - The first run failures were host storage/cache exhaustion; the retry finished cleanly after Docker cache cleanup.
+
+Desktop result:
+
+- `output/bananapi-2026/20260522T205734Z/summary.tsv`
+- `output/bananapi-2026/wip-desktop-20260522T205734Z.log`
+- 59 eligible WIP XFCE desktop rows are `ok`.
+- Failed rows: 0.
+- Skipped rows: 1, the same expected `bananapicm6` Debian 12 `bookworm` case.
+- The helper retained `.img.xz`, `.img.xz.sha`, and `.img.txt` outputs and removed raw `.img` files because `KEEP_RAW=no`.
 
 This does not promote the boards out of `.wip`. Hardware validation is still required before adding any of these boards to the default release matrix, especially for boot media, UART, Ethernet, USB, reboot/shutdown, and display where applicable.
 

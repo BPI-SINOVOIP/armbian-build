@@ -79,6 +79,24 @@ Result:
 - The combined WIP server matrix now covers Debian 12 `bookworm`, Debian 13 `trixie`, Ubuntu 22.04 `jammy`, Ubuntu 24.04 `noble`, and Ubuntu 26.04 `resolute` for all eligible WIP boards.
 - The release helper compressed generated raw images to `.img.xz`, verified them with `xz -t`, wrote `.img.xz.sha`, and removed raw `.img` files because `KEEP_RAW=no`.
 
+Controlled WIP full desktop matrix:
+
+```bash
+SKIP_EXISTING=yes KEEP_RAW=no ./b-bananapi-2026 build --board 'bananapir3 bananapir3mini bananapir64 bananapir4lite bananapir4pro bananapiw2 bananapiw3 bananapim4 bananapif2s bananapim6 bananapicm6 bananapi6204' --type desktop
+```
+
+Result:
+
+- Log folder: `output/bananapi-2026/20260522T205734Z`
+- Outer log: `output/bananapi-2026/wip-desktop-20260522T205734Z.log`
+- Selected builds: 59
+- Failed builds: 0
+- Skipped builds: 1
+- The skipped build is the expected `bananapicm6` Debian 12 `bookworm` case because this tree does not support `bookworm` for `riscv64`.
+- 59 eligible WIP XFCE desktop builds are `ok`.
+- The WIP desktop matrix now covers Debian 12 `bookworm`, Debian 13 `trixie`, Ubuntu 22.04 `jammy`, Ubuntu 24.04 `noble`, and Ubuntu 26.04 `resolute` for all eligible WIP boards.
+- The release helper compressed generated raw images to `.img.xz`, verified them with `xz -t`, wrote `.img.xz.sha`, and removed raw `.img` files because `KEEP_RAW=no`.
+
 Target releases:
 
 - `bookworm`
@@ -248,7 +266,7 @@ find output/images/2026.05 -maxdepth 2 -type f -name '*.img.xz.sha' -print0 |
   ' _
 ```
 
-Because the existing 2026.05 default release set is complete and passes file integrity checks, the default archived images do not need a blind rebuild. The WIP board expansion is now server-clean across the eligible five-OS matrix, so the next execution track is desktop images and then formal release packaging/reporting for the boards that pass.
+Because the existing 2026.05 default release set is complete and passes file integrity checks, the default archived images do not need a blind rebuild. The WIP board expansion is now server-clean and desktop-clean across the eligible five-OS matrix, so the next execution track is formal release packaging/reporting for the boards that pass plus hardware validation tracking before promotion.
 
 Current WIP server expansion status:
 
@@ -260,6 +278,17 @@ Current WIP server expansion status:
 | `bananapim6`, `bananapi6204` | `bookworm`, `trixie`, `jammy`, `noble`, `resolute` | server | OK |
 | `bananapicm6` | `trixie`, `jammy`, `noble`, `resolute` | server | OK |
 | `bananapicm6` | `bookworm` | server | Expected skip: `riscv64` unsupported for Debian 12 in this tree |
+
+Current WIP desktop expansion status:
+
+| Board group | Releases | Type | Result |
+| --- | --- | --- | --- |
+| `bananapir3`, `bananapir3mini`, `bananapir64` | `bookworm`, `trixie`, `jammy`, `noble`, `resolute` | XFCE desktop | OK |
+| `bananapir4lite`, `bananapir4pro` | `bookworm`, `trixie`, `jammy`, `noble`, `resolute` | XFCE desktop | OK |
+| `bananapiw2`, `bananapiw3`, `bananapim4`, `bananapif2s` | `bookworm`, `trixie`, `jammy`, `noble`, `resolute` | XFCE desktop | OK |
+| `bananapim6`, `bananapi6204` | `bookworm`, `trixie`, `jammy`, `noble`, `resolute` | XFCE desktop | OK |
+| `bananapicm6` | `trixie`, `jammy`, `noble`, `resolute` | XFCE desktop | OK |
+| `bananapicm6` | `bookworm` | XFCE desktop | Expected skip: `riscv64` unsupported for Debian 12 in this tree |
 
 ## BPI-R3 WIP Result
 
