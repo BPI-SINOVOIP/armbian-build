@@ -184,6 +184,36 @@ Tracked Armbian side changes:
 - `tools/build-bpi-m2c-unisoc-yocto.sh` provides the repeatable local rebuild wrapper for the three vendor baselines.
 - `tools/stage-bpi-m2c-unisoc-release.sh` stages the final PAC and core signed artifacts without committing proprietary binaries.
 
+## Hybrid PAC Strategy
+
+The BPI-M2C boot path is not a normal raw SD/eMMC Armbian image flow. The
+UNISOC PAC manifest maps the root filesystem through the `System` entry:
+
+```ini
+System=1@./out/target/product/uis7885-2h10/rootfs.ext4
+```
+
+The first Armbian integration step is therefore a vendor-PAC hybrid:
+
+1. Copy a known-good vendor `out/target/product/uis7885-2h10` tree into a
+   scratch directory.
+2. Replace only `rootfs.ext4`.
+3. Keep the signed boot chain, kernel, DTB, DTBO, modem firmware, and NV
+   artifacts from the vendor build.
+4. Inject the vendor `5.4.180` modules and `/lib/firmware` into the Armbian
+   rootfs.
+5. Enable `ttyS1` serial getty at `921600`.
+6. Repack PAC with the same vendor `makepac.py` and `mkpac.pl`.
+
+The helper for this flow is:
+
+```bash
+tools/make-bpi-m2c-unisoc-hybrid-pac.sh --release trixie --flavor cli
+```
+
+This still requires real hardware validation. Passing PAC generation only
+proves that the signed package can be assembled.
+
 ### Phase 4: Hardware Validation
 
 Minimum boot validation:
