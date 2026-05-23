@@ -222,6 +222,16 @@ The default matrix covers Debian bookworm/trixie and Ubuntu jammy/noble/resolute
 with `cli` and `xfce-desktop-mid` rootfs flavors. Missing rootfs cache entries
 are recorded in `matrix-summary.tsv` instead of being silently skipped.
 
+To collect a completed matrix into a flat release staging directory:
+
+```bash
+MATRIX_TAG=20260523-matrix DATE_TAG=20260523-hybrid-armbian \
+  tools/stage-bpi-m2c-unisoc-hybrid-release.sh
+```
+
+The staged release keeps the generated PAC files under `pac/`, per-image
+metadata under `metadata/`, and top-level `manifest.tsv`/`SHA256SUMS` files.
+
 This still requires real hardware validation. Passing PAC generation only
 proves that the signed package can be assembled.
 
