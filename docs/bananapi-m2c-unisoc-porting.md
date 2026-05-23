@@ -211,6 +211,17 @@ The helper for this flow is:
 tools/make-bpi-m2c-unisoc-hybrid-pac.sh --release trixie --flavor cli
 ```
 
+To generate a server/desktop matrix from the current Armbian arm64 rootfs
+cache:
+
+```bash
+tools/make-bpi-m2c-unisoc-hybrid-matrix.sh --date-tag 20260523-matrix --force
+```
+
+The default matrix covers Debian bookworm/trixie and Ubuntu jammy/noble/resolute
+with `cli` and `xfce-desktop-mid` rootfs flavors. Missing rootfs cache entries
+are recorded in `matrix-summary.tsv` instead of being silently skipped.
+
 This still requires real hardware validation. Passing PAC generation only
 proves that the signed package can be assembled.
 
