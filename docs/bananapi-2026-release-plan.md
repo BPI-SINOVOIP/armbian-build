@@ -130,7 +130,8 @@ Current progress:
 - Phase 1 is complete for the default release artifact audit and upstream/BPI coverage comparison.
 - Phase 2 server validation is complete for the added WIP boards across every eligible target OS.
 - Phase 2 desktop validation is complete for the added WIP boards across every eligible target OS.
-- The next active work is formal packaging/reporting for the boards that pass, plus hardware validation tracking before any `.wip` promotion.
+- WIP release staging is complete under `output/images/2026.05-wip`, with `xz -t` and per-folder checksum verification passing for 118 staged images.
+- The next active work is hardware validation tracking before any `.wip` promotion, plus any board-specific fixes found by real boot testing.
 
 ### Phase 0: Push This Plan
 
@@ -267,8 +268,8 @@ The release is considered complete when:
 
 ## Immediate Next Actions After This Push
 
-1. Archive or publish the clean WIP server and desktop outputs separately from the default release set until hardware validation is complete.
-2. Keep `.wip` boards out of the default release set until each board has real hardware boot notes for storage, UART, network, reboot/shutdown, and display where applicable.
-3. Produce the next formal release report from `output/bananapi-2026/20260522T144740Z`, `output/bananapi-2026/20260522T182154Z`, and `output/bananapi-2026/20260522T205734Z`.
-4. Promote individual `.wip` boards only after hardware validation, not merely because their images build cleanly.
-5. Continue the BPI-RV2/Siflower investigation as a separate blocked-family porting track.
+1. Keep the staged WIP images in `output/images/2026.05-wip` separate from the default release set until hardware validation is complete.
+2. Record real boot notes for storage, UART, network, reboot/shutdown, and display where applicable for each `.wip` board.
+3. Promote individual `.wip` boards only after hardware validation, not merely because their images build cleanly.
+4. Continue the BPI-RV2/Siflower investigation as a separate blocked-family porting track.
+5. Use `tools/stage-bananapi-wip-2026.sh` after future WIP rebuilds to refresh staged images, per-folder checksums, and manifest files.

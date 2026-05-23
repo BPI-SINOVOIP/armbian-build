@@ -97,6 +97,45 @@ Result:
 - The WIP desktop matrix now covers Debian 12 `bookworm`, Debian 13 `trixie`, Ubuntu 22.04 `jammy`, Ubuntu 24.04 `noble`, and Ubuntu 26.04 `resolute` for all eligible WIP boards.
 - The release helper compressed generated raw images to `.img.xz`, verified them with `xz -t`, wrote `.img.xz.sha`, and removed raw `.img` files because `KEEP_RAW=no`.
 
+WIP release staging:
+
+```bash
+VERIFY_XZ=yes VERIFY_JOBS=4 LINK_MODE=hardlink tools/stage-bananapi-wip-2026.sh
+```
+
+Result:
+
+- Staging folder: `output/images/2026.05-wip`
+- Tool: `tools/stage-bananapi-wip-2026.sh`
+- Staged images: 118
+- `.img.xz`: 118
+- `.img.xz.sha`: 118
+- `.img.txt`: 118
+- Missing errors: 0
+- Expected skip records: `bananapicm6` Debian 12 `bookworm` server and desktop.
+- The tool rebuilt per-folder `.img.xz.sha` files so `sha256sum -c` works directly from each staged board directory.
+- Full `xz -t` verification passed for all 118 staged `.img.xz` files.
+- Full per-folder `sha256sum -c` verification passed for all 118 staged `.img.xz.sha` files.
+- Manifest: `output/images/2026.05-wip/manifest.tsv`
+- Missing/skip table: `output/images/2026.05-wip/missing.tsv`
+
+Staged WIP board folders:
+
+| Folder | Images |
+| --- | ---: |
+| `bpi-6204` | 10 |
+| `bpi-cm6` | 8 |
+| `bpi-f2s` | 10 |
+| `bpi-m4` | 10 |
+| `bpi-m6` | 10 |
+| `bpi-r3` | 10 |
+| `bpi-r3mini` | 10 |
+| `bpi-r4lite` | 10 |
+| `bpi-r4pro` | 10 |
+| `bpi-r64` | 10 |
+| `bpi-w2` | 10 |
+| `bpi-w3` | 10 |
+
 Target releases:
 
 - `bookworm`
