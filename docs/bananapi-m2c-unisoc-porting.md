@@ -2,13 +2,19 @@
 
 Branch: `bpi-v26.8.0-trunk`
 
-Date: 2026-05-23
+Date: 2026-05-23, updated 2026-05-24
 
 ## Objective
 
 Bring up the unpublished Banana Pi `bpi-m2c` platform from the local UNISOC vendor materials, refresh the vendor Yocto outputs first, then use those results to decide the correct Armbian integration path.
 
 The first goal is not to pretend this is a normal upstream Armbian board. The current material is a UNISOC secure boot and PAC-image flow, so the work must preserve the vendor boot chain until hardware proves that a more standard Armbian disk image can boot.
+
+As of 2026-05-24, the active source of truth is the new sync tree:
+
+- `/media/pi/SMCI/bpi/unisoc/sync-20260524/source_sync_rls_25c`
+
+The older expanded trees remain historical validation references only.
 
 ## Working Rules
 
@@ -26,6 +32,8 @@ Local UNISOC root:
 
 Expanded Yocto baselines:
 
+- `/media/pi/SMCI/bpi/unisoc/sync-20260524/source_sync_rls_25c` current default
+- `/media/pi/SMCI/bpi/unisoc/sync-20260524/source_sync_trunk_3_0_dev` reference only
 - `/media/pi/SMCI/bpi/unisoc/source_rls_25c_w26_05_5`
 - `/media/pi/SMCI/bpi/unisoc/source_rls_25c_w26_07_2`
 - `/media/pi/SMCI/bpi/unisoc/source_trunk_3_0_dev_w24_05_2_p1_2`
@@ -38,12 +46,14 @@ Original source archives:
 
 Build wrappers:
 
+- `/media/pi/SMCI/bpi/unisoc/build_uis7885_latest_official.sh`
 - `/media/pi/SMCI/bpi/unisoc/build_uis7885_05_5_incremental.sh`
 - `/media/pi/SMCI/bpi/unisoc/build_uis7885_07_2_incremental.sh`
 - `/media/pi/SMCI/bpi/unisoc/build_uis7885_trunk_incremental.sh`
 
 Known existing PAC outputs:
 
+- `sync-20260524/source_sync_rls_25c/out/target/product/uis7885-2h10/cp_sign/QOGIRN6PRO_UIS7885_2H10_SEC/uis7885_2h10+wayland+wayland+sec+uboot22-userdebug-native_QOGIRN6PRO_UIS7885_2H10_SEC.pac`
 - `source_rls_25c_w26_05_5/out/target/product/uis7885-2h10/cp_sign/QOGIRN6PRO_UIS7885_2H10_SEC/uis7885_2h10+wayland+wayland+sec-userdebug-native_QOGIRN6PRO_UIS7885_2H10_SEC.pac`
 - `source_rls_25c_w26_07_2/out/target/product/uis7885-2h10/cp_sign/QOGIRN6PRO_UIS7885_2H10_SEC/uis7885_2h10+wayland+wayland+sec-userdebug-native_QOGIRN6PRO_UIS7885_2H10_SEC.pac`
 - `source_trunk_3_0_dev_w24_05_2_p1_2/out/target/product/uis7885-2h10/cp_sign/QOGIRN6PRO_UIS7885_2H10_SEC/uis7885_2h10+wayland+wayland+sec-userdebug-native_QOGIRN6PRO_UIS7885_2H10_SEC.pac`
@@ -85,7 +95,8 @@ The local build wrappers and machine files currently target:
 - Distro: `unisoc-wayland`
 - Image: `unisoc-wayland-image`
 - Product/signing profile: `QOGIRN6PRO_UIS7885_2H10_SEC`
-- Build argument: `uis7885-2h10+wayland+wayland`
+- Current build argument: `uis7885-2h10+wayland+wayland+sec+uboot22 userdebug`
+- Historical build argument: `uis7885-2h10+wayland+wayland+sec userdebug`
 - Variant: `userdebug`
 - Secure boot setting: `sec`
 
@@ -122,7 +133,20 @@ The practical implication is that the first Armbian port should either:
 
 ### Phase 1: Vendor Baseline Revalidation
 
-Re-run the three available `uis7885-2h10` Yocto baselines:
+Current default action:
+
+1. Use `sync-20260524/source_sync_rls_25c`.
+2. Use the official UNISOC wrapper:
+
+   ```bash
+   cd /media/pi/SMCI/bpi/unisoc
+   ./build_uis7885_latest_official.sh check
+   ./build_uis7885_latest_official.sh wayland
+   ```
+
+3. Stage the resulting PAC and signed artifacts through the Armbian helper.
+
+Historical action, explicit opt-in only:
 
 1. `source_rls_25c_w26_07_2`
 2. `source_rls_25c_w26_05_5`
@@ -205,10 +229,17 @@ The first Armbian integration step is therefore a vendor-PAC hybrid:
 5. Enable `ttyS1` serial getty at `921600`.
 6. Repack PAC with the same vendor `makepac.py` and `mkpac.pl`.
 
-The helper for this flow is:
+The helper for this flow is now defaulted to `sync-20260524-rls-25c`:
 
 ```bash
 tools/make-bpi-m2c-unisoc-hybrid-pac.sh --release trixie --flavor cli
+```
+
+Equivalent explicit form:
+
+```bash
+BASELINE=sync-20260524-rls-25c \
+  tools/make-bpi-m2c-unisoc-hybrid-pac.sh --release trixie --flavor cli
 ```
 
 To generate a server/desktop matrix from the current Armbian arm64 rootfs
@@ -234,6 +265,47 @@ metadata under `metadata/`, and top-level `manifest.tsv`/`SHA256SUMS` files.
 
 This still requires real hardware validation. Passing PAC generation only
 proves that the signed package can be assembled.
+
+## Execution Result: 2026-05-24 Sync Tree
+
+The BPI-M2C Armbian helpers were repointed to the current vendor sync tree:
+
+- baseline id: `sync-20260524-rls-25c`
+- source tree: `/media/pi/SMCI/bpi/unisoc/sync-20260524/source_sync_rls_25c`
+- vendor PAC:
+  `/media/pi/SMCI/bpi/unisoc/sync-20260524/source_sync_rls_25c/out/target/product/uis7885-2h10/cp_sign/QOGIRN6PRO_UIS7885_2H10_SEC/uis7885_2h10+wayland+wayland+sec+uboot22-userdebug-native_QOGIRN6PRO_UIS7885_2H10_SEC.pac`
+
+Latest vendor artifacts were staged here:
+
+```text
+/media/pi/SMCI/bpi/unisoc/release/bpi-m2c/20260524-sync20260524
+```
+
+Staging result:
+
+| Baseline | Staged | Missing | Checksum |
+| --- | ---: | ---: | --- |
+| `sync-20260524-rls-25c` | 15 | 0 | `sha256sum -c SHA256SUMS` passed |
+
+A first Armbian-rootfs hybrid PAC was generated from the current trixie CLI
+rootfs cache:
+
+```text
+/media/pi/SMCI/bpi/unisoc/hybrid/bpi-m2c/20260524-sync20260524/sync-20260524-rls-25c-armbian-trixie-cli/product/cp_sign/QOGIRN6PRO_UIS7885_2H10_SEC/bpi-m2c_sync-20260524-rls-25c_armbian-trixie-cli_QOGIRN6PRO_UIS7885_2H10_SEC.pac
+```
+
+Hybrid PAC result:
+
+| Item | Value |
+| --- | --- |
+| PAC bytes | `2409116954` |
+| PAC SHA256 | `91b9ed6eed98ddf376a32b70dedcc28955d0e10d7eb97864991bc8ebfcb6625f` |
+| Rootfs size | `2048 MB` |
+| Rootfs SHA256 | `5db8231764fa00e564c1fb34a2fb6382b607d7fbfb1670a120d944a401e25344` |
+| Checksum status | `sha256sum -c SHA256SUMS` passed |
+
+This is still a packaging validation result only. It must be flashed and booted
+on real BPI-M2C hardware before the board can move beyond `.wip`.
 
 ### Phase 4: Hardware Validation
 

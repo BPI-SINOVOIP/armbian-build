@@ -9,18 +9,84 @@ LINK_MODE="${LINK_MODE:-hardlink}"
 BOARD_ID="${BOARD_ID:-bpi-m2c}"
 MACHINE="${MACHINE:-uis7885-2h10}"
 SIGN_PROFILE="${SIGN_PROFILE:-QOGIRN6PRO_UIS7885_2H10_SEC}"
-PAC_NAME="${PAC_NAME:-uis7885_2h10+wayland+wayland+sec-userdebug-native_QOGIRN6PRO_UIS7885_2H10_SEC.pac}"
+PAC_NAME="${PAC_NAME:-}"
+BASELINES="${BASELINES:-sync-20260524-rls-25c}"
 
-baselines=(
-	rls-25c-w26-05-5
-	rls-25c-w26-07-2
-	trunk-3-0-dev-w24-05-2-p1-2
-)
+requested_baselines=()
+
+usage() {
+	cat <<-EOF
+	Usage: $0 [options]
+
+	Stage BPI-M2C UNISOC vendor PAC/core signed artifacts.
+
+	Options:
+	  --baseline NAME       Stage one baseline; may be repeated
+	  --date-tag NAME       Default: ${DATE_TAG}
+	  --target-dir PATH     Default: ${TARGET_DIR}
+	  --link-mode MODE      hardlink or copy, default: ${LINK_MODE}
+	  -h, --help            Show this help
+
+	Default baseline:
+	  sync-20260524-rls-25c
+
+	Supported baselines:
+	  sync-20260524-rls-25c
+	  rls-25c-w26-05-5
+	  rls-25c-w26-07-2
+	  trunk-3-0-dev-w24-05-2-p1-2
+
+	Environment:
+	  SOURCE_ROOT, TARGET_ROOT, DATE_TAG, TARGET_DIR, LINK_MODE,
+	  BOARD_ID, MACHINE, SIGN_PROFILE, PAC_NAME, BASELINES
+	EOF
+}
+
+while (($#)); do
+	case "$1" in
+		--baseline)
+			shift
+			requested_baselines+=("${1:?missing baseline}")
+			;;
+		--date-tag)
+			shift
+			DATE_TAG="${1:?missing date tag}"
+			TARGET_DIR="${TARGET_ROOT}/${DATE_TAG}"
+			;;
+		--target-dir)
+			shift
+			TARGET_DIR="${1:?missing target dir}"
+			;;
+		--link-mode)
+			shift
+			LINK_MODE="${1:?missing link mode}"
+			;;
+		-h | --help)
+			usage
+			exit 0
+			;;
+		*)
+			printf 'Unknown argument: %s\n\n' "$1" >&2
+			usage >&2
+			exit 2
+			;;
+	esac
+	shift
+done
+
+if ((${#requested_baselines[@]} == 0)); then
+	read -r -a baselines <<< "${BASELINES}"
+else
+	baselines=("${requested_baselines[@]}")
+fi
 
 tree_for_baseline() {
 	local baseline="$1"
 
 	case "${baseline}" in
+		sync-20260524-rls-25c)
+			printf '%s/sync-20260524/source_sync_rls_25c\n' "${SOURCE_ROOT}"
+			;;
 		rls-25c-w26-05-5)
 			printf '%s/source_rls_25c_w26_05_5\n' "${SOURCE_ROOT}"
 			;;
@@ -37,9 +103,32 @@ tree_for_baseline() {
 	esac
 }
 
+pac_name_for_baseline() {
+	local baseline="$1"
+
+	if [[ -n "${PAC_NAME}" ]]; then
+		printf '%s\n' "${PAC_NAME}"
+		return
+	fi
+
+	case "${baseline}" in
+		sync-20260524-rls-25c)
+			printf '%s\n' "uis7885_2h10+wayland+wayland+sec+uboot22-userdebug-native_${SIGN_PROFILE}.pac"
+			;;
+		*)
+			printf '%s\n' "uis7885_2h10+wayland+wayland+sec-userdebug-native_${SIGN_PROFILE}.pac"
+			;;
+	esac
+}
+
 artifact_list() {
+	local baseline="$1"
+	local pac_name
+
+	pac_name="$(pac_name_for_baseline "${baseline}")"
+
 	printf '%s\n' \
-		"cp_sign/${SIGN_PROFILE}/${PAC_NAME}" \
+		"cp_sign/${SIGN_PROFILE}/${pac_name}" \
 		"boot-sign.img" \
 		"dtbo-sign.img" \
 		"Image-dtb-sign.dtb" \
@@ -128,7 +217,7 @@ stage_baseline() {
 		stage_file "${src}" "${dst}"
 		printf '%s\t%s\t%s\t%s\t%s\n' "${BOARD_ID}" "${baseline}" "${rel}" "$(stat -c %s "${dst}")" "${dst}" >> "${manifest}"
 		((staged += 1))
-	done < <(artifact_list)
+	done < <(artifact_list "${baseline}")
 
 	(
 		cd "${dst_dir}"

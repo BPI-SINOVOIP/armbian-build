@@ -5,7 +5,7 @@ SOURCE_ROOT="${SOURCE_ROOT:-/media/pi/SMCI/bpi/unisoc}"
 TARGET_ROOT="${TARGET_ROOT:-${SOURCE_ROOT}/hybrid/bpi-m2c}"
 ARMBIAN_ROOTFS_CACHE="${ARMBIAN_ROOTFS_CACHE:-/media/pi/SMCI/armbian/bpi-v26.2.1/cache/rootfs}"
 DATE_TAG="${DATE_TAG:-$(date +%Y%m%d)}"
-BASELINE="${BASELINE:-trunk-3-0-dev-w24-05-2-p1-2}"
+BASELINE="${BASELINE:-sync-20260524-rls-25c}"
 MACHINE="${MACHINE:-uis7885-2h10}"
 SIGN_PROFILE="${SIGN_PROFILE:-QOGIRN6PRO_UIS7885_2H10_SEC}"
 RELEASE="${RELEASE:-trixie}"
@@ -110,6 +110,9 @@ require_cmd() {
 
 tree_for_baseline() {
 	case "$1" in
+		sync-20260524-rls-25c)
+			printf '%s/sync-20260524/source_sync_rls_25c\n' "${SOURCE_ROOT}"
+			;;
 		rls-25c-w26-05-5)
 			printf '%s/source_rls_25c_w26_05_5\n' "${SOURCE_ROOT}"
 			;;
