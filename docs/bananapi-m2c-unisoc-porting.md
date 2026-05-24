@@ -307,6 +307,35 @@ Hybrid PAC result:
 This is still a packaging validation result only. It must be flashed and booted
 on real BPI-M2C hardware before the board can move beyond `.wip`.
 
+## SD Rootfs Test Plan
+
+The `sync-20260524` code and documents do not show a complete BPI-M2C SD-card
+first-stage boot path. The current `uis7885-2h10` machine and PAC layout build
+signed eMMC/UFS loaders, not an SD SPL. The next storage experiment is therefore
+eMMC/UFS boot plus SD-mounted Armbian rootfs.
+
+Detailed analysis and the test procedure are tracked in:
+
+- `docs/bananapi-m2c-unisoc-sd-rootfs-plan.md`
+
+The helper for generating the SD rootfs image is:
+
+```bash
+tools/make-bpi-m2c-unisoc-sd-rootfs.sh --release trixie --flavor cli --force
+```
+
+First generated SD-rootfs test image:
+
+```text
+/media/pi/SMCI/bpi/unisoc/sdrootfs/bpi-m2c/20260524/sync-20260524-rls-25c-armbian-trixie-cli-sdroot/rootfs.ext4
+```
+
+Use this kernel root argument for the first hardware test:
+
+```text
+root=UUID=c43f0ac5-b23c-4797-a0d4-945de5474b37 rootfstype=ext4 rootwait rw
+```
+
 ### Phase 4: Hardware Validation
 
 Minimum boot validation:
