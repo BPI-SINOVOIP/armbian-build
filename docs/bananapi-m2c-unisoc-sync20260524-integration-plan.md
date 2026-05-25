@@ -1,6 +1,6 @@
 # Banana Pi BPI-M2C UNISOC Sync-20260524 Integration Plan
 
-Date: 2026-05-24
+Date: 2026-05-24, updated 2026-05-25
 
 Branch: `bpi-v26.8.0-trunk`
 
@@ -238,6 +238,45 @@ No board status upgrade is allowed until real BPI-M2C hardware proves:
 - USB host enumerates storage;
 - reboot and poweroff work;
 - `dmesg` has no boot-critical storage or firmware errors.
+
+## Execution Result: 2026-05-25
+
+The current SD-rootfs path was implemented as a PAC variant, not as full SD
+first-stage boot. The reason is that the active vendor product carries the
+effective rootfs selection in signed DTBO bootargs, while the product PAC only
+contains eMMC/UFS SPL loaders.
+
+New tracked helpers:
+
+```text
+tools/inspect-bpi-m2c-unisoc-bootargs.sh
+tools/write-bpi-m2c-unisoc-sd-rootfs.sh
+tools/make-bpi-m2c-unisoc-sdroot-pac.sh
+```
+
+Generated hardware-test PAC:
+
+```text
+/media/pi/SMCI/bpi/unisoc/sdrootfs-pac/bpi-m2c/20260525/sync-20260524-rls-25c-sdrootfs-c43f0ac5-b23c-4797-a0d4-945de5474b37/product/cp_sign/QOGIRN6PRO_UIS7885_2H10_SEC/bpi-m2c_sync-20260524-rls-25c-sdrootfs-c43f0ac5-b23c-4797-a0d4-945de5474b37_QOGIRN6PRO_UIS7885_2H10_SEC.pac
+```
+
+The PAC changes `dtbo.img` from `root=/dev/mmcblk0p31 rootfstype=ext4 ro
+rootwait` to `root=UUID=c43f0ac5-b23c-4797-a0d4-945de5474b37
+rootfstype=ext4 rw rootwait`, then regenerates `dtbo-sign.img`.
+
+Validation completed:
+
+- DTBO bootargs verified with `fdtget`.
+- DTBO signing verified by `add_content_certificate() success!`.
+- PAC packaging reached `do packet success`.
+- SHA256 verification passed for the PAC and generated metadata.
+
+Known limitation:
+
+- `makepac.py` exits non-zero after PAC creation while writing optional
+  `BT_VERSION` metadata because CP2 version lookup returns `None`. The wrapper
+  records this in `makepac.log` and continues only when the PAC file exists and
+  `do packet success` is present.
 
 ## Deliverables
 

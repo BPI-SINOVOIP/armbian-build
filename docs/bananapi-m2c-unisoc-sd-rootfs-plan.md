@@ -1,6 +1,6 @@
 # Banana Pi BPI-M2C UNISOC SD Boot and SD Rootfs Plan
 
-Date: 2026-05-24
+Date: 2026-05-24, updated 2026-05-25
 
 Active vendor tree:
 
@@ -96,7 +96,8 @@ The package contains only an Armbian ext4 rootfs image prepared for BPI-M2C,
 with vendor kernel modules and firmware injected from the known-good vendor
 rootfs. The existing vendor PAC remains responsible for the signed boot chain.
 
-The boot test requires changing the kernel root argument to:
+The boot test requires changing the kernel root argument in the signed DTBO
+overlay to:
 
 ```text
 root=UUID=<sd-rootfs-uuid> rootfstype=ext4 rootwait rw
@@ -120,13 +121,23 @@ numbering can change between U-Boot and Linux.
    a whole disk unless the card was intentionally prepared that way:
 
    ```bash
-   sudo dd if=/path/to/rootfs.ext4 of=/dev/sdX1 bs=16M conv=fsync status=progress
+   tools/write-bpi-m2c-unisoc-sd-rootfs.sh --dry-run --device /dev/sdX1
+   tools/write-bpi-m2c-unisoc-sd-rootfs.sh --yes --device /dev/sdX1
    ```
 
-4. Flash the current secure vendor or hybrid PAC to eMMC/UFS.
+4. Build the matching SD-rootfs PAC. This modifies only `dtbo.img` bootargs,
+   re-signs `dtbo-sign.img`, and repacks PAC:
 
-5. Change the boot args to use the SD filesystem UUID recorded in
-   `build-info.txt`.
+   ```bash
+   tools/inspect-bpi-m2c-unisoc-bootargs.sh \
+     --output /media/pi/SMCI/bpi/unisoc/sdrootfs/bpi-m2c/20260524/sync-20260524-rls-25c-armbian-trixie-cli-sdroot/bootargs-inspection.txt
+
+   tools/make-bpi-m2c-unisoc-sdroot-pac.sh --force
+   ```
+
+5. Flash the generated secure PAC to eMMC/UFS. The PAC keeps the vendor signed
+   boot chain and changes the DTBO root argument to the SD rootfs UUID recorded
+   in `build-info.txt`.
 
 6. Boot with UART attached and collect:
 
@@ -195,3 +206,53 @@ Verification completed:
 
 This artifact still needs hardware validation with the current secure vendor or
 hybrid PAC boot chain.
+
+## Execution Result: 2026-05-25
+
+Generated the signed PAC variant for testing vendor eMMC/UFS boot plus SD
+Armbian rootfs:
+
+```text
+/media/pi/SMCI/bpi/unisoc/sdrootfs-pac/bpi-m2c/20260525/sync-20260524-rls-25c-sdrootfs-c43f0ac5-b23c-4797-a0d4-945de5474b37/product/cp_sign/QOGIRN6PRO_UIS7885_2H10_SEC/bpi-m2c_sync-20260524-rls-25c-sdrootfs-c43f0ac5-b23c-4797-a0d4-945de5474b37_QOGIRN6PRO_UIS7885_2H10_SEC.pac
+```
+
+Build metadata:
+
+| Item | Value |
+| --- | --- |
+| Work directory | `/media/pi/SMCI/bpi/unisoc/sdrootfs-pac/bpi-m2c/20260525/sync-20260524-rls-25c-sdrootfs-c43f0ac5-b23c-4797-a0d4-945de5474b37` |
+| Base product | `/media/pi/SMCI/bpi/unisoc/hybrid/bpi-m2c/20260524-sync20260524/sync-20260524-rls-25c-armbian-trixie-cli/product` |
+| Rootfs UUID | `c43f0ac5-b23c-4797-a0d4-945de5474b37` |
+| PAC size | `2409116986` bytes |
+| PAC SHA256 | `a047202e76486a89df40ba88ee5ed6a8f214b44fd07a77900930a944edffb16c` |
+| Inspection report | `/media/pi/SMCI/bpi/unisoc/sdrootfs/bpi-m2c/20260524/sync-20260524-rls-25c-armbian-trixie-cli-sdroot/bootargs-inspection.txt` |
+
+DTBO bootargs were changed from:
+
+```text
+root=/dev/mmcblk0p31 rootfstype=ext4 ro rootwait
+```
+
+to:
+
+```text
+root=UUID=c43f0ac5-b23c-4797-a0d4-945de5474b37 rootfstype=ext4 rw rootwait
+```
+
+Verification completed:
+
+- `sha256sum -c SHA256SUMS` passed for the PAC, `dtbo.img`,
+  `dtbo-sign.img`, `build-info.txt`, `sign-dtbo.log`, and `makepac.log`.
+- `fdtget` confirms `dtbo.img` contains the SD rootfs UUID bootargs.
+- `sprd_sign` log contains `add_content_certificate() success!`.
+- `makepac.py` log contains `do packet success`.
+
+Known packaging warning:
+
+- `makepac.py` exits after PAC creation while writing `BT_VERSION`, because the
+  local CP2 version lookup returns `None`. The PAC is already written and its
+  CRC step reports `do packet success`; the wrapper treats this as a recorded
+  metadata warning, not a PAC creation failure.
+
+This PAC still needs real BPI-M2C hardware validation with the matching SD
+card rootfs.
