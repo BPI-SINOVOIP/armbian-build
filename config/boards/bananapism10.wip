@@ -1,0 +1,11 @@
+# Banana Pi BPI-SM10 / SpacemiT K3-CoM260 developer kit
+BOARD_NAME="BananaPi BPI-SM10"
+BOARD_VENDOR="sinovoip"
+BOARDFAMILY="spacemit-k3-bpi"
+BOARD_MAINTAINER="BPI-SINOVOIP"
+INTRODUCED="2026"
+KERNEL_TARGET="current"
+BOOT_FDT_FILE="spacemit/k3_com260.dtb"
+BOOTDELAY=1
+SRC_CMDLINE="earlycon=sbi console=ttyS0,115200 console=tty1 loglevel=7 rootwait"
+PACKAGE_LIST_BOARD="rfkill bluetooth bluez bluez-tools"

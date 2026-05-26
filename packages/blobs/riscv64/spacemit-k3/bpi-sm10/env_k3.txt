@@ -1,0 +1,8 @@
+console=ttyS0,115200
+bootdelay=1
+knl_name=Image
+ramdisk_name=initramfs-generic.img
+dtb_dir=dtb/spacemit
+dtb_name=dtb/spacemit/k3_com260.dtb
+dtb_env=echo using Armbian fixed dtb
+loglevel=7

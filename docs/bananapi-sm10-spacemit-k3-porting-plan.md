@@ -372,7 +372,10 @@ names, kernel branches, device trees, and flashing tools.
 1. Keep vendor BSP source, downloaded archives, generated images, proprietary
    firmware, GPU/NPU userspace payloads, and flashing packages under
    `/media/pi/SMCI/bpi/bpi-sm10`, not in Git.
-2. Commit only Armbian board definitions, scripts, patches, and documentation.
+2. Commit Armbian board definitions, scripts, patches, documentation, and the
+   minimum boot-stage blobs required to reproduce this local image. Do not
+   commit the full vendor SDK, generated images, Titan packages, or vendor
+   userspace payloads.
 3. Treat BPI-SM10 as `.wip` until real hardware boots an Armbian image and the
    core hardware test matrix passes.
 4. Pin every vendor source revision or manifest used for a successful build.
@@ -636,8 +639,10 @@ Hardware checks:
 4. Done: built the unmodified vendor BSP.
 5. Done: staged and checksummed the vendor outputs.
 6. Pending: flash and boot the unmodified vendor image on BPI-SM10.
-7. Pending: only after vendor boot succeeds, add `bananapism10.wip` and
-   hybrid-rootfs tooling to the Armbian tree.
+7. Done: added the initial `bananapism10.wip` Armbian board using the vendor
+   K3 boot chain, vendor-pinned Linux 6.18 source, and Armbian trixie minimal
+   rootfs.
+8. Pending: flash and boot the Armbian image on BPI-SM10.
 
 ## Execution Record: 2026-05-26 Vendor BSP Build
 
@@ -738,3 +743,113 @@ sha256sum -c SHA256SUMS
 ```
 
 All staged artifacts passed checksum verification on 2026-05-26.
+
+## Execution Record: 2026-05-26 Armbian Initial Port
+
+Implementation files added:
+
+```text
+config/boards/bananapism10.wip
+config/sources/families/spacemit-k3-bpi.conf
+config/kernel/linux-spacemit-k3-bpi-current.config
+packages/blobs/riscv64/spacemit-k3/bpi-sm10/
+```
+
+The first Armbian image is a vendor-boot-chain image:
+
+- Linux is built from the public SpacemiT `linux-6.18` source at the same
+  revision as the verified vendor SDK.
+- U-Boot package creation uses the boot-stage binaries produced by the verified
+  vendor BSP build, with source revisions recorded for provenance.
+- The partition layout preserves the vendor raw offsets and GPT partition names
+  required by the K3 U-Boot environment.
+
+Armbian source pins:
+
+| Component | Source | Revision |
+| --- | --- | --- |
+| Linux | `https://github.com/spacemit-com/linux-6.18.git` | `27275ec8240cc49af3a525b8bc325d9b5029fb81` |
+| U-Boot provenance | `https://github.com/spacemit-com/uboot-2022.10.git` | `1b10c8119e1a9b5451a4236f6b384f7c91eed1e2` |
+
+Board selection:
+
+```text
+BOARD=bananapism10
+BOARDFAMILY=spacemit-k3-bpi
+BOOT_FDT_FILE=spacemit/k3_com260.dtb
+```
+
+Build command:
+
+```bash
+cd /media/pi/SMCI/armbian/bpi-v26.2.1
+./compile.sh build BOARD=bananapism10 BRANCH=current BUILD_DESKTOP=no BUILD_MINIMAL=yes KERNEL_CONFIGURE=no RELEASE=trixie EXPERT=yes
+```
+
+Build result:
+
+```text
+output/images/Armbian-unofficial_26.05.0-trunk_Bananapism10_trixie_current_6.18.3_minimal.img
+output/images/Armbian-unofficial_26.05.0-trunk_Bananapism10_trixie_current_6.18.3_minimal.img.sha
+output/images/Armbian-unofficial_26.05.0-trunk_Bananapism10_trixie_current_6.18.3_minimal.img.txt
+output/logs/log-build-02955ea9-2713-44cd-9e1d-d4e8f3093076.log.ans
+```
+
+Image SHA256:
+
+```text
+b55231412c606e9e45aa7940badae6aefa609ce99b55de67d0d5880e73fc3124
+```
+
+Build runtime:
+
+```text
+30:36 min
+```
+
+Partition verification:
+
+| Partition | Start sector | Start offset | Size | GPT name |
+| --- | ---: | ---: | ---: | --- |
+| bootfs | 24576 | 12 MiB | 256 MiB | `bootfs` |
+| rootfs | 548864 | 268 MiB | 1.2 GiB | `rootfs` |
+
+Boot-chain offset verification against staged vendor blobs:
+
+| Blob | Offset | Result |
+| --- | ---: | --- |
+| `env.bin` | 640 KiB | byte-identical |
+| `bootinfo_block.bin` | 1024 KiB | byte-identical |
+| `FSBL.bin` | 1536 KiB | byte-identical |
+| `esos.itb` | 4096 KiB | byte-identical |
+| `fw_dynamic.itb` | 7168 KiB | byte-identical |
+| `u-boot.itb` | 8192 KiB | byte-identical |
+
+Bootfs verification:
+
+| File | SHA256 |
+| --- | --- |
+| `env_k3.txt` | `2e1aa1026c2849a5b08d5864c3be48958bb3d099a1901580629dfefd46db161a` |
+| `bianbu.bmp` | `a3567f599894c570d1b62c461d52e227b29eca9ab745ac619553890ecf9c2e8b` |
+| `uInitrd` | `3a5ef6a972a26f8da78a5c1ff5e2e380abbf72394505a711db601dab16432024` |
+| `initramfs-generic.img` | `3a5ef6a972a26f8da78a5c1ff5e2e380abbf72394505a711db601dab16432024` |
+| `Image` | `696819ce0253fa3068363de26197ae2fc186dde9ead1c242d65d28b53a2e8ff3` |
+| `dtb/spacemit/k3_com260.dtb` | `8f26aa98dbe2c081190d8241355ad143930933eed139efa382d85904498f6461` |
+
+`uInitrd` and `initramfs-generic.img` were verified as identical. This matters
+because the vendor K3 U-Boot environment defaults to `initramfs-generic.img`.
+
+Validation completed:
+
+```text
+bash -n config/sources/families/spacemit-k3-bpi.conf config/boards/bananapism10.wip
+sha256sum -c output/images/Armbian-unofficial_26.05.0-trunk_Bananapism10_trixie_current_6.18.3_minimal.img.sha
+sfdisk -l -o Device,Start,End,Sectors,Size,Type,Name output/images/Armbian-unofficial_26.05.0-trunk_Bananapism10_trixie_current_6.18.3_minimal.img
+cmp checks for all raw boot-chain blob offsets
+read-only bootfs mount and file checksum inspection
+```
+
+Hardware status:
+
+- Vendor Buildroot image: built and staged, not yet boot-tested on BPI-SM10.
+- Armbian image: built and offline-verified, not yet boot-tested on BPI-SM10.
