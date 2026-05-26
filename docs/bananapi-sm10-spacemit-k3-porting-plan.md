@@ -626,14 +626,115 @@ Hardware checks:
 
 ## Immediate Next Actions
 
-1. Open the official K3 Buildroot source guide in a browser and record the exact
-   download command, manifest branch, manifest XML, supported board defconfig,
-   and build command.
-2. Implement local BSP fetch/build/stage scripts under
+1. Done: opened the official K3 Buildroot source guide in a browser and
+   recorded the exact download command, manifest branch, manifest XML,
+   supported board defconfig, and build command.
+2. Done: implemented local BSP fetch/build/stage scripts under
    `/media/pi/SMCI/bpi/bpi-sm10/scripts`.
-3. Download the official BSP into `/media/pi/SMCI/bpi/bpi-sm10/sdk`.
-4. Build the unmodified vendor BSP.
-5. Stage and checksum the vendor outputs.
-6. Flash and boot the unmodified vendor image on BPI-SM10.
-7. Only after vendor boot succeeds, add `bananapism10.wip` and hybrid-rootfs
-   tooling to the Armbian tree.
+3. Done: downloaded the official BSP into
+   `/media/pi/SMCI/bpi/bpi-sm10/sdk/k3-buildroot-sdk-1.0`.
+4. Done: built the unmodified vendor BSP.
+5. Done: staged and checksummed the vendor outputs.
+6. Pending: flash and boot the unmodified vendor image on BPI-SM10.
+7. Pending: only after vendor boot succeeds, add `bananapism10.wip` and
+   hybrid-rootfs tooling to the Armbian tree.
+
+## Execution Record: 2026-05-26 Vendor BSP Build
+
+Official documentation evidence:
+
+- Dynamic SpacemiT guide capture:
+  `/media/pi/SMCI/bpi/bpi-sm10/notes/spacemit-k3-buildroot-source-20260526.txt`
+- Screenshot:
+  `/media/pi/SMCI/bpi/bpi-sm10/notes/spacemit-k3-buildroot-source-20260526.png`
+- Page last-updated value recorded from the guide: `2026-05-23 10:34:03`
+
+Vendor SDK workspace:
+
+```text
+/media/pi/SMCI/bpi/bpi-sm10/sdk/k3-buildroot-sdk-1.0
+```
+
+Source manifest evidence:
+
+```text
+/media/pi/SMCI/bpi/bpi-sm10/notes/source-manifest-20260526-091258.xml
+/media/pi/SMCI/bpi/bpi-sm10/notes/source-manifest-20260526-091258.tsv
+/media/pi/SMCI/bpi/bpi-sm10/notes/source-manifest-20260526-091258.txt
+```
+
+Key pinned revisions from `repo manifest -r`:
+
+| Component | Path | Revision |
+| --- | --- | --- |
+| Buildroot | `buildroot` | `06a303b332a7216c6ca9360dd7c7f52a3fb8b1da` |
+| Buildroot external tree | `buildroot-ext` | `67a5f68cf4f3720d9f31fff96860863ef1fe6d51` |
+| Linux | `bsp-src/linux-6.18` | `27275ec8240cc49af3a525b8bc325d9b5029fb81` |
+| U-Boot | `bsp-src/uboot-2022.10` | `1b10c8119e1a9b5451a4236f6b384f7c91eed1e2` |
+| OpenSBI | `bsp-src/opensbi` | `3e2f9efc9660b8d5fcae4e0b6495f306d5c64078` |
+| ESOS | `package-src/esos` | `92a8baf250e42853a094a7af6f7ee849adb3de4a` |
+| Mesa | `package-src/mesa` | `e0f7500a6571846265f4442befdd4a012c5170af` |
+| PowerVR userspace | `package-src/img-gpu-powervr` | `f934f308946f35f8eec25e746c04e4cf91b33853` |
+| K3 VPU firmware | `package-src/k3x-vpu-firmware` | `8ece3da96f8cbfbd29c64a0a2366fd27652e9353` |
+| SDK scripts | `scripts` | `96418825a37a1cf07d3275c13d9d3329934224f0` |
+
+Builder image:
+
+```text
+harbor.spacemit.com/bianbu/k3-bsp-builder@sha256:d192640a2503f4d5ca5eadccca545d4fd53d13a1d1f158990078f33fb076c155
+```
+
+Build command:
+
+```text
+BATCH_MODE=1 /media/pi/SMCI/bpi/bpi-sm10/scripts/build-bpi-sm10-spacemit-k3-bsp.sh --mode k3-build
+```
+
+Build log:
+
+```text
+/media/pi/SMCI/bpi/bpi-sm10/logs/bpi-sm10-k3-build-k3-build-20260526-091653.log
+```
+
+Result:
+
+- The unmodified vendor Buildroot BSP completed successfully.
+- Kernel built from `bsp-src/linux-6.18`; installed module version observed in
+  the log: `6.18.3`.
+- U-Boot built from `bsp-src/uboot-2022.10` and produced `u-boot.itb`.
+- OpenSBI produced `fw_dynamic.itb`.
+- The generated SD image contains vendor partitions for `env`, `bootinfo`,
+  `fsbl`, `esos`, `opensbi`, `uboot`, `bootfs`, and `rootfs`.
+
+Staged release:
+
+```text
+/media/pi/SMCI/bpi/bpi-sm10/release/20260526-k3-buildroot-v1.0-vendor-bsp
+```
+
+Primary artifacts:
+
+| Artifact | Size | SHA256 |
+| --- | ---: | --- |
+| `Buildroot-k3-20260526110427-sdcard.img` | 1891651584 | `ce2c9e82aa46f877f85b2915b3cc7267e59c1fdfd150d17f71c853de4489d1a6` |
+| `Buildroot-k3-20260526110427.zip` | 363327116 | `3dc26cf5e992727ea16ad875527f069170adf368311ac389c9854109ff51212c` |
+| `FSBL.bin` | 449984 | `d18ceb20ae2433e441e9a5d935b1db34a7d35b5cf074979d8104ffc35c4971f2` |
+| `fw_dynamic.itb` | 272223 | `6ba858dcbf79371cdf3cc4770e036ea448e7d81547bf880af5b2903e7296a044` |
+| `u-boot.itb` | 2134494 | `1f7752ad032e3b04e30ffce5e9e3a79b427c05efc7fc7ef4130fde23a7990982` |
+| `bootfs.img` | 268435456 | `c428a76ec6384046cc4053d413ebf201c0642c4b39e38b4f0c29c9df37a125a9` |
+
+Full artifact manifest and checksum file:
+
+```text
+/media/pi/SMCI/bpi/bpi-sm10/release/20260526-k3-buildroot-v1.0-vendor-bsp/manifest.tsv
+/media/pi/SMCI/bpi/bpi-sm10/release/20260526-k3-buildroot-v1.0-vendor-bsp/SHA256SUMS
+```
+
+Validation:
+
+```text
+cd /media/pi/SMCI/bpi/bpi-sm10/release/20260526-k3-buildroot-v1.0-vendor-bsp
+sha256sum -c SHA256SUMS
+```
+
+All staged artifacts passed checksum verification on 2026-05-26.
