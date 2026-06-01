@@ -109,7 +109,7 @@ This list excludes MCU-only accessories and boards already represented above.
 | BPI-R4 Mini | MT7987 | blocked / no local Mini DTS | Medium/Hard | P2/P3: local tree supports BPI-R4 Lite MT7987, but Mini has different Ethernet/WiFi hardware; wait for Mini-specific kernel DTS and U-Boot defconfig |
 | BPI-RT2 | Realtek RTL8198D | blocked / OpenWrt UBI flow | Hard | P3: no local `rtl8198` Armbian family; official docs use web/TFTP UBI upgrade and dual-backup router partitions, not a raw disk image |
 | BPI-WiFi5 Router | Siflower SF19A2890S | blocked / OpenWrt web-upgrade flow | Hard/Blocked | P3: BPI BSP is `BPI-WiFi5-Siflower` with Linux 4.14/OpenWrt 18.06 firmware; no local Siflower Armbian family or raw-image boot strategy |
-| BPI-RV2 Gateway | Siflower SF21H8898 | missing | Hard/Blocked | P3: needs new `siflower-sf21h8898` family and image strategy |
+| BPI-RV2 Gateway | Siflower SF21H8898 | blocked / OpenWrt FIT flow | Hard/Blocked | P3: BSP has NAND/NOR DTS and OpenWrt defconfigs, but this branch lacks Siflower kernel/U-Boot/OpenSBI support and a raw-image or FIT-updater artifact policy |
 | BPI-F2 | Freescale i.MX6 | missing | Hard | P3: old vendor path; no active BPI i.MX6 family in this branch |
 | BPI-F4 | Sunplus SP7350 | missing | Hard | P3: new Sunplus family |
 | BPI-F5 | Allwinner T527 | missing | Medium/Hard | P3: needs BSP/DTS review; may reuse new sunxi work if SoC support exists |
