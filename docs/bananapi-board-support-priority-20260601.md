@@ -58,6 +58,7 @@ Scope:
 | BPI-M2 Ultra | `bananapim2ultra` | `csc` | `sun8i` | current 6.18, edge 7.0, legacy 6.12 | community |
 | BPI-M2 Zero | `bananapim2zero` | `csc` | `sun8i` | current 6.18, edge 7.0, legacy 6.12 | community |
 | BPI-P2 Zero | `bananapip2zero` | `csc` | `sun8i` | current 6.18, edge 7.0, legacy 6.12 | community |
+| BPI-P2 Pro | `bananapip2pro` | `wip` | `rockchip64` | current 6.18 | initial RK3308 target; needs hardware validation |
 | BPI-M2 Magic | `bananapim2magic` | `csc` | `sun8i` | current 6.18, edge 7.0, legacy 6.12 | community |
 | BPI-M3 | `bananapim3` | `csc` | `sun8i` | current 6.18, edge 7.0, legacy 6.12 | community |
 | BPI-6204 | `bananapi6204` | `wip` | `sun8i` | legacy 6.12 | smoke build exists; needs hardware validation |
@@ -99,7 +100,6 @@ This list excludes MCU-only accessories and boards already represented above.
 
 | Board | SoC / family | Current local state | Difficulty | Suggested priority |
 | --- | --- | --- | --- | --- |
-| BPI-P2 Pro | RK3308 | missing | Medium | P2: old board; reuse `rockchip64` only after DTS/boot chain is confirmed |
 | BPI-M1 Super | RK3528 | missing | Medium | P2: `rockchip64` has RK3528 hooks, but BPI DTS/U-Boot must be imported |
 | BPI-F2P | Sunplus SP7021 | missing | Medium | P2: likely reuse `sunplus-sp7021-bpi` after comparing with F2S BSP |
 | BPI-R2 Mini | MT7981B | missing | Medium | P2: likely `filogic`, but router boot layout must be verified |
@@ -149,6 +149,7 @@ This list excludes MCU-only accessories and boards already represented above.
    - Done: BPI-RK3588 LGA core board development kit is documented as covered by the existing `bananapiw3` WIP target.
    - Done: BPI-LM7 is documented as the LGA core module used by the existing `bananapiw3` WIP target.
    - Done: BPI-AIM7 has initial `bananapiaim7` WIP coverage through the existing ArmSoM AIM7 IO RK3588 boot path.
+   - Done: BPI-P2 Pro has initial `bananapip2pro` WIP coverage using the RK3308 current kernel DTS and a new U-Boot defconfig.
 
 3. Port boards that reuse existing kernel families and boot logic:
    - RK3568/RK3576/RK3588 group: completed for this P1 pass; remaining Rockchip boards are older P2 items.
