@@ -103,7 +103,7 @@ This list excludes MCU-only accessories and boards already represented above.
 | Board | SoC / family | Current local state | Difficulty | Suggested priority |
 | --- | --- | --- | --- | --- |
 | BPI-R2 Mini | MT7981B | blocked / no local board DTS | Medium/Blocked | P2: official forum says it is based on OpenWrt One hardware, but do not add an Armbian alias until a dedicated DTS/U-Boot board file or verified OpenWrt One compatibility exists |
-| OpenWrt One | MT7981B | missing | Medium | P2: only include if BPI release scope wants it |
+| OpenWrt One | MT7981B | deferred / kernel DTS exists | Medium/Blocked | P2: local kernel has `mt7981b-openwrt-one.dts`, but the board is an OpenWrt NAND/NOR target; add Armbian only after a NAND/NOR installer or verified bootchain handoff is designed |
 | BPI-WiFi6 Router | Triductor TR6560/TR5220 | missing | Hard | P3: OpenWrt/router-specific, no current Armbian family |
 | BPI-WiFi6 Mini | Triductor TR6560/TR5220 | missing | Hard | P3: OpenWrt/router-specific, no current Armbian family |
 | BPI-R4 Mini | MT7987 | missing | Medium/Hard | P2/P3: maybe reuse R4 Lite family, but board-specific DTS/boot required |
@@ -160,7 +160,8 @@ This list excludes MCU-only accessories and boards already represented above.
 
 4. Router boards after the current Filogic WIP boards boot on hardware:
    - BPI-R2 Mini stays blocked until a board-specific DTS/U-Boot target or verified OpenWrt One compatibility exists.
-   - OpenWrt One, BPI-R4 Mini
+   - OpenWrt One stays deferred until Armbian has a NAND/NOR image or installer path for the OpenWrt One boot layout.
+   - BPI-R4 Mini
    - then Siflower/Triductor/Realtek router boards only after deciding whether non-raw OpenWrt-style images belong in this Armbian release.
 
 5. New SoC families last:
