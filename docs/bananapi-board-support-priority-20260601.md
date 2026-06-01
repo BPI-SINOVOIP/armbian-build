@@ -104,7 +104,7 @@ This list excludes MCU-only accessories and boards already represented above.
 | --- | --- | --- | --- | --- |
 | BPI-R2 Mini | MT7981B | blocked / no local board DTS | Medium/Blocked | P2: official forum says it is based on OpenWrt One hardware, but do not add an Armbian alias until a dedicated DTS/U-Boot board file or verified OpenWrt One compatibility exists |
 | OpenWrt One | MT7981B | deferred / kernel DTS exists | Medium/Blocked | P2: local kernel has `mt7981b-openwrt-one.dts`, but the board is an OpenWrt NAND/NOR target; add Armbian only after a NAND/NOR installer or verified bootchain handoff is designed |
-| BPI-WiFi6 Router | Triductor TR6560/TR5220 | missing | Hard | P3: OpenWrt/router-specific, no current Armbian family |
+| BPI-WiFi6 Router | Triductor TR6560/TR5220 | blocked / OpenWrt BSP only | Hard | P3: no local Armbian `tr6560` family; official docs point to `THG6500-TAX2-OPENWRT-BSP_TGP3` and require MAC/key handling for WiFi |
 | BPI-WiFi6 Mini | Triductor TR6560/TR5220 | missing | Hard | P3: OpenWrt/router-specific, no current Armbian family |
 | BPI-R4 Mini | MT7987 | missing | Medium/Hard | P2/P3: maybe reuse R4 Lite family, but board-specific DTS/boot required |
 | BPI-RT2 | Realtek RTL8198 | missing | Hard | P3: new Realtek router path, likely OpenWrt-style |
