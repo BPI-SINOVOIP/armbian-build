@@ -111,7 +111,7 @@ This list excludes MCU-only accessories and boards already represented above.
 | BPI-WiFi5 Router | Siflower SF19A2890S | blocked / OpenWrt web-upgrade flow | Hard/Blocked | P3: BPI BSP is `BPI-WiFi5-Siflower` with Linux 4.14/OpenWrt 18.06 firmware; no local Siflower Armbian family or raw-image boot strategy |
 | BPI-RV2 Gateway | Siflower SF21H8898 | blocked / OpenWrt FIT flow | Hard/Blocked | P3: BSP has NAND/NOR DTS and OpenWrt defconfigs, but this branch lacks Siflower kernel/U-Boot/OpenSBI support and a raw-image or FIT-updater artifact policy |
 | BPI-F2 | Freescale/NXP i.MX6 | blocked / no BPI-F2 board files | Hard/Blocked | P3: the branch has a generic `imx6` family for Udoo/Cubox-i/Wandboard, but no BPI-F2 kernel DTS, U-Boot defconfig, or vendor BSP hook; port only after importing exact board files and validating the old boot flow |
-| BPI-F4 | Sunplus SP7350 | missing | Hard | P3: new Sunplus family |
+| BPI-F4 | Sunplus SP7350 | blocked / new Sunplus family | Hard/Blocked | P3: official docs point to `sunplus-plus1/Q654` (`master` at `1e7775a2` on GitHub), but this branch only has the older SP7021 BPI BSP hooks; add after the SP7350 boot flow, kernel tree layout, U-Boot artifacts, and SD/eMMC image layout are mapped |
 | BPI-F5 | Allwinner T527 | missing | Medium/Hard | P3: needs BSP/DTS review; may reuse new sunxi work if SoC support exists |
 | BPI-Forge1 | RK3506J | missing | Hard | P3: new Rockchip low-end family work likely required |
 | BPI-CanMV-K230D Zero | Canaan K230D | missing | Hard | P3: new RISC-V/AI SoC family |
