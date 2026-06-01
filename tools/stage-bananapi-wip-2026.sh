@@ -19,6 +19,7 @@ declare -A BOARD_DIR=(
 	[Bananapicm5pro]=bpi-cm5pro
 	[Bananapiaim7]=bpi-aim7
 	[Bananapip2pro]=bpi-p2pro
+	[Bananapim1super]=bpi-m1super
 	[Bananapiw2]=bpi-w2
 	[Bananapiw3]=bpi-w3
 	[Bananapim4]=bpi-m4
@@ -39,6 +40,7 @@ boards=(
 	Bananapicm5pro
 	Bananapiaim7
 	Bananapip2pro
+	Bananapim1super
 	Bananapiw2
 	Bananapiw3
 	Bananapim4

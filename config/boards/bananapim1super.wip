@@ -1,0 +1,12 @@
+# Rockchip RK3528 BPI-M1 Super, initial ArmSoM Sige1-derived bring-up
+source "${SRC}/config/boards/armsom-sige1.csc"
+BOARD_NAME="Banana Pi M1 Super"
+BOARD_VENDOR="sinovoip"
+BOARD_MAINTAINER="BPI-SINOVOIP"
+INTRODUCED="2024"
+BOOTCONFIG="hinlink_rk3528_defconfig"
+BOOT_FDT_FILE="rockchip/rk3528-armsom-sige1.dtb"
+# These are included in armsom-sige1.csc, but this file is parsed directly
+# by the JSON matrix generator and thus those need to be in here.
+KERNEL_TARGET="vendor"
+BOARDFAMILY="rk35xx"
