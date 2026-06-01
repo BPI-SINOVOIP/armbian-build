@@ -88,6 +88,7 @@ Scope:
 | BPI-AIM7 | `bananapiaim7` | `wip` | `rockchip-rk3588` | vendor 6.1 | initial ArmSoM AIM7 IO-derived target; needs hardware validation |
 | BPI-M1 Super | `bananapim1super` | `wip` | `rk35xx` | vendor 6.1 | initial ArmSoM Sige1-derived target; needs hardware validation |
 | BPI-F2P | `bananapif2p` | `wip` | `sunplus-sp7021-bpi` | legacy 5.4 | initial F2P target from the shared F2S/F2P BSP; needs hardware validation |
+| BPI-Forge1 | `bananapiforge1` | `wip` | `rockchip` | vendor 6.1 | initial ArmSoM Forge1-derived RK3506 target; needs hardware validation |
 | BPI-R3 | `bananapir3` | `wip` | `filogic` | current 6.12 | smoke build exists; needs hardware validation |
 | BPI-R3 Mini | `bananapir3mini` | `wip` | `filogic` | current 6.12 | smoke build exists; needs hardware validation |
 | BPI-R64 | `bananapir64` | `wip` | `filogic` | current 6.12 | smoke build exists; needs hardware validation |
@@ -113,7 +114,6 @@ This list excludes MCU-only accessories and boards already represented above.
 | BPI-F2 | Freescale/NXP i.MX6 | blocked / no BPI-F2 board files | Hard/Blocked | P3: the branch has a generic `imx6` family for Udoo/Cubox-i/Wandboard, but no BPI-F2 kernel DTS, U-Boot defconfig, or vendor BSP hook; port only after importing exact board files and validating the old boot flow |
 | BPI-F4 | Sunplus SP7350 | blocked / new Sunplus family | Hard/Blocked | P3: official docs point to `sunplus-plus1/Q654` (`master` at `1e7775a2` on GitHub), but this branch only has the older SP7021 BPI BSP hooks; add after the SP7350 boot flow, kernel tree layout, U-Boot artifacts, and SD/eMMC image layout are mapped |
 | BPI-F5 | Allwinner T527 / sun55i | blocked / no BPI-F5 DTS | Medium/Blocked | P3: local `sun55iw3` T527/A527 support exists for boards such as Orange Pi 4A, Avaota A1, LonganPi 4B, and Radxa Cubie A5E, but no BPI-F5 DTS/defconfig is present; official BPI-F5 docs list hardware resources but no BSP source repo yet |
-| BPI-Forge1 | RK3506J | missing | Hard | P3: new Rockchip low-end family work likely required |
 | BPI-CanMV-K230D Zero | Canaan K230D | missing | Hard | P3: new RISC-V/AI SoC family |
 | BPI-S64 Core | Actions S700 | missing | Hard | P3: old unsupported SoC family |
 | BPI-CM5 | Amlogic A311D2 | missing | Medium/Hard | P3: related to Amlogic but needs exact boot FIP/DTS support |
@@ -152,6 +152,7 @@ This list excludes MCU-only accessories and boards already represented above.
    - Done: BPI-P2 Pro has initial `bananapip2pro` WIP coverage using the RK3308 current kernel DTS and a new U-Boot defconfig.
    - Done: BPI-M1 Super has initial `bananapim1super` WIP coverage through the existing ArmSoM Sige1 RK3528 boot path.
    - Done: BPI-F2P has initial `bananapif2p` WIP coverage through the shared BPI-F2S/F2P Sunplus SP7021 BSP.
+   - Done: BPI-Forge1 has initial `bananapiforge1` WIP coverage through the existing ArmSoM Forge1 RK3506 boot path.
 
 3. Port boards that reuse existing kernel families and boot logic:
    - RK3568/RK3576/RK3588 group: completed for this P1 pass; remaining Rockchip boards are older P2 items.
@@ -165,6 +166,6 @@ This list excludes MCU-only accessories and boards already represented above.
    - then Siflower/Triductor/Realtek router boards only after deciding whether non-raw OpenWrt-style images belong in this Armbian release.
 
 5. New SoC families last:
-   - BPI-F4, BPI-F5, Forge1, CanMV K230D Zero, S64 Core, Secure-Pi, SM9, AI2H, Loongson industrial boards.
+   - BPI-F4, BPI-F5, CanMV K230D Zero, S64 Core, Secure-Pi, SM9, AI2H, Loongson industrial boards.
 
 When two boards have the same difficulty, use the older public product order first. For the current tree, that means older M/R series boards before newer AI/industrial boards unless we already have local hardware for the newer board.

@@ -1,0 +1,14 @@
+# Rockchip RK3506J Banana Pi BPI-Forge1, ArmSoM Forge1-derived bring-up.
+source "${SRC}/config/boards/armsom-forge1.csc"
+
+BOARD_NAME="Banana Pi BPI-Forge1"
+BOARD_VENDOR="sinovoip"
+BOARDFAMILY="rockchip"
+BOOTCONFIG="forge1-rk3506b_defconfig"
+BOARD_MAINTAINER="BPI-SINOVOIP"
+INTRODUCED="2025"
+KERNEL_TARGET="vendor"
+BOOT_FDT_FILE="rk3506b-armsom-forge1.dtb"
+IMAGE_PARTITION_TABLE="gpt"
+BOOT_SOC="rk3506"
+DDR_BLOB="rk35/rk3506b_ddr_750MHz_v1.06.bin"
