@@ -115,7 +115,7 @@ This list excludes MCU-only accessories and boards already represented above.
 | BPI-F4 | Sunplus SP7350 | blocked / new Sunplus family | Hard/Blocked | P3: official docs point to `sunplus-plus1/Q654` (`master` at `1e7775a2` on GitHub), but this branch only has the older SP7021 BPI BSP hooks; add after the SP7350 boot flow, kernel tree layout, U-Boot artifacts, and SD/eMMC image layout are mapped |
 | BPI-F5 | Allwinner T527 / sun55i | blocked / no BPI-F5 DTS | Medium/Blocked | P3: local `sun55iw3` T527/A527 support exists for boards such as Orange Pi 4A, Avaota A1, LonganPi 4B, and Radxa Cubie A5E, but no BPI-F5 DTS/defconfig is present; official BPI-F5 docs list hardware resources but no BSP source repo yet |
 | BPI-CanMV-K230D Zero | Canaan K230D | blocked / vendor SPL + no kernel DTS | Hard/Blocked | P3: U-Boot v2025.04+ has `k230_canmv_defconfig`, but its docs still rely on vendor SPL/vendor SD image for DDR and image layout; local kernels only expose K210 Canaan DTS files, so add only after importing the K230D kernel DTS and designing a K230 Armbian family around the Kendryte SDK/Linux SDK boot flow |
-| BPI-S64 Core | Actions S700 | missing | Hard | P3: old unsupported SoC family |
+| BPI-S64 Core | Actions S700 | blocked / no BPI-S64 family or DTS | Hard/Blocked | P3: mainline-style kernel trees contain generic S700 support and `s700-cubieboard7.dts`, but this branch has no Actions/S700 Armbian family, no BPI-S64 Core carrier DTS, and no matching S700 U-Boot boot target |
 | BPI-CM5 | Amlogic A311D2 | missing | Medium/Hard | P3: related to Amlogic but needs exact boot FIP/DTS support |
 | BPI-Secure-Pi | MegaHunt SP2302 | missing | Hard | P3: new vendor BSP family |
 | BPI-SM9 | SOPHGO BM1688 | missing | Hard | P3: new SOPHGO family |
