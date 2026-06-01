@@ -72,6 +72,7 @@ Scope:
 | BPI-CM6 | `bananapicm6` | `wip` | `spacemit` | legacy 6.6 / vendor 6.6.36 branch | smoke build exists; needs hardware validation |
 | BPI-SM10 | `bananapism10` | `wip` | `spacemit-k3-bpi` | current 6.18 | offline build verified; needs hardware validation |
 | BPI-M2C | `bananapim2c` | `wip` | `unisoc-uis7885-bpi` | vendor PAC path | blocked for normal raw image; PAC/hybrid validation track |
+| BPI-CM2 | `bananapicm2` | `wip` | `rockchip64` | current 6.18, edge 7.0 | initial R2 Pro-derived target; no dedicated CM2 carrier DTS yet |
 | BPI-F2S | `bananapif2s` | `wip` | `sunplus-sp7021-bpi` | legacy 5.4 | smoke build exists; needs hardware validation |
 | BPI-M4 plain | `bananapim4` | `wip` | `realtek-rtd139x-bpi` | legacy 4.9 | smoke build exists; needs hardware validation |
 | BPI-M4 Super | `bananapim4super` | `wip` | `rk35xx` | vendor 6.1 | initial Sige3-derived target; needs hardware validation |
@@ -96,7 +97,6 @@ This list excludes MCU-only accessories and boards already represented above.
 
 | Board | SoC / family | Current local state | Difficulty | Suggested priority |
 | --- | --- | --- | --- | --- |
-| BPI-CM2 | RK3568 | missing | Easy/Medium | P1: reuse `rockchip64` if DTS/U-Boot config is available |
 | BPI-CM5 Pro | RK3576 | missing | Easy/Medium | P1: reuse `rk35xx` / M5 Pro path |
 | BPI-RK3588 Core Board | RK3588 | missing | Easy/Medium | P1: reuse `rockchip-rk3588` / M7 path |
 | BPI-LM7 Core Board | RK3588 | missing | Easy/Medium | P1: reuse `rockchip-rk3588` / M7 path |
@@ -146,9 +146,10 @@ This list excludes MCU-only accessories and boards already represented above.
    - Done: BPI-R1 has official `bananapir1` naming.
    - Done: BPI-CM4 is documented as covered by `bananapicm4io`; add more carrier-specific targets only when a separate DTB exists.
    - Done: BPI-M4 Super has initial `bananapim4super` WIP coverage through the existing RK3568 Sige3-derived boot path.
+   - Done: BPI-CM2 has initial `bananapicm2` WIP coverage through the existing BPI-R2 Pro RK3568 boot path.
 
 3. Port boards that reuse existing kernel families and boot logic:
-   - RK3568/RK3576/RK3588 group: BPI-CM2, BPI-CM5 Pro, RK3588 Core, LM7, AIM7
+   - RK3568/RK3576/RK3588 group: BPI-CM5 Pro, RK3588 Core, LM7, AIM7
    - SP7021 group: BPI-F2P after comparing against F2S
    - older Rockchip group: BPI-P2 Pro and BPI-M1 Super
 
