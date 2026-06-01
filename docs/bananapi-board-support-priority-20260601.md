@@ -74,6 +74,7 @@ Scope:
 | BPI-M2C | `bananapim2c` | `wip` | `unisoc-uis7885-bpi` | vendor PAC path | blocked for normal raw image; PAC/hybrid validation track |
 | BPI-F2S | `bananapif2s` | `wip` | `sunplus-sp7021-bpi` | legacy 5.4 | smoke build exists; needs hardware validation |
 | BPI-M4 plain | `bananapim4` | `wip` | `realtek-rtd139x-bpi` | legacy 4.9 | smoke build exists; needs hardware validation |
+| BPI-M4 Super | `bananapim4super` | `wip` | `rk35xx` | vendor 6.1 | initial Sige3-derived target; needs hardware validation |
 | BPI-W2 | `bananapiw2` | `wip` | `realtek-rtd129x-bpi` | legacy 4.9 | smoke build exists; needs hardware validation |
 | BPI-M6 | `bananapim6` | `wip` | `vs680` | legacy 5.4 | smoke build exists; needs hardware validation |
 | BPI-R2 | `bananapir2` | `csc` | `mt7623` | current 6.6 | community |
@@ -95,7 +96,6 @@ This list excludes MCU-only accessories and boards already represented above.
 
 | Board | SoC / family | Current local state | Difficulty | Suggested priority |
 | --- | --- | --- | --- | --- |
-| BPI-M4 Super | RK3568 | missing | Easy/Medium | P1: reuse `rockchip64` / R2 Pro-style path if vendor DTS is available |
 | BPI-CM2 | RK3568 | missing | Easy/Medium | P1: reuse `rockchip64` if DTS/U-Boot config is available |
 | BPI-CM5 Pro | RK3576 | missing | Easy/Medium | P1: reuse `rk35xx` / M5 Pro path |
 | BPI-RK3588 Core Board | RK3588 | missing | Easy/Medium | P1: reuse `rockchip-rk3588` / M7 path |
@@ -145,9 +145,10 @@ This list excludes MCU-only accessories and boards already represented above.
 2. Add low-risk official coverage aliases or board configs:
    - Done: BPI-R1 has official `bananapir1` naming.
    - Done: BPI-CM4 is documented as covered by `bananapicm4io`; add more carrier-specific targets only when a separate DTB exists.
+   - Done: BPI-M4 Super has initial `bananapim4super` WIP coverage through the existing RK3568 Sige3-derived boot path.
 
 3. Port boards that reuse existing kernel families and boot logic:
-   - RK3568/RK3576/RK3588 group: BPI-M4 Super, BPI-CM2, BPI-CM5 Pro, RK3588 Core, LM7, AIM7
+   - RK3568/RK3576/RK3588 group: BPI-CM2, BPI-CM5 Pro, RK3588 Core, LM7, AIM7
    - SP7021 group: BPI-F2P after comparing against F2S
    - older Rockchip group: BPI-P2 Pro and BPI-M1 Super
 

@@ -1,0 +1,13 @@
+# Rockchip RK3568B2 BPI-M4 Super, initial Sige3-derived bring-up
+BOARD_NAME="Banana Pi M4 Super"
+BOARD_VENDOR="sinovoip"
+BOARDFAMILY="rk35xx"
+BOARD_MAINTAINER="BPI-SINOVOIP"
+INTRODUCED="2024"
+BOOTCONFIG="armsom-sige3-rk3568_defconfig"
+KERNEL_TARGET="vendor"
+FULL_DESKTOP="yes"
+BOOT_LOGO="desktop"
+BOOT_FDT_FILE="rockchip/rk3568-armsom-sige3.dtb"
+BOOT_SCENARIO="spl-blobs"
+IMAGE_PARTITION_TABLE="gpt"
