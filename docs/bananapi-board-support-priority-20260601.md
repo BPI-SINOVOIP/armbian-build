@@ -83,7 +83,7 @@ Scope:
 | BPI-R2 Pro | `bananapir2pro` | `csc` | `rockchip64` | current 6.18, edge 7.0 | community |
 | BPI-M5 Pro | `bananapim5pro` | `conf` | `rk35xx` | vendor 6.1, edge 7.0 | normal |
 | BPI-M7 | `bananapim7` | `conf` | `rockchip-rk3588` | vendor 6.1, current 6.18, edge 7.0 | normal |
-| BPI-W3 / BPI-RK3588 LGA core board development kit | `bananapiw3` | `wip` | `rockchip-rk3588` | vendor 6.1 | smoke build exists; needs hardware validation |
+| BPI-W3 / BPI-RK3588 LGA core board / BPI-LM7 development kit | `bananapiw3` | `wip` | `rockchip-rk3588` | vendor 6.1 | smoke build exists; needs hardware validation |
 | BPI-R3 | `bananapir3` | `wip` | `filogic` | current 6.12 | smoke build exists; needs hardware validation |
 | BPI-R3 Mini | `bananapir3mini` | `wip` | `filogic` | current 6.12 | smoke build exists; needs hardware validation |
 | BPI-R64 | `bananapir64` | `wip` | `filogic` | current 6.12 | smoke build exists; needs hardware validation |
@@ -98,7 +98,6 @@ This list excludes MCU-only accessories and boards already represented above.
 
 | Board | SoC / family | Current local state | Difficulty | Suggested priority |
 | --- | --- | --- | --- | --- |
-| BPI-LM7 Core Board | RK3588 | missing | Easy/Medium | P1: reuse `rockchip-rk3588` / M7 path |
 | BPI-AIM7 | RK3588 | missing | Easy/Medium | P1: reuse `rockchip-rk3588` / M7 path |
 | BPI-P2 Pro | RK3308 | missing | Medium | P2: old board; reuse `rockchip64` only after DTS/boot chain is confirmed |
 | BPI-M1 Super | RK3528 | missing | Medium | P2: `rockchip64` has RK3528 hooks, but BPI DTS/U-Boot must be imported |
@@ -148,9 +147,10 @@ This list excludes MCU-only accessories and boards already represented above.
    - Done: BPI-CM2 has initial `bananapicm2` WIP coverage through the existing BPI-R2 Pro RK3568 boot path.
    - Done: BPI-CM5 Pro has initial `bananapicm5pro` WIP coverage through the existing ArmSoM CM5 IO RK3576 boot path.
    - Done: BPI-RK3588 LGA core board development kit is documented as covered by the existing `bananapiw3` WIP target.
+   - Done: BPI-LM7 is documented as the LGA core module used by the existing `bananapiw3` WIP target.
 
 3. Port boards that reuse existing kernel families and boot logic:
-   - RK3568/RK3576/RK3588 group: LM7, AIM7
+   - RK3568/RK3576/RK3588 group: AIM7
    - SP7021 group: BPI-F2P after comparing against F2S
    - older Rockchip group: BPI-P2 Pro and BPI-M1 Super
 
