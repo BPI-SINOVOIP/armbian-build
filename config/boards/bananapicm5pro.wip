@@ -1,0 +1,12 @@
+# Rockchip RK3576 BPI-CM5 Pro kit, initial ArmSoM CM5 IO-derived bring-up
+source "${SRC}/config/boards/armsom-cm5-io.csc"
+BOARD_NAME="Banana Pi CM5 Pro"
+BOARD_VENDOR="sinovoip"
+BOARD_MAINTAINER="BPI-SINOVOIP"
+INTRODUCED="2024"
+BOOTCONFIG="armsom-cm5-io-rk3576_defconfig"
+BOOT_FDT_FILE="rockchip/rk3576-armsom-cm5-io.dtb"
+# These are included in armsom-cm5-io.csc, but this file is parsed directly
+# by the JSON matrix generator and thus those need to be in here.
+KERNEL_TARGET="vendor"
+BOARDFAMILY="rk35xx"
