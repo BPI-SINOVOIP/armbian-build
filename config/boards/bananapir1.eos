@@ -1,0 +1,13 @@
+# Allwinner A20 dual core 1GB SoC, SATA, and Ethernet switch
+BOARD_NAME="Banana Pi R1"
+BOARD_VENDOR="sinovoip"
+BOARDFAMILY="sun7i"
+BOARD_MAINTAINER=""
+INTRODUCED="2014"
+BOOTCONFIG="Lamobo_R1_defconfig"
+KERNEL_TARGET="current,edge"
+
+function post_config_uboot_target__extra_configs_for_bananapir1() {
+	display_alert "$BOARD" "set dram clock" "info"
+	run_host_command_logged scripts/config --set-val CONFIG_DRAM_CLK "384"
+}

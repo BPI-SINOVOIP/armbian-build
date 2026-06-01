@@ -51,7 +51,7 @@ Scope:
 | BPI-M1 | `bananapi` | `conf` | `sun7i` | current 6.18, edge 7.0, legacy 6.12 | normal |
 | BPI-M1 Plus | `bananapim1plus` | `csc` | `sun7i` | current 6.18, edge 7.0, legacy 6.12 | community |
 | BPI-Pro | `bananapipro` | `csc` | `sun7i` | current 6.18, edge 7.0, legacy 6.12 | community |
-| BPI-R1 / Lamobo R1 | `lamobo-r1` | `eos` | `sun7i` | current 6.18, edge 7.0 | end-of-support naming only |
+| BPI-R1 | `bananapir1` | `eos` | `sun7i` | current 6.18, edge 7.0 | official naming over existing Lamobo R1 path |
 | BPI-M2 | `bananapim2` | `csc` | `sun6i` | current 6.18, legacy 6.12 | community |
 | BPI-M2 Plus | `bananapim2plus` | `conf` | `sun8i` | current 6.18, edge 7.0, legacy 6.12 | normal |
 | BPI-M2 Berry | `bananapim2berry` | `csc` | `sun8i` | current 6.18, edge 7.0, legacy 6.12 | community |
@@ -95,7 +95,6 @@ This list excludes MCU-only accessories and boards already represented above.
 
 | Board | SoC / family | Current local state | Difficulty | Suggested priority |
 | --- | --- | --- | --- | --- |
-| BPI-R1 official name | Allwinner A20 | Only `lamobo-r1.eos` exists | Easy | P1: add a `bananapir1` alias/config if official naming matters |
 | BPI-CM4 module | Amlogic A311D | Covered only through `bananapicm4io` | Easy | P1: document as covered by CM4IO unless a separate carrier target is needed |
 | BPI-M4 Super | RK3568 | missing | Easy/Medium | P1: reuse `rockchip64` / R2 Pro-style path if vendor DTS is available |
 | BPI-CM2 | RK3568 | missing | Easy/Medium | P1: reuse `rockchip64` if DTS/U-Boot config is available |
@@ -145,7 +144,6 @@ This list excludes MCU-only accessories and boards already represented above.
    - BPI-M2C, but only through its PAC/hybrid test path
 
 2. Add low-risk official coverage aliases or board configs:
-   - BPI-R1 official `bananapir1` naming over the existing `lamobo-r1` path
    - BPI-CM4 coverage note or carrier-specific config if needed
 
 3. Port boards that reuse existing kernel families and boot logic:
