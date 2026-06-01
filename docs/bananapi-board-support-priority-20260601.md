@@ -107,7 +107,7 @@ This list excludes MCU-only accessories and boards already represented above.
 | BPI-WiFi6 Router | Triductor TR6560/TR5220 | blocked / OpenWrt BSP only | Hard | P3: no local Armbian `tr6560` family; official docs point to `THG6500-TAX2-OPENWRT-BSP_TGP3` and require MAC/key handling for WiFi |
 | BPI-WiFi6 Mini | Triductor TR6560/TR5220 | blocked / OpenWrt BSP only | Hard | P3: no local Armbian `tr6560` family; official docs point to `THG6500-MINI-TAX2-OPENWRT-BSP_TGP3` and require MAC/key handling for WiFi |
 | BPI-R4 Mini | MT7987 | blocked / no local Mini DTS | Medium/Hard | P2/P3: local tree supports BPI-R4 Lite MT7987, but Mini has different Ethernet/WiFi hardware; wait for Mini-specific kernel DTS and U-Boot defconfig |
-| BPI-RT2 | Realtek RTL8198 | missing | Hard | P3: new Realtek router path, likely OpenWrt-style |
+| BPI-RT2 | Realtek RTL8198D | blocked / OpenWrt UBI flow | Hard | P3: no local `rtl8198` Armbian family; official docs use web/TFTP UBI upgrade and dual-backup router partitions, not a raw disk image |
 | BPI-WiFi5 Router | Siflower SF19A2890S | missing | Hard/Blocked | P3: OpenWrt web-upgrade flow, not a normal raw-image target |
 | BPI-RV2 Gateway | Siflower SF21H8898 | missing | Hard/Blocked | P3: needs new `siflower-sf21h8898` family and image strategy |
 | BPI-F2 | Freescale i.MX6 | missing | Hard | P3: old vendor path; no active BPI i.MX6 family in this branch |
