@@ -87,6 +87,7 @@ Scope:
 | BPI-W3 / BPI-RK3588 LGA core board / BPI-LM7 development kit | `bananapiw3` | `wip` | `rockchip-rk3588` | vendor 6.1 | smoke build exists; needs hardware validation |
 | BPI-AIM7 | `bananapiaim7` | `wip` | `rockchip-rk3588` | vendor 6.1 | initial ArmSoM AIM7 IO-derived target; needs hardware validation |
 | BPI-M1 Super | `bananapim1super` | `wip` | `rk35xx` | vendor 6.1 | initial ArmSoM Sige1-derived target; needs hardware validation |
+| BPI-F2P | `bananapif2p` | `wip` | `sunplus-sp7021-bpi` | legacy 5.4 | initial F2P target from the shared F2S/F2P BSP; needs hardware validation |
 | BPI-R3 | `bananapir3` | `wip` | `filogic` | current 6.12 | smoke build exists; needs hardware validation |
 | BPI-R3 Mini | `bananapir3mini` | `wip` | `filogic` | current 6.12 | smoke build exists; needs hardware validation |
 | BPI-R64 | `bananapir64` | `wip` | `filogic` | current 6.12 | smoke build exists; needs hardware validation |
@@ -101,7 +102,6 @@ This list excludes MCU-only accessories and boards already represented above.
 
 | Board | SoC / family | Current local state | Difficulty | Suggested priority |
 | --- | --- | --- | --- | --- |
-| BPI-F2P | Sunplus SP7021 | missing | Medium | P2: likely reuse `sunplus-sp7021-bpi` after comparing with F2S BSP |
 | BPI-R2 Mini | MT7981B | missing | Medium | P2: likely `filogic`, but router boot layout must be verified |
 | OpenWrt One | MT7981B | missing | Medium | P2: only include if BPI release scope wants it |
 | BPI-WiFi6 Router | Triductor TR6560/TR5220 | missing | Hard | P3: OpenWrt/router-specific, no current Armbian family |
@@ -151,10 +151,11 @@ This list excludes MCU-only accessories and boards already represented above.
    - Done: BPI-AIM7 has initial `bananapiaim7` WIP coverage through the existing ArmSoM AIM7 IO RK3588 boot path.
    - Done: BPI-P2 Pro has initial `bananapip2pro` WIP coverage using the RK3308 current kernel DTS and a new U-Boot defconfig.
    - Done: BPI-M1 Super has initial `bananapim1super` WIP coverage through the existing ArmSoM Sige1 RK3528 boot path.
+   - Done: BPI-F2P has initial `bananapif2p` WIP coverage through the shared BPI-F2S/F2P Sunplus SP7021 BSP.
 
 3. Port boards that reuse existing kernel families and boot logic:
    - RK3568/RK3576/RK3588 group: completed for this P1 pass; remaining Rockchip boards are older P2 items.
-   - SP7021 group: BPI-F2P after comparing against F2S
+   - SP7021 group: completed for the shared F2S/F2P BSP targets.
    - older Rockchip group: completed for this P2 pass.
 
 4. Router boards after the current Filogic WIP boards boot on hardware:
