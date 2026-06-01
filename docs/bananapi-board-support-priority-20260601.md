@@ -43,6 +43,8 @@ Scope:
 | `spacemit-k3-bpi` | `current` | 6.18 | BPI-SM10 K3 vendor-sync path |
 | `renesas-rzv2n-bpi` | `legacy` | 6.1 | BPI-AI2N path |
 | `unisoc-uis7885-bpi` | `vendor` | vendor PAC | Normal Armbian raw-image build is intentionally blocked |
+| `uefi-loong64` | `current` | 6.18 | Generic LoongArch UEFI image path, not Banana Pi board-specific |
+| `uefi-loong64` | `edge` | 7.0 | Generic LoongArch UEFI image path, not Banana Pi board-specific |
 
 ## Current Armbian Banana Pi Matrix
 
@@ -124,7 +126,8 @@ This list excludes MCU-only accessories and boards already represented above.
 | BPI-MNF | MT7622E / BPI-R64-derived | deferred / MNF carrier DTS missing | Medium/Blocked | P3: local `bananapir64` WIP already builds an MT7622 SDMMC image with `mt7622-bananapi-bpi-r64.dtb`, and official MNF docs describe R64-based 4G/5G aggregation variants; do not add a separate MNF target until the modem/SIM/eMMC/PCIe/USB carrier wiring is captured in a dedicated DTS or verified as exactly R64-compatible |
 | BPI-OM7 | RK3588 + Orbbec Gemini 2 | covered by `bananapim7` base | App-layer only | No separate board target: existing notes identify `BPI-OM7-orbbec_reconstruction` as a BPI-M7 plus Orbbec camera application stack on Ubuntu 24.04; keep using `bananapim7` unless a dedicated camera-ready image profile is requested |
 | BPI-6202 / BPI-CS6202 | Allwinner A40i-H / R40 | covered by `bananapi6204` WIP BSP | Defer duplicate target | P3: existing notes show the `bpi-cs6202` repo currently describes BPI-CS6204 and matches the CS6204/CS6202-compatible R40/M2 Ultra BSP direction already covered by `bananapi6204.wip`; do not add a separate board id until BPI provides separate CS6202 schematic/DTS requirements; validate the BPI-6204 image on 6202 hardware if available |
-| BPI-5202 / 2K3000 / 3A5000 / 3A6000 | Loongson | missing | Hard | P3: new Loongson/LoongArch product line, outside current BPI matrix |
+| BPI-2K0300 | Loongson 2K0300 | blocked / vendor BSP only | Medium/Blocked | P3: official docs describe a Raspberry Pi-sized LoongArch SBC with U-Boot 2022.04, Linux 5.10, Buildroot/Loongnix/OpenHarmony/OpenWrt support, but this tree has no BPI-2K0300 board config, kernel DTS, U-Boot target, or SPI/eMMC/TF image writer; do not map it to generic `uefi-loong64` because it needs an embedded U-Boot boot flow |
+| BPI-5202 / BPI-2K3000 / BPI-3A5000 / BPI-3A6000 | Loongson 2K1000LA / 2K3000 / 3A5000 / 3A6000 | deferred / generic UEFI path only | Medium/Hard | P3: this branch has a generic `uefi-loong64` target with current 6.18 and edge 7.0 kernels, so Mini PC-style Loongson systems should first be tested with `BOARD=uefi-loong64`; BPI-5202 and any non-UEFI industrial variants still need exact BPI board files, U-Boot/BIOS expectations, DTS/ACPI handoff, and storage image policy before adding dedicated targets |
 
 ## Recommended Order
 
@@ -166,6 +169,6 @@ This list excludes MCU-only accessories and boards already represented above.
    - then Siflower/Triductor/Realtek router boards only after deciding whether non-raw OpenWrt-style images belong in this Armbian release.
 
 5. New SoC families last:
-   - BPI-F4, BPI-F5, CanMV K230D Zero, S64 Core, Secure-Pi, SM9, AI2H, Loongson industrial boards.
+   - BPI-F4, BPI-F5, CanMV K230D Zero, S64 Core, Secure-Pi, SM9, AI2H, BPI-2K0300, and Loongson industrial boards.
 
 When two boards have the same difficulty, use the older public product order first. For the current tree, that means older M/R series boards before newer AI/industrial boards unless we already have local hardware for the newer board.
