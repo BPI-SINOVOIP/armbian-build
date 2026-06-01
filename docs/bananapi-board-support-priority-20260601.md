@@ -64,7 +64,7 @@ Scope:
 | BPI-M64 | `bananapim64` | `csc` | `sun50iw1` | current 6.18, edge 7.0, legacy 6.12 | community |
 | BPI-M4 Berry | `bananapim4berry` | `conf` | `sun50iw9-bpi` | current 6.18, edge 7.0 | normal |
 | BPI-M4 Zero | `bananapim4zero` | `conf` | `sun50iw9-bpi` | current 6.18, edge 7.0 | normal |
-| BPI-CM4IO | `bananapicm4io` | `conf` | `meson-g12b` | current 6.18, edge 7.0 | normal |
+| BPI-CM4 module + CM4IO carrier | `bananapicm4io` | `conf` | `meson-g12b` | current 6.18, edge 7.0 | normal; DTB is carrier-specific |
 | BPI-M2S | `bananapim2s` | `conf` | `meson-g12b` | current 6.18, edge 7.0 | normal |
 | BPI-M2 Pro | `bananapim2pro` | `conf` | `meson-sm1` | current 6.18, edge 7.0 | normal |
 | BPI-M5 | `bananapim5` | `conf` | `meson-sm1` | current 6.18, edge 7.0 | normal |
@@ -95,7 +95,6 @@ This list excludes MCU-only accessories and boards already represented above.
 
 | Board | SoC / family | Current local state | Difficulty | Suggested priority |
 | --- | --- | --- | --- | --- |
-| BPI-CM4 module | Amlogic A311D | Covered only through `bananapicm4io` | Easy | P1: document as covered by CM4IO unless a separate carrier target is needed |
 | BPI-M4 Super | RK3568 | missing | Easy/Medium | P1: reuse `rockchip64` / R2 Pro-style path if vendor DTS is available |
 | BPI-CM2 | RK3568 | missing | Easy/Medium | P1: reuse `rockchip64` if DTS/U-Boot config is available |
 | BPI-CM5 Pro | RK3576 | missing | Easy/Medium | P1: reuse `rk35xx` / M5 Pro path |
@@ -144,7 +143,8 @@ This list excludes MCU-only accessories and boards already represented above.
    - BPI-M2C, but only through its PAC/hybrid test path
 
 2. Add low-risk official coverage aliases or board configs:
-   - BPI-CM4 coverage note or carrier-specific config if needed
+   - Done: BPI-R1 has official `bananapir1` naming.
+   - Done: BPI-CM4 is documented as covered by `bananapicm4io`; add more carrier-specific targets only when a separate DTB exists.
 
 3. Port boards that reuse existing kernel families and boot logic:
    - RK3568/RK3576/RK3588 group: BPI-M4 Super, BPI-CM2, BPI-CM5 Pro, RK3588 Core, LM7, AIM7
