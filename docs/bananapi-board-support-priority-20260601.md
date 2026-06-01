@@ -106,7 +106,7 @@ This list excludes MCU-only accessories and boards already represented above.
 | OpenWrt One | MT7981B | deferred / kernel DTS exists | Medium/Blocked | P2: local kernel has `mt7981b-openwrt-one.dts`, but the board is an OpenWrt NAND/NOR target; add Armbian only after a NAND/NOR installer or verified bootchain handoff is designed |
 | BPI-WiFi6 Router | Triductor TR6560/TR5220 | blocked / OpenWrt BSP only | Hard | P3: no local Armbian `tr6560` family; official docs point to `THG6500-TAX2-OPENWRT-BSP_TGP3` and require MAC/key handling for WiFi |
 | BPI-WiFi6 Mini | Triductor TR6560/TR5220 | blocked / OpenWrt BSP only | Hard | P3: no local Armbian `tr6560` family; official docs point to `THG6500-MINI-TAX2-OPENWRT-BSP_TGP3` and require MAC/key handling for WiFi |
-| BPI-R4 Mini | MT7987 | missing | Medium/Hard | P2/P3: maybe reuse R4 Lite family, but board-specific DTS/boot required |
+| BPI-R4 Mini | MT7987 | blocked / no local Mini DTS | Medium/Hard | P2/P3: local tree supports BPI-R4 Lite MT7987, but Mini has different Ethernet/WiFi hardware; wait for Mini-specific kernel DTS and U-Boot defconfig |
 | BPI-RT2 | Realtek RTL8198 | missing | Hard | P3: new Realtek router path, likely OpenWrt-style |
 | BPI-WiFi5 Router | Siflower SF19A2890S | missing | Hard/Blocked | P3: OpenWrt web-upgrade flow, not a normal raw-image target |
 | BPI-RV2 Gateway | Siflower SF21H8898 | missing | Hard/Blocked | P3: needs new `siflower-sf21h8898` family and image strategy |
@@ -161,7 +161,7 @@ This list excludes MCU-only accessories and boards already represented above.
 4. Router boards after the current Filogic WIP boards boot on hardware:
    - BPI-R2 Mini stays blocked until a board-specific DTS/U-Boot target or verified OpenWrt One compatibility exists.
    - OpenWrt One stays deferred until Armbian has a NAND/NOR image or installer path for the OpenWrt One boot layout.
-   - BPI-R4 Mini
+   - BPI-R4 Mini stays blocked until Mini-specific MT7987 DTS/U-Boot support is imported; do not alias it to BPI-R4 Lite.
    - then Siflower/Triductor/Realtek router boards only after deciding whether non-raw OpenWrt-style images belong in this Armbian release.
 
 5. New SoC families last:
