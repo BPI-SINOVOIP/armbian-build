@@ -84,6 +84,7 @@ Scope:
 | BPI-M5 Pro | `bananapim5pro` | `conf` | `rk35xx` | vendor 6.1, edge 7.0 | normal |
 | BPI-M7 | `bananapim7` | `conf` | `rockchip-rk3588` | vendor 6.1, current 6.18, edge 7.0 | normal |
 | BPI-W3 / BPI-RK3588 LGA core board / BPI-LM7 development kit | `bananapiw3` | `wip` | `rockchip-rk3588` | vendor 6.1 | smoke build exists; needs hardware validation |
+| BPI-AIM7 | `bananapiaim7` | `wip` | `rockchip-rk3588` | vendor 6.1 | initial ArmSoM AIM7 IO-derived target; needs hardware validation |
 | BPI-R3 | `bananapir3` | `wip` | `filogic` | current 6.12 | smoke build exists; needs hardware validation |
 | BPI-R3 Mini | `bananapir3mini` | `wip` | `filogic` | current 6.12 | smoke build exists; needs hardware validation |
 | BPI-R64 | `bananapir64` | `wip` | `filogic` | current 6.12 | smoke build exists; needs hardware validation |
@@ -98,7 +99,6 @@ This list excludes MCU-only accessories and boards already represented above.
 
 | Board | SoC / family | Current local state | Difficulty | Suggested priority |
 | --- | --- | --- | --- | --- |
-| BPI-AIM7 | RK3588 | missing | Easy/Medium | P1: reuse `rockchip-rk3588` / M7 path |
 | BPI-P2 Pro | RK3308 | missing | Medium | P2: old board; reuse `rockchip64` only after DTS/boot chain is confirmed |
 | BPI-M1 Super | RK3528 | missing | Medium | P2: `rockchip64` has RK3528 hooks, but BPI DTS/U-Boot must be imported |
 | BPI-F2P | Sunplus SP7021 | missing | Medium | P2: likely reuse `sunplus-sp7021-bpi` after comparing with F2S BSP |
@@ -148,9 +148,10 @@ This list excludes MCU-only accessories and boards already represented above.
    - Done: BPI-CM5 Pro has initial `bananapicm5pro` WIP coverage through the existing ArmSoM CM5 IO RK3576 boot path.
    - Done: BPI-RK3588 LGA core board development kit is documented as covered by the existing `bananapiw3` WIP target.
    - Done: BPI-LM7 is documented as the LGA core module used by the existing `bananapiw3` WIP target.
+   - Done: BPI-AIM7 has initial `bananapiaim7` WIP coverage through the existing ArmSoM AIM7 IO RK3588 boot path.
 
 3. Port boards that reuse existing kernel families and boot logic:
-   - RK3568/RK3576/RK3588 group: AIM7
+   - RK3568/RK3576/RK3588 group: completed for this P1 pass; remaining Rockchip boards are older P2 items.
    - SP7021 group: BPI-F2P after comparing against F2S
    - older Rockchip group: BPI-P2 Pro and BPI-M1 Super
 
