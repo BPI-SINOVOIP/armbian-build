@@ -1,0 +1,17 @@
+{
+  "id": 1,
+  "clk": 480,
+  "dx_odt": "0x07070707",
+  "dx_dri": "0x0e0e0e0e",
+  "ca_dri": "0x00000e0e",
+  "odt_en": "0xaaaaeeee",
+  "tpr0": "0x00000000",
+  "tpr2": "0x00000000",
+  "tpr6": "0x44000000",
+  "tpr10": "0x402f6663",
+  "tpr11": "0x24242624",
+  "tpr12": "0x0f0f100f",
+  "level": "M2",
+  "passes": 3,
+  "window": 8
+}
