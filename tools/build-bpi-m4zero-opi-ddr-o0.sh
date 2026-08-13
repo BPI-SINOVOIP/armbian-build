@@ -7,6 +7,17 @@ git_short="$(git -C "$repo_dir" rev-parse --short=9 HEAD)"
 build_stamp="${BUILD_STAMP:-$(date +%Y%m%d-%H%M%S)}"
 experiment="${EXPERIMENT:-O0}"
 expect_diagnostics="${EXPECT_DIAGNOSTICS:-no}"
+expect_lab="${EXPECT_LAB:-no}"
+profile_description="${PROFILE_DESCRIPTION:-Orange Pi Zero 3 DDR 基線}"
+expected_clk="${EXPECTED_CLK:-792}"
+expected_dx_odt="${EXPECTED_DX_ODT:-0x07070707}"
+expected_dx_dri="${EXPECTED_DX_DRI:-0x0e0e0e0e}"
+expected_ca_dri="${EXPECTED_CA_DRI:-0x0e0e}"
+expected_odt_en="${EXPECTED_ODT_EN:-0xaaaaeeee}"
+expected_tpr6="${EXPECTED_TPR6:-0x44000000}"
+expected_tpr10="${EXPECTED_TPR10:-0x402f6663}"
+expected_tpr11="${EXPECTED_TPR11:-0x24242624}"
+expected_tpr12="${EXPECTED_TPR12:-0x0f0f100f}"
 output_dir="${OUTPUT_DIR:-$repo_dir/output/evidence/bpi-m4zero-opi-ddr/${experiment}-${build_stamp}-${git_short}}"
 extract_dir="$output_dir/extracted-deb"
 build_log="$output_dir/build.log"
@@ -63,9 +74,9 @@ printf '\n' >>"$output_dir/build-command.txt"
 {
 	printf '實驗代號：%s\n' "$experiment"
 	if [[ "$expect_diagnostics" == yes ]]; then
-		printf '用途：Orange Pi Zero 3 DDR profile 加結構化唯讀診斷\n'
+		printf '用途：%s加結構化唯讀診斷\n' "$profile_description"
 	else
-		printf '用途：Orange Pi Zero 3 DDR profile 的 BPI-M4 Zero 乾淨基線\n'
+		printf '用途：%s的 BPI-M4 Zero 乾淨基線\n' "$profile_description"
 	fi
 	printf '開始時間：%s\n' "$(date --iso-8601=seconds)"
 	printf 'Armbian 提交：%s\n' "$git_sha"
@@ -108,15 +119,15 @@ for artifact_path in "$uboot_bin" "$uboot_config" "$uboot_defconfig"; do
 	}
 done
 
-grep -qx 'CONFIG_DRAM_CLK=792' "$uboot_config"
-grep -qx 'CONFIG_DRAM_SUNXI_DX_ODT=0x07070707' "$uboot_config"
-grep -qx 'CONFIG_DRAM_SUNXI_DX_DRI=0x0e0e0e0e' "$uboot_config"
-grep -qx 'CONFIG_DRAM_SUNXI_CA_DRI=0x0e0e' "$uboot_config"
-grep -qx 'CONFIG_DRAM_SUNXI_ODT_EN=0xaaaaeeee' "$uboot_config"
-grep -qx 'CONFIG_DRAM_SUNXI_TPR6=0x44000000' "$uboot_config"
-grep -qx 'CONFIG_DRAM_SUNXI_TPR10=0x402f6663' "$uboot_config"
-grep -qx 'CONFIG_DRAM_SUNXI_TPR11=0x24242624' "$uboot_config"
-grep -qx 'CONFIG_DRAM_SUNXI_TPR12=0x0f0f100f' "$uboot_config"
+grep -qx "CONFIG_DRAM_CLK=$expected_clk" "$uboot_config"
+grep -qx "CONFIG_DRAM_SUNXI_DX_ODT=$expected_dx_odt" "$uboot_config"
+grep -qx "CONFIG_DRAM_SUNXI_DX_DRI=$expected_dx_dri" "$uboot_config"
+grep -qx "CONFIG_DRAM_SUNXI_CA_DRI=$expected_ca_dri" "$uboot_config"
+grep -qx "CONFIG_DRAM_SUNXI_ODT_EN=$expected_odt_en" "$uboot_config"
+grep -qx "CONFIG_DRAM_SUNXI_TPR6=$expected_tpr6" "$uboot_config"
+grep -qx "CONFIG_DRAM_SUNXI_TPR10=$expected_tpr10" "$uboot_config"
+grep -qx "CONFIG_DRAM_SUNXI_TPR11=$expected_tpr11" "$uboot_config"
+grep -qx "CONFIG_DRAM_SUNXI_TPR12=$expected_tpr12" "$uboot_config"
 
 case "$expect_diagnostics" in
 	yes)
@@ -130,6 +141,22 @@ case "$expect_diagnostics" in
 		;;
 	*)
 		echo "EXPECT_DIAGNOSTICS 只接受 yes 或 no" >&2
+		exit 1
+		;;
+esac
+
+case "$expect_lab" in
+	yes)
+		grep -qx 'CONFIG_DRAM_SUNXI_H616_LAB=y' "$uboot_config"
+		;;
+	no)
+		if grep -qx 'CONFIG_DRAM_SUNXI_H616_LAB=y' "$uboot_config"; then
+			echo "一般開機產物不得啟用 M4ZLAB2 實驗器" >&2
+			exit 1
+		fi
+		;;
+	*)
+		echo "EXPECT_LAB 只接受 yes 或 no" >&2
 		exit 1
 		;;
 esac
@@ -221,13 +248,14 @@ find "$repo_dir/patch/u-boot/v2026.01/board_bananapim4zero" \
 {
 	printf '檢查項目\t結果\n'
 	printf 'U-Boot 套件建置\t通過\n'
-	printf 'Orange Pi DDR profile\t通過\n'
-	printf '792 MHz 設定\t通過\n'
+	printf 'DDR profile\t通過（%s）\n' "$profile_description"
+	printf 'DDR 時脈設定\t通過（%s MHz）\n' "$expected_clk"
 	if [[ "$expect_diagnostics" == yes ]]; then
 	printf 'M4ZDDR1 結構化診斷\t已啟用並找到標記\n'
 	else
 		printf 'M4ZDDR1 結構化診斷\t未啟用\n'
 	fi
+	printf 'M4ZLAB2 實驗器\t%s\n' "$([[ "$expect_lab" == yes ]] && printf '已啟用' || printf '未啟用')"
 	printf 'SPL 未封裝大小低於 40 KiB\t通過（%s bytes，餘量 %s bytes）\n' \
 		"$spl_nodtb_size" "$((40960 - spl_nodtb_size))"
 	printf '無自製 Rank fallback\t通過\n'

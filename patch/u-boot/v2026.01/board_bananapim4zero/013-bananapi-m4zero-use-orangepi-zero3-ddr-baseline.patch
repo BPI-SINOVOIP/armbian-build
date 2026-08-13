@@ -1,18 +1,22 @@
 From: Banana Pi -BPI <lionwang@sinovoip.com.cn>
 Date: Thu, 13 Aug 2026 13:10:00 +0800
-Subject: [PATCH] sunxi: 將 BPI-M4 Zero 對齊 Orange Pi Zero 3 DDR 基線
+Subject: [PATCH] sunxi: 採用 BPI-M4 Zero 跨板 DDR 候選
 
-Orange Pi Zero 3 的 upstream H618 LPDDR4 支援以
-RS1G32LO4D2BDS-53BT 4 GiB 顆粒開發，與 BPI-M4 Zero 的 D2 BOM 相同。
+先以單一執行期 SPL 實驗器，
+分別掃描 0438 與 1116 兩片 4 GiB 板。
+兩板在 792 MHz 共同候選各完成 M2 10/10。
+TPR6 共同已觀察零失敗區間為 0x2e 至 0x44。
 
-保留 BPI-M4 Zero 的 DTS、eMMC 與周邊設定，只把板級 DDR PHY profile
-對齊 upstream orangepi_zero3_defconfig。時脈維持 792 MHz，讓 O0 成為
-可重現的單一基線，不混入先前的動態 eye scan 或固定 geometry 實驗。
+保留 BPI-M4 Zero 的 DTS、eMMC、geometry 自動探測與周邊設定。
+只更新板級 DDR PHY profile。
+採用共同窗口中心附近的 TPR6 0x3a。
+同時使用 0438 lane 掃描中心。
+此提交仍須通過冷開機與 Linux 壓力矩陣。
 
 Signed-off-by: Banana Pi -BPI <lionwang@sinovoip.com.cn>
 ---
- configs/bananapi_m4zero_defconfig | 6 +++---
- 1 file changed, 3 insertions(+), 3 deletions(-)
+ configs/bananapi_m4zero_defconfig | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
 
 diff --git a/configs/bananapi_m4zero_defconfig b/configs/bananapi_m4zero_defconfig
 index 6d70efd1a50..04db592d743 100644
@@ -21,15 +25,16 @@ index 6d70efd1a50..04db592d743 100644
 @@ -7,10 +7,10 @@ CONFIG_SPL=y
  CONFIG_DRAM_SUNXI_DX_ODT=0x07070707
  CONFIG_DRAM_SUNXI_DX_DRI=0x0e0e0e0e
- CONFIG_DRAM_SUNXI_CA_DRI=0x0e0e
+-CONFIG_DRAM_SUNXI_CA_DRI=0x0e0e
++CONFIG_DRAM_SUNXI_CA_DRI=0x0d0d
  CONFIG_DRAM_SUNXI_ODT_EN=0xaaaaeeee
 -CONFIG_DRAM_SUNXI_TPR6=0x48808080
-+CONFIG_DRAM_SUNXI_TPR6=0x44000000
++CONFIG_DRAM_SUNXI_TPR6=0x3a808080
  CONFIG_DRAM_SUNXI_TPR10=0x402f6663
 -CONFIG_DRAM_SUNXI_TPR11=0x26262524
 -CONFIG_DRAM_SUNXI_TPR12=0x100f100f
-+CONFIG_DRAM_SUNXI_TPR11=0x24242624
-+CONFIG_DRAM_SUNXI_TPR12=0x0f0f100f
++CONFIG_DRAM_SUNXI_TPR11=0x24242422
++CONFIG_DRAM_SUNXI_TPR12=0x110f1111
  CONFIG_MACH_SUN50I_H616=y
  CONFIG_SUNXI_DRAM_H616_LPDDR4=y
  CONFIG_DRAM_CLK=792

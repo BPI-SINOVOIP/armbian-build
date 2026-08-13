@@ -948,3 +948,24 @@ docs/evidence/bananapi-m4zero-opi-ddr/M4ZLAB2-hardware-1116-20260813.md
 
 兩板熱重設 gate 完成。下一階段把共同候選帶回標準 U-Boot，驗證 TF-A、
 U-Boot proper、核心、initrd、完整斷電冷開機及 Linux 壓力。
+
+## 2026-08-13：跨板候選帶回標準 U-Boot
+
+板級 `013` 補丁改為兩板共同候選：792 MHz、`CA_DRI=0x0d0d`、
+`TPR6=0x3a808080`、`TPR11=0x24242422`、`TPR12=0x110f1111`。geometry
+仍由 upstream 自動探測，不加入固定容量或 Rank fallback。
+
+`015` 的實驗器程式碼繼續保留，但一般 defconfig 明確關閉
+`CONFIG_DRAM_SUNXI_H616_LAB`，並恢復 SPL MMC、raw image 與下一階段載入。
+`M4ZDDR1` 唯讀診斷暫時啟用，用於追蹤 TF-A、核心與 initrd 交接；它不改變
+訓練旗標、重試次數或初始化回傳值。
+
+從乾淨 U-Boot clone 依序套用 `001`、`002`、`010`、`011`、`013`、`014`、
+`015` 全部成功，最終 defconfig 與跨板候選逐欄一致。建置工具新增 LAB 關閉
+守門與可傳入的預期 profile，入口為：
+
+```text
+tools/build-bpi-m4zero-cross-board-792.sh
+```
+
+本階段只完成原始碼與補丁堆疊檢查，正式 U-Boot 建置及映像封裝在推送後執行。
