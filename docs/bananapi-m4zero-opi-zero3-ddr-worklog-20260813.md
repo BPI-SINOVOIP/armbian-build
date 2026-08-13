@@ -1035,3 +1035,21 @@ output/evidence/bpi-m4zero-opi-ddr/X2-20260813-cross-board-post-push-86f22f9aa
 並與既有 X2 完整映像 8 KiB 偏移回讀逐位元一致。第一次核對命令因呼叫端
 把 `$wd` 保留成字面路徑而找不到檔案，未寫入或修改任何內容；改用絕對路徑
 及 `set -euo pipefail` 後通過。
+
+## 2026-08-13：兩片三星 DDR 樣本盤點
+
+原始照片 `IMG_3687.jpg` 與 `IMG_3686.jpg` 已納入證據目錄並計算 SHA-256。
+兩片顆粒字樣均分成 `K4F6E3S` 與 `4HMMGCJ` 兩行，完整料號確認為
+`K4F6E3S4HM-MGCJ`；頂部追溯碼分別為 `SEC 337` 與 `SEC 322`。照片底部的
+追溯字串有模糊字元，因此不做猜測性轉錄。
+
+Renesas DRAM 相容清單將該料號列為 LPDDR4、16 Gb、x32、1 Rank，單顆
+封裝容量相當於 2 GiB。此資料只建立實機 geometry 預期，不取代 SPL 與
+Linux 驗證，也不代表 X2 已跨 DDR 供應商通過。兩片暫以 `S337`、`S322`
+識別，待補拍板身序號與 PCB 版本後再建立永久樣本對照。
+
+詳細盤點與驗證邊界：
+
+```text
+docs/evidence/bananapi-m4zero-opi-ddr/M4Z-Samsung-DDR-inventory-20260813.md
+```

@@ -67,6 +67,7 @@
 | `RS512M32LO4D1BDS-53BT` | M4 Zero 2 GiB | x32、1 Rank、16 Rows、10 Columns | BOM 與實機日誌 |
 | `RS1G32LO4D2BDS-53BT` | M4 Zero／Orange Pi Zero 3 4 GiB | x32、2 Ranks、16 Rows、10 Columns | BOM、upstream 郵件與實機日誌 |
 | `RS1G32LX4D4BNR-53BT` | M4 Zero 4 GiB | x32、2 Ranks、16 Rows、10 Columns | 實機照片與 Android 日誌 |
+| `K4F6E3S4HM-MGCJ` | M4 Zero 三星樣本，預期 2 GiB | x32、1 Rank；Rows／Columns 待實機確認 | 兩片實機照片與 Renesas 相容清單 |
 
 邏輯 geometry 相同不代表 die 組織、PCB margin 或最佳 PHY profile 相同。
 
@@ -215,3 +216,16 @@ X2 已完成可重現的標準 U-Boot、TF-A、套件與完整 Jammy 映像建�
 工作樹及映像內 bootloader 逐位元一致，且一般 SPL 載入功能已恢復；
 `M4ZLAB2` 已停用。四片 M4 Zero 的跨批次冷啟動與 Linux 壓力仍待執行；
 兩片 BPI-M4B 採獨立板級工作流，不直接使用 X2 映像。
+
+## 19. 三星 DDR 樣本照片與料號盤點
+
+```text
+docs/evidence/bananapi-m4zero-opi-ddr/M4Z-Samsung-DDR-inventory-20260813.md
+docs/evidence/bananapi-m4zero-opi-ddr/hardware/M4Z-Samsung-20260813/IMG_3687.jpg
+docs/evidence/bananapi-m4zero-opi-ddr/hardware/M4Z-Samsung-20260813/IMG_3686.jpg
+```
+
+兩片新找到的 M4 Zero 均確認採用三星 `K4F6E3S4HM-MGCJ`，頂部追溯碼分別
+為 `SEC 337` 與 `SEC 322`。外部相容清單顯示該料號為 16 Gb、x32、1 Rank
+LPDDR4，單顆容量相當於 2 GiB；實機 geometry、冷開機與 Linux 壓力仍待
+完成，不納入 X2 已通過統計。

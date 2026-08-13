@@ -8,8 +8,8 @@
 | --- | --- | --- |
 | BPI-M4 Zero 已知批次 | `0438` | 已完成 M4ZLAB2 熱重設矩陣 |
 | BPI-M4 Zero 已知批次 | `1116` | 已完成 M4ZLAB2 熱重設矩陣 |
-| BPI-M4 Zero 三星 DDR 批次 | 待記錄板號 A | 現場已確認三星，完整料號待盤點 |
-| BPI-M4 Zero 三星 DDR 批次 | 待記錄板號 B | 現場已確認三星，完整料號待盤點 |
+| BPI-M4 Zero 三星 DDR 批次 | `S337`，板身序號待補 | `K4F6E3S4HM-MGCJ`，`SEC 337` |
+| BPI-M4 Zero 三星 DDR 批次 | `S322`，板身序號待補 | `K4F6E3S4HM-MGCJ`，`SEC 322` |
 | BPI-M4B | 待記錄板號 C | 禁止使用 M4 Zero 映像 |
 | BPI-M4B | 待記錄板號 D | 禁止使用 M4 Zero 映像 |
 
@@ -36,8 +36,8 @@ Armbian-unofficial_26.05.0-trunk_Bananapim4zero_jammy_current_6.18.32_x2-cross-b
 
 1. 先完成目前 `1116` 的 X2 標準映像啟動，確認從 SPL、TF-A、U-Boot、
    kernel、initrd 到使用者空間完整交接。
-2. 依序盤點兩片三星 DDR M4 Zero，記錄板號、PCB 版本、DDR 完整料號、
-   顆粒日期碼、電源與 SD 卡識別。
+2. 依序補齊兩片三星 DDR M4 Zero 的板身序號、PCB 版本、電源與 SD 卡
+   識別；DDR 料號與原始照片已完成盤點。
 3. 每片新板先做一次 UART 全程冷開機，不通過時停止該板後續壓力測試並
    保存完整失敗邊界。
 4. 四片 M4 Zero 各執行十次完全斷電冷啟動，順序交錯，不能把 warm reset
@@ -69,9 +69,15 @@ Armbian-unofficial_26.05.0-trunk_Bananapim4zero_jammy_current_6.18.32_x2-cross-b
 任一板失敗時，不把其他板的通過結果外推到該批次。先以相同映像重現三次，
 再回到 M4ZLAB2 對該板執行單變因邊界測試。
 
-三星顆粒在取得完整料號前，不推定其容量、Rank、die 組織或與 Rayson 相同的
-最佳 PHY 參數。X2 的名稱只代表 0438 與 1116 兩板候選，不代表已完成跨
-DDR 供應商驗證。
+兩片三星樣本的料號均為 `K4F6E3S4HM-MGCJ`；外部相容清單列出的組織為
+`16 Gb`、x32、1 Rank，因此預期單顆容量為 `2 GiB`。實機 geometry 仍須由
+SPL 與 Linux 驗證，且不能推定其最佳 PHY 參數與 Rayson 相同。X2 的名稱只
+代表 0438 與 1116 兩板候選，不代表已完成跨 DDR 供應商驗證。照片、雜湊與
+辨識邊界記錄於：
+
+```text
+docs/evidence/bananapi-m4zero-opi-ddr/M4Z-Samsung-DDR-inventory-20260813.md
+```
 
 ## BPI-M4B 分流原則
 
