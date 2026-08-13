@@ -5,6 +5,10 @@
 分支：`bpi-m4zero-opi-ddr-port-20260813`  
 工作目錄：`/media/pi/SMCI/armbian/bpi-v26.2.1-m4zero-opi-ddr`
 
+截至 2026-08-13 下午：O0／O1 建置與 O1 可燒錄映像完成；`1116` 單次 O1
+UART 已驗證 geometry 與診斷格式，但 kernel 出現 initramfs 解包錯誤。
+O2 因 geometry 正確暫時跳過，O3 同板參數對照已開始，O4／O5 尚未完成。
+
 ## 1. 目標
 
 以 upstream U-Boot 的 Orange Pi Zero 3 H618 LPDDR4 實作為乾淨基線，為

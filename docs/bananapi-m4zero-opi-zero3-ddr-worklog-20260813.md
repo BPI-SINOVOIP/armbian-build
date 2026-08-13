@@ -655,6 +655,88 @@ docs/bananapi-m4zero-o1-hardware-test-guide-20260813.md
 - 下一個唯一有效步驟是依 O1 實機手冊收集 `1116` 或弱板完整 UART；沒有
   O1 日誌前不得直接建立 O2，也不得宣稱 Orange Pi 方案已解決 792 MHz。
 
+## 2026-08-13：1116 的 O1 硬體證據與 O3 同板對照
+
+### 輸入
+
+使用者提供：
+
+```text
+output/evidence/bpi-m4zero-opi-ddr/O1-hardware-1116-20260813-135610
+```
+
+內容包含 4,916 bytes 原始 UART、10,838 bytes 解析 JSON、外部交接文件與
+雜湊清單。`sha256sum -c evidence-sha256.txt` 三項全部通過。
+
+原始 UART SHA-256：
+
+```text
+c645d23c74ec4903fa7c51c4a431361bc5452e6b733450a4b8608aa56ba7855f
+```
+
+### 診斷結果
+
+- Build ID 為 `P4301`，與 O1 候選相符。
+- 41 筆 `M4ZDDR1` 標記完整；四次 read calibration 均首次通過。
+- 最終為 4,096 MiB、2 Rank、x32、16 Rows、10 Columns。
+- TF-A、U-Boot 與 kernel handoff 成功。
+- 核心回報 `Initramfs unpacking failed: no cpio magic`，沒有登入證據。
+- JSON 解析器結束碼 `0`、`問題=[]`；這只代表診斷格式完整。
+
+以證據目錄為工作目錄、純檔名作輸入重跑解析器，產生 JSON SHA-256
+`12d01460...`，與保存檔逐位元一致。
+
+### initrd 離線驗證
+
+以唯讀 loop 掛接映像，從 ext4 取出實際 `uInitrd` 目標。`dumpimage`、
+`gzip -t` 與 `cpio -t` 全部通過，共 1,163 個 cpio 項目。uImage SHA-256
+為 `77e1014b...`，gzip payload SHA-256 為 `9917880d...`。
+
+封裝時已證明 O1 映像除 bootloader 外與 U0 payload 相同；既有 U0 480 MHz
+日誌另有多次登入成功。決策 D011：geometry 沒有失敗證據，暫不建立 O2；
+initramfs 錯誤優先視為 792 MHz DRAM 資料可靠性假設，但尚未確定根因。
+
+### O3 同板差異
+
+原廠 `1116` UART SHA-256 為 `aaff93ef...`。同為 792 MHz／4 GiB／2 Rank／
+x32，原廠動態結果與 O1 靜態值分別是：
+
+| 欄位 | O1 | 原廠 |
+| --- | --- | --- |
+| `TPR6` | `0x44000000` | `0x3a808080` |
+| `TPR11` | `0x24242624` | `0x25252523` |
+| `TPR12` | `0x0f0f100f` | `0x110f0f10` |
+
+原廠還執行 `R_2d`、`R_1st`、`W_2st`、`R_2st`、`RV_C`、DST 與 simple
+test；O1 只啟用 read calibration。決策 D012：O3 已證明主要缺口是動態
+眼圖與選點，不把 `1116` 結果硬編碼為通用值；O4 必須逐步移植。
+
+### 本輪失敗命令
+
+以下全部保存，沒有隱藏：
+
+1. 第一次批次讀檔把 `2>/dev/null` 放在 `for` 清單，shell 結束碼 `2`；
+   未執行寫入。
+2. 第一次重建 JSON 從倉庫根目錄傳入長相對路徑，`cmp` 結束碼 `1`；差異
+   只在每筆「來源」字串。改用證據目錄與純檔名後逐位元通過。
+3. 第一次 `jq` 直接用中文識別符建立物件，編譯結束碼 `3`；改用
+   `.["欄位"]` 後通過。
+4. 第一次 `debugfs dump /boot/uInitrd` 匯出的是符號連結本身，得到空檔，
+   `dumpimage` 結束碼 `1`；改讀實際目標後全部通過。
+5. 第二次 initrd 命令含 `rm -f`，在執行前被工具安全規則拒絕；沒有建立
+   loop 或修改檔案。改用全新 `mktemp` 目錄完成唯讀驗證。
+
+### 證據保存
+
+原始 UART 與 JSON 已逐位元複製到 Git 追蹤目錄，兩次 `cmp` 都是結束碼
+`0`。完整報告及機器可讀比較：
+
+```text
+docs/evidence/bananapi-m4zero-opi-ddr/O1-hardware-1116-20260813.md
+docs/evidence/bananapi-m4zero-opi-ddr/O3-1116-parameter-comparison-20260813.tsv
+docs/evidence/bananapi-m4zero-opi-ddr/hardware/O1-1116-20260813
+```
+
 ## 日誌追加規則
 
 每次實質操作後追加：

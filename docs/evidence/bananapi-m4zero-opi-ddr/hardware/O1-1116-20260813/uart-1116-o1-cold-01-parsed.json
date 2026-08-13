@@ -1,0 +1,380 @@
+{
+  "格式版本": "M4ZDDR1",
+  "設定": {
+    "clk": "792",
+    "type": "8",
+    "wl": "0",
+    "rc": "1",
+    "rt": "0",
+    "wt": "0",
+    "dx_odt": "07070707",
+    "dx_dri": "0e0e0e0e",
+    "ca_dri": "00000e0e",
+    "odt_en": "aaaaeeee",
+    "tpr6": "44000000",
+    "tpr10": "402f6663",
+    "tpr11": "24242624",
+    "tpr12": "0f0f100f"
+  },
+  "初始化": [
+    {
+      "開始": {
+        "來源": "Armbian-unofficial_26.05.0-trunk_Bananapim4zero_jammy_current_6.18.32_o1-opi-ddr-diag-P4301-792mhz.img.txt",
+        "行號": 6,
+        "欄位": {
+          "ranks": "2",
+          "width": "32",
+          "rows": "13",
+          "cols": "8"
+        }
+      },
+      "階段": [
+        {
+          "標記": "M4ZDDR1_RUN",
+          "來源": "Armbian-unofficial_26.05.0-trunk_Bananapim4zero_jammy_current_6.18.32_o1-opi-ddr-diag-P4301-792mhz.img.txt",
+          "行號": 7,
+          "欄位": {
+            "stage": "rc"
+          }
+        },
+        {
+          "標記": "M4ZDDR1_STAGE",
+          "來源": "Armbian-unofficial_26.05.0-trunk_Bananapim4zero_jammy_current_6.18.32_o1-opi-ddr-diag-P4301-792mhz.img.txt",
+          "行號": 8,
+          "欄位": {
+            "stage": "rc",
+            "result": "pass",
+            "attempts": "1"
+          }
+        }
+      ],
+      "結束": {
+        "來源": "Armbian-unofficial_26.05.0-trunk_Bananapim4zero_jammy_current_6.18.32_o1-opi-ddr-diag-P4301-792mhz.img.txt",
+        "行號": 9,
+        "欄位": {
+          "result": "pass"
+        }
+      }
+    },
+    {
+      "開始": {
+        "來源": "Armbian-unofficial_26.05.0-trunk_Bananapim4zero_jammy_current_6.18.32_o1-opi-ddr-diag-P4301-792mhz.img.txt",
+        "行號": 10,
+        "欄位": {
+          "ranks": "2",
+          "width": "32",
+          "rows": "13",
+          "cols": "11"
+        }
+      },
+      "階段": [
+        {
+          "標記": "M4ZDDR1_RUN",
+          "來源": "Armbian-unofficial_26.05.0-trunk_Bananapim4zero_jammy_current_6.18.32_o1-opi-ddr-diag-P4301-792mhz.img.txt",
+          "行號": 11,
+          "欄位": {
+            "stage": "rc"
+          }
+        },
+        {
+          "標記": "M4ZDDR1_STAGE",
+          "來源": "Armbian-unofficial_26.05.0-trunk_Bananapim4zero_jammy_current_6.18.32_o1-opi-ddr-diag-P4301-792mhz.img.txt",
+          "行號": 12,
+          "欄位": {
+            "stage": "rc",
+            "result": "pass",
+            "attempts": "1"
+          }
+        }
+      ],
+      "結束": {
+        "來源": "Armbian-unofficial_26.05.0-trunk_Bananapim4zero_jammy_current_6.18.32_o1-opi-ddr-diag-P4301-792mhz.img.txt",
+        "行號": 13,
+        "欄位": {
+          "result": "pass"
+        }
+      }
+    },
+    {
+      "開始": {
+        "來源": "Armbian-unofficial_26.05.0-trunk_Bananapim4zero_jammy_current_6.18.32_o1-opi-ddr-diag-P4301-792mhz.img.txt",
+        "行號": 14,
+        "欄位": {
+          "ranks": "2",
+          "width": "32",
+          "rows": "17",
+          "cols": "8"
+        }
+      },
+      "階段": [
+        {
+          "標記": "M4ZDDR1_RUN",
+          "來源": "Armbian-unofficial_26.05.0-trunk_Bananapim4zero_jammy_current_6.18.32_o1-opi-ddr-diag-P4301-792mhz.img.txt",
+          "行號": 15,
+          "欄位": {
+            "stage": "rc"
+          }
+        },
+        {
+          "標記": "M4ZDDR1_STAGE",
+          "來源": "Armbian-unofficial_26.05.0-trunk_Bananapim4zero_jammy_current_6.18.32_o1-opi-ddr-diag-P4301-792mhz.img.txt",
+          "行號": 16,
+          "欄位": {
+            "stage": "rc",
+            "result": "pass",
+            "attempts": "1"
+          }
+        }
+      ],
+      "結束": {
+        "來源": "Armbian-unofficial_26.05.0-trunk_Bananapim4zero_jammy_current_6.18.32_o1-opi-ddr-diag-P4301-792mhz.img.txt",
+        "行號": 17,
+        "欄位": {
+          "result": "pass"
+        }
+      }
+    },
+    {
+      "開始": {
+        "來源": "Armbian-unofficial_26.05.0-trunk_Bananapim4zero_jammy_current_6.18.32_o1-opi-ddr-diag-P4301-792mhz.img.txt",
+        "行號": 18,
+        "欄位": {
+          "ranks": "2",
+          "width": "32",
+          "rows": "16",
+          "cols": "10"
+        }
+      },
+      "階段": [
+        {
+          "標記": "M4ZDDR1_RUN",
+          "來源": "Armbian-unofficial_26.05.0-trunk_Bananapim4zero_jammy_current_6.18.32_o1-opi-ddr-diag-P4301-792mhz.img.txt",
+          "行號": 19,
+          "欄位": {
+            "stage": "rc"
+          }
+        },
+        {
+          "標記": "M4ZDDR1_STAGE",
+          "來源": "Armbian-unofficial_26.05.0-trunk_Bananapim4zero_jammy_current_6.18.32_o1-opi-ddr-diag-P4301-792mhz.img.txt",
+          "行號": 20,
+          "欄位": {
+            "stage": "rc",
+            "result": "pass",
+            "attempts": "1"
+          }
+        }
+      ],
+      "結束": {
+        "來源": "Armbian-unofficial_26.05.0-trunk_Bananapim4zero_jammy_current_6.18.32_o1-opi-ddr-diag-P4301-792mhz.img.txt",
+        "行號": 21,
+        "欄位": {
+          "result": "pass"
+        }
+      }
+    }
+  ],
+  "暫存器": [
+    {
+      "來源": "Armbian-unofficial_26.05.0-trunk_Bananapim4zero_jammy_current_6.18.32_o1-opi-ddr-diag-P4301-792mhz.img.txt",
+      "行號": 22,
+      "欄位": {
+        "block": "ctl",
+        "off": "000",
+        "value": "c3080020"
+      }
+    },
+    {
+      "來源": "Armbian-unofficial_26.05.0-trunk_Bananapim4zero_jammy_current_6.18.32_o1-opi-ddr-diag-P4301-792mhz.img.txt",
+      "行號": 23,
+      "欄位": {
+        "block": "ctl",
+        "off": "004",
+        "value": "00000001"
+      }
+    },
+    {
+      "來源": "Armbian-unofficial_26.05.0-trunk_Bananapim4zero_jammy_current_6.18.32_o1-opi-ddr-diag-P4301-792mhz.img.txt",
+      "行號": 24,
+      "欄位": {
+        "block": "ctl",
+        "off": "010",
+        "value": "00000030"
+      }
+    },
+    {
+      "來源": "Armbian-unofficial_26.05.0-trunk_Bananapim4zero_jammy_current_6.18.32_o1-opi-ddr-diag-P4301-792mhz.img.txt",
+      "行號": 25,
+      "欄位": {
+        "block": "ctl",
+        "off": "014",
+        "value": "00001624"
+      }
+    },
+    {
+      "來源": "Armbian-unofficial_26.05.0-trunk_Bananapim4zero_jammy_current_6.18.32_o1-opi-ddr-diag-P4301-792mhz.img.txt",
+      "行號": 26,
+      "欄位": {
+        "block": "ctl",
+        "off": "1bc",
+        "value": "00000001"
+      }
+    },
+    {
+      "來源": "Armbian-unofficial_26.05.0-trunk_Bananapim4zero_jammy_current_6.18.32_o1-opi-ddr-diag-P4301-792mhz.img.txt",
+      "行號": 27,
+      "欄位": {
+        "block": "ctl",
+        "off": "324",
+        "value": "00000001"
+      }
+    },
+    {
+      "來源": "Armbian-unofficial_26.05.0-trunk_Bananapim4zero_jammy_current_6.18.32_o1-opi-ddr-diag-P4301-792mhz.img.txt",
+      "行號": 28,
+      "欄位": {
+        "block": "phy",
+        "off": "180",
+        "value": "00000016"
+      }
+    },
+    {
+      "來源": "Armbian-unofficial_26.05.0-trunk_Bananapim4zero_jammy_current_6.18.32_o1-opi-ddr-diag-P4301-792mhz.img.txt",
+      "行號": 29,
+      "欄位": {
+        "block": "phy",
+        "off": "184",
+        "value": "00000000"
+      }
+    },
+    {
+      "來源": "Armbian-unofficial_26.05.0-trunk_Bananapim4zero_jammy_current_6.18.32_o1-opi-ddr-diag-P4301-792mhz.img.txt",
+      "行號": 30,
+      "欄位": {
+        "block": "phy",
+        "off": "188",
+        "value": "00000000"
+      }
+    },
+    {
+      "來源": "Armbian-unofficial_26.05.0-trunk_Bananapim4zero_jammy_current_6.18.32_o1-opi-ddr-diag-P4301-792mhz.img.txt",
+      "行號": 31,
+      "欄位": {
+        "block": "phy",
+        "off": "258",
+        "value": "00000007"
+      }
+    },
+    {
+      "來源": "Armbian-unofficial_26.05.0-trunk_Bananapim4zero_jammy_current_6.18.32_o1-opi-ddr-diag-P4301-792mhz.img.txt",
+      "行號": 32,
+      "欄位": {
+        "block": "phy",
+        "off": "25c",
+        "value": "00000007"
+      }
+    },
+    {
+      "來源": "Armbian-unofficial_26.05.0-trunk_Bananapim4zero_jammy_current_6.18.32_o1-opi-ddr-diag-P4301-792mhz.img.txt",
+      "行號": 33,
+      "欄位": {
+        "block": "phy",
+        "off": "26c",
+        "value": "00000001"
+      }
+    },
+    {
+      "來源": "Armbian-unofficial_26.05.0-trunk_Bananapim4zero_jammy_current_6.18.32_o1-opi-ddr-diag-P4301-792mhz.img.txt",
+      "行號": 34,
+      "欄位": {
+        "block": "phy",
+        "off": "274",
+        "value": "00000001"
+      }
+    },
+    {
+      "來源": "Armbian-unofficial_26.05.0-trunk_Bananapim4zero_jammy_current_6.18.32_o1-opi-ddr-diag-P4301-792mhz.img.txt",
+      "行號": 35,
+      "欄位": {
+        "block": "phy",
+        "off": "318",
+        "value": "00000007"
+      }
+    },
+    {
+      "來源": "Armbian-unofficial_26.05.0-trunk_Bananapim4zero_jammy_current_6.18.32_o1-opi-ddr-diag-P4301-792mhz.img.txt",
+      "行號": 36,
+      "欄位": {
+        "block": "phy",
+        "off": "31c",
+        "value": "00000007"
+      }
+    },
+    {
+      "來源": "Armbian-unofficial_26.05.0-trunk_Bananapim4zero_jammy_current_6.18.32_o1-opi-ddr-diag-P4301-792mhz.img.txt",
+      "行號": 37,
+      "欄位": {
+        "block": "phy",
+        "off": "32c",
+        "value": "00000001"
+      }
+    },
+    {
+      "來源": "Armbian-unofficial_26.05.0-trunk_Bananapim4zero_jammy_current_6.18.32_o1-opi-ddr-diag-P4301-792mhz.img.txt",
+      "行號": 38,
+      "欄位": {
+        "block": "phy",
+        "off": "334",
+        "value": "00000001"
+      }
+    },
+    {
+      "來源": "Armbian-unofficial_26.05.0-trunk_Bananapim4zero_jammy_current_6.18.32_o1-opi-ddr-diag-P4301-792mhz.img.txt",
+      "行號": 39,
+      "欄位": {
+        "block": "phy",
+        "off": "840",
+        "value": "00000000"
+      }
+    },
+    {
+      "來源": "Armbian-unofficial_26.05.0-trunk_Bananapim4zero_jammy_current_6.18.32_o1-opi-ddr-diag-P4301-792mhz.img.txt",
+      "行號": 40,
+      "欄位": {
+        "block": "phy",
+        "off": "a40",
+        "value": "00000000"
+      }
+    },
+    {
+      "來源": "Armbian-unofficial_26.05.0-trunk_Bananapim4zero_jammy_current_6.18.32_o1-opi-ddr-diag-P4301-792mhz.img.txt",
+      "行號": 41,
+      "欄位": {
+        "block": "phy",
+        "off": "8e0",
+        "value": "00000000"
+      }
+    },
+    {
+      "來源": "Armbian-unofficial_26.05.0-trunk_Bananapim4zero_jammy_current_6.18.32_o1-opi-ddr-diag-P4301-792mhz.img.txt",
+      "行號": 42,
+      "欄位": {
+        "block": "phy",
+        "off": "ae0",
+        "value": "00000000"
+      }
+    }
+  ],
+  "最終結果": {
+    "來源": "Armbian-unofficial_26.05.0-trunk_Bananapim4zero_jammy_current_6.18.32_o1-opi-ddr-diag-P4301-792mhz.img.txt",
+    "行號": 43,
+    "欄位": {
+      "size_mib": "4096",
+      "ranks": "2",
+      "width": "32",
+      "rows": "16",
+      "cols": "10"
+    }
+  },
+  "問題": []
+}

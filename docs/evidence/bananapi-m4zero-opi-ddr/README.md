@@ -147,3 +147,15 @@ docs/bananapi-m4zero-o1-hardware-test-guide-20260813.md
 
 手冊固定映像雜湊、燒錄回讀、UART 邊界、板號欄位與弱板驗收矩陣，避免
 不同操作者使用不同映像或把單次開機誤記為穩定通過。
+
+## 13. O1 第一次硬體證據與 O3 同板對照
+
+```text
+docs/evidence/bananapi-m4zero-opi-ddr/O1-hardware-1116-20260813.md
+docs/evidence/bananapi-m4zero-opi-ddr/O3-1116-parameter-comparison-20260813.tsv
+docs/evidence/bananapi-m4zero-opi-ddr/hardware/O1-1116-20260813
+```
+
+`1116` 的單次 O1 診斷完成 4 GiB geometry、TF-A、U-Boot 與 kernel
+handoff，但核心回報 initramfs 解包錯誤，未進入使用者空間。原始 UART 與
+解析 JSON 已納入 Git；本結果不算 792 MHz 穩定通過，也不能納入 O5 統計。
