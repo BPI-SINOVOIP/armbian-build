@@ -5,6 +5,7 @@ repo_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 git_sha="$(git -C "$repo_dir" rev-parse HEAD)"
 git_short="$(git -C "$repo_dir" rev-parse --short=9 HEAD)"
 build_stamp="${BUILD_STAMP:-$(date +%Y%m%d-%H%M%S)}"
+source_date_epoch="${SOURCE_DATE_EPOCH:-1786579200}"
 experiment="${EXPERIMENT:-O0}"
 expect_diagnostics="${EXPECT_DIAGNOSTICS:-no}"
 expect_lab="${EXPECT_LAB:-no}"
@@ -21,6 +22,7 @@ expected_tpr12="${EXPECTED_TPR12:-0x0f0f100f}"
 output_dir="${OUTPUT_DIR:-$repo_dir/output/evidence/bpi-m4zero-opi-ddr/${experiment}-${build_stamp}-${git_short}}"
 extract_dir="$output_dir/extracted-deb"
 build_log="$output_dir/build.log"
+build_started_epoch="$(date +%s)"
 
 required_commands=(
 	aarch64-linux-gnu-size
@@ -66,6 +68,7 @@ build_command=(
 	BRANCH=current
 	RELEASE=trixie
 	ARTIFACT_IGNORE_CACHE=yes
+	"SOURCE_DATE_EPOCH=$source_date_epoch"
 )
 
 printf '%q ' "${build_command[@]}" >"$output_dir/build-command.txt"
@@ -80,28 +83,44 @@ printf '\n' >>"$output_dir/build-command.txt"
 	fi
 	printf '開始時間：%s\n' "$(date --iso-8601=seconds)"
 	printf 'Armbian 提交：%s\n' "$git_sha"
+	printf 'SOURCE_DATE_EPOCH：%s\n' "$source_date_epoch"
 	printf '建置命令：'
 	printf '%q ' "${build_command[@]}"
 	printf '\n'
 	cd "$repo_dir"
-	"${build_command[@]}"
+	SOURCE_DATE_EPOCH="$source_date_epoch" "${build_command[@]}"
 	printf '結束時間：%s\n' "$(date --iso-8601=seconds)"
 } 2>&1 | tee "$build_log"
 
+deb_search_dirs=()
+for candidate_dir in \
+	"$repo_dir/output/debs" \
+	"$repo_dir/output/packages-hashed/global"; do
+	if [[ -d "$candidate_dir" ]]; then
+		deb_search_dirs+=("$candidate_dir")
+	fi
+done
+
+(( ${#deb_search_dirs[@]} > 0 )) || {
+	echo "找不到 Armbian U-Boot 套件輸出目錄" >&2
+	exit 1
+}
+
 mapfile -t deb_candidates < <(
-	find "$repo_dir/output/packages-hashed/global" -maxdepth 1 -type f \
+	find "${deb_search_dirs[@]}" -maxdepth 1 -type f \
 		-name 'linux-u-boot-bananapim4zero-current_*.deb' \
+		-newermt "@$((build_started_epoch - 1))" \
 		-printf '%T@\t%p\n' \
 		| sort -nr
 )
 (( ${#deb_candidates[@]} > 0 )) || {
-	echo "找不到本次 BPI-M4 Zero U-Boot hashed 套件" >&2
+	echo "找不到本次建置後產生的 BPI-M4 Zero U-Boot 套件" >&2
 	exit 1
 }
 deb_path="${deb_candidates[0]#*$'\t'}"
 
 [[ -n "$deb_path" && -f "$deb_path" ]] || {
-	echo "找不到本次 BPI-M4 Zero U-Boot hashed 套件" >&2
+	echo "找不到本次建置後產生的 BPI-M4 Zero U-Boot 套件" >&2
 	exit 1
 }
 

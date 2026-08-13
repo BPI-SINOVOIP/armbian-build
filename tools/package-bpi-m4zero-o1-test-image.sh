@@ -6,10 +6,11 @@ evidence_dir="${1:-}"
 source_xz="${2:-/media/pi/SMCI/armbian/bpi-v26.2.1/output/images/2026.07/bpi-m4z-u0-safe-480/Armbian-unofficial_26.05.0-trunk_Bananapim4zero_jammy_current_6.18.32_u0-safe-480mhz.img.xz}"
 output_dir="${OUTPUT_DIR:-$repo_dir/output/images/2026.08/bpi-m4zero-o1-opi-ddr-diag}"
 output_image="${OUTPUT_IMAGE:-$output_dir/Armbian-unofficial_26.05.0-trunk_Bananapim4zero_jammy_current_6.18.32_o1-opi-ddr-diag-P4301-792mhz.img}"
+package_label="${PACKAGE_LABEL:-O1}"
 boot_offset=8192
 
 if [[ -z "$evidence_dir" ]]; then
-	echo "用法：$0 O1證據目錄 [U0來源映像.xz]" >&2
+	echo "用法：$0 證據目錄 [U0來源映像.xz]" >&2
 	exit 2
 fi
 
@@ -38,7 +39,7 @@ done
 bootloader="$evidence_dir/u-boot-sunxi-with-spl.bin"
 validation="$evidence_dir/validation.tsv"
 [[ -f "$bootloader" && -f "$validation" ]] || {
-	echo "O1 證據目錄缺少 bootloader 或驗證表" >&2
+	echo "$package_label 證據目錄缺少 bootloader 或驗證表" >&2
 	exit 1
 }
 grep -Fqx $'M4ZDDR1 結構化診斷\t已啟用並找到標記' "$validation"
@@ -99,7 +100,7 @@ image_xz_sha="$(cut -d' ' -f1 "$output_image.xz.sha256")"
 	printf '項目\t值\n'
 	printf '來源映像\t%s\n' "$source_xz"
 	printf '來源映像 SHA-256\t%s\n' "$source_xz_sha"
-	printf 'O1 證據目錄\t%s\n' "$evidence_dir"
+	printf '%s 證據目錄\t%s\n' "$package_label" "$evidence_dir"
 	printf 'bootloader offset\t%s\n' "$boot_offset"
 	printf 'bootloader size\t%s\n' "$bootloader_size"
 	printf 'bootloader SHA-256\t%s\n' "$bootloader_sha"
@@ -114,5 +115,5 @@ image_xz_sha="$(cut -d' ' -f1 "$output_image.xz.sha256")"
 	printf '實機驗證\t尚未執行\n'
 } >"$output_image.manifest.tsv"
 
-echo "O1 測試映像封裝完成：$output_image"
+echo "$package_label 測試映像封裝完成：$output_image"
 echo "注意：尚未執行實機驗證"

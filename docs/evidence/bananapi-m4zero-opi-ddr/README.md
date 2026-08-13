@@ -203,3 +203,15 @@ tools/bpi-m4zero-ddr-lab-profile-cross-board-candidate-792.json
 1116 的 480 與 792 MHz 候選各完成 `M2 10/10`。與 0438 的結果合併後，
 792 MHz 跨板候選為 `20/20`；`TPR6` 共同已觀察零失敗區間為
 `0x2e..0x44`。以上仍是熱重設實驗，冷開機與 Linux 壓力 gate 尚未完成。
+
+## 18. X2 標準建置與可燒錄映像
+
+```text
+docs/evidence/bananapi-m4zero-opi-ddr/X2-cross-board-792-build-image-20260813.md
+docs/bananapi-m4zero-cross-batch-x2-hardware-plan-20260813.md
+```
+
+X2 已完成可重現的標準 U-Boot、TF-A、套件與完整 Jammy 映像建置。套件、
+工作樹及映像內 bootloader 逐位元一致，且一般 SPL 載入功能已恢復；
+`M4ZLAB2` 已停用。四片 M4 Zero 的跨批次冷啟動與 Linux 壓力仍待執行；
+兩片 BPI-M4B 採獨立板級工作流，不直接使用 X2 映像。

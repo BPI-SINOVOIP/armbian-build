@@ -975,3 +975,44 @@ tools/build-bpi-m4zero-cross-board-792.sh
 `if (IS_ENABLED())` 包住；後者仍須通過 C 名稱解析。最終讓 `extern` 宣告
 始終可見，實體定義與物件仍只在 LAB 模式連結；一般映像的條件分支會被
 編譯器消除。此修正不改 LAB 啟用時的行為，也不產生失敗候選產物。
+
+## 2026-08-13：X2 可重現建置與完整映像
+
+一般建置修正後，U-Boot 與 TF-A 已完成編譯。證據腳本第一次誤取舊的
+480 MHz LAB 套件，原因是只搜尋 `output/packages-hashed/global`；改為搜尋
+現行輸出並限定建置開始後產物。後續二進位差異已確認只來自兩處時間字串及
+衍生校驗，加入固定 `SOURCE_DATE_EPOCH=1786579200`，沒有放寬 `cmp`。
+
+Armbian 仍曾回用同 Build ID 的舊套件，故先將兩份舊 `P1f88` 套件移入
+證據封存目錄，再執行第五輪。正式命令結束碼為 `0`：
+
+```bash
+BUILD_STAMP=20260813-cross-board-pushed-v5 \
+  ./tools/build-bpi-m4zero-cross-board-792.sh
+```
+
+套件、工作樹與證據目錄內的完整 bootloader SHA-256 均為：
+
+```text
+a23cb287ac503a63bb505c4fe538447aec91a18fb5aadb6e5e87126b3c47e0ad
+```
+
+以 U0 480 MHz 已知可開機映像為 payload，只替換 8 KiB 偏移 bootloader，
+產生並保留 `.img` 與 `.img.xz`。其 SHA-256 分別為：
+
+```text
+fb665992d6a5becfe2694cade5f2e1367f0eeb18582fdcda8e8d3d446042610b
+3bff7ae94ffdc6e38fb5241646204dbe6ede9b6556028924bd54626ecc670fbd
+```
+
+前綴、bootloader 回讀、後綴、檔案大小、分割表與 xz 完整性全部通過。
+目前新增兩片不同批次、現場確認採用三星 DDR 的 M4 Zero，實機矩陣擴充為
+`0438`、`1116` 與兩片待記錄板號及完整 DDR 料號的三星樣本。X2 仍只代表
+兩片 Rayson 板的共同候選，不宣稱已跨 DDR 供應商。另有兩片 H618 BPI-M4B，
+因板級設定與 DDR 拓撲尚未確認，採獨立工作流，禁止直接使用 M4 Zero 映像。
+完整證據與計畫：
+
+```text
+docs/evidence/bananapi-m4zero-opi-ddr/X2-cross-board-792-build-image-20260813.md
+docs/bananapi-m4zero-cross-batch-x2-hardware-plan-20260813.md
+```
