@@ -737,8 +737,6 @@ docs/evidence/bananapi-m4zero-opi-ddr/O3-1116-parameter-comparison-20260813.tsv
 docs/evidence/bananapi-m4zero-opi-ddr/hardware/O1-1116-20260813
 ```
 
-## 日誌追加規則
-
 ## 2026-08-13：改用單一執行期 SPL DDR 實驗器
 
 使用者指出以完整作業系統映像逐版搜尋 DDR 參數效率過低，且要求移除每組
@@ -772,6 +770,106 @@ docs/bananapi-m4zero-ddr-lab-plan-20260813.md
 
 決策 D014：保險值、最佳值、最大容錯值必須分開計算。單板結果先保存，
 量產共同值只能取跨序號、顆粒與批次的通過交集。
+
+## 2026-08-13：M4ZLAB2 軟體完成與正式建置
+
+決策 D015：所有待搜尋的 DDR 候選欄位改為單筆 UART `R` 記錄，在同一份
+SPL 執行期套用。480 MHz 只保留為首次啟動與錯誤復原錨點；SPL 會保存本次
+啟動實際使用的完整 profile，不另維護第二份硬編碼安全參數。
+
+正式實作包含：
+
+1. `clk`、`dx_odt`、`dx_dri`、`ca_dri`、`odt_en`、`tpr0`、`tpr2`、
+   `tpr6`、`tpr10`、`tpr11`、`tpr12` 全部由 UART 執行期設定。
+2. PLL 與 `ns_to_t()` 使用同一候選時脈，只接受 240 至 900 MHz 間的
+   12 MHz 倍數。
+3. 初始 DDR 初始化與每個候選都受 watchdog 保護；安全設定恢復成功後才輸出
+   `FINAL recovered=pass`。
+4. M0／M1／M2 包含資料線、全容量位址別名、Rank 邊界、五個分散窗口、
+   圖樣校驗及直接 load／store／copy 計時。
+5. 主機工具提供 `info`、`run`、`scan`、`rank`、JSONL 增量保存、
+   `--resume`、多欄笛卡兒掃描、重複 watchdog 重啟與外部重設命令。
+6. 排名要求相同參數的全部 M2 樣本通過，分別輸出保險、最佳效能與最大容錯
+   候選；掃描碰到邊界時明確標示容錯半徑尚未收斂。
+
+正式建置命令執行兩次：
+
+```bash
+BUILD_STAMP=20260813-final-a ./tools/build-bpi-m4zero-ddr-lab.sh
+BUILD_STAMP=20260813-final-b-repro ./tools/build-bpi-m4zero-ddr-lab.sh
+```
+
+兩次結束碼均為 `0`。Build ID 為
+`2026.01-S127a-P2cea-Hc6a9-V3946-Be6d8-R448a`；未封裝 SPL 為
+24,768 bytes，eGON SPL 為 32,768 bytes，距 49,056-byte 上限尚有
+24,288 bytes。套件與來源組合二進位逐位元一致，兩輪的 SPL、ELF 與組合
+二進位也逐位元一致。SPL SHA-256：
+
+```text
+4cf6e982dfff69485e4c1251f7a8b16d74dfe9b881bede907a8a32b412171a8f
+```
+
+主機工具完成 `ruff check`、`ruff format --check` 與 19 項單元測試；兩份
+shell 工具完成 `bash -n` 與 `shellcheck`。U-Boot 正式補丁的 strict
+checkpatch 為 `0 errors`、`9 warnings`、`0 checks`，保留直接 DRAM 存取
+需要的 8 個 `volatile` 警告與 1 個新檔維護者提醒。
+
+韌體與主機工具分別以 `effa18361`、`9db9f9549` 提交並推送。為排除工作樹
+未提交程式碼影響，另從 `9db9f9549380f2657040d3462ba5f840f475dbfa`
+執行正式提交後建置：
+
+```bash
+BUILD_STAMP=20260813-pushed-final ./tools/build-bpi-m4zero-ddr-lab.sh
+```
+
+命令結束碼為 `0`，產物位於：
+
+```text
+output/evidence/bpi-m4zero-ddr-lab/build-20260813-pushed-final-9db9f9549
+```
+
+該次 `Build ID`、尺寸及三項主要雜湊均與前兩次相同；正式 SPL SHA-256 仍為
+`4cf6e982dfff69485e4c1251f7a8b16d74dfe9b881bede907a8a32b412171a8f`。
+由於 Git 的一般空白檢查會把巢狀 `format-patch` 內容所需的前導字元視為
+空白問題，正式補丁改由 U-Boot `checkpatch.pl --strict` 守門；其餘程式與
+文件仍使用 Git 空白檢查。
+
+本輪失敗與修正均保留：
+
+1. 第一個正式建置證據腳本錯選舊 `P4301` hashed DEB，導致來源與套件比對
+   失敗；改為從 SPL 版本字串取得 Build ID，且只選同 ID 套件。
+2. 第二次建置仍因 U-Boot 的 `env -i` 丟棄 `SOURCE_DATE_EPOCH`，兩個時間字串
+   與其 eGON／FIT 校驗共 9 bytes 不同；將值傳入 U-Boot make 環境後，
+   中間版 `P141b` 與最終版 `P2cea` 各自兩次完整建置逐位元一致。
+3. 主機工具第一次審查發現送出位置欄位、事件使用空格、文字 `id` 與 SPL 的
+   `key=value`、底線事件、`u32 id` 不一致；統一協定並加入正式補丁契約測試。
+4. 韌體審查發現 `tiny-printf` 不支援 `ll`、任意時脈與 PLL 取整不一致、
+   `FINAL` 早於安全恢復及初始初始化沒有 watchdog；全部修正後才建立正式證據。
+5. 獨立 U-Boot 完整映像建置因缺少 `atf-bl31` 結束碼為 `2`；同一命令已完成
+   SPL 編譯，正式 Armbian 建置提供 TF-A 後完整通過。
+6. 清除本輪 Python 快取時，`rm -rf` 被工具安全規則拒絕且未執行；改用
+   `find -delete` 與 `rmdir` 清除本輪產物。
+7. 第一份大型補丁因檔頭插入點不符而整筆拒絕，沒有留下部分修改；拆成小型
+   原子修改後完成。
+8. 直接修改 Armbian U-Boot cache 因檔案屬於 root 而失敗，沒有寫入；只調整
+   本輪涉及檔案的擁有者後繼續，未改動無關來源。
+9. 第一次隔離輸出建置先缺少 `syncconfig`，補做後又因共享來源殘留 in-tree
+   產物而被 U-Boot 拒絕；沒有執行 `mrproper` 破壞共享狀態，改用本機乾淨
+   clone 驗證。
+10. 乾淨 clone 第一次編譯缺少 timer 與 DRAM base 定義，第二次仍缺 DRAM
+    base；加入正確 `config.h` 後完成 SPL 編譯。這些失敗都沒有形成候選產物。
+
+完整建置證據與操作手冊：
+
+```text
+docs/evidence/bananapi-m4zero-opi-ddr/M4ZLAB2-build-20260813.md
+docs/bananapi-m4zero-ddr-lab-guide-20260813.md
+```
+
+目前分類：軟體與離線建置完成；尚未寫入實體 SD 卡，2 GiB／4 GiB Rayson
+實機矩陣尚未執行，因此三類候選仍無硬體結論。
+
+## 日誌追加規則
 
 每次實質操作後追加：
 

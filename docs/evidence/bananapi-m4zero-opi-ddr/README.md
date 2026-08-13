@@ -159,3 +159,14 @@ docs/evidence/bananapi-m4zero-opi-ddr/hardware/O1-1116-20260813
 `1116` 的單次 O1 診斷完成 4 GiB geometry、TF-A、U-Boot 與 kernel
 handoff，但核心回報 initramfs 解包錯誤，未進入使用者空間。原始 UART 與
 解析 JSON 已納入 Git；本結果不算 792 MHz 穩定通過，也不能納入 O5 統計。
+
+## 14. M4ZLAB2 單一 SPL 實驗器
+
+```text
+docs/evidence/bananapi-m4zero-opi-ddr/M4ZLAB2-build-20260813.md
+docs/bananapi-m4zero-ddr-lab-guide-20260813.md
+```
+
+實驗器在同一份 SPL 內接受全部 DDR 候選參數，提供 watchdog 復原、M0／M1／
+M2、JSONL 續跑與三類候選排名。三次完整建置的 SPL、ELF 與組合二進位逐位元
+一致，其中一次直接由已推送的程式提交建置；實機參數矩陣尚未執行。

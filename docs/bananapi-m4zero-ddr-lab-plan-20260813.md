@@ -1,7 +1,9 @@
 # BPI-M4 Zero 單一 SPL DDR 實驗器計畫
 
-日期：2026-08-13  
-狀態：實作中  
+日期：2026-08-13
+
+狀態：軟體完成，實機矩陣待執行
+
 協定版本：`M4ZLAB2`
 
 ## 1. 問題與目標
@@ -28,7 +30,9 @@ SPL。主機端控制器負責產生候選、偵測 UART 逾時、保存原始�
 ```text
 H618 BROM
   -> 從 SD 卡 8 KiB 偏移載入同一份 SPL
+  -> 啟動 watchdog
   -> 以 U0 已驗證的 480 MHz profile 初始化與偵測 geometry
+  -> 保存本次啟動實際使用的完整 profile
   -> 啟動 M4ZLAB2 UART 伺服器
   -> 接收候選 profile
   -> watchdog 保護下完整重設 DDR controller／PHY／PLL
@@ -45,7 +49,8 @@ H618 BROM
 
 | 欄位 | 意義 |
 | --- | --- |
-| `clk` | DDR 資料時脈 MHz |
+| `id` | 主機管理的 32-bit 交易識別碼 |
+| `clk` | DDR 資料時脈 MHz，240 至 900 且為 12 的倍數 |
 | `dx_odt` | DQ ODT 設定 |
 | `dx_dri` | DQ 驅動設定 |
 | `ca_dri` | CA 驅動設定 |
@@ -54,6 +59,7 @@ H618 BROM
 | `tpr6` | DQ delay／Vref 相關值 |
 | `tpr10` | calibration／training 啟用位元 |
 | `tpr11`、`tpr12` | lane delay 相關值 |
+| `level`、`passes`、`window` | 測試層級、輪數與 MiB 窗口 |
 
 H616 的 `ns_to_t()` 原本以 `CONFIG_DRAM_CLK` 在編譯期換算控制器 timing。
 實驗器必須改用目前候選的 `clk`；否則只改 PLL 會造成 timing 與實際時脈
@@ -94,9 +100,9 @@ SPL 使用小型固定欄位協定，不納入完整 U-Boot CLI。主機端提�
 
 | 層級 | 內容 | 用途 |
 | --- | --- | --- |
-| M0 | 原廠 simple write、資料線 walking-bit、Rank 邊界別名 | 快速淘汰 |
-| M1 | 五個容量位置、固定圖樣、walking-one／zero、複製比較 | 一般掃描 |
-| M2 | 多輪大窗口、跨 Rank、搬移後校驗、讀寫複製 benchmark | 決賽候選 |
+| M0 | 資料線 walking-one／zero、全容量位址別名、Rank 邊界 | 快速淘汰 |
+| M1 | M0 加五個容量位置、多輪固定圖樣寫入與逐字校驗 | 一般掃描 |
+| M2 | M1 加直接 load／store／copy 計時與搬移後校驗 | 決賽候選 |
 
 四 GiB／兩 Rank 板的必要位置包含：
 
@@ -108,8 +114,9 @@ Rank 邊界下方與上方     0xC0000000 前後
 最高有效位址附近
 ```
 
-所有位址計算使用 64-bit 型別。M0 參考原廠 `dramc_simple_wr_test`；M1／M2
-另加入相鄰 Rank 邊界窗口，不能只測 Rank 1 起點。
+所有位址計算使用 64-bit 型別。M0 的範圍設計參考原廠
+`dramc_simple_wr_test`，但另行實作資料線、全容量位址別名及 Rank 邊界測試；
+M1／M2 再加入分散窗口，不能只測 Rank 1 起點。
 
 ## 7. 自動搜尋與排名
 
@@ -143,12 +150,11 @@ Rank 邊界下方與上方     0xC0000000 前後
 sunxi-spl-ddr-lab.bin
 bpi-m4zero-ddr-lab.py
 write-bpi-m4zero-ddr-lab.sh
-protocol-fixtures/
 session.jsonl
 uart-raw.log
-candidates.tsv
 rankings.json
-sha256sums.txt
+manifest.tsv
+validation.tsv
 ```
 
 寫入工具只更新 SD 卡 8 KiB 偏移的 SPL 範圍，寫入前後必須保存雜湊並逐位元
@@ -161,7 +167,7 @@ sha256sums.txt
 1. 一份 SPL 可接收並套用不同 profile，不重編譯。
 2. `ns_to_t()` 與 PLL 都使用同一執行期時脈。
 3. watchdog 卡死復原及主機端續跑流程已實作。
-4. UART 協定 parser、模擬 fixture、排名與中斷續跑測試通過。
+4. UART 協定 parser、模擬 UART、排名與中斷續跑測試通過。
 5. SPL 大小、SRAM stack、符號與不載入下一階段的證據完整。
 6. 建置與寫入工具保存來源提交、命令、SHA-256 及回讀結果。
 
