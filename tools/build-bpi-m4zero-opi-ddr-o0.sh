@@ -5,7 +5,9 @@ repo_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 git_sha="$(git -C "$repo_dir" rev-parse HEAD)"
 git_short="$(git -C "$repo_dir" rev-parse --short=9 HEAD)"
 build_stamp="${BUILD_STAMP:-$(date +%Y%m%d-%H%M%S)}"
-output_dir="${OUTPUT_DIR:-$repo_dir/output/evidence/bpi-m4zero-opi-ddr/O0-${build_stamp}-${git_short}}"
+experiment="${EXPERIMENT:-O0}"
+expect_diagnostics="${EXPECT_DIAGNOSTICS:-no}"
+output_dir="${OUTPUT_DIR:-$repo_dir/output/evidence/bpi-m4zero-opi-ddr/${experiment}-${build_stamp}-${git_short}}"
 extract_dir="$output_dir/extracted-deb"
 build_log="$output_dir/build.log"
 
@@ -26,6 +28,7 @@ required_commands=(
 	sort
 	stat
 	tee
+	strings
 	xargs
 )
 
@@ -35,6 +38,12 @@ for command_name in "${required_commands[@]}"; do
 		exit 1
 	}
 done
+
+if [[ "$expect_diagnostics" == no && \
+	-f "$repo_dir/patch/u-boot/v2026.01/board_bananapim4zero/014-sunxi-h616-add-structured-dram-diagnostics.patch" ]]; then
+	echo "目前補丁堆疊已進入 O1；重建 O0 請切換至證據提交 a9bef393b" >&2
+	exit 1
+fi
 
 mkdir -p "$output_dir" "$extract_dir"
 
@@ -51,8 +60,12 @@ printf '%q ' "${build_command[@]}" >"$output_dir/build-command.txt"
 printf '\n' >>"$output_dir/build-command.txt"
 
 {
-	printf '實驗代號：O0\n'
-	printf '用途：Orange Pi Zero 3 DDR profile 的 BPI-M4 Zero 乾淨基線\n'
+	printf '實驗代號：%s\n' "$experiment"
+	if [[ "$expect_diagnostics" == yes ]]; then
+		printf '用途：Orange Pi Zero 3 DDR profile 加結構化唯讀診斷\n'
+	else
+		printf '用途：Orange Pi Zero 3 DDR profile 的 BPI-M4 Zero 乾淨基線\n'
+	fi
 	printf '開始時間：%s\n' "$(date --iso-8601=seconds)"
 	printf 'Armbian 提交：%s\n' "$git_sha"
 	printf '建置命令：'
@@ -104,6 +117,22 @@ grep -qx 'CONFIG_DRAM_SUNXI_TPR10=0x402f6663' "$uboot_config"
 grep -qx 'CONFIG_DRAM_SUNXI_TPR11=0x24242624' "$uboot_config"
 grep -qx 'CONFIG_DRAM_SUNXI_TPR12=0x0f0f100f' "$uboot_config"
 
+case "$expect_diagnostics" in
+	yes)
+		grep -qx 'CONFIG_DRAM_SUNXI_H616_DIAGNOSTICS=y' "$uboot_config"
+		;;
+	no)
+		if grep -qx 'CONFIG_DRAM_SUNXI_H616_DIAGNOSTICS=y' "$uboot_config"; then
+			echo "O0 不得啟用結構化診斷；請切換至 O0 證據提交 a9bef393b" >&2
+			exit 1
+		fi
+		;;
+	*)
+		echo "EXPECT_DIAGNOSTICS 只接受 yes 或 no" >&2
+		exit 1
+		;;
+esac
+
 if grep -q 'DRAM_SUNXI_KNOWN_GEOMETRY_AUTO_RANKS=y' "$uboot_config"; then
 	echo "O0 不得帶入自製 Rank fallback" >&2
 	exit 1
@@ -126,6 +155,21 @@ source_combined="$source_dir/u-boot-sunxi-with-spl.bin"
 	exit 1
 }
 cmp "$uboot_bin" "$source_combined"
+
+if [[ "$expect_diagnostics" == yes ]]; then
+	strings "$source_dir/spl/u-boot-spl" \
+		| rg '^M4ZDDR1_' \
+		| sort -u >"$output_dir/diagnostic-markers.txt"
+	[[ -s "$output_dir/diagnostic-markers.txt" ]] || {
+		echo "O1 SPL 缺少 M4ZDDR1 診斷標記" >&2
+		exit 1
+	}
+else
+	if strings "$source_dir/spl/u-boot-spl" | rg -q '^M4ZDDR1_'; then
+		echo "O0 SPL 不得包含 M4ZDDR1 診斷標記" >&2
+		exit 1
+	fi
+fi
 
 install -m 0644 "$deb_path" "$output_dir/"
 install -m 0644 "$uboot_bin" "$output_dir/u-boot-sunxi-with-spl.bin"
@@ -165,6 +209,11 @@ find "$repo_dir/patch/u-boot/v2026.01/board_bananapim4zero" \
 	printf 'U-Boot 套件建置\t通過\n'
 	printf 'Orange Pi DDR profile\t通過\n'
 	printf '792 MHz 設定\t通過\n'
+	if [[ "$expect_diagnostics" == yes ]]; then
+		printf 'M4ZDDR1 結構化診斷\t已啟用並找到標記\n'
+	else
+		printf 'M4ZDDR1 結構化診斷\t未啟用\n'
+	fi
 	printf '無自製 Rank fallback\t通過\n'
 	printf '無 150 us 額外延遲\t通過\n'
 	printf '套件與原始碼組合產物一致\t通過\n'
@@ -192,5 +241,5 @@ find "$repo_dir/patch/u-boot/v2026.01/board_bananapim4zero" \
 		| sort >sha256sums.txt
 )
 
-echo "O0 U-Boot 建置與離線驗證完成：$output_dir"
+echo "$experiment U-Boot 建置與離線驗證完成：$output_dir"
 echo "注意：尚未執行實機驗證"

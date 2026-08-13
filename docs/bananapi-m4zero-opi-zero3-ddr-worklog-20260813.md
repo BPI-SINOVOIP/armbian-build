@@ -285,6 +285,178 @@ O0 已完成原始碼套用、編譯、套件回讀與離線一致性驗證。�
 預期的 Orange Pi DDR 基線，不等於弱板在 792 MHz 已穩定；目前仍是
 「尚未實機驗證」。下一階段 O1 只加入不改變訓練流程的唯讀診斷標記。
 
+## 2026-08-13：O0 證據提交與推送
+
+執行：
+
+```bash
+git commit -m '紀錄：保存 M4 Zero O0 建置證據'
+git push
+```
+
+結果：
+
+- 提交：`a9bef393b`。
+- 推送：成功。
+- O0 的程式、文件與重建腳本至此形成不可變證據點。
+
+## 2026-08-13：O1 診斷設計稽核
+
+### upstream UART 與空間
+
+U-Boot SPL 在 `sunxi_dram_init()` 前已執行 `preloader_console_init()`，目前
+組態也有 `CONFIG_SPL_SERIAL=y` 與 `CONFIG_SPL_PRINTF=y`，因此可直接輸出
+固定 UART 標記，不必啟用全域 `DEBUG`。
+
+O0 的 SPL 尺寸資料：
+
+```text
+u-boot-spl-nodtb.bin  37712 bytes
+text                  37229 bytes
+data                    480 bytes
+bss                     448 bytes
+```
+
+`TPR10=0x402f6663` 的有效訓練位為：
+
+```text
+write leveling    0
+read calibration  1
+read training     0
+write training    0
+```
+
+因此 O1 必須明確輸出 `wl=0 rc=1 rt=0 wt=0`。若擅自打開另外三項，將變成
+訓練演算法實驗，不再是 O1 唯讀診斷。
+
+### 第一次補丁格式失敗
+
+第一次以人工方式組合 `014` 郵件補丁時，執行：
+
+```bash
+git apply --check 014-sunxi-h616-add-structured-dram-diagnostics.patch
+```
+
+結果為 `corrupt patch at line 38`。該檔立即刪除，沒有套用、編譯或宣稱
+成功。後續改在獨立 U-Boot 複本實際修改、提交，再以 `git format-patch`
+產生正式補丁，避免人工維護 hunk 計數。
+
+### 靜態 BSS 草稿遭否決
+
+初始設計曾考慮用靜態結構保存初始化序號及每個訓練結果。稽核發現此 SPL
+的 BSS 位址位於尚未初始化的 DRAM；在 `sunxi_dram_init()` 內讀寫靜態
+BSS 會形成循環依賴。此草稿在形成正式補丁及編譯前即遭否決。
+
+決策 D006：O1 不使用任何新的可寫靜態狀態。每個結果立即輸出，最終
+controller／PHY 白名單快照只在最後一次 `mctl_core_init()` 後輸出一次。
+
+### 診斷時序邊界
+
+O1 不改變條件位、重試次數、函式回傳值、geometry、Rank、時脈或失敗
+處理。不過 UART 本身會增加初始化之間的時間，因此 O1 只能用來定位，
+不能用其成功率直接替代 O0／O5 的無診斷穩定性驗證。
+
+## 2026-08-13：原廠 boot0 V0.651 證據重算
+
+### 啟動與成功率
+
+本機 30 次 vendor boot0 測試重算結果：
+
+| 板號 | DST 通過 |
+| --- | ---: |
+| `450600146` | 10/10 |
+| `450600826` | 9/10 |
+| `450601075` | 10/10 |
+| 合計 | 29/30 |
+
+另一組 `v3-sunxi-flash-gpt` 的 `450600826` 為 8/10。這些數據證明原廠
+792 MHz 也不是每次必過，不能把 boot0 視為絕對穩定的黑盒答案。
+
+原廠流程保持 792 MHz，最多執行四輪 DST。失敗後觀察到同頻率重新掃描
+與重新選點，例如 `tpr6` 從 `0x34808080` 改成 `0x36808080`；沒有找到
+自動降頻證據。
+
+已知流程為 `R_2d`、`R_1st`、`W_2st`、`R_2st`、`RV_C`，接著 DRAM
+simple test 並把調校參數寫入 RTC。未剝除符號的原廠物件：
+
+```text
+/media/pi/SMCI/bpi/m4z/BPI-H618-Android12-source-sparse/longan/brandy/brandy-2.0/spl-pub/board/h618/libsun50iw9p1_sdcard.a
+SHA-256 8c563e43895005dd6beb0e8b4f034f8d28c979b3d7fa801ac722bdcdebb5ccc5
+```
+
+RTC 索引 8 至 15 對應 `mr6`、`mr14`、`tpr6`、`tpr11`、`tpr12`、
+`para1`、`para2`、`tpr13`；位址範圍為 `0x07000120` 至
+`0x0700013c`。詳細證據與欄位見 O1 設計文件。
+
+決策 D007：O1 先證明 upstream 實際執行的低階階段與最終 PHY 狀態；
+原廠四輪 DST、R/W 眼圖及 RTC 恢復策略留到 O3/O4，不能提前混入 O1。
+
+## 2026-08-13：O1 實作與獨立編譯
+
+### 正式實作
+
+新增：
+
+```text
+patch/u-boot/v2026.01/board_bananapim4zero/014-sunxi-h616-add-structured-dram-diagnostics.patch
+tools/build-bpi-m4zero-opi-ddr-o1.sh
+tools/parse-bpi-m4zero-o1-uart.py
+```
+
+補丁提供固定 `M4ZDDR1` 欄位，記錄 profile、每次初始化 geometry、執行中的
+訓練階段、結果與重試次數、最終暫存器白名單及容量。解析器把混有其他
+UART 文字的日誌轉為結構化 JSON，並偵測 BEGIN／END 不平衡或缺少 FINAL。
+
+### 隔離編譯
+
+在一次性 U-Boot 複本 `/tmp/bpi-m4zero-o1.5TbzdB`，以 `v2026.01`
+提交 `127a42c7257a6ffbbd1575ed1cbaa8f5408a44b3` 套用 O0 補丁後編譯。
+
+結果：
+
+```text
+checkpatch --strict      0 errors, 0 warnings
+M4 Zero O1 build         exit code 0
+u-boot-spl-nodtb.bin     39328 bytes
+text                     38843 bytes
+data                       480 bytes
+bss                        448 bytes
+```
+
+相對 O0，SPL text 增加 1,614 bytes，BSS 完全不變；未超過現有 SPL 限制，
+但 O1 仍只供診斷。MMIO 位址第一次編譯曾出現 32/64 位指標轉換警告，改為
+經 `ulong` 轉型後重新編譯，警告消失。
+
+另以 `orangepi_zero3_defconfig` 建置未啟用診斷的控制組：exit code `0`，
+SPL 不含任何 `M4ZDDR1` 字串，證明其他板在未選取 Kconfig 時不帶入診斷。
+
+### 工具驗證
+
+```text
+bash -n                         通過
+shellcheck                      通過
+python3 -m py_compile           通過
+合成 M4ZDDR1 UART 解析          通過，問題清單為空
+O0 最新分支防誤標               通過，在建置前拒絕並指向 a9bef393b
+git apply --check 014           通過
+git diff --check                通過
+```
+
+完整欄位定義與暫存器白名單見
+`docs/evidence/bananapi-m4zero-opi-ddr/O1-diagnostics-design-20260813.md`。
+
+### 巢狀補丁的 whitespace 檢查
+
+`014` 本身是加入 Git 的郵件補丁；對整個 staged diff 執行
+`git diff --cached --check` 時，Git 會把內層補丁的 context 前置空白當成
+外層新增內容的 whitespace 警告。這不是待套用 C 原始碼的空白錯誤。
+
+處理方式：
+
+- `014` 單獨以 U-Boot `checkpatch.pl --strict` 驗證，結果 0/0。
+- `014` 對 O0 U-Boot 來源執行 `git apply --check`，結果通過。
+- 其餘 staged 檔案排除巢狀 patch 後執行 `git diff --cached --check`，通過。
+
 ## 日誌追加規則
 
 每次實質操作後追加：

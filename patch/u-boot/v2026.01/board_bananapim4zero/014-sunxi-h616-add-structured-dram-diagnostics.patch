@@ -1,0 +1,237 @@
+From 91f16a18361c672d1e1cde43ab7990a85ca9e14f Mon Sep 17 00:00:00 2001
+From: Banana Pi -BPI <lionwang@sinovoip.com.cn>
+Date: Thu, 13 Aug 2026 13:03:15 +0800
+Subject: [PATCH] =?UTF-8?q?sunxi=EF=BC=9Ah616=EF=BC=9A=E5=8A=A0=E5=85=A5?=
+ =?UTF-8?q?=E7=B5=90=E6=A7=8B=E5=8C=96=20DRAM=20=E8=A8=BA=E6=96=B7?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+在不改變訓練選擇、重試次數或失敗處理的前提下，
+記錄每次控制器初始化的輸入 geometry、既有訓練結果，
+以及最終控制器與 PHY 白名單暫存器。
+
+輸出採固定 M4ZDDR1 欄位，供 UART 日誌工具解析。
+診斷狀態不使用靜態 BSS，避免在 DRAM 初始化前存取
+尚未可用的記憶體。
+
+Signed-off-by: Banana Pi -BPI <lionwang@sinovoip.com.cn>
+---
+ arch/arm/mach-sunxi/Kconfig            |  10 +++
+ arch/arm/mach-sunxi/dram_sun50i_h616.c | 103 ++++++++++++++++++++++++-
+ configs/bananapi_m4zero_defconfig      |   1 +
+ 3 files changed, 113 insertions(+), 1 deletion(-)
+
+diff --git a/arch/arm/mach-sunxi/Kconfig b/arch/arm/mach-sunxi/Kconfig
+index e979ee4a2cc..6eb77dc68e5 100644
+--- a/arch/arm/mach-sunxi/Kconfig
++++ b/arch/arm/mach-sunxi/Kconfig
+@@ -195,6 +195,16 @@ config DRAM_SUNXI_PHY_ADDR_MAP_1
+ 	help
+ 	  This pin mapping selection should be used by the H700.
+ endchoice
++
++config DRAM_SUNXI_H616_DIAGNOSTICS
++	bool "輸出 H616 DRAM 結構化診斷"
++	depends on DRAM_SUN50I_H616
++	help
++	  以固定 M4ZDDR1 欄位輸出每次控制器初始化的 geometry、訓練結果及
++	  控制器與 PHY 白名單暫存器。此選項不改變訓練決策，但 UART 輸出會
++	  改變初始化之間的時間，因此只供診斷，不得作為穩定性或量產證明。
++
++	  只應在有 UART 紀錄需求的板級診斷組態啟用。
+ endif
+ 
+ config SUN6I_PRCM
+diff --git a/arch/arm/mach-sunxi/dram_sun50i_h616.c b/arch/arm/mach-sunxi/dram_sun50i_h616.c
+index 3345c9b8e82..3999c4ffc8d 100644
+--- a/arch/arm/mach-sunxi/dram_sun50i_h616.c
++++ b/arch/arm/mach-sunxi/dram_sun50i_h616.c
+@@ -30,6 +30,86 @@ enum {
+ 	MBUS_QOS_HIGHEST
+ };
+ 
++static void mctl_diag_profile(const struct dram_para *para)
++{
++	if (!IS_ENABLED(CONFIG_DRAM_SUNXI_H616_DIAGNOSTICS))
++		return;
++
++	printf("M4ZDDR1_PROFILE0 clk=%u type=%u wl=%u rc=%u rt=%u wt=%u\n",
++	       para->clk, para->type,
++	       !!(para->tpr10 & TPR10_WRITE_LEVELING),
++	       !!(para->tpr10 & TPR10_READ_CALIBRATION),
++	       !!(para->tpr10 & TPR10_READ_TRAINING),
++	       !!(para->tpr10 & TPR10_WRITE_TRAINING));
++	printf("M4ZDDR1_PROFILE1 dx_odt=%08x dx_dri=%08x ca_dri=%08x odt_en=%08x\n",
++	       para->dx_odt, para->dx_dri, para->ca_dri, para->odt_en);
++	printf("M4ZDDR1_PROFILE2 tpr6=%08x tpr10=%08x tpr11=%08x tpr12=%08x\n",
++	       para->tpr6, para->tpr10, para->tpr11, para->tpr12);
++}
++
++static void mctl_diag_begin(const struct dram_config *config)
++{
++	if (!IS_ENABLED(CONFIG_DRAM_SUNXI_H616_DIAGNOSTICS))
++		return;
++
++	printf("M4ZDDR1_BEGIN ranks=%u width=%u rows=%u cols=%u\n",
++	       config->ranks,
++	       config->bus_full_width ? 32 : 16, config->rows, config->cols);
++}
++
++static void mctl_diag_run(const char *stage)
++{
++	if (!IS_ENABLED(CONFIG_DRAM_SUNXI_H616_DIAGNOSTICS))
++		return;
++
++	printf("M4ZDDR1_RUN stage=%s\n", stage);
++}
++
++static void mctl_diag_stage(const char *stage, unsigned int attempts,
++			    bool result)
++{
++	if (!IS_ENABLED(CONFIG_DRAM_SUNXI_H616_DIAGNOSTICS))
++		return;
++
++	printf("M4ZDDR1_STAGE stage=%s result=%s attempts=%u\n", stage,
++	       result ? "pass" : "fail", attempts);
++}
++
++static void mctl_diag_end(bool result)
++{
++	if (!IS_ENABLED(CONFIG_DRAM_SUNXI_H616_DIAGNOSTICS))
++		return;
++
++	printf("M4ZDDR1_END result=%s\n", result ? "pass" : "fail");
++}
++
++static void mctl_diag_snapshot(void)
++{
++	static const u16 ctl_offsets[] = {
++		0x000, 0x004, 0x010, 0x014, 0x1bc, 0x324,
++	};
++	static const u16 phy_offsets[] = {
++		0x180, 0x184, 0x188, 0x258, 0x25c, 0x26c, 0x274,
++		0x318, 0x31c, 0x32c, 0x334, 0x840, 0xa40, 0x8e0, 0xae0,
++	};
++	unsigned int i;
++
++	if (!IS_ENABLED(CONFIG_DRAM_SUNXI_H616_DIAGNOSTICS))
++		return;
++
++	for (i = 0; i < ARRAY_SIZE(ctl_offsets); i++)
++		printf("M4ZDDR1_REG block=ctl off=%03x value=%08x\n",
++		       ctl_offsets[i],
++		       readl((void *)(ulong)(SUNXI_DRAM_CTL0_BASE +
++					     ctl_offsets[i])));
++
++	for (i = 0; i < ARRAY_SIZE(phy_offsets); i++)
++		printf("M4ZDDR1_REG block=phy off=%03x value=%08x\n",
++		       phy_offsets[i],
++		       readl((void *)(ulong)(SUNXI_DRAM_PHY0_BASE +
++					     phy_offsets[i])));
++}
++
+ static void mbus_configure_port(u8 port,
+ 				bool bwlimit,
+ 				bool priority,
+@@ -1151,9 +1231,11 @@ static bool mctl_phy_init(const struct dram_para *para,
+ 	writel(1, &mctl_ctl->swctl);
+ 
+ 	if (para->tpr10 & TPR10_WRITE_LEVELING) {
++		mctl_diag_run("wl");
+ 		for (i = 0; i < 5; i++)
+ 			if (mctl_phy_write_leveling(para, config))
+ 				break;
++		mctl_diag_stage("wl", i < 5 ? i + 1 : 5, i < 5);
+ 		if (i == 5) {
+ 			debug("write leveling failed!\n");
+ 			return false;
+@@ -1161,9 +1243,11 @@ static bool mctl_phy_init(const struct dram_para *para,
+ 	}
+ 
+ 	if (para->tpr10 & TPR10_READ_CALIBRATION) {
++		mctl_diag_run("rc");
+ 		for (i = 0; i < 5; i++)
+ 			if (mctl_phy_read_calibration(config))
+ 				break;
++		mctl_diag_stage("rc", i < 5 ? i + 1 : 5, i < 5);
+ 		if (i == 5) {
+ 			debug("read calibration failed!\n");
+ 			return false;
+@@ -1171,9 +1255,11 @@ static bool mctl_phy_init(const struct dram_para *para,
+ 	}
+ 
+ 	if (para->tpr10 & TPR10_READ_TRAINING) {
++		mctl_diag_run("rt");
+ 		for (i = 0; i < 5; i++)
+ 			if (mctl_phy_read_training(para, config))
+ 				break;
++		mctl_diag_stage("rt", i < 5 ? i + 1 : 5, i < 5);
+ 		if (i == 5) {
+ 			debug("read training failed!\n");
+ 			return false;
+@@ -1181,9 +1267,11 @@ static bool mctl_phy_init(const struct dram_para *para,
+ 	}
+ 
+ 	if (para->tpr10 & TPR10_WRITE_TRAINING) {
++		mctl_diag_run("wt");
+ 		for (i = 0; i < 5; i++)
+ 			if (mctl_phy_write_training(config))
+ 				break;
++		mctl_diag_stage("wt", i < 5 ? i + 1 : 5, i < 5);
+ 		if (i == 5) {
+ 			debug("write training failed!\n");
+ 			return false;
+@@ -1314,9 +1402,14 @@ static bool mctl_ctrl_init(const struct dram_para *para,
+ bool mctl_core_init(const struct dram_para *para,
+ 		    const struct dram_config *config)
+ {
++	bool result;
++
++	mctl_diag_begin(config);
+ 	mctl_sys_init(para->clk);
++	result = mctl_ctrl_init(para, config);
++	mctl_diag_end(result);
+ 
+-	return mctl_ctrl_init(para, config);
++	return result;
+ }
+ 
+ static const struct dram_para para = {
+@@ -1346,6 +1439,8 @@ unsigned long sunxi_dram_init(void)
+ 	struct dram_config config;
+ 	unsigned long size;
+ 
++	mctl_diag_profile(&para);
++
+ 	setbits_le32(prcm + CCU_PRCM_RES_CAL_CTRL, BIT(8));
+ 	clrbits_le32(prcm + CCU_PRCM_OHMS240, 0x3f);
+ 
+@@ -1353,9 +1448,15 @@ unsigned long sunxi_dram_init(void)
+ 	mctl_auto_detect_dram_size(&para, &config);
+ 
+ 	mctl_core_init(&para, &config);
++	mctl_diag_snapshot();
+ 
+ 	size = mctl_calc_size(&config);
+ 
++	if (IS_ENABLED(CONFIG_DRAM_SUNXI_H616_DIAGNOSTICS))
++		printf("M4ZDDR1_FINAL size_mib=%lu ranks=%u width=%u rows=%u cols=%u\n",
++		       size >> 20, config.ranks,
++		       config.bus_full_width ? 32 : 16, config.rows, config.cols);
++
+ 	mctl_set_master_priority();
+ 
+ 	return size;
+diff --git a/configs/bananapi_m4zero_defconfig b/configs/bananapi_m4zero_defconfig
+index eeffd00bbe4..e200da66c8d 100644
+--- a/configs/bananapi_m4zero_defconfig
++++ b/configs/bananapi_m4zero_defconfig
+@@ -3,6 +3,7 @@ CONFIG_ARM=y
+ CONFIG_ARCH_SUNXI=y
+ CONFIG_DEFAULT_DEVICE_TREE="allwinner/sun50i-h618-bananapi-m4-zero"
+ CONFIG_SPL=y
++CONFIG_DRAM_SUNXI_H616_DIAGNOSTICS=y
+ CONFIG_DRAM_SUNXI_DX_ODT=0x07070707
+ CONFIG_DRAM_SUNXI_DX_DRI=0x0e0e0e0e
+ CONFIG_DRAM_SUNXI_CA_DRI=0x0e0e

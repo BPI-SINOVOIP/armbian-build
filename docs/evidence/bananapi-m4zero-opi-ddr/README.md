@@ -111,3 +111,12 @@ docs/evidence/bananapi-m4zero-opi-ddr/O0-build-20260813.md
 
 O0 U-Boot 已完成建置與離線一致性驗證。實機驗證仍未執行，因此不得把
 建置通過記為 DDR 穩定性通過。
+
+## 9. O1 診斷設計證據
+
+```text
+docs/evidence/bananapi-m4zero-opi-ddr/O1-diagnostics-design-20260813.md
+```
+
+此文件包含 `M4ZDDR1` 格式、暫存器白名單、解析方法、原廠 boot0 的
+30 次結果重算、動態選點證據與 RTC 欄位映射。O1 尚未實機驗證。
