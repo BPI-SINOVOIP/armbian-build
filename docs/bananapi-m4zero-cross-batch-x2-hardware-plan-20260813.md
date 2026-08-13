@@ -7,7 +7,7 @@
 | 群組 | 樣本 | 狀態 |
 | --- | --- | --- |
 | BPI-M4 Zero 已知批次 | `0438` | 已完成 M4ZLAB2 熱重設矩陣 |
-| BPI-M4 Zero 已知批次 | `1116` | 已完成 M4ZLAB2 熱重設矩陣 |
+| BPI-M4 Zero 已知批次 | `1116` | X2 G1 通過，冷啟動 `1/10` |
 | BPI-M4 Zero 三星 DDR 批次 | `S337`，板身序號待補 | `K4F6E3S4HM-MGCJ`，`SEC 337` |
 | BPI-M4 Zero 三星 DDR 批次 | `S322`，板身序號待補 | `K4F6E3S4HM-MGCJ`，`SEC 322` |
 | BPI-M4B | 待記錄板號 C | 禁止使用 M4 Zero 映像 |
@@ -34,8 +34,8 @@ Armbian-unofficial_26.05.0-trunk_Bananapim4zero_jammy_current_6.18.32_x2-cross-b
 
 ## 執行順序
 
-1. 先完成目前 `1116` 的 X2 標準映像啟動，確認從 SPL、TF-A、U-Boot、
-   kernel、initrd 到使用者空間完整交接。
+1. `1116` 已完成 X2 標準映像啟動，從 SPL、TF-A、U-Boot、kernel、initrd
+   到使用者空間完整交接；後續仍須補齊 G2 至 G4。
 2. 依序補齊兩片三星 DDR M4 Zero 的板身序號、PCB 版本、電源與 SD 卡
    識別；DDR 料號與原始照片已完成盤點。
 3. 每片新板先做一次 UART 全程冷開機，不通過時停止該板後續壓力測試並

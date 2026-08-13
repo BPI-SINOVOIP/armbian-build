@@ -1053,3 +1053,26 @@ Linux 驗證，也不代表 X2 已跨 DDR 供應商通過。兩片暫以 `S337`�
 ```text
 docs/evidence/bananapi-m4zero-opi-ddr/M4Z-Samsung-DDR-inventory-20260813.md
 ```
+
+## 2026-08-13：1116 的 X2 標準啟動 G1
+
+將 X2 完整映像寫入新出現的 `/dev/mmcblk0` 59.5 GiB SD 卡。寫入前確認
+映像大小為 `2034237440` 位元組，SHA-256 為
+`fb665992d6a5becfe2694cade5f2e1367f0eeb18582fdcda8e8d3d446042610b`。
+完整範圍回讀雜湊相同，8 KiB 偏移的 `1154976` 位元組 bootloader 也逐位元
+一致。第一次 bootloader 區段比較把讀取權限放在 `cmp` 而不是裝置端 `dd`，
+因此只產生權限錯誤；改正後通過，完整回讀結果從未失敗。
+
+`1116` 完全斷電後使用該卡啟動。SPL 一次完成每個 geometry 階段，最終為
+4,096 MiB、x32、2 Rank、16 Rows、10 Columns；TF-A、U-Boot、initrd checksum、
+核心及 rootfs 全部通過。Linux `6.18.32-current-sunxi64` 進入使用者空間，
+systemd 為 `running`、失敗服務為零，可用記憶體約 3.8 GiB。先前 O1 的
+initramfs 解包錯誤沒有重現。
+
+第一次開機完成 rootfs 擴充與測試帳號初始化。提交的 UART 只遮蔽 root
+測試密碼參數，其餘輸出未改。此結果通過 G1 並計入 G2 `1/10`；G2 至 G4
+仍待完成。詳細證據：
+
+```text
+docs/evidence/bananapi-m4zero-opi-ddr/X2-hardware-1116-G1-20260813.md
+```

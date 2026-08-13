@@ -229,3 +229,15 @@ docs/evidence/bananapi-m4zero-opi-ddr/hardware/M4Z-Samsung-20260813/IMG_3686.jpg
 為 `SEC 337` 與 `SEC 322`。外部相容清單顯示該料號為 16 Gb、x32、1 Rank
 LPDDR4，單顆容量相當於 2 GiB；實機 geometry、冷開機與 Linux 壓力仍待
 完成，不納入 X2 已通過統計。
+
+## 20. X2 在 1116 的標準啟動 G1
+
+```text
+docs/evidence/bananapi-m4zero-opi-ddr/X2-hardware-1116-G1-20260813.md
+docs/evidence/bananapi-m4zero-opi-ddr/hardware/X2-1116-20260813/uart-1116-x2-cold-01.log.gz
+```
+
+`1116` 已用固定 X2 映像完成一次完全斷電冷啟動。792 MHz、4 GiB 雙 Rank
+geometry、TF-A、U-Boot、initramfs、rootfs 與使用者空間全部通過，systemd
+為 `running` 且失敗服務為零。此結果通過 G1 並計入 G2 `1/10`，尚未通過
+冷啟動統計、記憶體測試及並行壓力 Gate。
