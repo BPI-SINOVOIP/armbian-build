@@ -241,3 +241,15 @@ docs/evidence/bananapi-m4zero-opi-ddr/hardware/X2-1116-20260813/uart-1116-x2-col
 geometry、TF-A、U-Boot、initramfs、rootfs 與使用者空間全部通過，systemd
 為 `running` 且失敗服務為零。此結果通過 G1 並計入 G2 `1/10`，尚未通過
 冷啟動統計、記憶體測試及並行壓力 Gate。
+
+## 21. X2 在三星 S337 的標準啟動 G1
+
+```text
+docs/evidence/bananapi-m4zero-opi-ddr/X2-hardware-S337-G1-20260813.md
+docs/evidence/bananapi-m4zero-opi-ddr/hardware/X2-S337-20260813/uart-s337-x2-cold-01.log.gz
+```
+
+`S337` 正確偵測三星 2 GiB、x32、1 Rank geometry，並完成 X2 792 MHz
+完整啟動。systemd 為 `running`，失敗服務為零；180 秒、1.4 GiB 記憶體與
+4 CPU 冒煙測試結束碼為 `0`。SDIO 與 Bluetooth 另有初始化錯誤，因此本次
+只通過 DDR 標準啟動 G1，不宣稱無線周邊正常，也不把短壓力算成完整 G3。

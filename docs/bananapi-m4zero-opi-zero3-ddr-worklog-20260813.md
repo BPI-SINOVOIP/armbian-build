@@ -1076,3 +1076,24 @@ initramfs 解包錯誤沒有重現。
 ```text
 docs/evidence/bananapi-m4zero-opi-ddr/X2-hardware-1116-G1-20260813.md
 ```
+
+## 2026-08-13：三星 S337 的 X2 標準啟動 G1
+
+同一張 X2 SD 卡移至頂部追溯碼 `SEC 337`、料號 `K4F6E3S4HM-MGCJ` 的三星
+樣本。SPL 在雙 Rank read calibration 五次失敗後依主線探測流程退回單 Rank；
+後續 geometry 階段全部一次通過，最終正確回報 2,048 MiB、x32、1 Rank、
+16 Rows、10 Columns。TF-A、U-Boot、initrd checksum、核心、rootfs 與使用者
+空間全部通過。
+
+Linux `6.18.32-current-sunxi64` 顯示總記憶體 1.9 GiB，systemd 為 `running`，
+失敗服務為零。以 `stress` 配置 1.4 GiB 持續寫入、4 CPU worker、180 秒，
+結束碼為 `0`；測試後沒有 OOM、page fault、panic、Oops、EDAC 或資料毀損
+關鍵字。此項只列短壓力，不升格為完整 G3。
+
+錯誤掃描發現 SDIO `mmc1` 初始化失敗及 Bluetooth reset timeout。它們未影響
+DDR、SD、eMMC、rootfs 或 systemd，故不阻擋 DDR G1，但需另列周邊支援缺口。
+S337 通過 G1 並計入 G2 `1/10`。詳細證據：
+
+```text
+docs/evidence/bananapi-m4zero-opi-ddr/X2-hardware-S337-G1-20260813.md
+```
