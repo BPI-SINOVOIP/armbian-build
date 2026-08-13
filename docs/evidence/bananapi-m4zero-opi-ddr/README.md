@@ -266,3 +266,24 @@ docs/evidence/bananapi-m4zero-opi-ddr/hardware/X2-S322-20260813/uart-s322-x2-col
 CID、控制器及 UUID 核對後確認仍是同一張 `SR64G` SD 卡，不是 eMMC。
 SDIO／Bluetooth 初始化失敗使系統沒有網路介面，`vnstat.service` 因此失敗、
 systemd 為 `degraded`；DDR G1 通過，但周邊功能仍未通過。
+
+## 23. X2 在 0438 的標準啟動 G1
+
+```text
+docs/evidence/bananapi-m4zero-opi-ddr/X2-hardware-0438-G1-20260813.md
+docs/evidence/bananapi-m4zero-opi-ddr/hardware/X2-0438-20260813/uart-0438-x2-cold-01.log.gz
+```
+
+`0438` 正確偵測 Rayson 4 GiB、x32、2 Rank geometry，並完成 X2 792 MHz
+完整啟動。systemd 為 `running`、失敗服務為零，3.0 GiB 記憶體與 4 CPU、
+180 秒冒煙測試結束碼為 `0`，沒有核心或資料錯誤。
+
+## 24. X2 四板 G1 摘要
+
+```text
+docs/evidence/bananapi-m4zero-opi-ddr/X2-four-board-G1-summary-20260813.md
+```
+
+固定 X2 映像已在 0438、1116、S337、S322 四片實物完成首次完全斷電冷啟動，
+涵蓋 4 GiB 雙 Rank Rayson 與 2 GiB 單 Rank Samsung。四片 G1 均通過，但
+每片 G2 仍只有 `1/10`，G3、G4、G5 未通過；三星無線周邊問題另列處理。

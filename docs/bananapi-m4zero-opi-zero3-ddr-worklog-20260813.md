@@ -1119,3 +1119,24 @@ docs/evidence/bananapi-m4zero-opi-ddr/X2-hardware-S337-G1-20260813.md
 ```text
 docs/evidence/bananapi-m4zero-opi-ddr/X2-hardware-S322-G1-20260813.md
 ```
+
+## 2026-08-13：0438 與四板 X2 G1 階段完成
+
+同一張 X2 SD 卡移至 Rayson `0438`。SPL 的四個雙 Rank geometry 階段均一次
+通過，最終回報 4,096 MiB、x32、2 Rank、16 Rows、10 Columns。TF-A、U-Boot、
+initrd checksum、核心、rootfs 與使用者空間全部通過。systemd 為 `running`、
+失敗服務為零，`wlan0` 已建立；錯誤掃描只命中 watchdog 的正常 timeout 設定。
+
+以 3.0 GiB 記憶體持續寫入、4 CPU worker 執行 180 秒，結束碼為 `0`；swap
+未使用，核心沒有 OOM、page fault、panic、Oops、EDAC 或資料毀損。0438
+通過 G1 並計入 G2 `1/10`。
+
+至此固定 X2 映像已在 0438、1116、S337、S322 四片實物完成首次完全斷電
+冷啟動，涵蓋 Rayson 4 GiB 雙 Rank 與 Samsung 2 GiB 單 Rank。四片 G1 通過，
+但 G2 都只有 `1/10`，G3、G4、G5 尚未通過；S337、S322 的無線周邊問題不因
+DDR 成功而關閉。摘要與 0438 詳細證據：
+
+```text
+docs/evidence/bananapi-m4zero-opi-ddr/X2-hardware-0438-G1-20260813.md
+docs/evidence/bananapi-m4zero-opi-ddr/X2-four-board-G1-summary-20260813.md
+```
