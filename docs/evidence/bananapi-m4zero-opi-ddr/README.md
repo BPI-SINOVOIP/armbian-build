@@ -129,3 +129,21 @@ docs/evidence/bananapi-m4zero-opi-ddr/O1-build-20260813.md
 
 正式通過產物由提交 `238e3e244` 建置，包含 hashed DEB、未封裝 SPL、
 固定 40 KiB SPL、完整 U-Boot、TF-A、設定、日誌及雜湊。實機仍未驗證。
+
+## 11. O1 可燒錄映像證據
+
+```text
+docs/evidence/bananapi-m4zero-opi-ddr/O1-test-image-20260813.md
+```
+
+此映像以已知可用的 U0 Jammy payload 為底，只在 8 KiB 偏移替換正式 O1
+bootloader。封裝與獨立複驗皆通過，但實機仍未驗證。
+
+## 12. O1 實機測試入口
+
+```text
+docs/bananapi-m4zero-o1-hardware-test-guide-20260813.md
+```
+
+手冊固定映像雜湊、燒錄回讀、UART 邊界、板號欄位與弱板驗收矩陣，避免
+不同操作者使用不同映像或把單次開機誤記為穩定通過。

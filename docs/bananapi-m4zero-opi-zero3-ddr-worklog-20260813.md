@@ -576,6 +576,63 @@ output/evidence/bpi-m4zero-opi-ddr/O1-20260813-131210-238e3e244
 docs/evidence/bananapi-m4zero-opi-ddr/O1-build-20260813.md
 ```
 
+## 2026-08-13：O1 測試映像封裝與獨立複驗
+
+### 封裝輸入
+
+```text
+封裝提交 cd69c06c797bda76b166abfc5df104a525629c62
+O1 證據 output/evidence/bpi-m4zero-opi-ddr/O1-20260813-131210-238e3e244
+來源映像 Armbian-unofficial_26.05.0-trunk_Bananapim4zero_jammy_current_6.18.32_u0-safe-480mhz.img.xz
+來源 SHA-256 80f9b188d6315b9a7d189a3e08b3b174ffbeb6b6173c74c98007a4ff1dbb6348
+```
+
+執行：
+
+```bash
+./tools/package-bpi-m4zero-o1-test-image.sh \
+  output/evidence/bpi-m4zero-opi-ddr/O1-20260813-131210-238e3e244
+```
+
+程序結束碼為 `0`。它解壓來源映像後，只把 O1 組合 bootloader 寫入
+8,192 bytes 偏移，長度 873,977 bytes；寫入前後分別比對前綴、後綴、
+總大小與 bootloader 回讀，最後建立 `.img.xz`、分割表 JSON、清單與雜湊。
+
+### 產物
+
+```text
+output/images/2026.08/bpi-m4zero-o1-opi-ddr-diag/Armbian-unofficial_26.05.0-trunk_Bananapim4zero_jammy_current_6.18.32_o1-opi-ddr-diag-P4301-792mhz.img
+output/images/2026.08/bpi-m4zero-o1-opi-ddr-diag/Armbian-unofficial_26.05.0-trunk_Bananapim4zero_jammy_current_6.18.32_o1-opi-ddr-diag-P4301-792mhz.img.xz
+```
+
+| 產物 | 大小 | SHA-256 |
+| --- | ---: | --- |
+| `.img` | 2,034,237,440 bytes | `316e0d24dc02c9bbfd9579d2b190cbb1aea37516acd2ddcefa85842546897e23` |
+| `.img.xz` | 454,842,952 bytes | `20d70f507c3a7e81e2aafc4f6ebf0f36d4249ecd59ad9f46eb301a7642704847` |
+
+### 封裝後獨立複驗
+
+另行執行兩份 `sha256sum -c`、`xz -t` 與：
+
+```bash
+cmp -n 873977 -i 8192:0 映像 O1證據/u-boot-sunxi-with-spl.bin
+```
+
+全部 exit code `0`。從映像內指定區間可讀到 `P4301`、
+`M4ZDDR1_PROFILE0`、`M4ZDDR1_BEGIN` 與 `M4ZDDR1_FINAL`。分割表仍為
+DOS，第一分割區從磁區 8192 開始。
+
+決策 D010：O1 映像升格為「可燒錄的診斷產物」，但不得升格為可用或穩定
+映像。它沿用 U0 既有系統內容，唯一受控變因是 O1 bootloader；下一步依實機
+手冊收集完整 UART，再判斷是否建立 O2。
+
+完整證據與實機入口：
+
+```text
+docs/evidence/bananapi-m4zero-opi-ddr/O1-test-image-20260813.md
+docs/bananapi-m4zero-o1-hardware-test-guide-20260813.md
+```
+
 ## 日誌追加規則
 
 每次實質操作後追加：
