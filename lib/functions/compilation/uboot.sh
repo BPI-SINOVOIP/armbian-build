@@ -246,6 +246,9 @@ function compile_uboot_target() {
 		"CCACHE_BASEDIR=$(pwd)"
 		"PYTHONPATH=\"${PYTHON3_INFO[MODULES_PATH]}:${PYTHONPATH}\"" # Insert the pip modules downloaded by Armbian into PYTHONPATH (needed e.g. for pyelftools)
 	)
+	if [[ -n "${SOURCE_DATE_EPOCH:-}" ]]; then
+		uboot_make_envs+=("SOURCE_DATE_EPOCH=${SOURCE_DATE_EPOCH@Q}")
+	fi
 
 	# Pass the ccache directories explicitly, since we'll run under "env -i"
 	if [[ -n "${CCACHE_DIR}" ]]; then
