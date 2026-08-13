@@ -170,3 +170,12 @@ docs/bananapi-m4zero-ddr-lab-guide-20260813.md
 實驗器在同一份 SPL 內接受全部 DDR 候選參數，提供 watchdog 復原、M0／M1／
 M2、JSONL 續跑與三類候選排名。三次完整建置的 SPL、ELF 與組合二進位逐位元
 一致，其中一次直接由已推送的程式提交建置；實機參數矩陣尚未執行。
+
+## 15. M4ZLAB2 SD 卡寫入證據
+
+```text
+docs/evidence/bananapi-m4zero-opi-ddr/M4ZLAB2-sd-write-20260813.md
+```
+
+正式 SPL 已寫入本機辨識為 `/dev/mmcblk0` 的 59.5 GiB SD 卡 8 KiB 偏移；
+來源與回讀逐位元一致，原區段已備份。尚未上板讀取 UART。

@@ -869,6 +869,28 @@ docs/bananapi-m4zero-ddr-lab-guide-20260813.md
 目前分類：軟體與離線建置完成；尚未寫入實體 SD 卡，2 GiB／4 GiB Rayson
 實機矩陣尚未執行，因此三類候選仍無硬體結論。
 
+## 2026-08-13：正式實驗 SPL 寫入 SD 卡
+
+本機將裝置識別碼 `0x97bc8c07`、容量 `63864569856` bytes 的 SD 卡辨識為
+`/dev/mmcblk0`。寫入前確認根目錄位於 `/dev/nvme0n1p5`，SD 卡所有分割區
+均未掛載。使用正式提交後建置的 `M4ZLAB2` SPL，只寫入 8 KiB 偏移的
+32 KiB 區段。
+
+寫入工具結束碼為 `0`。來源及裝置回讀 SHA-256 均為：
+
+```text
+4cf6e982dfff69485e4c1251f7a8b16d74dfe9b881bede907a8a32b412171a8f
+```
+
+寫入前原區段已保存，SHA-256 為
+`4aff4a4bb4a6ea86b78ca5308e5c0dfc1fbf16a139d41012d7cb3857e1f16a12`。
+本階段證明媒體寫入正確；SD 卡尚未放入 BPI-M4 Zero，UART 與 DDR 實機結果
+仍為尚未驗證。完整證據：
+
+```text
+docs/evidence/bananapi-m4zero-opi-ddr/M4ZLAB2-sd-write-20260813.md
+```
+
 ## 日誌追加規則
 
 每次實質操作後追加：
