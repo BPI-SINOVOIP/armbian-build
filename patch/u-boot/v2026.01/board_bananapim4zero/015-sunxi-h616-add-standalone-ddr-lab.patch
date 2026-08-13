@@ -34,13 +34,11 @@ diff --git a/arch/arm/include/asm/arch-sunxi/dram_sun50i_h616.h b/arch/arm/inclu
 index a8fdda124a0..208fd2e694d 100644
 --- a/arch/arm/include/asm/arch-sunxi/dram_sun50i_h616.h
 +++ b/arch/arm/include/asm/arch-sunxi/dram_sun50i_h616.h
-@@ -168,13 +168,26 @@ struct dram_config {
+@@ -168,13 +168,24 @@ struct dram_config {
  	u8 bus_full_width;
  };
  
-+#if IS_ENABLED(CONFIG_DRAM_SUNXI_H616_LAB)
 +extern u32 sunxi_h616_dram_runtime_clk;
-+#endif
 +
  static inline int ns_to_t(int nanoseconds)
  {
