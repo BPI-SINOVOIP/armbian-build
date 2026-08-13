@@ -214,7 +214,8 @@ docs/bananapi-m4zero-cross-batch-x2-hardware-plan-20260813.md
 
 X2 已完成可重現的標準 U-Boot、TF-A、套件與完整 Jammy 映像建置。套件、
 工作樹及映像內 bootloader 逐位元一致，且一般 SPL 載入功能已恢復；
-`M4ZLAB2` 已停用。四片 M4 Zero 的跨批次冷啟動與 Linux 壓力仍待執行；
+`M4ZLAB2` 已停用。本節記錄文件建立當時的狀態；當時四片 M4 Zero 的跨批次
+冷啟動與 Linux 壓力仍待執行，後續結果已記錄於第 20 至 24 節。
 兩片 BPI-M4B 採獨立板級工作流，不直接使用 X2 映像。
 
 ## 19. 三星 DDR 樣本照片與料號盤點
@@ -227,8 +228,9 @@ docs/evidence/bananapi-m4zero-opi-ddr/hardware/M4Z-Samsung-20260813/IMG_3686.jpg
 
 兩片新找到的 M4 Zero 均確認採用三星 `K4F6E3S4HM-MGCJ`，頂部追溯碼分別
 為 `SEC 337` 與 `SEC 322`。外部相容清單顯示該料號為 16 Gb、x32、1 Rank
-LPDDR4，單顆容量相當於 2 GiB；實機 geometry、冷開機與 Linux 壓力仍待
-完成，不納入 X2 已通過統計。
+LPDDR4，單顆容量相當於 2 GiB。本節記錄盤點當時的狀態；當時實機
+geometry、冷開機與 Linux 壓力仍待完成，不納入 X2 已通過統計。後續結果
+已記錄於第 21、22 與 24 節。
 
 ## 20. X2 在 1116 的標準啟動 G1
 
@@ -287,3 +289,14 @@ docs/evidence/bananapi-m4zero-opi-ddr/X2-four-board-G1-summary-20260813.md
 固定 X2 映像已在 0438、1116、S337、S322 四片實物完成首次完全斷電冷啟動，
 涵蓋 4 GiB 雙 Rank Rayson 與 2 GiB 單 Rank Samsung。四片 G1 均通過，但
 每片 G2 仍只有 `1/10`，G3、G4、G5 未通過；三星無線周邊問題另列處理。
+
+## 25. X2 完整作業系統映像矩陣
+
+```text
+docs/bananapi-m4zero-x2-792-image-matrix-delivery-20260814.md
+docs/evidence/bananapi-m4zero-opi-ddr/X2-mass-validation-record-template.tsv
+```
+
+五個發行版的 CLI 與 XFCE 共十套 IMG/XZ 已完成。每套都鎖定四板 G1 使用的
+`P1f88` bootloader，並通過全檔雜湊、XZ 串流、分割表與內嵌 bootloader
+回讀。這些映像供大量硬體驗證，不代表已完成量產認證。
