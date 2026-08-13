@@ -931,3 +931,20 @@ docs/evidence/bananapi-m4zero-opi-ddr/M4ZLAB2-hardware-0438-20260813.md
 
 本輪全是 watchdog 熱重設，尚不能算冷開機或量產通過。下一步是第二片板的
 完整候選與關鍵邊界交集，再建立可開機候選進行 Linux 壓力測試。
+
+## 2026-08-13：1116 跨板熱重設驗證
+
+1116 回報與 0438 相同的 4,096 MiB、2 Rank、x32、16 Rows、10 Columns。
+480 與 792 MHz 以十輪交錯順序各完成 `M2 10/10`。關鍵 `TPR6` 邊界顯示
+`0x44` 為 3/3、`0x45` 為 1/3、`0x46` 為 0/3；與 0438 合併後，共同已
+觀察零失敗區間為 `0x2e..0x44`，跨板候選保留中心附近的 `0x3a`。
+
+原廠 1116 動態 `TPR11/TPR12` 組合另完成 `M2 5/5`。乾淨證據共 64 筆，
+53 筆通過及 11 筆預期邊界失敗，所有測試均恢復安全設定。詳細報告：
+
+```text
+docs/evidence/bananapi-m4zero-opi-ddr/M4ZLAB2-hardware-1116-20260813.md
+```
+
+兩板熱重設 gate 完成。下一階段把共同候選帶回標準 U-Boot，驗證 TF-A、
+U-Boot proper、核心、initrd、完整斷電冷開機及 Linux 壓力。

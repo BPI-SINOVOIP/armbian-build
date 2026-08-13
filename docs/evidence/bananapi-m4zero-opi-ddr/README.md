@@ -191,3 +191,15 @@ tools/bpi-m4zero-ddr-lab-profile-0438-candidate-792.json
 0438 已完成 531 組執行期實驗。480 MHz 保險設定與 792 MHz 單板中心候選
 各完成 `M2 10/10`；壓縮後的乾淨 JSONL 與 UART 已納入 Git。這些都是同次
 上電後的熱重設結果，第二片板、冷開機及 Linux 壓力測試仍待執行。
+
+## 17. M4ZLAB2 在 1116 板的跨板驗證
+
+```text
+docs/evidence/bananapi-m4zero-opi-ddr/M4ZLAB2-hardware-1116-20260813.md
+docs/evidence/bananapi-m4zero-opi-ddr/hardware/M4ZLAB2-1116-20260813
+tools/bpi-m4zero-ddr-lab-profile-cross-board-candidate-792.json
+```
+
+1116 的 480 與 792 MHz 候選各完成 `M2 10/10`。與 0438 的結果合併後，
+792 MHz 跨板候選為 `20/20`；`TPR6` 共同已觀察零失敗區間為
+`0x2e..0x44`。以上仍是熱重設實驗，冷開機與 Linux 壓力 gate 尚未完成。
