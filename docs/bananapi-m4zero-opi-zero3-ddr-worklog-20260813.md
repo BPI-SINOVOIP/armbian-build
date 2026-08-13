@@ -543,6 +543,39 @@ code `0`。差異只來自腳本錯選 reversioned 套件，不是 U-Boot 編譯
 reversioned 套件只供 Armbian 發布命名，不再作為逐位元來源證據。修正提交
 後執行第三輪，不把第二輪標記為通過。
 
+## 2026-08-13：O1 第三輪正式通過
+
+修正提交 `238e3e244` 推送後再次執行 O1 建置。結果：
+
+```text
+開始 2026-08-13T13:12:10+08:00
+結束 2026-08-13T13:12:44+08:00
+exit code 0
+Build ID 2026.01-S127a-P4301-Hc6a9-V3946-Bd0d2-R448a
+```
+
+正式產物目錄：
+
+```text
+output/evidence/bpi-m4zero-opi-ddr/O1-20260813-131210-238e3e244
+```
+
+結果摘要：
+
+- 未封裝 SPL 為 38,912 bytes，距 40 KiB 邊界 2,048 bytes。
+- SPL section 為 text 38,429、data 480、BSS 448 bytes。
+- hashed DEB 與來源組合二進位逐位元一致。
+- 十種 `M4ZDDR1` 標記全部存在。
+- 八個受控二進位／設定執行 `sha256sum -c` 全部通過。
+- build log 沒有命中 `error`、`failed`、`fatal`。
+- 實機驗證仍未執行。
+
+完整證據摘要：
+
+```text
+docs/evidence/bananapi-m4zero-opi-ddr/O1-build-20260813.md
+```
+
 ## 日誌追加規則
 
 每次實質操作後追加：

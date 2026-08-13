@@ -120,3 +120,12 @@ docs/evidence/bananapi-m4zero-opi-ddr/O1-diagnostics-design-20260813.md
 
 此文件包含 `M4ZDDR1` 格式、暫存器白名單、解析方法、原廠 boot0 的
 30 次結果重算、動態選點證據與 RTC 欄位映射。O1 尚未實機驗證。
+
+## 10. O1 正式建置證據
+
+```text
+docs/evidence/bananapi-m4zero-opi-ddr/O1-build-20260813.md
+```
+
+正式通過產物由提交 `238e3e244` 建置，包含 hashed DEB、未封裝 SPL、
+固定 40 KiB SPL、完整 U-Boot、TF-A、設定、日誌及雜湊。實機仍未驗證。
