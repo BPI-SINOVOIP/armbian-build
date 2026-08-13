@@ -12,6 +12,7 @@ extract_dir="$output_dir/extracted-deb"
 build_log="$output_dir/build.log"
 
 required_commands=(
+	aarch64-linux-gnu-size
 	basename
 	cmp
 	cut
@@ -177,12 +178,25 @@ install -m 0644 "$uboot_config" "$output_dir/u-boot.config"
 install -m 0644 "$uboot_defconfig" "$output_dir/u-boot.defconfig"
 
 for source_artifact in \
+	"$source_dir/spl/u-boot-spl-nodtb.bin" \
 	"$source_dir/spl/sunxi-spl.bin" \
 	"$source_dir/u-boot.bin"; do
 	if [[ -f "$source_artifact" ]]; then
 		install -m 0644 "$source_artifact" "$output_dir/$(basename "$source_artifact")"
 	fi
 done
+
+spl_nodtb="$output_dir/u-boot-spl-nodtb.bin"
+[[ -f "$spl_nodtb" ]] || {
+	echo "缺少 SPL 未封裝二進位" >&2
+	exit 1
+}
+spl_nodtb_size="$(stat -c %s "$spl_nodtb")"
+if (( spl_nodtb_size >= 40960 )); then
+	echo "SPL 未封裝二進位已達 40 KiB 邊界：$spl_nodtb_size bytes" >&2
+	exit 1
+fi
+aarch64-linux-gnu-size "$source_dir/spl/u-boot-spl" >"$output_dir/spl-size.txt"
 
 atf_path="$repo_dir/cache/sources/arm-trusted-firmware/lts-v2.12.9/build/sun50i_h616/debug/bl31.bin"
 if [[ -f "$atf_path" ]]; then
@@ -210,10 +224,12 @@ find "$repo_dir/patch/u-boot/v2026.01/board_bananapim4zero" \
 	printf 'Orange Pi DDR profile\t通過\n'
 	printf '792 MHz 設定\t通過\n'
 	if [[ "$expect_diagnostics" == yes ]]; then
-		printf 'M4ZDDR1 結構化診斷\t已啟用並找到標記\n'
+	printf 'M4ZDDR1 結構化診斷\t已啟用並找到標記\n'
 	else
 		printf 'M4ZDDR1 結構化診斷\t未啟用\n'
 	fi
+	printf 'SPL 未封裝大小低於 40 KiB\t通過（%s bytes，餘量 %s bytes）\n' \
+		"$spl_nodtb_size" "$((40960 - spl_nodtb_size))"
 	printf '無自製 Rank fallback\t通過\n'
 	printf '無 150 us 額外延遲\t通過\n'
 	printf '套件與原始碼組合產物一致\t通過\n'

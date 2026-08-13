@@ -457,6 +457,54 @@ git diff --check                通過
 - `014` 對 O0 U-Boot 來源執行 `git apply --check`，結果通過。
 - 其餘 staged 檔案排除巢狀 patch 後執行 `git diff --cached --check`，通過。
 
+## 2026-08-13：O1 程式提交與第一輪正式建置
+
+### 提交與推送
+
+```text
+提交 91fec77ca
+訊息 診斷：加入 M4 Zero O1 結構化 DDR 紀錄
+推送 成功
+```
+
+### 第一輪 Armbian artifact
+
+```bash
+./tools/build-bpi-m4zero-opi-ddr-o1.sh
+```
+
+結果：
+
+| 項目 | 值 |
+| --- | --- |
+| 開始 | `2026-08-13T13:08:28+08:00` |
+| 結束 | `2026-08-13T13:09:03+08:00` |
+| Armbian 提交 | `91fec77caccd7ef551ce72d555fd429e8abd8ee7` |
+| U-Boot 提交 | `127a42c7257a6ffbbd1575ed1cbaa8f5408a44b3` |
+| Build ID | `2026.01-S127a-P4301-Hc6a9-V3946-Bd0d2-R448a` |
+| 建置結果 | exit code `0` |
+| 套件與來源產物 | 逐位元一致 |
+| `M4ZDDR1` 標記 | 十種全部存在 |
+| 實機 | 尚未驗證 |
+
+產物目錄：
+
+```text
+output/evidence/bpi-m4zero-opi-ddr/O1-20260813-130828-91fec77ca
+```
+
+七個受控產物執行 `sha256sum -c` 全部通過，完整 build log 沒有命中
+`error`、`failed` 或 `fatal`。
+
+### 證據腳本補強
+
+第一輪保存了固定 40 KiB 的 `sunxi-spl.bin`，但沒有保存可顯示實際程式
+餘量的 `u-boot-spl-nodtb.bin`。這不影響第一輪建置成功，但不足以直接由
+artifact 重新稽核 SPL 邊界。
+
+決策 D008：正式 O1 證據再增加未封裝 SPL、`size` 報告及低於 40 KiB 的
+強制檢查；先提交工具改進，再執行第二輪正式建置，不手工修改第一輪產物。
+
 ## 日誌追加規則
 
 每次實質操作後追加：
