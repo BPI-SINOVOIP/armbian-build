@@ -739,6 +739,40 @@ docs/evidence/bananapi-m4zero-opi-ddr/hardware/O1-1116-20260813
 
 ## 日誌追加規則
 
+## 2026-08-13：改用單一執行期 SPL DDR 實驗器
+
+使用者指出以完整作業系統映像逐版搜尋 DDR 參數效率過低，且要求移除每組
+候選使用 `#define`／Kconfig 重編譯的方式。決策 D013：停止建立 O4 的逐組
+編譯候選，改為 `M4ZLAB2` 單一 SPL 實驗器與主機端控制器。
+
+已淘汰但未建置、未提交的兩份草稿如下：
+
+1. O4a 只開啟 upstream read training 的候選。
+2. `M4ZLAB1` 以 Kconfig 固定 passes、window 與單一 profile 的實驗器。
+
+兩者都沒有產生實機結果，不得列入候選歷史。保留的技術結論只有：H616
+timing 的 `ns_to_t()` 目前使用編譯期 `CONFIG_DRAM_CLK`，若要在同一 SPL
+切換時脈，必須讓 timing 與 PLL 同時改用執行期 `para->clk`。
+
+新的固定流程為 480 MHz 保險 profile 啟動、UART 下發完整候選、watchdog
+保護下重設 DDR、執行 M0／M1／M2，正常後恢復 480 MHz。壞候選若卡死，
+watchdog 重啟同一份 SPL；主機端保存進度並續跑，不需重寫 SD 卡。
+
+原廠物件唯讀分析確認 `dramc_simple_wr_test` 為 140 bytes，會測試 RAM 起點
+與容量中點；四 GiB／兩 Rank 時對應 Rank 0 與 Rank 1 起點。它只能作快速
+篩選，新的 M1／M2 仍須加入 Rank 邊界、initrd 區域、大窗口及 benchmark。
+
+詳細協定、判定與交付條件：
+
+```text
+docs/bananapi-m4zero-ddr-lab-plan-20260813.md
+```
+
+目前分類：架構與協定已確定；程式尚未建置；硬體尚未執行。
+
+決策 D014：保險值、最佳值、最大容錯值必須分開計算。單板結果先保存，
+量產共同值只能取跨序號、顆粒與批次的通過交集。
+
 每次實質操作後追加：
 
 1. 時間與階段。
