@@ -128,6 +128,18 @@ python3 -B tools/bpi-m4zero-ddr-lab.py scan \
 再繼續下一組。`--resume` 會按每組參數所需重複次數續跑，不會把第一次結果
 誤當成全部重複測試已完成。
 
+多候選重複測試採交錯順序：先各跑一次所有候選，再進入下一輪，避免同一候選
+連續執行造成溫升與時間漂移偏差。
+
+`tpr6`、`tpr11`、`tpr12` 是 packed 欄位。掃描單一 lane 時使用
+`tpr6.b3`、`tpr11.b0` 至 `tpr11.b3`、`tpr12.b0` 至 `tpr12.b3`；主機工具會
+只替換指定子欄位，再下發完整 32-bit 值。不得用整個 packed 整數的加減代表
+lane 步進。
+
+排名器只有在左右失敗邊界都已量到時，才會輸出
+`maximum_margin_candidate`。若受測範圍兩端仍通過，資料會保留在
+`widest_observed_candidate` 並標記邊界截尾，不得當成最大容錯結論。
+
 ## 7. M0、M1、M2
 
 | 層級 | 內容 | 用途 |

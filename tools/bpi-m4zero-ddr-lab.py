@@ -63,6 +63,15 @@ REGISTER_FIELDS = {
     "tpr11",
     "tpr12",
 }
+PACKED_SCAN_FIELDS = {
+    "tpr6.b3": ("tpr6", 24, 0xFF),
+    **{
+        f"{register}.b{lane}": (register, lane * 8, 0x3F)
+        for register in ("tpr11", "tpr12")
+        for lane in range(4)
+    },
+}
+SCAN_FIELDS = set(PROFILE_FIELDS) | set(PACKED_SCAN_FIELDS)
 LEVELS = {"M0", "M1", "M2"}
 LEVEL_VALUES = {"M0": 0, "M1": 1, "M2": 2}
 EVENT_RE = re.compile(
@@ -183,13 +192,17 @@ def load_profile(path: Path) -> dict[str, Any]:
     return normalize_profile(raw)
 
 
-def parse_assignment(spec: str, option: str) -> tuple[str, str]:
+def parse_assignment(
+    spec: str,
+    option: str,
+    allowed_fields: Iterable[str] = PROFILE_FIELDS,
+) -> tuple[str, str]:
     if "=" not in spec:
         raise LabError(f"{option} 必須使用 欄位=值 格式：{spec}")
     field, value = spec.split("=", 1)
     field = field.strip()
     value = value.strip()
-    if field not in PROFILE_FIELDS:
+    if field not in allowed_fields:
         raise LabError(f"{option} 指定未知欄位：{field}")
     if not value:
         raise LabError(f"{option} 的欄位 {field} 缺少值")
@@ -280,13 +293,31 @@ def parse_scan_values(field: str, expression: str) -> list[Any]:
 def parse_scan_fields(specs: Sequence[str]) -> dict[str, list[Any]]:
     fields: dict[str, list[Any]] = {}
     for spec in specs:
-        field, expression = parse_assignment(spec, "--field")
+        field, expression = parse_assignment(spec, "--field", SCAN_FIELDS)
         if field == "id":
             raise LabError("欄位 id 由工具管理，不可作為掃描參數")
         if field in fields:
             raise LabError(f"--field 重複指定欄位：{field}")
         fields[field] = parse_scan_values(field, expression)
     return fields
+
+
+def scan_field_value(profile: Mapping[str, Any], field: str) -> Any:
+    if field in PROFILE_FIELDS:
+        return profile[field]
+    register, shift, mask = PACKED_SCAN_FIELDS[field]
+    return (int(profile[register]) >> shift) & mask
+
+
+def apply_scan_value(profile: dict[str, Any], field: str, value: Any) -> None:
+    if field in PROFILE_FIELDS:
+        profile[field] = value
+        return
+    register, shift, mask = PACKED_SCAN_FIELDS[field]
+    parsed = parse_integer(value, field)
+    if not 0 <= parsed <= mask:
+        raise LabError(f"欄位 {field} 必須介於 0 與 {mask:#x}")
+    profile[register] = (int(profile[register]) & ~(mask << shift)) | (parsed << shift)
 
 
 def expand_matrix(
@@ -310,7 +341,8 @@ def expand_matrix(
     ):
         candidate = dict(base)
         coordinates = dict(zip(field_names, combination))
-        candidate.update(coordinates)
+        for field, value in coordinates.items():
+            apply_scan_value(candidate, field, value)
         if "id" not in scan_fields:
             candidate["id"] = base["id"] + index - 1
         candidate = normalize_profile(candidate)
@@ -329,8 +361,8 @@ def repeat_profiles(
         return []
     next_id = normalize_profile(profiles[0][0])["id"]
     repeated: list[tuple[dict[str, Any], dict[str, Any]]] = []
-    for profile, coordinates in profiles:
-        for attempt in range(1, repeat + 1):
+    for attempt in range(1, repeat + 1):
+        for profile, coordinates in profiles:
             if next_id > 0xFFFFFFFF:
                 raise LabError("交易 id 超過 0xffffffff")
             candidate = dict(profile)
@@ -866,7 +898,7 @@ def _margin_for_candidate(
     field_results: dict[str, Any] = {}
     for field, raw_domain in domains.items():
         if (
-            field not in PROFILE_FIELDS
+            field not in SCAN_FIELDS
             or not isinstance(raw_domain, list)
             or not raw_domain
         ):
@@ -875,26 +907,35 @@ def _margin_for_candidate(
         if all(isinstance(item, int) and not isinstance(item, bool) for item in domain):
             domain.sort()
         try:
-            center = domain.index(profile[field])
+            center_value = scan_field_value(profile, field)
+            center = domain.index(center_value)
         except (KeyError, ValueError):
             continue
-        fixed_signature = tuple(
-            (name, _freeze(profile[name]))
-            for name in PROFILE_FIELDS
-            if name not in {"id", field}
-        )
+        packed = PACKED_SCAN_FIELDS.get(field)
+
+        def signature(item: Mapping[str, Any]) -> tuple[Any, ...]:
+            result: list[tuple[str, Any]] = []
+            for name in PROFILE_FIELDS:
+                if name == "id" or name == field:
+                    continue
+                value = item[name]
+                if packed is not None and name == packed[0]:
+                    _, shift, mask = packed
+                    value = int(value) & ~(mask << shift)
+                result.append((name, _freeze(value)))
+            return tuple(result)
+
+        fixed_signature = signature(profile)
         pass_by_value: dict[Any, bool] = {}
         for record in records:
             other = record.get("profile")
-            if not isinstance(other, dict) or field not in other:
+            if not isinstance(other, dict):
                 continue
-            other_signature = tuple(
-                (name, _freeze(other.get(name)))
-                for name in PROFILE_FIELDS
-                if name not in {"id", field}
-            )
+            other_signature = signature(other)
             if other_signature == fixed_signature:
-                pass_by_value[_freeze(other[field])] = _is_m2_candidate(record)
+                pass_by_value[_freeze(scan_field_value(other, field))] = (
+                    _is_m2_candidate(record)
+                )
 
         left = center
         while left > 0 and pass_by_value.get(_freeze(domain[left - 1]), False):
@@ -921,7 +962,7 @@ def _margin_for_candidate(
         }
         if all(isinstance(item, int) for item in domain):
             field_result["radius_value"] = min(
-                profile[field] - domain[left], domain[right] - profile[field]
+                center_value - domain[left], domain[right] - center_value
             )
         field_results[field] = field_result
 
@@ -1056,18 +1097,33 @@ def build_ranking(
         if performance_candidates
         else None
     )
-    maximum_margin = (
-        max(
-            candidates,
-            key=lambda candidate: (
-                margin_tuple(candidate),
-                performance_value(candidate),
-                -int(candidate["profile"]["clk"]),
-            ),
+    observed_margin_candidates = [
+        candidate for candidate in candidates if candidate["margin"]["fields"]
+    ]
+    complete_margin_candidates = [
+        candidate
+        for candidate in observed_margin_candidates
+        if not candidate["margin"]["boundary_truncated"]
+    ]
+
+    def maximum_margin_from(
+        margin_candidates: Sequence[Mapping[str, Any]],
+    ) -> Mapping[str, Any] | None:
+        return (
+            max(
+                margin_candidates,
+                key=lambda candidate: (
+                    margin_tuple(candidate),
+                    performance_value(candidate),
+                    -int(candidate["profile"]["clk"]),
+                ),
+            )
+            if margin_candidates
+            else None
         )
-        if candidates
-        else None
-    )
+
+    maximum_margin = maximum_margin_from(complete_margin_candidates)
+    widest_observed = maximum_margin_from(observed_margin_candidates)
 
     return {
         "protocol": PROTOCOL,
@@ -1077,11 +1133,13 @@ def build_ranking(
         "safe_candidate": safe,
         "best_performance_candidate": best,
         "maximum_margin_candidate": maximum_margin,
+        "widest_observed_candidate": widest_observed,
         "definitions": {
             "sample_gate": "相同參數的全部 M2 樣本皆通過，且樣本數達門檻，才可列入候選",
             "safe_candidate": "通過樣本門檻後，時脈最低者優先，同時脈再依連續通過半徑排序",
             "best_performance_candidate": "讀、寫、複製三者最差吞吐量最高者",
-            "maximum_margin_candidate": "各掃描欄位最小連續通過半徑最高者；邊界截尾表示尚未量到真實邊界",
+            "maximum_margin_candidate": "左右失敗邊界完整時，各掃描欄位最小連續通過半徑最高者",
+            "widest_observed_candidate": "包含邊界截尾資料的最寬已觀察候選，不得當成最大容錯結論",
         },
     }
 

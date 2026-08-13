@@ -904,3 +904,30 @@ docs/evidence/bananapi-m4zero-opi-ddr/M4ZLAB2-sd-write-20260813.md
 7. 由結果產生的下一個單變因決策。
 
 未插板、未讀 UART 或未完成壓力測試時，一律記為「尚未實機驗證」。
+
+## 2026-08-13：0438 執行期參數掃描
+
+停止一個舊 `minicom` 程序對 `/dev/ttyUSB0` 的爭用後，重新建立乾淨 JSONL
+與 UART 記錄。0438 回報 4,096 MiB、2 Rank、x32、16 Rows、10 Columns。
+乾淨記錄共 531 筆，其中 383 筆通過、148 筆為刻意搜尋邊界所得失敗。
+
+480 MHz 保險設定與 792 MHz 單板中心候選各完成 `M2 10/10`。792 MHz 候選：
+
+```text
+dx_odt=0x07070707 dx_dri=0x0e0e0e0e ca_dri=0x00000d0d
+odt_en=0xaaaaeeee
+tpr6=0x3a808080 tpr10=0x402f6663
+tpr11=0x24242422 tpr12=0x110f1111
+```
+
+主機工具同步加入 packed lane 掃描與多候選交錯執行，避免把 `tpr11`、
+`tpr12` 整個 32-bit 值作錯誤線性加減，並降低連續測同一候選造成的時間及
+溫度偏差。排名器也改為只有左右失敗邊界完整時才輸出最大容錯候選；截尾
+窗口另列為最寬已觀察候選。原始記錄、SHA-256、邊界結果與限制收錄於：
+
+```text
+docs/evidence/bananapi-m4zero-opi-ddr/M4ZLAB2-hardware-0438-20260813.md
+```
+
+本輪全是 watchdog 熱重設，尚不能算冷開機或量產通過。下一步是第二片板的
+完整候選與關鍵邊界交集，再建立可開機候選進行 Linux 壓力測試。

@@ -134,6 +134,19 @@ class ProfileTests(unittest.TestCase):
         self.assertIn({"clk": 528, "tpr6": 0x12}, coordinates)
         self.assertEqual(matrix[0][0]["id"], 1)
 
+    def test_packed_lane_scan_changes_only_selected_lane(self) -> None:
+        fields = lab.parse_scan_fields(["tpr11.b1=0x25,0x27"])
+        matrix = lab.expand_matrix(base_profile(tpr11=0x24242624), fields)
+        self.assertEqual(
+            [item[0]["tpr11"] for item in matrix], [0x24242524, 0x24242724]
+        )
+        self.assertEqual([item[1]["tpr11.b1"] for item in matrix], [0x25, 0x27])
+
+    def test_packed_lane_scan_rejects_out_of_range_value(self) -> None:
+        fields = lab.parse_scan_fields(["tpr12.b0=0x40"])
+        with self.assertRaisesRegex(lab.LabError, "0x3f"):
+            lab.expand_matrix(base_profile(), fields)
+
     def test_non_pll_step_clock_is_rejected(self) -> None:
         with self.assertRaisesRegex(lab.LabError, "12 MHz"):
             lab.normalize_profile(base_profile(clk=799))
@@ -142,6 +155,15 @@ class ProfileTests(unittest.TestCase):
         profiles = lab.repeat_profiles([(base_profile(id=100), {})], 3)
         self.assertEqual([item[0]["id"] for item in profiles], [100, 101, 102])
         self.assertEqual(len({lab.profile_key(item[0]) for item in profiles}), 1)
+
+    def test_repeat_profiles_interleaves_matrix_candidates(self) -> None:
+        matrix = [
+            (base_profile(id=100, clk=480), {"clk": 480}),
+            (base_profile(id=101, clk=528), {"clk": 528}),
+        ]
+        profiles = lab.repeat_profiles(matrix, 2)
+        self.assertEqual([item[0]["clk"] for item in profiles], [480, 528, 480, 528])
+        self.assertEqual([item[1]["repetition"] for item in profiles], [1, 1, 2, 2])
 
     def test_command_matches_firmware_field_contract(self) -> None:
         patch_text = PATCH_PATH.read_text(encoding="utf-8")
@@ -266,26 +288,25 @@ class PersistenceAndRankingTests(unittest.TestCase):
             for value in domain
         ]
         ranking = lab.build_ranking(records)
-        candidate = next(
-            item
-            for item in (
-                ranking["safe_candidate"],
-                ranking["best_performance_candidate"],
-                ranking["maximum_margin_candidate"],
-            )
-            if item["profile"]["tpr6"] == 20
-        )
+        self.assertIsNone(ranking["maximum_margin_candidate"])
+        candidate = ranking["widest_observed_candidate"]
+        self.assertEqual(candidate["profile"]["tpr6"], 20)
         field_margin = candidate["margin"]["fields"]["tpr6"]
         self.assertEqual(field_margin["radius_steps"], 1)
         self.assertTrue(field_margin["boundary_truncated"])
 
     def test_multidimensional_margin_holds_other_fields_fixed(self) -> None:
-        domains = {"tpr6": [1, 2, 3], "tpr11": [10, 20, 30]}
+        domains = {"tpr6": [0, 1, 2, 3, 4], "tpr11": [0, 10, 20, 30, 40]}
         records: list[dict[str, object]] = []
         for tpr6 in domains["tpr6"]:
             for tpr11 in domains["tpr11"]:
-                profile = base_profile(id=tpr6 * 100 + tpr11, tpr6=tpr6, tpr11=tpr11)
-                record = ranking_record(profile, "pass", None)
+                profile = base_profile(
+                    id=tpr6 * 100 + tpr11 + 1, tpr6=tpr6, tpr11=tpr11
+                )
+                status = (
+                    "pass" if tpr6 in {1, 2, 3} and tpr11 in {10, 20, 30} else "fail"
+                )
+                record = ranking_record(profile, status, None)
                 record["scan"] = {
                     "fields": domains,
                     "coordinates": {"tpr6": tpr6, "tpr11": tpr11},
@@ -297,6 +318,25 @@ class PersistenceAndRankingTests(unittest.TestCase):
         self.assertEqual(candidate["profile"]["tpr11"], 20)
         self.assertEqual(candidate["margin"]["minimum_radius_steps"], 1)
         self.assertEqual(set(candidate["margin"]["fields"]), {"tpr6", "tpr11"})
+
+    def test_packed_lane_margin_holds_other_lanes_fixed(self) -> None:
+        domain = [0x22, 0x23, 0x24, 0x25, 0x26]
+        records: list[dict[str, object]] = []
+        for lane_value in domain:
+            tpr11 = (0x24242624 & ~0xFF) | lane_value
+            profile = base_profile(id=lane_value, tpr11=tpr11)
+            status = "pass" if lane_value in {0x23, 0x24, 0x25} else "fail"
+            record = ranking_record(profile, status, None)
+            record["scan"] = {
+                "fields": {"tpr11.b0": domain},
+                "coordinates": {"tpr11.b0": lane_value},
+            }
+            records.append(record)
+        ranking = lab.build_ranking(records)
+        candidate = ranking["maximum_margin_candidate"]
+        margin = candidate["margin"]["fields"]["tpr11.b0"]
+        self.assertEqual(lab.scan_field_value(candidate["profile"], "tpr11.b0"), 0x24)
+        self.assertEqual(margin["radius_steps"], 1)
 
     def test_generic_timer_rate_uses_24_mhz(self) -> None:
         profile = base_profile(id=99)
