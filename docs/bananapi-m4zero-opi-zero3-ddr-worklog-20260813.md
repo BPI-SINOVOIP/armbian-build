@@ -505,6 +505,44 @@ artifact 重新稽核 SPL 邊界。
 決策 D008：正式 O1 證據再增加未封裝 SPL、`size` 報告及低於 40 KiB 的
 強制檢查；先提交工具改進，再執行第二輪正式建置，不手工修改第一輪產物。
 
+## 2026-08-13：O1 第二輪後處理失敗與套件選取修正
+
+工具補強提交 `3623e3726` 已推送後，執行第二輪：
+
+```bash
+./tools/build-bpi-m4zero-opi-ddr-o1.sh
+```
+
+U-Boot 與 DEB 本身建置成功，但整體腳本 exit code 為 `1`，停止於：
+
+```text
+u-boot-sunxi-with-spl.bin differ: byte 13, line 1
+```
+
+失敗產物目錄保留命令與完整日誌：
+
+```text
+output/evidence/bpi-m4zero-opi-ddr/O1-20260813-131012-3623e3726
+```
+
+### 根因
+
+Armbian 同一 Build ID 重建時產生了新的 hashed 套件，但 reversioned
+`output/debs` 目的檔沿用第一輪內容。兩者雖有新的 mtime，內容不同：
+
+| 來源 | SHA-256 |
+| --- | --- |
+| reversioned `output/debs` | `5cf5150ff474a875adac37a948c814ad6890d51bbd378df2cfc294bab2a13a10` |
+| 第二輪 hashed 套件 | `f162302b0898011dd01b7492d55ba85b55ad99e20891ad1030fedb8ad9f86c82` |
+| 第二輪來源組合二進位 | `8d900976a1261ce213d6e3e4a8c7b8ca4ef9e2a35ae4ac6ee3afa335e2d6ecf2` |
+
+從 hashed 套件提取的組合二進位 SHA-256 同為 `8d900976...`，`cmp` exit
+code `0`。差異只來自腳本錯選 reversioned 套件，不是 U-Boot 編譯錯誤。
+
+決策 D009：證據腳本改由 `output/packages-hashed/global` 取本輪原始套件；
+reversioned 套件只供 Armbian 發布命名，不再作為逐位元來源證據。修正提交
+後執行第三輪，不把第二輪標記為通過。
+
 ## 日誌追加規則
 
 每次實質操作後追加：

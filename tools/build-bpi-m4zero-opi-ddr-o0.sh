@@ -78,19 +78,19 @@ printf '\n' >>"$output_dir/build-command.txt"
 } 2>&1 | tee "$build_log"
 
 mapfile -t deb_candidates < <(
-	find "$repo_dir/output/debs" -maxdepth 1 -type f \
+	find "$repo_dir/output/packages-hashed/global" -maxdepth 1 -type f \
 		-name 'linux-u-boot-bananapim4zero-current_*.deb' \
 		-printf '%T@\t%p\n' \
 		| sort -nr
 )
 (( ${#deb_candidates[@]} > 0 )) || {
-	echo "找不到本次 BPI-M4 Zero U-Boot 套件" >&2
+	echo "找不到本次 BPI-M4 Zero U-Boot hashed 套件" >&2
 	exit 1
 }
 deb_path="${deb_candidates[0]#*$'\t'}"
 
 [[ -n "$deb_path" && -f "$deb_path" ]] || {
-	echo "找不到本次 BPI-M4 Zero U-Boot 套件" >&2
+	echo "找不到本次 BPI-M4 Zero U-Boot hashed 套件" >&2
 	exit 1
 }
 
