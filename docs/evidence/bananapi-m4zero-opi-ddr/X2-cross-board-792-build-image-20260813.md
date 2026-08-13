@@ -29,7 +29,7 @@ MMC、FIT、block load 與 raw image 載入功能均已啟用。
 | 項目 | 值 |
 | --- | --- |
 | Armbian 分支 | `bpi-m4zero-opi-ddr-port-20260813` |
-| 建置提交 | `918c0e93a89d2ceec2e059ef742467f8dc546be4` |
+| 正式 post-push 建置提交 | `86f22f9aaaa8a4b57c199903f4050caf61d29637` |
 | U-Boot upstream | `127a42c7257a6ffbbd1575ed1cbaa8f5408a44b3` |
 | U-Boot 版本 | `v2026.01` |
 | TF-A 版本 | `lts-v2.12.9` |
@@ -39,14 +39,14 @@ MMC、FIT、block load 與 raw image 載入功能均已啟用。
 正式命令：
 
 ```bash
-BUILD_STAMP=20260813-cross-board-pushed-v5 \
+BUILD_STAMP=20260813-cross-board-post-push \
   ./tools/build-bpi-m4zero-cross-board-792.sh
 ```
 
 正式證據目錄：
 
 ```text
-output/evidence/bpi-m4zero-opi-ddr/X2-20260813-cross-board-pushed-v5-918c0e93a
+output/evidence/bpi-m4zero-opi-ddr/X2-20260813-cross-board-post-push-86f22f9aa
 ```
 
 ## 建置守門
@@ -120,7 +120,11 @@ output/images/2026.08/bpi-m4zero-cross-board-792
    將兩份舊套件移入
    `output/evidence/bpi-m4zero-opi-ddr/pre-deterministic-P1f88-20260813`
    後重建。
-5. 第五輪建置、套件、工作樹與映像回讀全部一致，才列為正式 X2 產物。
+5. 第五輪建置、套件、工作樹與映像回讀全部一致，才列為 X2 候選產物。
+6. 封裝工具、證據與計畫推送為提交 `86f22f9aa` 後，從該提交再完整建置；
+   bootloader 雜湊與第五輪及已封裝映像逐位元一致，列為正式 post-push 證據。
+7. 第一次 post-push 比對命令把 `$wd` 保留成字面路徑，讀取結束碼不正確，
+   未修改任何檔案；改用絕對路徑並啟用 `set -euo pipefail` 後全部通過。
 
 ## 證據邊界
 

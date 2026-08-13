@@ -1016,3 +1016,22 @@ fb665992d6a5becfe2694cade5f2e1367f0eeb18582fdcda8e8d3d446042610b
 docs/evidence/bananapi-m4zero-opi-ddr/X2-cross-board-792-build-image-20260813.md
 docs/bananapi-m4zero-cross-batch-x2-hardware-plan-20260813.md
 ```
+
+封裝工具與計畫以提交 `86f22f9aa` 推送後，另由該提交執行：
+
+```bash
+BUILD_STAMP=20260813-cross-board-post-push \
+  ./tools/build-bpi-m4zero-cross-board-792.sh
+```
+
+命令結束碼為 `0`，正式 post-push 證據目錄為：
+
+```text
+output/evidence/bpi-m4zero-opi-ddr/X2-20260813-cross-board-post-push-86f22f9aa
+```
+
+其 bootloader SHA-256 仍為
+`a23cb287ac503a63bb505c4fe538447aec91a18fb5aadb6e5e87126b3c47e0ad`，
+並與既有 X2 完整映像 8 KiB 偏移回讀逐位元一致。第一次核對命令因呼叫端
+把 `$wd` 保留成字面路徑而找不到檔案，未寫入或修改任何內容；改用絕對路徑
+及 `set -euo pipefail` 後通過。
