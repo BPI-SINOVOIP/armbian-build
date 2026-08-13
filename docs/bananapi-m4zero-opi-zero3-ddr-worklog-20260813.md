@@ -633,6 +633,28 @@ docs/evidence/bananapi-m4zero-opi-ddr/O1-test-image-20260813.md
 docs/bananapi-m4zero-o1-hardware-test-guide-20260813.md
 ```
 
+### 文件提交與交接狀態
+
+```text
+提交 3847308cf
+訊息 紀錄：保存 O1 可燒錄映像與實機交接
+遠端 origin/bpi-m4zero-opi-ddr-port-20260813
+推送 成功
+```
+
+提交前已完成 `git diff --check`、文件引用路徑存在性檢查，以及新增文件的
+可翻譯外語敘述掃描，結果均通過。環境未安裝 `markdownlint-cli2`、
+`markdownlint` 或 `mdl`，因此沒有宣稱通過未執行的 Markdown linter。
+
+目前可交接狀態：
+
+- O0 與 O1 原始碼、建置腳本、解析器、建置證據及映像封裝工具已推送。
+- O1 原始映像及壓縮映像已在本機產生，雜湊與 bootloader 回讀通過。
+- 大型映像位於 `output/images`，不納入 Git；遠端保存其重建工具與雜湊證據。
+- 目前沒有接上待測 M4 Zero，所有硬體結論仍為「尚未實機驗證」。
+- 下一個唯一有效步驟是依 O1 實機手冊收集 `1116` 或弱板完整 UART；沒有
+  O1 日誌前不得直接建立 O2，也不得宣稱 Orange Pi 方案已解決 792 MHz。
+
 ## 日誌追加規則
 
 每次實質操作後追加：
