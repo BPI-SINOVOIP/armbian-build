@@ -208,7 +208,82 @@ fatal: could not create directory ... Permission denied
   `0x44000000/0x402f6663/0x24242624/0x0f0f100f`。
 - 原始碼沒有 `udelay(150)`。
 - `bash -n`、`shellcheck` 與 `git diff --check` 通過。
-- 尚未執行編譯與實機驗證。
+- 當時尚未執行編譯與實機驗證。
+
+## 2026-08-13：O0 U-Boot 建置與離線驗證
+
+### 可重現命令
+
+```bash
+./tools/build-bpi-m4zero-opi-ddr-o0.sh
+```
+
+腳本實際呼叫：
+
+```bash
+./compile.sh uboot BOARD=bananapim4zero BRANCH=current RELEASE=trixie ARTIFACT_IGNORE_CACHE=yes
+```
+
+### 起訖與來源
+
+| 項目 | 值 |
+| --- | --- |
+| 開始時間 | `2026-08-13T12:47:46+08:00` |
+| 結束時間 | `2026-08-13T12:49:47+08:00` |
+| Armbian 提交 | `ed1ba8108310043a22d080805b870bfe3d1ac8ef` |
+| U-Boot 標籤 | `v2026.01` |
+| U-Boot 提交 | `127a42c7257a6ffbbd1575ed1cbaa8f5408a44b3` |
+| TF-A 版本 | `lts-v2.12.9` |
+| 套件版本 | `2026.01-S127a-Pe260-Hc6a9-V3946-Bd0d2-R448a` |
+| 建置結果 | exit code `0` |
+
+Armbian patch 工具回報 16 個 patch 全部套用；其中兩項既有跨板 patch 有
+metadata／rebase 警告，但沒有套用失敗，M4 Zero 的 `013` 成功套用。完整
+建置日誌搜尋 `error`、`failed`、`fatal` 沒有命中。
+
+### 設定回讀
+
+從生成套件內的 `.config` 回讀：
+
+```text
+CONFIG_DRAM_SUNXI_DX_ODT=0x07070707
+CONFIG_DRAM_SUNXI_DX_DRI=0x0e0e0e0e
+CONFIG_DRAM_SUNXI_CA_DRI=0x0e0e
+CONFIG_DRAM_SUNXI_ODT_EN=0xaaaaeeee
+CONFIG_DRAM_SUNXI_TPR6=0x44000000
+CONFIG_DRAM_SUNXI_TPR10=0x402f6663
+CONFIG_DRAM_SUNXI_TPR11=0x24242624
+CONFIG_DRAM_SUNXI_TPR12=0x0f0f100f
+CONFIG_DRAM_CLK=792
+```
+
+同時確認不存在自製 Rank fallback 與額外 `udelay(150)`。套件中的
+`u-boot-sunxi-with-spl.bin` 與原始碼工作樹建置產物逐位元一致。
+
+### 關鍵產物
+
+產物目錄：
+
+```text
+output/evidence/bpi-m4zero-opi-ddr/O0-20260813-124746-ed1ba8108
+```
+
+| 產物 | 大小 | SHA-256 |
+| --- | ---: | --- |
+| `linux-u-boot-...deb` | 1,024,192 | `baccd13dac5cef738be6ee84167cd0c9a2dd5916b0b73f622eea2105a4d750b6` |
+| `sunxi-spl.bin` | 40,960 | `197a84f9476173187d9c9c15bfa44e4c85044d3e25b307964119f629a642df98` |
+| `u-boot.bin` | 777,664 | `0fd53ae235971982fe6ab420ef3ba26682c0342206ae5194b0893697f5308079` |
+| `u-boot-sunxi-with-spl.bin` | 873,977 | `219b40324979f4a0dbad816c704bb22e4284c5abcc56fcb68bd2e9449b15b8be` |
+| `bl31.bin` | 53,361 | `641bbce6b58d3e541e650946e7ce81c7c3cdb8e63244800457599c48947cb226` |
+
+`sha256sum -c sha256sums.txt` 對七個受控產物全部回報 `OK`。詳細清單見
+`docs/evidence/bananapi-m4zero-opi-ddr/O0-build-20260813.md`。
+
+### 結論與邊界
+
+O0 已完成原始碼套用、編譯、套件回讀與離線一致性驗證。這只證明產物是
+預期的 Orange Pi DDR 基線，不等於弱板在 792 MHz 已穩定；目前仍是
+「尚未實機驗證」。下一階段 O1 只加入不改變訓練流程的唯讀診斷標記。
 
 ## 日誌追加規則
 

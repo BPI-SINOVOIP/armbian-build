@@ -102,3 +102,12 @@ tools/build-bpi-m4zero-opi-ddr-o0.sh
 
 O0 明確移除原有 150 us 容量探測延遲。若硬體結果需要該延遲，必須建立
 O0b，不得直接改寫 O0 的證據。
+
+## 8. O0 建置證據
+
+```text
+docs/evidence/bananapi-m4zero-opi-ddr/O0-build-20260813.md
+```
+
+O0 U-Boot 已完成建置與離線一致性驗證。實機驗證仍未執行，因此不得把
+建置通過記為 DDR 穩定性通過。
