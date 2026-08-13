@@ -13,6 +13,7 @@
 | U-Boot 版本 | `v2026.01` |
 | TF-A 版本 | `lts-v2.12.9` |
 | TF-A 平台 | `sun50i_h616` |
+| U-Boot upstream 提交 | `127a42c7257a6ffbbd1575ed1cbaa8f5408a44b3` |
 
 ## 2. 公開主要來源
 
@@ -91,3 +92,13 @@
 - UART 日誌 SHA-256。
 - 板號、DDR 料號、冷／暖啟動次數與結果。
 - 可外推與不可外推的範圍。
+
+## 7. O0 原始碼入口
+
+```text
+patch/u-boot/v2026.01/board_bananapim4zero/013-bananapi-m4zero-use-orangepi-zero3-ddr-baseline.patch
+tools/build-bpi-m4zero-opi-ddr-o0.sh
+```
+
+O0 明確移除原有 150 us 容量探測延遲。若硬體結果需要該延遲，必須建立
+O0b，不得直接改寫 O0 的證據。

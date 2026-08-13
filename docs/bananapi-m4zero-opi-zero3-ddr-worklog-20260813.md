@@ -8,12 +8,12 @@
 | 欄位 | 內容 |
 | --- | --- |
 | 日期 | 2026-08-13 |
-| 階段 | A：證據凍結與文件基線 |
+| 階段 | B：O0 乾淨基線 |
 | 分支 | `bpi-m4zero-opi-ddr-port-20260813` |
 | worktree | `/media/pi/SMCI/armbian/bpi-v26.2.1-m4zero-opi-ddr` |
 | 起點 | `052955507` |
-| 最近完成 | 建立隔離 worktree；完成啟動鏈與公開案例稽核 |
-| 下一步 | 提交並推送文件基線，建立 O0 最小 DDR profile 補丁 |
+| 最近完成 | 文件基線以 `89645a409` 提交並推送 |
+| 下一步 | 建置 O0 U-Boot，保存產物、設定、日誌與雜湊 |
 | 硬體需求 | O0/O1 編譯完成後才需要三片弱板 UART 驗證 |
 
 ## 2026-08-13：架構重新評估
@@ -136,6 +136,79 @@ Orange Pi Zero 3 profile。O0 必須把這個差異放進獨立補丁，不能�
 `012` 在 `mctl_mem_matches_base()` 增加 150 us delay，會影響容量探測，
 因此必須列為已存在的 M4 差異；O0 建置清單與日誌要明確標示它，後續另設
 無 delay 控制組才能判斷是否仍有必要。
+
+## 2026-08-13：階段 A 提交與推送
+
+執行：
+
+```bash
+git commit -m '文件：建立 M4 Zero DDR 移植計畫與工作紀錄'
+git push -u origin bpi-m4zero-opi-ddr-port-20260813
+```
+
+結果：
+
+- 提交：`89645a409`。
+- 推送：成功。
+- 遠端分支：`origin/bpi-m4zero-opi-ddr-port-20260813`。
+- 此提交只有計畫書、工作日誌與證據索引，沒有程式變更。
+
+## 2026-08-13：O0 變因重新收斂
+
+### 發現
+
+乾淨分支原有 `012` 會在 upstream `mctl_mem_matches_base()` 的 `dsb()` 後
+額外等待 150 us。upstream U-Boot `v2026.01` 與 Orange Pi Zero 3 不包含
+此延遲；若 O0 同時修改 TPR 並保留延遲，就不是精確的 Orange Pi DDR
+控制組。
+
+### 決策 D005：O0 移除額外延遲
+
+O0 移除 `012`，只用獨立 `013` 補丁把 BPI-M4 Zero 的 TPR6／11／12
+對齊 Orange Pi Zero 3。若實機出現容量誤判，另建立 O0b，只加回 150 us
+延遲，不同時修改其他參數。
+
+### 建置來源警告
+
+原工作樹的 U-Boot cache 已有多個板子的未提交補丁，狀態為 dirty，不能
+直接當成 O0 產物來源。O0 必須由隔離 worktree 的 Armbian artifact 流程
+重新準備來源、套用補丁及建置，並由套件回讀確認結果。
+
+## 2026-08-13：O0 靜態實作與補丁驗證
+
+### 程式變更
+
+1. 移除會增加 150 us 容量探測延遲的 `012`。
+2. 新增 `013-bananapi-m4zero-use-orangepi-zero3-ddr-baseline.patch`。
+3. `013` 只修改 TPR6、TPR11、TPR12，其他 DDR profile 與 792 MHz 不變。
+4. 新增 `tools/build-bpi-m4zero-opi-ddr-o0.sh`，負責建置、回讀套件、驗證
+   `.config`、比對原始碼產物並產生 manifest 與 SHA-256。
+
+### 第一次補丁驗證失敗
+
+原先嘗試從既有 U-Boot cache 建立額外 Git worktree，Git 回報共用 bare
+metadata 沒有寫入權限：
+
+```text
+fatal: could not create directory ... Permission denied
+```
+
+這次操作沒有產生驗證結果，也沒有修改原 U-Boot 工作樹。
+
+### 替代驗證
+
+改由 upstream 提交 `127a42c7257a6ffbbd1575ed1cbaa8f5408a44b3` 執行
+`git archive`，在一次性目錄依名稱順序套用完整 M4 Zero 補丁堆疊。
+
+結果：
+
+- `001`、`002`、`010`、`011`、`013` 全部成功套用。
+- 最終 `CONFIG_DRAM_CLK=792`。
+- TPR6／10／11／12 為
+  `0x44000000/0x402f6663/0x24242624/0x0f0f100f`。
+- 原始碼沒有 `udelay(150)`。
+- `bash -n`、`shellcheck` 與 `git diff --check` 通過。
+- 尚未執行編譯與實機驗證。
 
 ## 日誌追加規則
 

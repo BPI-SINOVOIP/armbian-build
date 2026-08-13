@@ -80,7 +80,8 @@ TPR12  = 0x0f0f100f
 
 | 代號 | 用途 | 唯一主要變因 | 發布資格 |
 | --- | --- | --- | --- |
-| O0 | Orange Pi 乾淨控制組 | M4 DTS／周邊加 Orange Pi DDR profile | 無，僅基線 |
+| O0 | Orange Pi 乾淨控制組 | M4 DTS／周邊加 Orange Pi DDR profile；不加容量探測延遲 | 無，僅基線 |
+| O0b | 容量延遲控制組 | O0 只增加 150 us 容量探測延遲 | 無，僅診斷 |
 | O1 | 訓練診斷版 | O0 加入唯讀訓練與 PHY 暫存器輸出 | 無，僅診斷 |
 | O2 | geometry 控制組 | O1 加入已知 geometry 與 Rank 選擇策略 | 無，僅診斷 |
 | O3 | 原廠狀態對照組 | 比對 boot0 與 O1/O2 最終 PHY 狀態 | 無，僅診斷 |
@@ -113,9 +114,10 @@ TPR12  = 0x0f0f100f
 
 1. 產生可審查的 Orange Pi 與 M4 Zero defconfig 差異。
 2. 將 DDR profile 差異限制在獨立補丁。
-3. 不帶入先前 V0/V1 自製 eye scan。
-4. 編譯 O0 U-Boot，保存 `.config`、SPL、U-Boot、TF-A、雜湊與建置日誌。
-5. 回讀映像中的 U-Boot，確認與建置產物一致。
+3. 不帶入先前 V0/V1 自製 eye scan，也不帶入額外 150 us 容量探測延遲。
+4. 只有 O0 實機出現容量偵測問題時，才建立 O0b 單變因控制組。
+5. 編譯 O0 U-Boot，保存 `.config`、SPL、U-Boot、TF-A、雜湊與建置日誌。
+6. 回讀映像中的 U-Boot，確認與建置產物一致。
 
 ### 階段 C：O1 唯讀診斷
 

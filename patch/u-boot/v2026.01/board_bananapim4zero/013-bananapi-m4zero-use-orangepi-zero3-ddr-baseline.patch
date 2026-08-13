@@ -1,0 +1,37 @@
+From: Banana Pi -BPI <lionwang@sinovoip.com.cn>
+Date: Thu, 13 Aug 2026 13:10:00 +0800
+Subject: [PATCH] sunxi: 將 BPI-M4 Zero 對齊 Orange Pi Zero 3 DDR 基線
+
+Orange Pi Zero 3 的 upstream H618 LPDDR4 支援以
+RS1G32LO4D2BDS-53BT 4 GiB 顆粒開發，與 BPI-M4 Zero 的 D2 BOM 相同。
+
+保留 BPI-M4 Zero 的 DTS、eMMC 與周邊設定，只把板級 DDR PHY profile
+對齊 upstream orangepi_zero3_defconfig。時脈維持 792 MHz，讓 O0 成為
+可重現的單一基線，不混入先前的動態 eye scan 或固定 geometry 實驗。
+
+Signed-off-by: Banana Pi -BPI <lionwang@sinovoip.com.cn>
+---
+ configs/bananapi_m4zero_defconfig | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/configs/bananapi_m4zero_defconfig b/configs/bananapi_m4zero_defconfig
+index 6d70efd1a50..04db592d743 100644
+--- a/configs/bananapi_m4zero_defconfig
++++ b/configs/bananapi_m4zero_defconfig
+@@ -7,10 +7,10 @@ CONFIG_SPL=y
+ CONFIG_DRAM_SUNXI_DX_ODT=0x07070707
+ CONFIG_DRAM_SUNXI_DX_DRI=0x0e0e0e0e
+ CONFIG_DRAM_SUNXI_CA_DRI=0x0e0e
+ CONFIG_DRAM_SUNXI_ODT_EN=0xaaaaeeee
+-CONFIG_DRAM_SUNXI_TPR6=0x48808080
++CONFIG_DRAM_SUNXI_TPR6=0x44000000
+ CONFIG_DRAM_SUNXI_TPR10=0x402f6663
+-CONFIG_DRAM_SUNXI_TPR11=0x26262524
+-CONFIG_DRAM_SUNXI_TPR12=0x100f100f
++CONFIG_DRAM_SUNXI_TPR11=0x24242624
++CONFIG_DRAM_SUNXI_TPR12=0x0f0f100f
+ CONFIG_MACH_SUN50I_H616=y
+ CONFIG_SUNXI_DRAM_H616_LPDDR4=y
+ CONFIG_DRAM_CLK=792
+-- 
+2.43.0
