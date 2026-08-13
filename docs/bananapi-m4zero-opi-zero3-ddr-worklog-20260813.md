@@ -1097,3 +1097,25 @@ S337 通過 G1 並計入 G2 `1/10`。詳細證據：
 ```text
 docs/evidence/bananapi-m4zero-opi-ddr/X2-hardware-S337-G1-20260813.md
 ```
+
+## 2026-08-13：三星 S322 的 X2 標準啟動 G1
+
+同一張 X2 SD 卡移至頂部追溯碼 `SEC 322` 的三星樣本。SPL 的雙 Rank 探測
+失敗五次後退回單 Rank，後續 geometry 全部一次通過，最終正確回報
+2,048 MiB、x32、1 Rank、16 Rows、10 Columns。TF-A、U-Boot、initrd checksum、
+核心、rootfs 與使用者空間全部通過。
+
+本板 Linux 把測試 SD 枚舉為 `/dev/mmcblk2`，而非 S337 的 `/dev/mmcblk0`。
+名稱 `SR64G`、59.5 GiB 容量、CID、`4020000.mmc` 控制器及 rootfs UUID 均
+確認它仍是同一張 SD；`/dev/mmcblk1` 才是 7.28 GiB 的 `8GTF4R` eMMC。
+
+180 秒、1.4 GiB 記憶體與 4 CPU 冒煙測試結束碼為 `0`，沒有記憶體或核心
+異常。SDIO 與 Bluetooth 初始化仍失敗，系統只剩 loopback 介面；
+`vnstat.service` 因無介面可加入資料庫而退出，使 systemd 成為 `degraded`。
+此問題不阻擋 DDR G1，但代表整板周邊 Gate 尚未通過。S322 計入 G2 `1/10`。
+
+詳細證據：
+
+```text
+docs/evidence/bananapi-m4zero-opi-ddr/X2-hardware-S322-G1-20260813.md
+```

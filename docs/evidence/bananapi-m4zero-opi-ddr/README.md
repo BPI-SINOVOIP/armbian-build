@@ -253,3 +253,16 @@ docs/evidence/bananapi-m4zero-opi-ddr/hardware/X2-S337-20260813/uart-s337-x2-col
 完整啟動。systemd 為 `running`，失敗服務為零；180 秒、1.4 GiB 記憶體與
 4 CPU 冒煙測試結束碼為 `0`。SDIO 與 Bluetooth 另有初始化錯誤，因此本次
 只通過 DDR 標準啟動 G1，不宣稱無線周邊正常，也不把短壓力算成完整 G3。
+
+## 22. X2 在三星 S322 的標準啟動 G1
+
+```text
+docs/evidence/bananapi-m4zero-opi-ddr/X2-hardware-S322-G1-20260813.md
+docs/evidence/bananapi-m4zero-opi-ddr/hardware/X2-S322-20260813/uart-s322-x2-cold-01.log.gz
+```
+
+`S322` 同樣正確偵測三星 2 GiB、x32、1 Rank geometry，並完成 X2 792 MHz
+完整啟動與 180 秒冒煙測試。rootfs 顯示為 `/dev/mmcblk2p1`，經名稱、容量、
+CID、控制器及 UUID 核對後確認仍是同一張 `SR64G` SD 卡，不是 eMMC。
+SDIO／Bluetooth 初始化失敗使系統沒有網路介面，`vnstat.service` 因此失敗、
+systemd 為 `degraded`；DDR G1 通過，但周邊功能仍未通過。

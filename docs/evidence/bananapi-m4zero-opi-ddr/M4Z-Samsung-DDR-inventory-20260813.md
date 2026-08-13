@@ -60,10 +60,16 @@ https://www.renesas.com/ja/document/apn/rz-family-dram-list
 | 樣本 | X2 G1 | G2 | 短壓力 | 備註 |
 | --- | --- | ---: | --- | --- |
 | `S337` | 通過 | `1/10` | 180 秒、1.4 GiB、4 CPU 通過 | 正確偵測 2 GiB、x32、1 Rank；SDIO／Bluetooth 有周邊錯誤 |
-| `S322` | 待測 | `0/10` | 待測 | 使用同一張 SD 卡進行下一次冷啟動 |
+| `S322` | 通過 | `1/10` | 180 秒、1.4 GiB、4 CPU 通過 | 正確偵測 2 GiB、x32、1 Rank；SDIO／Bluetooth 有周邊錯誤，systemd degraded |
 
 S337 詳細證據：
 
 ```text
 docs/evidence/bananapi-m4zero-opi-ddr/X2-hardware-S337-G1-20260813.md
+```
+
+S322 詳細證據：
+
+```text
+docs/evidence/bananapi-m4zero-opi-ddr/X2-hardware-S322-G1-20260813.md
 ```
