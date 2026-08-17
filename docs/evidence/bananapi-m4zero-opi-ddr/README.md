@@ -300,3 +300,16 @@ docs/evidence/bananapi-m4zero-opi-ddr/X2-mass-validation-record-template.tsv
 五個發行版的 CLI 與 XFCE 共十套 IMG/XZ 已完成。每套都鎖定四板 G1 使用的
 `P1f88` bootloader，並通過全檔雜湊、XZ 串流、分割表與內嵌 bootloader
 回讀。這些映像供大量硬體驗證，不代表已完成量產認證。
+
+## 26. X2 Noble XFCE 擴大板群結果
+
+```text
+docs/evidence/bananapi-m4zero-opi-ddr/X2-noble-xfce-batch-results-20260817.md
+docs/evidence/bananapi-m4zero-opi-ddr/hardware/X2-Noble-XFCE-batch-20260817
+```
+
+17 份 UART 中有 15 份可判定，板級單次功能啟動為 `13/15`。舊 V2 八板
+矩陣的同一組樣本由 `5/8` 改善為 X2 `8/8`；但 `450600667` 有 74 次 DDR
+`rc` 階段失敗，`450600845` 在 kernel handoff 後因 PID 1 結束而 panic。
+兩份空 UART、板號不一致、試算表仍保留 U0 480 MHz 表頭及缺少映像回讀
+雜湊等限制均已保留，故 X2 仍是大量驗證候選，不是穩定或量產版本。
