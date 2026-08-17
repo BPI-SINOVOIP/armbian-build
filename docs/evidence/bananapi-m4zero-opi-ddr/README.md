@@ -306,6 +306,7 @@ docs/evidence/bananapi-m4zero-opi-ddr/X2-mass-validation-record-template.tsv
 ```text
 docs/evidence/bananapi-m4zero-opi-ddr/X2-noble-xfce-batch-results-20260817.md
 docs/evidence/bananapi-m4zero-opi-ddr/hardware/X2-Noble-XFCE-batch-20260817
+docs/bananapi-m4zero-0845-ddr-benchmark-plan-20260817.md
 ```
 
 17 份 UART 中有 15 份可判定，板級單次功能啟動為 `13/15`。舊 V2 八板
@@ -314,3 +315,7 @@ docs/evidence/bananapi-m4zero-opi-ddr/hardware/X2-Noble-XFCE-batch-20260817
 `450600027` 已確認缺件、屬於硬體不良而排除；另有一份空 UART、板號不一致、
 試算表仍保留 U0 480 MHz 表頭及缺少映像回讀雜湊等限制，故 X2 仍是大量
 驗證候選，不是穩定或量產版本。
+
+0845 已列為第一優先弱板；計畫先以 U0/X2 對照排除 SD、rootfs 與硬體問題，
+再用同一份 M4ZLAB2 SPL 執行頻率、TPR、驅動與 ODT 邊界掃描。最終設定必須
+取 0845、0438、1116 與 2 GiB 單 Rank 樣本共同窗口，不採用單板特調值。
