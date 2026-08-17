@@ -1,6 +1,6 @@
 板號或標籤	UART檔案	SHA-256	SPL次數	DRAM容量MiB	U-Boot	核心交接	使用者空間	判定	關鍵證據
 450300156	450300156 SD启动.log	757cf7208556c2b61a42434c29c06f8dd11269e23aaf7672acc951da2653f68e	1	4096	是	是	是	通過	登入並進入root shell
-450600027	450600027 SD启动.log	f1945cd6c19e56b3c1c78943ef5ec18116907a4ca1efc40a57d48ab1db7adfc5	0		否	否	否	無法判定	只有3 bytes UTF-8 BOM
+450600027	450600027 SD启动.log	f1945cd6c19e56b3c1c78943ef5ec18116907a4ca1efc40a57d48ab1db7adfc5	0		否	否	否	排除	UART只有3 bytes BOM；使用者於2026-08-17確認缺件、硬體不良
 450600146	450600146 SD启动.log	d4b4af76e51fa0544fecfe8f1b465515fc27f4198259fb2501af59140fe31437	1	4096	是	是	是	通過	完成首次設定並進入root shell
 450600285	450600285 SD启动.log	b6c3df957f8c611ad06625f8d916dfaec7dafe21be171b5aa63686bf31dccc51	1	4096	是	是	是	通過	登入並進入root shell
 450600327	450600327 SD启动.log	e3228909d6500703860abb0671e3aa84a7dbd6cb8498de671ff98962166aea92	1	4096	是	是	是	通過	登入並進入root shell
