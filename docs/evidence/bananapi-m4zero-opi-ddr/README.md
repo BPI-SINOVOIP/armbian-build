@@ -368,3 +368,16 @@ A1 已建立 Bookworm、Jammy、Noble、Resolute、Trixie 的 CLI 與 XFCE，共
 10 個 IMG、10 個 XZ 與 10 份 metadata。所有產物統一內嵌 `P02e5`
 bootloader，整批 SHA-256 守門通過。資格狀態仍是
 `A1_0845_M4ZLAB2_PASS_COLD_BOOT_PENDING`，尚未通過 0845 冷啟動或 Linux Gate。
+
+## 31. A1 Noble 四板標準啟動 G1
+
+```text
+docs/evidence/bananapi-m4zero-opi-ddr/A1-Noble-four-board-G1-20260820.md
+docs/evidence/bananapi-m4zero-opi-ddr/hardware/A1-Noble-four-board-20260820
+```
+
+`0845`、`0438`、`0256`、`1116` 四份 UART 均使用 `P02e5` 與 A1 792 MHz
+設定，全部完成 DDR geometry、核心、Noble 使用者空間及正常關機。`0845`
+另完成一次暖重啟，先前的 PID 1 panic 未重現；`0256` 正確退回 2 GiB
+單 Rank，但 Bluetooth reset timeout 仍須分開處理。四板可列標準啟動 G1
+通過；因缺少斷電控制、映像回讀及壓力測試證據，不計入 G2 且不升格量產。

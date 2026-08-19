@@ -11,10 +11,26 @@ A1 使用 0845 實測收斂的 DDR lane 參數，已完成五個發行版、CLI 
 SPL benchmark：0845 64 MiB M2 20/20 通過
 0845 完全斷電冷啟動：尚未執行
 Linux 全容量壓力：尚未執行
-跨板共同 Gate：尚未執行
+後驗標準啟動 G1：Noble 四板通過
+跨板冷啟動與壓力共同 Gate：尚未執行
 ```
 
 因此本矩陣是可燒錄工程候選，不是量產或穩定版聲明。
+
+## 後驗四板紀錄
+
+2026-08-20 收到 `0845`、`0438`、`0256`、`1116` 四份 Noble UART。四份
+均核對為同一個 `P02e5` 與 A1 792 MHz 設定，全部完成 DDR geometry、核心、
+使用者空間登入與正常關機；`0845` 另完成一次暖重啟。測試已涵蓋 4 GiB
+雙 Rank 與 2 GiB 單 Rank。
+
+這批資料通過標準啟動 G1，但沒有受控斷電、完整映像回讀或 Linux 壓力證據，
+所以建置期資格字串與量產限制不變。`0256` 另有 Bluetooth reset timeout，
+不影響 DDR G1 判定，但周邊 Gate 尚未通過。完整證據見：
+
+```text
+docs/evidence/bananapi-m4zero-opi-ddr/A1-Noble-four-board-G1-20260820.md
+```
 
 ## 共同參數
 
@@ -81,7 +97,7 @@ output/images/2026.08/bpi-m4zero-a1-0845-792-matrix
 
 ## 測試順序
 
-1. 先用 Jammy CLI 在 0845 執行完全斷電冷啟動與 UART 收集。
+1. 先用 Jammy CLI 在 0845 執行受控完全斷電冷啟動與 UART 收集。
 2. 進入 Linux 後執行全容量記憶體、CPU、SD／eMMC 並行壓力。
 3. Jammy CLI 通過後，再測 Noble XFCE，確認桌面與顯示路徑。
 4. 0845 通過後，再把同一映像帶到 0438、1116、2 GiB 單 Rank 與舊 V2

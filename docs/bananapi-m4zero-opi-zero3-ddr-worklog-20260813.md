@@ -1140,3 +1140,24 @@ DDR 成功而關閉。摘要與 0438 詳細證據：
 docs/evidence/bananapi-m4zero-opi-ddr/X2-hardware-0438-G1-20260813.md
 docs/evidence/bananapi-m4zero-opi-ddr/X2-four-board-G1-summary-20260813.md
 ```
+
+## 2026-08-20：A1 Noble 四板標準啟動 G1
+
+收到矩陣輸出目錄內的 `0845.txt`、`0438.txt`、`0256.txt`、`1116.txt`。
+四份 UART 均核對為 `P02e5` 與 A1 792 MHz 固定參數，全部完成 DDR
+geometry、TF-A、U-Boot、核心、Noble 使用者空間登入與正常關機。
+
+`0845` 共記錄兩次啟動，第一次完成帳號初始化後暖重啟，第二次正常關機；
+先前 X2 的 PID 1 panic 未重現。`0438` 與 `1116` 均正確辨識 4 GiB 雙 Rank。
+`0256` 的錯誤雙 Rank 候選在 read calibration 五次失敗後自動退回，最終正確
+辨識 2 GiB 單 Rank 並進入 Linux；Bluetooth reset timeout 另列周邊缺陷。
+
+原始 UART 已以確定性 gzip 封存並記錄原始與壓縮 SHA-256。`0845` 日誌中的
+測試 Wi-Fi 名稱與密碼只在提交版遮蔽，原始檔留在本機並以雜湊追溯。這批
+證據列為四板標準啟動 G1 通過；因缺少受控斷電、映像回讀與壓力測試，不計入
+G2，A1 仍維持工程候選。
+
+```text
+docs/evidence/bananapi-m4zero-opi-ddr/A1-Noble-four-board-G1-20260820.md
+docs/evidence/bananapi-m4zero-opi-ddr/hardware/A1-Noble-four-board-20260820
+```
