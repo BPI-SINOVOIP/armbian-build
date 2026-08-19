@@ -329,3 +329,17 @@ docs/evidence/bananapi-m4zero-opi-ddr/M4ZLAB2-sd-write-0845-20260819.md
 正式 `M4ZLAB2` SPL 已寫入 `/dev/mmcblk0` 的 8 KiB 偏移，來源與 32 KiB
 裝置回讀 SHA-256 均為 `4cf6e982...171a8f`，逐位元一致。SD 卡已可移入
 0845；目前狀態只代表寫卡完成，尚無 0845 UART 或 DDR 實機結果。
+
+## 28. 0845 M4ZLAB2 792 MHz 參數收斂
+
+```text
+docs/evidence/bananapi-m4zero-opi-ddr/M4ZLAB2-hardware-0845-20260819.md
+docs/evidence/bananapi-m4zero-opi-ddr/hardware/M4ZLAB2-0845-20260819
+tools/bpi-m4zero-ddr-lab-profile-0845-candidate-792.json
+```
+
+0845 已完成 305 組執行期測試。原 X2 792 MHz 參數在 M2 重現資料位元錯誤；
+改用 1116 原廠動態輸出的 `tpr11=0x25252523`、`tpr12=0x110f0f10` 後，
+`tpr6=0x3a808080` 完成小窗口 `20/20` 與 64 MiB 強測 `3/3`。0845 的
+`TPR6` 實測通過窗為 `0x30..0x42`，失敗邊界為 `0x2e` 與 `0x44`。
+此結果成立為 0845 工程候選，尚未通過冷開機、Linux 全容量壓力或多板 Gate。
