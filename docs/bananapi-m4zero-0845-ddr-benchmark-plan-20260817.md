@@ -178,3 +178,15 @@ python3 -B tools/bpi-m4zero-ddr-lab.py rank \
 - 三類候選與 0438、1116、2 GiB 樣本的窗口交集。
 - 最終 bootloader、完整映像、建置提交與回讀雜湊。
 - 明確列出通過 Gate、未通過 Gate 及不得外推的範圍。
+
+## 2026-08-19 執行進度
+
+已完成 0845 的 M4ZLAB2 geometry 確認、原 X2 反證、頻率粗掃、TPR6 上下
+失敗邊界與 TPR11／TPR12 配對收斂。原 X2 792 MHz M2 出現真實資料位元
+錯誤；A1 候選改用 `tpr11=0x25252523`、`tpr12=0x110f0f10`，保留
+`tpr6=0x3a808080`。A1 標準 bootloader 與 Jammy IMG/XZ 已建立並通過離線
+封裝驗證。
+
+尚未完成的 Gate 是斷電冷啟動、Linux 全容量壓力、跨 0438／1116／2 GiB
+單 Rank／舊 V2 弱板的共同驗證，以及溫度與供電角落。進度與限制不得解讀
+為 A1 已可量產。

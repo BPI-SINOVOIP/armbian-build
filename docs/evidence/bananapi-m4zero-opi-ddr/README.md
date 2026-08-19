@@ -343,3 +343,15 @@ tools/bpi-m4zero-ddr-lab-profile-0845-candidate-792.json
 `tpr6=0x3a808080` 完成小窗口 `20/20` 與 64 MiB 強測 `3/3`。0845 的
 `TPR6` 實測通過窗為 `0x30..0x42`，失敗邊界為 `0x2e` 與 `0x44`。
 此結果成立為 0845 工程候選，尚未通過冷開機、Linux 全容量壓力或多板 Gate。
+
+## 29. A1 標準 bootloader 與 Jammy 工程映像
+
+```text
+docs/evidence/bananapi-m4zero-opi-ddr/A1-0845-792-build-image-20260819.md
+tools/build-bpi-m4zero-0845-candidate-792.sh
+tools/package-bpi-m4zero-0845-candidate-792-image.sh
+```
+
+A1 已從提交 `6e05b3313` 完成標準 U-Boot、TF-A、DEB 與完整 Jammy IMG/XZ。
+Build ID 為 `P02e5`，內嵌 bootloader、未壓縮 IMG 與 XZ 解壓串流皆經獨立
+雜湊複驗。此映像供 0845 冷啟動與 Linux Gate，不代表 Gate 已通過。
