@@ -3,16 +3,23 @@ set -euo pipefail
 
 repo_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 source_dir="${SOURCE_DIR:-/media/pi/SMCI/armbian/bpi-v26.2.1/output/images/2026.07/bpi-m4z-u0-safe-480}"
+matrix_label="${MATRIX_LABEL:-X2 跨板 792 MHz}"
+artifact_tag="${ARTIFACT_TAG:-x2-cross-board-792mhz}"
 output_dir="${OUTPUT_DIR:-$repo_dir/output/images/2026.08/bpi-m4zero-x2-cross-board-792-matrix}"
 work_dir="${WORK_DIR:-$repo_dir/.tmp/bpi-m4zero-x2-792-matrix-20260813}"
-x2_evidence_dir="${X2_EVIDENCE_DIR:-$repo_dir/output/evidence/bpi-m4zero-opi-ddr/X2-20260813-cross-board-pushed-v5-918c0e93a}"
-x2_deb="${X2_DEB:-$x2_evidence_dir/linux-u-boot-bananapim4zero-current_26.05.0-trunk_arm64__2026.01-S127a-P1f88-Hc6a9-V3946-Be6d8-R448a.deb}"
-delivery_doc="$repo_dir/docs/bananapi-m4zero-x2-792-image-matrix-delivery-20260814.md"
-test_record_template="$repo_dir/docs/evidence/bananapi-m4zero-opi-ddr/X2-mass-validation-record-template.tsv"
+evidence_dir="${EVIDENCE_DIR:-${X2_EVIDENCE_DIR:-$repo_dir/output/evidence/bpi-m4zero-opi-ddr/X2-20260813-cross-board-pushed-v5-918c0e93a}}"
+uboot_deb="${UBOOT_DEB:-${X2_DEB:-$evidence_dir/linux-u-boot-bananapim4zero-current_26.05.0-trunk_arm64__2026.01-S127a-P1f88-Hc6a9-V3946-Be6d8-R448a.deb}}"
+delivery_doc="${DELIVERY_DOC:-$repo_dir/docs/bananapi-m4zero-x2-792-image-matrix-delivery-20260814.md}"
+test_record_template="${TEST_RECORD_TEMPLATE:-$repo_dir/docs/evidence/bananapi-m4zero-opi-ddr/X2-mass-validation-record-template.tsv}"
+validate_delivery_table="${VALIDATE_DELIVERY_TABLE:-yes}"
 
-expected_deb_sha256="5353c323bab7fd4ff034a3be682da027dbb97ff833929a34cf71c6475a05de28"
-expected_uboot_sha256="a23cb287ac503a63bb505c4fe538447aec91a18fb5aadb6e5e87126b3c47e0ad"
-expected_build_id="P1f88"
+expected_deb_sha256="${EXPECTED_DEB_SHA256:-5353c323bab7fd4ff034a3be682da027dbb97ff833929a34cf71c6475a05de28}"
+expected_uboot_sha256="${EXPECTED_UBOOT_SHA256:-a23cb287ac503a63bb505c4fe538447aec91a18fb5aadb6e5e87126b3c47e0ad}"
+expected_build_id="${EXPECTED_BUILD_ID:-P1f88}"
+metadata_qualification="${METADATA_QUALIFICATION:-x2_four_board_g1_pass_mass_validation_pending}"
+matrix_qualification="${MATRIX_QUALIFICATION:-X2_FOUR_BOARD_G1_PASS_MASS_VALIDATION_PENDING}"
+hardware_g1_pass="${HARDWARE_G1_PASS:-0438,1116,S337,S322}"
+required_next_step="${REQUIRED_NEXT_STEP:-repeated_cold_boot_and_long_memory_stress}"
 uboot_offset=8192
 uboot_size=873977
 uboot_end=$((uboot_offset + uboot_size))
@@ -27,7 +34,7 @@ done
 mkdir -p "$output_dir/bootloader" "$work_dir"
 exec 9>"$output_dir/.build.lock"
 flock -n 9 || {
-	echo "另一個 X2 矩陣建置程序正在執行：$output_dir" >&2
+	echo "另一個 $matrix_label 矩陣建置程序正在執行：$output_dir" >&2
 	exit 1
 }
 
@@ -35,8 +42,8 @@ completion_status="$output_dir/COMPLETION_STATUS.txt"
 printf 'status=in_progress\n' >"$completion_status.partial"
 mv "$completion_status.partial" "$completion_status"
 
-[[ -f "$x2_deb" ]] || {
-	echo "找不到鎖定的 X2 U-Boot 套件：$x2_deb" >&2
+[[ -f "$uboot_deb" ]] || {
+	echo "找不到鎖定的 $matrix_label U-Boot 套件：$uboot_deb" >&2
 	exit 1
 }
 [[ -f "$delivery_doc" && -f "$test_record_template" ]] || {
@@ -44,8 +51,8 @@ mv "$completion_status.partial" "$completion_status"
 	exit 1
 }
 
-[[ "$(sha256sum "$x2_deb" | cut -d' ' -f1)" == "$expected_deb_sha256" ]] || {
-	echo "X2 U-Boot 套件雜湊不符：$x2_deb" >&2
+[[ "$(sha256sum "$uboot_deb" | cut -d' ' -f1)" == "$expected_deb_sha256" ]] || {
+	echo "$matrix_label U-Boot 套件雜湊不符：$uboot_deb" >&2
 	exit 1
 }
 
@@ -55,28 +62,28 @@ cleanup() {
 }
 trap cleanup EXIT
 
-dpkg-deb -x "$x2_deb" "$deb_dir"
-x2_uboot="$deb_dir/usr/lib/linux-u-boot-current-bananapim4zero/u-boot-sunxi-with-spl.bin"
+dpkg-deb -x "$uboot_deb" "$deb_dir"
+matrix_uboot="$deb_dir/usr/lib/linux-u-boot-current-bananapim4zero/u-boot-sunxi-with-spl.bin"
 
-[[ "$(stat -c %s "$x2_uboot")" == "$uboot_size" ]] || {
-	echo "X2 bootloader 大小不符" >&2
+[[ "$(stat -c %s "$matrix_uboot")" == "$uboot_size" ]] || {
+	echo "$matrix_label bootloader 大小不符" >&2
 	exit 1
 }
-[[ "$(sha256sum "$x2_uboot" | cut -d' ' -f1)" == "$expected_uboot_sha256" ]] || {
-	echo "X2 bootloader 雜湊不符" >&2
+[[ "$(sha256sum "$matrix_uboot" | cut -d' ' -f1)" == "$expected_uboot_sha256" ]] || {
+	echo "$matrix_label bootloader 雜湊不符" >&2
 	exit 1
 }
-grep -aFq "U-Boot SPL 2026.01_armbian-2026.01-S127a-${expected_build_id}-" "$x2_uboot" || {
-	echo "X2 bootloader Build ID 不符" >&2
+grep -aFq "U-Boot SPL 2026.01_armbian-2026.01-S127a-${expected_build_id}-" "$matrix_uboot" || {
+	echo "$matrix_label bootloader Build ID 不符" >&2
 	exit 1
 }
 
-deb_output="$output_dir/bootloader/$(basename "$x2_deb")"
+deb_output="$output_dir/bootloader/$(basename "$uboot_deb")"
 uboot_output="$output_dir/bootloader/u-boot-sunxi-with-spl-${expected_build_id}.bin"
-cp "$x2_deb" "$deb_output.partial"
+cp "$uboot_deb" "$deb_output.partial"
 [[ "$(sha256sum "$deb_output.partial" | cut -d' ' -f1)" == "$expected_deb_sha256" ]]
 mv "$deb_output.partial" "$deb_output"
-cp "$x2_uboot" "$uboot_output.partial"
+cp "$matrix_uboot" "$uboot_output.partial"
 [[ "$(sha256sum "$uboot_output.partial" | cut -d' ' -f1)" == "$expected_uboot_sha256" ]]
 mv "$uboot_output.partial" "$uboot_output"
 
@@ -218,7 +225,7 @@ for source_entry in "${source_entries[@]}"; do
 	}
 	xz -t "$source_image"
 
-	output_xz_name="${source_name/_u0-safe-480mhz/_x2-cross-board-792mhz}"
+	output_xz_name="${source_name/_u0-safe-480mhz/_$artifact_tag}"
 	output_img_name="${output_xz_name%.xz}"
 	output_xz="$output_dir/$output_xz_name"
 	output_img="$output_dir/$output_img_name"
@@ -237,7 +244,7 @@ for source_entry in "${source_entries[@]}"; do
 		validate_outside_bootloader_region "$source_image" "$output_img"
 		raw_size="$(stat -c %s "$output_img")"
 		raw_sha256="$(sha256sum "$output_img" | cut -d' ' -f1)"
-		require_metadata_value qualification_status x2_four_board_g1_pass_mass_validation_pending "$metadata"
+		require_metadata_value qualification_status "$metadata_qualification" "$metadata"
 		require_metadata_value release "$release" "$metadata"
 		require_metadata_value profile "$profile" "$metadata"
 		require_metadata_value kernel 6.18.32-current-sunxi64 "$metadata"
@@ -258,14 +265,14 @@ for source_entry in "${source_entries[@]}"; do
 			exit 1
 		}
 
-		dd if="$x2_uboot" of="$output_img.partial" bs=1M seek="$uboot_offset" oflag=seek_bytes conv=notrunc status=none
+		dd if="$matrix_uboot" of="$output_img.partial" bs=1M seek="$uboot_offset" oflag=seek_bytes conv=notrunc status=none
 		validate_raw_image "$output_img.partial"
 		validate_outside_bootloader_region "$source_image" "$output_img.partial"
 		raw_size="$(stat -c %s "$output_img.partial")"
 		raw_sha256="$(sha256sum "$output_img.partial" | cut -d' ' -f1)"
 
 		{
-			printf 'qualification_status=x2_four_board_g1_pass_mass_validation_pending\n'
+			printf 'qualification_status=%s\n' "$metadata_qualification"
 			printf 'release=%s\n' "$release"
 			printf 'profile=%s\n' "$profile"
 			printf 'kernel=6.18.32-current-sunxi64\n'
@@ -323,24 +330,29 @@ metadata_count="$(find "$output_dir" -maxdepth 1 -type f -name '*.metadata.txt' 
 mv "$matrix.partial" "$matrix"
 
 {
-	printf 'qualification_status=X2_FOUR_BOARD_G1_PASS_MASS_VALIDATION_PENDING\n'
+	printf 'qualification_status=%s\n' "$matrix_qualification"
 	printf 'distribution_scope=BOOKWORM_JAMMY_NOBLE_RESOLUTE_TRIXIE_CLI_XFCE\n'
 	printf 'build_id=%s\n' "$expected_build_id"
 	printf 'dram_clock_mhz=792\n'
-	printf 'hardware_g1_pass=0438,1116,S337,S322\n'
-	printf 'required_next_step=repeated_cold_boot_and_long_memory_stress\n'
+	printf 'hardware_g1_pass=%s\n' "$hardware_g1_pass"
+	printf 'required_next_step=%s\n' "$required_next_step"
 } >"$output_dir/QUALIFICATION_STATUS.txt.partial"
 mv "$output_dir/QUALIFICATION_STATUS.txt.partial" "$output_dir/QUALIFICATION_STATUS.txt"
 
 cp "$delivery_doc" "$output_dir/README.md.partial"
-while IFS=$'\t' read -r release profile raw_size raw_sha256 xz_size xz_sha256 _img_filename xz_filename; do
-	[[ "$release" == "release" ]] && continue
-	expected_readme_row="| ${release^} | ${profile^^} | $(group_digits "$xz_size") | \`$xz_sha256\` |"
-	grep -Fxq "$expected_readme_row" "$output_dir/README.md.partial" || {
-		echo "交付文件缺少或錯配 $xz_filename 的完整表格列" >&2
-		exit 1
-	}
-done <"$matrix"
+if [[ "$validate_delivery_table" == yes ]]; then
+	while IFS=$'\t' read -r release profile raw_size raw_sha256 xz_size xz_sha256 _img_filename xz_filename; do
+		[[ "$release" == "release" ]] && continue
+		expected_readme_row="| ${release^} | ${profile^^} | $(group_digits "$xz_size") | \`$xz_sha256\` |"
+		grep -Fxq "$expected_readme_row" "$output_dir/README.md.partial" || {
+			echo "交付文件缺少或錯配 $xz_filename 的完整表格列" >&2
+			exit 1
+		}
+	done <"$matrix"
+elif [[ "$validate_delivery_table" != no ]]; then
+	echo "VALIDATE_DELIVERY_TABLE 只接受 yes 或 no" >&2
+	exit 1
+fi
 mv "$output_dir/README.md.partial" "$output_dir/README.md"
 cp "$test_record_template" "$output_dir/TEST_RECORD_TEMPLATE.tsv.partial"
 mv "$output_dir/TEST_RECORD_TEMPLATE.tsv.partial" "$output_dir/TEST_RECORD_TEMPLATE.tsv"
@@ -383,7 +395,7 @@ chmod 0644 "$output_dir"/*.img "$output_dir"/*.img.xz \
 	"$output_dir/README.md" "$output_dir/TEST_RECORD_TEMPLATE.tsv" \
 	"$output_dir"/bootloader/*
 
-echo "X2 792 MHz 完整矩陣已完成：$output_dir"
+echo "$matrix_label 完整矩陣已完成：$output_dir"
 echo "IMG 數量：$raw_count"
 echo "XZ 數量：$xz_count"
 echo "Bootloader SHA-256：$expected_uboot_sha256"
