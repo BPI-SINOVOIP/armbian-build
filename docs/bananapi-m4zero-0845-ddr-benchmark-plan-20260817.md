@@ -191,3 +191,7 @@ python3 -B tools/bpi-m4zero-ddr-lab.py rank \
 尚未完成的 Gate 是斷電冷啟動、Linux 全容量壓力、跨 0438／1116／2 GiB
 單 Rank／舊 V2 弱板的共同驗證，以及溫度與供電角落。進度與限制不得解讀
 為 A1 已可量產。
+
+依後續擴大交付要求，A1 已同步建立五個發行版的 CLI／XFCE 共十套完整
+IMG/XZ。矩陣產物、雜湊與使用順序記錄於
+`docs/bananapi-m4zero-a1-792-image-matrix-delivery-20260820.md`。

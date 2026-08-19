@@ -355,3 +355,16 @@ tools/package-bpi-m4zero-0845-candidate-792-image.sh
 A1 已從提交 `6e05b3313` 完成標準 U-Boot、TF-A、DEB 與完整 Jammy IMG/XZ。
 Build ID 為 `P02e5`，內嵌 bootloader、未壓縮 IMG 與 XZ 解壓串流皆經獨立
 雜湊複驗。此映像供 0845 冷啟動與 Linux Gate，不代表 Gate 已通過。
+
+## 30. A1 完整作業系統映像矩陣
+
+```text
+docs/bananapi-m4zero-a1-792-image-matrix-delivery-20260820.md
+output/images/2026.08/bpi-m4zero-a1-0845-792-matrix
+tools/build-bpi-m4zero-a1-792-matrix.sh
+```
+
+A1 已建立 Bookworm、Jammy、Noble、Resolute、Trixie 的 CLI 與 XFCE，共
+10 個 IMG、10 個 XZ 與 10 份 metadata。所有產物統一內嵌 `P02e5`
+bootloader，整批 SHA-256 守門通過。資格狀態仍是
+`A1_0845_M4ZLAB2_PASS_COLD_BOOT_PENDING`，尚未通過 0845 冷啟動或 Linux Gate。
