@@ -319,3 +319,13 @@ docs/bananapi-m4zero-0845-ddr-benchmark-plan-20260817.md
 0845 已列為第一優先弱板；計畫先以 U0/X2 對照排除 SD、rootfs 與硬體問題，
 再用同一份 M4ZLAB2 SPL 執行頻率、TPR、驅動與 ODT 邊界掃描。最終設定必須
 取 0845、0438、1116 與 2 GiB 單 Rank 樣本共同窗口，不採用單板特調值。
+
+## 27. 0845 M4ZLAB2 Benchmark 卡
+
+```text
+docs/evidence/bananapi-m4zero-opi-ddr/M4ZLAB2-sd-write-0845-20260819.md
+```
+
+正式 `M4ZLAB2` SPL 已寫入 `/dev/mmcblk0` 的 8 KiB 偏移，來源與 32 KiB
+裝置回讀 SHA-256 均為 `4cf6e982...171a8f`，逐位元一致。SD 卡已可移入
+0845；目前狀態只代表寫卡完成，尚無 0845 UART 或 DDR 實機結果。
