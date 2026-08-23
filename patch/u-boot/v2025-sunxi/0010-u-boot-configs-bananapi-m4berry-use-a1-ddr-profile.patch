@@ -1,0 +1,40 @@
+From: Banana Pi -BPI <lionwang@sinovoip.com.cn>
+Date: Sun, 23 Aug 2026 16:00:00 +0800
+Subject: [PATCH] sunxi: 採用 BPI-M4 Berry A1 DDR 候選設定
+
+BPI-M4 Berry 現有 792 MHz 設定與 BPI-M4 Zero 舊設定同源。
+移植 M4 Zero A1 在多片 4 GiB 板及 0845 收斂測試所得的 PHY
+候選參數，同時保留 M4 Berry 的板級 DTS、電源、eMMC 與周邊設定。
+
+容量仍由 H616/H618 DRAM 初始化程式進行 geometry 探測，不鎖定
+2 GiB 或 4 GiB。此設定只視為 M4 Berry 實機驗證候選；M4 Zero 的
+通過統計不可取代 M4 Berry 的冷啟動與 Linux 記憶體壓力測試。
+
+Signed-off-by: Banana Pi -BPI <lionwang@sinovoip.com.cn>
+---
+ configs/bananapi_m4_berry_defconfig | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/configs/bananapi_m4_berry_defconfig b/configs/bananapi_m4_berry_defconfig
+index 94eb4bac7afb..8438a24771d9 100644
+--- a/configs/bananapi_m4_berry_defconfig
++++ b/configs/bananapi_m4_berry_defconfig
+@@ -5,12 +5,12 @@ CONFIG_OF_UPSTREAM=y
+ CONFIG_SPL=y
+ CONFIG_DRAM_SUNXI_DX_ODT=0x07070707
+ CONFIG_DRAM_SUNXI_DX_DRI=0x0e0e0e0e
+-CONFIG_DRAM_SUNXI_CA_DRI=0x0e0e
++CONFIG_DRAM_SUNXI_CA_DRI=0x0d0d
+ CONFIG_DRAM_SUNXI_ODT_EN=0xaaaaeeee
+-CONFIG_DRAM_SUNXI_TPR6=0x48808080
++CONFIG_DRAM_SUNXI_TPR6=0x3a808080
+ CONFIG_DRAM_SUNXI_TPR10=0x402f6663
+-CONFIG_DRAM_SUNXI_TPR11=0x26262524
+-CONFIG_DRAM_SUNXI_TPR12=0x100f100f
++CONFIG_DRAM_SUNXI_TPR11=0x25252523
++CONFIG_DRAM_SUNXI_TPR12=0x110f0f10
+ CONFIG_MACH_SUN50I_H616=y
+ CONFIG_SUNXI_DRAM_H616_LPDDR4=y
+ CONFIG_DRAM_CLK=792
+-- 
+2.43.0
