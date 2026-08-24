@@ -19,6 +19,10 @@ class M4BerryOptimizedMatrixTests(unittest.TestCase):
         self.assertIn("cli xfce", self.script)
         self.assertIn("expected_count=", self.script)
 
+    def test_xfce_uses_current_noninteractive_desktop_tier(self) -> None:
+        self.assertIn("DESKTOP_TIER=mid", self.script)
+        self.assertNotIn("DESKTOP_ENVIRONMENT_CONFIG_NAME", self.script)
+
     def test_each_entry_is_a_full_build(self) -> None:
         self.assertIn("./compile.sh", self.script)
         self.assertIn("build BOARD=bananapim4berry", self.script)

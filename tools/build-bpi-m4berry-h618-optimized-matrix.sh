@@ -68,7 +68,7 @@ for release in "${releases[@]}"; do
 			else
 				build_args=(
 					BUILD_DESKTOP=yes BUILD_MINIMAL=no DESKTOP_ENVIRONMENT=xfce
-					DESKTOP_ENVIRONMENT_CONFIG_NAME=config_base
+					DESKTOP_TIER=mid
 				)
 			fi
 
