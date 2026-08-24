@@ -51,7 +51,7 @@ checkout_pinned_source "${WIRINGPI_URL}" "${WIRINGPI_BRANCH}" \
 	"${WIRINGPI_COMMIT}" "${wiringpi_dir}"
 (
 	cd "${wiringpi_dir}"
-	WIRINGPI_SUDO= ./build debian
+	WIRINGPI_SUDO='' ./build debian
 	wiringpi_deb=$(find debian-template -maxdepth 1 -type f -name 'wiringpi*.deb' -print -quit)
 	test -n "${wiringpi_deb}"
 	apt-get install --reinstall -y "./${wiringpi_deb}"

@@ -31,7 +31,9 @@ grep -Ei 'crypto' /proc/interrupts || true
 
 echo
 echo '40-pin 介面：'
-command -v gpiodetect >/dev/null 2>&1 && gpiodetect 2>/dev/null || true
+if command -v gpiodetect >/dev/null 2>&1; then
+	gpiodetect 2>/dev/null || true
+fi
 printf 'I2C：'; find /dev -maxdepth 1 -name 'i2c-*' -printf '%f ' 2>/dev/null; echo
 printf 'SPI：'; find /dev -maxdepth 1 -name 'spidev*' -printf '%f ' 2>/dev/null; echo
 printf 'UART：'; find /dev -maxdepth 1 -name 'ttyS*' -printf '%f ' 2>/dev/null; echo

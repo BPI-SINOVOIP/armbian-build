@@ -135,6 +135,16 @@ M4 Berry 映像改為 `cma=256M`；此值須同時驗證多媒體穩定性與一
 每個映像必須保留未壓縮 `.img`、壓縮 `.img.xz`、SHA-256、建置參數、
 核心與 U-Boot 套件雜湊，以及測試紀錄範本。
 
+### 第四階段完成結果
+
+2026-08-25 已完成十組完整重建映像。輸出包含十個 `.img`、十個
+`.img.xz`、個別 SHA-256、建置中繼資料與日誌，沒有殘留 `.partial`。
+
+`verify-bpi-m4berry-h618-optimized-matrix.sh` 已完成二十個 SHA-256、十個
+`xz` 串流及十個映像的唯讀掛載內容檢查，全部通過。詳細檔名、容量、
+雜湊與限制記錄於
+`bananapi-m4berry-h618-optimized-image-matrix-delivery-20260825.md`。
+
 ## 驗收門檻
 
 ### 啟動與 DDR

@@ -37,6 +37,18 @@ class M4BerryOptimizedMatrixTests(unittest.TestCase):
         self.assertIn("raw_sha256", self.script)
         self.assertIn("xz_sha256", self.script)
 
+    def test_read_only_matrix_verifier_checks_every_image(self) -> None:
+        verifier = (
+            REPO_DIR / "tools/verify-bpi-m4berry-h618-optimized-matrix.sh"
+        ).read_text()
+        self.assertIn("--partscan --read-only", verifier)
+        self.assertIn("mount -o ro,noload", verifier)
+        self.assertIn("CONFIG_VIDEO_SUNXI_CEDRUS=y", verifier)
+        self.assertIn("CONFIG_SUN50I_H6_PRCM_PPU=y", verifier)
+        self.assertIn("CONFIG_DRM_PANFROST=m", verifier)
+        self.assertIn("gstreamer1.0-plugins-bad", verifier)
+        self.assertIn("M4 Berry H618 十映像矩陣全部通過唯讀驗證", verifier)
+
 
 if __name__ == "__main__":
     unittest.main()
