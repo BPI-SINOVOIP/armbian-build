@@ -1,0 +1,57 @@
+BPI-M4 Berry 40-pin 使用對照
+============================
+
+啟用方式
+--------
+
+在 `/boot/armbianEnv.txt` 的 `overlays=` 後加入下列名稱；名稱不含
+`sun50i-h616-` 前綴與 `.dtbo` 副檔名。多個 overlay 以空白分隔，重啟後
+生效。啟用周邊功能會占用對應 GPIO，衝突的功能不可同時啟用。
+
+I2C
+---
+
+* 實體 pin 3／5：`bananapi-m4-pg-15-16-i2c4`，裝置通常為 `/dev/i2c-4`。
+* 實體 pin 27／28：`bananapi-m4-pg-17-18-i2c3`，裝置通常為 `/dev/i2c-3`。
+
+SPI
+---
+
+SPI1 使用實體 pin 19（MOSI）、21（MISO）、23（SCLK）、24（CS0）與
+26（CS1）。
+
+* 僅啟用 CS0：`bananapi-m4-spi1-cs0-spidev`
+* 僅啟用 CS1：`bananapi-m4-spi1-cs1-spidev`
+* 同時啟用 CS0／CS1：`bananapi-m4-spi1-cs0-cs1-spidev`
+
+UART
+----
+
+* 實體 pin 8／10：`bananapi-m4-pg-6-7-uart1`
+* 實體 pin 8／10／16／18，含 RTS／CTS：
+  `bananapi-m4-pg-8-9-rts-cts-uart1`
+* 實體 pin 11／13：`bananapi-m4-ph-2-3-uart5`
+
+PWM
+---
+
+* 實體 pin 7（PG19）：`pwm1-pg19`
+* 實體 pin 11（PH2）：`pwm2-ph2`
+* 實體 pin 13（PH3）：`pwm1-ph3`
+
+GPIO
+----
+
+未被 overlay 或板載裝置占用的 40-pin 訊號可透過 GPIO 字元裝置操作。
+建議使用 `gpiodetect`、`gpioinfo`、`gpioget` 與 `gpioset`。M4 Berry 的
+主 GPIO 控制器通常是 `/dev/gpiochip1`；程式不得只依賴固定晶片編號，
+應先以控制器標籤 `300b000.pinctrl` 辨識。
+
+相容 Raspberry Pi 舊程式時，可執行
+`sudo bpi-m4berry-io-compat-install` 安裝固定版本的 `BPI-WiringPi2` 與
+`RPi.GPIO`。這兩套舊式介面直接存取實體暫存器，操作時需要 root；新程式
+仍應優先使用核心 GPIO 字元裝置與 `libgpiod`。
+
+可用電壓僅為 3.3 V，不可把 5 V 訊號直接接到 GPIO。變更輸出前必須先
+確認實體腳位、電源與外接負載，避免和 eMMC、網路、LED 或其他板載功能
+衝突。

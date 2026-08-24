@@ -72,6 +72,7 @@ dtb-$(CONFIG_ARCH_SUNXI) += \
 	sun50i-h616-i2c4-ph.dtbo \
 	sun50i-h616-keys.dtbo \
 	sun50i-h616-pwm1-ph3.dtbo \
+	sun50i-h616-pwm1-pg19.dtbo \
 	sun50i-h616-pwm1-pi11.dtbo \
 	sun50i-h616-pwm2-ph2.dtbo \
 	sun50i-h616-pwm2-pi12.dtbo \
@@ -109,7 +110,8 @@ scr-$(CONFIG_ARCH_SUNXI) += \
 
 dtbotxt-$(CONFIG_ARCH_SUNXI) += \
 	README.sun50i-a64-overlays \
-	README.sun50i-h5-overlays
+	README.sun50i-h5-overlays \
+	README.sun50i-h616-overlays
 
 targets += $(dtb-y) $(scr-y) $(dtbotxt-y)
 
