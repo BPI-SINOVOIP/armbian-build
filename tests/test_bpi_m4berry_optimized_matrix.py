@@ -27,7 +27,8 @@ class M4BerryOptimizedMatrixTests(unittest.TestCase):
 
     def test_raw_and_xz_are_both_kept_and_verified(self) -> None:
         self.assertIn("COMPRESS_OUTPUTIMAGE=sha,img", self.script)
-        self.assertIn('xz -T0 -6 -k "${image}"', self.script)
+        self.assertIn('xz -T0 -6 --stdout "${image}"', self.script)
+        self.assertIn('mv "${image}.xz.partial" "${image}.xz"', self.script)
         self.assertIn('xz -t "${image}.xz"', self.script)
         self.assertIn("raw_sha256", self.script)
         self.assertIn("xz_sha256", self.script)

@@ -10,7 +10,7 @@ build_tag="${BUILD_TAG:-a1-h618-optimized-792mhz}"
 read -r -a releases <<<"${releases_text}"
 read -r -a profiles <<<"${profiles_text}"
 
-for command in find flock git mkdir mv sed sha256sum stat xz; do
+for command in basename cut find flock git mkdir mv rm sha256sum stat tee unlink wc xz; do
 	command -v "${command}" >/dev/null || {
 		echo "缺少必要命令：${command}" >&2
 		exit 1
@@ -61,7 +61,7 @@ for release in "${releases[@]}"; do
 			log_file="${output_dir}/logs/${release}-${profile}.log"
 			common_args=(
 				build BOARD=bananapim4berry BRANCH=current RELEASE="${release}"
-				KERNEL_CONFIGURE=no EXPERT=yes COMPRESS_OUTPUTIMAGE=sha,img
+				KERNEL_CONFIGURE=no EXPERT=yes "COMPRESS_OUTPUTIMAGE=sha,img"
 			)
 			if [[ "${profile}" == cli ]]; then
 				build_args=(BUILD_DESKTOP=no BUILD_MINIMAL=yes)
@@ -92,7 +92,9 @@ for release in "${releases[@]}"; do
 			source_image="${candidates[0]}"
 			image="${output_dir}/$(basename "${source_image}" .img)_${build_tag}.img"
 			mv "${source_image}" "${image}"
-			xz -T0 -6 -k "${image}"
+			rm -f "${image}.xz.partial"
+			xz -T0 -6 --stdout "${image}" >"${image}.xz.partial"
+			mv "${image}.xz.partial" "${image}.xz"
 			xz -t "${image}.xz"
 		fi
 
