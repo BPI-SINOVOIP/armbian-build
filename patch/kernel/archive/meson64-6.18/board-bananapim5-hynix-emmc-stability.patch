@@ -1,0 +1,37 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Banana Pi -BPI <lionwang@sinovoip.com.cn>
+Date: Wed, 26 Aug 2026 00:00:00 +0800
+Subject: [PATCH] arm64: dts: amlogic: 降低 Banana Pi M5 eMMC 時脈
+
+部分 Banana Pi M5 批次搭配 Hynix eMMC 時，較高的 Meson eMMC
+時序可能降低長時間讀寫與啟動穩定性。Linux 保留 HS200，但停用 HS400
+並將控制器上限由 200 MHz 降為 100 MHz。
+
+這項設定只覆寫 M5 板級 DTS，不影響尚未取得相同實機證據的 M2 Pro。
+
+Signed-off-by: Banana Pi -BPI <lionwang@sinovoip.com.cn>
+---
+ .../boot/dts/amlogic/meson-sm1-bananapi-m5.dts | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff --git a/arch/arm64/boot/dts/amlogic/meson-sm1-bananapi-m5.dts b/arch/arm64/boot/dts/amlogic/meson-sm1-bananapi-m5.dts
+index 697855fec476..000000000000 100644
+--- a/arch/arm64/boot/dts/amlogic/meson-sm1-bananapi-m5.dts
++++ b/arch/arm64/boot/dts/amlogic/meson-sm1-bananapi-m5.dts
+@@ -162,8 +162,14 @@ &cvbs_vdac_port {
+ 	cvbs_vdac_out: endpoint {
+ 		remote-endpoint = <&cvbs_connector_in>;
+ 	};
+ };
+ 
++&sd_emmc_c {
++	/* Hynix 批次以保守的 HS200 時脈換取啟動與讀寫穩定性。 */
++	no-mmc-hs400;
++	max-frequency = <100000000>;
++};
++
+ &frddr_a {
+ 	status = "okay";
+ };
+-- 
+2.51.0
