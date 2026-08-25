@@ -70,7 +70,6 @@
 - `bananapim4berry`：矩陣工具須防止既有映像被錯標為目前來源提交。
 - `bananapim4berry`：壓縮映像須以串流雜湊證明解壓內容與同名原始映像一致。
 - `bananapism10`：原廠啟動二進位與實機開機仍未完成驗證。
-- `bpi-ai2n`：family 設定含固定 root 密碼，且正式板卡欄位不完整。
 
 ## 欄位品質
 
@@ -105,7 +104,6 @@
 - `bananapism10`：缺少建議欄位 `KERNEL_TEST_TARGET`。
 - `bananapiw2`：缺少建議欄位 `BOARD_MAINTAINER`。
 - `bananapiw3`：缺少建議欄位 `BOARD_MAINTAINER, KERNEL_TEST_TARGET`。
-- `bpi-ai2n`：缺少建議欄位 `BOARD_VENDOR, BOARD_MAINTAINER, INTRODUCED, KERNEL_TEST_TARGET`。
 
 ## 判讀限制
 

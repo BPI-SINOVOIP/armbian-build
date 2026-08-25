@@ -46,4 +46,4 @@ bananapir64	wip	Banana Pi R64	filogic	arm64	current	current	no	D	L0	mt7622_banan
 bananapism10	wip	BananaPi BPI-SM10	spacemit-k3-bpi	riscv64	current	current	yes	F	L0		spacemit/k3_com260.dtb	KERNEL_TEST_TARGET	確認建置鏈並建立 Trixie CLI 候選
 bananapiw2	wip	Banana Pi W2	realtek-rtd129x-bpi	arm64	legacy	legacy	yes	F	L0	rtd1296_sd_bananapi_defconfig	realtek/rtd129x/rtd-1296-bananapi-w2-2GB.dtb	BOARD_MAINTAINER	確認建置鏈並建立 Trixie CLI 候選
 bananapiw3	wip	Banana Pi W3	rockchip-rk3588	arm64	vendor	vendor	yes	E	L0	armsom-w3-rk3588_defconfig	rockchip/rk3588-bananapi-w3.dtb	BOARD_MAINTAINER,KERNEL_TEST_TARGET	確認建置鏈並建立 Trixie CLI 候選
-bpi-ai2n	conf	Banana Pi AI2N	renesas-rzv2n-bpi	arm64	legacy	legacy	yes	B	L0	bananapi_ai2n_defconfig	renesas/bananapi-ai2n.dtb	BOARD_VENDOR,BOARD_MAINTAINER,INTRODUCED,KERNEL_TEST_TARGET	建立 Trixie CLI 並完成離線守門
+bpi-ai2n	conf	Banana Pi AI2N	renesas-rzv2n-bpi	arm64	legacy	legacy	yes	B	L0	bananapi_ai2n_defconfig	renesas/bananapi-ai2n.dtb		建立 Trixie CLI 並完成離線守門

@@ -49,8 +49,8 @@ class BananaPiBoardAuditTests(unittest.TestCase):
         self.assertEqual(self.by_id["bananapim4berry"].level, "L4")
         self.assertFalse(any(board.level == "L5" for board in self.boards))
 
-    def test_ai2n_field_gap_remains_visible(self) -> None:
-        self.assertIn("BOARD_VENDOR", AUDIT.field_gaps(self.by_id["bpi-ai2n"]))
+    def test_ai2n_supported_fields_are_complete(self) -> None:
+        self.assertEqual(AUDIT.field_gaps(self.by_id["bpi-ai2n"]), [])
 
     def test_generated_outputs_cover_every_board(self) -> None:
         report = AUDIT.markdown_text(self.boards, "2026-08-26")
