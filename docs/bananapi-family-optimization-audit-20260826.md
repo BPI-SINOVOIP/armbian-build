@@ -69,7 +69,6 @@
 - `bananapim2c`：仍採 secure PAC 與 Yocto 混合流程，尚非一般 Armbian SD 首階段啟動。
 - `bananapim4berry`：矩陣工具須防止既有映像被錯標為目前來源提交。
 - `bananapim4berry`：壓縮映像須以串流雜湊證明解壓內容與同名原始映像一致。
-- `bananapim4zero`：板卡設定封鎖主線 RTL8821CU 驅動，須修正並加入回歸測試。
 - `bananapism10`：原廠啟動二進位與實機開機仍未完成驗證。
 - `bpi-ai2n`：family 設定含固定 root 密碼，且正式板卡欄位不完整。
 
