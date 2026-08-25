@@ -18,6 +18,7 @@ ALL_BRANCHES="${ALL_BRANCHES:-no}"
 EXPERT="${EXPERT:-yes}"
 DOWNLOAD_MIRROR="${DOWNLOAD_MIRROR:-bfsu}"
 SKIP_EXISTING="${SKIP_EXISTING:-no}"
+ALLOW_HEADLESS_DESKTOP="${ALLOW_HEADLESS_DESKTOP:-no}"
 
 usage() {
 	cat <<-EOF
@@ -26,7 +27,7 @@ usage() {
 	Build the 2026 Banana Pi release matrix.
 
 	Default matrix:
-	  Boards:   all config/boards/bananapi* plus lamobo-r1 when INCLUDE_LAMOBO=yes
+	  板卡：config/boards/bananapi*、config/boards/bpi-*，以及啟用 INCLUDE_LAMOBO 時的 lamobo-r1
 	  Releases: Debian 12 bookworm, Debian 13 trixie,
 	            Ubuntu 22.04 jammy, Ubuntu 24.04 noble, Ubuntu 26.04 resolute
 	  Images:   server desktop
@@ -39,7 +40,7 @@ usage() {
 	  --branch LIST      Override branches for all boards
 	  --all-branches     Build every branch listed by each board config
 	  --no-lamobo        Do not include lamobo-r1
-	  --include-wip      Include config/boards/bananapi*.wip in the default board list
+	  --include-wip      將 config/boards/bananapi*.wip 與 config/boards/bpi-*.wip 納入預設板卡
 	  --no-compress      Do not create/test .img.xz after each build
 	  --remove-raw       Remove raw .img after tested .img.xz is created
 	  --skip-existing    Skip a build if a matching .img or .img.xz already exists
@@ -51,7 +52,7 @@ usage() {
 	  DESKTOP_ENVIRONMENT, DESKTOP_TIER, KERNEL_CONFIGURE
 	  EXTRA_COMPILE_ARGS, COMPRESS, STOP_ON_FAIL, INCLUDE_LAMOBO
 	  INCLUDE_WIP, KEEP_RAW, EXPERT, DOWNLOAD_MIRROR
-	  CUSTOM_UBUNTU_MIRROR_PORTS, SKIP_EXISTING
+	  CUSTOM_UBUNTU_MIRROR_PORTS, SKIP_EXISTING, ALLOW_HEADLESS_DESKTOP
 
 	Examples:
 	  $0 list
@@ -176,7 +177,7 @@ board_arch() {
 		sun6i | sun7i | sun8i | mt7623 | sunplus-sp7021-bpi)
 			printf 'armhf\n'
 			;;
-		spacemit)
+		spacemit | spacemit-k3-bpi)
 			printf 'riscv64\n'
 			;;
 		*)
@@ -197,7 +198,13 @@ release_supports_arch() {
 default_boards() {
 	local path id
 
-	for path in config/boards/bananapi*.conf config/boards/bananapi*.csc config/boards/bananapi*.eos; do
+	for path in \
+		config/boards/bananapi*.conf \
+		config/boards/bananapi*.csc \
+		config/boards/bananapi*.eos \
+		config/boards/bpi-*.conf \
+		config/boards/bpi-*.csc \
+		config/boards/bpi-*.eos; do
 		[[ -f "${path}" ]] || continue
 		id="${path#config/boards/}"
 		printf '%s\n' "${id%.*}"
@@ -214,7 +221,7 @@ default_boards() {
 	fi
 
 	if [[ "${INCLUDE_WIP}" == "yes" ]]; then
-		for path in config/boards/bananapi*.wip; do
+		for path in config/boards/bananapi*.wip config/boards/bpi-*.wip; do
 			[[ -f "${path}" ]] || continue
 			id="${path#config/boards/}"
 			printf '%s\n' "${id%.*}"
@@ -270,7 +277,7 @@ make_command() {
 				"DESKTOP_ENVIRONMENT=${DESKTOP_ENVIRONMENT}"
 				"DESKTOP_TIER=${DESKTOP_TIER}"
 			)
-			if board_has_no_video_output "${board}"; then
+			if [[ "${ALLOW_HEADLESS_DESKTOP}" == "yes" ]] && board_has_no_video_output "${board}"; then
 				cmd+=("ALLOW_HEADLESS_DESKTOP=yes")
 			fi
 			;;
@@ -455,6 +462,15 @@ for board in ${BOARDS}; do
 			fi
 
 			for image_type in ${IMAGE_TYPES}; do
+				if [[ "${image_type}" == "desktop" ]] && \
+					[[ "${ALLOW_HEADLESS_DESKTOP}" != "yes" ]] && \
+					board_has_no_video_output "${board}"; then
+					printf '略過：%s/%s %s 為無影像輸出板卡，預設不建置 desktop\n' \
+						"${board}" "${branch}" "${release}" >&2
+					((skipped += 1))
+					continue
+				fi
+
 				((total += 1))
 				case "${action}" in
 					list)
