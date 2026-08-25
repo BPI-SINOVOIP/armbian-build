@@ -1,6 +1,6 @@
 From: Banana Pi -BPI <lionwang@sinovoip.com.cn>
 Date: Wed, 19 Aug 2026 23:00:00 +0800
-Subject: [PATCH] sunxi: 採用 0845 實測收斂的 DDR lane 參數
+Subject: [PATCH] BPI-M4-Zero-DDR-0845-lane-profile
 
 0845 使用既有 X2 設定時，在 792 MHz M2 測試發現可重現的位元錯誤。
 改用 1116 原廠動態訓練輸出的 TPR11 與 TPR12 後，0845 的 TPR6

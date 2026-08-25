@@ -106,6 +106,24 @@ class BananaPiMesonSourcePolicyTests(unittest.TestCase):
         )
         self.assertEqual(matching, [])
 
+    def test_bananapi_patch_mailbox_subjects_are_ascii(self) -> None:
+        for patch in (ROOT / "patch").rglob("*.patch"):
+            if "bananapi" not in str(patch).lower():
+                continue
+            with patch.open("rb") as stream:
+                subject = next(
+                    (
+                        line.rstrip(b"\r\n")
+                        for line in stream
+                        if line.startswith(b"Subject: ")
+                    ),
+                    None,
+                )
+            if subject is None:
+                continue
+            with self.subTest(patch=patch.relative_to(ROOT)):
+                subject.decode("ascii")
+
 
 if __name__ == "__main__":
     unittest.main()

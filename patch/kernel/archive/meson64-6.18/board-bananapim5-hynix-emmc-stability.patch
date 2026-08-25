@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Banana Pi -BPI <lionwang@sinovoip.com.cn>
 Date: Wed, 26 Aug 2026 00:00:00 +0800
-Subject: [PATCH] arm64: dts: amlogic: 降低 Banana Pi M5 eMMC 時脈
+Subject: [PATCH] BPI-M5-Linux-eMMC-100MHz-HS200
 
 部分 Banana Pi M5 批次搭配 Hynix eMMC 時，較高的 Meson eMMC
 時序可能降低長時間讀寫與啟動穩定性。Linux 保留 HS200，但停用 HS400

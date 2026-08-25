@@ -1,6 +1,6 @@
 From: Banana Pi -BPI <lionwang@sinovoip.com.cn>
 Date: Thu, 13 Aug 2026 13:10:00 +0800
-Subject: [PATCH] sunxi: 採用 BPI-M4 Zero 跨板 DDR 候選
+Subject: [PATCH] BPI-M4-Zero-Orange-Pi-Zero-3-DDR-baseline
 
 先以單一執行期 SPL 實驗器，
 分別掃描 0438 與 1116 兩片 4 GiB 板。

@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Banana Pi -BPI <lionwang@sinovoip.com.cn>
 Date: Wed, 26 Aug 2026 00:00:00 +0800
-Subject: [PATCH] Banana Pi M5：U-Boot 採保守 eMMC 時序
+Subject: [PATCH] BPI-M5-U-Boot-eMMC-25MHz-legacy
 
 部分 M5 批次搭配 Hynix eMMC 時，在 U-Boot 高速模式讀取大型檔案可能
 失敗。U-Boot 只負責可靠載入開機檔案，因此以 8-bit legacy 模式限制在
