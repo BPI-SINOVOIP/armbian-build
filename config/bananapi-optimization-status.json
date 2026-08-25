@@ -1,0 +1,98 @@
+{
+  "schema_version": 1,
+  "updated": "2026-08-26",
+  "batches": {
+    "A": [
+      "bananapim5",
+      "bananapim2pro",
+      "bananapicm4io",
+      "bananapim2s"
+    ],
+    "B": [
+      "bananapi",
+      "bananapim2plus",
+      "bananapif3",
+      "bananapim5pro",
+      "bananapim7",
+      "bpi-ai2n"
+    ],
+    "C": [
+      "bananapim1plus",
+      "bananapipro",
+      "bananapim2",
+      "bananapim2berry",
+      "bananapim2magic",
+      "bananapim2ultra",
+      "bananapim2zero",
+      "bananapim3",
+      "bananapim64",
+      "bananapip2zero",
+      "bananapi6204"
+    ],
+    "D": [
+      "bananapir2",
+      "bananapir2pro",
+      "bananapir3",
+      "bananapir3mini",
+      "bananapir4",
+      "bananapir4lite",
+      "bananapir4pro",
+      "bananapir64"
+    ],
+    "E": [
+      "bananapiaim7",
+      "bananapicm2",
+      "bananapicm5pro",
+      "bananapiforge1",
+      "bananapim1super",
+      "bananapim4super",
+      "bananapip2pro",
+      "bananapiw3"
+    ],
+    "F": [
+      "bananapicm6",
+      "bananapif2p",
+      "bananapif2s",
+      "bananapim2c",
+      "bananapim4",
+      "bananapim6",
+      "bananapism10",
+      "bananapiw2"
+    ],
+    "G": [
+      "bananapir1"
+    ],
+    "R": [
+      "bananapim4zero",
+      "bananapim4berry"
+    ]
+  },
+  "evidence": {
+    "bananapim4zero": {
+      "level": "L3",
+      "basis": "已有多板啟動與 DDR 證據；功能與長時間冷啟動門檻仍未關閉"
+    },
+    "bananapim4berry": {
+      "level": "L4",
+      "basis": "已有單片 2 GiB 的 GPU、VPU、Crypto、I/O 與十映像證據；仍缺 4 GiB、多板與外接迴路"
+    }
+  },
+  "open_findings": {
+    "bananapim4zero": [
+      "板卡設定封鎖主線 RTL8821CU 驅動，須修正並加入回歸測試"
+    ],
+    "bananapim4berry": [
+      "矩陣工具須防止既有映像被錯標為目前來源提交",
+      "壓縮映像須以串流雜湊證明解壓內容與同名原始映像一致"
+    ],
+    "bpi-ai2n": [
+      "family 設定含固定 root 密碼，且正式板卡欄位不完整"
+    ],
+    "bananapism10": [
+      "原廠啟動二進位與實機開機仍未完成驗證"
+    ],
+    "bananapim2c": [
+      "仍採 secure PAC 與 Yocto 混合流程，尚非一般 Armbian SD 首階段啟動"
+    ]
+  }
+}
