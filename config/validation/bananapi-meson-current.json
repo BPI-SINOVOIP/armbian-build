@@ -1,0 +1,85 @@
+{
+  "schema_version": 1,
+  "fip_commit": "e11ae32f65219e9cba903e9744f216239b41386a",
+  "common_packages": [
+    "gpiod",
+    "i2c-tools",
+    "python3-libgpiod",
+    "python3-spidev",
+    "v4l-utils",
+    "rfkill",
+    "bluetooth",
+    "bluez",
+    "bluez-tools"
+  ],
+  "common_kernel_options": {
+    "CONFIG_BT_HCIUART_RTL": "y",
+    "CONFIG_CRYPTO_DEV_AMLOGIC_GXL": "y",
+    "CONFIG_DRM_MESON": "y",
+    "CONFIG_DRM_PANFROST": "m",
+    "CONFIG_DWMAC_MESON": "m",
+    "CONFIG_I2C_MESON": "y",
+    "CONFIG_MMC_MESON_GX": "y",
+    "CONFIG_PWM_MESON": "y",
+    "CONFIG_SPI_MESON_SPICC": "y",
+    "CONFIG_STMMAC_ETH": "y",
+    "CONFIG_USB_CONFIGFS_MASS_STORAGE": "y",
+    "CONFIG_USB_DWC2": "y",
+    "CONFIG_USB_DWC3": "y",
+    "CONFIG_USB_GADGET": "y",
+    "CONFIG_VIDEO_MESON_GE2D": "m",
+    "CONFIG_VIDEO_MESON_VDEC": "m"
+  },
+  "boards": {
+    "bananapim5": {
+      "family": "meson-sm1",
+      "dtb": "amlogic/meson-sm1-bananapi-m5.dtb",
+      "uboot_tag": "v2024.07",
+      "fip_directory": "bananapi-m5",
+      "fip_manifest_sha256": "5389454805b06de71caf40d84f9d63081bb4cd1671e1f44708eb39bfebc70887",
+      "emmc_max_frequency": 100000000,
+      "emmc_no_hs400": true,
+      "required_overlays": [
+        "meson-sm1-bananapi-m5-rtl8822cs.dtbo",
+        "meson-sm1-bananapi-uartA.dtbo"
+      ]
+    },
+    "bananapim2pro": {
+      "family": "meson-sm1",
+      "dtb": "amlogic/meson-sm1-bananapi-m2-pro.dtb",
+      "uboot_tag": "v2024.07",
+      "fip_directory": "bananapi-m2-pro",
+      "fip_manifest_sha256": "534c3be4414e2e45f0305983eb66634e48f729bc56730eccfd7625c55d870d15",
+      "emmc_max_frequency": 200000000,
+      "emmc_no_hs400": false,
+      "required_overlays": [
+        "meson-sm1-bananapi-uartA.dtbo"
+      ]
+    },
+    "bananapicm4io": {
+      "family": "meson-g12b",
+      "dtb": "amlogic/meson-g12b-bananapi-cm4-cm4io.dtb",
+      "uboot_tag": "v2026.01",
+      "fip_directory": "bananapi-m2s",
+      "fip_manifest_sha256": "356ce998e920b72d0fdb915aa57dffea45e98ba93ac2c16cfec96f5a14dc26b6",
+      "emmc_max_frequency": 100000000,
+      "emmc_no_hs400": true,
+      "required_overlays": [
+        "meson-g12b-bananapi-cm4-i2c2.dtbo",
+        "meson-g12b-bananapi-cm4-pwm-gpioh-5-fan.dtbo"
+      ]
+    },
+    "bananapim2s": {
+      "family": "meson-g12b",
+      "dtb": "amlogic/meson-g12b-a311d-bananapi-m2s.dtb",
+      "uboot_tag": "v2026.01",
+      "fip_directory": "bananapi-m2s",
+      "fip_manifest_sha256": "356ce998e920b72d0fdb915aa57dffea45e98ba93ac2c16cfec96f5a14dc26b6",
+      "emmc_max_frequency": 200000000,
+      "emmc_no_hs400": false,
+      "required_overlays": [
+        "meson-g12b-bananapi-m2s-rtl8822cs.dtbo"
+      ]
+    }
+  }
+}

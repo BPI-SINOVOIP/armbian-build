@@ -55,6 +55,14 @@ class BananaPiMesonSourcePolicyTests(unittest.TestCase):
                     text,
                 )
 
+    def test_board_fip_pin_runs_after_family_fetch(self) -> None:
+        for board in BOARDS:
+            with self.subTest(board=board):
+                self.assertIn(
+                    "fetch_sources_tools__900_bananapi_amlogic_fip",
+                    self.board_text(board),
+                )
+
     def test_a311d_boards_do_not_force_performance_governor(self) -> None:
         for board in ("bananapicm4io", "bananapim2s"):
             with self.subTest(board=board):

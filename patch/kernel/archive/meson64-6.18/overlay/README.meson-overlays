@@ -29,3 +29,41 @@ Aliased to i2c0 for hardkernel odroid-c4 compatibility
 
 Activates i2c3 bus over GPIOA-14(D27/SDA) and GPIOA-15(D28/SCL)
 Aliased to i2c1 for hardkernel odroid-c4 compatibility
+
+### Banana Pi Meson 覆蓋設定清單
+
+- meson-g12b-bananapi-cm4-i2c2
+- meson-g12b-bananapi-cm4-pwm-gpioh-5-fan
+- meson-g12b-bananapi-m2s-rtl8822cs
+- meson-sm1-bananapi-m5-rtl8822cs
+- meson-sm1-bananapi-uartA
+- meson-sm1-bananapi-uartA_cts_rts
+- meson-sm1-bananapi-uartAO_B
+
+### meson-g12b-bananapi-cm4-i2c2
+
+在 BPI-CM4IO 啟用 I2C2。此設定會停用共用接腳的 UART_A，兩項功能不能同時使用。
+
+### meson-g12b-bananapi-cm4-pwm-gpioh-5-fan
+
+在 BPI-CM4IO 以 GPIOH_5 控制風扇，CPU 或 DDR 溫度達 55°C 時啟動，回差為 10°C。使用前必須核對載板風扇電路與有效電位。
+
+### meson-g12b-bananapi-m2s-rtl8822cs
+
+在 BPI-M2S 啟用 RTL8822CS 的 SDIO Wi-Fi 與 UART Bluetooth。沒有安裝對應模組時不應啟用。
+
+### meson-sm1-bananapi-m5-rtl8822cs
+
+在 BPI-M5 啟用選配 RTL8822CS 的 SDIO Wi-Fi 與 UART Bluetooth。此設定會占用 UART_A，不得同時啟用 UART_A overlay。
+
+### meson-sm1-bananapi-uartA
+
+在 BPI-M5 或 BPI-M2 Pro 啟用 UART_A 的 TX／RX。BPI-M5 使用 RTL8822CS Bluetooth 時不得同時啟用。
+
+### meson-sm1-bananapi-uartA_cts_rts
+
+在 BPI-M5 或 BPI-M2 Pro 啟用 UART_A 的 TX／RX／CTS／RTS。BPI-M5 使用 RTL8822CS Bluetooth 時不得同時啟用。
+
+### meson-sm1-bananapi-uartAO_B
+
+在 BPI-M5 或 BPI-M2 Pro 啟用 UART_AO_B。啟用前必須依板卡原理圖核對實體接腳與電壓。
