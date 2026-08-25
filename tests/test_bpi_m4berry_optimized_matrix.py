@@ -46,6 +46,10 @@ class M4BerryOptimizedMatrixTests(unittest.TestCase):
         self.assertIn("CONFIG_VIDEO_SUNXI_CEDRUS=y", verifier)
         self.assertIn("CONFIG_SUN50I_H6_PRCM_PPU=y", verifier)
         self.assertIn("CONFIG_DRM_PANFROST=m", verifier)
+        self.assertIn("CONFIG_RTW88_8821CU=m", verifier)
+        self.assertIn("rtw88_8821cu.ko", verifier)
+        self.assertIn("usb:v0BDApC820", verifier)
+        self.assertIn("blacklist[[:space:]]+rtw88_8821cu", verifier)
         self.assertIn("gstreamer1.0-plugins-bad", verifier)
         self.assertIn("M4 Berry H618 十映像矩陣全部通過唯讀驗證", verifier)
 

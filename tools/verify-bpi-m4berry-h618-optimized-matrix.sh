@@ -8,7 +8,7 @@ expected_profiles=(cli xfce)
 expected_count=$(( ${#expected_releases[@]} * ${#expected_profiles[@]} ))
 verify_archives="${VERIFY_ARCHIVES:-yes}"
 
-for command in awk basename find grep lsblk losetup mktemp mount mountpoint \
+for command in awk basename find grep lsblk losetup mktemp modinfo mount mountpoint \
 	sha256sum sort sudo udevadm umount wc xz; do
 	command -v "${command}" >/dev/null || {
 		echo "缺少必要命令：${command}" >&2
@@ -71,7 +71,7 @@ validate_mounted_image() (
 	local image=$1
 	local release=$2
 	local profile=$3
-	local loop_device partition mount_dir config_file package
+	local loop_device partition mount_dir config_file package module_file modprobe_dir
 
 	mount_dir=$(mktemp -d "${repo_dir}/.tmp/m4berry-verify.XXXXXX")
 	loop_device=$(sudo losetup --find --show --partscan --read-only "${image}")
@@ -114,6 +114,22 @@ validate_mounted_image() (
 		fail "${release} ${profile} 未啟用 Panfrost"
 	grep -qx 'CONFIG_CRYPTO_DEV_SUN8I_CE=m' "${config_file}" ||
 		fail "${release} ${profile} 未啟用 Crypto Engine"
+	grep -qx 'CONFIG_RTW88_8821CU=m' "${config_file}" ||
+		fail "${release} ${profile} 未啟用主線 RTL8821CU 驅動"
+
+	module_file=$(find "${mount_dir}/lib/modules" -type f \
+		-name 'rtw88_8821cu.ko*' -print -quit)
+	[[ -n "${module_file}" ]] || fail "${release} ${profile} 缺少 rtw88_8821cu 模組"
+	modinfo -F alias "${module_file}" | grep -Eqi 'usb:v0BDApC820' ||
+		fail "${release} ${profile} 的 rtw88_8821cu 不支援 0bda:c820"
+	for modprobe_dir in etc/modprobe.d usr/lib/modprobe.d lib/modprobe.d; do
+		[[ -d "${mount_dir}/${modprobe_dir}" ]] || continue
+		if grep -RhsEq \
+			'^[[:space:]]*blacklist[[:space:]]+rtw88_8821cu([[:space:]]|$)' \
+			"${mount_dir}/${modprobe_dir}"; then
+			fail "${release} ${profile} 封鎖了 rtw88_8821cu"
+		fi
+	done
 
 	[[ -s "${mount_dir}/boot/Image" ]] || fail "${release} ${profile} 缺少核心映像"
 	[[ -s "${mount_dir}/boot/dtb/allwinner/sun50i-h618-bananapi-m4-berry.dtb" ]] ||

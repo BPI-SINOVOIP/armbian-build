@@ -7,6 +7,8 @@ import unittest
 
 REPO_DIR = Path(__file__).resolve().parents[1]
 BOARD_CONFIG = REPO_DIR / "config/boards/bananapim4berry.conf"
+CURRENT_KERNEL_CONFIG = REPO_DIR / "config/kernel/linux-sunxi64-current.config"
+EDGE_KERNEL_CONFIG = REPO_DIR / "config/kernel/linux-sunxi64-edge.config"
 OVERLAY_DIR = REPO_DIR / "patch/kernel/archive/sunxi-6.18/overlay_64"
 UDEV_RULES = (
     REPO_DIR / "packages/bsp/bananapi-m4berry/99-bananapi-m4berry-io.rules"
@@ -39,6 +41,18 @@ class M4BerryIoTests(unittest.TestCase):
             "libdrm-tests",
         ):
             self.assertIn(package, config)
+
+    def test_mainline_rtl8821cu_driver_is_not_blocked(self) -> None:
+        config = BOARD_CONFIG.read_text(encoding="utf-8")
+        self.assertNotIn("wifi-rtl8821cu/etc/modprobe.d/8821cu.conf", config)
+        self.assertNotRegex(
+            config,
+            r"MODULES_BLACKLIST=.*\brtw88_(?:8821c|8821cu)\b",
+        )
+
+        for kernel_config_path in (CURRENT_KERNEL_CONFIG, EDGE_KERNEL_CONFIG):
+            kernel_config = kernel_config_path.read_text(encoding="utf-8")
+            self.assertIn("CONFIG_RTW88_8821CU=m", kernel_config)
 
     def test_header_pwm_overlay_is_built_and_documented(self) -> None:
         makefile = (OVERLAY_DIR / "Makefile").read_text(encoding="utf-8")
