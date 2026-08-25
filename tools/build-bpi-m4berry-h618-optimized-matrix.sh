@@ -16,6 +16,7 @@ for command in basename cut find flock git mkdir mv rm sha256sum stat tee unlink
 		exit 1
 	}
 done
+source_commit="$(git -C "${repo_dir}" rev-parse HEAD)"
 
 mkdir -p "${output_dir}/logs" "${repo_dir}/.tmp"
 exec 9>"${output_dir}/.build.lock"
@@ -111,7 +112,7 @@ for release in "${releases[@]}"; do
 			printf 'release=%s\n' "${release}"
 			printf 'profile=%s\n' "${profile}"
 			printf 'build_method=full_compile_sh_build\n'
-			printf 'source_commit=%s\n' "$(git -C "${repo_dir}" rev-parse HEAD)"
+			printf 'source_commit=%s\n' "${source_commit}"
 			printf 'kernel_branch=current\n'
 			printf 'dram_clock_mhz=792\n'
 			printf 'cma_mib=256\n'

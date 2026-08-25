@@ -37,6 +37,14 @@ class M4BerryOptimizedMatrixTests(unittest.TestCase):
         self.assertIn("raw_sha256", self.script)
         self.assertIn("xz_sha256", self.script)
 
+    def test_source_commit_is_captured_once_for_the_whole_matrix(self) -> None:
+        snapshot = 'source_commit="$(git -C "${repo_dir}" rev-parse HEAD)"'
+        self.assertIn(snapshot, self.script)
+        self.assertEqual(self.script.count("rev-parse HEAD"), 1)
+        self.assertIn(
+            "printf 'source_commit=%s\\n' \"${source_commit}\"", self.script
+        )
+
     def test_read_only_matrix_verifier_checks_every_image(self) -> None:
         verifier = (
             REPO_DIR / "tools/verify-bpi-m4berry-h618-optimized-matrix.sh"

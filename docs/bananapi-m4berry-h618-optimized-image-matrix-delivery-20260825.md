@@ -18,7 +18,7 @@ output/images/2026.08/bpi-m4berry-a1-h618-optimized-792-matrix/
 
 ```text
 branch=bpi-m4berry-a1-ddr-port-20260823
-source_commit=621a0d5b7a83033c0afbc52b988d87c8f0362f4f
+source_commit=16144c5c076c984a0fb0892055be34ab4a11b858
 kernel=6.18.46-current-sunxi64
 u-boot=2025.04
 dram_clock_mhz=792
@@ -36,20 +36,20 @@ cma_mib=256
 
 | 發行版 | 類型 | 原始容量 | 壓縮容量 | 壓縮檔 SHA-256 | 壓縮檔名 |
 | --- | --- | ---: | ---: | --- | --- |
-| Bookworm | CLI | 1.5 GiB | 312 MiB | `fcfff769222e36b462ce5b07eca70b048853ac6c26f7ced8e9d8f76dcf7a2b23` | `Armbian-unofficial_26.05.0-trunk_Bananapim4berry_bookworm_current_6.18.46_minimal_a1-h618-optimized-792mhz.img.xz` |
-| Bookworm | XFCE | 4.8 GiB | 966 MiB | `b0ebdefbab7c4b94461c77f086b8e07873d3a422c08c0921302ef50beff13fdd` | `Armbian-unofficial_26.05.0-trunk_Bananapim4berry_bookworm_current_6.18.46_xfce_desktop_a1-h618-optimized-792mhz.img.xz` |
-| Trixie | CLI | 1.5 GiB | 329 MiB | `c9736ab312dcf87785673e632168982bce29b30df67fa5925dc698e84c52b070` | `Armbian-unofficial_26.05.0-trunk_Bananapim4berry_trixie_current_6.18.46_minimal_a1-h618-optimized-792mhz.img.xz` |
-| Trixie | XFCE | 5.4 GiB | 1.1 GiB | `48bd37d417d21909010d189de514f7d35ba12589936f11ad32d842d4b9fb3a94` | `Armbian-unofficial_26.05.0-trunk_Bananapim4berry_trixie_current_6.18.46_xfce_desktop_a1-h618-optimized-792mhz.img.xz` |
-| Jammy | CLI | 1.5 GiB | 316 MiB | `73fb1caedbb06b0d2af39d2360ccbdc2bf26e57afb002b9fdf2e6ff15d3f7a3a` | `Armbian-unofficial_26.05.0-trunk_Bananapim4berry_jammy_current_6.18.46_minimal_a1-h618-optimized-792mhz.img.xz` |
-| Jammy | XFCE | 4.4 GiB | 911 MiB | `b6f534691512aed3daf09fb7f1b5f9446176cbbc92b2894e7684a3a3d57ac3ee` | `Armbian-unofficial_26.05.0-trunk_Bananapim4berry_jammy_current_6.18.46_xfce_desktop_a1-h618-optimized-792mhz.img.xz` |
-| Noble | CLI | 1.5 GiB | 314 MiB | `3a9dd4429df3eb1b2a07e84c1d31f61a4ce79f4c28bd37e60777de1dc9f7ac0d` | `Armbian-unofficial_26.05.0-trunk_Bananapim4berry_noble_current_6.18.46_minimal_a1-h618-optimized-792mhz.img.xz` |
-| Noble | XFCE | 4.7 GiB | 907 MiB | `342bad86f2233b1108a388850cc57c5510b4ec9d25e68c4945a4960c0c9725ad` | `Armbian-unofficial_26.05.0-trunk_Bananapim4berry_noble_current_6.18.46_xfce_desktop_a1-h618-optimized-792mhz.img.xz` |
-| Resolute | CLI | 1.5 GiB | 329 MiB | `9b8f6a186e473ac763956b39b3c6fb7edb109d9d663f3bcdc5178063eafec9b7` | `Armbian-unofficial_26.05.0-trunk_Bananapim4berry_resolute_current_6.18.46_minimal_a1-h618-optimized-792mhz.img.xz` |
-| Resolute | XFCE | 5.2 GiB | 994 MiB | `7bbac52b04f7cb1b4e2fb90ed47acc974d66b20ec9da88fa49e2b164fc3a2100` | `Armbian-unofficial_26.05.0-trunk_Bananapim4berry_resolute_current_6.18.46_xfce_desktop_a1-h618-optimized-792mhz.img.xz` |
+| Bookworm | CLI | 1.4 GiB | 310.3 MiB | `7aa9b52e1cc1977cdcddcc3bd520310cff01beb1d75bd9940a8b3684828a2ccc` | `Armbian-unofficial_26.05.0-trunk_Bananapim4berry_bookworm_current_6.18.46_minimal_a1-h618-optimized-792mhz.img.xz` |
+| Bookworm | XFCE | 4.7 GiB | 970.2 MiB | `88acb541fff3197942974975f7c40032d4af3a8258502cdc5dde785b528e9b0b` | `Armbian-unofficial_26.05.0-trunk_Bananapim4berry_bookworm_current_6.18.46_xfce_desktop_a1-h618-optimized-792mhz.img.xz` |
+| Trixie | CLI | 1.5 GiB | 328.1 MiB | `d3908358673497290542e1c2341df965ff91021ea49ed7c01429f8ceeaebda63` | `Armbian-unofficial_26.05.0-trunk_Bananapim4berry_trixie_current_6.18.46_minimal_a1-h618-optimized-792mhz.img.xz` |
+| Trixie | XFCE | 5.3 GiB | 1072.4 MiB | `d8de2c8ca5f854378624075eca2937760fb1974b721268af3a934e10492dfb78` | `Armbian-unofficial_26.05.0-trunk_Bananapim4berry_trixie_current_6.18.46_xfce_desktop_a1-h618-optimized-792mhz.img.xz` |
+| Jammy | CLI | 1.4 GiB | 317.2 MiB | `60fe1153ed3880ff81bd04042f40df7d4fb5ac72f7f548fdb9e16e13500316c4` | `Armbian-unofficial_26.05.0-trunk_Bananapim4berry_jammy_current_6.18.46_minimal_a1-h618-optimized-792mhz.img.xz` |
+| Jammy | XFCE | 4.3 GiB | 908.8 MiB | `950336653ceb5826032c5d7bf6b245d14f8d192e31a754433f976a0b2d5d28dd` | `Armbian-unofficial_26.05.0-trunk_Bananapim4berry_jammy_current_6.18.46_xfce_desktop_a1-h618-optimized-792mhz.img.xz` |
+| Noble | CLI | 1.4 GiB | 312.3 MiB | `90367816f6eadd0cc0fe03ce544f97708abfb7a9785e8a95d6d628c33124eb5e` | `Armbian-unofficial_26.05.0-trunk_Bananapim4berry_noble_current_6.18.46_minimal_a1-h618-optimized-792mhz.img.xz` |
+| Noble | XFCE | 4.7 GiB | 906.7 MiB | `b7c9dd812f67a73692b33cd35fd1a04f4949f61f58d4b7cc75a954bd357c7d4a` | `Armbian-unofficial_26.05.0-trunk_Bananapim4berry_noble_current_6.18.46_xfce_desktop_a1-h618-optimized-792mhz.img.xz` |
+| Resolute | CLI | 1.4 GiB | 327.2 MiB | `2bb307b7fb13431ab88fb933fc1c5439e467bbc10a56c9e646f3f0eb80059875` | `Armbian-unofficial_26.05.0-trunk_Bananapim4berry_resolute_current_6.18.46_minimal_a1-h618-optimized-792mhz.img.xz` |
+| Resolute | XFCE | 5.1 GiB | 988.1 MiB | `5780fdf94ef4c4017cd7c858c0fa700daefff087cf64083215e939a8388fcbe3` | `Armbian-unofficial_26.05.0-trunk_Bananapim4berry_resolute_current_6.18.46_xfce_desktop_a1-h618-optimized-792mhz.img.xz` |
 
-廚房秤桌面整機的第一優先驗證映像為 Noble XFCE；無桌面的產品服務基線
-可先驗證 Noble CLI。其他八個映像用於發行版相容、回歸與客戶選型，不代表
-所有發行版都已取得相同的實機時數。
+一般桌面用途建議優先驗證 Noble XFCE；無桌面服務或嵌入式專案可優先
+驗證 Noble CLI。其他八個映像用於發行版相容性與回歸測試，不代表
+所有發行版都已取得相同的實機驗證時數。
 
 ## 離線驗證
 
@@ -68,6 +68,8 @@ cma_mib=256
 - `CONFIG_SUN50I_H6_PRCM_PPU=y`。
 - `CONFIG_DRM_PANFROST=m`。
 - `CONFIG_CRYPTO_DEV_SUN8I_CE=m`。
+- `CONFIG_RTW88_8821CU=m`、模組與 USB `0bda:c820` 別名存在。
+- 映像沒有將主線 `rtw88_8821cu` 驅動加入黑名單。
 - 核心映像、M4 Berry DTB、PG19 PWM overlay 與 40-pin 文件。
 - 硬體盤點工具、相容層安裝器與受控 udev 權限規則。
 - 所有映像的 GPIO、I2C、SPI、V4L2 套件。
@@ -86,6 +88,7 @@ output/images/2026.08/bpi-m4berry-a1-h618-optimized-792-matrix/VALIDATION_REPORT
 - Cedrus H.264、H.265 8-bit、VP8、MPEG-2 的 H616／H618 600 MHz 能力表。
 - M4 Berry 專屬 `cma=256M`，避免 2 GiB 板的 H.265 緩衝配置失敗。
 - `sun8i-ce` Crypto Engine、Linux DRM 與 HDMI。
+- 內建 RTL8821CU 改用核心主線 `rtw88_8821cu`，移除舊外掛驅動黑名單。
 - GPIO 字元裝置、I2C、SPI、UART、PWM overlay 及受控群組權限。
 - 固定提交版本的 BPI-WiringPi2／RPi.GPIO 相容安裝路徑。
 
@@ -112,16 +115,19 @@ sync
 ## 證據限制
 
 離線驗證證明映像完整、設定一致且必要檔案與套件存在；它不等同硬體量產
-驗證。目前直接實機證據主要來自一片 2 GiB M4 Berry，已涵蓋 Panfrost、
-Cedrus 四種格式、AF_ALG Crypto、GPIO、I2C 與舊介面相容層。
+驗證。目前直接實機證據來自一片 2 GiB M4 Berry，已涵蓋 768 MiB
+`memtester`、10 分鐘 CPU／記憶體壓力、Panfrost、Cedrus 四種格式、
+AF_ALG Crypto、SD／eMMC 唯讀效能、RTL8821CU 重啟自動載入與 Wi-Fi 雙頻掃描。
+實測四核最高設定為 1416000 kHz，現版未證明可達 1.5 GHz。
 
 仍須由實驗室或客戶完成：
 
 - 2 GiB／4 GiB 各至少三片、每片至少二十次完整斷電冷啟動。
 - SD／eMMC 雙路啟動、記憶體與儲存壓力、長時間重新啟動。
 - SPI／UART／PWM 實體迴路及完整 40-pin 電氣驗證。
-- H.265 10-bit、長時間播放、seek 與客戶實際媒體。
-- 720×1280 顯示、電容觸控、條碼機、Wi-Fi、藍牙與電池供電整機測試。
+- H.265 10-bit、長時間播放、尋址與多種實際媒體。
+- 目標顯示模式、USB 輸入／資料周邊、Wi-Fi 連線傳輸、Bluetooth／BLE 配對與供電情境測試。
+- 高於 1.416 GHz 的 CPU OPP、電壓、散熱與長時間穩定性。
 - U-Boot HDMI Logo；完成獨立顯示驅動移植前不得宣稱支援。
 
 完成上述樣本數前，本批映像應標示為「工程驗證候選」，不得標示為量產
