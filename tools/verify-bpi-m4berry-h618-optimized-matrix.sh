@@ -8,8 +8,8 @@ expected_profiles=(cli xfce)
 expected_count=$(( ${#expected_releases[@]} * ${#expected_profiles[@]} ))
 verify_archives="${VERIFY_ARCHIVES:-yes}"
 
-for command in awk basename find grep lsblk losetup mktemp modinfo mount mountpoint \
-	sha256sum sort sudo udevadm umount wc xz; do
+for command in awk basename cut find grep lsblk losetup mktemp modinfo mount mountpoint \
+	sha256sum sort stat sudo udevadm umount wc xz; do
 	command -v "${command}" >/dev/null || {
 		echo "缺少必要命令：${command}" >&2
 		exit 1
@@ -28,14 +28,36 @@ grep -qx 'status=complete' "${output_dir}/COMPLETION_STATUS.txt" || {
 	echo "矩陣狀態不是 complete。" >&2
 	exit 1
 }
-sudo -n true || {
-	echo "唯讀掛載驗證需要免互動 sudo。" >&2
-	exit 1
-}
-
 fail() {
 	echo "驗證失敗：$*" >&2
 	exit 1
+}
+
+read_metadata_value() {
+	local metadata_file=$1
+	local key=$2
+	local matches=()
+
+	mapfile -t matches < <(grep -E "^${key}=" "${metadata_file}")
+	[[ ${#matches[@]} -eq 1 ]] || return 1
+	printf '%s\n' "${matches[0]#*=}"
+}
+
+require_metadata_value() {
+	local metadata_file=$1
+	local key=$2
+	local expected=$3
+	local actual
+
+	actual="$(read_metadata_value "${metadata_file}" "${key}")" ||
+		fail "中繼資料缺少唯一欄位 ${key}：${metadata_file}"
+	[[ "${actual}" == "${expected}" ]] ||
+		fail "中繼資料欄位 ${key} 不符：預期 ${expected}，實際 ${actual}"
+}
+
+validate_source_commit() {
+	local commit=$1
+	[[ "${commit}" =~ ^[0-9a-f]{40}([0-9a-f]{24})?$ ]]
 }
 
 case "${verify_archives}" in
@@ -65,6 +87,69 @@ package_installed() {
 		}
 		END { exit found ? 0 : 1 }
 	' "${root_dir}/var/lib/dpkg/status"
+}
+
+validate_artifact_identity() {
+	local release=$1
+	local profile=$2
+	local expected_raw_size=$3
+	local expected_raw_sha256=$4
+	local expected_xz_size=$5
+	local expected_xz_sha256=$6
+	local img_filename=$7
+	local xz_filename=$8
+	local expected_source_commit=$9
+	local image archive metadata actual_raw_size actual_raw_sha256
+	local actual_xz_size actual_xz_sha256 decompressed_sha256 metadata_source_commit
+
+	[[ "$(basename "${img_filename}")" == "${img_filename}" ]] ||
+		fail "${release} ${profile} 的 IMG 檔名含有路徑"
+	[[ "$(basename "${xz_filename}")" == "${xz_filename}" ]] ||
+		fail "${release} ${profile} 的 XZ 檔名含有路徑"
+	[[ "${xz_filename}" == "${img_filename}.xz" ]] ||
+		fail "${release} ${profile} 的 IMG/XZ 並非同名產物"
+	validate_source_commit "${expected_source_commit}" ||
+		fail "${release} ${profile} 的矩陣來源不明"
+
+	image="${output_dir}/${img_filename}"
+	archive="${output_dir}/${xz_filename}"
+	metadata="${image}.metadata.txt"
+	[[ -f "${image}" ]] || fail "找不到原始映像：${image}"
+	[[ -f "${archive}" ]] || fail "找不到壓縮映像：${archive}"
+	[[ -f "${metadata}" ]] || fail "找不到可信中繼資料：${metadata}"
+
+	actual_raw_size=$(stat -c %s "${image}")
+	actual_raw_sha256=$(sha256sum "${image}" | cut -d' ' -f1)
+	actual_xz_size=$(stat -c %s "${archive}")
+	actual_xz_sha256=$(sha256sum "${archive}" | cut -d' ' -f1)
+	[[ "${actual_raw_size}" == "${expected_raw_size}" ]] ||
+		fail "${release} ${profile} 的 IMG 大小與矩陣不符"
+	[[ "${actual_raw_sha256}" == "${expected_raw_sha256}" ]] ||
+		fail "${release} ${profile} 的 IMG SHA-256 與矩陣不符"
+	[[ "${actual_xz_size}" == "${expected_xz_size}" ]] ||
+		fail "${release} ${profile} 的 XZ 大小與矩陣不符"
+	[[ "${actual_xz_sha256}" == "${expected_xz_sha256}" ]] ||
+		fail "${release} ${profile} 的 XZ SHA-256 與矩陣不符"
+
+	decompressed_sha256=$(xz -dc -- "${archive}" | sha256sum | cut -d' ' -f1)
+	[[ "${decompressed_sha256}" == "${actual_raw_sha256}" ]] ||
+		fail "${release} ${profile} 的 XZ 解壓資料 SHA-256 與同名 IMG 不一致"
+
+	metadata_source_commit="$(read_metadata_value "${metadata}" source_commit)" ||
+		fail "${release} ${profile} 的中繼資料缺少唯一來源"
+	validate_source_commit "${metadata_source_commit}" ||
+		fail "${release} ${profile} 的中繼資料來源不明"
+	require_metadata_value "${metadata}" board bananapim4berry
+	require_metadata_value "${metadata}" release "${release}"
+	require_metadata_value "${metadata}" profile "${profile}"
+	require_metadata_value "${metadata}" build_method full_compile_sh_build
+	require_metadata_value "${metadata}" source_commit "${expected_source_commit}"
+	require_metadata_value "${metadata}" raw_size "${actual_raw_size}"
+	require_metadata_value "${metadata}" raw_sha256 "${actual_raw_sha256}"
+	require_metadata_value "${metadata}" xz_size "${actual_xz_size}"
+	require_metadata_value "${metadata}" xz_sha256 "${actual_xz_sha256}"
+
+	echo "產物來源與同一性通過：${release} ${profile}"
 }
 
 validate_mounted_image() (
@@ -161,14 +246,20 @@ validate_mounted_image() (
 
 mapfile -t images < <(find "${output_dir}" -maxdepth 1 -type f -name '*.img' -print | sort)
 mapfile -t archives < <(find "${output_dir}" -maxdepth 1 -type f -name '*.img.xz' -print | sort)
+mapfile -t metadata_files < <(find "${output_dir}" -maxdepth 1 -type f -name '*.img.metadata.txt' -print | sort)
 mapfile -t partials < <(find "${output_dir}" -maxdepth 1 -type f -name '*.partial' -print)
 [[ ${#images[@]} -eq ${expected_count} ]] ||
 	fail "原始映像預期 ${expected_count} 個，實際 ${#images[@]} 個"
 [[ ${#archives[@]} -eq ${expected_count} ]] ||
 	fail "壓縮映像預期 ${expected_count} 個，實際 ${#archives[@]} 個"
+[[ ${#metadata_files[@]} -eq ${expected_count} ]] ||
+	fail "中繼資料預期 ${expected_count} 個，實際 ${#metadata_files[@]} 個"
 [[ ${#partials[@]} -eq 0 ]] || fail "仍有未完成的 .partial 檔案"
 
-row_count=$(awk 'NR > 1 && NF == 8 { count++ } END { print count + 0 }' "${output_dir}/MATRIX.tsv")
+IFS= read -r matrix_header <"${output_dir}/MATRIX.tsv"
+expected_header=$'release\tprofile\traw_size\traw_sha256\txz_size\txz_sha256\timg_filename\txz_filename\tsource_commit'
+[[ "${matrix_header}" == "${expected_header}" ]] || fail "矩陣欄位格式不符"
+row_count=$(awk 'NR > 1 && NF == 9 { count++ } END { print count + 0 }' "${output_dir}/MATRIX.tsv")
 [[ ${row_count} -eq ${expected_count} ]] ||
 	fail "矩陣清單預期 ${expected_count} 筆，實際 ${row_count} 筆"
 
@@ -191,10 +282,23 @@ if [[ "${verify_archives}" == yes ]]; then
 	echo "驗證所有 xz 串流。"
 	xz -t -- "${archives[@]}"
 else
-	echo "依 VERIFY_ARCHIVES=no 略過 SHA-256 與 xz；只檢查映像內容。"
+	echo "依 VERIFY_ARCHIVES=no 略過旁車 SHA-256 與批次 xz 測試；仍執行串流同一性驗證。"
 fi
 
-while IFS=$'\t' read -r release profile _ _ _ _ img_filename _; do
+while IFS=$'\t' read -r release profile raw_size raw_sha256 xz_size xz_sha256 \
+	img_filename xz_filename source_commit; do
+	[[ "${release}" == release ]] && continue
+	validate_artifact_identity "${release}" "${profile}" "${raw_size}" \
+		"${raw_sha256}" "${xz_size}" "${xz_sha256}" "${img_filename}" \
+		"${xz_filename}" "${source_commit}"
+done <"${output_dir}/MATRIX.tsv"
+
+sudo -n true || {
+	echo "唯讀掛載驗證需要免互動 sudo。" >&2
+	exit 1
+}
+
+while IFS=$'\t' read -r release profile _ _ _ _ img_filename _ _; do
 	[[ "${release}" == release ]] && continue
 	validate_mounted_image "${output_dir}/${img_filename}" "${release}" "${profile}"
 done <"${output_dir}/MATRIX.tsv"
