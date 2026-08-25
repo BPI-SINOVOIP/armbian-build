@@ -17,7 +17,7 @@ Signed-off-by: Banana Pi -BPI <lionwang@sinovoip.com.cn>
  2 files changed, 23 insertions(+)
 
 diff --git a/arch/arm/dts/meson-sm1-bananapi-m5-u-boot.dtsi b/arch/arm/dts/meson-sm1-bananapi-m5-u-boot.dtsi
-index a86fdb5668d3..000000000000 100644
+index a86fdb5668d3..1fdb1fac05a0 100644
 --- a/arch/arm/dts/meson-sm1-bananapi-m5-u-boot.dtsi
 +++ b/arch/arm/dts/meson-sm1-bananapi-m5-u-boot.dtsi
 @@ -11,3 +11,14 @@ &ethmac {
@@ -36,7 +36,7 @@ index a86fdb5668d3..000000000000 100644
 +	max-frequency = <25000000>;
 +};
 diff --git a/drivers/mmc/meson_gx_mmc.c b/drivers/mmc/meson_gx_mmc.c
-index 0825c0a2a838..000000000000 100644
+index 0825c0a2a838..e7d12e52dd2e 100644
 --- a/drivers/mmc/meson_gx_mmc.c
 +++ b/drivers/mmc/meson_gx_mmc.c
 @@ -263,6 +263,7 @@ static int meson_mmc_probe(struct udevice *dev)

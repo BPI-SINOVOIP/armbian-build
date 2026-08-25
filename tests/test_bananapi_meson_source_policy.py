@@ -124,6 +124,21 @@ class BananaPiMesonSourcePolicyTests(unittest.TestCase):
             with self.subTest(patch=patch.relative_to(ROOT)):
                 subject.decode("ascii")
 
+    def test_m5_modified_patch_indexes_are_not_zero(self) -> None:
+        patches = (
+            ROOT
+            / "patch/kernel/archive/meson64-6.18"
+            / "board-bananapim5-hynix-emmc-stability.patch",
+            ROOT
+            / "patch/u-boot/v2024.07/board_bananapim5"
+            / "001-bananapi-m5-conservative-emmc.patch",
+        )
+        for patch in patches:
+            with self.subTest(patch=patch.relative_to(ROOT)):
+                for line in patch.read_text().splitlines():
+                    if line.startswith("index "):
+                        self.assertNotRegex(line, r"\.\.0{7,}")
+
 
 if __name__ == "__main__":
     unittest.main()

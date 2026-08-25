@@ -15,12 +15,10 @@ Signed-off-by: Banana Pi -BPI <lionwang@sinovoip.com.cn>
  1 file changed, 6 insertions(+)
 
 diff --git a/arch/arm64/boot/dts/amlogic/meson-sm1-bananapi-m5.dts b/arch/arm64/boot/dts/amlogic/meson-sm1-bananapi-m5.dts
-index 697855fec476..000000000000 100644
+index 79b9f40d67f1..c323ea889d4b 100644
 --- a/arch/arm64/boot/dts/amlogic/meson-sm1-bananapi-m5.dts
 +++ b/arch/arm64/boot/dts/amlogic/meson-sm1-bananapi-m5.dts
-@@ -162,8 +162,14 @@ &cvbs_vdac_port {
- 	cvbs_vdac_out: endpoint {
- 		remote-endpoint = <&cvbs_connector_in>;
+@@ -177,6 +177,12 @@
  	};
  };
  
