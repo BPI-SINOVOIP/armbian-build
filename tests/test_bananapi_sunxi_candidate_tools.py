@@ -13,6 +13,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 CONFIG = ROOT / "config/validation/bananapi-sunxi-a20-current.json"
+H3_CONFIG = ROOT / "config/validation/bananapi-sunxi-h3-current.json"
 BUILD_SCRIPT = ROOT / "tools/build-bananapi-sunxi-candidates.sh"
 VERIFY_SCRIPT = ROOT / "tools/verify-bananapi-sunxi-candidates.sh"
 ISOLATED_RUNNER = ROOT / "tools/run-bananapi-candidates-isolated-cache.sh"
@@ -35,6 +36,7 @@ class BananaPiSunxiCandidateToolTests(unittest.TestCase):
                 self.assertEqual(policy["uboot_tag"], "v2024.01")
                 self.assertEqual(policy["uboot_offset"], 8192)
                 self.assertEqual(policy["overlay_prefix"], "sun7i-a20")
+                self.assertEqual(policy["sd_bus_width"], 4)
                 self.assertIn("/display-engine", policy["required_status_nodes"])
                 self.assertNotIn("/soc/display-engine", policy["required_status_nodes"])
 
@@ -49,6 +51,28 @@ class BananaPiSunxiCandidateToolTests(unittest.TestCase):
             )
             packages = set(package_line.split('"', 2)[1].split())
             self.assertTrue(required <= packages)
+
+    def test_h3_reference_policy_covers_wireless_and_header_io(self) -> None:
+        config = json.loads(H3_CONFIG.read_text())
+        self.assertEqual(set(config["boards"]), {"bananapim2plus"})
+        policy = config["boards"]["bananapim2plus"]
+        self.assertEqual(policy["family"], "sun8i")
+        self.assertEqual(policy["sd_node"], "/soc/mmc@1c0f000")
+        self.assertEqual(policy["default_overlays"], ["analog-codec"])
+        self.assertTrue({"i2c0", "pwm", "spi-spidev", "uart2"} <= set(policy["required_overlays"]))
+        board_text = (ROOT / "config/boards/bananapim2plus.conf").read_text()
+        package_line = next(
+            line for line in board_text.splitlines()
+            if line.startswith('PACKAGE_LIST_BOARD="')
+        )
+        self.assertTrue(set(config["common_packages"]) <= set(package_line.split('"', 2)[1].split()))
+
+        overlay_dir = ROOT / "patch/kernel/archive/sunxi-6.18/overlay_32"
+        for overlay in policy["required_overlays"]:
+            with self.subTest(overlay=overlay):
+                self.assertTrue(
+                    (overlay_dir / f"{policy['overlay_prefix']}-{overlay}.dtso").is_file()
+                )
 
     def test_build_tool_records_reproducibility_evidence(self) -> None:
         text = BUILD_SCRIPT.read_text()
@@ -78,6 +102,8 @@ class BananaPiSunxiCandidateToolTests(unittest.TestCase):
             "fdtfile=",
             "dtb_basename",
             "overlay_prefix=",
+            "required_overlays",
+            "sd_bus_width",
             "required_status_nodes",
             "common_kernel_options",
             "candidate_source_commit",

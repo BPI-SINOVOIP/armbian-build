@@ -159,7 +159,7 @@ validate_installed_uboot() {
 validate_mounted_image() (
 	local image=$1 board=$2
 	local dtb_relative dtb_basename dtb_path fdt_override model compatible expected node option_line option value package
-	local loop_device partition mount_dir config_file overlay_prefix
+	local loop_device partition mount_dir config_file overlay_prefix overlay default_overlays overlays_line sd_node sd_bus_width
 	dtb_relative="$(board_field "${board}" dtb)"
 	dtb_basename="$(basename "${dtb_relative}")"
 	mount_dir="$(mktemp -d "${repo_dir}/.tmp/sunxi-verify.XXXXXX")"
@@ -184,6 +184,17 @@ validate_mounted_image() (
 	fi
 	overlay_prefix="$(board_field "${board}" overlay_prefix)"
 	grep -qx "overlay_prefix=${overlay_prefix}" "${mount_dir}/boot/armbianEnv.txt" || fail "${board} 的 overlay_prefix 不符"
+	default_overlays="$(board_field "${board}" default_overlays)"
+	if [[ -n "${default_overlays}" ]]; then
+		overlays_line="$(grep '^overlays=' "${mount_dir}/boot/armbianEnv.txt")" || fail "${board} 缺少預設 overlays"
+		for overlay in ${default_overlays}; do
+			[[ " ${overlays_line#overlays=} " == *" ${overlay} "* ]] || fail "${board} 未預設啟用 overlay：${overlay}"
+		done
+	fi
+	for overlay in $(board_field "${board}" required_overlays); do
+		[[ -s "${mount_dir}/boot/dtb/overlay/${overlay_prefix}-${overlay}.dtbo" ]] ||
+			fail "${board} 缺少 overlay：${overlay_prefix}-${overlay}.dtbo"
+	done
 	dtb_path="${mount_dir}/boot/dtb/${dtb_relative}"
 	if [[ ! -s "${dtb_path}" ]]; then
 		dtb_path="${mount_dir}/boot/dtb/${dtb_basename}"
@@ -198,7 +209,10 @@ validate_mounted_image() (
 	for node in $(board_field "${board}" required_status_nodes); do
 		[[ "$(fdtget -t s "${dtb_path}" "${node}" status)" == okay ]] || fail "${board} 節點未啟用：${node}"
 	done
-	[[ "$(fdtget -t u "${dtb_path}" /soc/mmc@1c0f000 bus-width)" == 4 ]] || fail "${board} 的 SD 匯流排不是 4-bit"
+	sd_node="$(board_field "${board}" sd_node)"
+	sd_bus_width="$(board_field "${board}" sd_bus_width)"
+	[[ "$(fdtget -t u "${dtb_path}" "${sd_node}" bus-width)" == "${sd_bus_width}" ]] ||
+		fail "${board} 的 SD 匯流排寬度不是 ${sd_bus_width}-bit"
 
 	config_file="$(find "${mount_dir}/boot" -maxdepth 1 -type f -name 'config-*' -print -quit)"
 	[[ -n "${config_file}" ]] || fail "${board} 缺少核心設定檔"

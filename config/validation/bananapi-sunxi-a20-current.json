@@ -36,6 +36,10 @@
       "uboot_payload": "u-boot-sunxi-with-spl.bin",
       "uboot_offset": 8192,
       "overlay_prefix": "sun7i-a20",
+      "sd_node": "/soc/mmc@1c0f000",
+      "sd_bus_width": 4,
+      "default_overlays": [],
+      "required_overlays": [],
       "required_status_nodes": [
         "/display-engine",
         "/soc/ethernet@1c50000",
@@ -61,6 +65,10 @@
       "uboot_payload": "u-boot-sunxi-with-spl.bin",
       "uboot_offset": 8192,
       "overlay_prefix": "sun7i-a20",
+      "sd_node": "/soc/mmc@1c0f000",
+      "sd_bus_width": 4,
+      "default_overlays": [],
+      "required_overlays": [],
       "required_status_nodes": [
         "/display-engine",
         "/soc/ethernet@1c50000",
