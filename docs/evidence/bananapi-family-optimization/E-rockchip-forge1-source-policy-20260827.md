@@ -32,7 +32,7 @@ DDR 與 TEE 都是不能由本倉庫來源重建的預編譯二進位；雜湊�
 
 ## 啟動與分割政策
 
-- U-Boot 以 `u-boot-rockchip.bin` 單一載荷封裝 DDR 初始化、SPL、U-Boot 與 TEE，寫入整碟映像 offset 32768 bytes。
+- U-Boot 以 `u-boot-rockchip.bin` 單一載荷封裝 DDR 初始化、SPL、U-Boot 與 TEE，寫入整碟映像 offset 32768 bytes。驗證器由受 basename 限制的板級欄位指定此載荷，並逐字確認 Banana Pi 板級身分與 Linux DTB 路徑。
 - GPT 第一分割區固定從 sector 32768 開始，也就是 16 MiB；驗證器會拒絕載荷超出保留區或映像內容與套件載荷不同。
 - U-Boot 控制 DT 使用 `rk3506j-bananapi-forge1`，供應商 Linux 則提供 `rk3506b-bananapi-forge1.dtb`。兩者都是繼承 ArmSoM 硬體描述的 Banana Pi 專用 wrapper，不會改寫共用參考 DTS；啟動腳本固定 Linux DTB 檔名，避免混用 U-Boot 的 `rk3506j` 名稱。
 - 專用啟動腳本使用 `ttyFIQ0,1500000n8`，不再沿用共用 RK3506 腳本硬編碼的 `ttyS2`。

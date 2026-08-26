@@ -102,6 +102,10 @@ class BananaPiRockchipForge1CandidateTests(unittest.TestCase):
 
     def test_uboot_payload_and_partition_reservation_are_explicit(self) -> None:
         self.assertEqual(self.board["uboot_payloads"], ["u-boot-rockchip.bin@32768"])
+        self.assertEqual(
+            self.board["uboot_binary_for_string_checks"],
+            "u-boot-rockchip.bin",
+        )
         self.assertEqual(self.board["partition_start_sector"], 32768)
         self.assertEqual(self.board["logical_sector_size"], 512)
         self.assertEqual(self.board["partition_table"], "gpt")

@@ -102,6 +102,7 @@
         "rk35/rk3506_tee_v2.10.bin",
         "u-boot-rockchip.bin"
       ],
+      "uboot_binary_for_string_checks": "u-boot-rockchip.bin",
       "uboot_required_binary_strings": [
         "Banana Pi BPI-Forge1",
         "rockchip/rk3506b-bananapi-forge1.dtb"
