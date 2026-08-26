@@ -13,7 +13,7 @@ BOOT_FDT_FILE="rockchip/rk3568-bpi-r2-pro.dtb"
 BOOTBRANCH_BOARD="tag:v2024.01"
 BOOTPATCHDIR="v2024.01"
 SRC_EXTLINUX="yes"
-SRC_CMDLINE="console=ttyS02,1500000 console=tty0"
+SRC_CMDLINE="console=ttyS2,1500000 console=tty0"
 ASOUND_STATE="asound.state.station-p2"
 IMAGE_PARTITION_TABLE="gpt"
 

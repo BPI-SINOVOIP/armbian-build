@@ -44,6 +44,15 @@ class BananaPiBoardAuditTests(unittest.TestCase):
     def test_spacemit_k3_is_riscv64(self) -> None:
         self.assertEqual(self.by_id["bananapism10"].architecture, "riscv64")
 
+    def test_forge1_uses_rockchip_armhf_family(self) -> None:
+        self.assertEqual(self.by_id["bananapiforge1"].architecture, "armhf")
+
+    def test_rk3568_uart_console_names_are_valid(self) -> None:
+        for board_id in ("bananapir2pro", "bananapicm2"):
+            cmdline = self.by_id[board_id].fields["SRC_CMDLINE"]
+            self.assertIn("console=ttyS2,1500000", cmdline)
+            self.assertNotIn("ttyS02", cmdline)
+
     def test_reference_evidence_does_not_claim_full_release(self) -> None:
         for board_id in ("bananapim5", "bananapim2pro", "bananapicm4io", "bananapim2s"):
             self.assertEqual(self.by_id[board_id].level, "L2")

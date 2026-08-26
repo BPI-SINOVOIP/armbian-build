@@ -33,6 +33,7 @@ LEVEL_NAMES = {
     "L5": "發布候選",
 }
 ARMHF_FAMILIES = {
+    "rockchip",
     "sun6i",
     "sun7i",
     "sun8i",
