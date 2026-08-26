@@ -100,6 +100,10 @@
       "level": "L2",
       "basis": "Trixie current CLI 已由乾淨來源完整建置並通過映像、U-Boot、H2+ DTB、SD／SDIO／8-bit eMMC、Ethernet、硬體加速設定、overlay 與標準 I/O 工具唯讀守門；仍待實機驗證"
     },
+    "bananapip2pro": {
+      "level": "L2",
+      "basis": "Trixie current CLI 已由乾淨來源完整建置並通過映像、U-Boot、固定 RKBin 啟動依賴、RK3308 DTB、SD／eMMC／SDIO、overlay 與標準 I/O 工具唯讀守門；仍待實機驗證"
+    },
     "bananapipro": {
       "level": "L2",
       "basis": "Trixie current CLI 已由乾淨來源完整建置並通過映像、U-Boot、A20 DTB、核心功能與標準 I/O 工具唯讀守門；仍待實機驗證"
