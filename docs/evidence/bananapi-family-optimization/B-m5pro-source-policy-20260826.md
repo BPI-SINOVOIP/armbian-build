@@ -16,6 +16,8 @@
 
 三個提交皆可由宣告遠端取得。固定只在 M5 Pro 的 `edge` hook 生效，不改動其他 RK3576 板卡或 `vendor` 分支。
 
+Linux 7.0.14 已包含 `serial: 8250_dw: dispatch SysRq character in dw8250_handle_irq()` 的穩定分支修正。舊的 Armbian 7.0 臨時修補會重複修改相同鎖定路徑，因此本次移除該過時修補，避免對已修正的核心重複套用；此變更只影響 `rockchip64-7.0` 修補目錄。
+
 ## RK3576 啟動輸入
 
 本次固定 DDR v1.08、BL31 v1.20、FlashBoost v1.02、USB plug v1.03、`RK3576MINIALL.ini` 與 `boot_merger` 的 SHA-256。DDR v1.09 曾在部分 RK3576 板卡出現啟動失敗，因此軟體候選維持 v1.08，後續只有在多板冷啟動證據足夠時才評估更新。

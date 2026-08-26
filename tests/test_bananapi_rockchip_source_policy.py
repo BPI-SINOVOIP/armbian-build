@@ -225,6 +225,14 @@ printf 'kernel_source=%s\\nkernel=%s\\nuboot=%s\\nrkbin=%s\\n' \
         self.assertTrue(RADIO_PACKAGES <= packages)
         self.assertTrue({"pciutils", "nvme-cli", "usbutils", "iw", "ethtool"} <= packages)
 
+    def test_linux_7_0_does_not_reapply_upstream_sysrq_fix(self) -> None:
+        obsolete_patch = (
+            ROOT
+            / "patch/kernel/archive/rockchip64-7.0"
+            / "general-serial-8250-fix-sysrq-break-dw-apb.patch"
+        )
+        self.assertFalse(obsolete_patch.exists())
+
 
 if __name__ == "__main__":
     unittest.main()
