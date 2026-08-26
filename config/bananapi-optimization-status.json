@@ -116,6 +116,10 @@
       "level": "L2",
       "basis": "Trixie current CLI 已由乾淨來源完整建置並通過映像、固定 Linux／U-Boot／firmware 來源、A83T M3 DTB、SD／SDIO／eMMC、AP6212、USB OTG、GbE、HDMI／類比音訊與標準 I/O 工具唯讀守門；仍待實機驗證"
     },
+    "bananapim64": {
+      "level": "L2",
+      "basis": "Trixie current CLI 已由乾淨來源完整建置並通過映像、固定 Linux／U-Boot／ATF／Crust／firmware 來源、A64 M64 DTB、SD／SDIO／eMMC、AP6212、USB OTG、GbE、HDMI／類比音訊、Lima、Cedrus 與標準 I/O 工具唯讀守門；仍待實機驗證"
+    },
     "bananapif3": {
       "level": "L2",
       "basis": "Trixie current CLI 已由乾淨來源完整建置並通過映像、固定 Linux／U-Boot／OpenSBI 來源、六項 SpacemiT 啟動載荷、F3 DTB、核心功能與標準 I/O 工具唯讀守門；仍待實機驗證"

@@ -29,7 +29,7 @@ bananapim4zero	conf	BananaPi BPI-M4-Zero	sun50iw9-bpi	arm64	current,edge	current
 bananapim5	conf	Banana Pi M5	meson-sm1	arm64	current,edge	current	yes	A	L2	bananapi-m5_defconfig	amlogic/meson-sm1-bananapi-m5.dtb		執行 UART、啟動與基本周邊實機驗證
 bananapim5pro	conf	Banana Pi M5 Pro	rk35xx	arm64	edge,vendor	edge	yes	B	L2	bananapi-m5-pro-rk3576_defconfig	rockchip/rk3576-bananapi-m5-pro.dtb	KERNEL_TEST_TARGET	執行 UART、啟動與基本周邊實機驗證
 bananapim6	wip	Banana Pi M6	vs680	arm64	legacy	legacy	yes	F	L0	vs680_oemboot_c05_defconfig	synaptics/vs680-a0-bananapi-m6.dtb	KERNEL_TEST_TARGET	確認建置鏈並建立 Trixie CLI 候選
-bananapim64	csc	Banana Pi M64	sun50iw1	arm64	current,edge,legacy	current	yes	C	L0	bananapi_m64_defconfig			建立 Trixie CLI 並完成離線守門
+bananapim64	csc	Banana Pi M64	sun50iw1	arm64	current,edge,legacy	current	yes	C	L2	bananapi_m64_defconfig	allwinner/sun50i-a64-bananapi-m64.dtb		執行 UART、啟動與基本周邊實機驗證
 bananapim7	conf	Banana Pi M7	rockchip-rk3588	arm64	current,edge,vendor	current	yes	B	L2	armsom-sige7-rk3588_defconfig	rockchip/rk3588-bananapi-m7.dtb		執行 UART、啟動與基本周邊實機驗證
 bananapip2pro	wip	Banana Pi P2 Pro	rockchip64	arm64	current	current	no	E	L2	bpi-p2-pro-rk3308_defconfig	rockchip/rk3308-bpi-p2-pro.dtb	KERNEL_TEST_TARGET	執行 UART、啟動與基本周邊實機驗證
 bananapip2zero	csc	Banana Pi P2 Zero	sun8i	armhf	current,edge,legacy	current	yes	C	L2	bananapi_p2_zero_defconfig	allwinner/sun8i-h2-plus-bananapi-p2-zero.dtb	BOARD_MAINTAINER	執行 UART、啟動與基本周邊實機驗證
