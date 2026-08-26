@@ -148,6 +148,10 @@
       "level": "L2",
       "basis": "Trixie current CLI 已由乾淨來源完整建置並通過映像、固定 Linux／U-Boot／RKBin／firmware 來源、GPT、雙啟動載荷、RK3568 R2 Pro DTB、雙乙太網路、MT7531、SATA、雙 PCIe、USB host、顯示與媒體設定唯讀守門；仍待實機驗證"
     },
+    "bananapi6204": {
+      "level": "L2",
+      "basis": "Trixie legacy minimal CLI 已由乾淨來源完整建置並通過映像、固定 Linux／U-Boot／firmware 來源、完整 R40 6204 DTB、eMMC 保守設定、SATA、GMAC、CAN、雙 RTC、五組 UART、USB、Lima、Cedrus 與工控 I/O 工具唯讀守門；仍待實機驗證"
+    },
     "bananapipro": {
       "level": "L2",
       "basis": "Trixie current CLI 已由乾淨來源完整建置並通過映像、U-Boot、A20 DTB、核心功能與標準 I/O 工具唯讀守門；仍待實機驗證"
