@@ -2,7 +2,7 @@
 /plugin/;
 
 / {
-	compatible = "allwinner,sun8i-h3";
+	compatible = "allwinner,sun8i-r40";
 
 	fragment@0 {
 		target-path = "/aliases";
