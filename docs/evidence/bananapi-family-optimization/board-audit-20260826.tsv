@@ -40,7 +40,7 @@ bananapir2pro	csc	Banana Pi R2 Pro	rockchip64	arm64	current,edge	current	yes	D	L
 bananapir3	wip	Banana Pi R3	filogic	arm64	current	current	no	D	L2	mt7986a_bpir3_sd_defconfig	mediatek/mt7986a-bananapi-bpi-r3-sd-nor.dtb	BOARD_MAINTAINER	執行 UART、啟動與基本周邊實機驗證
 bananapir3mini	wip	Banana Pi R3 Mini	filogic	arm64	current	current	no	D	L0	mt7986a_bpir3mini_emmc_defconfig	mediatek/mt7986a-bananapi-bpi-r3-mini.dtb	BOARD_MAINTAINER	確認建置鏈並建立 Trixie CLI 候選
 bananapir4	csc	Banana Pi R4	filogic	arm64	current	current	no	D	L2	mt7988a_bananapi_bpi-r4-sdmmc_defconfig	mediatek/mt7988a-bananapi-bpi-r4-sd.dtb	BOARD_MAINTAINER	執行 UART、啟動與基本周邊實機驗證
-bananapir4lite	wip	Banana Pi R4 Lite	filogic	arm64	current	current	no	D	L0	mt7987a_bananapi_bpi-r4-lite-sdmmc_defconfig	mediatek/mt7987a-bananapi-bpi-r4-lite-sd.dtb		確認建置鏈並建立 Trixie CLI 候選
+bananapir4lite	wip	Banana Pi R4 Lite	filogic	arm64	current	current	no	D	L2	mt7987a_bananapi_bpi-r4-lite-sdmmc_defconfig	mediatek/mt7987a-bananapi-bpi-r4-lite-sd.dtb		執行 UART、啟動與基本周邊實機驗證
 bananapir4pro	wip	Banana Pi R4 Pro 8X	filogic	arm64	current	current	no	D	L0	mt7988a_bananapi_bpi-r4-pro-8x-sdmmc_defconfig	mediatek/mt7988a-bananapi-bpi-r4-pro-8x-sd.dtb	BOARD_MAINTAINER	確認建置鏈並建立 Trixie CLI 候選
 bananapir64	csc	Banana Pi R64	filogic	arm64	current	current	no	D	L2	mt7622_bananapi_bpi-r64-sdmmc_defconfig	mediatek/mt7622-bananapi-bpi-r64.dtb	BOARD_MAINTAINER	執行 UART、啟動與基本周邊實機驗證
 bananapism10	wip	BananaPi BPI-SM10	spacemit-k3-bpi	riscv64	current	current	yes	F	L0		spacemit/k3_com260.dtb	KERNEL_TEST_TARGET	確認建置鏈並建立 Trixie CLI 候選

@@ -156,6 +156,10 @@
       "level": "L2",
       "basis": "Trixie current minimal CLI 已由隔離快取完整建置並通過映像、固定 Linux／U-Boot／ATF／firmware／mt76／linux-firmware 來源、五分割區 GPT、BL2／FIP、R4 SD DTB、MT7988 2.5G PHY／WED、MT7996、PCIe、USB、DSA、SFP 與標準 I/O 工具唯讀守門；仍待實機驗證"
     },
+    "bananapir4lite": {
+      "level": "L2",
+      "basis": "實驗性 Trixie current minimal CLI 已由隔離快取完整建置並通過映像、固定 Linux／U-Boot／ATF／firmware／linux-firmware 來源、五分割區 GPT、BL2／FIP、R4 Lite SD DTB、MT7987 2.5GbE PHY、PCIe、USB、DSA、SFP 與標準 I/O 工具唯讀守門；6.17.0-rc1 核心與實體功能仍待驗證"
+    },
     "bananapir64": {
       "level": "L2",
       "basis": "Trixie current minimal CLI 已由隔離快取完整建置並通過映像、固定 Linux／U-Boot／ATF／firmware／linux-firmware 來源、五分割區 GPT、BL2／FIP、R64 SD DTB、MT7622 無線網路／藍牙、SATA、PCIe、USB、DSA 與標準 I/O 工具唯讀守門；GPIO90 模式與實體功能仍待實機驗證"
