@@ -105,6 +105,8 @@ class BananaPiFilogicR64CandidateTests(unittest.TestCase):
 
     def test_gpt_dtb_and_dual_mmc_contract_is_complete(self) -> None:
         self.assertEqual(self.policy["root_partition_number"], 5)
+        self.assertIn("bl2.img=65000", self.policy["uboot_payload_minimum_sizes"])
+        self.assertNotIn("bl2.img=180000", self.policy["uboot_payload_minimum_sizes"])
         self.assertEqual(
             self.policy["required_partitions"],
             [

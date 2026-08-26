@@ -132,7 +132,7 @@
         "gpt"
       ],
       "uboot_payload_minimum_sizes": [
-        "bl2.img=180000",
+        "bl2.img=65000",
         "gpt=17408",
         "u-boot.fip=400000"
       ],
