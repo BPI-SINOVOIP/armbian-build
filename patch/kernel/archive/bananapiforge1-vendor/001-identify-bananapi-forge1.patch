@@ -1,0 +1,38 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: BPI-SINOVOIP <support@banana-pi.org>
+Date: Thu, 27 Aug 2026 00:00:00 +0800
+Subject: [PATCH] arm: dts: identify Banana Pi Forge1
+
+新增繼承 ArmSoM 硬體描述的 Banana Pi 專用 DTB，同時保留 Banana Pi、
+ArmSoM 與 Rockchip 相容字串，避免修改共用參考板 DTS。
+---
+ arch/arm/boot/dts/Makefile                     | 1 +
+ arch/arm/boot/dts/rk3506b-bananapi-forge1.dts | 8 ++++++++
+ 2 files changed, 9 insertions(+)
+
+diff --git a/arch/arm/boot/dts/Makefile b/arch/arm/boot/dts/Makefile
+index ffd7467abb45d3409b3e69d0a7e8ae04dcdd6a01..8b97482206e6d43f695e9c1883c6f60b6f9113d4 100644
+--- a/arch/arm/boot/dts/Makefile
++++ b/arch/arm/boot/dts/Makefile
+@@ -1226,6 +1226,7 @@ dtb-$(CONFIG_ARCH_ROCKCHIP) += \
+ 	rk3502g-evb1-v10.dtb \
+ 	rk3503g-evb1-v10.dtb \
+ 	rk3506b-armsom-forge1.dtb \
++	rk3506b-bananapi-forge1.dtb \
+ 	rk3506b-evb1-v10.dtb \
+ 	rk3506b-test2-v10.dtb \
+ 	rk3506b-luckfox-lyra-ultra-w.dtb \
+diff --git a/arch/arm/boot/dts/rk3506b-bananapi-forge1.dts b/arch/arm/boot/dts/rk3506b-bananapi-forge1.dts
+new file mode 100644
+index 0000000000000000000000000000000000000000..3a60cc0b17b5b49da70aa4a52d10b0c84028054c
+--- /dev/null
++++ b/arch/arm/boot/dts/rk3506b-bananapi-forge1.dts
+@@ -0,0 +1,8 @@
++// SPDX-License-Identifier: (GPL-2.0+ OR MIT)
++
++#include "rk3506b-armsom-forge1.dts"
++
++/ {
++	model = "Banana Pi BPI-Forge1";
++	compatible = "bananapi,bpi-forge1", "rockchip,rk3506J-armsom-forge1", "rockchip,rk3506";
++};

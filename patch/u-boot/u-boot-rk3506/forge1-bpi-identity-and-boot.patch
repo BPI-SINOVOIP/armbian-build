@@ -1,0 +1,56 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: BPI-SINOVOIP <support@banana-pi.org>
+Date: Thu, 27 Aug 2026 00:00:00 +0800
+Subject: [PATCH] rockchip: prepare Banana Pi Forge1 boot
+
+建立 BPI-Forge1 專用 U-Boot DT，繼承 ArmSoM 的硬體描述但保留
+Banana Pi 板級身分。Linux DTB 檔名與 Armbian 啟動流程保持一致，
+並啟用 Btrfs 命令供既有根檔案系統流程使用。
+---
+ arch/arm/dts/rk3506j-bananapi-forge1.dts | 8 ++++++++
+ configs/forge1-rk3506j_defconfig          | 5 +++--
+ 2 files changed, 11 insertions(+), 2 deletions(-)
+
+diff --git a/arch/arm/dts/rk3506j-bananapi-forge1.dts b/arch/arm/dts/rk3506j-bananapi-forge1.dts
+new file mode 100644
+index 0000000000000000000000000000000000000000..f024e55046faef28f5cd7eb8a21a3899488a7dcc
+--- /dev/null
++++ b/arch/arm/dts/rk3506j-bananapi-forge1.dts
+@@ -0,0 +1,8 @@
++// SPDX-License-Identifier: (GPL-2.0+ OR MIT)
++
++#include "rk3506j-armsom-forge1.dts"
++
++/ {
++	model = "Banana Pi BPI-Forge1";
++	compatible = "bananapi,bpi-forge1", "armsom,forge1", "rockchip,rk3506";
++};
+diff --git a/configs/forge1-rk3506j_defconfig b/configs/forge1-rk3506j_defconfig
+index c51f9e86cf4818349efd0a3e9d5d6796b6ebe58d..d97a20a2bfdc6fe021b0b902d5d56f15f3621cf3 100644
+--- a/configs/forge1-rk3506j_defconfig
++++ b/configs/forge1-rk3506j_defconfig
+@@ -2,14 +2,14 @@ CONFIG_ARM=y
+ CONFIG_SKIP_LOWLEVEL_INIT=y
+ CONFIG_COUNTER_FREQUENCY=24000000
+ CONFIG_ARCH_ROCKCHIP=y
+-CONFIG_DEFAULT_DEVICE_TREE="rk3506j-armsom-forge1"
++CONFIG_DEFAULT_DEVICE_TREE="rk3506j-bananapi-forge1"
+ CONFIG_ROCKCHIP_RK3506=y
+ CONFIG_SYS_BOOTM_LEN=0x4000000
+ CONFIG_SYS_LOAD_ADDR=0xc00800
+ CONFIG_DEBUG_UART_BASE=0xFF0A0000
+ CONFIG_DEBUG_UART_CLOCK=24000000
+ CONFIG_DEBUG_UART=y
+-CONFIG_DEFAULT_FDT_FILE="rockchip/rk3506j-armsom-forge1.dtb"
++CONFIG_DEFAULT_FDT_FILE="rockchip/rk3506b-bananapi-forge1.dtb"
+ # CONFIG_DISPLAY_CPUINFO is not set
+ CONFIG_SPL_MAX_SIZE=0x40000
+ # CONFIG_SPL_RAW_IMAGE_SUPPORT is not set
+@@ -27,6 +27,7 @@ CONFIG_CMD_USB_MASS_STORAGE=y
+ # CONFIG_CMD_SETEXPR is not set
+ CONFIG_CMD_RNG=y
+ CONFIG_CMD_REGULATOR=y
++CONFIG_CMD_BTRFS=y
+ # CONFIG_SPL_DOS_PARTITION is not set
+ CONFIG_OF_SPL_REMOVE_PROPS="clock-names interrupt-parent assigned-clocks assigned-clock-rates assigned-clock-parents"
+ CONFIG_BUTTON=y

@@ -1,0 +1,2 @@
+patch/kernel/archive/bananapiforge1-vendor/*.patch -whitespace
+patch/u-boot/u-boot-rk3506/forge1-bpi-identity-and-boot.patch -whitespace

@@ -1,0 +1,181 @@
+{
+  "schema_version": 1,
+  "candidate_branch": "vendor",
+  "kernel_family": "rockchip",
+  "linux_source": "https://github.com/armbian/linux-rockchip.git",
+  "linux_ref": "commit:c6157104418d012823413c02f9222f3fe123dd25",
+  "linux_commit": "c6157104418d012823413c02f9222f3fe123dd25",
+  "rkbin_source": "https://github.com/armbian/rkbin",
+  "rkbin_ref": "commit:1d3c61008fa823936ae7a59615393f8294b64456",
+  "rkbin_commit": "1d3c61008fa823936ae7a59615393f8294b64456",
+  "rkbin_blobs": {
+    "LICENSE.TXT": "0b37e1522c36cf4579c45dfb138798c3cb5665fcf6302b95377179fbed38e35c",
+    "rk35/rk3506_tee_v2.10.bin": "93603ca22cdf22e47ac130e4ac386cdf9474443ab076039807dfc2d5d30b7ecd",
+    "rk35/rk3506b_ddr_750MHz_v1.06.bin": "14a607be903eff6c0984cdbeda77e7ce2963afad74aa900cad17149ec3fc65a7"
+  },
+  "installed_firmware_blobs": {
+    "/usr/share/doc/armbian-bsp-bananapiforge1/rkbin.LICENSE.TXT": "0b37e1522c36cf4579c45dfb138798c3cb5665fcf6302b95377179fbed38e35c"
+  },
+  "common_packages": [
+    "gpiod",
+    "i2c-tools",
+    "python3-libgpiod",
+    "python3-spidev",
+    "spi-tools",
+    "usbutils",
+    "usb-modeswitch",
+    "evtest",
+    "can-utils",
+    "ethtool",
+    "iproute2",
+    "iperf3"
+  ],
+  "common_kernel_options": {
+    "CONFIG_ARCH_ROCKCHIP": "y",
+    "CONFIG_CAN": "m",
+    "CONFIG_CANFD_RK3576": "m",
+    "CONFIG_DRM": "y",
+    "CONFIG_DRM_ROCKCHIP": "y",
+    "CONFIG_DW_WATCHDOG": "y",
+    "CONFIG_GPIO_CDEV": "y",
+    "CONFIG_GPIO_ROCKCHIP": "y",
+    "CONFIG_HID": "y",
+    "CONFIG_HID_GENERIC": "y",
+    "CONFIG_HIDRAW": "y",
+    "CONFIG_HW_RANDOM_ROCKCHIP": "y",
+    "CONFIG_I2C_CHARDEV": "y",
+    "CONFIG_I2C_RK3X": "y",
+    "CONFIG_INPUT_EVDEV": "y",
+    "CONFIG_MMC": "y",
+    "CONFIG_MMC_DW": "y",
+    "CONFIG_MMC_DW_ROCKCHIP": "y",
+    "CONFIG_ROCKCHIP_MULTI_RGA": "y",
+    "CONFIG_ROCKCHIP_THERMAL": "y",
+    "CONFIG_SND_SOC_RK730": "y",
+    "CONFIG_SPI": "y",
+    "CONFIG_SPI_ROCKCHIP": "y",
+    "CONFIG_SPI_ROCKCHIP_SFC": "y",
+    "CONFIG_SPI_SPIDEV": "y",
+    "CONFIG_STMMAC_ETH": "m",
+    "CONFIG_USB": "y",
+    "CONFIG_USB_CONFIGFS": "y",
+    "CONFIG_USB_CONFIGFS_MASS_STORAGE": "y",
+    "CONFIG_USB_DWC2": "y",
+    "CONFIG_USB_GADGET": "y",
+    "CONFIG_USB_HID": "y",
+    "CONFIG_USB_STORAGE": "m"
+  },
+  "boards": {
+    "bananapiforge1": {
+      "family": "rockchip",
+      "dtb": "rk3506b-bananapi-forge1.dtb",
+      "model": "Banana Pi BPI-Forge1",
+      "compatible": [
+        "bananapi,bpi-forge1",
+        "rockchip,rk3506J-armsom-forge1",
+        "rockchip,rk3506"
+      ],
+      "uboot_tag": "v2026.04-rc1",
+      "uboot_version": "2026.04-rc1",
+      "uboot_git_source": "https://source.denx.de/u-boot/contributors/kwiboo/u-boot.git",
+      "uboot_git_ref": "commit:a72ec1294fc6ba6b0bfd5ebc912a7bed2dc2513d",
+      "uboot_revision": "a72ec1294fc6ba6b0bfd5ebc912a7bed2dc2513d",
+      "uboot_defconfig": "forge1-rk3506j_defconfig",
+      "uboot_target_index": 1,
+      "uboot_required_config_options": [
+        "CONFIG_ARCH_ROCKCHIP=y",
+        "CONFIG_BAUDRATE=1500000",
+        "CONFIG_CMD_BTRFS=y",
+        "CONFIG_CMD_MMC=y",
+        "CONFIG_CMD_USB=y",
+        "CONFIG_CMD_USB_MASS_STORAGE=y",
+        "CONFIG_DEFAULT_DEVICE_TREE=\"rk3506j-bananapi-forge1\"",
+        "CONFIG_DEFAULT_FDT_FILE=\"rockchip/rk3506b-bananapi-forge1.dtb\"",
+        "CONFIG_DWC_ETH_QOS_ROCKCHIP=y",
+        "CONFIG_MMC_DW_ROCKCHIP=y",
+        "CONFIG_MTD_SPI_NAND=y",
+        "CONFIG_ROCKCHIP_RK3506=y",
+        "CONFIG_USB_DWC2=y"
+      ],
+      "uboot_target_make_contains": [
+        "rk35/rk3506b_ddr_750MHz_v1.06.bin",
+        "rk35/rk3506_tee_v2.10.bin",
+        "u-boot-rockchip.bin"
+      ],
+      "uboot_required_binary_strings": [
+        "Banana Pi BPI-Forge1",
+        "rockchip/rk3506b-bananapi-forge1.dtb"
+      ],
+      "uboot_payloads": [
+        "u-boot-rockchip.bin@32768"
+      ],
+      "uboot_payload_minimum_sizes": [
+        "u-boot-rockchip.bin=524288"
+      ],
+      "partition_table": "gpt",
+      "partition_name": "rootfs",
+      "partition_start_sector": 32768,
+      "logical_sector_size": 512,
+      "root_partition_number": 1,
+      "boot_configuration": "armbian_env",
+      "overlay_prefix": "rockchip",
+      "default_overlays": [],
+      "required_overlays": [],
+      "dtb_forbidden_binary_strings": [
+        "console=ttyS2",
+        "root=/dev/mmcblk"
+      ],
+      "sd_node": "/mmc@ff480000",
+      "sd_bus_width": 4,
+      "required_boolean_properties": [
+        "/mmc@ff480000:disable-wp",
+        "/mmc@ff480000:no-mmc",
+        "/mmc@ff480000:no-sdio"
+      ],
+      "required_string_properties": [
+        "/ethernet@ff4c8000:phy-mode=rmii",
+        "/ethernet@ff4d0000:phy-mode=rmii",
+        "/usb@ff740000:dr_mode=otg",
+        "/usb@ff780000:dr_mode=host"
+      ],
+      "required_uint_properties": [
+        "/fiq-debugger:rockchip,baudrate=1500000",
+        "/spi@ff488000/flash@0:spi-max-frequency=80000000"
+      ],
+      "required_aliases": [
+        "ethernet0=/ethernet@ff4c8000",
+        "ethernet1=/ethernet@ff4d0000",
+        "serial0=/serial@ff0a0000"
+      ],
+      "required_status_nodes": [
+        "/adc@ff4e8000",
+        "/can@ff320000",
+        "/dsi@ff640000",
+        "/ethernet@ff4c8000",
+        "/ethernet@ff4d0000",
+        "/i2c@ff050000",
+        "/i2c@ff060000",
+        "/mmc@ff480000",
+        "/phy@ff670000",
+        "/rga@ff610000",
+        "/rng@ff710000",
+        "/serial@ff0d0000",
+        "/spi@ff488000",
+        "/tsadc@ff650000",
+        "/usb@ff740000",
+        "/usb@ff780000",
+        "/vop@ff600000"
+      ],
+      "required_present_nodes": [
+        "/dsi@ff640000/panel@0",
+        "/fiq-debugger",
+        "/i2c@ff050000/rk730@17",
+        "/i2c@ff060000/gt9xx@14",
+        "/i2c@ff060000/hym8563@51",
+        "/leds/green-led",
+        "/rk730-sound",
+        "/spi@ff488000/flash@0"
+      ]
+    }
+  }
+}
