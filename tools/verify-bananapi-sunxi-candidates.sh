@@ -153,32 +153,58 @@ validate_boot_area() {
 
 validate_installed_uboot() {
 	local image=$1 mount_dir=$2 board=$3
-	local uboot_tag uboot_version payload_name offset uboot_dir payload
+	local uboot_tag uboot_version uboot_git_source uboot_git_ref uboot_revision
+	local payload_specs payload_spec payload_name offset uboot_dir payload
 	local metadata_file md5sums_file payload_path expected_md5 actual_md5 payload_size
 	uboot_tag="$(board_field "${board}" uboot_tag)"
-	uboot_version="${uboot_tag#v}"
-	payload_name="$(board_field "${board}" uboot_payload)"
-	offset="$(board_field "${board}" uboot_offset)"
+	uboot_version="$(board_field_optional "${board}" uboot_version)"
+	[[ -n "${uboot_version}" ]] || uboot_version="${uboot_tag#v}"
+	uboot_git_source="$(board_field_optional "${board}" uboot_git_source)"
+	uboot_git_ref="$(board_field_optional "${board}" uboot_git_ref)"
+	[[ -n "${uboot_git_ref}" ]] || uboot_git_ref="tag:${uboot_tag}"
+	uboot_revision="$(board_field_optional "${board}" uboot_revision)"
+	if [[ -z "${uboot_revision}" && "${uboot_git_ref}" == commit:* ]]; then
+		uboot_revision="${uboot_git_ref#commit:}"
+	fi
+	payload_specs="$(board_field_optional "${board}" uboot_payloads)"
+	if [[ -z "${payload_specs}" ]]; then
+		payload_specs="$(board_field "${board}" uboot_payload)@$(board_field "${board}" uboot_offset)"
+	fi
 	uboot_dir="${mount_dir}/usr/lib/linux-u-boot-current-${board}"
-	payload="${uboot_dir}/${payload_name}"
 	metadata_file="${uboot_dir}/u-boot-metadata.sh"
 	md5sums_file="${mount_dir}/var/lib/dpkg/info/linux-u-boot-${board}-current.md5sums"
-	payload_path="usr/lib/linux-u-boot-current-${board}/${payload_name}"
 
-	[[ -s "${payload}" && -s "${metadata_file}" && -s "${md5sums_file}" ]] ||
+	[[ -s "${metadata_file}" && -s "${md5sums_file}" ]] ||
 		fail "${board} 缺少可驗證的 U-Boot 套件 payload"
-	grep -qx "declare UBOOT_VERSION=\"${uboot_version}\"" "${metadata_file}" ||
+	grep -Fqx "declare UBOOT_VERSION=\"${uboot_version}\"" "${metadata_file}" ||
 		fail "${board} 的 U-Boot 版本不是 ${uboot_tag}"
-	grep -qx "declare UBOOT_GIT_BRANCH=\"tag:${uboot_tag}\"" "${metadata_file}" ||
+	grep -Fqx "declare UBOOT_GIT_BRANCH=\"${uboot_git_ref}\"" "${metadata_file}" ||
 		fail "${board} 的 U-Boot Git 分支不符"
-	expected_md5="$(awk -v path="${payload_path}" '$2 == path { print $1 }' "${md5sums_file}")"
-	[[ "${expected_md5}" =~ ^[0-9a-f]{32}$ ]] || fail "${board} 缺少唯一 payload MD5"
-	actual_md5="$(md5sum "${payload}" | cut -d' ' -f1)"
-	[[ "${actual_md5}" == "${expected_md5}" ]] || fail "${board} 的 U-Boot payload 已被修改"
-	payload_size="$(stat -c %s "${payload}")"
-	(( payload_size > 32768 )) || fail "${board} 的 U-Boot payload 太小"
-	cmp --silent --ignore-initial="0:${offset}" --bytes="${payload_size}" \
-		"${payload}" "${image}" || fail "${board} 映像 ${offset} 偏移與 U-Boot payload 不同"
+	if [[ -n "${uboot_git_source}" ]]; then
+		grep -Fqx "declare UBOOT_GIT_SOURCE=\"${uboot_git_source}\"" "${metadata_file}" ||
+			fail "${board} 的 U-Boot Git 來源不符"
+	fi
+	if [[ -n "${uboot_revision}" ]]; then
+		[[ "${uboot_revision}" =~ ^[0-9a-f]{40}$ ]] || fail "${board} 的 U-Boot revision 格式不符"
+		grep -Fqx "declare UBOOT_GIT_REVISION=\"${uboot_revision}\"" "${metadata_file}" ||
+			fail "${board} 的 U-Boot Git revision 不符"
+	fi
+	for payload_spec in ${payload_specs}; do
+		[[ "${payload_spec}" =~ ^[^@]+@[0-9]+$ ]] || fail "${board} 的 U-Boot payload 規格不符"
+		payload_name="${payload_spec%@*}"
+		offset="${payload_spec##*@}"
+		payload="${uboot_dir}/${payload_name}"
+		payload_path="usr/lib/linux-u-boot-current-${board}/${payload_name}"
+		[[ -s "${payload}" ]] || fail "${board} 缺少 U-Boot payload：${payload_name}"
+		expected_md5="$(awk -v path="${payload_path}" '$2 == path { print $1 }' "${md5sums_file}")"
+		[[ "${expected_md5}" =~ ^[0-9a-f]{32}$ ]] || fail "${board} 缺少唯一 payload MD5：${payload_name}"
+		actual_md5="$(md5sum "${payload}" | cut -d' ' -f1)"
+		[[ "${actual_md5}" == "${expected_md5}" ]] || fail "${board} 的 U-Boot payload 已被修改：${payload_name}"
+		payload_size="$(stat -c %s "${payload}")"
+		(( payload_size > 32768 )) || fail "${board} 的 U-Boot payload 太小：${payload_name}"
+		cmp --silent --ignore-initial="0:${offset}" --bytes="${payload_size}" \
+			"${payload}" "${image}" || fail "${board} 映像 ${offset} 偏移與 ${payload_name} 不同"
+	done
 }
 
 validate_mounted_image() (
@@ -307,6 +333,10 @@ while IFS=$'\t' read -r board release profile raw_size raw_sha256 xz_size \
 		"xz_sha256 ${xz_sha256}"; do
 		read -r key expected <<<"${item}"
 		require_metadata_value "${metadata}" "${key}" "${expected}"
+	done
+	for key in uboot_git_source uboot_git_ref uboot_revision uboot_version; do
+		expected="$(board_field_optional "${board}" "${key}")"
+		[[ -z "${expected}" ]] || require_metadata_value "${metadata}" "${key}" "${expected}"
 	done
 	validate_boot_area "${image}"
 	validate_mounted_image "${image}" "${board}"

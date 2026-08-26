@@ -4,7 +4,7 @@
 
 ## 結論
 
-B 批六張正式設定板卡的建置鏈並不相同，不能以單一「current」命令推論全部可重現。`bananapi` 與 `bananapim2plus` 採成熟 Sunxi 主線流程，可先建立候選；`bananapif3` 可建置但須記錄多階段開機鏈；`bananapim7` 與 `bananapim5pro` 依賴 Rockchip 專有 DDR／BL31 與目前未固定提交的 `rkbin`；`bpi-ai2n` 只宣告 legacy，並依賴預建封裝工具與專有執行期二進位。
+B 批六張正式設定板卡的建置鏈並不相同，不能以單一「current」命令推論全部可重現。`bananapi` 與 `bananapim2plus` 採成熟 Sunxi 主線流程；`bananapif3` 可建置但須記錄多階段開機鏈；`bananapim7` 已固定 Radxa U-Boot、RKBin 與板級 DDR／BL31，仍待候選與實機；`bananapim5pro` 仍依賴尚未固定的 Rockchip 來源；`bpi-ai2n` 只宣告 legacy，並依賴預建封裝工具與專有執行期二進位。
 
 所有板卡目前仍以既有證據等級為準。來源審查與主機建置不能取代實機開機、介面或加速功能驗證。
 
@@ -15,7 +15,7 @@ B 批六張正式設定板卡的建置鏈並不相同，不能以單一「curren
 | `bananapi` | current | Sunxi U-Boot 固定 `v2024.01`；核心為 `6.18`；板級 DRAM 384 MHz 與停用 U-Boot DE2 有明確設定 | 作為 B 批第一張 A20 候選，完成 L1／L2 |
 | `bananapim2plus` | current | 與一般 H3 Sunxi 流程一致，具有 analog-codec 預設 overlay 與 USB gadget serial 設定 | A20 通過後作為 H3 代表板 |
 | `bananapif3` | current | OpenSBI 與 U-Boot 固定 `k1-bl-v2.2.9-release` tag；current 核心追蹤 `linux-6.18.y` branch；映像包含 bootinfo、FSBL、OpenSBI 與 U-Boot ITB | 先固定本次實際核心提交及 `esos.elf` 雜湊，再建立候選 |
-| `bananapim7` | current | 繼承 ArmSoM Sige7；U-Boot 追蹤 Radxa branch；`rkbin` 預設追蹤 `master`；板設定使用較舊 DDR v1.11／BL31 v1.38，而家族預設已更新 | 先確認舊 blob 是否為板級必要條件並固定 `rkbin` 提交 |
+| `bananapim7` | current | 繼承 ArmSoM Sige7；Radxa U-Boot 固定提交 `39cd993e...`，RKBin 固定提交 `1d3c6100...`；保留板級 DDR v1.11／BL31 v1.38 | 建立 Trixie CLI，逐段驗證雙 payload 與 RKBin 輸入 |
 | `bananapim5pro` | edge | 板卡只宣告 edge、vendor；繼承 Sige5 的 RK3576 `spl-blobs`；需 DDR、BL31、SPL、boost、usbplug 與 x86 封裝工具 | 先固定 `rkbin` 與 Radxa U-Boot 提交，edge 建立主線基準後再做 vendor |
 | `bpi-ai2n` | legacy | 只支援 `6.1` legacy；核心、TF-A、U-Boot 均追蹤 vendor branch；封裝使用 x86-64 `bptool`／`fiptool`，映像加入 OpenCV、Codec 與 Flash Writer 二進位 | 固定三個來源提交與全部預建資產雜湊，再建立 legacy 候選 |
 
@@ -30,9 +30,9 @@ B 批六張正式設定板卡的建置鏈並不相同，不能以單一「curren
 
 ### M7 與 M5 Pro
 
-- `extensions/rkbin-tools.sh` 預設抓取 `branch:master`，無法只由 Armbian 提交重建相同 DDR／BL31。
+- M7 current 已由板級 hook 固定 Radxa U-Boot 提交 `39cd993e5d6296635438e84f4576b3a9bf76f86e`，並固定 RKBin 提交 `1d3c61008fa823936ae7a59615393f8294b64456`；不改動其他 RK3588 板卡或 M7 edge／vendor 的預設來源。
 - `config/boards/armsom-sige7.csc` 明確覆寫 RK3588 DDR v1.11 與 BL31 v1.38；`config/sources/families/include/rockchip64_common.inc` 的家族預設已更新為 DDR v1.20／BL31 v1.48。未經實機驗證不能直接升級或移除覆寫。
-- `config/sources/families/rk35xx.conf` 與 `rockchip-rk3588.conf` 的 Radxa U-Boot 使用可變 branch；候選必須記錄實際提交與所有 blob 雜湊。
+- M7 使用的 DDR、BL31 與選用 RockUSB loader 已保存 SHA-256；M5 Pro 的 Radxa U-Boot、RKBin 與封裝工具仍須另行固定。
 - 專有 DDR、BL31 或封裝工具同一性只證明輸入相同，不等於冷啟動、記憶體穩定、SPI、eMMC 或量產通過。
 
 ### AI2N

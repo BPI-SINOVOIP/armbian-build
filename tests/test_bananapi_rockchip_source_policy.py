@@ -10,6 +10,8 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
 RKBIN_COMMIT = "46c4793ea2dcea7c8331fce9f07b5c80561a0395"
+M7_RKBIN_COMMIT = "1d3c61008fa823936ae7a59615393f8294b64456"
+M7_UBOOT_COMMIT = "39cd993e5d6296635438e84f4576b3a9bf76f86e"
 IO_PACKAGES = {
     "gpiod",
     "i2c-tools",
@@ -26,6 +28,7 @@ class BananaPiRockchipSourcePolicyTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         cls.board = (ROOT / "config/boards/bananapip2pro.wip").read_text()
+        cls.m7_board = (ROOT / "config/boards/bananapim7.conf").read_text()
         cls.extension = (ROOT / "extensions/rkbin-tools.sh").read_text()
 
     def test_rkbin_extension_accepts_an_immutable_ref(self) -> None:
@@ -106,6 +109,58 @@ fetch_sources_tools__rkbin_tools
         packages = set(package_line.split('"', 2)[1].split())
         self.assertTrue(IO_PACKAGES <= packages)
         self.assertTrue(RADIO_PACKAGES <= packages)
+
+    def test_m7_pins_uboot_and_rkbin_commits(self) -> None:
+        self.assertIn(f'BOOTBRANCH_BOARD="commit:{M7_UBOOT_COMMIT}"', self.m7_board)
+        self.assertIn(f'RKBIN_GIT_REF="commit:{M7_RKBIN_COMMIT}"', self.m7_board)
+        self.assertNotIn('BOOTBRANCH_BOARD="branch:', self.m7_board)
+        self.assertNotIn('RKBIN_GIT_REF="branch:', self.m7_board)
+
+    def test_m7_preserves_validated_rk3588_blobs(self) -> None:
+        self.assertIn(
+            'DDR_BLOB="rk35/rk3588_ddr_lp4_2112MHz_lp5_2736MHz_v1.11.bin"',
+            self.m7_board,
+        )
+        self.assertIn('BL31_BLOB="rk35/rk3588_bl31_v1.38.elf"', self.m7_board)
+
+    def test_m7_current_hook_overrides_family_branch(self) -> None:
+        harness = f'''
+enable_extension() {{ :; }}
+display_alert() {{ :; }}
+SRC="{ROOT}"
+BRANCH=current
+source "{ROOT / 'config/boards/bananapim7.conf'}"
+source "{ROOT / 'config/sources/families/rockchip-rk3588.conf'}"
+printf 'before=%s\\n' "$BOOTBRANCH"
+post_family_config_branch_current__bananapim7_pin_uboot
+printf 'after=%s\\n' "$BOOTBRANCH"
+printf 'ddr=%s\\nbl31=%s\\n' "$DDR_BLOB" "$BL31_BLOB"
+'''
+        result = subprocess.run(
+            ["bash", "-c", harness],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("before=branch:next-dev-v2024.10", result.stdout)
+        self.assertIn(f"after=commit:{M7_UBOOT_COMMIT}", result.stdout)
+        self.assertIn(
+            "ddr=rk35/rk3588_ddr_lp4_2112MHz_lp5_2736MHz_v1.11.bin",
+            result.stdout,
+        )
+        self.assertIn("bl31=rk35/rk3588_bl31_v1.38.elf", result.stdout)
+
+    def test_m7_includes_standard_io_and_radio_packages(self) -> None:
+        package_line = next(
+            line
+            for line in self.m7_board.splitlines()
+            if line.startswith('PACKAGE_LIST_BOARD="')
+        )
+        packages = set(package_line.split('"', 2)[1].split())
+        self.assertTrue(IO_PACKAGES <= packages)
+        self.assertTrue(RADIO_PACKAGES <= packages)
+        self.assertTrue({"pciutils", "nvme-cli"} <= packages)
 
 
 if __name__ == "__main__":

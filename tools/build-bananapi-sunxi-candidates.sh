@@ -93,6 +93,19 @@ else:
 PY
 }
 
+board_field_optional() {
+	python3 - "${validation_config}" "$1" "$2" <<'PY'
+import json
+import sys
+with open(sys.argv[1], encoding="utf-8") as stream:
+    value = json.load(stream)["boards"][sys.argv[2]].get(sys.argv[3], "")
+if isinstance(value, list):
+    print(" ".join(str(item) for item in value))
+else:
+    print(value)
+PY
+}
+
 validate_board() {
 	python3 - "${validation_config}" "$1" <<'PY'
 import json
@@ -161,6 +174,10 @@ for board in "${boards[@]}"; do
 	mkdir -p "${board_dir}"
 	family="$(board_field "${board}" family)"
 	uboot_tag="$(board_field "${board}" uboot_tag)"
+	uboot_git_source="$(board_field_optional "${board}" uboot_git_source)"
+	uboot_git_ref="$(board_field_optional "${board}" uboot_git_ref)"
+	uboot_revision="$(board_field_optional "${board}" uboot_revision)"
+	uboot_version="$(board_field_optional "${board}" uboot_version)"
 	dtb="$(board_field "${board}" dtb)"
 	build_parameters="BOARD=${board} BRANCH=${branch} RELEASE=${release} BUILD_DESKTOP=no BUILD_MINIMAL=yes KERNEL_CONFIGURE=no EXPERT=yes ARTIFACT_IGNORE_CACHE=${artifact_ignore_cache} COMPRESS_OUTPUTIMAGE=sha,img"
 	build_parameters_sha256="$(printf '%s\n' "${build_parameters}" | sha256sum | cut -d' ' -f1)"
@@ -176,6 +193,13 @@ for board in "${boards[@]}"; do
 			"family ${family}" "dtb ${dtb}" "uboot_tag ${uboot_tag}"; do
 			read -r key expected <<<"${item}"
 			require_metadata_value "${metadata}" "${key}" "${expected}"
+		done
+		for item in "uboot_git_source ${uboot_git_source}" \
+			"uboot_git_ref ${uboot_git_ref}" "uboot_revision ${uboot_revision}" \
+			"uboot_version ${uboot_version}"; do
+			read -r key expected <<<"${item}"
+			[[ -z "${expected}" ]] ||
+				require_metadata_value "${metadata}" "${key}" "${expected}"
 		done
 		image="${board_dir}/$(read_metadata_value "${metadata}" image_filename)"
 		archive="${board_dir}/$(read_metadata_value "${metadata}" archive_filename)"
@@ -221,6 +245,12 @@ for board in "${boards[@]}"; do
 			printf 'build_method=full_compile_sh_build\nbuild_parameters_sha256=%s\n' "${build_parameters_sha256}"
 			printf 'artifact_ignore_cache=%s\nsource_commit=%s\nsource_tree=%s\n' "${artifact_ignore_cache}" "${source_commit}" "${source_tree}"
 			printf 'validation_config_sha256=%s\nfamily=%s\ndtb=%s\nuboot_tag=%s\n' "${validation_config_sha256}" "${family}" "${dtb}" "${uboot_tag}"
+			for item in "uboot_git_source ${uboot_git_source}" \
+				"uboot_git_ref ${uboot_git_ref}" "uboot_revision ${uboot_revision}" \
+				"uboot_version ${uboot_version}"; do
+				read -r key value <<<"${item}"
+				[[ -z "${value}" ]] || printf '%s=%s\n' "${key}" "${value}"
+			done
 			printf 'image_filename=%s\narchive_filename=%s\n' "$(basename "${image}")" "$(basename "${archive}")"
 			printf 'raw_size=%s\nraw_sha256=%s\nxz_size=%s\nxz_sha256=%s\n' "${raw_size}" "${raw_sha256}" "${xz_size}" "${xz_sha256}"
 			printf 'build_log=logs/%s.log\nevidence_level=L1\nbuilt_at_utc=%s\n' "${board}" "$(date -u +%Y-%m-%dT%H:%M:%SZ)"

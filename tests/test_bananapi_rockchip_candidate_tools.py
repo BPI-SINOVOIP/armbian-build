@@ -10,6 +10,7 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
 CONFIG = ROOT / "config/validation/bananapi-rockchip-rk3308-current.json"
+M7_CONFIG = ROOT / "config/validation/bananapi-rockchip-rk3588-m7-current.json"
 BUILD_SCRIPT = ROOT / "tools/build-bananapi-rockchip-candidates.sh"
 VERIFY_SCRIPT = ROOT / "tools/verify-bananapi-rockchip-candidates.sh"
 
@@ -20,6 +21,7 @@ class BananaPiRockchipCandidateToolTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         cls.config = json.loads(CONFIG.read_text())
+        cls.m7_config = json.loads(M7_CONFIG.read_text())
 
     def test_validation_config_has_exact_p2_pro_policy(self) -> None:
         self.assertEqual(self.config["schema_version"], 1)
@@ -62,6 +64,59 @@ class BananaPiRockchipCandidateToolTests(unittest.TestCase):
         ):
             with self.subTest(required=required):
                 self.assertIn(required, verify_text)
+
+    def test_validation_config_has_exact_m7_policy(self) -> None:
+        config = self.m7_config
+        self.assertEqual(config["kernel_family"], "rockchip64")
+        self.assertEqual(
+            config["rkbin_commit"],
+            "1d3c61008fa823936ae7a59615393f8294b64456",
+        )
+        self.assertEqual(set(config["boards"]), {"bananapim7"})
+        policy = config["boards"]["bananapim7"]
+        self.assertEqual(policy["uboot_version"], "2017.09")
+        self.assertEqual(
+            policy["uboot_git_ref"],
+            "commit:39cd993e5d6296635438e84f4576b3a9bf76f86e",
+        )
+        self.assertEqual(
+            policy["uboot_payloads"],
+            ["idbloader.img@32768", "u-boot.itb@8388608"],
+        )
+        self.assertEqual(policy["sd_bus_width"], 4)
+        self.assertIn("/mmc@fe2e0000=8", policy["additional_bus_widths"])
+        self.assertNotIn("/ethernet@fe1b0000", policy["required_status_nodes"])
+        self.assertNotIn("/ethernet@fe1c0000", policy["required_status_nodes"])
+
+    def test_m7_blob_hashes_and_packages_are_complete(self) -> None:
+        self.assertEqual(len(self.m7_config["rkbin_blobs"]), 3)
+        for path, digest in self.m7_config["rkbin_blobs"].items():
+            with self.subTest(path=path):
+                self.assertTrue(path.startswith("rk35/rk3588_"))
+                self.assertRegex(digest, r"^[0-9a-f]{64}$")
+        board_text = (ROOT / "config/boards/bananapim7.conf").read_text()
+        package_line = next(
+            line for line in board_text.splitlines()
+            if line.startswith('PACKAGE_LIST_BOARD="')
+        )
+        packages = set(package_line.split('"', 2)[1].split())
+        self.assertTrue(set(self.m7_config["common_packages"]) <= packages)
+
+    def test_generic_verifier_supports_commit_and_multiple_payloads(self) -> None:
+        build_text = (ROOT / "tools/build-bananapi-sunxi-candidates.sh").read_text()
+        verify_text = (ROOT / "tools/verify-bananapi-sunxi-candidates.sh").read_text()
+        for required in (
+            "uboot_git_source",
+            "uboot_git_ref",
+            "uboot_revision",
+            "uboot_version",
+        ):
+            with self.subTest(required=required):
+                self.assertIn(required, build_text)
+                self.assertIn(required, verify_text)
+        self.assertIn("uboot_payloads", verify_text)
+        self.assertIn('UBOOT_GIT_BRANCH=\\"${uboot_git_ref}\\"', verify_text)
+        self.assertIn('UBOOT_GIT_REVISION=\\"${uboot_revision}\\"', verify_text)
 
     def test_p2_pro_board_packages_match_policy(self) -> None:
         board_text = (ROOT / "config/boards/bananapip2pro.wip").read_text()
