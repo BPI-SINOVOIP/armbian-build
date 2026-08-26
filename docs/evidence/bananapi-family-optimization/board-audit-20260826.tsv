@@ -3,7 +3,7 @@ bananapi	conf	Banana Pi	sun7i	armhf	current,edge,legacy	current	yes	B	L0	Bananap
 bananapi6204	wip	Banana Pi BPI-6204	sun8i	armhf	legacy	legacy	yes	C	L0	Bananapi_M2_Ultra_defconfig	allwinner/sun8i-r40-bpi-6204.dtb		確認建置鏈並建立 Trixie CLI 候選
 bananapiaim7	wip	Banana Pi AIM7	rockchip-rk3588	arm64	vendor	vendor	yes	E	L0	armsom-aim7-io-rk3588_defconfig	rockchip/rk3588-armsom-aim7-io.dtb	KERNEL_TEST_TARGET	確認建置鏈並建立 Trixie CLI 候選
 bananapicm2	wip	Banana Pi CM2	rockchip64	arm64	current,edge	current	yes	E	L0	bpi-r2-pro-rk3568_defconfig	rockchip/rk3568-bpi-r2-pro.dtb		確認建置鏈並建立 Trixie CLI 候選
-bananapicm4io	conf	Banana Pi CM4IO	meson-g12b	arm64	current,edge	current	yes	A	L0	bananapi-cm4-cm4io_defconfig	amlogic/meson-g12b-bananapi-cm4-cm4io.dtb		建立 Trixie CLI 並完成離線守門
+bananapicm4io	conf	Banana Pi CM4IO	meson-g12b	arm64	current,edge	current	yes	A	L2	bananapi-cm4-cm4io_defconfig	amlogic/meson-g12b-bananapi-cm4-cm4io.dtb		執行 UART、啟動與基本周邊實機驗證
 bananapicm5pro	wip	Banana Pi CM5 Pro	rk35xx	arm64	vendor	vendor	yes	E	L0	armsom-cm5-io-rk3576_defconfig	rockchip/rk3576-armsom-cm5-io.dtb	KERNEL_TEST_TARGET	確認建置鏈並建立 Trixie CLI 候選
 bananapicm6	wip	BananaPi BPI-CM6	spacemit	riscv64	legacy	legacy	yes	F	L0		spacemit/k1-x_deb1.dtb	KERNEL_TEST_TARGET	確認建置鏈並建立 Trixie CLI 候選
 bananapif2p	wip	Banana Pi F2P	sunplus-sp7021-bpi	armhf	legacy	legacy	yes	F	L0	sp7021_bpi_f2p_defconfig	sp7021-bpi-f2p.dtb		確認建置鏈並建立 Trixie CLI 候選
@@ -17,8 +17,8 @@ bananapim2berry	csc	Banana Pi M2 Berry	sun8i	armhf	current,edge,legacy	current	y
 bananapim2c	wip	Banana Pi M2C	unisoc-uis7885-bpi	arm64	vendor	vendor	yes	F	L0				確認建置鏈並建立 Trixie CLI 候選
 bananapim2magic	csc	Banana Pi M2 Magic	sun8i	armhf	current,edge,legacy	current	yes	C	L0	Bananapi_m2m_defconfig	allwinner/sun8i-r16-bananapi-m2m.dtb	BOARD_MAINTAINER	建立 Trixie CLI 並完成離線守門
 bananapim2plus	conf	Banana Pi M2+	sun8i	armhf	current,edge,legacy	current	yes	B	L0	bananapi_m2_plus_h3_defconfig			建立 Trixie CLI 並完成離線守門
-bananapim2pro	conf	Banana Pi M2Pro	meson-sm1	arm64	current,edge	current	yes	A	L0	bananapi-m2-pro_defconfig	amlogic/meson-sm1-bananapi-m2-pro.dtb		建立 Trixie CLI 並完成離線守門
-bananapim2s	conf	Banana Pi M2S	meson-g12b	arm64	current,edge	current	yes	A	L0	bananapi-m2s_defconfig	amlogic/meson-g12b-a311d-bananapi-m2s.dtb		建立 Trixie CLI 並完成離線守門
+bananapim2pro	conf	Banana Pi M2Pro	meson-sm1	arm64	current,edge	current	yes	A	L2	bananapi-m2-pro_defconfig	amlogic/meson-sm1-bananapi-m2-pro.dtb		執行 UART、啟動與基本周邊實機驗證
+bananapim2s	conf	Banana Pi M2S	meson-g12b	arm64	current,edge	current	yes	A	L2	bananapi-m2s_defconfig	amlogic/meson-g12b-a311d-bananapi-m2s.dtb		執行 UART、啟動與基本周邊實機驗證
 bananapim2ultra	csc	Banana Pi M2 Ultra	sun8i	armhf	current,edge,legacy	current	yes	C	L0	Bananapi_M2_Ultra_defconfig		BOARD_MAINTAINER	建立 Trixie CLI 並完成離線守門
 bananapim2zero	csc	Banana Pi M2 Zero	sun8i	armhf	current,edge,legacy	current	yes	C	L0	bananapi_m2_zero_defconfig			建立 Trixie CLI 並完成離線守門
 bananapim3	csc	Banana Pi M3	sun8i	armhf	current,edge,legacy	current	yes	C	L0	Sinovoip_BPI_M3_defconfig			建立 Trixie CLI 並完成離線守門
@@ -26,7 +26,7 @@ bananapim4	wip	Banana Pi M4	realtek-rtd139x-bpi	arm64	legacy	legacy	yes	F	L0	rtd
 bananapim4berry	conf	BananaPi M4 Berry	sun50iw9-bpi	arm64	current,edge	current	yes	R	L4	bananapi_m4_berry_defconfig	sun50i-h618-bananapi-m4-berry.dtb		補齊樣本數、冷啟動與發布門檻
 bananapim4super	wip	Banana Pi M4 Super	rk35xx	arm64	vendor	vendor	yes	E	L0	armsom-sige3-rk3568_defconfig	rockchip/rk3568-armsom-sige3.dtb	KERNEL_TEST_TARGET	確認建置鏈並建立 Trixie CLI 候選
 bananapim4zero	conf	BananaPi BPI-M4-Zero	sun50iw9-bpi	arm64	current,edge	current	yes	R	L3	bananapi_m4zero_defconfig	sun50i-h618-bananapi-m4-zero.dtb		補齊加速、I/O、多板與長時間測試
-bananapim5	conf	Banana Pi M5	meson-sm1	arm64	current,edge	current	yes	A	L0	bananapi-m5_defconfig	amlogic/meson-sm1-bananapi-m5.dtb		建立 Trixie CLI 並完成離線守門
+bananapim5	conf	Banana Pi M5	meson-sm1	arm64	current,edge	current	yes	A	L2	bananapi-m5_defconfig	amlogic/meson-sm1-bananapi-m5.dtb		執行 UART、啟動與基本周邊實機驗證
 bananapim5pro	conf	Banana Pi M5 Pro	rk35xx	arm64	edge,vendor	edge	yes	B	L0	bananapi-m5-pro-rk3576_defconfig	rockchip/rk3576-bananapi-m5-pro.dtb	KERNEL_TEST_TARGET	建立 Trixie CLI 並完成離線守門
 bananapim6	wip	Banana Pi M6	vs680	arm64	legacy	legacy	yes	F	L0	vs680_oemboot_c05_defconfig	synaptics/vs680-a0-bananapi-m6.dtb	KERNEL_TEST_TARGET	確認建置鏈並建立 Trixie CLI 候選
 bananapim64	csc	Banana Pi M64	sun50iw1	arm64	current,edge,legacy	current	yes	C	L0	bananapi_m64_defconfig			建立 Trixie CLI 並完成離線守門

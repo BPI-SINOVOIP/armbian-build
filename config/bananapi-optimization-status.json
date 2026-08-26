@@ -68,6 +68,22 @@
     ]
   },
   "evidence": {
+    "bananapim5": {
+      "level": "L2",
+      "basis": "Trixie current CLI 已由乾淨來源完整建置並通過映像、U-Boot、FIP、eMMC 與功能設定唯讀守門；仍待實機驗證"
+    },
+    "bananapim2pro": {
+      "level": "L2",
+      "basis": "Trixie current CLI 已由乾淨來源完整建置並通過映像、U-Boot、FIP、eMMC 與功能設定唯讀守門；仍待實機驗證"
+    },
+    "bananapicm4io": {
+      "level": "L2",
+      "basis": "Trixie current CLI 已由乾淨來源完整建置並通過映像、U-Boot、FIP、Hynix eMMC 保守設定與功能設定唯讀守門；仍待實機驗證"
+    },
+    "bananapim2s": {
+      "level": "L2",
+      "basis": "Trixie current CLI 已由乾淨來源完整建置並通過映像、U-Boot、FIP、eMMC 與功能設定唯讀守門；仍待實機驗證"
+    },
     "bananapim4zero": {
       "level": "L3",
       "basis": "已有多板啟動與 DDR 證據；功能與長時間冷啟動門檻仍未關閉"

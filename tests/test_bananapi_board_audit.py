@@ -45,6 +45,8 @@ class BananaPiBoardAuditTests(unittest.TestCase):
         self.assertEqual(self.by_id["bananapism10"].architecture, "riscv64")
 
     def test_reference_evidence_does_not_claim_full_release(self) -> None:
+        for board_id in ("bananapim5", "bananapim2pro", "bananapicm4io", "bananapim2s"):
+            self.assertEqual(self.by_id[board_id].level, "L2")
         self.assertEqual(self.by_id["bananapim4zero"].level, "L3")
         self.assertEqual(self.by_id["bananapim4berry"].level, "L4")
         self.assertFalse(any(board.level == "L5" for board in self.boards))
