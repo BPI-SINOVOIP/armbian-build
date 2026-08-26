@@ -13,6 +13,7 @@ CONFIG = ROOT / "config/validation/bananapi-rockchip-rk3308-current.json"
 M7_CONFIG = ROOT / "config/validation/bananapi-rockchip-rk3588-m7-current.json"
 BUILD_SCRIPT = ROOT / "tools/build-bananapi-rockchip-candidates.sh"
 VERIFY_SCRIPT = ROOT / "tools/verify-bananapi-rockchip-candidates.sh"
+ROOTFS_CACHE = ROOT / "lib/functions/rootfs/create-cache.sh"
 
 
 class BananaPiRockchipCandidateToolTests(unittest.TestCase):
@@ -22,6 +23,12 @@ class BananaPiRockchipCandidateToolTests(unittest.TestCase):
     def setUpClass(cls) -> None:
         cls.config = json.loads(CONFIG.read_text())
         cls.m7_config = json.loads(M7_CONFIG.read_text())
+
+    def test_rootfs_extract_avoids_cursor_wait_on_dumb_terminal(self) -> None:
+        text = ROOTFS_CACHE.read_text()
+        self.assertIn('[[ -t 1 && "${TERM:-dumb}" != "dumb" ]]', text)
+        self.assertIn('pv_cursor=(-c)', text)
+        self.assertIn('pv -p -b -r "${pv_cursor[@]}"', text)
 
     def test_validation_config_has_exact_p2_pro_policy(self) -> None:
         self.assertEqual(self.config["schema_version"], 1)
