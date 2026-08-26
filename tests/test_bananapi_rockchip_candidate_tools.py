@@ -159,9 +159,17 @@ class BananaPiRockchipCandidateToolTests(unittest.TestCase):
             policy["uboot_payloads"],
             ["idbloader.img@32768", "u-boot.itb@8388608"],
         )
-        self.assertEqual(policy["sd_node"], "/mmc@2a310000")
-        self.assertIn("/mmc@2a320000=4", policy["additional_bus_widths"])
-        self.assertIn("/mmc@2a330000=8", policy["additional_bus_widths"])
+        self.assertEqual(policy["sd_node"], "/soc/mmc@2a310000")
+        self.assertIn("/soc/mmc@2a320000=4", policy["additional_bus_widths"])
+        self.assertIn("/soc/mmc@2a330000=8", policy["additional_bus_widths"])
+        self.assertIn(
+            "/soc/adc@2ae00000",
+            policy["required_status_nodes"],
+        )
+        self.assertIn(
+            "/soc/usb@23000000:dr_mode=otg",
+            policy["required_string_properties"],
+        )
 
     def test_m5_pro_rkbin_inputs_are_complete(self) -> None:
         blobs = self.m5pro_config["rkbin_blobs"]

@@ -88,34 +88,34 @@
       ],
       "overlay_prefix": "rk35xx",
       "overlay_directory": "rockchip/overlay",
-      "sd_node": "/mmc@2a310000",
+      "sd_node": "/soc/mmc@2a310000",
       "sd_bus_width": 4,
       "additional_bus_widths": [
-        "/mmc@2a320000=4",
-        "/mmc@2a330000=8"
+        "/soc/mmc@2a320000=4",
+        "/soc/mmc@2a330000=8"
       ],
       "default_overlays": [],
       "required_overlays": [],
       "required_string_properties": [
-        "/ethernet@2a220000:phy-mode=rgmii-id",
-        "/ethernet@2a230000:phy-mode=rgmii-id",
-        "/usb@23000000:dr_mode=otg",
-        "/usb@23400000:dr_mode=host"
+        "/soc/ethernet@2a220000:phy-mode=rgmii-id",
+        "/soc/ethernet@2a230000:phy-mode=rgmii-id",
+        "/soc/usb@23000000:dr_mode=otg",
+        "/soc/usb@23400000:dr_mode=host"
       ],
       "required_status_nodes": [
-        "/adc@2ae00000",
-        "/ethernet@2a220000",
-        "/ethernet@2a230000",
-        "/gpu@27800000",
-        "/hdmi@27da0000",
-        "/mmc@2a310000",
-        "/mmc@2a320000",
-        "/mmc@2a330000",
-        "/pcie@22000000",
-        "/serial@2ad40000",
-        "/usb@23000000",
-        "/usb@23400000",
-        "/vop@27d00000"
+        "/soc/adc@2ae00000",
+        "/soc/ethernet@2a220000",
+        "/soc/ethernet@2a230000",
+        "/soc/gpu@27800000",
+        "/soc/hdmi@27da0000",
+        "/soc/mmc@2a310000",
+        "/soc/mmc@2a320000",
+        "/soc/mmc@2a330000",
+        "/soc/pcie@22000000",
+        "/soc/serial@2ad40000",
+        "/soc/usb@23000000",
+        "/soc/usb@23400000",
+        "/soc/vop@27d00000"
       ]
     }
   }
