@@ -14,6 +14,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 CONFIG = ROOT / "config/validation/bananapi-sunxi-a20-current.json"
 H3_CONFIG = ROOT / "config/validation/bananapi-sunxi-h3-current.json"
+H2PLUS_CONFIG = ROOT / "config/validation/bananapi-sunxi-h2plus-current.json"
 BUILD_SCRIPT = ROOT / "tools/build-bananapi-sunxi-candidates.sh"
 VERIFY_SCRIPT = ROOT / "tools/verify-bananapi-sunxi-candidates.sh"
 ISOLATED_RUNNER = ROOT / "tools/run-bananapi-candidates-isolated-cache.sh"
@@ -74,6 +75,33 @@ class BananaPiSunxiCandidateToolTests(unittest.TestCase):
                     (overlay_dir / f"{policy['overlay_prefix']}-{overlay}.dtso").is_file()
                 )
 
+    def test_h2plus_policy_covers_storage_wireless_and_header_io(self) -> None:
+        config = json.loads(H2PLUS_CONFIG.read_text())
+        self.assertEqual(set(config["boards"]), {"bananapim2zero", "bananapip2zero"})
+        overlay_dir = ROOT / "patch/kernel/archive/sunxi-6.18/overlay_32"
+        for board, policy in config["boards"].items():
+            with self.subTest(board=board):
+                self.assertEqual(policy["family"], "sun8i")
+                self.assertEqual(policy["sd_bus_width"], 4)
+                self.assertIn("/soc/mmc@1c10000=4", policy["additional_bus_widths"])
+                board_text = next((ROOT / "config/boards").glob(f"{board}.*")).read_text()
+                package_line = next(
+                    line for line in board_text.splitlines()
+                    if line.startswith('PACKAGE_LIST_BOARD="')
+                )
+                self.assertTrue(
+                    set(config["common_packages"])
+                    <= set(package_line.split('"', 2)[1].split())
+                )
+                for overlay in policy["required_overlays"]:
+                    self.assertTrue(
+                        (overlay_dir / f"{policy['overlay_prefix']}-{overlay}.dtso").is_file()
+                    )
+        self.assertIn(
+            "/soc/mmc@1c11000=8",
+            config["boards"]["bananapip2zero"]["additional_bus_widths"],
+        )
+
     def test_build_tool_records_reproducibility_evidence(self) -> None:
         text = BUILD_SCRIPT.read_text()
         for required in (
@@ -103,6 +131,7 @@ class BananaPiSunxiCandidateToolTests(unittest.TestCase):
             "dtb_basename",
             "overlay_prefix=",
             "required_overlays",
+            "additional_bus_widths",
             "sd_bus_width",
             "required_status_nodes",
             "common_kernel_options",

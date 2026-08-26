@@ -75,6 +75,19 @@ else:
 PY
 }
 
+board_field_optional() {
+	python3 - "${validation_config}" "$1" "$2" <<'PY'
+import json
+import sys
+with open(sys.argv[1], encoding="utf-8") as stream:
+    value = json.load(stream)["boards"][sys.argv[2]].get(sys.argv[3], "")
+if isinstance(value, list):
+    print(" ".join(str(item) for item in value))
+else:
+    print(value)
+PY
+}
+
 common_values() {
 	python3 - "${validation_config}" "$1" <<'PY'
 import json
@@ -159,7 +172,7 @@ validate_installed_uboot() {
 validate_mounted_image() (
 	local image=$1 board=$2
 	local dtb_relative dtb_basename dtb_path fdt_override model compatible expected node option_line option value package
-	local loop_device partition mount_dir config_file overlay_prefix overlay default_overlays overlays_line sd_node sd_bus_width
+	local loop_device partition mount_dir config_file overlay_prefix overlay default_overlays overlays_line sd_node sd_bus_width requirement required_node required_width
 	dtb_relative="$(board_field "${board}" dtb)"
 	dtb_basename="$(basename "${dtb_relative}")"
 	mount_dir="$(mktemp -d "${repo_dir}/.tmp/sunxi-verify.XXXXXX")"
@@ -213,6 +226,12 @@ validate_mounted_image() (
 	sd_bus_width="$(board_field "${board}" sd_bus_width)"
 	[[ "$(fdtget -t u "${dtb_path}" "${sd_node}" bus-width)" == "${sd_bus_width}" ]] ||
 		fail "${board} 的 SD 匯流排寬度不是 ${sd_bus_width}-bit"
+	for requirement in $(board_field_optional "${board}" additional_bus_widths); do
+		required_node="${requirement%=*}"
+		required_width="${requirement##*=}"
+		[[ "$(fdtget -t u "${dtb_path}" "${required_node}" bus-width)" == "${required_width}" ]] ||
+			fail "${board} 的 ${required_node} 匯流排寬度不是 ${required_width}-bit"
+	done
 
 	config_file="$(find "${mount_dir}/boot" -maxdepth 1 -type f -name 'config-*' -print -quit)"
 	[[ -n "${config_file}" ]] || fail "${board} 缺少核心設定檔"
