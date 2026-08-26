@@ -64,7 +64,7 @@ function post_config_uboot_target__bananapir4lite_standard_boot() {
 	run_host_command_logged scripts/config --set-val CONFIG_SYS_MMC_ENV_DEV 0
 }
 
-# MT7987 PHY 與共享 Filogic 韌體固定由可追溯的 Linux 韌體提交收入 BSP。
+# MT7987 參考韌體、目前 PHY 驅動所需檔案與共享 Filogic 韌體固定收入 BSP。
 function post_family_tweaks_bsp__bananapir4lite_network_firmware() {
 	local firmware_file
 	local mt7987_source="${SRC}/packages/blobs/filogic/firmware/mediatek/mt7987"

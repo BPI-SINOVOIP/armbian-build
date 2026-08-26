@@ -32,14 +32,14 @@
 
 ## 核心與韌體政策
 
-核心契約新增 GPIO keys 與 PCA9555 GPIO expander，並驗證 MediaTek Ethernet／WED、MT7530 DSA、2.5G PHY、SFP、PCIe、NVMe、MMC、USB、PWM fan、RTC、I2C mux、EEPROM 與標準 I/O 工具。
+核心契約新增 GPIO keys 與 PCA9555 GPIO expander，並驗證 MediaTek Ethernet／WED、MT7530 DSA、2.5G PHY、SFP、PCIe、NVMe、MMC、USB、PWM fan、RTC、I2C mux、EEPROM 與標準 I/O 工具。固定 6.17 核心使用 `CONFIG_MEDIATEK_2P5GE_PHY=y`；共用設定同時保留 6.12 BPI 分支採用的舊符號 `CONFIG_MEDIATEK_2P5G_PHY=y`，未被該核心定義的符號會由 Kconfig 忽略。
 
-MT7987 內建 2.5GbE PHY 需要下列兩個固定 Linux firmware 檔案：
+固定 Linux firmware 提交另提供下列兩個 MT7987 參考檔案：
 
 - `mediatek/mt7987/i2p5ge-phy-DSPBitTb.bin`：SHA-256 `1f7b7fd1c243576e04c16b98c649db1e3326f6a715556c2a56094bcd7d300d71`。
 - `mediatek/mt7987/i2p5ge-phy-pmb.bin`：SHA-256 `941e3118493d5cb14323968ebc1193b23411d7c330a566014eeeb51c5ea7ed45`。
 
-同一核心亦包含共享 Filogic Ethernet 驅動，因此 BSP 一併安裝 MT7981、MT7986 與 MT7988 共六個 WED／PHY 韌體，避免 initramfs 缺檔警告。這些共享檔案不表示 R4 Lite 具有其他 SoC 的硬體。MediaTek 授權原文因法律與來源追溯要求保留，周邊來源說明使用繁體中文。
+固定 6.17 驅動目前實際宣告 `mediatek/mt7988/i2p5ge-phy-pmb.bin`，而非上述 MT7987 路徑；BSP 因此同時安裝這個必要檔案。核心亦包含共享 Filogic Ethernet／WED 驅動，所以一併安裝 MT7981、MT7986 與 MT7988 其餘五個韌體，避免 initramfs 缺檔警告。這些參考與共享檔案不表示 R4 Lite 具有其他 SoC 的硬體。MediaTek 授權原文因法律與來源追溯要求保留，周邊來源說明使用繁體中文。
 
 ATF 的 MT7987 流程會連結供應商提供的預編譯 DRAM／eFuse 物件。完整建置可證明載荷可重現產生，但在逐檔來源與授權旁證補齊前，仍屬再散布合規風險；不得把本地 L2 當成對外授權核准。
 

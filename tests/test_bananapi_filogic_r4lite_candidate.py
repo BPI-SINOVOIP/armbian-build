@@ -102,6 +102,11 @@ class BananaPiFilogicR4LiteCandidateTests(unittest.TestCase):
             with self.subTest(option=option):
                 self.assertIn(f"{option}={value}", text)
         self.assertNotIn("# CONFIG_INPUT is not set", text)
+        self.assertIn("CONFIG_MEDIATEK_2P5GE_PHY=y", text)
+        self.assertEqual(
+            self.config["common_kernel_options"]["CONFIG_MEDIATEK_2P5GE_PHY"],
+            "y",
+        )
 
     def test_sd_gpt_dtb_and_payload_contract_is_complete(self) -> None:
         self.assertEqual(self.policy["root_partition_number"], 5)
