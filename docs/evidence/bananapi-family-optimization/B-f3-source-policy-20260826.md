@@ -28,6 +28,8 @@ U-Boot 與 OpenSBI 提交分別是 `k1-bl-v2.2.9-release` 標籤解析後的提�
 
 此檔案納入逐位元組證據，但僅有雜湊不能證明其來源碼、授權、功能或實機行為。
 
+現有檔案可追溯到 SpacemiT `buildroot-ext` 提交 `65994600db55ec0db7a70a138f63a10785a3e7a1` 的舊版韌體；上游目前檔案雜湊已不同。本階段不在缺少 `remoteproc`、休眠及壓力實機測試時升級它。
+
 ## 啟動映像布局
 
 F3 的 SD／eMMC 主映像使用下列四段 payload：
@@ -41,15 +43,18 @@ F3 的 SD／eMMC 主映像使用下列四段 payload：
 
 `bootinfo_spinor.bin` 與 `u-boot-env-default.bin` 仍由 U-Boot 套件提供，但不直接寫入本次 SD／eMMC 主映像，因此不能假裝成主映像內的連續區段。`bootinfo_emmc.bin` 的正常大小只有 80 bytes，驗證器必須依套件 MD5 與映像偏移逐位元組比對，不能用任意 32 KiB 下限拒絕。
 
+SpacemiT 原始碼另有 `bootinfo_sd.bin` 與不同的 FSBL 位置，但現行 Armbian 及既有映像對 SD 使用上述 eMMC 格式。本階段維持已知布局並明確取證，不在沒有 BootROM 與實機證據時擅自切換格式。
+
 ## F3 L2 軟體門檻
 
 - Linux 6.18 `spacemit` 核心、F3 DTB、initramfs 與板級套件完整封裝。
 - SD 4-bit、SDIO 4-bit 與 eMMC 8-bit 裝置樹設定符合受控 DTB。
 - 雙 GbE、GPU、HDMI、PCIe、USB host、UART、I2C、QSPI、PWM 與溫度節點處於啟用狀態。
 - SpacemiT DRM、VPU、HDMI、NVMe、RTL8852BS、Bluetooth、USB gadget mass-storage、音訊、GPIO、I2C 與 SPI 核心能力已建置。
-- `overlay_prefix=k1` 寫入 `armbianEnv.txt`，I2C、SPI 與 UART 的既有 overlay 可由標準流程選用。
+- `k1` overlay 前綴與 I2C、SPI、UART overlay 檔案已納入映像；F3 目前使用 `extlinux.conf`，未預設套用這些 overlay。
 - GPIO、I2C、SPI、V4L2、PCIe、NVMe、USB、音訊、網路與無線診斷工具已安裝。
 - IMG／XZ、來源提交、設定雜湊、四段 U-Boot payload、OpenSBI、Linux 與 `esos.elf` 證據通過守門。
+- 六個 U-Boot 套件 payload 均產生大小與 SHA-256 清單；其中四個另與主映像偏移逐位元組比對。
 
 ## 不可由 L2 推論
 
@@ -59,3 +64,4 @@ F3 的 SD／eMMC 主映像使用下列四段 payload：
 - GPU、VPU 或其他加速器已完成硬體加速；核心設定與節點存在不是執行證據。
 - USB gadget 或 `g_mass_storage` 已在 Type-C 連線上通過主機辨識與資料完整性驗證。
 - 40-pin overlay 已完成實體腳位、電壓域、衝突及外接迴路驗證。
+- 此候選已具備量產 secure boot 信任鏈；FSBL 的 `secure=0` 設定不能支持此推論。

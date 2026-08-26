@@ -5,21 +5,27 @@
     "linux": {
       "source": "https://github.com/jmontleon/linux-bianbu.git",
       "ref": "commit:3e8e7fd730721aee3926a365cef6635221705b61",
-      "revision": "3e8e7fd730721aee3926a365cef6635221705b61"
+      "revision": "3e8e7fd730721aee3926a365cef6635221705b61",
+      "worktree": "cache/sources/linux-kernel-worktree/6.18__spacemit__riscv64"
     },
     "opensbi": {
       "source": "https://github.com/pyavitz/spacemit-opensbi.git",
       "ref": "commit:05479f5228f3fab2a4221fe0745f3703171ace58",
-      "revision": "05479f5228f3fab2a4221fe0745f3703171ace58"
+      "revision": "05479f5228f3fab2a4221fe0745f3703171ace58",
+      "worktree": "cache/sources/opensbi/05479f5228f3fab2a4221fe0745f3703171ace58"
     },
     "uboot": {
       "source": "https://github.com/pyavitz/spacemit-u-boot.git",
       "ref": "commit:d61c8c77e241314438dce31d9ff1b1cbd9d53688",
-      "revision": "d61c8c77e241314438dce31d9ff1b1cbd9d53688"
+      "revision": "d61c8c77e241314438dce31d9ff1b1cbd9d53688",
+      "worktree": "cache/sources/u-boot-worktree/u-boot-spacemit/d61c8c77e241314438dce31d9ff1b1cbd9d53688"
     }
   },
   "firmware_blobs": {
     "packages/blobs/riscv64/spacemit/esos.elf": "3b3ef5ba9b404c6500bfc0f7f1efc0cb7fdde818450b7beddac1c00f29898537"
+  },
+  "installed_firmware_blobs": {
+    "/lib/firmware/esos.elf": "3b3ef5ba9b404c6500bfc0f7f1efc0cb7fdde818450b7beddac1c00f29898537"
   },
   "common_packages": [
     "rfkill",
@@ -47,6 +53,7 @@
     "CONFIG_GPIO_K1X": "y",
     "CONFIG_I2C_SPACEMIT_K1X": "y",
     "CONFIG_K1X_EMAC": "y",
+    "CONFIG_K1X_REMOTEPROC": "y",
     "CONFIG_K1X_THERMAL": "y",
     "CONFIG_MMC_SDHCI_OF_K1X": "y",
     "CONFIG_PCIEPORTBUS": "y",
@@ -88,6 +95,21 @@
         "fw_dynamic.itb@655360",
         "u-boot.itb@1048576"
       ],
+      "uboot_package_only_payloads": [
+        "bootinfo_spinor.bin",
+        "u-boot-env-default.bin"
+      ],
+      "uboot_payload_minimum_sizes": [
+        "bootinfo_emmc.bin=1",
+        "bootinfo_spinor.bin=1",
+        "FSBL.bin=65536",
+        "fw_dynamic.itb=65536",
+        "u-boot-env-default.bin=16384",
+        "u-boot.itb=1048576"
+      ],
+      "boot_configuration": "extlinux",
+      "extlinux_fdt": "/boot/dtb/spacemit/k1-bananapi-f3.dtb",
+      "partition_start_sector": 8192,
       "overlay_prefix": "k1",
       "overlay_directory": "spacemit/overlay",
       "sd_node": "/soc/sdh@d4280000",
@@ -103,6 +125,15 @@
         "spi3-cs0-spidev",
         "uart5"
       ],
+      "required_boolean_properties": [
+        "/soc/sdh@d4280800:non-removable",
+        "/soc/sdh@d4281000:mmc-hs400-1_8v",
+        "/soc/sdh@d4281000:mmc-hs400-enhanced-strobe",
+        "/soc/sdh@d4281000:non-removable"
+      ],
+      "required_string_properties": [
+        "/soc/usb3@0/dwc3@c0a00000:dr_mode=host"
+      ],
       "required_status_nodes": [
         "/soc/ehci1@c0980100",
         "/soc/ethernet@cac80000",
@@ -115,13 +146,17 @@
         "/soc/pcie@ca800000",
         "/soc/port@c0440000",
         "/soc/pwm@d4021800",
+        "/soc/rcpu_rproc@0",
         "/soc/sdh@d4280000",
         "/soc/sdh@d4280800",
         "/soc/sdh@d4281000",
         "/soc/serial@d4017000",
         "/soc/spi@d420c000",
         "/soc/thermal@d4018000",
-        "/soc/uart@d4017100"
+        "/soc/uart@d4017100",
+        "/soc/udc@c0900100",
+        "/soc/usb3@0",
+        "/soc/usb3hub@0"
       ]
     }
   }

@@ -154,8 +154,8 @@ validate_boot_area() {
 validate_installed_uboot() {
 	local image=$1 mount_dir=$2 board=$3
 	local uboot_tag uboot_version uboot_git_source uboot_git_ref uboot_revision
-	local payload_specs payload_spec payload_name offset uboot_dir payload
-	local metadata_file md5sums_file payload_path expected_md5 actual_md5 payload_size
+	local payload_specs package_only_payloads payload_spec payload_name offset uboot_dir payload
+	local metadata_file md5sums_file payload_size payload_sha256 minimum_spec
 	uboot_tag="$(board_field "${board}" uboot_tag)"
 	uboot_version="$(board_field_optional "${board}" uboot_version)"
 	[[ -n "${uboot_version}" ]] || uboot_version="${uboot_tag#v}"
@@ -189,21 +189,52 @@ validate_installed_uboot() {
 		grep -Fqx "declare UBOOT_GIT_REVISION=\"${uboot_revision}\"" "${metadata_file}" ||
 			fail "${board} 的 U-Boot Git revision 不符"
 	fi
+	validate_uboot_payload_file() {
+		local checked_payload_name=$1 checked_payload checked_payload_path
+		local checked_expected_md5 checked_actual_md5 checked_size checked_minimum=1
+		checked_payload="${uboot_dir}/${checked_payload_name}"
+		checked_payload_path="usr/lib/linux-u-boot-current-${board}/${checked_payload_name}"
+		[[ -s "${checked_payload}" ]] || fail "${board} 缺少 U-Boot payload：${checked_payload_name}"
+		checked_expected_md5="$(awk -v path="${checked_payload_path}" '$2 == path { print $1 }' "${md5sums_file}")"
+		[[ "${checked_expected_md5}" =~ ^[0-9a-f]{32}$ ]] ||
+			fail "${board} 缺少唯一 payload MD5：${checked_payload_name}"
+		checked_actual_md5="$(md5sum "${checked_payload}" | cut -d' ' -f1)"
+		[[ "${checked_actual_md5}" == "${checked_expected_md5}" ]] ||
+			fail "${board} 的 U-Boot payload 已被修改：${checked_payload_name}"
+		for minimum_spec in $(board_field_optional "${board}" uboot_payload_minimum_sizes); do
+			[[ "${minimum_spec%=*}" == "${checked_payload_name}" ]] || continue
+			checked_minimum="${minimum_spec##*=}"
+		done
+		[[ "${checked_minimum}" =~ ^[1-9][0-9]*$ ]] ||
+			fail "${board} 的 payload 最小大小無效：${checked_payload_name}"
+		checked_size="$(stat -c %s "${checked_payload}")"
+		(( checked_size >= checked_minimum )) ||
+			fail "${board} 的 U-Boot payload 太小：${checked_payload_name}"
+		printf '%s\t%s\n' "${checked_payload}" "${checked_size}"
+	}
 	for payload_spec in ${payload_specs}; do
 		[[ "${payload_spec}" =~ ^[^@]+@[0-9]+$ ]] || fail "${board} 的 U-Boot payload 規格不符"
 		payload_name="${payload_spec%@*}"
 		offset="${payload_spec##*@}"
 		payload="${uboot_dir}/${payload_name}"
-		payload_path="usr/lib/linux-u-boot-current-${board}/${payload_name}"
-		[[ -s "${payload}" ]] || fail "${board} 缺少 U-Boot payload：${payload_name}"
-		expected_md5="$(awk -v path="${payload_path}" '$2 == path { print $1 }' "${md5sums_file}")"
-		[[ "${expected_md5}" =~ ^[0-9a-f]{32}$ ]] || fail "${board} 缺少唯一 payload MD5：${payload_name}"
-		actual_md5="$(md5sum "${payload}" | cut -d' ' -f1)"
-		[[ "${actual_md5}" == "${expected_md5}" ]] || fail "${board} 的 U-Boot payload 已被修改：${payload_name}"
+		validate_uboot_payload_file "${payload_name}" >/dev/null
 		payload_size="$(stat -c %s "${payload}")"
-		(( payload_size > 32768 )) || fail "${board} 的 U-Boot payload 太小：${payload_name}"
+		payload_sha256="$(sha256sum "${payload}" | cut -d' ' -f1)"
 		cmp --silent --ignore-initial="0:${offset}" --bytes="${payload_size}" \
 			"${payload}" "${image}" || fail "${board} 映像 ${offset} 偏移與 ${payload_name} 不同"
+		printf '%s\t%s\timage\t%s\t%s\t%s\n' \
+			"${board}" "${payload_name}" "${offset}" "${payload_size}" "${payload_sha256}" \
+			>>"${output_dir}/UBOOT_PAYLOAD_EVIDENCE.tsv.partial"
+	done
+	package_only_payloads="$(board_field_optional "${board}" uboot_package_only_payloads)"
+	for payload_name in ${package_only_payloads}; do
+		validate_uboot_payload_file "${payload_name}" >/dev/null
+		payload="${uboot_dir}/${payload_name}"
+		payload_size="$(stat -c %s "${payload}")"
+		payload_sha256="$(sha256sum "${payload}" | cut -d' ' -f1)"
+		printf '%s\t%s\tpackage-only\t-\t%s\t%s\n' \
+			"${board}" "${payload_name}" "${payload_size}" "${payload_sha256}" \
+			>>"${output_dir}/UBOOT_PAYLOAD_EVIDENCE.tsv.partial"
 	done
 }
 
@@ -211,6 +242,7 @@ validate_mounted_image() (
 	local image=$1 board=$2
 	local dtb_relative dtb_basename dtb_path fdt_override model compatible expected node option_line option value package
 	local loop_device partition mount_dir config_file overlay_prefix overlay overlay_directory default_overlays overlays_line sd_node sd_bus_width requirement required_node required_width kernel_family
+	local boot_configuration extlinux_fdt expected_start_sector actual_start_sector property_spec property_node property_name property_expected installed_spec installed_path installed_sha256
 	dtb_relative="$(board_field "${board}" dtb)"
 	dtb_basename="$(basename "${dtb_relative}")"
 	mount_dir="$(mktemp -d "${repo_dir}/.tmp/${verify_tmp_prefix}.XXXXXX")"
@@ -224,19 +256,40 @@ validate_mounted_image() (
 	udevadm settle
 	partition="$(lsblk -nrpo NAME,TYPE "${loop_device}" | awk '$2 == "part" { print $1; exit }')"
 	[[ -n "${partition}" ]] || fail "${board} 沒有可掛載分割區"
+	expected_start_sector="$(board_field_optional "${board}" partition_start_sector)"
+	if [[ -n "${expected_start_sector}" ]]; then
+		actual_start_sector="$(lsblk -nrno START "${partition}" | tr -d ' ')"
+		[[ "${actual_start_sector}" == "${expected_start_sector}" ]] ||
+			fail "${board} 的第一分割區起點不是 ${expected_start_sector} sector"
+	fi
 	sudo mount -o ro,noload "${partition}" "${mount_dir}"
 
 	[[ -s "${mount_dir}/boot/zImage" || -s "${mount_dir}/boot/Image" ]] || fail "${board} 缺少核心映像"
 	[[ -s "${mount_dir}/boot/uInitrd" ]] || fail "${board} 缺少 initrd"
-	if grep -q '^fdtfile=' "${mount_dir}/boot/armbianEnv.txt"; then
-		fdt_override="$(grep '^fdtfile=' "${mount_dir}/boot/armbianEnv.txt")"
-		[[ "${fdt_override}" == "fdtfile=${dtb_relative}" || \
-			"${fdt_override}" == "fdtfile=${dtb_basename}" ]] || fail "${board} 的 fdtfile 覆寫不符"
-	fi
+	boot_configuration="$(board_field_optional "${board}" boot_configuration)"
+	[[ -n "${boot_configuration}" ]] || boot_configuration="armbian_env"
 	overlay_prefix="$(board_field "${board}" overlay_prefix)"
 	overlay_directory="$(board_field_optional "${board}" overlay_directory)"
 	[[ -n "${overlay_directory}" ]] || overlay_directory="overlay"
-	grep -qx "overlay_prefix=${overlay_prefix}" "${mount_dir}/boot/armbianEnv.txt" || fail "${board} 的 overlay_prefix 不符"
+	case "${boot_configuration}" in
+		armbian_env)
+			[[ -s "${mount_dir}/boot/armbianEnv.txt" ]] || fail "${board} 缺少 armbianEnv.txt"
+			if grep -q '^fdtfile=' "${mount_dir}/boot/armbianEnv.txt"; then
+				fdt_override="$(grep '^fdtfile=' "${mount_dir}/boot/armbianEnv.txt")"
+				[[ "${fdt_override}" == "fdtfile=${dtb_relative}" || \
+					"${fdt_override}" == "fdtfile=${dtb_basename}" ]] || fail "${board} 的 fdtfile 覆寫不符"
+			fi
+			grep -qx "overlay_prefix=${overlay_prefix}" "${mount_dir}/boot/armbianEnv.txt" ||
+				fail "${board} 的 overlay_prefix 不符"
+			;;
+		extlinux)
+			extlinux_fdt="$(board_field "${board}" extlinux_fdt)"
+			[[ -s "${mount_dir}/boot/extlinux/extlinux.conf" ]] || fail "${board} 缺少 extlinux.conf"
+			grep -Fqx "  fdt ${extlinux_fdt}" "${mount_dir}/boot/extlinux/extlinux.conf" ||
+				fail "${board} 的 extlinux FDT 不符"
+			;;
+		*) fail "${board} 的開機設定類型不支援：${boot_configuration}" ;;
+	esac
 	default_overlays="$(board_field "${board}" default_overlays)"
 	if [[ -n "${default_overlays}" ]]; then
 		overlays_line="$(grep '^overlays=' "${mount_dir}/boot/armbianEnv.txt")" || fail "${board} 缺少預設 overlays"
@@ -262,6 +315,20 @@ validate_mounted_image() (
 	for node in $(board_field "${board}" required_status_nodes); do
 		[[ "$(fdtget -t s "${dtb_path}" "${node}" status)" == okay ]] || fail "${board} 節點未啟用：${node}"
 	done
+	for property_spec in $(board_field_optional "${board}" required_boolean_properties); do
+		property_node="${property_spec%%:*}"
+		property_name="${property_spec#*:}"
+		fdtget "${dtb_path}" "${property_node}" "${property_name}" >/dev/null ||
+			fail "${board} 缺少 DT 布林屬性：${property_node}:${property_name}"
+	done
+	for property_spec in $(board_field_optional "${board}" required_string_properties); do
+		property_node="${property_spec%%:*}"
+		property_name="${property_spec#*:}"
+		property_expected="${property_name#*=}"
+		property_name="${property_name%%=*}"
+		[[ "$(fdtget -t s "${dtb_path}" "${property_node}" "${property_name}")" == "${property_expected}" ]] ||
+			fail "${board} 的 DT 字串屬性不符：${property_node}:${property_name}"
+	done
 	sd_node="$(board_field "${board}" sd_node)"
 	sd_bus_width="$(board_field "${board}" sd_bus_width)"
 	[[ "$(fdtget -t u "${dtb_path}" "${sd_node}" bus-width)" == "${sd_bus_width}" ]] ||
@@ -282,6 +349,14 @@ validate_mounted_image() (
 	for package in $(common_values common_packages); do
 		package_installed "${mount_dir}" "${package}" || fail "${board} 缺少套件 ${package}"
 	done
+	while IFS= read -r installed_spec; do
+		[[ -n "${installed_spec}" ]] || continue
+		installed_path="${installed_spec%%=*}"
+		installed_sha256="${installed_spec#*=}"
+		[[ -f "${mount_dir}${installed_path}" ]] || fail "${board} 缺少韌體 ${installed_path}"
+		[[ "$(sha256sum "${mount_dir}${installed_path}" | cut -d' ' -f1)" == "${installed_sha256}" ]] ||
+			fail "${board} 的韌體雜湊不符：${installed_path}"
+	done < <(common_values installed_firmware_blobs 2>/dev/null || true)
 	kernel_family="$(top_field_optional kernel_family)"
 	[[ -n "${kernel_family}" ]] || kernel_family="sunxi"
 	for package in "linux-image-current-${kernel_family}" "linux-dtb-current-${kernel_family}" \
@@ -312,6 +387,8 @@ build_validation_config_sha256="$(git -C "${repo_dir}" show \
 
 verification_file="${output_dir}/VERIFICATION.tsv"
 printf 'board\tidentity\tread_only_content\tevidence_level\n' >"${verification_file}.partial"
+printf 'board\tpayload\tplacement\toffset\tsize\tsha256\n' \
+	>"${output_dir}/UBOOT_PAYLOAD_EVIDENCE.tsv.partial"
 while IFS=$'\t' read -r board release profile raw_size raw_sha256 xz_size \
 	xz_sha256 img_path xz_path candidate_commit uboot_tag; do
 	[[ "${release}" == trixie && "${profile}" == cli ]] || fail "${board} 發行版或設定不符"
@@ -344,6 +421,10 @@ while IFS=$'\t' read -r board release profile raw_size raw_sha256 xz_size \
 done < <(tail -n +2 "${output_dir}/CANDIDATES.tsv")
 
 mv "${verification_file}.partial" "${verification_file}"
+mv "${output_dir}/UBOOT_PAYLOAD_EVIDENCE.tsv.partial" \
+	"${output_dir}/UBOOT_PAYLOAD_EVIDENCE.tsv"
+uboot_payload_manifest_sha256="$(sha256sum \
+	"${output_dir}/UBOOT_PAYLOAD_EVIDENCE.tsv" | cut -d' ' -f1)"
 status_file="${output_dir}/VERIFICATION_STATUS.json"
 {
 	printf '{\n  "status": "complete",\n  "evidence_level": "L2",\n'
@@ -351,6 +432,7 @@ status_file="${output_dir}/VERIFICATION_STATUS.json"
 	printf '  "verifier_commit": "%s",\n' "${verifier_commit}"
 	printf '  "build_validation_config_sha256": "%s",\n' "${build_validation_config_sha256}"
 	printf '  "verification_config_sha256": "%s",\n' "${verification_config_sha256}"
+	printf '  "uboot_payload_manifest_sha256": "%s",\n' "${uboot_payload_manifest_sha256}"
 	printf '  "verified_utc": "%s"\n}\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 } >"${status_file}.partial"
 mv "${status_file}.partial" "${status_file}"
