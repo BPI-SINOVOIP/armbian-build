@@ -58,6 +58,8 @@ class BananaPiBoardAuditTests(unittest.TestCase):
             "bananapi",
             "bananapipro",
             "bananapim2plus",
+            "bananapim2zero",
+            "bananapip2zero",
             "bananapim5",
             "bananapim2pro",
             "bananapicm4io",

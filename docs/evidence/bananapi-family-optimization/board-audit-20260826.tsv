@@ -20,7 +20,7 @@ bananapim2plus	conf	Banana Pi M2+	sun8i	armhf	current,edge,legacy	current	yes	B	
 bananapim2pro	conf	Banana Pi M2Pro	meson-sm1	arm64	current,edge	current	yes	A	L2	bananapi-m2-pro_defconfig	amlogic/meson-sm1-bananapi-m2-pro.dtb		執行 UART、啟動與基本周邊實機驗證
 bananapim2s	conf	Banana Pi M2S	meson-g12b	arm64	current,edge	current	yes	A	L2	bananapi-m2s_defconfig	amlogic/meson-g12b-a311d-bananapi-m2s.dtb		執行 UART、啟動與基本周邊實機驗證
 bananapim2ultra	csc	Banana Pi M2 Ultra	sun8i	armhf	current,edge,legacy	current	yes	C	L0	Bananapi_M2_Ultra_defconfig		BOARD_MAINTAINER	建立 Trixie CLI 並完成離線守門
-bananapim2zero	csc	Banana Pi M2 Zero	sun8i	armhf	current,edge,legacy	current	yes	C	L0	bananapi_m2_zero_defconfig			建立 Trixie CLI 並完成離線守門
+bananapim2zero	csc	Banana Pi M2 Zero	sun8i	armhf	current,edge,legacy	current	yes	C	L2	bananapi_m2_zero_defconfig			執行 UART、啟動與基本周邊實機驗證
 bananapim3	csc	Banana Pi M3	sun8i	armhf	current,edge,legacy	current	yes	C	L0	Sinovoip_BPI_M3_defconfig			建立 Trixie CLI 並完成離線守門
 bananapim4	wip	Banana Pi M4	realtek-rtd139x-bpi	arm64	legacy	legacy	yes	F	L0	rtd1395_bananapi_defconfig	realtek/rtd139x/rtd-1395-bananapi-m4-2GB.dtb	BOARD_MAINTAINER	確認建置鏈並建立 Trixie CLI 候選
 bananapim4berry	conf	BananaPi M4 Berry	sun50iw9-bpi	arm64	current,edge	current	yes	R	L4	bananapi_m4_berry_defconfig	sun50i-h618-bananapi-m4-berry.dtb		補齊樣本數、冷啟動與發布門檻
@@ -32,7 +32,7 @@ bananapim6	wip	Banana Pi M6	vs680	arm64	legacy	legacy	yes	F	L0	vs680_oemboot_c05
 bananapim64	csc	Banana Pi M64	sun50iw1	arm64	current,edge,legacy	current	yes	C	L0	bananapi_m64_defconfig			建立 Trixie CLI 並完成離線守門
 bananapim7	conf	Banana Pi M7	rockchip-rk3588	arm64	current,edge,vendor	current	yes	B	L0	armsom-sige7-rk3588_defconfig	rockchip/rk3588-bananapi-m7.dtb		建立 Trixie CLI 並完成離線守門
 bananapip2pro	wip	Banana Pi P2 Pro	rockchip64	arm64	current	current	no	E	L0	bpi-p2-pro-rk3308_defconfig	rockchip/rk3308-bpi-p2-pro.dtb	KERNEL_TEST_TARGET	確認建置鏈並建立 Trixie CLI 候選
-bananapip2zero	csc	Banana Pi P2 Zero	sun8i	armhf	current,edge,legacy	current	yes	C	L0	bananapi_p2_zero_defconfig	allwinner/sun8i-h2-plus-bananapi-p2-zero.dtb	BOARD_MAINTAINER	建立 Trixie CLI 並完成離線守門
+bananapip2zero	csc	Banana Pi P2 Zero	sun8i	armhf	current,edge,legacy	current	yes	C	L2	bananapi_p2_zero_defconfig	allwinner/sun8i-h2-plus-bananapi-p2-zero.dtb	BOARD_MAINTAINER	執行 UART、啟動與基本周邊實機驗證
 bananapipro	csc	Banana Pi Pro	sun7i	armhf	current,edge,legacy	current	yes	C	L2	Bananapro_defconfig		BOARD_MAINTAINER	執行 UART、啟動與基本周邊實機驗證
 bananapir1	eos	Banana Pi R1	sun7i	armhf	current,edge	current	yes	G	L0	Lamobo_R1_defconfig		BOARD_MAINTAINER,KERNEL_TEST_TARGET	保留最後可用基線，不列入新發布
 bananapir2	csc	Banana Pi R2	mt7623	armhf	current	current	yes	D	L0	mt7623n_bpir2_defconfig	mediatek/mt7623n-bananapi-bpi-r2	BOARD_MAINTAINER	建立 Trixie CLI 並完成離線守門
