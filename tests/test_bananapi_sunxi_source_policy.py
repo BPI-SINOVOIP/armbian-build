@@ -50,6 +50,25 @@ class BananaPiSunxiSourcePolicyTests(unittest.TestCase):
             {"Add-MACH_SUN8I_A83T-to-can-calibrate.patch"},
         )
 
+    def test_m64_pins_the_complete_current_boot_chain(self) -> None:
+        board = (ROOT / "config/boards/bananapim64.csc").read_text()
+        for expected in (
+            'KERNELBRANCH_BOARD="commit:1f99e9ab748fc5c32120de9c4eca31abfe54a4d5"',
+            'BOOTBRANCH_BOARD="commit:866ca972d6c3cabeaf6dbac431e8e08bb30b3c8e"',
+            'ATFBRANCH_BOARD="commit:c2a0e7080d64d69940be4ad0ff6578501f3cbf9e"',
+            'CRUSTBRANCH_BOARD="commit:ffe9f1ac9c675e6e67db9084bd19fbdeffd8e162"',
+            'ARMBIAN_FIRMWARE_GIT_REF_BOARD="commit:f50a2a21bcdb77a562b3976930c5c6b521a1df08"',
+        ):
+            with self.subTest(expected=expected):
+                self.assertIn(expected, board)
+        self.assertNotIn("CONFIG_DRAM_CLK", board)
+
+        patch = (
+            ROOT
+            / "patch/u-boot/u-boot-sunxi/allwinner-lower-default-DRAM-freq-A64-H5.patch"
+        ).read_text()
+        self.assertIn("default 648 if MACH_SUN50I || MACH_SUN50I_H5", patch)
+
     def test_firmware_artifact_accepts_an_exact_git_ref(self) -> None:
         compile_text = (
             ROOT / "lib/functions/compilation/packages/firmware-deb.sh"

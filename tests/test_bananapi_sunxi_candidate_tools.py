@@ -20,6 +20,7 @@ R40_CONFIG = ROOT / "config/validation/bananapi-sunxi-r40-current.json"
 A31S_CONFIG = ROOT / "config/validation/bananapi-sunxi-a31s-current.json"
 A33_CONFIG = ROOT / "config/validation/bananapi-sunxi-a33-current.json"
 A83T_CONFIG = ROOT / "config/validation/bananapi-sunxi-a83t-current.json"
+A64_CONFIG = ROOT / "config/validation/bananapi-sunxi-a64-current.json"
 BUILD_SCRIPT = ROOT / "tools/build-bananapi-sunxi-candidates.sh"
 VERIFY_SCRIPT = ROOT / "tools/verify-bananapi-sunxi-candidates.sh"
 ISOLATED_RUNNER = ROOT / "tools/run-bananapi-candidates-isolated-cache.sh"
@@ -398,6 +399,53 @@ class BananaPiSunxiCandidateToolTests(unittest.TestCase):
         )
         self.assertNotIn("CONFIG_DRAM_CLK", board_text)
 
+    def test_a64_policy_covers_full_firmware_chain_and_m64_io(self) -> None:
+        config = json.loads(A64_CONFIG.read_text())
+        self.assertEqual(config["candidate_branch"], "current")
+        self.assertEqual(config["kernel_family"], "sunxi64")
+        self.assertEqual(set(config["boards"]), {"bananapim64"})
+        policy = config["boards"]["bananapim64"]
+        self.assertEqual(policy["dtb"], "allwinner/sun50i-a64-bananapi-m64.dtb")
+        self.assertEqual(policy["overlay_prefix"], "sun50i-a64")
+        self.assertTrue(
+            {"i2c1", "spi-spidev", "uart4", "w1-gpio"}
+            <= set(policy["required_overlays"])
+        )
+        self.assertNotIn("uart1", policy["required_overlays"])
+        self.assertTrue(
+            {"atf_git_source", "atf_git_ref", "atf_revision",
+             "crust_git_source", "crust_git_ref", "crust_revision"}
+            <= set(policy)
+        )
+        self.assertEqual(
+            policy["atf_revision"],
+            "c2a0e7080d64d69940be4ad0ff6578501f3cbf9e",
+        )
+        self.assertEqual(
+            policy["crust_revision"],
+            "ffe9f1ac9c675e6e67db9084bd19fbdeffd8e162",
+        )
+        self.assertIn(
+            "/soc/usb@1c19000:dr_mode=otg",
+            policy["required_string_properties"],
+        )
+        self.assertTrue(
+            {"/soc/crypto@1c15000", "/soc/gpu@1c40000",
+             "/soc/video-codec@1c0e000"}
+            <= set(policy["required_present_nodes"])
+        )
+
+        board_text = (ROOT / "config/boards/bananapim64.csc").read_text()
+        package_line = next(
+            line for line in board_text.splitlines()
+            if line.startswith('PACKAGE_LIST_BOARD="')
+        )
+        self.assertTrue(
+            set(config["common_packages"])
+            <= set(package_line.split('"', 2)[1].split())
+        )
+        self.assertNotIn("CONFIG_DRAM_CLK", board_text)
+
     def test_build_tool_records_reproducibility_evidence(self) -> None:
         text = BUILD_SCRIPT.read_text()
         for required in (
@@ -411,6 +459,7 @@ class BananaPiSunxiCandidateToolTests(unittest.TestCase):
             "build_parameters_sha256",
             "decompressed_sha256",
             "ARTIFACT_IGNORE_CACHE",
+            "CLEAN_LEVEL=make-kernel,make-uboot,make-atf,make-crust",
         ):
             with self.subTest(required=required):
                 self.assertIn(required, text)

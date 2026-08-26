@@ -198,6 +198,9 @@ for board in "${boards[@]}"; do
 	crust_revision="$(board_field_optional "${board}" crust_revision)"
 	dtb="$(board_field "${board}" dtb)"
 	build_parameters="BOARD=${board} BRANCH=${branch} RELEASE=${release} BUILD_DESKTOP=no BUILD_MINIMAL=yes KERNEL_CONFIGURE=no EXPERT=yes ARTIFACT_IGNORE_CACHE=${artifact_ignore_cache} COMPRESS_OUTPUTIMAGE=sha,img"
+	if [[ "${artifact_ignore_cache}" == yes ]]; then
+		build_parameters+=" CLEAN_LEVEL=make-kernel,make-uboot,make-atf,make-crust"
+	fi
 	build_parameters_sha256="$(printf '%s\n' "${build_parameters}" | sha256sum | cut -d' ' -f1)"
 
 	if [[ -f "${metadata}" ]]; then
@@ -236,7 +239,7 @@ for board in "${boards[@]}"; do
 			"COMPRESS_OUTPUTIMAGE=sha,img"
 		)
 		if [[ "${artifact_ignore_cache}" == yes ]]; then
-			build_args+=("CLEAN_LEVEL=make-kernel,make-uboot")
+			build_args+=("CLEAN_LEVEL=make-kernel,make-uboot,make-atf,make-crust")
 		fi
 		echo "完整建置 ${board} ${release} ${branch} CLI。"
 		(cd "${repo_dir}" && ./compile.sh "${build_args[@]}") |& tee "${log_file}"
