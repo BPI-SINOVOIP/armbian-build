@@ -10,6 +10,8 @@ branch="${BRANCH:-current}"
 artifact_ignore_cache="${ARTIFACT_IGNORE_CACHE:-yes}"
 minimum_free_gib="${MINIMUM_FREE_GIB:-80}"
 require_isolated_cache="${REQUIRE_ISOLATED_CACHE:-yes}"
+candidate_family_name="${CANDIDATE_FAMILY_NAME:-Sunxi}"
+candidate_lock_file="${CANDIDATE_LOCK_FILE:-.bananapi-sunxi-build.lock}"
 
 read -r -a boards <<<"${boards_text}"
 
@@ -48,7 +50,7 @@ validate_default_userpatches() {
 
 [[ -f "${validation_config}" ]] || fail "找不到驗證設定：${validation_config}"
 [[ "${release}" == trixie && "${branch}" == current ]] || {
-	echo "Sunxi 第一批守門只接受 RELEASE=trixie 與 BRANCH=current。" >&2
+	echo "${candidate_family_name} 候選守門只接受 RELEASE=trixie 與 BRANCH=current。" >&2
 	exit 2
 }
 case "${artifact_ignore_cache}" in
@@ -130,8 +132,8 @@ write_status() {
 }
 
 mkdir -p "${output_dir}/logs" "${repo_dir}/.tmp"
-exec 9>"${repo_dir}/.tmp/.bananapi-sunxi-build.lock"
-flock -n 9 || fail "此工作樹已有另一個 Sunxi 候選映像建置"
+exec 9>"${repo_dir}/.tmp/${candidate_lock_file}"
+flock -n 9 || fail "此工作樹已有另一個 ${candidate_family_name} 候選映像建置"
 
 status_file="${output_dir}/COMPLETION_STATUS.json"
 matrix_file="${output_dir}/CANDIDATES.tsv"
@@ -254,4 +256,4 @@ actual_rows="$(awk 'NR > 1 { count++ } END { print count + 0 }' "${matrix_file}.
 mv "${matrix_file}.partial" "${matrix_file}"
 write_status complete "指定板卡的 L1 候選已完整建置"
 trap - EXIT
-echo "Sunxi 候選映像建置完成：${output_dir}"
+echo "${candidate_family_name} 候選映像建置完成：${output_dir}"

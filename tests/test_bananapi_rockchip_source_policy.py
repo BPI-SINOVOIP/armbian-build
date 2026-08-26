@@ -2,6 +2,9 @@
 """Banana Pi Rockchip 板級來源政策回歸測試。"""
 
 from pathlib import Path
+import os
+import re
+import subprocess
 import unittest
 
 
@@ -32,12 +35,53 @@ class BananaPiRockchipSourcePolicyTests(unittest.TestCase):
             self.extension,
         )
 
+    def test_rkbin_ref_is_passed_to_fetch_from_repo(self) -> None:
+        cases = (
+            ({}, "branch:master"),
+            ({"RKBIN_GIT_BRANCH": "vendor"}, "branch:vendor"),
+            (
+                {"RKBIN_GIT_REF": "", "RKBIN_GIT_BRANCH": "fallback"},
+                "branch:fallback",
+            ),
+            ({"RKBIN_GIT_REF": f"commit:{RKBIN_COMMIT}"}, f"commit:{RKBIN_COMMIT}"),
+            (
+                {
+                    "RKBIN_GIT_REF": f"commit:{RKBIN_COMMIT}",
+                    "RKBIN_GIT_BRANCH": "ignored",
+                },
+                f"commit:{RKBIN_COMMIT}",
+            ),
+        )
+        harness = f'''
+fetch_from_repo() {{ printf '%s\\n' "$3"; }}
+source "{ROOT / 'extensions/rkbin-tools.sh'}"
+fetch_sources_tools__rkbin_tools
+'''
+        for variables, expected in cases:
+            with self.subTest(variables=variables):
+                environment = os.environ.copy()
+                environment.pop("RKBIN_GIT_REF", None)
+                environment.pop("RKBIN_GIT_BRANCH", None)
+                environment.update(variables)
+                result = subprocess.run(
+                    ["bash", "-c", harness],
+                    env=environment,
+                    capture_output=True,
+                    text=True,
+                    check=False,
+                )
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertEqual(result.stdout.strip(), expected)
+
     def test_p2_pro_pins_rkbin_commit(self) -> None:
         self.assertIn(
             f'RKBIN_GIT_REF="commit:{RKBIN_COMMIT}"',
             self.board,
         )
         self.assertNotIn('RKBIN_GIT_REF="branch:', self.board)
+        match = re.search(r'RKBIN_GIT_REF="(commit:[0-9a-f]+)"', self.board)
+        self.assertIsNotNone(match)
+        self.assertRegex(match.group(1), r"^commit:[0-9a-f]{40}$")
 
     def test_p2_pro_uses_expected_rk3308_blobs(self) -> None:
         self.assertIn(

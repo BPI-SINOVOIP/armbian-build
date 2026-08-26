@@ -6,6 +6,8 @@ validation_config="${VALIDATION_CONFIG:-${repo_dir}/config/validation/bananapi-s
 output_dir="${OUTPUT_DIR:-${repo_dir}/output/images/2026.08/bananapi-sunxi-a20-trixie-current-cli}"
 boards_text="${BOARDS:-bananapi bananapipro}"
 verify_archives="${VERIFY_ARCHIVES:-yes}"
+candidate_family_name="${CANDIDATE_FAMILY_NAME:-Sunxi}"
+verify_tmp_prefix="${VERIFY_TMP_PREFIX:-bananapi-verify}"
 
 read -r -a boards <<<"${boards_text}"
 
@@ -103,6 +105,16 @@ else:
 PY
 }
 
+top_field_optional() {
+	python3 - "${validation_config}" "$1" <<'PY'
+import json
+import sys
+with open(sys.argv[1], encoding="utf-8") as stream:
+    value = json.load(stream).get(sys.argv[2], "")
+print(value)
+PY
+}
+
 read_metadata_value() {
 	local metadata_file=$1 key=$2 matches=()
 	mapfile -t matches < <(grep -E "^${key}=" "${metadata_file}")
@@ -172,10 +184,10 @@ validate_installed_uboot() {
 validate_mounted_image() (
 	local image=$1 board=$2
 	local dtb_relative dtb_basename dtb_path fdt_override model compatible expected node option_line option value package
-	local loop_device partition mount_dir config_file overlay_prefix overlay default_overlays overlays_line sd_node sd_bus_width requirement required_node required_width
+	local loop_device partition mount_dir config_file overlay_prefix overlay overlay_directory default_overlays overlays_line sd_node sd_bus_width requirement required_node required_width kernel_family
 	dtb_relative="$(board_field "${board}" dtb)"
 	dtb_basename="$(basename "${dtb_relative}")"
-	mount_dir="$(mktemp -d "${repo_dir}/.tmp/sunxi-verify.XXXXXX")"
+	mount_dir="$(mktemp -d "${repo_dir}/.tmp/${verify_tmp_prefix}.XXXXXX")"
 	loop_device="$(sudo losetup --find --show --partscan --read-only "${image}")"
 	cleanup_image() {
 		if mountpoint -q "${mount_dir}"; then sudo umount "${mount_dir}"; fi
@@ -196,6 +208,8 @@ validate_mounted_image() (
 			"${fdt_override}" == "fdtfile=${dtb_basename}" ]] || fail "${board} 的 fdtfile 覆寫不符"
 	fi
 	overlay_prefix="$(board_field "${board}" overlay_prefix)"
+	overlay_directory="$(board_field_optional "${board}" overlay_directory)"
+	[[ -n "${overlay_directory}" ]] || overlay_directory="overlay"
 	grep -qx "overlay_prefix=${overlay_prefix}" "${mount_dir}/boot/armbianEnv.txt" || fail "${board} 的 overlay_prefix 不符"
 	default_overlays="$(board_field "${board}" default_overlays)"
 	if [[ -n "${default_overlays}" ]]; then
@@ -205,7 +219,7 @@ validate_mounted_image() (
 		done
 	fi
 	for overlay in $(board_field "${board}" required_overlays); do
-		[[ -s "${mount_dir}/boot/dtb/overlay/${overlay_prefix}-${overlay}.dtbo" ]] ||
+		[[ -s "${mount_dir}/boot/dtb/${overlay_directory}/${overlay_prefix}-${overlay}.dtbo" ]] ||
 			fail "${board} 缺少 overlay：${overlay_prefix}-${overlay}.dtbo"
 	done
 	dtb_path="${mount_dir}/boot/dtb/${dtb_relative}"
@@ -242,7 +256,9 @@ validate_mounted_image() (
 	for package in $(common_values common_packages); do
 		package_installed "${mount_dir}" "${package}" || fail "${board} 缺少套件 ${package}"
 	done
-	for package in linux-image-current-sunxi linux-dtb-current-sunxi \
+	kernel_family="$(top_field_optional kernel_family)"
+	[[ -n "${kernel_family}" ]] || kernel_family="sunxi"
+	for package in "linux-image-current-${kernel_family}" "linux-dtb-current-${kernel_family}" \
 		"linux-u-boot-${board}-current" "armbian-bsp-cli-${board}-current"; do
 		package_installed "${mount_dir}" "${package}" || fail "${board} 缺少 Armbian 套件 ${package}"
 	done
@@ -308,4 +324,4 @@ status_file="${output_dir}/VERIFICATION_STATUS.json"
 	printf '  "verified_utc": "%s"\n}\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 } >"${status_file}.partial"
 mv "${status_file}.partial" "${status_file}"
-echo "Sunxi 候選映像全部通過 L2 唯讀守門。"
+echo "${candidate_family_name} 候選映像全部通過 L2 唯讀守門。"

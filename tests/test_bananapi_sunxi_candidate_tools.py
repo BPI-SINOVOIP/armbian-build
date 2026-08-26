@@ -108,7 +108,7 @@ class BananaPiSunxiCandidateToolTests(unittest.TestCase):
             "status --porcelain --untracked-files=all",
             "validate_default_userpatches",
             "cache 不是 OverlayFS",
-            ".tmp/.bananapi-sunxi-build.lock",
+            "CANDIDATE_LOCK_FILE",
             "source_commit",
             "source_tree",
             "validation_config_sha256",
@@ -130,6 +130,7 @@ class BananaPiSunxiCandidateToolTests(unittest.TestCase):
             "fdtfile=",
             "dtb_basename",
             "overlay_prefix=",
+            "overlay_directory",
             "required_overlays",
             "additional_bus_widths",
             "sd_bus_width",
@@ -139,6 +140,7 @@ class BananaPiSunxiCandidateToolTests(unittest.TestCase):
             "verifier_commit",
             "build_validation_config_sha256",
             "verification_config_sha256",
+            "kernel_family",
             "xz -dc",
         ):
             with self.subTest(required=required):
