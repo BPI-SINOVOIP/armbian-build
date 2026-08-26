@@ -69,12 +69,14 @@ class BananaPiSunxiCandidateToolTests(unittest.TestCase):
         )
         self.assertTrue(set(config["common_packages"]) <= set(package_line.split('"', 2)[1].split()))
 
-        overlay_dir = ROOT / "patch/kernel/archive/sunxi-6.18/overlay_32"
-        for overlay in policy["required_overlays"]:
-            with self.subTest(overlay=overlay):
-                self.assertTrue(
-                    (overlay_dir / f"{policy['overlay_prefix']}-{overlay}.dtso").is_file()
-                )
+        for version in ("6.18", "7.0"):
+            overlay_dir = ROOT / f"patch/kernel/archive/sunxi-{version}/overlay_32"
+            makefile = (overlay_dir / "Makefile").read_text()
+            for overlay in policy["required_overlays"]:
+                filename = f"{policy['overlay_prefix']}-{overlay}"
+                with self.subTest(version=version, overlay=overlay):
+                    self.assertTrue((overlay_dir / f"{filename}.dtso").is_file())
+                    self.assertIn(f"{filename}.dtbo", makefile)
 
     def test_h2plus_policy_covers_storage_wireless_and_header_io(self) -> None:
         config = json.loads(H2PLUS_CONFIG.read_text())
@@ -150,12 +152,14 @@ class BananaPiSunxiCandidateToolTests(unittest.TestCase):
         )
         self.assertNotIn("CONFIG_DRAM_CLK", board_text)
 
-        overlay_dir = ROOT / "patch/kernel/archive/sunxi-6.18/overlay_32"
-        for overlay in policy["required_overlays"]:
-            with self.subTest(overlay=overlay):
-                self.assertTrue(
-                    (overlay_dir / f"{policy['overlay_prefix']}-{overlay}.dtso").is_file()
-                )
+        for version in ("6.18", "7.0"):
+            overlay_dir = ROOT / f"patch/kernel/archive/sunxi-{version}/overlay_32"
+            makefile = (overlay_dir / "Makefile").read_text()
+            for overlay in policy["required_overlays"]:
+                filename = f"{policy['overlay_prefix']}-{overlay}"
+                with self.subTest(version=version, overlay=overlay):
+                    self.assertTrue((overlay_dir / f"{filename}.dtso").is_file())
+                    self.assertIn(f"{filename}.dtbo", makefile)
 
     def test_build_tool_records_reproducibility_evidence(self) -> None:
         text = BUILD_SCRIPT.read_text()

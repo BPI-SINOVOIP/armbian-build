@@ -41,6 +41,7 @@ dtb-$(CONFIG_MACH_SUN7I) += \
 	sun7i-a20-i2c2.dtbo \
 	sun7i-a20-i2c3.dtbo \
 	sun7i-a20-i2c4.dtbo \
+	sun7i-a20-i2s0.dtbo \
 	sun7i-a20-mmc2.dtbo \
 	sun7i-a20-nand.dtbo \
 	sun7i-a20-pps-gpio.dtbo \
@@ -49,6 +50,7 @@ dtb-$(CONFIG_MACH_SUN7I) += \
 	sun7i-a20-spi-add-cs1.dtbo \
 	sun7i-a20-spi-jedec-nor.dtbo \
 	sun7i-a20-spi-spidev.dtbo \
+	sun7i-a20-spi0.dtbo \
 	sun7i-a20-uart2.dtbo \
 	sun7i-a20-uart3.dtbo \
 	sun7i-a20-uart4.dtbo \
