@@ -544,6 +544,16 @@ function compile_uboot() {
 			declare UBOOT_CRUST_GIT_REVISION="${CRUST_GIT_REVISION}"
 		UBOOT_CRUST_METADATA_SH
 	fi
+	if [[ -n "${RKBIN_DIR:-}" ]]; then
+		: "${RKBIN_GIT_SOURCE_ACTUAL:?RKBIN_GIT_SOURCE_ACTUAL is not set}"
+		: "${RKBIN_GIT_REF_ACTUAL:?RKBIN_GIT_REF_ACTUAL is not set}"
+		: "${RKBIN_GIT_REVISION:?RKBIN_GIT_REVISION is not set}"
+		cat <<- UBOOT_RKBIN_METADATA_SH >> "${uboottempdir}/usr/lib/${uboot_name}/u-boot-metadata.sh"
+			declare UBOOT_RKBIN_GIT_SOURCE="${RKBIN_GIT_SOURCE_ACTUAL}"
+			declare UBOOT_RKBIN_GIT_BRANCH="${RKBIN_GIT_REF_ACTUAL}"
+			declare UBOOT_RKBIN_GIT_REVISION="${RKBIN_GIT_REVISION}"
+		UBOOT_RKBIN_METADATA_SH
+	fi
 
 	if [[ $DEBUG == yes ]]; then
 		display_alert "${uboot_prefix}Showing u-boot metadata for target" "${version} ${target_make}" "debug"

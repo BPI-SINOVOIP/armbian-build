@@ -57,7 +57,7 @@ with open(sys.argv[1], encoding="utf-8") as stream:
 PY
 )"
 case "${candidate_branch}" in
-	current | edge | vendor) ;;
+	current | edge | vendor | legacy) ;;
 	*) echo "驗證設定的 candidate_branch 不受支援：${candidate_branch}" >&2; exit 2 ;;
 esac
 [[ -n "${branch}" ]] || branch="${candidate_branch}"
@@ -118,6 +118,16 @@ else:
 PY
 }
 
+top_field_optional() {
+	python3 - "${validation_config}" "$1" <<'PY'
+import json
+import sys
+with open(sys.argv[1], encoding="utf-8") as stream:
+    value = json.load(stream).get(sys.argv[2], "")
+print(value)
+PY
+}
+
 validate_board() {
 	python3 - "${validation_config}" "$1" <<'PY'
 import json
@@ -175,6 +185,16 @@ trap finish_status EXIT
 
 printf 'board\trelease\tprofile\traw_size\traw_sha256\txz_size\txz_sha256\timg_path\txz_path\tsource_commit\tuboot_tag\n' >"${matrix_file}.partial"
 
+linux_git_source="$(top_field_optional linux_source)"
+linux_revision="$(top_field_optional linux_commit)"
+linux_git_ref="$(top_field_optional linux_ref)"
+[[ -n "${linux_git_ref}" || -z "${linux_revision}" ]] || linux_git_ref="commit:${linux_revision}"
+rkbin_revision="$(top_field_optional rkbin_commit)"
+rkbin_git_source="$(top_field_optional rkbin_source)"
+[[ -n "${rkbin_git_source}" || -z "${rkbin_revision}" ]] || rkbin_git_source="https://github.com/armbian/rkbin"
+rkbin_git_ref="$(top_field_optional rkbin_ref)"
+[[ -n "${rkbin_git_ref}" || -z "${rkbin_revision}" ]] || rkbin_git_ref="commit:${rkbin_revision}"
+
 for board in "${boards[@]}"; do
 	validate_board "${board}" || { echo "驗證設定未登錄板卡：${board}" >&2; exit 2; }
 	available_bytes="$(df --output=avail -B1 "${repo_dir}" | awk 'NR == 2 { print $1 }')"
@@ -220,7 +240,10 @@ for board in "${boards[@]}"; do
 			"uboot_version ${uboot_version}" \
 			"atf_git_source ${atf_git_source}" "atf_git_ref ${atf_git_ref}" \
 			"atf_revision ${atf_revision}" "crust_git_source ${crust_git_source}" \
-			"crust_git_ref ${crust_git_ref}" "crust_revision ${crust_revision}"; do
+			"crust_git_ref ${crust_git_ref}" "crust_revision ${crust_revision}" \
+			"linux_git_source ${linux_git_source}" "linux_git_ref ${linux_git_ref}" \
+			"linux_revision ${linux_revision}" "rkbin_git_source ${rkbin_git_source}" \
+			"rkbin_git_ref ${rkbin_git_ref}" "rkbin_revision ${rkbin_revision}"; do
 			read -r key expected <<<"${item}"
 			[[ -z "${expected}" ]] ||
 				require_metadata_value "${metadata}" "${key}" "${expected}"
@@ -274,7 +297,10 @@ for board in "${boards[@]}"; do
 				"uboot_version ${uboot_version}" \
 				"atf_git_source ${atf_git_source}" "atf_git_ref ${atf_git_ref}" \
 				"atf_revision ${atf_revision}" "crust_git_source ${crust_git_source}" \
-				"crust_git_ref ${crust_git_ref}" "crust_revision ${crust_revision}"; do
+				"crust_git_ref ${crust_git_ref}" "crust_revision ${crust_revision}" \
+				"linux_git_source ${linux_git_source}" "linux_git_ref ${linux_git_ref}" \
+				"linux_revision ${linux_revision}" "rkbin_git_source ${rkbin_git_source}" \
+				"rkbin_git_ref ${rkbin_git_ref}" "rkbin_revision ${rkbin_revision}"; do
 				read -r key value <<<"${item}"
 				[[ -z "${value}" ]] || printf '%s=%s\n' "${key}" "${value}"
 			done

@@ -60,7 +60,7 @@ class BananaPiRockchipSourcePolicyTests(unittest.TestCase):
             ),
         )
         harness = f'''
-fetch_from_repo() {{ printf '%s\\n' "$3"; }}
+fetch_from_repo() {{ checked_out_revision=0123456789abcdef0123456789abcdef01234567; printf '%s\\n' "$3"; }}
 source "{ROOT / 'extensions/rkbin-tools.sh'}"
 fetch_sources_tools__rkbin_tools
 '''

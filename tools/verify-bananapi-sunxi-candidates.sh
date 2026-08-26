@@ -13,7 +13,7 @@ read -r -a boards <<<"${boards_text}"
 
 for command in awk basename cmp cut date fdtget find git grep lsblk losetup \
 	md5sum mktemp mount mountpoint od python3 sha256sum stat sudo udevadm \
-	umount xz; do
+	sfdisk sgdisk umount xz; do
 	command -v "${command}" >/dev/null || {
 		echo "缺少必要命令：${command}" >&2
 		exit 1
@@ -66,7 +66,7 @@ with open(sys.argv[1], encoding="utf-8") as stream:
 PY
 )"
 case "${candidate_branch}" in
-	current | edge | vendor) ;;
+	current | edge | vendor | legacy) ;;
 	*) fail "驗證設定的 candidate_branch 不受支援：${candidate_branch}" ;;
 esac
 case "${verify_archives}" in
@@ -105,6 +105,20 @@ with open(sys.argv[1], encoding="utf-8") as stream:
 if isinstance(value, list):
     print(" ".join(str(item) for item in value))
 else:
+    print(value)
+PY
+}
+
+board_values() {
+	python3 - "${validation_config}" "$1" "$2" <<'PY'
+import json
+import sys
+with open(sys.argv[1], encoding="utf-8") as stream:
+    value = json.load(stream)["boards"][sys.argv[2]].get(sys.argv[3], [])
+if isinstance(value, list):
+    for item in value:
+        print(item)
+elif value:
     print(value)
 PY
 }
@@ -165,9 +179,45 @@ package_installed() {
 }
 
 validate_boot_area() {
-	local signature
-	signature="$(od -An -tx1 -j510 -N2 "$1" | awk '{ print $1 $2 }')"
-	[[ "${signature}" == 55aa ]] || fail "$1 缺少 DOS MBR 簽章"
+	local image=$1 board=$2 signature partition_table partition_name partition_json actual_table actual_name
+	signature="$(od -An -tx1 -j510 -N2 "${image}" | awk '{ print $1 $2 }')"
+	[[ "${signature}" == 55aa ]] || fail "${image} 缺少 DOS MBR 簽章"
+	partition_table="$(board_field_optional "${board}" partition_table)"
+	[[ -n "${partition_table}" ]] || return 0
+	partition_json="$(sfdisk --json "${image}")" || fail "${board} 無法解析分割表"
+	actual_table="$(printf '%s\n' "${partition_json}" | python3 -c 'import json,sys; print(json.load(sys.stdin)["partitiontable"]["label"])')"
+	[[ "${actual_table}" == "${partition_table}" ]] ||
+		fail "${board} 的分割表不是 ${partition_table}"
+	if [[ "${partition_table}" == gpt ]]; then
+		sgdisk -v "${image}" >/dev/null || fail "${board} 的 GPT 結構或 CRC 不完整"
+	fi
+	partition_name="$(board_field_optional "${board}" partition_name)"
+	if [[ -n "${partition_name}" ]]; then
+		actual_name="$(printf '%s\n' "${partition_json}" | python3 -c 'import json,sys; p=json.load(sys.stdin)["partitiontable"]["partitions"]; print(p[0].get("name", "") if p else "")')"
+		[[ "${actual_name}" == "${partition_name}" ]] ||
+			fail "${board} 的第一分割區名稱不是 ${partition_name}"
+	fi
+}
+
+validate_installed_kernel_source() {
+	local mount_dir=$1 linux_source linux_revision linux_ref metadata_files=() metadata_file
+	linux_source="$(top_field_optional linux_source)"
+	linux_revision="$(top_field_optional linux_commit)"
+	[[ -n "${linux_source}${linux_revision}" ]] || return 0
+	[[ -n "${linux_source}" && "${linux_revision}" =~ ^[0-9a-f]{40}$ ]] ||
+		fail "Linux 來源政策欄位不完整"
+	linux_ref="$(top_field_optional linux_ref)"
+	[[ -n "${linux_ref}" ]] || linux_ref="commit:${linux_revision}"
+	mapfile -t metadata_files < <(find "${mount_dir}/usr/lib" -path \
+		'*/linux-image-*/armbian-kernel-metadata.sh' -type f -print)
+	[[ ${#metadata_files[@]} -eq 1 ]] || fail "映像缺少唯一 Linux 來源中繼資料"
+	metadata_file="${metadata_files[0]}"
+	grep -Fqx "declare KERNEL_GIT_SOURCE=\"${linux_source}\"" "${metadata_file}" ||
+		fail "Linux Git 來源不符"
+	grep -Fqx "declare KERNEL_GIT_BRANCH=\"${linux_ref}\"" "${metadata_file}" ||
+		fail "Linux Git 分支不符"
+	grep -Fqx "declare KERNEL_GIT_REVISION=\"${linux_revision}\"" "${metadata_file}" ||
+		fail "Linux Git revision 不符"
 }
 
 validate_installed_uboot() {
@@ -176,6 +226,8 @@ validate_installed_uboot() {
 	local component component_upper component_prefix component_source component_ref component_revision
 	local payload_specs package_only_payloads payload_spec payload_name offset uboot_dir payload
 	local metadata_file md5sums_file payload_size payload_sha256 minimum_spec
+	local rkbin_source rkbin_ref rkbin_revision partition_table partition_start_sector sector_size payload_end first_partition_byte
+	local uboot_target_index uboot_config_file uboot_target_metadata uboot_defconfig option_line target_fragment
 	uboot_tag="$(board_field "${board}" uboot_tag)"
 	uboot_version="$(board_field_optional "${board}" uboot_version)"
 	[[ -n "${uboot_version}" ]] || uboot_version="${uboot_tag#v}"
@@ -209,6 +261,11 @@ validate_installed_uboot() {
 		grep -Fqx "declare UBOOT_GIT_REVISION=\"${uboot_revision}\"" "${metadata_file}" ||
 			fail "${board} 的 U-Boot Git revision 不符"
 	fi
+	partition_table="$(board_field_optional "${board}" partition_table)"
+	if [[ -n "${partition_table}" ]]; then
+		grep -Fqx "declare UBOOT_PARTITION_TYPE=\"${partition_table}\"" "${metadata_file}" ||
+			fail "${board} 的 U-Boot 分割表政策不符"
+	fi
 	for component in atf crust; do
 		component_source="$(board_field_optional "${board}" "${component}_git_source")"
 		component_ref="$(board_field_optional "${board}" "${component}_git_ref")"
@@ -227,6 +284,47 @@ validate_installed_uboot() {
 		grep -Fqx "declare ${component_prefix}_REVISION=\"${component_revision}\"" "${metadata_file}" ||
 			fail "${board} 的 ${component} Git revision 不符"
 	done
+	rkbin_revision="$(top_field_optional rkbin_commit)"
+	if [[ -n "${rkbin_revision}" ]]; then
+		[[ "${rkbin_revision}" =~ ^[0-9a-f]{40}$ ]] || fail "${board} 的 rkbin revision 格式不符"
+		rkbin_source="$(top_field_optional rkbin_source)"
+		[[ -n "${rkbin_source}" ]] || rkbin_source="https://github.com/armbian/rkbin"
+		rkbin_ref="$(top_field_optional rkbin_ref)"
+		[[ -n "${rkbin_ref}" ]] || rkbin_ref="commit:${rkbin_revision}"
+		grep -Fqx "declare UBOOT_RKBIN_GIT_SOURCE=\"${rkbin_source}\"" "${metadata_file}" ||
+			fail "${board} 的 rkbin Git 來源不符"
+		grep -Fqx "declare UBOOT_RKBIN_GIT_BRANCH=\"${rkbin_ref}\"" "${metadata_file}" ||
+			fail "${board} 的 rkbin Git 分支不符"
+		grep -Fqx "declare UBOOT_RKBIN_GIT_REVISION=\"${rkbin_revision}\"" "${metadata_file}" ||
+			fail "${board} 的 rkbin Git revision 不符"
+	fi
+	uboot_target_index="$(board_field_optional "${board}" uboot_target_index)"
+	if [[ -n "${uboot_target_index}" ]]; then
+		[[ "${uboot_target_index}" =~ ^[1-9][0-9]*$ ]] || fail "${board} 的 U-Boot target 編號無效"
+		uboot_config_file="${uboot_dir}/u-boot-config-target-${uboot_target_index}"
+		uboot_target_metadata="${uboot_dir}/u-boot-metadata-target-${uboot_target_index}.sh"
+		[[ -s "${uboot_config_file}" && -s "${uboot_target_metadata}" ]] ||
+			fail "${board} 缺少 U-Boot target 設定證據"
+		while IFS= read -r option_line; do
+			[[ -n "${option_line}" ]] || continue
+			grep -Fqx "${option_line}" "${uboot_config_file}" ||
+				fail "${board} 的 U-Boot 設定不符：${option_line}"
+		done < <(board_values "${board}" uboot_required_config_options)
+		while IFS= read -r target_fragment; do
+			[[ -n "${target_fragment}" ]] || continue
+			grep -Fq -- "${target_fragment}" "${uboot_target_metadata}" ||
+				fail "${board} 的 U-Boot target 缺少：${target_fragment}"
+		done < <(board_values "${board}" uboot_target_make_contains)
+	fi
+	uboot_defconfig="$(board_field_optional "${board}" uboot_defconfig)"
+	if [[ -n "${uboot_defconfig}" ]]; then
+		[[ -s "${mount_dir}/usr/lib/u-boot/${uboot_defconfig}" ]] ||
+			fail "${board} 缺少 U-Boot defconfig：${uboot_defconfig}"
+	fi
+	partition_start_sector="$(board_field_optional "${board}" partition_start_sector)"
+	sector_size="$(board_field_optional "${board}" logical_sector_size)"
+	[[ -n "${sector_size}" ]] || sector_size=512
+	[[ "${sector_size}" =~ ^[1-9][0-9]*$ ]] || fail "${board} 的邏輯 sector 大小無效"
 	validate_uboot_payload_file() {
 		local checked_payload_name=$1 checked_payload checked_payload_path
 		local checked_expected_md5 checked_actual_md5 checked_size checked_minimum=1
@@ -258,6 +356,12 @@ validate_installed_uboot() {
 		validate_uboot_payload_file "${payload_name}" >/dev/null
 		payload_size="$(stat -c %s "${payload}")"
 		payload_sha256="$(sha256sum "${payload}" | cut -d' ' -f1)"
+		if [[ -n "${partition_start_sector}" ]]; then
+			payload_end=$((offset + payload_size))
+			first_partition_byte=$((partition_start_sector * sector_size))
+			(( payload_end <= first_partition_byte )) ||
+				fail "${board} 的 ${payload_name} 超出第一分割區前保留區"
+		fi
 		cmp --silent --ignore-initial="0:${offset}" --bytes="${payload_size}" \
 			"${payload}" "${image}" || fail "${board} 映像 ${offset} 偏移與 ${payload_name} 不同"
 		printf '%s\t%s\timage\t%s\t%s\t%s\n' \
@@ -281,6 +385,7 @@ validate_mounted_image() (
 	local dtb_relative dtb_basename dtb_path fdt_override model compatible expected node node_status option_line option value package
 	local loop_device partition mount_dir config_file overlay_prefix overlay overlay_directory default_overlays overlays_line sd_node sd_bus_width requirement required_node required_width kernel_family
 	local boot_configuration extlinux_fdt expected_start_sector actual_start_sector property_spec property_node property_name property_expected installed_spec installed_path installed_sha256
+	local dtb_sha256 alias_spec alias_name alias_expected
 	dtb_relative="$(board_field "${board}" dtb)"
 	dtb_basename="$(basename "${dtb_relative}")"
 	mount_dir="$(mktemp -d "${repo_dir}/.tmp/${verify_tmp_prefix}.XXXXXX")"
@@ -344,6 +449,11 @@ validate_mounted_image() (
 		dtb_path="${mount_dir}/boot/dtb/${dtb_basename}"
 	fi
 	[[ -s "${dtb_path}" ]] || fail "${board} 缺少 DTB：${dtb_relative}"
+	dtb_sha256="$(board_field_optional "${board}" dtb_sha256)"
+	if [[ -n "${dtb_sha256}" ]]; then
+		[[ "$(sha256sum "${dtb_path}" | cut -d' ' -f1)" == "${dtb_sha256}" ]] ||
+			fail "${board} 的 DTB 雜湊不符"
+	fi
 	model="$(fdtget -t s "${dtb_path}" / model)"
 	[[ "${model}" == "$(board_field "${board}" model)" ]] || fail "${board} 的 DTB model 不符"
 	compatible="$(fdtget -t s "${dtb_path}" / compatible)"
@@ -361,6 +471,10 @@ validate_mounted_image() (
 		*) fail "${board} DT 節點不可用：${node}，status=${node_status}" ;;
 		esac
 	done
+	for node in $(board_field_optional "${board}" required_disabled_nodes); do
+		[[ "$(fdtget -t s "${dtb_path}" "${node}" status)" == disabled ]] ||
+			fail "${board} 節點未停用：${node}"
+	done
 	for property_spec in $(board_field_optional "${board}" required_boolean_properties); do
 		property_node="${property_spec%%:*}"
 		property_name="${property_spec#*:}"
@@ -374,6 +488,20 @@ validate_mounted_image() (
 		property_name="${property_name%%=*}"
 		[[ "$(fdtget -t s "${dtb_path}" "${property_node}" "${property_name}")" == "${property_expected}" ]] ||
 			fail "${board} 的 DT 字串屬性不符：${property_node}:${property_name}"
+	done
+	for property_spec in $(board_field_optional "${board}" required_uint_properties); do
+		property_node="${property_spec%%:*}"
+		property_name="${property_spec#*:}"
+		property_expected="${property_name#*=}"
+		property_name="${property_name%%=*}"
+		[[ "$(fdtget -t u "${dtb_path}" "${property_node}" "${property_name}")" == "${property_expected}" ]] ||
+			fail "${board} 的 DT 數值屬性不符：${property_node}:${property_name}"
+	done
+	for alias_spec in $(board_field_optional "${board}" required_aliases); do
+		alias_name="${alias_spec%%=*}"
+		alias_expected="${alias_spec#*=}"
+		[[ "$(fdtget -t s "${dtb_path}" /aliases "${alias_name}")" == "${alias_expected}" ]] ||
+			fail "${board} 的 DT alias 不符：${alias_name}"
 	done
 	sd_node="$(board_field "${board}" sd_node)"
 	sd_bus_width="$(board_field "${board}" sd_bus_width)"
@@ -409,6 +537,7 @@ validate_mounted_image() (
 		"linux-u-boot-${board}-${candidate_branch}" "armbian-bsp-cli-${board}-${candidate_branch}"; do
 		package_installed "${mount_dir}" "${package}" || fail "${board} 缺少 Armbian 套件 ${package}"
 	done
+	validate_installed_kernel_source "${mount_dir}"
 	validate_installed_uboot "${image}" "${mount_dir}" "${board}"
 	echo "映像唯讀內容通過：${board}"
 )
@@ -463,7 +592,27 @@ while IFS=$'\t' read -r board release profile raw_size raw_sha256 xz_size \
 		expected="$(board_field_optional "${board}" "${key}")"
 		[[ -z "${expected}" ]] || require_metadata_value "${metadata}" "${key}" "${expected}"
 	done
-	validate_boot_area "${image}"
+	for key in linux_git_source linux_git_ref linux_revision rkbin_git_source rkbin_git_ref rkbin_revision; do
+		case "${key}" in
+			linux_git_source) expected="$(top_field_optional linux_source)" ;;
+			linux_git_ref)
+				expected="$(top_field_optional linux_ref)"
+				[[ -n "${expected}" ]] || { value="$(top_field_optional linux_commit)"; [[ -z "${value}" ]] || expected="commit:${value}"; }
+				;;
+			linux_revision) expected="$(top_field_optional linux_commit)" ;;
+			rkbin_git_source)
+				expected="$(top_field_optional rkbin_source)"
+				[[ -n "${expected}" ]] || { value="$(top_field_optional rkbin_commit)"; [[ -z "${value}" ]] || expected="https://github.com/armbian/rkbin"; }
+				;;
+			rkbin_git_ref)
+				expected="$(top_field_optional rkbin_ref)"
+				[[ -n "${expected}" ]] || { value="$(top_field_optional rkbin_commit)"; [[ -z "${value}" ]] || expected="commit:${value}"; }
+				;;
+			rkbin_revision) expected="$(top_field_optional rkbin_commit)" ;;
+		esac
+		[[ -z "${expected}" ]] || require_metadata_value "${metadata}" "${key}" "${expected}"
+	done
+	validate_boot_area "${image}" "${board}"
 	validate_mounted_image "${image}" "${board}"
 	printf '%s\tpass\tpass\tL2\n' "${board}" >>"${verification_file}.partial"
 done < <(tail -n +2 "${output_dir}/CANDIDATES.tsv")

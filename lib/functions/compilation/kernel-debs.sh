@@ -262,6 +262,15 @@ function kernel_package_callback_linux_image() {
 		run_host_command_logged cp -rp "${tmp_kernel_install_dirs[INSTALL_DTBS_PATH]}" "${package_directory}/usr/lib/linux-image-${kernel_version_family}"
 	fi
 
+	: "${kernel_git_revision:?kernel_git_revision is not set}"
+	mkdir -p "${package_directory}/usr/lib/linux-image-${kernel_version_family}"
+	cat <<- KERNEL_METADATA_SH > "${package_directory}/usr/lib/linux-image-${kernel_version_family}/armbian-kernel-metadata.sh"
+		declare KERNEL_GIT_SOURCE="${KERNELSOURCE}"
+		declare KERNEL_GIT_BRANCH="${KERNELBRANCH}"
+		declare KERNEL_GIT_REVISION="${kernel_git_revision}"
+		declare KERNEL_GIT_PATCHDIR="${KERNELPATCHDIR}"
+	KERNEL_METADATA_SH
+
 	# Generate a control file
 	cat <<- CONTROL_FILE > "${package_DEBIAN_dir}/control"
 		Package: ${package_name}

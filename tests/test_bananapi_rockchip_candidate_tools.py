@@ -15,6 +15,12 @@ M5PRO_CONFIG = ROOT / "config/validation/bananapi-rockchip-rk3576-m5pro-edge.jso
 BUILD_SCRIPT = ROOT / "tools/build-bananapi-rockchip-candidates.sh"
 VERIFY_SCRIPT = ROOT / "tools/verify-bananapi-rockchip-candidates.sh"
 ROOTFS_CACHE = ROOT / "lib/functions/rootfs/create-cache.sh"
+KERNEL_DEBS = ROOT / "lib/functions/compilation/kernel-debs.sh"
+UBOOT_COMPILER = ROOT / "lib/functions/compilation/uboot.sh"
+UBOOT_ARTIFACT = ROOT / "lib/functions/artifacts/artifact-uboot.sh"
+RKBIN_EXTENSION = ROOT / "extensions/rkbin-tools.sh"
+GENERIC_BUILD = ROOT / "tools/build-bananapi-sunxi-candidates.sh"
+GENERIC_VERIFY = ROOT / "tools/verify-bananapi-sunxi-candidates.sh"
 
 
 class BananaPiRockchipCandidateToolTests(unittest.TestCase):
@@ -126,6 +132,71 @@ class BananaPiRockchipCandidateToolTests(unittest.TestCase):
         self.assertIn("uboot_payloads", verify_text)
         self.assertIn('UBOOT_GIT_BRANCH=\\"${uboot_git_ref}\\"', verify_text)
         self.assertIn('UBOOT_GIT_REVISION=\\"${uboot_revision}\\"', verify_text)
+
+    def test_kernel_and_rkbin_actual_sources_are_packaged(self) -> None:
+        kernel_text = KERNEL_DEBS.read_text()
+        extension_text = RKBIN_EXTENSION.read_text()
+        uboot_text = UBOOT_COMPILER.read_text()
+        artifact_text = UBOOT_ARTIFACT.read_text()
+        for required in (
+            "armbian-kernel-metadata.sh",
+            "KERNEL_GIT_SOURCE",
+            "KERNEL_GIT_BRANCH",
+            "KERNEL_GIT_REVISION",
+            "KERNEL_GIT_PATCHDIR",
+        ):
+            with self.subTest(required=required):
+                self.assertIn(required, kernel_text)
+        for required in (
+            "RKBIN_GIT_SOURCE_ACTUAL",
+            "RKBIN_GIT_REF_ACTUAL",
+            "RKBIN_GIT_REVISION",
+            "checked_out_revision",
+        ):
+            with self.subTest(required=required):
+                self.assertIn(required, extension_text)
+        for required in (
+            "UBOOT_RKBIN_GIT_SOURCE",
+            "UBOOT_RKBIN_GIT_BRANCH",
+            "UBOOT_RKBIN_GIT_REVISION",
+        ):
+            with self.subTest(required=required):
+                self.assertIn(required, uboot_text)
+        self.assertIn("artifact_input_variables[RKBIN_GIT_URL]", artifact_text)
+        self.assertIn("artifact_input_variables[RKBIN_GIT_REF]", artifact_text)
+
+    def test_generic_tools_gate_sources_gpt_dtb_and_uboot_configuration(self) -> None:
+        build_text = GENERIC_BUILD.read_text()
+        verify_text = GENERIC_VERIFY.read_text()
+        for required in (
+            "linux_git_source",
+            "linux_git_ref",
+            "linux_revision",
+            "rkbin_git_source",
+            "rkbin_git_ref",
+            "rkbin_revision",
+        ):
+            with self.subTest(required=required):
+                self.assertIn(required, build_text)
+                self.assertIn(required, verify_text)
+        for required in (
+            "sgdisk -v",
+            "partition_name",
+            "dtb_sha256",
+            "required_uint_properties",
+            "required_disabled_nodes",
+            "required_aliases",
+            "uboot_required_config_options",
+            "uboot_target_make_contains",
+            "超出第一分割區前保留區",
+        ):
+            with self.subTest(required=required):
+                self.assertIn(required, verify_text)
+
+    def test_generic_candidate_tools_accept_a_controlled_legacy_branch(self) -> None:
+        for path in (GENERIC_BUILD, GENERIC_VERIFY):
+            with self.subTest(path=path.name):
+                self.assertIn("current | edge | vendor | legacy", path.read_text())
 
     def test_p2_pro_board_packages_match_policy(self) -> None:
         board_text = (ROOT / "config/boards/bananapip2pro.wip").read_text()
