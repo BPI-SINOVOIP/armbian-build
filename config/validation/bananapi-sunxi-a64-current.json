@@ -94,7 +94,7 @@
         "u-boot-sunxi-with-spl.bin=600000"
       ],
       "overlay_prefix": "sun50i-a64",
-      "overlay_directory": "overlay",
+      "overlay_directory": "allwinner/overlay",
       "sd_node": "/soc/mmc@1c0f000",
       "sd_bus_width": 4,
       "additional_bus_widths": [
