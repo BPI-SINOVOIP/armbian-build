@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated": "2026-08-26",
+  "updated": "2026-08-27",
   "batches": {
     "A": [
       "bananapim5",
@@ -143,6 +143,10 @@
     "bananapip2pro": {
       "level": "L2",
       "basis": "Trixie current CLI 已由乾淨來源完整建置並通過映像、U-Boot、固定 RKBin 啟動依賴、RK3308 DTB、SD／eMMC／SDIO、overlay 與標準 I/O 工具唯讀守門；仍待實機驗證"
+    },
+    "bananapir2pro": {
+      "level": "L2",
+      "basis": "Trixie current CLI 已由乾淨來源完整建置並通過映像、固定 Linux／U-Boot／RKBin／firmware 來源、GPT、雙啟動載荷、RK3568 R2 Pro DTB、雙乙太網路、MT7531、SATA、雙 PCIe、USB host、顯示與媒體設定唯讀守門；仍待實機驗證"
     },
     "bananapipro": {
       "level": "L2",

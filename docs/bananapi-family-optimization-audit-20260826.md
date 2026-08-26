@@ -1,6 +1,6 @@
 # Banana Pi 全系列最佳化盤點
 
-更新日期：2026-08-26
+更新日期：2026-08-27
 
 本報告由 `tools/bananapi-board-audit.py` 從板卡設定與受版本控制的證據登錄檔產生。建置成功、裝置節點存在及歷史映像均不會自動提升證據等級。
 
@@ -8,7 +8,7 @@
 
 - 板卡總數：48。
 - 正式 `.conf`：12；社群 `.csc`：13；開發中 `.wip`：22；停止支援 `.eos`：1。
-- 證據分布：L0 26；L1 0；L2 20；L3 1；L4 1；L5 0。
+- 證據分布：L0 25；L1 0；L2 21；L3 1；L4 1；L5 0。
 - 未取得實機的板卡最高只能標示 L2；目前 L3／L4 只沿用已納入 Git 的 M4 Zero／M4 Berry 證據。
 
 ## 板卡矩陣
@@ -52,7 +52,7 @@
 | `bananapipro` | 社群 | Banana Pi Pro | `sun7i` | `armhf` | `current,edge,legacy` | 是 | C | L2 軟體候選 | 執行 UART、啟動與基本周邊實機驗證 |
 | `bananapir1` | 停止支援 | Banana Pi R1 | `sun7i` | `armhf` | `current,edge` | 是 | G | L0 已盤點 | 保留最後可用基線，不列入新發布 |
 | `bananapir2` | 社群 | Banana Pi R2 | `mt7623` | `armhf` | `current` | 是 | D | L0 已盤點 | 建立 Trixie CLI 並完成離線守門 |
-| `bananapir2pro` | 社群 | Banana Pi R2 Pro | `rockchip64` | `arm64` | `current,edge` | 是 | D | L0 已盤點 | 建立 Trixie CLI 並完成離線守門 |
+| `bananapir2pro` | 社群 | Banana Pi R2 Pro | `rockchip64` | `arm64` | `current,edge` | 是 | D | L2 軟體候選 | 執行 UART、啟動與基本周邊實機驗證 |
 | `bananapir3` | 開發中 | Banana Pi R3 | `filogic` | `arm64` | `current` | 否 | D | L0 已盤點 | 確認建置鏈並建立 Trixie CLI 候選 |
 | `bananapir3mini` | 開發中 | Banana Pi R3 Mini | `filogic` | `arm64` | `current` | 否 | D | L0 已盤點 | 確認建置鏈並建立 Trixie CLI 候選 |
 | `bananapir4` | 社群 | Banana Pi R4 | `filogic` | `arm64` | `current` | 否 | D | L0 已盤點 | 建立 Trixie CLI 並完成離線守門 |
@@ -91,7 +91,6 @@
 - `bananapipro`：缺少建議欄位 `BOARD_MAINTAINER`。
 - `bananapir1`：缺少建議欄位 `BOARD_MAINTAINER, KERNEL_TEST_TARGET`。
 - `bananapir2`：缺少建議欄位 `BOARD_MAINTAINER`。
-- `bananapir2pro`：缺少建議欄位 `BOARD_MAINTAINER`。
 - `bananapir3`：缺少建議欄位 `BOARD_MAINTAINER`。
 - `bananapir3mini`：缺少建議欄位 `BOARD_MAINTAINER`。
 - `bananapir4`：缺少建議欄位 `BOARD_MAINTAINER`。
