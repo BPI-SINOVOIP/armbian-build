@@ -313,6 +313,14 @@ class BananaPiRockchipCandidateToolTests(unittest.TestCase):
             "/usb@fcc00000:dr_mode=otg",
             policy["required_string_properties"],
         )
+        self.assertIn(
+            "/video-codec@fdf80200",
+            policy["required_present_nodes"],
+        )
+        self.assertNotIn(
+            "/iommu@fdf80800",
+            policy["required_present_nodes"],
+        )
 
     def test_r2_pro_rkbin_blobs_and_packages_are_complete(self) -> None:
         blobs = self.r2pro_config["rkbin_blobs"]

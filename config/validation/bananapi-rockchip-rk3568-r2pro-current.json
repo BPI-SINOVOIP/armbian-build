@@ -182,7 +182,6 @@
       "required_present_nodes": [
         "/iommu@fdea0800",
         "/iommu@fdee0800",
-        "/iommu@fdf80800",
         "/rga@fdeb0000",
         "/video-codec@fdea0400",
         "/video-codec@fdee0000",
