@@ -74,9 +74,12 @@ class BananaPiSunxiCandidateToolTests(unittest.TestCase):
             'cmp --silent --ignore-initial="0:${offset}"',
             "u-boot-sunxi-with-spl.bin",
             "fdtfile=",
+            "dtb_basename",
             "overlay_prefix=",
             "required_status_nodes",
             "common_kernel_options",
+            "candidate_source_commit",
+            "verifier_commit",
             "xz -dc",
         ):
             with self.subTest(required=required):

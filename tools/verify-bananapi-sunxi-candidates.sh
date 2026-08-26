@@ -9,7 +9,7 @@ verify_archives="${VERIFY_ARCHIVES:-yes}"
 
 read -r -a boards <<<"${boards_text}"
 
-for command in awk basename cmp cut date fdtget find grep lsblk losetup \
+for command in awk basename cmp cut date fdtget find git grep lsblk losetup \
 	md5sum mktemp mount mountpoint od python3 sha256sum stat sudo udevadm \
 	umount xz; do
 	command -v "${command}" >/dev/null || {
@@ -57,8 +57,7 @@ esac
 validate_default_userpatches
 sudo -n true || fail "唯讀掛載驗證需要免互動 sudo"
 
-source_commit="$(git -C "${repo_dir}" rev-parse HEAD)"
-source_tree="$(git -C "${repo_dir}" rev-parse 'HEAD^{tree}')"
+verifier_commit="$(git -C "${repo_dir}" rev-parse HEAD)"
 validation_config_sha256="$(sha256sum "${validation_config}" | cut -d' ' -f1)"
 
 board_field() {
@@ -159,9 +158,10 @@ validate_installed_uboot() {
 
 validate_mounted_image() (
 	local image=$1 board=$2
-	local dtb_relative dtb_path model compatible expected node option_line option value package
+	local dtb_relative dtb_basename dtb_path fdt_override model compatible expected node option_line option value package
 	local loop_device partition mount_dir config_file overlay_prefix
 	dtb_relative="$(board_field "${board}" dtb)"
+	dtb_basename="$(basename "${dtb_relative}")"
 	mount_dir="$(mktemp -d "${repo_dir}/.tmp/sunxi-verify.XXXXXX")"
 	loop_device="$(sudo losetup --find --show --partscan --read-only "${image}")"
 	cleanup_image() {
@@ -177,10 +177,17 @@ validate_mounted_image() (
 
 	[[ -s "${mount_dir}/boot/zImage" || -s "${mount_dir}/boot/Image" ]] || fail "${board} 缺少核心映像"
 	[[ -s "${mount_dir}/boot/uInitrd" ]] || fail "${board} 缺少 initrd"
-	grep -qx "fdtfile=${dtb_relative}" "${mount_dir}/boot/armbianEnv.txt" || fail "${board} 的 fdtfile 不符"
+	if grep -q '^fdtfile=' "${mount_dir}/boot/armbianEnv.txt"; then
+		fdt_override="$(grep '^fdtfile=' "${mount_dir}/boot/armbianEnv.txt")"
+		[[ "${fdt_override}" == "fdtfile=${dtb_relative}" || \
+			"${fdt_override}" == "fdtfile=${dtb_basename}" ]] || fail "${board} 的 fdtfile 覆寫不符"
+	fi
 	overlay_prefix="$(board_field "${board}" overlay_prefix)"
 	grep -qx "overlay_prefix=${overlay_prefix}" "${mount_dir}/boot/armbianEnv.txt" || fail "${board} 的 overlay_prefix 不符"
 	dtb_path="${mount_dir}/boot/dtb/${dtb_relative}"
+	if [[ ! -s "${dtb_path}" ]]; then
+		dtb_path="${mount_dir}/boot/dtb/${dtb_basename}"
+	fi
 	[[ -s "${dtb_path}" ]] || fail "${board} 缺少 DTB：${dtb_relative}"
 	model="$(fdtget -t s "${dtb_path}" / model)"
 	[[ "${model}" == "$(board_field "${board}" model)" ]] || fail "${board} 的 DTB model 不符"
@@ -215,13 +222,19 @@ IFS= read -r actual_header <"${output_dir}/CANDIDATES.tsv"
 [[ "${actual_header}" == "${expected_header}" ]] || fail "CANDIDATES.tsv 欄位不符"
 row_count="$(awk 'NR > 1 && NF == 11 { count++ } END { print count + 0 }' "${output_dir}/CANDIDATES.tsv")"
 [[ "${row_count}" -eq "${#boards[@]}" ]] || fail "候選矩陣筆數不符"
+candidate_source_commit="$(awk -F '\t' 'NR == 2 { print $10 }' "${output_dir}/CANDIDATES.tsv")"
+[[ "${candidate_source_commit}" =~ ^[0-9a-f]{40}$ ]] || fail "候選來源提交格式不符"
+[[ "$(awk -F '\t' -v commit="${candidate_source_commit}" 'NR > 1 && $10 != commit { count++ } END { print count + 0 }' "${output_dir}/CANDIDATES.tsv")" -eq 0 ]] ||
+	fail "候選矩陣混用不同來源提交"
+git -C "${repo_dir}" cat-file -e "${candidate_source_commit}^{commit}" || fail "本地找不到候選來源提交"
+candidate_source_tree="$(git -C "${repo_dir}" rev-parse "${candidate_source_commit}^{tree}")"
 
 verification_file="${output_dir}/VERIFICATION.tsv"
 printf 'board\tidentity\tread_only_content\tevidence_level\n' >"${verification_file}.partial"
 while IFS=$'\t' read -r board release profile raw_size raw_sha256 xz_size \
 	xz_sha256 img_path xz_path candidate_commit uboot_tag; do
 	[[ "${release}" == trixie && "${profile}" == cli ]] || fail "${board} 發行版或設定不符"
-	[[ "${candidate_commit}" == "${source_commit}" ]] || fail "${board} 來源提交不符"
+	[[ "${candidate_commit}" == "${candidate_source_commit}" ]] || fail "${board} 來源提交不符"
 	[[ "${uboot_tag}" == "$(board_field "${board}" uboot_tag)" ]] || fail "${board} U-Boot 標籤不符"
 	image="${output_dir}/${img_path}"; archive="${output_dir}/${xz_path}"
 	metadata="${output_dir}/${board}/artifact.metadata.txt"
@@ -234,7 +247,7 @@ while IFS=$'\t' read -r board release profile raw_size raw_sha256 xz_size \
 		xz -t "${archive}"
 		[[ "$(xz -dc -- "${archive}" | sha256sum | cut -d' ' -f1)" == "${raw_sha256}" ]] || fail "${board} XZ 解壓不同"
 	fi
-	for item in "source_commit ${source_commit}" "source_tree ${source_tree}" \
+	for item in "source_commit ${candidate_source_commit}" "source_tree ${candidate_source_tree}" \
 		"validation_config_sha256 ${validation_config_sha256}" "raw_sha256 ${raw_sha256}" \
 		"xz_sha256 ${xz_sha256}"; do
 		read -r key expected <<<"${item}"
@@ -249,7 +262,8 @@ mv "${verification_file}.partial" "${verification_file}"
 status_file="${output_dir}/VERIFICATION_STATUS.json"
 {
 	printf '{\n  "status": "complete",\n  "evidence_level": "L2",\n'
-	printf '  "source_commit": "%s",\n' "${source_commit}"
+	printf '  "source_commit": "%s",\n' "${candidate_source_commit}"
+	printf '  "verifier_commit": "%s",\n' "${verifier_commit}"
 	printf '  "verified_utc": "%s"\n}\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 } >"${status_file}.partial"
 mv "${status_file}.partial" "${status_file}"
