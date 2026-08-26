@@ -104,6 +104,10 @@
       "level": "L2",
       "basis": "Trixie current CLI 已由乾淨來源完整建置並通過映像、固定 Linux／U-Boot／firmware 來源、R40 M2 Berry DTB、AP6212 韌體、八項 overlay、核心功能與標準 I/O 工具唯讀守門；仍待實機驗證"
     },
+    "bananapim2magic": {
+      "level": "L2",
+      "basis": "Trixie current CLI 已由乾淨來源完整建置並通過映像、固定 Linux／U-Boot／firmware 來源、A33 M2 Magic DTB、SD／SDIO／eMMC、AP6212、OTG、音訊、Lima、Cedrus 與標準 I/O 工具唯讀守門；仍待實機驗證"
+    },
     "bananapim2ultra": {
       "level": "L2",
       "basis": "Trixie current CLI 已由乾淨來源完整建置並通過映像、固定 Linux／U-Boot／firmware 來源、R40 M2 Ultra DTB、8-bit eMMC、AP6212 韌體、八項 overlay、核心功能與標準 I/O 工具唯讀守門；仍待實機驗證"
