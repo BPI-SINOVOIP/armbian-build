@@ -92,6 +92,10 @@
       "level": "L2",
       "basis": "Trixie current CLI 已由乾淨來源完整建置並通過映像、U-Boot、H3 DTB、Wi-Fi／Bluetooth 設定、硬體加速設定、overlay 與標準 I/O 工具唯讀守門；仍待實機驗證"
     },
+    "bananapif3": {
+      "level": "L2",
+      "basis": "Trixie current CLI 已由乾淨來源完整建置並通過映像、固定 Linux／U-Boot／OpenSBI 來源、六項 SpacemiT 啟動載荷、F3 DTB、核心功能與標準 I/O 工具唯讀守門；仍待實機驗證"
+    },
     "bananapim7": {
       "level": "L2",
       "basis": "Trixie current CLI 已由乾淨來源完整建置並通過映像、雙 U-Boot payload、固定 RKBin 啟動依賴、RK3588 M7 DTB、核心功能與標準 I/O 工具唯讀守門；仍待實機驗證"
