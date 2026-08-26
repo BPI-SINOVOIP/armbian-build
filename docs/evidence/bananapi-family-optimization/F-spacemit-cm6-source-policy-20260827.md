@@ -22,7 +22,7 @@ Linux 是 BPI CM6 的供應商 `6.6.36` 基線，並非目前上游長期支援�
 
 - U-Boot 固定 `k1_defconfig`，封裝 `bootinfo_emmc.bin`、`bootinfo_spinor.bin`、`FSBL.bin`、`fw_dynamic.itb`、`u-boot.itb` 與 `u-boot-env-default.bin`。
 - SD 整碟映像把 `bootinfo_emmc.bin` 寫在 offset 0、`FSBL.bin` 寫在 512、`fw_dynamic.itb` 寫在 655360、`u-boot.itb` 寫在 1048576 bytes。
-- 第一個根檔案系統分割區固定由 sector 8192 開始，分割表明確設為 MBR／`msdos`，避免 U-Boot 套件中繼資料誤記成家族預設 GPT。
+- 第一個根檔案系統分割區固定由 sector 8192 開始，分割表明確設為 MBR／`msdos`。此值必須在板卡的 `post_family_config` 階段設定，才能在家族 `pre_prepare_partitions` 執行前一併寫入 U-Boot artifact 中繼資料，避免套件誤記成預設 GPT。
 - U-Boot 必須包含 `/extlinux/extlinux.conf`、`/boot/extlinux/extlinux.conf`、K1-X 自動開機環境及 `product_name=k1-x_deb1`。
 - `extlinux.conf` 必須選取 CM6 專用的 `/boot/dtb/spacemit/k1-x_bpi_cm6.dtb`。
 

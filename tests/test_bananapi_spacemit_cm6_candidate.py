@@ -34,7 +34,7 @@ class BananaPiSpacemitCm6CandidateTests(unittest.TestCase):
 
     def test_board_pins_all_sources_and_real_patch_directory(self) -> None:
         self.assertIn('KERNEL_TEST_TARGET="legacy"', self.board)
-        self.assertIn('IMAGE_PARTITION_TABLE="msdos"', self.board)
+        self.assertIn('declare -g IMAGE_PARTITION_TABLE="msdos"', self.board)
         self.assertNotIn("branch:v2022.10-k1-v2.1", self.board)
         self.assertNotIn("branch:linux-6.6.36-k1-cm6", self.board)
         for source in self.config["source_commits"].values():

@@ -11,10 +11,11 @@ BOOTDELAY=1
 SRC_EXTLINUX="yes"
 SRC_CMDLINE="earlycon=sbi console=tty1 console=ttyS0,115200 loglevel=1"
 OVERLAY_PREFIX="k1"
-IMAGE_PARTITION_TABLE="msdos"
 PACKAGE_LIST_BOARD="rfkill bluetooth bluez bluez-tools gpiod i2c-tools python3-libgpiod python3-spidev v4l-utils pciutils nvme-cli usbutils alsa-utils iw ethtool"
 
 function post_family_config__bananapicm6_use_bpi_k1_sources() {
+	# U-Boot artifact 在 pre_prepare_partitions 之前產生，必須於此固定分割表。
+	declare -g IMAGE_PARTITION_TABLE="msdos"
 	declare -g BOOTSOURCE="https://github.com/BPI-SINOVOIP/pi-u-boot.git"
 	declare -g BOOTBRANCH="commit:066cccd77f35e57d13363fea524a439759196dca"
 	declare -g BOOTPATCHDIR="legacy/u-boot-spacemit-k1-cm6"
