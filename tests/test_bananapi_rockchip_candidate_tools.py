@@ -12,6 +12,7 @@ ROOT = Path(__file__).resolve().parents[1]
 CONFIG = ROOT / "config/validation/bananapi-rockchip-rk3308-current.json"
 M7_CONFIG = ROOT / "config/validation/bananapi-rockchip-rk3588-m7-current.json"
 M5PRO_CONFIG = ROOT / "config/validation/bananapi-rockchip-rk3576-m5pro-edge.json"
+R2PRO_CONFIG = ROOT / "config/validation/bananapi-rockchip-rk3568-r2pro-current.json"
 BUILD_SCRIPT = ROOT / "tools/build-bananapi-rockchip-candidates.sh"
 VERIFY_SCRIPT = ROOT / "tools/verify-bananapi-rockchip-candidates.sh"
 ROOTFS_CACHE = ROOT / "lib/functions/rootfs/create-cache.sh"
@@ -31,6 +32,7 @@ class BananaPiRockchipCandidateToolTests(unittest.TestCase):
         cls.config = json.loads(CONFIG.read_text())
         cls.m7_config = json.loads(M7_CONFIG.read_text())
         cls.m5pro_config = json.loads(M5PRO_CONFIG.read_text())
+        cls.r2pro_config = json.loads(R2PRO_CONFIG.read_text())
 
     def test_rootfs_extract_avoids_cursor_wait_on_dumb_terminal(self) -> None:
         text = ROOTFS_CACHE.read_text()
@@ -278,6 +280,56 @@ class BananaPiRockchipCandidateToolTests(unittest.TestCase):
         )
         packages = set(package_line.split('"', 2)[1].split())
         self.assertTrue(set(self.m5pro_config["common_packages"]) <= packages)
+
+    def test_validation_config_has_exact_r2_pro_policy(self) -> None:
+        config = self.r2pro_config
+        self.assertEqual(config["candidate_branch"], "current")
+        self.assertEqual(config["kernel_family"], "rockchip64")
+        self.assertEqual(
+            config["linux_commit"],
+            "1f99e9ab748fc5c32120de9c4eca31abfe54a4d5",
+        )
+        self.assertEqual(
+            config["rkbin_commit"],
+            "46c4793ea2dcea7c8331fce9f07b5c80561a0395",
+        )
+        self.assertEqual(set(config["boards"]), {"bananapir2pro"})
+        policy = config["boards"]["bananapir2pro"]
+        self.assertEqual(policy["partition_table"], "gpt")
+        self.assertEqual(policy["partition_name"], "rootfs")
+        self.assertEqual(policy["partition_start_sector"], 32768)
+        self.assertEqual(policy["boot_configuration"], "extlinux")
+        self.assertEqual(
+            policy["uboot_payloads"],
+            ["idbloader.img@32768", "u-boot.itb@8388608"],
+        )
+        self.assertEqual(policy["sd_node"], "/mmc@fe2b0000")
+        self.assertIn("/mmc@fe310000=8", policy["additional_bus_widths"])
+        self.assertIn(
+            "/ethernet@fe2a0000/mdio/switch@1f:compatible=mediatek,mt7531",
+            policy["required_string_properties"],
+        )
+        self.assertNotIn(
+            "/usb@fcc00000:dr_mode=otg",
+            policy["required_string_properties"],
+        )
+
+    def test_r2_pro_rkbin_blobs_and_packages_are_complete(self) -> None:
+        blobs = self.r2pro_config["rkbin_blobs"]
+        self.assertEqual(len(blobs), 3)
+        self.assertIn("rk35/rk3568_ddr_1560MHz_v1.21.bin", blobs)
+        self.assertIn("rk35/rk3568_bl31_v1.44.elf", blobs)
+        self.assertIn("rk35/rk356x_spl_loader_v1.21.113.bin", blobs)
+        for path, digest in blobs.items():
+            with self.subTest(path=path):
+                self.assertRegex(digest, r"^[0-9a-f]{64}$")
+        board_text = (ROOT / "config/boards/bananapir2pro.csc").read_text()
+        package_line = next(
+            line for line in board_text.splitlines()
+            if line.startswith('PACKAGE_LIST_BOARD="')
+        )
+        packages = set(package_line.split('"', 2)[1].split())
+        self.assertTrue(set(self.r2pro_config["common_packages"]) <= packages)
 
 
 if __name__ == "__main__":

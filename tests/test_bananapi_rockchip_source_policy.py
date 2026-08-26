@@ -15,6 +15,9 @@ M7_UBOOT_COMMIT = "39cd993e5d6296635438e84f4576b3a9bf76f86e"
 M5PRO_LINUX_COMMIT = "458c6079fc1d41d564c37679c8ace02cd83ee817"
 M5PRO_UBOOT_COMMIT = "39cd993e5d6296635438e84f4576b3a9bf76f86e"
 M5PRO_RKBIN_COMMIT = "1d3c61008fa823936ae7a59615393f8294b64456"
+R2PRO_LINUX_COMMIT = "1f99e9ab748fc5c32120de9c4eca31abfe54a4d5"
+R2PRO_UBOOT_COMMIT = "866ca972d6c3cabeaf6dbac431e8e08bb30b3c8e"
+R2PRO_RKBIN_COMMIT = "46c4793ea2dcea7c8331fce9f07b5c80561a0395"
 IO_PACKAGES = {
     "gpiod",
     "i2c-tools",
@@ -33,6 +36,7 @@ class BananaPiRockchipSourcePolicyTests(unittest.TestCase):
         cls.board = (ROOT / "config/boards/bananapip2pro.wip").read_text()
         cls.m7_board = (ROOT / "config/boards/bananapim7.conf").read_text()
         cls.m5pro_board = (ROOT / "config/boards/bananapim5pro.conf").read_text()
+        cls.r2pro_board = (ROOT / "config/boards/bananapir2pro.csc").read_text()
         cls.extension = (ROOT / "extensions/rkbin-tools.sh").read_text()
 
     def test_rkbin_extension_accepts_an_immutable_ref(self) -> None:
@@ -232,6 +236,54 @@ printf 'kernel_source=%s\\nkernel=%s\\nuboot=%s\\nrkbin=%s\\n' \
             / "general-serial-8250-fix-sysrq-break-dw-apb.patch"
         )
         self.assertFalse(obsolete_patch.exists())
+
+    def test_r2_pro_pins_current_sources_and_rk3568_blobs(self) -> None:
+        for expected in (
+            f'KERNELBRANCH_BOARD="commit:{R2PRO_LINUX_COMMIT}"',
+            f'BOOTBRANCH_BOARD="commit:{R2PRO_UBOOT_COMMIT}"',
+            f'RKBIN_GIT_REF="commit:{R2PRO_RKBIN_COMMIT}"',
+            'DDR_BLOB="rk35/rk3568_ddr_1560MHz_v1.21.bin"',
+            'BL31_BLOB="rk35/rk3568_bl31_v1.44.elf"',
+            'ROCKUSB_BLOB="rk35/rk356x_spl_loader_v1.21.113.bin"',
+        ):
+            with self.subTest(expected=expected):
+                self.assertIn(expected, self.r2pro_board)
+        self.assertNotIn('KERNELBRANCH_BOARD="branch:', self.r2pro_board)
+        self.assertNotIn('BOOTBRANCH_BOARD="branch:', self.r2pro_board)
+        self.assertNotIn('RKBIN_GIT_REF="branch:', self.r2pro_board)
+
+    def test_r2_pro_current_hook_overrides_family_sources(self) -> None:
+        harness = f'''
+SRC="{ROOT}"
+BRANCH=current
+KERNELSOURCE=movable-kernel
+KERNELBRANCH=branch:movable-kernel
+BOOTBRANCH=branch:movable-uboot
+ARMBIAN_FIRMWARE_GIT_REF=branch:movable-firmware
+source "{ROOT / 'config/boards/bananapir2pro.csc'}"
+post_family_config_branch_current__bananapir2pro_pin_sources
+printf 'kernel_source=%s\\nkernel=%s\\nuboot=%s\\nrkbin=%s\\nfirmware=%s\\n' \\
+    "$KERNELSOURCE" "$KERNELBRANCH" "$BOOTBRANCH" "$RKBIN_GIT_REF" \\
+    "$ARMBIAN_FIRMWARE_GIT_REF"
+'''
+        result = subprocess.run(
+            ["bash", "-c", harness],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn(
+            "kernel_source=https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git",
+            result.stdout,
+        )
+        self.assertIn(f"kernel=commit:{R2PRO_LINUX_COMMIT}", result.stdout)
+        self.assertIn(f"uboot=commit:{R2PRO_UBOOT_COMMIT}", result.stdout)
+        self.assertIn(f"rkbin=commit:{R2PRO_RKBIN_COMMIT}", result.stdout)
+        self.assertIn(
+            "firmware=commit:f50a2a21bcdb77a562b3976930c5c6b521a1df08",
+            result.stdout,
+        )
 
 
 if __name__ == "__main__":
