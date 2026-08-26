@@ -124,6 +124,10 @@
       "level": "L2",
       "basis": "Trixie current CLI 已由乾淨來源完整建置並通過映像、固定 Linux／U-Boot／OpenSBI 來源、六項 SpacemiT 啟動載荷、F3 DTB、核心功能與標準 I/O 工具唯讀守門；仍待實機驗證"
     },
+    "bananapicm6": {
+      "level": "L2",
+      "basis": "Trixie legacy minimal CLI 已由隔離快取完整建置並通過映像、固定 Linux／U-Boot／OpenSBI 來源、六項 SpacemiT 啟動載荷、MBR、CM6 專用 DTB、核心功能、韌體授權與標準 I/O 工具唯讀守門；SD、eMMC 與實體功能仍待實機驗證"
+    },
     "bananapim5pro": {
       "level": "L2",
       "basis": "Trixie edge CLI 已由乾淨來源完整建置並通過映像、固定 Linux／U-Boot／RKBin 來源、雙 U-Boot 載荷、RK3576 M5 Pro DTB、核心功能與標準 I/O 工具唯讀守門；仍待實機驗證"
