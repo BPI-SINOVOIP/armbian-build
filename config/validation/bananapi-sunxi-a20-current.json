@@ -37,7 +37,7 @@
       "uboot_offset": 8192,
       "overlay_prefix": "sun7i-a20",
       "required_status_nodes": [
-        "/soc/display-engine",
+        "/display-engine",
         "/soc/ethernet@1c50000",
         "/soc/hdmi@1c16000",
         "/soc/i2c@1c2b400",
@@ -62,7 +62,7 @@
       "uboot_offset": 8192,
       "overlay_prefix": "sun7i-a20",
       "required_status_nodes": [
-        "/soc/display-engine",
+        "/display-engine",
         "/soc/ethernet@1c50000",
         "/soc/hdmi@1c16000",
         "/soc/i2c@1c2b400",

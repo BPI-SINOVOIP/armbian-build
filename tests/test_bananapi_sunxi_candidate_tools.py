@@ -35,6 +35,8 @@ class BananaPiSunxiCandidateToolTests(unittest.TestCase):
                 self.assertEqual(policy["uboot_tag"], "v2024.01")
                 self.assertEqual(policy["uboot_offset"], 8192)
                 self.assertEqual(policy["overlay_prefix"], "sun7i-a20")
+                self.assertIn("/display-engine", policy["required_status_nodes"])
+                self.assertNotIn("/soc/display-engine", policy["required_status_nodes"])
 
     def test_board_images_include_standard_io_tools(self) -> None:
         required = set(self.config["common_packages"])
@@ -80,6 +82,8 @@ class BananaPiSunxiCandidateToolTests(unittest.TestCase):
             "common_kernel_options",
             "candidate_source_commit",
             "verifier_commit",
+            "build_validation_config_sha256",
+            "verification_config_sha256",
             "xz -dc",
         ):
             with self.subTest(required=required):

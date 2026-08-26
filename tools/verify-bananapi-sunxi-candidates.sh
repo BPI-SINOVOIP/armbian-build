@@ -58,7 +58,7 @@ validate_default_userpatches
 sudo -n true || fail "唯讀掛載驗證需要免互動 sudo"
 
 verifier_commit="$(git -C "${repo_dir}" rev-parse HEAD)"
-validation_config_sha256="$(sha256sum "${validation_config}" | cut -d' ' -f1)"
+verification_config_sha256="$(sha256sum "${validation_config}" | cut -d' ' -f1)"
 
 board_field() {
 	python3 - "${validation_config}" "$1" "$2" <<'PY'
@@ -228,6 +228,12 @@ candidate_source_commit="$(awk -F '\t' 'NR == 2 { print $10 }' "${output_dir}/CA
 	fail "候選矩陣混用不同來源提交"
 git -C "${repo_dir}" cat-file -e "${candidate_source_commit}^{commit}" || fail "本地找不到候選來源提交"
 candidate_source_tree="$(git -C "${repo_dir}" rev-parse "${candidate_source_commit}^{tree}")"
+validation_config_relative="${validation_config#"${repo_dir}"/}"
+[[ "${validation_config_relative}" != "${validation_config}" ]] || fail "驗證設定必須位於來源倉庫內"
+git -C "${repo_dir}" cat-file -e "${candidate_source_commit}:${validation_config_relative}" ||
+	fail "候選來源提交缺少建置時驗證設定"
+build_validation_config_sha256="$(git -C "${repo_dir}" show \
+	"${candidate_source_commit}:${validation_config_relative}" | sha256sum | cut -d' ' -f1)"
 
 verification_file="${output_dir}/VERIFICATION.tsv"
 printf 'board\tidentity\tread_only_content\tevidence_level\n' >"${verification_file}.partial"
@@ -248,7 +254,7 @@ while IFS=$'\t' read -r board release profile raw_size raw_sha256 xz_size \
 		[[ "$(xz -dc -- "${archive}" | sha256sum | cut -d' ' -f1)" == "${raw_sha256}" ]] || fail "${board} XZ 解壓不同"
 	fi
 	for item in "source_commit ${candidate_source_commit}" "source_tree ${candidate_source_tree}" \
-		"validation_config_sha256 ${validation_config_sha256}" "raw_sha256 ${raw_sha256}" \
+		"validation_config_sha256 ${build_validation_config_sha256}" "raw_sha256 ${raw_sha256}" \
 		"xz_sha256 ${xz_sha256}"; do
 		read -r key expected <<<"${item}"
 		require_metadata_value "${metadata}" "${key}" "${expected}"
@@ -264,6 +270,8 @@ status_file="${output_dir}/VERIFICATION_STATUS.json"
 	printf '{\n  "status": "complete",\n  "evidence_level": "L2",\n'
 	printf '  "source_commit": "%s",\n' "${candidate_source_commit}"
 	printf '  "verifier_commit": "%s",\n' "${verifier_commit}"
+	printf '  "build_validation_config_sha256": "%s",\n' "${build_validation_config_sha256}"
+	printf '  "verification_config_sha256": "%s",\n' "${verification_config_sha256}"
 	printf '  "verified_utc": "%s"\n}\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 } >"${status_file}.partial"
 mv "${status_file}.partial" "${status_file}"
