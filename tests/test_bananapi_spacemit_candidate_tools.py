@@ -13,6 +13,7 @@ CONFIG = ROOT / "config/validation/bananapi-spacemit-k1-f3-current.json"
 BUILD_SCRIPT = ROOT / "tools/build-bananapi-spacemit-candidates.sh"
 VERIFY_SCRIPT = ROOT / "tools/verify-bananapi-spacemit-candidates.sh"
 GENERIC_VERIFY = ROOT / "tools/verify-bananapi-sunxi-candidates.sh"
+BOARD_CONFIG = ROOT / "config/boards/bananapif3.conf"
 
 
 class BananaPiSpacemitCandidateToolTests(unittest.TestCase):
@@ -86,6 +87,14 @@ class BananaPiSpacemitCandidateToolTests(unittest.TestCase):
         self.assertIn("read_partition_start_sector", text)
         self.assertIn('/sys/class/block/${block_name}/start', text)
         self.assertNotIn("lsblk -nrno START", text)
+
+    def test_f3_environment_payload_has_deterministic_mode(self) -> None:
+        text = BOARD_CONFIG.read_text()
+        self.assertIn(
+            "post_uboot_custom_postprocess__bananapif3_payload_permissions",
+            text,
+        )
+        self.assertIn("chmod 0644 ./u-boot-env-default.bin", text)
 
     def test_wrappers_preserve_source_evidence(self) -> None:
         build_text = BUILD_SCRIPT.read_text()
