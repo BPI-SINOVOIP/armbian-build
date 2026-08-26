@@ -50,7 +50,7 @@
 - M5 與 CM4IO 的 Hynix eMMC 修正仍須多片、多廠牌及非正常斷電實測。
 - GPU、VPU、USB gadget、Ethernet、Wi-Fi、Bluetooth 與 40-pin 只有映像內容證據，尚無本批映像實機功能證據。
 - M5 與 M2 Pro 的 BL31／BL30 關機問題仍受封閉韌體限制，未因本次建置宣告修正。
-- CM4 核心修補郵件在建置時出現一個內容剖析警告；最終 DTB 與 L2 設定檢查通過，但修補格式仍須獨立修正並做針對性重建。
+- CM4 核心補丁格式已在提交 `365c30eadb2e93777b1ed9f6e3c80451f52f59d6` 修正，並以該提交重新完整建置 CM4IO；建置日誌未再出現補丁剖析警告，映像亦通過 L2。詳細證據見 `A-cm4-patch-format-L2-revalidation-20260826.md`。
 
 ## 本機證據位置
 
