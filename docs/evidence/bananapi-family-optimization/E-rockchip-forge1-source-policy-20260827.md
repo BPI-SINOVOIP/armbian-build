@@ -4,7 +4,7 @@
 
 ## 階段結論
 
-本階段完成 `bananapiforge1` 的固定來源、RK3506J 啟動鏈、供應商核心、板級身分、UART、USB HID、常用 I/O 工具、RKBin 授權及唯讀映像驗證契約。依任務限制尚未執行完整映像建置，也沒有實體板證據，因此目前仍是 L0 的 L2 候選實作，不得宣稱已達 L2、可開機或可正式發布。
+`bananapiforge1` 已完成固定來源、RK3506J 啟動鏈、供應商核心、板級身分、UART、USB HID、常用 I/O 工具、RKBin 授權、完整映像建置及唯讀映像守門。目前證據等級為 L2；沒有實體板證據，因此不得宣稱可開機或可正式發布。
 
 板檔不再繼承 `armsom-forge1.csc`，避免 ArmSoM 預設值、可移動來源與 Banana Pi 板級政策混在一起。BPI-Forge1 與既有 ArmSoM Forge1 DTS 的硬體等同性仍須由原理圖、板卡版本及實機測試確認；本候選保留原相容字串，沒有把來源中不存在的周邊虛構成已支援功能。
 
@@ -54,11 +54,11 @@ DDR 與 TEE 都是不能由本倉庫來源重建的預編譯二進位；雜湊�
 
 固定 U-Boot 提交已套用專用補丁，搭配上述固定 DDR 與 TEE blob 產生 `u-boot-rockchip.bin`。輸出可讀回 `Banana Pi BPI-Forge1` 與 Banana Pi 專用 Linux DTB 路徑，建置設定亦包含 `CONFIG_CMD_BTRFS=y`、`CONFIG_CMD_USB_MASS_STORAGE=y` 與 `CONFIG_BAUDRATE=1500000`。
 
-上述結果只證明固定來源可在本機交叉編譯，且關鍵輸出內容符合靜態契約；它不包含 Armbian 根檔案系統、分割表、套件、整碟載荷同一性或實機啟動，因此不能取代完整映像 L2 與硬體 L3 驗證。
+上述元件級結果只證明固定來源可在本機交叉編譯，且關鍵輸出內容符合靜態契約；完整映像另已通過根檔案系統、分割表、套件及整碟載荷同一性守門。兩者都不能取代硬體 L3 驗證。
 
 ## 建置與驗證入口
 
-完整映像建置入口如下；本階段沒有執行：
+本次完整映像使用下列入口建置：
 
 ```bash
 ./tools/run-bananapi-rockchip-forge1-candidate-isolated-cache.sh

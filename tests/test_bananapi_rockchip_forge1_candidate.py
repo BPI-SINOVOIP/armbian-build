@@ -181,10 +181,11 @@ class BananaPiRockchipForge1CandidateTests(unittest.TestCase):
             self.assertIn('BOARDS="bananapiforge1"', text)
         self.assertIn("bananapi-rockchip-forge1-cache-overlay", RUNNER.read_text())
 
-    def test_source_policy_marks_build_and_hardware_as_pending(self) -> None:
+    def test_source_policy_records_l2_and_hardware_as_pending(self) -> None:
         text = POLICY.read_text()
-        self.assertIn("尚未執行完整映像建置", text)
-        self.assertIn("不得宣稱已達 L2", text)
+        self.assertIn("完整映像建置及唯讀映像守門", text)
+        self.assertIn("目前證據等級為 L2", text)
+        self.assertIn("沒有實體板證據", text)
         self.assertIn("板上沒有 Wi-Fi／Bluetooth", text)
 
 
