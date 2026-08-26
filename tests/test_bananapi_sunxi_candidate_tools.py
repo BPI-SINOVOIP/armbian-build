@@ -19,6 +19,7 @@ M1PLUS_CONFIG = ROOT / "config/validation/bananapi-sunxi-a20-m1plus-current.json
 R40_CONFIG = ROOT / "config/validation/bananapi-sunxi-r40-current.json"
 A31S_CONFIG = ROOT / "config/validation/bananapi-sunxi-a31s-current.json"
 A33_CONFIG = ROOT / "config/validation/bananapi-sunxi-a33-current.json"
+A83T_CONFIG = ROOT / "config/validation/bananapi-sunxi-a83t-current.json"
 BUILD_SCRIPT = ROOT / "tools/build-bananapi-sunxi-candidates.sh"
 VERIFY_SCRIPT = ROOT / "tools/verify-bananapi-sunxi-candidates.sh"
 ISOLATED_RUNNER = ROOT / "tools/run-bananapi-candidates-isolated-cache.sh"
@@ -333,6 +334,60 @@ class BananaPiSunxiCandidateToolTests(unittest.TestCase):
         self.assertTrue(
             set(config["common_packages"])
             <= set(package_line.split('"', 2)[1].split())
+        )
+        self.assertIn(
+            'ARMBIAN_FIRMWARE_GIT_REF_BOARD="commit:f50a2a21bcdb77a562b3976930c5c6b521a1df08"',
+            board_text,
+        )
+        self.assertNotIn("CONFIG_DRAM_CLK", board_text)
+
+    def test_a83t_policy_covers_m3_storage_network_hdmi_and_video(self) -> None:
+        config = json.loads(A83T_CONFIG.read_text())
+        self.assertEqual(config["candidate_branch"], "current")
+        self.assertEqual(set(config["boards"]), {"bananapim3"})
+        policy = config["boards"]["bananapim3"]
+        self.assertEqual(policy["dtb"], "allwinner/sun8i-a83t-bananapi-m3.dtb")
+        self.assertEqual(policy["overlay_prefix"], "sun8i-a83t")
+        self.assertEqual(policy["required_overlays"], [])
+        self.assertTrue(
+            {"/soc/mmc@1c10000=4", "/soc/mmc@1c11000=8"}
+            <= set(policy["additional_bus_widths"])
+        )
+        self.assertTrue(
+            {
+                "/display-engine",
+                "/soc/ethernet@1c30000",
+                "/soc/hdmi@1ee0000",
+            }
+            <= set(policy["required_status_nodes"])
+        )
+        self.assertIn(
+            "/soc/video-codec@01c0e000",
+            policy["required_present_nodes"],
+        )
+        self.assertNotIn("/soc/gpu@1c40000", policy["required_present_nodes"])
+        self.assertEqual(
+            set(config["installed_firmware_blobs"]),
+            {
+                "/lib/firmware/brcm/brcmfmac43430-sdio.bin",
+                "/lib/firmware/brcm/brcmfmac43430-sdio.txt",
+                "/lib/firmware/brcm/brcmfmac43430-sdio.clm_blob",
+                "/lib/firmware/brcm/BCM43430A1.hcd",
+            },
+        )
+
+        board_text = (ROOT / "config/boards/bananapim3.csc").read_text()
+        package_line = next(
+            line for line in board_text.splitlines()
+            if line.startswith('PACKAGE_LIST_BOARD="')
+        )
+        self.assertTrue(
+            set(config["common_packages"])
+            <= set(package_line.split('"', 2)[1].split())
+        )
+        self.assertIn(
+            'BOOTPATCHDIR="u-boot-sunxi/board_${BOARD}"',
+            board_text,
         )
         self.assertIn(
             'ARMBIAN_FIRMWARE_GIT_REF_BOARD="commit:f50a2a21bcdb77a562b3976930c5c6b521a1df08"',

@@ -41,6 +41,15 @@ class BananaPiSunxiSourcePolicyTests(unittest.TestCase):
                         text,
                     )
 
+    def test_m3_keeps_the_a83t_mmc_calibration_patch_directory(self) -> None:
+        board = (ROOT / "config/boards/bananapim3.csc").read_text()
+        self.assertIn('BOOTPATCHDIR="u-boot-sunxi/board_${BOARD}"', board)
+        patch_dir = ROOT / "patch/u-boot/u-boot-sunxi/board_bananapim3"
+        self.assertEqual(
+            {path.name for path in patch_dir.glob("*.patch")},
+            {"Add-MACH_SUN8I_A83T-to-can-calibrate.patch"},
+        )
+
     def test_firmware_artifact_accepts_an_exact_git_ref(self) -> None:
         compile_text = (
             ROOT / "lib/functions/compilation/packages/firmware-deb.sh"
