@@ -80,6 +80,7 @@
     "bananapir4lite": {
       "family": "mt7987",
       "dtb": "mediatek/mt7987a-bananapi-bpi-r4-lite-sd.dtb",
+      "dtb_sha256": "d01ef737139d97393b210c1bcd9cf3823dfe4e59e83a9aee9e25fdc2660a4ad9",
       "model": "Bananapi BPI-R4-LITE",
       "compatible": [
         "bananapi,bpi-r4-lite",

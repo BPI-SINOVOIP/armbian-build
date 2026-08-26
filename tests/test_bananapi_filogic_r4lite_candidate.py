@@ -110,6 +110,10 @@ class BananaPiFilogicR4LiteCandidateTests(unittest.TestCase):
 
     def test_sd_gpt_dtb_and_payload_contract_is_complete(self) -> None:
         self.assertEqual(self.policy["root_partition_number"], 5)
+        self.assertEqual(
+            self.policy["dtb_sha256"],
+            "d01ef737139d97393b210c1bcd9cf3823dfe4e59e83a9aee9e25fdc2660a4ad9",
+        )
         self.assertEqual(self.policy["sd_node"], "/soc/mmc@11230000")
         self.assertEqual(self.policy["sd_bus_width"], 4)
         self.assertIn(
