@@ -27,7 +27,7 @@ class BananaPiBoardAuditTests(unittest.TestCase):
         self.assertEqual(len(self.boards), 48)
         self.assertEqual(
             {status: sum(board.status == status for board in self.boards) for status in AUDIT.BOARD_SUFFIXES},
-            {"conf": 12, "csc": 13, "wip": 22, "eos": 1},
+            {"conf": 12, "csc": 14, "wip": 21, "eos": 1},
         )
 
     def test_status_registry_covers_each_board_once(self) -> None:
