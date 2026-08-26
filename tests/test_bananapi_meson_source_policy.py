@@ -6,6 +6,8 @@ from __future__ import annotations
 import unittest
 from pathlib import Path
 
+from unidiff import PatchSet
+
 
 ROOT = Path(__file__).resolve().parents[1]
 BOARDS = (
@@ -108,7 +110,8 @@ class BananaPiMesonSourcePolicyTests(unittest.TestCase):
 
     def test_bananapi_patch_mailbox_subjects_are_ascii(self) -> None:
         for patch in (ROOT / "patch").rglob("*.patch"):
-            if "bananapi" not in str(patch).lower():
+            relative = patch.relative_to(ROOT)
+            if "bananapi" not in relative.as_posix().lower():
                 continue
             with patch.open("rb") as stream:
                 subject = next(
@@ -121,8 +124,19 @@ class BananaPiMesonSourcePolicyTests(unittest.TestCase):
                 )
             if subject is None:
                 continue
-            with self.subTest(patch=patch.relative_to(ROOT)):
+            with self.subTest(patch=relative):
                 subject.decode("ascii")
+
+    def test_bananapi_unified_diffs_are_parseable(self) -> None:
+        for patch in (ROOT / "patch").rglob("*.patch"):
+            relative = patch.relative_to(ROOT)
+            if "bananapi" not in relative.as_posix().lower():
+                continue
+            text = patch.read_text()
+            if "diff --git " not in text:
+                continue
+            with self.subTest(patch=relative):
+                PatchSet(text.splitlines(keepends=True))
 
     def test_m5_modified_patch_indexes_are_not_zero(self) -> None:
         patches = (
