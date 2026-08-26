@@ -12,7 +12,7 @@ bananapif3	conf	BananaPi BPI-F3	spacemit	riscv64	legacy,current,edge	current	yes
 bananapiforge1	wip	Banana Pi BPI-Forge1	rockchip	armhf	vendor	vendor	yes	E	L0	forge1-rk3506b_defconfig	rk3506b-armsom-forge1.dtb	KERNEL_TEST_TARGET	確認建置鏈並建立 Trixie CLI 候選
 bananapim1plus	csc	Banana Pi M1+	sun7i	armhf	current,edge,legacy	current	yes	C	L2	bananapi_m1_plus_defconfig		BOARD_MAINTAINER	執行 UART、啟動與基本周邊實機驗證
 bananapim1super	wip	Banana Pi M1 Super	rk35xx	arm64	vendor	vendor	yes	E	L0	hinlink_rk3528_defconfig	rockchip/rk3528-armsom-sige1.dtb	KERNEL_TEST_TARGET	確認建置鏈並建立 Trixie CLI 候選
-bananapim2	csc	Banana Pi M2	sun6i	armhf	current,legacy	current	yes	C	L0	Sinovoip_BPI_M2_defconfig		BOARD_MAINTAINER	建立 Trixie CLI 並完成離線守門
+bananapim2	csc	Banana Pi M2	sun6i	armhf	current,legacy	current	yes	C	L2	Sinovoip_BPI_M2_defconfig		BOARD_MAINTAINER	執行 UART、啟動與基本周邊實機驗證
 bananapim2berry	csc	Banana Pi M2 Berry	sun8i	armhf	current,edge,legacy	current	yes	C	L2	bananapi_m2_berry_defconfig		BOARD_MAINTAINER	執行 UART、啟動與基本周邊實機驗證
 bananapim2c	wip	Banana Pi M2C	unisoc-uis7885-bpi	arm64	vendor	vendor	yes	F	L0				確認建置鏈並建立 Trixie CLI 候選
 bananapim2magic	csc	Banana Pi M2 Magic	sun8i	armhf	current,edge,legacy	current	yes	C	L0	Bananapi_m2m_defconfig	allwinner/sun8i-r16-bananapi-m2m.dtb	BOARD_MAINTAINER	建立 Trixie CLI 並完成離線守門
