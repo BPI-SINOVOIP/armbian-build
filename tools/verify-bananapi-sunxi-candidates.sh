@@ -173,6 +173,7 @@ validate_boot_area() {
 validate_installed_uboot() {
 	local image=$1 mount_dir=$2 board=$3
 	local uboot_tag uboot_version uboot_git_source uboot_git_ref uboot_revision
+	local component component_upper component_prefix component_source component_ref component_revision
 	local payload_specs package_only_payloads payload_spec payload_name offset uboot_dir payload
 	local metadata_file md5sums_file payload_size payload_sha256 minimum_spec
 	uboot_tag="$(board_field "${board}" uboot_tag)"
@@ -208,6 +209,24 @@ validate_installed_uboot() {
 		grep -Fqx "declare UBOOT_GIT_REVISION=\"${uboot_revision}\"" "${metadata_file}" ||
 			fail "${board} 的 U-Boot Git revision 不符"
 	fi
+	for component in atf crust; do
+		component_source="$(board_field_optional "${board}" "${component}_git_source")"
+		component_ref="$(board_field_optional "${board}" "${component}_git_ref")"
+		component_revision="$(board_field_optional "${board}" "${component}_revision")"
+		[[ -n "${component_source}${component_ref}${component_revision}" ]] || continue
+		[[ -n "${component_source}" && -n "${component_ref}" && -n "${component_revision}" ]] ||
+			fail "${board} 的 ${component} 來源政策欄位不完整"
+		[[ "${component_revision}" =~ ^[0-9a-f]{40}$ ]] ||
+			fail "${board} 的 ${component} revision 格式不符"
+		component_upper="${component^^}"
+		component_prefix="UBOOT_${component_upper}_GIT"
+		grep -Fqx "declare ${component_prefix}_SOURCE=\"${component_source}\"" "${metadata_file}" ||
+			fail "${board} 的 ${component} Git 來源不符"
+		grep -Fqx "declare ${component_prefix}_BRANCH=\"${component_ref}\"" "${metadata_file}" ||
+			fail "${board} 的 ${component} Git 分支不符"
+		grep -Fqx "declare ${component_prefix}_REVISION=\"${component_revision}\"" "${metadata_file}" ||
+			fail "${board} 的 ${component} Git revision 不符"
+	done
 	validate_uboot_payload_file() {
 		local checked_payload_name=$1 checked_payload checked_payload_path
 		local checked_expected_md5 checked_actual_md5 checked_size checked_minimum=1
@@ -438,7 +457,9 @@ while IFS=$'\t' read -r board release profile raw_size raw_sha256 xz_size \
 		read -r key expected <<<"${item}"
 		require_metadata_value "${metadata}" "${key}" "${expected}"
 	done
-	for key in uboot_git_source uboot_git_ref uboot_revision uboot_version; do
+	for key in uboot_git_source uboot_git_ref uboot_revision uboot_version \
+		atf_git_source atf_git_ref atf_revision \
+		crust_git_source crust_git_ref crust_revision; do
 		expected="$(board_field_optional "${board}" "${key}")"
 		[[ -z "${expected}" ]] || require_metadata_value "${metadata}" "${key}" "${expected}"
 	done

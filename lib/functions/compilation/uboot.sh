@@ -528,6 +528,22 @@ function compile_uboot() {
 		declare UBOOT_EXTLINUX_PREFER="${SRC_EXTLINUX:-"no"}"
 		declare UBOOT_EXTLINUX_CMDLINE="${SRC_CMDLINE}"
 	UBOOT_GENERAL_METADATA_SH
+	if [[ -n "${ATFSOURCE:-}" && "${ATFSOURCE}" != "none" ]]; then
+		: "${ATF_GIT_REVISION:?ATF_GIT_REVISION is not set}"
+		cat <<- UBOOT_ATF_METADATA_SH >> "${uboottempdir}/usr/lib/${uboot_name}/u-boot-metadata.sh"
+			declare UBOOT_ATF_GIT_SOURCE="${ATFSOURCE}"
+			declare UBOOT_ATF_GIT_BRANCH="${ATFBRANCH}"
+			declare UBOOT_ATF_GIT_REVISION="${ATF_GIT_REVISION}"
+		UBOOT_ATF_METADATA_SH
+	fi
+	if [[ -n "${CRUSTSOURCE:-}" && "${CRUSTSOURCE}" != "none" ]]; then
+		: "${CRUST_GIT_REVISION:?CRUST_GIT_REVISION is not set}"
+		cat <<- UBOOT_CRUST_METADATA_SH >> "${uboottempdir}/usr/lib/${uboot_name}/u-boot-metadata.sh"
+			declare UBOOT_CRUST_GIT_SOURCE="${CRUSTSOURCE}"
+			declare UBOOT_CRUST_GIT_BRANCH="${CRUSTBRANCH}"
+			declare UBOOT_CRUST_GIT_REVISION="${CRUST_GIT_REVISION}"
+		UBOOT_CRUST_METADATA_SH
+	fi
 
 	if [[ $DEBUG == yes ]]; then
 		display_alert "${uboot_prefix}Showing u-boot metadata for target" "${version} ${target_make}" "debug"

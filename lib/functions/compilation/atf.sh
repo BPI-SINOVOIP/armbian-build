@@ -29,6 +29,13 @@ compile_atf() {
 	fi
 	cd "$atfdir" || exit
 
+	local atf_git_head
+	atf_git_head="$(git rev-parse HEAD)"
+	[[ "${atf_git_head}" =~ ^[0-9a-f]{40}$ ]] ||
+		exit_with_error "ATF Git revision 格式不符" "${atf_git_head}"
+	# shellcheck disable=SC2034  # 由後續 U-Boot 套件中繼資料使用。
+	declare -g ATF_GIT_REVISION="${atf_git_head}"
+
 	display_alert "Compiling ATF" "" "info"
 
 	display_alert "Compiler version" "${ATF_COMPILER}gcc $(eval env "${ATF_COMPILER}gcc" -dumpfullversion -dumpversion)" "info"

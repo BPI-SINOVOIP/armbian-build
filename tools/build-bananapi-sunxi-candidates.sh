@@ -190,6 +190,12 @@ for board in "${boards[@]}"; do
 	uboot_git_ref="$(board_field_optional "${board}" uboot_git_ref)"
 	uboot_revision="$(board_field_optional "${board}" uboot_revision)"
 	uboot_version="$(board_field_optional "${board}" uboot_version)"
+	atf_git_source="$(board_field_optional "${board}" atf_git_source)"
+	atf_git_ref="$(board_field_optional "${board}" atf_git_ref)"
+	atf_revision="$(board_field_optional "${board}" atf_revision)"
+	crust_git_source="$(board_field_optional "${board}" crust_git_source)"
+	crust_git_ref="$(board_field_optional "${board}" crust_git_ref)"
+	crust_revision="$(board_field_optional "${board}" crust_revision)"
 	dtb="$(board_field "${board}" dtb)"
 	build_parameters="BOARD=${board} BRANCH=${branch} RELEASE=${release} BUILD_DESKTOP=no BUILD_MINIMAL=yes KERNEL_CONFIGURE=no EXPERT=yes ARTIFACT_IGNORE_CACHE=${artifact_ignore_cache} COMPRESS_OUTPUTIMAGE=sha,img"
 	build_parameters_sha256="$(printf '%s\n' "${build_parameters}" | sha256sum | cut -d' ' -f1)"
@@ -208,7 +214,10 @@ for board in "${boards[@]}"; do
 		done
 		for item in "uboot_git_source ${uboot_git_source}" \
 			"uboot_git_ref ${uboot_git_ref}" "uboot_revision ${uboot_revision}" \
-			"uboot_version ${uboot_version}"; do
+			"uboot_version ${uboot_version}" \
+			"atf_git_source ${atf_git_source}" "atf_git_ref ${atf_git_ref}" \
+			"atf_revision ${atf_revision}" "crust_git_source ${crust_git_source}" \
+			"crust_git_ref ${crust_git_ref}" "crust_revision ${crust_revision}"; do
 			read -r key expected <<<"${item}"
 			[[ -z "${expected}" ]] ||
 				require_metadata_value "${metadata}" "${key}" "${expected}"
@@ -259,7 +268,10 @@ for board in "${boards[@]}"; do
 			printf 'validation_config_sha256=%s\nfamily=%s\ndtb=%s\nuboot_tag=%s\n' "${validation_config_sha256}" "${family}" "${dtb}" "${uboot_tag}"
 			for item in "uboot_git_source ${uboot_git_source}" \
 				"uboot_git_ref ${uboot_git_ref}" "uboot_revision ${uboot_revision}" \
-				"uboot_version ${uboot_version}"; do
+				"uboot_version ${uboot_version}" \
+				"atf_git_source ${atf_git_source}" "atf_git_ref ${atf_git_ref}" \
+				"atf_revision ${atf_revision}" "crust_git_source ${crust_git_source}" \
+				"crust_git_ref ${crust_git_ref}" "crust_revision ${crust_revision}"; do
 				read -r key value <<<"${item}"
 				[[ -z "${value}" ]] || printf '%s=%s\n' "${key}" "${value}"
 			done

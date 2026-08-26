@@ -23,6 +23,9 @@ A83T_CONFIG = ROOT / "config/validation/bananapi-sunxi-a83t-current.json"
 BUILD_SCRIPT = ROOT / "tools/build-bananapi-sunxi-candidates.sh"
 VERIFY_SCRIPT = ROOT / "tools/verify-bananapi-sunxi-candidates.sh"
 ISOLATED_RUNNER = ROOT / "tools/run-bananapi-candidates-isolated-cache.sh"
+ATF_COMPILER = ROOT / "lib/functions/compilation/atf.sh"
+CRUST_COMPILER = ROOT / "lib/functions/compilation/crust.sh"
+UBOOT_COMPILER = ROOT / "lib/functions/compilation/uboot.sh"
 EXPECTED_BOARDS = {"bananapi", "bananapipro"}
 
 
@@ -411,6 +414,32 @@ class BananaPiSunxiCandidateToolTests(unittest.TestCase):
         ):
             with self.subTest(required=required):
                 self.assertIn(required, text)
+
+    def test_64_bit_sunxi_firmware_chain_is_traceable(self) -> None:
+        build_text = BUILD_SCRIPT.read_text()
+        verify_text = VERIFY_SCRIPT.read_text()
+        atf_text = ATF_COMPILER.read_text()
+        crust_text = CRUST_COMPILER.read_text()
+        uboot_text = UBOOT_COMPILER.read_text()
+
+        self.assertIn('declare -g ATF_GIT_REVISION="${atf_git_head}"', atf_text)
+        self.assertIn('declare -g CRUST_GIT_REVISION="${crust_git_head}"', crust_text)
+        for component in ("ATF", "CRUST"):
+            with self.subTest(component=component):
+                self.assertIn(f"UBOOT_{component}_GIT_SOURCE", uboot_text)
+                self.assertIn(f"UBOOT_{component}_GIT_BRANCH", uboot_text)
+                self.assertIn(f"UBOOT_{component}_GIT_REVISION", uboot_text)
+        for field in (
+            "atf_git_source",
+            "atf_git_ref",
+            "atf_revision",
+            "crust_git_source",
+            "crust_git_ref",
+            "crust_revision",
+        ):
+            with self.subTest(field=field):
+                self.assertIn(field, build_text)
+                self.assertIn(field, verify_text)
 
     def test_verifier_checks_sunxi_boot_layout_read_only(self) -> None:
         text = VERIFY_SCRIPT.read_text()
