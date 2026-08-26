@@ -73,7 +73,11 @@ class BananaPiFilogicR4LiteCandidateTests(unittest.TestCase):
         patch_text = KERNEL_PATCH.read_text()
         self.assertIn("mt7987a-bananapi-bpi-r4-lite-armbian.dtbo", patch_text)
         self.assertIn("/delete-property/ bootargs", patch_text)
-        self.assertIn("pci=pcie_bus_perf\";", patch_text)
+        self.assertIn(
+            'bootargs = "console=ttyS0,115200n1 loglevel=6 '
+            'earlycon=uart8250,mmio32,0x11000000 pci=pcie_bus_perf";',
+            patch_text,
+        )
         self.assertIn(KERNEL_PATCH.name, KERNEL_SERIES.read_text())
 
     def test_firmware_matches_fixed_linux_firmware(self) -> None:
