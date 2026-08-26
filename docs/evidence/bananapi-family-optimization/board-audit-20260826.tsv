@@ -16,7 +16,7 @@ bananapim2	csc	Banana Pi M2	sun6i	armhf	current,legacy	current	yes	C	L0	Sinovoip
 bananapim2berry	csc	Banana Pi M2 Berry	sun8i	armhf	current,edge,legacy	current	yes	C	L0	bananapi_m2_berry_defconfig		BOARD_MAINTAINER	建立 Trixie CLI 並完成離線守門
 bananapim2c	wip	Banana Pi M2C	unisoc-uis7885-bpi	arm64	vendor	vendor	yes	F	L0				確認建置鏈並建立 Trixie CLI 候選
 bananapim2magic	csc	Banana Pi M2 Magic	sun8i	armhf	current,edge,legacy	current	yes	C	L0	Bananapi_m2m_defconfig	allwinner/sun8i-r16-bananapi-m2m.dtb	BOARD_MAINTAINER	建立 Trixie CLI 並完成離線守門
-bananapim2plus	conf	Banana Pi M2+	sun8i	armhf	current,edge,legacy	current	yes	B	L0	bananapi_m2_plus_h3_defconfig			建立 Trixie CLI 並完成離線守門
+bananapim2plus	conf	Banana Pi M2+	sun8i	armhf	current,edge,legacy	current	yes	B	L2	bananapi_m2_plus_h3_defconfig			執行 UART、啟動與基本周邊實機驗證
 bananapim2pro	conf	Banana Pi M2Pro	meson-sm1	arm64	current,edge	current	yes	A	L2	bananapi-m2-pro_defconfig	amlogic/meson-sm1-bananapi-m2-pro.dtb		執行 UART、啟動與基本周邊實機驗證
 bananapim2s	conf	Banana Pi M2S	meson-g12b	arm64	current,edge	current	yes	A	L2	bananapi-m2s_defconfig	amlogic/meson-g12b-a311d-bananapi-m2s.dtb		執行 UART、啟動與基本周邊實機驗證
 bananapim2ultra	csc	Banana Pi M2 Ultra	sun8i	armhf	current,edge,legacy	current	yes	C	L0	Bananapi_M2_Ultra_defconfig		BOARD_MAINTAINER	建立 Trixie CLI 並完成離線守門

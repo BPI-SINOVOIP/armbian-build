@@ -57,6 +57,7 @@ class BananaPiBoardAuditTests(unittest.TestCase):
         for board_id in (
             "bananapi",
             "bananapipro",
+            "bananapim2plus",
             "bananapim5",
             "bananapim2pro",
             "bananapicm4io",
