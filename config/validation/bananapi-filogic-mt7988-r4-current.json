@@ -59,6 +59,7 @@
     "CONFIG_ARCH_MEDIATEK": "y",
     "CONFIG_BLK_DEV_NVME": "y",
     "CONFIG_I2C_CHARDEV": "y",
+    "CONFIG_MEDIATEK_2P5G_PHY": "y",
     "CONFIG_MMC_MTK": "y",
     "CONFIG_MT7996E": "m",
     "CONFIG_MTD_SPI_NAND": "y",

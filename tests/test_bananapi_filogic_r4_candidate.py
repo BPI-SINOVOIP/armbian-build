@@ -114,6 +114,10 @@ class BananaPiFilogicR4CandidateTests(unittest.TestCase):
 
     def test_kernel_enables_r4_network_storage_and_io(self) -> None:
         text = KERNEL_CONFIG.read_text()
+        self.assertEqual(
+            self.config["common_kernel_options"]["CONFIG_MEDIATEK_2P5G_PHY"],
+            "y",
+        )
         for option, value in self.config["common_kernel_options"].items():
             with self.subTest(option=option):
                 self.assertIn(f"{option}={value}", text)
