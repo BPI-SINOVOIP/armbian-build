@@ -42,6 +42,8 @@ DDR 與 TEE 都是不能由本倉庫來源重建的預編譯二進位；雜湊�
 
 核心補丁只調整板級 `model` 與 `compatible`，保留既有 ArmSoM 及 Rockchip 相容字串。驗證契約依固定來源 DTS 檢查 SD、雙 RMII Ethernet、USB OTG、USB host、SPI-NAND、I2C、RTC、RK730 音訊、CAN、RGA、RNG、溫度、DSI 顯示及觸控節點。這是映像內容契約，不是實物功能證明。
 
+實際編譯後 `rk3506b-bananapi-forge1.dtb` 的 SHA-256 固定為 `bc6a4d9329a095dcbdc21f0f38912c0aa90f778f4c5286f598419533d10cb657`。除了精確雜湊，守門仍會解析 model、compatible、節點、alias、bus width 及必要屬性；任一來源、補丁或工具鏈變更造成 DTB 漂移時，必須重新審查而不能沿用既有 L2 結論。
+
 核心設定明確啟用 USB、DWC2、USB HID、通用 HID、`hidraw`、USB gadget、ConfigFS mass storage 與 GPIO character device，並保留 vendor 基線既有的 I2C、SPI、MMC、CAN、Ethernet、音訊、顯示及 RGA 支援。根檔案系統加入 `gpiod`、`i2c-tools`、`python3-libgpiod`、`python3-spidev`、`spi-tools`、`usbutils`、`usb-modeswitch`、`evtest`、`can-utils`、`ethtool`、`iproute2` 與 `iperf3`。
 
 板上沒有 Wi-Fi／Bluetooth，因此本候選不加入無線套件、板級載入規則或虛構的韌體來源。一般 Armbian 根檔案系統可能仍由共用套件攜帶其他平台韌體，但這不構成 BPI-Forge1 板載無線支援聲明。

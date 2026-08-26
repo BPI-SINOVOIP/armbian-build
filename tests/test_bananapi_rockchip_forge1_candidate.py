@@ -156,6 +156,10 @@ class BananaPiRockchipForge1CandidateTests(unittest.TestCase):
         self.assertNotIn("ARMBIAN_FIRMWARE", self.board_text)
 
     def test_board_identity_patches_are_dedicated(self) -> None:
+        self.assertEqual(
+            self.board["dtb_sha256"],
+            "bc6a4d9329a095dcbdc21f0f38912c0aa90f778f4c5286f598419533d10cb657",
+        )
         uboot_text = UBOOT_PATCH.read_text()
         kernel_text = KERNEL_PATCH.read_text()
         for text in (uboot_text, kernel_text):

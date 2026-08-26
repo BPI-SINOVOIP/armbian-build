@@ -69,6 +69,7 @@
     "bananapiforge1": {
       "family": "rockchip",
       "dtb": "rk3506b-bananapi-forge1.dtb",
+      "dtb_sha256": "bc6a4d9329a095dcbdc21f0f38912c0aa90f778f4c5286f598419533d10cb657",
       "model": "Banana Pi BPI-Forge1",
       "compatible": [
         "bananapi,bpi-forge1",
