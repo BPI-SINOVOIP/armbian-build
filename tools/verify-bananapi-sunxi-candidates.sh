@@ -265,7 +265,7 @@ validate_installed_uboot() {
 	local payload_specs package_only_payloads payload_spec payload_name offset uboot_dir payload
 	local metadata_file md5sums_file payload_size payload_sha256 minimum_spec
 	local rkbin_source rkbin_ref rkbin_revision partition_table partition_start_sector sector_size payload_end first_partition_byte
-	local uboot_target_index uboot_config_file uboot_target_metadata uboot_defconfig option_line target_fragment forbidden_fragment
+	local uboot_target_index uboot_config_file uboot_target_metadata uboot_defconfig option_line target_fragment forbidden_fragment required_fragment
 	uboot_tag="$(board_field "${board}" uboot_tag)"
 	uboot_version="$(board_field_optional "${board}" uboot_version)"
 	[[ -n "${uboot_version}" ]] || uboot_version="${uboot_tag#v}"
@@ -361,6 +361,12 @@ validate_installed_uboot() {
 			fail "${board} 的 U-Boot 仍含禁止的供應商開機路徑：${forbidden_fragment}"
 		fi
 	done < <(board_values "${board}" uboot_forbidden_binary_strings)
+	while IFS= read -r required_fragment; do
+		[[ -n "${required_fragment}" ]] || continue
+		[[ -s "${uboot_dir}/u-boot.bin" ]] || fail "${board} 缺少可檢查的 U-Boot 二進位"
+		grep -aFq -- "${required_fragment}" "${uboot_dir}/u-boot.bin" ||
+			fail "${board} 的 U-Boot 缺少必要開機路徑：${required_fragment}"
+	done < <(board_values "${board}" uboot_required_binary_strings)
 	uboot_defconfig="$(board_field_optional "${board}" uboot_defconfig)"
 	if [[ -n "${uboot_defconfig}" ]]; then
 		[[ -s "${mount_dir}/usr/lib/u-boot/${uboot_defconfig}" ]] ||

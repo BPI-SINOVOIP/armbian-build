@@ -1,0 +1,34 @@
+From 0b67783e759e5e99cf6f5c3ea64739f0088563be Mon Sep 17 00:00:00 2001
+From: BPI-SINOVOIP <support@banana-pi.org>
+Date: Thu, 27 Aug 2026 08:30:00 +0800
+Subject: [PATCH] riscv: dts: identify Banana Pi CM6
+
+建立繼承供應商 K1 deb1 硬體描述的 Banana Pi BPI-CM6 專用 DTB，並移除
+繼承的偵錯與 rdinit 參數。Armbian 的 extlinux 設定負責提供實際核心命令列，
+避免供應商救援參數覆蓋根檔案系統政策。
+
+Signed-off-by: BPI-SINOVOIP <support@banana-pi.org>
+diff --git a/arch/riscv/boot/dts/spacemit/Makefile b/arch/riscv/boot/dts/spacemit/Makefile
+index e6a6e9ae661b..567347a20d38 100644
+--- a/arch/riscv/boot/dts/spacemit/Makefile
++++ b/arch/riscv/boot/dts/spacemit/Makefile
+@@ -7 +7,2 @@
++dtb-$(CONFIG_SOC_SPACEMIT_K1X) += k1-x_bpi_cm6.dtb
+ obj-$(CONFIG_BUILTIN_DTB) += $(addsuffix .o, $(dtb-y))
+diff --git a/arch/riscv/boot/dts/spacemit/k1-x_bpi_cm6.dts b/arch/riscv/boot/dts/spacemit/k1-x_bpi_cm6.dts
+new file mode 100644
+index 000000000000..a3f8405e210b
+--- /dev/null
++++ b/arch/riscv/boot/dts/spacemit/k1-x_bpi_cm6.dts
+@@ -0,0 +1,11 @@
++// SPDX-License-Identifier: (GPL-2.0 OR MIT)
++/* Copyright (c) 2026 BPI-SINOVOIP */
++
++#include "k1-x_deb1.dts"
++
++/ {
++	model = "BananaPi BPI-CM6";
++	compatible = "bananapi,bpi-cm6", "spacemit,k1-x";
++
++	chosen { /delete-property/ bootargs; };
++};

@@ -73,7 +73,6 @@
 
 - `bananapiaim7`：缺少建議欄位 `KERNEL_TEST_TARGET`。
 - `bananapicm5pro`：缺少建議欄位 `KERNEL_TEST_TARGET`。
-- `bananapicm6`：缺少建議欄位 `KERNEL_TEST_TARGET`。
 - `bananapif2s`：缺少建議欄位 `BOARD_MAINTAINER`。
 - `bananapiforge1`：缺少建議欄位 `KERNEL_TEST_TARGET`。
 - `bananapim1plus`：缺少建議欄位 `BOARD_MAINTAINER`。
