@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 function fetch_sources_tools__rkbin_tools() {
-	fetch_from_repo "${RKBIN_GIT_URL:-"https://github.com/armbian/rkbin"}" "rkbin-tools" "branch:${RKBIN_GIT_BRANCH:-"master"}"
+	local rkbin_git_ref="${RKBIN_GIT_REF:-branch:${RKBIN_GIT_BRANCH:-master}}"
+	fetch_from_repo "${RKBIN_GIT_URL:-"https://github.com/armbian/rkbin"}" "rkbin-tools" "${rkbin_git_ref}"
 }
 
 function build_host_tools__install_rkbin_tools() {
