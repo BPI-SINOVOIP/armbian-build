@@ -6,7 +6,7 @@ validation_config="${VALIDATION_CONFIG:-${repo_dir}/config/validation/bananapi-s
 output_dir="${OUTPUT_DIR:-${repo_dir}/output/images/2026.08/bananapi-sunxi-a20-trixie-current-cli}"
 boards_text="${BOARDS:-bananapi bananapipro}"
 release="${RELEASE:-trixie}"
-branch="${BRANCH:-current}"
+branch="${BRANCH:-}"
 artifact_ignore_cache="${ARTIFACT_IGNORE_CACHE:-yes}"
 minimum_free_gib="${MINIMUM_FREE_GIB:-80}"
 require_isolated_cache="${REQUIRE_ISOLATED_CACHE:-yes}"
@@ -49,8 +49,20 @@ validate_default_userpatches() {
 }
 
 [[ -f "${validation_config}" ]] || fail "找不到驗證設定：${validation_config}"
-[[ "${release}" == trixie && "${branch}" == current ]] || {
-	echo "${candidate_family_name} 候選守門只接受 RELEASE=trixie 與 BRANCH=current。" >&2
+candidate_branch="$(python3 - "${validation_config}" <<'PY'
+import json
+import sys
+with open(sys.argv[1], encoding="utf-8") as stream:
+    print(json.load(stream).get("candidate_branch", "current"))
+PY
+)"
+case "${candidate_branch}" in
+	current | edge | vendor) ;;
+	*) echo "驗證設定的 candidate_branch 不受支援：${candidate_branch}" >&2; exit 2 ;;
+esac
+[[ -n "${branch}" ]] || branch="${candidate_branch}"
+[[ "${release}" == trixie && "${branch}" == "${candidate_branch}" ]] || {
+	echo "${candidate_family_name} 候選守門只接受 RELEASE=trixie 與 BRANCH=${candidate_branch}。" >&2
 	exit 2
 }
 case "${artifact_ignore_cache}" in

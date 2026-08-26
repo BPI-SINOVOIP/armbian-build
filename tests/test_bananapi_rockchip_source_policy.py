@@ -12,6 +12,9 @@ ROOT = Path(__file__).resolve().parents[1]
 RKBIN_COMMIT = "46c4793ea2dcea7c8331fce9f07b5c80561a0395"
 M7_RKBIN_COMMIT = "1d3c61008fa823936ae7a59615393f8294b64456"
 M7_UBOOT_COMMIT = "39cd993e5d6296635438e84f4576b3a9bf76f86e"
+M5PRO_LINUX_COMMIT = "458c6079fc1d41d564c37679c8ace02cd83ee817"
+M5PRO_UBOOT_COMMIT = "39cd993e5d6296635438e84f4576b3a9bf76f86e"
+M5PRO_RKBIN_COMMIT = "1d3c61008fa823936ae7a59615393f8294b64456"
 IO_PACKAGES = {
     "gpiod",
     "i2c-tools",
@@ -29,6 +32,7 @@ class BananaPiRockchipSourcePolicyTests(unittest.TestCase):
     def setUpClass(cls) -> None:
         cls.board = (ROOT / "config/boards/bananapip2pro.wip").read_text()
         cls.m7_board = (ROOT / "config/boards/bananapim7.conf").read_text()
+        cls.m5pro_board = (ROOT / "config/boards/bananapim5pro.conf").read_text()
         cls.extension = (ROOT / "extensions/rkbin-tools.sh").read_text()
 
     def test_rkbin_extension_accepts_an_immutable_ref(self) -> None:
@@ -161,6 +165,65 @@ printf 'ddr=%s\\nbl31=%s\\n' "$DDR_BLOB" "$BL31_BLOB"
         self.assertTrue(IO_PACKAGES <= packages)
         self.assertTrue(RADIO_PACKAGES <= packages)
         self.assertTrue({"pciutils", "nvme-cli"} <= packages)
+
+    def test_m5_pro_pins_edge_sources_and_rk3576_blobs(self) -> None:
+        for expected in (
+            f'KERNELBRANCH_BOARD="commit:{M5PRO_LINUX_COMMIT}"',
+            f'BOOTBRANCH_BOARD="commit:{M5PRO_UBOOT_COMMIT}"',
+            f'RKBIN_GIT_REF="commit:{M5PRO_RKBIN_COMMIT}"',
+            'DDR_BLOB="rk35/rk3576_ddr_lp4_2112MHz_lp5_2736MHz_v1.08.bin"',
+            'BL31_BLOB="rk35/rk3576_bl31_v1.20.elf"',
+            'BOOST_BLOB="rk35/rk3576_boost_v1.02.bin"',
+            'USBPLUG_BLOB="rk35/rk3576_usbplug_v1.03.bin"',
+        ):
+            with self.subTest(expected=expected):
+                self.assertIn(expected, self.m5pro_board)
+        self.assertNotIn('KERNELBRANCH_BOARD="branch:', self.m5pro_board)
+        self.assertNotIn('BOOTBRANCH_BOARD="branch:', self.m5pro_board)
+        self.assertNotIn('RKBIN_GIT_REF="branch:', self.m5pro_board)
+
+    def test_m5_pro_edge_hook_overrides_movable_family_sources(self) -> None:
+        harness = f'''
+display_alert() {{ :; }}
+SRC="{ROOT}"
+BRANCH=edge
+BOOT_SOC=rk3576
+HOSTRELEASE=jammy
+source "{ROOT / 'config/boards/bananapim5pro.conf'}"
+source "{ROOT / 'config/sources/families/rk35xx.conf'}"
+printf 'before_kernel=%s\\n' "$KERNELBRANCH"
+printf 'before_uboot=%s\\n' "$BOOTBRANCH"
+post_family_config_branch_edge__bananapim5pro_pin_sources
+printf 'kernel_source=%s\\nkernel=%s\\nuboot=%s\\nrkbin=%s\\n' \
+    "$KERNELSOURCE" "$KERNELBRANCH" "$BOOTBRANCH" "$RKBIN_GIT_REF"
+'''
+        result = subprocess.run(
+            ["bash", "-c", harness],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("before_kernel=\n", result.stdout)
+        self.assertIn("before_uboot=branch:next-dev-v2024.10", result.stdout)
+        self.assertIn(
+            "kernel_source=https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git",
+            result.stdout,
+        )
+        self.assertIn(f"kernel=commit:{M5PRO_LINUX_COMMIT}", result.stdout)
+        self.assertIn(f"uboot=commit:{M5PRO_UBOOT_COMMIT}", result.stdout)
+        self.assertIn(f"rkbin=commit:{M5PRO_RKBIN_COMMIT}", result.stdout)
+
+    def test_m5_pro_includes_standard_io_and_radio_packages(self) -> None:
+        package_line = next(
+            line
+            for line in self.m5pro_board.splitlines()
+            if line.startswith('PACKAGE_LIST_BOARD="')
+        )
+        packages = set(package_line.split('"', 2)[1].split())
+        self.assertTrue(IO_PACKAGES <= packages)
+        self.assertTrue(RADIO_PACKAGES <= packages)
+        self.assertTrue({"pciutils", "nvme-cli", "usbutils", "iw", "ethtool"} <= packages)
 
 
 if __name__ == "__main__":

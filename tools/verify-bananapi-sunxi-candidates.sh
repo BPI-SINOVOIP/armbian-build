@@ -58,6 +58,17 @@ validate_default_userpatches() {
 [[ -f "${output_dir}/COMPLETION_STATUS.json" ]] || fail "找不到建置狀態"
 grep -q '"status": "complete"' "${output_dir}/COMPLETION_STATUS.json" ||
 	fail "建置狀態不是 complete"
+candidate_branch="$(python3 - "${validation_config}" <<'PY'
+import json
+import sys
+with open(sys.argv[1], encoding="utf-8") as stream:
+    print(json.load(stream).get("candidate_branch", "current"))
+PY
+)"
+case "${candidate_branch}" in
+	current | edge | vendor) ;;
+	*) fail "驗證設定的 candidate_branch 不受支援：${candidate_branch}" ;;
+esac
 case "${verify_archives}" in
 	yes | no) ;;
 	*) fail "VERIFY_ARCHIVES 只接受 yes 或 no" ;;
@@ -178,9 +189,9 @@ validate_installed_uboot() {
 	if [[ -z "${payload_specs}" ]]; then
 		payload_specs="$(board_field "${board}" uboot_payload)@$(board_field "${board}" uboot_offset)"
 	fi
-	uboot_dir="${mount_dir}/usr/lib/linux-u-boot-current-${board}"
+	uboot_dir="${mount_dir}/usr/lib/linux-u-boot-${candidate_branch}-${board}"
 	metadata_file="${uboot_dir}/u-boot-metadata.sh"
-	md5sums_file="${mount_dir}/var/lib/dpkg/info/linux-u-boot-${board}-current.md5sums"
+	md5sums_file="${mount_dir}/var/lib/dpkg/info/linux-u-boot-${board}-${candidate_branch}.md5sums"
 
 	[[ -s "${metadata_file}" && -s "${md5sums_file}" ]] ||
 		fail "${board} 缺少可驗證的 U-Boot 套件 payload"
@@ -201,7 +212,7 @@ validate_installed_uboot() {
 		local checked_payload_name=$1 checked_payload checked_payload_path
 		local checked_expected_md5 checked_actual_md5 checked_size checked_minimum=1
 		checked_payload="${uboot_dir}/${checked_payload_name}"
-		checked_payload_path="usr/lib/linux-u-boot-current-${board}/${checked_payload_name}"
+		checked_payload_path="usr/lib/linux-u-boot-${candidate_branch}-${board}/${checked_payload_name}"
 		[[ -s "${checked_payload}" ]] || fail "${board} 缺少 U-Boot payload：${checked_payload_name}"
 		checked_expected_md5="$(awk -v path="${checked_payload_path}" '$2 == path { print $1 }' "${md5sums_file}")"
 		[[ "${checked_expected_md5}" =~ ^[0-9a-f]{32}$ ]] ||
@@ -367,8 +378,8 @@ validate_mounted_image() (
 	done < <(common_values installed_firmware_blobs 2>/dev/null || true)
 	kernel_family="$(top_field_optional kernel_family)"
 	[[ -n "${kernel_family}" ]] || kernel_family="sunxi"
-	for package in "linux-image-current-${kernel_family}" "linux-dtb-current-${kernel_family}" \
-		"linux-u-boot-${board}-current" "armbian-bsp-cli-${board}-current"; do
+	for package in "linux-image-${candidate_branch}-${kernel_family}" "linux-dtb-${candidate_branch}-${kernel_family}" \
+		"linux-u-boot-${board}-${candidate_branch}" "armbian-bsp-cli-${board}-${candidate_branch}"; do
 		package_installed "${mount_dir}" "${package}" || fail "${board} 缺少 Armbian 套件 ${package}"
 	done
 	validate_installed_uboot "${image}" "${mount_dir}" "${board}"
@@ -415,7 +426,7 @@ while IFS=$'\t' read -r board release profile raw_size raw_sha256 xz_size \
 	fi
 	for item in "source_commit ${candidate_source_commit}" "source_tree ${candidate_source_tree}" \
 		"validation_config_sha256 ${build_validation_config_sha256}" "raw_sha256 ${raw_sha256}" \
-		"xz_sha256 ${xz_sha256}"; do
+		"xz_sha256 ${xz_sha256}" "branch ${candidate_branch}"; do
 		read -r key expected <<<"${item}"
 		require_metadata_value "${metadata}" "${key}" "${expected}"
 	done

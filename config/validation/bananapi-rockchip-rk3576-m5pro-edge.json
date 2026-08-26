@@ -1,0 +1,122 @@
+{
+  "schema_version": 1,
+  "candidate_branch": "edge",
+  "kernel_family": "rockchip64",
+  "linux_source": "https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git",
+  "linux_commit": "458c6079fc1d41d564c37679c8ace02cd83ee817",
+  "rkbin_commit": "1d3c61008fa823936ae7a59615393f8294b64456",
+  "rkbin_blobs": {
+    "rk35/RK3576MINIALL.ini": "5f33eb26bfcb098096d0fea5261b56fe523f3666354b4f4c8c29134f9caf89d0",
+    "rk35/rk3576_bl31_v1.20.elf": "34f875f6cc4fd2a633e08dcbe9f4f031ddf95a1bf6d5eaeb7621ac750d997cac",
+    "rk35/rk3576_boost_v1.02.bin": "c07aa38c1b816d53e1c2635577356a75627f29667dd9e1133d44dd4b00fd17f6",
+    "rk35/rk3576_ddr_lp4_2112MHz_lp5_2736MHz_v1.08.bin": "7403cf1663d4b0c9d7c692014e0852e60f0d3977209ec75fa755c293f54e2d50",
+    "rk35/rk3576_usbplug_v1.03.bin": "1ccac7349056bd68f72d93b2ad717e82ce1ec67b3f8c69fd3f10e60be58c7be2",
+    "tools/boot_merger": "30c5ae87038b77117fa27fb4c39d697e835492386f96f9553f57f343cee9f4dc"
+  },
+  "common_packages": [
+    "rfkill",
+    "bluetooth",
+    "bluez",
+    "bluez-tools",
+    "gpiod",
+    "i2c-tools",
+    "python3-libgpiod",
+    "python3-spidev",
+    "v4l-utils",
+    "pciutils",
+    "nvme-cli",
+    "usbutils",
+    "alsa-utils",
+    "iw",
+    "ethtool"
+  ],
+  "common_kernel_options": {
+    "CONFIG_ARCH_ROCKCHIP": "y",
+    "CONFIG_BLK_DEV_NVME": "y",
+    "CONFIG_BT_HCIUART": "m",
+    "CONFIG_BT_HCIUART_RTL": "y",
+    "CONFIG_CRYPTO_DEV_ROCKCHIP": "m",
+    "CONFIG_DRM_PANFROST": "m",
+    "CONFIG_DRM_PANTHOR": "m",
+    "CONFIG_DRM_ROCKCHIP": "m",
+    "CONFIG_I2C_RK3X": "y",
+    "CONFIG_MMC_DW": "y",
+    "CONFIG_MMC_DW_ROCKCHIP": "y",
+    "CONFIG_MMC_SDHCI_OF_DWCMSHC": "y",
+    "CONFIG_PCIE_ROCKCHIP_DW_HOST": "y",
+    "CONFIG_PHY_ROCKCHIP_USBDP": "y",
+    "CONFIG_PWM_ROCKCHIP": "y",
+    "CONFIG_R8169": "m",
+    "CONFIG_RFKILL": "m",
+    "CONFIG_ROCKCHIP_DW_HDMI_QP": "y",
+    "CONFIG_ROCKCHIP_SARADC": "y",
+    "CONFIG_ROCKCHIP_THERMAL": "y",
+    "CONFIG_ROCKCHIP_VOP2": "y",
+    "CONFIG_RTL8852BS": "m",
+    "CONFIG_RTC_DRV_HYM8563": "m",
+    "CONFIG_SENSORS_PWM_FAN": "m",
+    "CONFIG_SND_SOC_ES8323": "y",
+    "CONFIG_SPI_ROCKCHIP": "y",
+    "CONFIG_STMMAC_ETH": "y",
+    "CONFIG_TYPEC": "y",
+    "CONFIG_USB_CONFIGFS": "m",
+    "CONFIG_USB_CONFIGFS_MASS_STORAGE": "y",
+    "CONFIG_USB_DWC3": "y",
+    "CONFIG_USB_GADGET": "y",
+    "CONFIG_USB_XHCI_HCD": "y",
+    "CONFIG_VIDEO_HANTRO": "m",
+    "CONFIG_VIDEO_ROCKCHIP_RGA": "m",
+    "CONFIG_VIDEO_ROCKCHIP_VDEC": "m"
+  },
+  "boards": {
+    "bananapim5pro": {
+      "family": "rockchip64",
+      "dtb": "rockchip/rk3576-bananapi-m5-pro.dtb",
+      "model": "Banana Pi M5 Pro",
+      "compatible": [
+        "bananapi,m5-pro",
+        "rockchip,rk3576"
+      ],
+      "uboot_tag": "v2017.09",
+      "uboot_version": "2017.09",
+      "uboot_git_source": "https://github.com/radxa/u-boot.git",
+      "uboot_git_ref": "commit:39cd993e5d6296635438e84f4576b3a9bf76f86e",
+      "uboot_revision": "39cd993e5d6296635438e84f4576b3a9bf76f86e",
+      "uboot_payloads": [
+        "idbloader.img@32768",
+        "u-boot.itb@8388608"
+      ],
+      "overlay_prefix": "rk35xx",
+      "overlay_directory": "rockchip/overlay",
+      "sd_node": "/mmc@2a310000",
+      "sd_bus_width": 4,
+      "additional_bus_widths": [
+        "/mmc@2a320000=4",
+        "/mmc@2a330000=8"
+      ],
+      "default_overlays": [],
+      "required_overlays": [],
+      "required_string_properties": [
+        "/ethernet@2a220000:phy-mode=rgmii-id",
+        "/ethernet@2a230000:phy-mode=rgmii-id",
+        "/usb@23000000:dr_mode=otg",
+        "/usb@23400000:dr_mode=host"
+      ],
+      "required_status_nodes": [
+        "/adc@2ae00000",
+        "/ethernet@2a220000",
+        "/ethernet@2a230000",
+        "/gpu@27800000",
+        "/hdmi@27da0000",
+        "/mmc@2a310000",
+        "/mmc@2a320000",
+        "/mmc@2a330000",
+        "/pcie@22000000",
+        "/serial@2ad40000",
+        "/usb@23000000",
+        "/usb@23400000",
+        "/vop@27d00000"
+      ]
+    }
+  }
+}
