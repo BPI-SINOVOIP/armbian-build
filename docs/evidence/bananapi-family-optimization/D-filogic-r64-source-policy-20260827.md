@@ -33,13 +33,17 @@
 
 核心契約補入 MT7622 pinctrl、基礎／Ethernet／HIF clocks、舊世代 MediaTek PCIe、MT7615/MT7622 WMAC 與 MediaTek 藍牙 UART 驅動。原有 SATA AHCI、MT7530 DSA、MMC、SPI NAND、USB、I2C、SPI、PWM、RTC 及標準網路與 I/O 工具一併納入映像守門。
 
-以下三個執行期韌體由固定 Linux firmware 提交收入板級 BSP，並以精確 SHA-256 驗證：
+以下三個 MT7622 執行期韌體由固定 Linux firmware 提交收入板級 BSP，並以精確 SHA-256 驗證：
 
 - `mediatek/mt7622pr2h.bin`：藍牙 UART 韌體。
 - `mediatek/mt7622_n9.bin`：內建無線網路 N9 韌體。
 - `mediatek/mt7622_rom_patch.bin`：內建無線網路 ROM 修補韌體。
 
 MediaTek 授權原文因法律與來源追溯要求保留；中文來源說明記錄官方提交、用途與每個檔案雜湊。
+
+Filogic current 是同時涵蓋多個 SoC 的共享核心。為避免內建 MediaTek Ethernet／2.5G PHY 驅動在 initramfs 產生缺檔警告，板級 BSP 亦收入同一官方提交的 `mt7981_wo.bin`、兩個 MT7986 WED 韌體，以及相鄰受控目錄中的 MT7988 2.5G PHY／WED 韌體。這些檔案只用來滿足共享核心的完整韌體契約，不代表 R64 具有 MT7981、MT7986 或 MT7988 硬體。
+
+來源提交 `8ac78258b` 的第一次完整建置曾揭露六個共享驅動缺檔警告，因此該產物只作預驗證並被拒絕升級；只有補齊後重新完整建置且警告消失的映像，才可進入 L2 守門。
 
 ## 硬體限制
 

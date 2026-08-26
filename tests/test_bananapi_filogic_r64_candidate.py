@@ -65,8 +65,11 @@ class BananaPiFilogicR64CandidateTests(unittest.TestCase):
             "mt7622pr2h.bin": "48c919e6ea243485f5092e63fd5558d03a5b9075e79c14447e3705ca42c14b53",
             "mt7622_n9.bin": "f1b21fced7344006e029b291ed1edacddd41eaf2571c7a31e2207903ddd111a3",
             "mt7622_rom_patch.bin": "b7ad5bab333b2dffe31dcb4cc911a15060ee16f661de38139e66f0804a74ba26",
+            "mt7981_wo.bin": "2d69d4cb56d4808727e8ab1bf9a9abfc61657f9803c284bf39017f1872af9dd1",
+            "mt7986_wo_0.bin": "4c268aed7c9ebd7fdd9afc6d2f93e64e108e335626b7b025d7ab7c80704684d8",
+            "mt7986_wo_1.bin": "b60e9930e507b9e8228ba229c3ba6d1e4736d34720c744aeb2f85a9c8e5d3f29",
             "LICENCE.mediatek": "a90d3f66704d85889945fec5525ea77622549da83aced1aac99828383f8f1805",
-            "SOURCE.md": "96887e12198b03b03957abdad8e8ed8df6a88b72bd049d60c66b5283798c19bc",
+            "SOURCE.md": "0afb5cf8f30c79d1dd8cb074276b17d0679b41b3d6ee9ff1a0dcd9251d035568",
         }
         for filename, digest in expected.items():
             with self.subTest(filename=filename):
@@ -76,6 +79,23 @@ class BananaPiFilogicR64CandidateTests(unittest.TestCase):
             self.config["linux_firmware_commit"],
             "01205307636157a12c29e6a774bf83b218732050",
         )
+
+    def test_shared_filogic_firmware_contract_is_complete(self) -> None:
+        blobs = self.config["installed_firmware_blobs"]
+        shared_paths = [
+            "/lib/firmware/mediatek/mt7981_wo.bin",
+            "/lib/firmware/mediatek/mt7986_wo_0.bin",
+            "/lib/firmware/mediatek/mt7986_wo_1.bin",
+            "/lib/firmware/mediatek/mt7988/i2p5ge-phy-pmb.bin",
+            "/lib/firmware/mediatek/mt7988/mt7988_wo_0.bin",
+            "/lib/firmware/mediatek/mt7988/mt7988_wo_1.bin",
+        ]
+        board_text = BOARD.read_text()
+        for path in shared_paths:
+            with self.subTest(path=path):
+                self.assertIn(path, blobs)
+                self.assertIn(Path(path).name, board_text)
+        self.assertIn("mt7988-firmware-SOURCE.md", board_text)
 
     def test_kernel_enables_mt7622_network_storage_and_io(self) -> None:
         text = KERNEL_CONFIG.read_text()

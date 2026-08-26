@@ -15,8 +15,15 @@
     "/lib/firmware/mediatek/mt7622_n9.bin": "f1b21fced7344006e029b291ed1edacddd41eaf2571c7a31e2207903ddd111a3",
     "/lib/firmware/mediatek/mt7622_rom_patch.bin": "b7ad5bab333b2dffe31dcb4cc911a15060ee16f661de38139e66f0804a74ba26",
     "/lib/firmware/mediatek/mt7622pr2h.bin": "48c919e6ea243485f5092e63fd5558d03a5b9075e79c14447e3705ca42c14b53",
+    "/lib/firmware/mediatek/mt7981_wo.bin": "2d69d4cb56d4808727e8ab1bf9a9abfc61657f9803c284bf39017f1872af9dd1",
+    "/lib/firmware/mediatek/mt7986_wo_0.bin": "4c268aed7c9ebd7fdd9afc6d2f93e64e108e335626b7b025d7ab7c80704684d8",
+    "/lib/firmware/mediatek/mt7986_wo_1.bin": "b60e9930e507b9e8228ba229c3ba6d1e4736d34720c744aeb2f85a9c8e5d3f29",
+    "/lib/firmware/mediatek/mt7988/i2p5ge-phy-pmb.bin": "643157e984732eccad6aa5e1f80a2be82a6cbf747aac25b54c75eefeccaf8aec",
+    "/lib/firmware/mediatek/mt7988/mt7988_wo_0.bin": "a00b95235a9baa850fe5e9c08562b54279bb5528abad207de6f2e649a8009b15",
+    "/lib/firmware/mediatek/mt7988/mt7988_wo_1.bin": "6d9123b4e8400f93fc40cfe1adcfe67c5a2e9d7c07c168ca05f0eba739e8d39f",
     "/usr/share/doc/armbian-bsp-bananapir64/linux-firmware.LICENCE.mediatek": "a90d3f66704d85889945fec5525ea77622549da83aced1aac99828383f8f1805",
-    "/usr/share/doc/armbian-bsp-bananapir64/mt7622-firmware-SOURCE.md": "96887e12198b03b03957abdad8e8ed8df6a88b72bd049d60c66b5283798c19bc"
+    "/usr/share/doc/armbian-bsp-bananapir64/mt7622-firmware-SOURCE.md": "0afb5cf8f30c79d1dd8cb074276b17d0679b41b3d6ee9ff1a0dcd9251d035568",
+    "/usr/share/doc/armbian-bsp-bananapir64/mt7988-firmware-SOURCE.md": "a42e86e57a4671ea5f9c28a7bf18c62218db52eef83f28de2ce4fe204140ace3"
   },
   "common_packages": [
     "bridge-utils",

@@ -65,12 +65,20 @@ function post_config_uboot_target__bananapir64_standard_boot() {
 function post_family_tweaks_bsp__bananapir64_network_firmware() {
 	local firmware_file
 	local firmware_source="${SRC}/packages/blobs/filogic/firmware/mediatek/mt7622"
+	local mt7988_source="${SRC}/packages/blobs/filogic/firmware/mediatek/mt7988"
 	display_alert "MT7622 網路與藍牙韌體來源" \
 	  "${LINUX_FIRMWARE_GIT_SOURCE_BOARD} ${LINUX_FIRMWARE_GIT_REF_BOARD}" "info"
-	for firmware_file in mt7622pr2h.bin mt7622_n9.bin mt7622_rom_patch.bin; do
+	for firmware_file in \
+		mt7622pr2h.bin mt7622_n9.bin mt7622_rom_patch.bin \
+		mt7981_wo.bin mt7986_wo_0.bin mt7986_wo_1.bin; do
 		run_host_command_logged install -Dm0644 \
 		  "${firmware_source}/${firmware_file}" \
 		  "${destination}/lib/firmware/mediatek/${firmware_file}"
+	done
+	for firmware_file in i2p5ge-phy-pmb.bin mt7988_wo_0.bin mt7988_wo_1.bin; do
+		run_host_command_logged install -Dm0644 \
+		  "${mt7988_source}/${firmware_file}" \
+		  "${destination}/lib/firmware/mediatek/mt7988/${firmware_file}"
 	done
 	run_host_command_logged install -Dm0644 \
 	  "${firmware_source}/LICENCE.mediatek" \
@@ -78,4 +86,7 @@ function post_family_tweaks_bsp__bananapir64_network_firmware() {
 	run_host_command_logged install -Dm0644 \
 	  "${firmware_source}/SOURCE.md" \
 	  "${destination}/usr/share/doc/armbian-bsp-${BOARD}/mt7622-firmware-SOURCE.md"
+	run_host_command_logged install -Dm0644 \
+	  "${mt7988_source}/SOURCE.md" \
+	  "${destination}/usr/share/doc/armbian-bsp-${BOARD}/mt7988-firmware-SOURCE.md"
 }
