@@ -81,6 +81,12 @@ class BananaPiSpacemitCandidateToolTests(unittest.TestCase):
         self.assertNotIn("payload_size > 32768", text)
         self.assertIn("checked_minimum=1", text)
 
+    def test_partition_start_check_uses_portable_sysfs_interface(self) -> None:
+        text = GENERIC_VERIFY.read_text()
+        self.assertIn("read_partition_start_sector", text)
+        self.assertIn('/sys/class/block/${block_name}/start', text)
+        self.assertNotIn("lsblk -nrno START", text)
+
     def test_wrappers_preserve_source_evidence(self) -> None:
         build_text = BUILD_SCRIPT.read_text()
         verify_text = VERIFY_SCRIPT.read_text()

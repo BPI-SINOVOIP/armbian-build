@@ -25,6 +25,14 @@ fail() {
 	exit 1
 }
 
+read_partition_start_sector() {
+	local partition=$1 block_name start_path
+	block_name="$(basename -- "${partition}")"
+	start_path="/sys/class/block/${block_name}/start"
+	[[ -r "${start_path}" ]] || fail "無法讀取 ${partition} 的分割區起點"
+	tr -d '[:space:]' <"${start_path}"
+}
+
 validate_default_userpatches() {
 	local path relative template
 	[[ -d "${repo_dir}/userpatches" ]] || return 0
@@ -258,7 +266,7 @@ validate_mounted_image() (
 	[[ -n "${partition}" ]] || fail "${board} 沒有可掛載分割區"
 	expected_start_sector="$(board_field_optional "${board}" partition_start_sector)"
 	if [[ -n "${expected_start_sector}" ]]; then
-		actual_start_sector="$(lsblk -nrno START "${partition}" | tr -d ' ')"
+		actual_start_sector="$(read_partition_start_sector "${partition}")"
 		[[ "${actual_start_sector}" == "${expected_start_sector}" ]] ||
 			fail "${board} 的第一分割區起點不是 ${expected_start_sector} sector"
 	fi
