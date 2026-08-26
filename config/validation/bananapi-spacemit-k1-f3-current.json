@@ -1,0 +1,128 @@
+{
+  "schema_version": 1,
+  "kernel_family": "spacemit",
+  "source_commits": {
+    "linux": {
+      "source": "https://github.com/jmontleon/linux-bianbu.git",
+      "ref": "commit:3e8e7fd730721aee3926a365cef6635221705b61",
+      "revision": "3e8e7fd730721aee3926a365cef6635221705b61"
+    },
+    "opensbi": {
+      "source": "https://github.com/pyavitz/spacemit-opensbi.git",
+      "ref": "commit:05479f5228f3fab2a4221fe0745f3703171ace58",
+      "revision": "05479f5228f3fab2a4221fe0745f3703171ace58"
+    },
+    "uboot": {
+      "source": "https://github.com/pyavitz/spacemit-u-boot.git",
+      "ref": "commit:d61c8c77e241314438dce31d9ff1b1cbd9d53688",
+      "revision": "d61c8c77e241314438dce31d9ff1b1cbd9d53688"
+    }
+  },
+  "firmware_blobs": {
+    "packages/blobs/riscv64/spacemit/esos.elf": "3b3ef5ba9b404c6500bfc0f7f1efc0cb7fdde818450b7beddac1c00f29898537"
+  },
+  "common_packages": [
+    "rfkill",
+    "bluetooth",
+    "bluez",
+    "bluez-tools",
+    "gpiod",
+    "i2c-tools",
+    "python3-libgpiod",
+    "python3-spidev",
+    "v4l-utils",
+    "pciutils",
+    "nvme-cli",
+    "usbutils",
+    "alsa-utils",
+    "iw",
+    "ethtool"
+  ],
+  "common_kernel_options": {
+    "CONFIG_BLK_DEV_NVME": "y",
+    "CONFIG_BT": "y",
+    "CONFIG_BT_HCIUART": "m",
+    "CONFIG_BT_HCIUART_RTL": "y",
+    "CONFIG_DRM_SPACEMIT": "y",
+    "CONFIG_GPIO_K1X": "y",
+    "CONFIG_I2C_SPACEMIT_K1X": "y",
+    "CONFIG_K1X_EMAC": "y",
+    "CONFIG_K1X_THERMAL": "y",
+    "CONFIG_MMC_SDHCI_OF_K1X": "y",
+    "CONFIG_PCIEPORTBUS": "y",
+    "CONFIG_RFKILL": "y",
+    "CONFIG_RTL8852BS": "m",
+    "CONFIG_SENSORS_PWM_FAN": "y",
+    "CONFIG_SND_SOC_SPACEMIT": "y",
+    "CONFIG_SOC_SPACEMIT_K1X": "y",
+    "CONFIG_SPACEMIT_HDMI": "y",
+    "CONFIG_SPACEMIT_REE_ENGINE": "y",
+    "CONFIG_SPACEMIT_WATCHDOG": "y",
+    "CONFIG_SPI_K1X": "y",
+    "CONFIG_SPI_K1X_QSPI": "y",
+    "CONFIG_SPI_SPIDEV": "y",
+    "CONFIG_USB_CONFIGFS": "y",
+    "CONFIG_USB_CONFIGFS_MASS_STORAGE": "y",
+    "CONFIG_USB_DWC3": "y",
+    "CONFIG_USB_GADGET": "y",
+    "CONFIG_USB_K1XCI_OTG": "y",
+    "CONFIG_USB_XHCI_HCD": "y",
+    "CONFIG_VIDEO_LINLON_K1X": "m"
+  },
+  "boards": {
+    "bananapif3": {
+      "family": "spacemit",
+      "dtb": "spacemit/k1-bananapi-f3.dtb",
+      "model": "BananaPi BPI-F3",
+      "compatible": [
+        "spacemit,k1-x"
+      ],
+      "uboot_tag": "k1-bl-v2.2.9-release",
+      "uboot_version": "2022.10",
+      "uboot_git_source": "https://github.com/pyavitz/spacemit-u-boot.git",
+      "uboot_git_ref": "commit:d61c8c77e241314438dce31d9ff1b1cbd9d53688",
+      "uboot_revision": "d61c8c77e241314438dce31d9ff1b1cbd9d53688",
+      "uboot_payloads": [
+        "bootinfo_emmc.bin@0",
+        "FSBL.bin@512",
+        "fw_dynamic.itb@655360",
+        "u-boot.itb@1048576"
+      ],
+      "overlay_prefix": "k1",
+      "overlay_directory": "spacemit/overlay",
+      "sd_node": "/soc/sdh@d4280000",
+      "sd_bus_width": 4,
+      "additional_bus_widths": [
+        "/soc/sdh@d4280800=4",
+        "/soc/sdh@d4281000=8"
+      ],
+      "default_overlays": [],
+      "required_overlays": [
+        "i2c3",
+        "i2c4",
+        "spi3-cs0-spidev",
+        "uart5"
+      ],
+      "required_status_nodes": [
+        "/soc/ehci1@c0980100",
+        "/soc/ethernet@cac80000",
+        "/soc/ethernet@cac81000",
+        "/soc/hdmi@C0400500",
+        "/soc/i2c@d4010800",
+        "/soc/i2c@d4012000",
+        "/soc/imggpu@cac00000",
+        "/soc/pcie@ca400000",
+        "/soc/pcie@ca800000",
+        "/soc/port@c0440000",
+        "/soc/pwm@d4021800",
+        "/soc/sdh@d4280000",
+        "/soc/sdh@d4280800",
+        "/soc/sdh@d4281000",
+        "/soc/serial@d4017000",
+        "/soc/spi@d420c000",
+        "/soc/thermal@d4018000",
+        "/soc/uart@d4017100"
+      ]
+    }
+  }
+}
