@@ -118,6 +118,7 @@
         "CONFIG_SPI_FLASH_USE_4K_SECTORS=y"
       ],
       "uboot_target_make_contains": [],
+      "uboot_binary_for_string_checks": "u-boot.itb",
       "uboot_required_binary_strings": [
         "/extlinux/extlinux.conf",
         "/boot/extlinux/extlinux.conf",

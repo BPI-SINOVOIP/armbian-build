@@ -266,6 +266,7 @@ validate_installed_uboot() {
 	local metadata_file md5sums_file payload_size payload_sha256 minimum_spec
 	local rkbin_source rkbin_ref rkbin_revision partition_table partition_start_sector sector_size payload_end first_partition_byte
 	local uboot_target_index uboot_config_file uboot_target_metadata uboot_defconfig option_line target_fragment forbidden_fragment required_fragment
+	local uboot_binary_name uboot_binary
 	uboot_tag="$(board_field "${board}" uboot_tag)"
 	uboot_version="$(board_field_optional "${board}" uboot_version)"
 	[[ -n "${uboot_version}" ]] || uboot_version="${uboot_tag#v}"
@@ -354,17 +355,22 @@ validate_installed_uboot() {
 				fail "${board} 的 U-Boot target 缺少：${target_fragment}"
 		done < <(board_values "${board}" uboot_target_make_contains)
 	fi
+	uboot_binary_name="$(board_field_optional "${board}" uboot_binary_for_string_checks)"
+	[[ -n "${uboot_binary_name}" ]] || uboot_binary_name="u-boot.bin"
+	[[ "${uboot_binary_name}" =~ ^[A-Za-z0-9._+-]+$ ]] ||
+		fail "${board} 的 U-Boot 字串檢查載荷名稱無效"
+	uboot_binary="${uboot_dir}/${uboot_binary_name}"
 	while IFS= read -r forbidden_fragment; do
 		[[ -n "${forbidden_fragment}" ]] || continue
-		[[ -s "${uboot_dir}/u-boot.bin" ]] || fail "${board} 缺少可檢查的 U-Boot 二進位"
-		if grep -aFq -- "${forbidden_fragment}" "${uboot_dir}/u-boot.bin"; then
+		[[ -s "${uboot_binary}" ]] || fail "${board} 缺少可檢查的 U-Boot 載荷：${uboot_binary_name}"
+		if grep -aFq -- "${forbidden_fragment}" "${uboot_binary}"; then
 			fail "${board} 的 U-Boot 仍含禁止的供應商開機路徑：${forbidden_fragment}"
 		fi
 	done < <(board_values "${board}" uboot_forbidden_binary_strings)
 	while IFS= read -r required_fragment; do
 		[[ -n "${required_fragment}" ]] || continue
-		[[ -s "${uboot_dir}/u-boot.bin" ]] || fail "${board} 缺少可檢查的 U-Boot 二進位"
-		grep -aFq -- "${required_fragment}" "${uboot_dir}/u-boot.bin" ||
+		[[ -s "${uboot_binary}" ]] || fail "${board} 缺少可檢查的 U-Boot 載荷：${uboot_binary_name}"
+		grep -aFq -- "${required_fragment}" "${uboot_binary}" ||
 			fail "${board} 的 U-Boot 缺少必要開機路徑：${required_fragment}"
 	done < <(board_values "${board}" uboot_required_binary_strings)
 	uboot_defconfig="$(board_field_optional "${board}" uboot_defconfig)"

@@ -86,6 +86,9 @@ class BananaPiSpacemitCm6CandidateTests(unittest.TestCase):
         self.assertEqual(self.policy["partition_table"], "msdos")
         self.assertEqual(self.policy["partition_start_sector"], 8192)
         self.assertEqual(self.policy["boot_configuration"], "extlinux")
+        self.assertEqual(
+            self.policy["uboot_binary_for_string_checks"], "u-boot.itb"
+        )
         self.assertIn(
             "product_name=k1-x_deb1",
             self.policy["uboot_required_binary_strings"],
@@ -113,6 +116,9 @@ class BananaPiSpacemitCm6CandidateTests(unittest.TestCase):
         self.assertIn("verify-bananapi-spacemit-candidates.sh", verifier)
         self.assertIn("bananapi-spacemit-k1-cm6-legacy.json", verifier)
         self.assertIn("uboot_required_binary_strings", GENERIC_VERIFY.read_text())
+        generic_verify = GENERIC_VERIFY.read_text()
+        self.assertIn("uboot_binary_for_string_checks", generic_verify)
+        self.assertIn("^[A-Za-z0-9._+-]+$", generic_verify)
 
 
 if __name__ == "__main__":
