@@ -102,8 +102,7 @@
         "CONFIG_FS_EXT4=y",
         "CONFIG_MMC_MTK=y",
         "CONFIG_TARGET_MT7986=y",
-        "# CONFIG_AUTOBOOT_KEYED is not set",
-        "# CONFIG_AUTOBOOT_MENU_SHOW is not set"
+        "# CONFIG_AUTOBOOT_KEYED is not set"
       ],
       "uboot_target_make_contains": [
         "mt7986a_bpir3_sd_defconfig"
