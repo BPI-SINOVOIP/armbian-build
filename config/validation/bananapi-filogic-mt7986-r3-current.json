@@ -104,9 +104,7 @@
         "CONFIG_TARGET_MT7986=y",
         "# CONFIG_AUTOBOOT_KEYED is not set"
       ],
-      "uboot_target_make_contains": [
-        "mt7986a_bpir3_sd_defconfig"
-      ],
+      "uboot_target_make_contains": [],
       "uboot_payloads": [
         "bl2.img@17408",
         "u-boot.fip@6815744"
