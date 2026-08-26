@@ -84,6 +84,14 @@
       "level": "L2",
       "basis": "Trixie current CLI 已由乾淨來源完整建置並通過映像、U-Boot、FIP、eMMC 與功能設定唯讀守門；仍待實機驗證"
     },
+    "bananapi": {
+      "level": "L2",
+      "basis": "Trixie current CLI 已由乾淨來源完整建置並通過映像、U-Boot、A20 DTB、核心功能與標準 I/O 工具唯讀守門；仍待實機驗證"
+    },
+    "bananapipro": {
+      "level": "L2",
+      "basis": "Trixie current CLI 已由乾淨來源完整建置並通過映像、U-Boot、A20 DTB、核心功能與標準 I/O 工具唯讀守門；仍待實機驗證"
+    },
     "bananapim4zero": {
       "level": "L3",
       "basis": "已有多板啟動與 DDR 證據；功能與長時間冷啟動門檻仍未關閉"

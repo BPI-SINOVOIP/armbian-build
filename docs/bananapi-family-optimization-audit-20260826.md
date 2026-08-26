@@ -8,14 +8,14 @@
 
 - 板卡總數：48。
 - 正式 `.conf`：12；社群 `.csc`：13；開發中 `.wip`：22；停止支援 `.eos`：1。
-- 證據分布：L0 42；L1 0；L2 4；L3 1；L4 1；L5 0。
+- 證據分布：L0 40；L1 0；L2 6；L3 1；L4 1；L5 0。
 - 未取得實機的板卡最高只能標示 L2；目前 L3／L4 只沿用已納入 Git 的 M4 Zero／M4 Berry 證據。
 
 ## 板卡矩陣
 
 | 板卡 | 層級 | 名稱 | 家族 | 架構 | 核心目標 | 顯示 | 批次 | 證據 | 下一門檻 |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| `bananapi` | 正式 | Banana Pi | `sun7i` | `armhf` | `current,edge,legacy` | 是 | B | L0 已盤點 | 建立 Trixie CLI 並完成離線守門 |
+| `bananapi` | 正式 | Banana Pi | `sun7i` | `armhf` | `current,edge,legacy` | 是 | B | L2 軟體候選 | 執行 UART、啟動與基本周邊實機驗證 |
 | `bananapi6204` | 開發中 | Banana Pi BPI-6204 | `sun8i` | `armhf` | `legacy` | 是 | C | L0 已盤點 | 確認建置鏈並建立 Trixie CLI 候選 |
 | `bananapiaim7` | 開發中 | Banana Pi AIM7 | `rockchip-rk3588` | `arm64` | `vendor` | 是 | E | L0 已盤點 | 確認建置鏈並建立 Trixie CLI 候選 |
 | `bananapicm2` | 開發中 | Banana Pi CM2 | `rockchip64` | `arm64` | `current,edge` | 是 | E | L0 已盤點 | 確認建置鏈並建立 Trixie CLI 候選 |
@@ -49,7 +49,7 @@
 | `bananapim7` | 正式 | Banana Pi M7 | `rockchip-rk3588` | `arm64` | `current,edge,vendor` | 是 | B | L0 已盤點 | 建立 Trixie CLI 並完成離線守門 |
 | `bananapip2pro` | 開發中 | Banana Pi P2 Pro | `rockchip64` | `arm64` | `current` | 否 | E | L0 已盤點 | 確認建置鏈並建立 Trixie CLI 候選 |
 | `bananapip2zero` | 社群 | Banana Pi P2 Zero | `sun8i` | `armhf` | `current,edge,legacy` | 是 | C | L0 已盤點 | 建立 Trixie CLI 並完成離線守門 |
-| `bananapipro` | 社群 | Banana Pi Pro | `sun7i` | `armhf` | `current,edge,legacy` | 是 | C | L0 已盤點 | 建立 Trixie CLI 並完成離線守門 |
+| `bananapipro` | 社群 | Banana Pi Pro | `sun7i` | `armhf` | `current,edge,legacy` | 是 | C | L2 軟體候選 | 執行 UART、啟動與基本周邊實機驗證 |
 | `bananapir1` | 停止支援 | Banana Pi R1 | `sun7i` | `armhf` | `current,edge` | 是 | G | L0 已盤點 | 保留最後可用基線，不列入新發布 |
 | `bananapir2` | 社群 | Banana Pi R2 | `mt7623` | `armhf` | `current` | 是 | D | L0 已盤點 | 建立 Trixie CLI 並完成離線守門 |
 | `bananapir2pro` | 社群 | Banana Pi R2 Pro | `rockchip64` | `arm64` | `current,edge` | 是 | D | L0 已盤點 | 建立 Trixie CLI 並完成離線守門 |

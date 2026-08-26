@@ -1,5 +1,5 @@
 board_id	status	board_name	family	architecture	kernel_targets	preferred_target	video_output	batch	evidence_level	bootconfig	boot_fdt_file	field_gaps	next_gate
-bananapi	conf	Banana Pi	sun7i	armhf	current,edge,legacy	current	yes	B	L0	Bananapi_defconfig			建立 Trixie CLI 並完成離線守門
+bananapi	conf	Banana Pi	sun7i	armhf	current,edge,legacy	current	yes	B	L2	Bananapi_defconfig			執行 UART、啟動與基本周邊實機驗證
 bananapi6204	wip	Banana Pi BPI-6204	sun8i	armhf	legacy	legacy	yes	C	L0	Bananapi_M2_Ultra_defconfig	allwinner/sun8i-r40-bpi-6204.dtb		確認建置鏈並建立 Trixie CLI 候選
 bananapiaim7	wip	Banana Pi AIM7	rockchip-rk3588	arm64	vendor	vendor	yes	E	L0	armsom-aim7-io-rk3588_defconfig	rockchip/rk3588-armsom-aim7-io.dtb	KERNEL_TEST_TARGET	確認建置鏈並建立 Trixie CLI 候選
 bananapicm2	wip	Banana Pi CM2	rockchip64	arm64	current,edge	current	yes	E	L0	bpi-r2-pro-rk3568_defconfig	rockchip/rk3568-bpi-r2-pro.dtb		確認建置鏈並建立 Trixie CLI 候選
@@ -33,7 +33,7 @@ bananapim64	csc	Banana Pi M64	sun50iw1	arm64	current,edge,legacy	current	yes	C	L
 bananapim7	conf	Banana Pi M7	rockchip-rk3588	arm64	current,edge,vendor	current	yes	B	L0	armsom-sige7-rk3588_defconfig	rockchip/rk3588-bananapi-m7.dtb		建立 Trixie CLI 並完成離線守門
 bananapip2pro	wip	Banana Pi P2 Pro	rockchip64	arm64	current	current	no	E	L0	bpi-p2-pro-rk3308_defconfig	rockchip/rk3308-bpi-p2-pro.dtb	KERNEL_TEST_TARGET	確認建置鏈並建立 Trixie CLI 候選
 bananapip2zero	csc	Banana Pi P2 Zero	sun8i	armhf	current,edge,legacy	current	yes	C	L0	bananapi_p2_zero_defconfig	allwinner/sun8i-h2-plus-bananapi-p2-zero.dtb	BOARD_MAINTAINER	建立 Trixie CLI 並完成離線守門
-bananapipro	csc	Banana Pi Pro	sun7i	armhf	current,edge,legacy	current	yes	C	L0	Bananapro_defconfig		BOARD_MAINTAINER	建立 Trixie CLI 並完成離線守門
+bananapipro	csc	Banana Pi Pro	sun7i	armhf	current,edge,legacy	current	yes	C	L2	Bananapro_defconfig		BOARD_MAINTAINER	執行 UART、啟動與基本周邊實機驗證
 bananapir1	eos	Banana Pi R1	sun7i	armhf	current,edge	current	yes	G	L0	Lamobo_R1_defconfig		BOARD_MAINTAINER,KERNEL_TEST_TARGET	保留最後可用基線，不列入新發布
 bananapir2	csc	Banana Pi R2	mt7623	armhf	current	current	yes	D	L0	mt7623n_bpir2_defconfig	mediatek/mt7623n-bananapi-bpi-r2	BOARD_MAINTAINER	建立 Trixie CLI 並完成離線守門
 bananapir2pro	csc	Banana Pi R2 Pro	rockchip64	arm64	current,edge	current	yes	D	L0	bpi-r2-pro-rk3568_defconfig	rockchip/rk3568-bpi-r2-pro.dtb	BOARD_MAINTAINER	建立 Trixie CLI 並完成離線守門
