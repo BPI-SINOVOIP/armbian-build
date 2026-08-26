@@ -17,6 +17,7 @@ H3_CONFIG = ROOT / "config/validation/bananapi-sunxi-h3-current.json"
 H2PLUS_CONFIG = ROOT / "config/validation/bananapi-sunxi-h2plus-current.json"
 M1PLUS_CONFIG = ROOT / "config/validation/bananapi-sunxi-a20-m1plus-current.json"
 R40_CONFIG = ROOT / "config/validation/bananapi-sunxi-r40-current.json"
+A31S_CONFIG = ROOT / "config/validation/bananapi-sunxi-a31s-current.json"
 BUILD_SCRIPT = ROOT / "tools/build-bananapi-sunxi-candidates.sh"
 VERIFY_SCRIPT = ROOT / "tools/verify-bananapi-sunxi-candidates.sh"
 ISOLATED_RUNNER = ROOT / "tools/run-bananapi-candidates-isolated-cache.sh"
@@ -244,6 +245,53 @@ class BananaPiSunxiCandidateToolTests(unittest.TestCase):
                 with self.subTest(version=version, overlay=overlay):
                     self.assertTrue((overlay_dir / f"{filename}.dtso").is_file())
                     self.assertIn(f"{filename}.dtbo", makefile)
+
+    def test_a31s_policy_limits_claims_to_mainline_dtb(self) -> None:
+        config = json.loads(A31S_CONFIG.read_text())
+        self.assertEqual(config["candidate_branch"], "current")
+        self.assertEqual(config["kernel_family"], "sunxi")
+        self.assertEqual(set(config["boards"]), {"bananapim2"})
+        self.assertEqual(
+            config["firmware_commit"],
+            "f50a2a21bcdb77a562b3976930c5c6b521a1df08",
+        )
+        self.assertEqual(
+            set(config["installed_firmware_blobs"]),
+            {
+                "/lib/firmware/brcm/brcmfmac43362-sdio.bin",
+                "/lib/firmware/brcm/brcmfmac43362-sdio.txt",
+            },
+        )
+        policy = config["boards"]["bananapim2"]
+        self.assertEqual(policy["family"], "sun6i")
+        self.assertEqual(
+            policy["dtb"],
+            "allwinner/sun6i-a31s-sinovoip-bpi-m2.dtb",
+        )
+        self.assertEqual(policy["overlay_prefix"], "sun6i-a31s")
+        self.assertEqual(policy["required_overlays"], [])
+        self.assertIn("/soc/mmc@1c11000=4", policy["additional_bus_widths"])
+        self.assertNotIn("CONFIG_USB_GADGET", config["common_kernel_options"])
+        self.assertNotIn("CONFIG_DRM_LIMA", config["common_kernel_options"])
+
+        board_text = (ROOT / "config/boards/bananapim2.csc").read_text()
+        package_line = next(
+            line for line in board_text.splitlines()
+            if line.startswith('PACKAGE_LIST_BOARD="')
+        )
+        self.assertTrue(
+            set(config["common_packages"])
+            <= set(package_line.split('"', 2)[1].split())
+        )
+        self.assertIn(
+            'KERNELBRANCH_BOARD="commit:1f99e9ab748fc5c32120de9c4eca31abfe54a4d5"',
+            board_text,
+        )
+        self.assertIn(
+            'BOOTBRANCH_BOARD="commit:866ca972d6c3cabeaf6dbac431e8e08bb30b3c8e"',
+            board_text,
+        )
+        self.assertNotIn("CONFIG_DRAM_CLK", board_text)
 
     def test_build_tool_records_reproducibility_evidence(self) -> None:
         text = BUILD_SCRIPT.read_text()

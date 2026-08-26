@@ -1,0 +1,100 @@
+{
+  "schema_version": 1,
+  "candidate_branch": "current",
+  "kernel_family": "sunxi",
+  "linux_source": "https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git",
+  "linux_commit": "1f99e9ab748fc5c32120de9c4eca31abfe54a4d5",
+  "firmware_source": "https://github.com/armbian/firmware",
+  "firmware_commit": "f50a2a21bcdb77a562b3976930c5c6b521a1df08",
+  "installed_firmware_blobs": {
+    "/lib/firmware/brcm/brcmfmac43362-sdio.bin": "5783fd90528cc7ae421b6a6056b1572a3840eac4559b26d299d1acae17523e42",
+    "/lib/firmware/brcm/brcmfmac43362-sdio.txt": "353bc911682d404f2912fc0d3efd3fad6da643c56edda23464e4567c87918b46"
+  },
+  "common_packages": [
+    "rfkill",
+    "iw",
+    "ethtool",
+    "usbutils",
+    "gpiod",
+    "i2c-tools",
+    "python3-libgpiod",
+    "python3-spidev",
+    "v4l-utils"
+  ],
+  "common_kernel_options": {
+    "CONFIG_ARCH_SUNXI": "y",
+    "CONFIG_BRCMFMAC": "m",
+    "CONFIG_BRCMFMAC_PROTO_BCDC": "y",
+    "CONFIG_BRCMFMAC_SDIO": "y",
+    "CONFIG_CFG80211": "m",
+    "CONFIG_CRYPTO_DEV_SUN4I_SS": "y",
+    "CONFIG_DWMAC_SUNXI": "y",
+    "CONFIG_GPIO_CDEV": "y",
+    "CONFIG_I2C_CHARDEV": "y",
+    "CONFIG_I2C_MV64XXX": "y",
+    "CONFIG_IR_SUNXI": "m",
+    "CONFIG_MFD_AXP20X_RSB": "y",
+    "CONFIG_MMC_SUNXI": "y",
+    "CONFIG_PHY_SUN4I_USB": "y",
+    "CONFIG_RC_CORE": "y",
+    "CONFIG_REGULATOR_AXP20X": "y",
+    "CONFIG_RFKILL": "m",
+    "CONFIG_SERIAL_8250_DW": "y",
+    "CONFIG_SPI_SPIDEV": "m",
+    "CONFIG_SPI_SUN6I": "y",
+    "CONFIG_STMMAC_ETH": "y",
+    "CONFIG_STMMAC_PLATFORM": "y",
+    "CONFIG_USB_EHCI_HCD_PLATFORM": "y",
+    "CONFIG_USB_OHCI_HCD_PLATFORM": "y"
+  },
+  "boards": {
+    "bananapim2": {
+      "family": "sun6i",
+      "dtb": "allwinner/sun6i-a31s-sinovoip-bpi-m2.dtb",
+      "model": "Sinovoip BPI-M2",
+      "compatible": [
+        "sinovoip,bpi-m2",
+        "allwinner,sun6i-a31s"
+      ],
+      "uboot_tag": "v2024.01",
+      "uboot_version": "2024.01",
+      "uboot_git_source": "https://github.com/u-boot/u-boot",
+      "uboot_git_ref": "commit:866ca972d6c3cabeaf6dbac431e8e08bb30b3c8e",
+      "uboot_revision": "866ca972d6c3cabeaf6dbac431e8e08bb30b3c8e",
+      "uboot_payload": "u-boot-sunxi-with-spl.bin",
+      "uboot_offset": 8192,
+      "uboot_payload_minimum_sizes": [
+        "u-boot-sunxi-with-spl.bin=500000"
+      ],
+      "overlay_prefix": "sun6i-a31s",
+      "overlay_directory": "overlay",
+      "sd_node": "/soc/mmc@1c0f000",
+      "sd_bus_width": 4,
+      "additional_bus_widths": [
+        "/soc/mmc@1c11000=4"
+      ],
+      "default_overlays": [],
+      "required_overlays": [],
+      "required_boolean_properties": [
+        "/soc/mmc@1c11000:non-removable"
+      ],
+      "required_string_properties": [
+        "/soc/ethernet@1c30000:phy-mode=rgmii",
+        "/soc/mmc@1c11000/wifi@1:compatible=brcm,bcm4329-fmac",
+        "/pwrseq:compatible=mmc-pwrseq-simple",
+        "/soc/i2c@1f03400/pmic@68:compatible=x-powers,axp221"
+      ],
+      "required_status_nodes": [
+        "/soc/mmc@1c0f000",
+        "/soc/mmc@1c11000",
+        "/soc/phy@1c19400",
+        "/soc/usb@1c1a000",
+        "/soc/usb@1c1a400",
+        "/soc/serial@1c28000",
+        "/soc/ethernet@1c30000",
+        "/soc/ir@1f02000",
+        "/soc/i2c@1f03400"
+      ]
+    }
+  }
+}
