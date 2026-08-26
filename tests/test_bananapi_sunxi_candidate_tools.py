@@ -15,6 +15,7 @@ ROOT = Path(__file__).resolve().parents[1]
 CONFIG = ROOT / "config/validation/bananapi-sunxi-a20-current.json"
 H3_CONFIG = ROOT / "config/validation/bananapi-sunxi-h3-current.json"
 H2PLUS_CONFIG = ROOT / "config/validation/bananapi-sunxi-h2plus-current.json"
+M1PLUS_CONFIG = ROOT / "config/validation/bananapi-sunxi-a20-m1plus-current.json"
 BUILD_SCRIPT = ROOT / "tools/build-bananapi-sunxi-candidates.sh"
 VERIFY_SCRIPT = ROOT / "tools/verify-bananapi-sunxi-candidates.sh"
 ISOLATED_RUNNER = ROOT / "tools/run-bananapi-candidates-isolated-cache.sh"
@@ -101,6 +102,60 @@ class BananaPiSunxiCandidateToolTests(unittest.TestCase):
             "/soc/mmc@1c11000=8",
             config["boards"]["bananapip2zero"]["additional_bus_widths"],
         )
+
+    def test_m1plus_policy_pins_sources_wireless_and_header_io(self) -> None:
+        config = json.loads(M1PLUS_CONFIG.read_text())
+        self.assertEqual(config["candidate_branch"], "current")
+        self.assertEqual(config["kernel_family"], "sunxi")
+        self.assertEqual(
+            config["linux_commit"],
+            "1f99e9ab748fc5c32120de9c4eca31abfe54a4d5",
+        )
+        self.assertEqual(set(config["boards"]), {"bananapim1plus"})
+        policy = config["boards"]["bananapim1plus"]
+        self.assertEqual(policy["family"], "sun7i")
+        self.assertEqual(policy["sd_node"], "/soc/mmc@1c0f000")
+        self.assertIn("/soc/mmc@1c12000=4", policy["additional_bus_widths"])
+        self.assertEqual(
+            policy["uboot_revision"],
+            "866ca972d6c3cabeaf6dbac431e8e08bb30b3c8e",
+        )
+        self.assertEqual(
+            set(config["installed_firmware_blobs"]),
+            {
+                "/lib/firmware/brcm/brcmfmac43362-sdio.bin",
+                "/lib/firmware/brcm/brcmfmac43362-sdio.txt",
+            },
+        )
+        self.assertTrue(
+            {"can", "i2c2", "i2c3", "i2s0", "spi-spidev", "uart7"}
+            <= set(policy["required_overlays"])
+        )
+        board_text = (ROOT / "config/boards/bananapim1plus.csc").read_text()
+        package_line = next(
+            line for line in board_text.splitlines()
+            if line.startswith('PACKAGE_LIST_BOARD="')
+        )
+        self.assertTrue(
+            set(config["common_packages"])
+            <= set(package_line.split('"', 2)[1].split())
+        )
+        self.assertIn(
+            'KERNELBRANCH_BOARD="commit:1f99e9ab748fc5c32120de9c4eca31abfe54a4d5"',
+            board_text,
+        )
+        self.assertIn(
+            'BOOTBRANCH_BOARD="commit:866ca972d6c3cabeaf6dbac431e8e08bb30b3c8e"',
+            board_text,
+        )
+        self.assertNotIn("CONFIG_DRAM_CLK", board_text)
+
+        overlay_dir = ROOT / "patch/kernel/archive/sunxi-6.18/overlay_32"
+        for overlay in policy["required_overlays"]:
+            with self.subTest(overlay=overlay):
+                self.assertTrue(
+                    (overlay_dir / f"{policy['overlay_prefix']}-{overlay}.dtso").is_file()
+                )
 
     def test_build_tool_records_reproducibility_evidence(self) -> None:
         text = BUILD_SCRIPT.read_text()
