@@ -259,7 +259,7 @@ validate_installed_uboot() {
 
 validate_mounted_image() (
 	local image=$1 board=$2
-	local dtb_relative dtb_basename dtb_path fdt_override model compatible expected node option_line option value package
+	local dtb_relative dtb_basename dtb_path fdt_override model compatible expected node node_status option_line option value package
 	local loop_device partition mount_dir config_file overlay_prefix overlay overlay_directory default_overlays overlays_line sd_node sd_bus_width requirement required_node required_width kernel_family
 	local boot_configuration extlinux_fdt expected_start_sector actual_start_sector property_spec property_node property_name property_expected installed_spec installed_path installed_sha256
 	dtb_relative="$(board_field "${board}" dtb)"
@@ -333,6 +333,14 @@ validate_mounted_image() (
 	done
 	for node in $(board_field "${board}" required_status_nodes); do
 		[[ "$(fdtget -t s "${dtb_path}" "${node}" status)" == okay ]] || fail "${board} 節點未啟用：${node}"
+	done
+	for node in $(board_field_optional "${board}" required_present_nodes); do
+		fdtget -l "${dtb_path}" "${node}" >/dev/null || fail "${board} 缺少 DT 節點：${node}"
+		node_status="$(fdtget -t s "${dtb_path}" "${node}" status 2>/dev/null || true)"
+		case "${node_status}" in
+		"" | ok | okay) ;;
+		*) fail "${board} DT 節點不可用：${node}，status=${node_status}" ;;
+		esac
 	done
 	for property_spec in $(board_field_optional "${board}" required_boolean_properties); do
 		property_node="${property_spec%%:*}"

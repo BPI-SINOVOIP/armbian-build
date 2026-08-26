@@ -18,6 +18,7 @@ H2PLUS_CONFIG = ROOT / "config/validation/bananapi-sunxi-h2plus-current.json"
 M1PLUS_CONFIG = ROOT / "config/validation/bananapi-sunxi-a20-m1plus-current.json"
 R40_CONFIG = ROOT / "config/validation/bananapi-sunxi-r40-current.json"
 A31S_CONFIG = ROOT / "config/validation/bananapi-sunxi-a31s-current.json"
+A33_CONFIG = ROOT / "config/validation/bananapi-sunxi-a33-current.json"
 BUILD_SCRIPT = ROOT / "tools/build-bananapi-sunxi-candidates.sh"
 VERIFY_SCRIPT = ROOT / "tools/verify-bananapi-sunxi-candidates.sh"
 ISOLATED_RUNNER = ROOT / "tools/run-bananapi-candidates-isolated-cache.sh"
@@ -293,6 +294,52 @@ class BananaPiSunxiCandidateToolTests(unittest.TestCase):
         )
         self.assertNotIn("CONFIG_DRAM_CLK", board_text)
 
+    def test_a33_policy_covers_storage_otg_wireless_and_acceleration(self) -> None:
+        config = json.loads(A33_CONFIG.read_text())
+        self.assertEqual(config["candidate_branch"], "current")
+        self.assertEqual(set(config["boards"]), {"bananapim2magic"})
+        policy = config["boards"]["bananapim2magic"]
+        self.assertEqual(policy["dtb"], "allwinner/sun8i-r16-bananapi-m2m.dtb")
+        self.assertEqual(policy["overlay_prefix"], "sun8i-a33")
+        self.assertEqual(policy["required_overlays"], [])
+        self.assertTrue(
+            {"/soc/mmc@1c10000=4", "/soc/mmc@1c11000=8"}
+            <= set(policy["additional_bus_widths"])
+        )
+        self.assertTrue(
+            {
+                "/soc/crypto-engine@1c15000",
+                "/soc/gpu@1c40000",
+                "/soc/video-codec@1c0e000",
+            }
+            <= set(policy["required_present_nodes"])
+        )
+        self.assertNotIn("/display-engine", policy["required_status_nodes"])
+        self.assertEqual(
+            set(config["installed_firmware_blobs"]),
+            {
+                "/lib/firmware/brcm/brcmfmac43430-sdio.bin",
+                "/lib/firmware/brcm/brcmfmac43430-sdio.txt",
+                "/lib/firmware/brcm/brcmfmac43430-sdio.clm_blob",
+                "/lib/firmware/brcm/BCM43430A1.hcd",
+            },
+        )
+
+        board_text = (ROOT / "config/boards/bananapim2magic.csc").read_text()
+        package_line = next(
+            line for line in board_text.splitlines()
+            if line.startswith('PACKAGE_LIST_BOARD="')
+        )
+        self.assertTrue(
+            set(config["common_packages"])
+            <= set(package_line.split('"', 2)[1].split())
+        )
+        self.assertIn(
+            'ARMBIAN_FIRMWARE_GIT_REF_BOARD="commit:f50a2a21bcdb77a562b3976930c5c6b521a1df08"',
+            board_text,
+        )
+        self.assertNotIn("CONFIG_DRAM_CLK", board_text)
+
     def test_build_tool_records_reproducibility_evidence(self) -> None:
         text = BUILD_SCRIPT.read_text()
         for required in (
@@ -326,6 +373,7 @@ class BananaPiSunxiCandidateToolTests(unittest.TestCase):
             "additional_bus_widths",
             "sd_bus_width",
             "required_status_nodes",
+            "required_present_nodes",
             "common_kernel_options",
             "candidate_source_commit",
             "verifier_commit",
