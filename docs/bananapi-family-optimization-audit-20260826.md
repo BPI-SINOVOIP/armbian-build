@@ -8,7 +8,7 @@
 
 - 板卡總數：48。
 - 正式 `.conf`：12；社群 `.csc`：13；開發中 `.wip`：22；停止支援 `.eos`：1。
-- 證據分布：L0 32；L1 0；L2 14；L3 1；L4 1；L5 0。
+- 證據分布：L0 31；L1 0；L2 15；L3 1；L4 1；L5 0。
 - 未取得實機的板卡最高只能標示 L2；目前 L3／L4 只沿用已納入 Git 的 M4 Zero／M4 Berry 證據。
 
 ## 板卡矩陣
@@ -29,7 +29,7 @@
 | `bananapim1plus` | 社群 | Banana Pi M1+ | `sun7i` | `armhf` | `current,edge,legacy` | 是 | C | L2 軟體候選 | 執行 UART、啟動與基本周邊實機驗證 |
 | `bananapim1super` | 開發中 | Banana Pi M1 Super | `rk35xx` | `arm64` | `vendor` | 是 | E | L0 已盤點 | 確認建置鏈並建立 Trixie CLI 候選 |
 | `bananapim2` | 社群 | Banana Pi M2 | `sun6i` | `armhf` | `current,legacy` | 是 | C | L0 已盤點 | 建立 Trixie CLI 並完成離線守門 |
-| `bananapim2berry` | 社群 | Banana Pi M2 Berry | `sun8i` | `armhf` | `current,edge,legacy` | 是 | C | L0 已盤點 | 建立 Trixie CLI 並完成離線守門 |
+| `bananapim2berry` | 社群 | Banana Pi M2 Berry | `sun8i` | `armhf` | `current,edge,legacy` | 是 | C | L2 軟體候選 | 執行 UART、啟動與基本周邊實機驗證 |
 | `bananapim2c` | 開發中 | Banana Pi M2C | `unisoc-uis7885-bpi` | `arm64` | `vendor` | 是 | F | L0 已盤點 | 確認建置鏈並建立 Trixie CLI 候選 |
 | `bananapim2magic` | 社群 | Banana Pi M2 Magic | `sun8i` | `armhf` | `current,edge,legacy` | 是 | C | L0 已盤點 | 建立 Trixie CLI 並完成離線守門 |
 | `bananapim2plus` | 正式 | Banana Pi M2+ | `sun8i` | `armhf` | `current,edge,legacy` | 是 | B | L2 軟體候選 | 執行 UART、啟動與基本周邊實機驗證 |
@@ -75,7 +75,6 @@
 - `bananapicm5pro`：缺少建議欄位 `KERNEL_TEST_TARGET`。
 - `bananapicm6`：缺少建議欄位 `KERNEL_TEST_TARGET`。
 - `bananapif2s`：缺少建議欄位 `BOARD_MAINTAINER`。
-- `bananapif3`：缺少建議欄位 `KERNEL_TEST_TARGET`。
 - `bananapiforge1`：缺少建議欄位 `KERNEL_TEST_TARGET`。
 - `bananapim1plus`：缺少建議欄位 `BOARD_MAINTAINER`。
 - `bananapim1super`：缺少建議欄位 `KERNEL_TEST_TARGET`。
