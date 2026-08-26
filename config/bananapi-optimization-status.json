@@ -152,6 +152,10 @@
       "level": "L2",
       "basis": "Trixie current minimal CLI 已由隔離快取完整建置並通過映像、固定 Linux／U-Boot／ATF／firmware／mt76 來源、五分割區 GPT、BL2／FIP、R3 SD／NOR DTB、MT7986 WMAC／WED、SATA、PCIe、USB、DSA、SFP 與標準 I/O 工具唯讀守門；仍待實機驗證"
     },
+    "bananapir4": {
+      "level": "L2",
+      "basis": "Trixie current minimal CLI 已由隔離快取完整建置並通過映像、固定 Linux／U-Boot／ATF／firmware／mt76／linux-firmware 來源、五分割區 GPT、BL2／FIP、R4 SD DTB、MT7988 2.5G PHY／WED、MT7996、PCIe、USB、DSA、SFP 與標準 I/O 工具唯讀守門；仍待實機驗證"
+    },
     "bananapi6204": {
       "level": "L2",
       "basis": "Trixie legacy minimal CLI 已由乾淨來源完整建置並通過映像、固定 Linux／U-Boot／firmware 來源、完整 R40 6204 DTB、eMMC 保守設定、SATA、GMAC、CAN、雙 RTC、五組 UART、USB、Lima、Cedrus 與工控 I/O 工具唯讀守門；仍待實機驗證"
