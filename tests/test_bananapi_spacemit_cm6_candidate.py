@@ -95,6 +95,10 @@ class BananaPiSpacemitCm6CandidateTests(unittest.TestCase):
         )
 
     def test_dtb_identity_and_vendor_bootargs_are_controlled(self) -> None:
+        self.assertEqual(
+            self.policy["dtb_sha256"],
+            "6d8db2aa3dc0a106190052316a0839cf9dda6a64b41ff6fe8fcc317f96a46f67",
+        )
         self.assertEqual(self.policy["model"], "BananaPi BPI-CM6")
         self.assertIn("bananapi,bpi-cm6", self.policy["compatible"])
         self.assertIn("rdinit=/init", self.policy["dtb_forbidden_binary_strings"])

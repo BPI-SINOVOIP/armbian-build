@@ -32,6 +32,8 @@ SpacemiT 家族的 eMMC 寫入函式會把前兩段載荷寫到 eMMC `boot0`，�
 
 專用核心補丁位於 `patch/kernel/archive/bananapicm6-legacy`，板檔以完整的 `archive/bananapicm6-legacy` 路徑選取，建立繼承供應商 `k1-x_deb1.dts` 的 `k1-x_bpi_cm6.dtb`。該 DTB 把板級身分改為 `BananaPi BPI-CM6`，加入 `bananapi,bpi-cm6` 相容字串，並移除繼承的 `debug loglevel=8` 與 `rdinit=/init`。實際核心命令列只由 Armbian extlinux 政策提供；共用 deb1 DTB 不會被候選修改。
 
+驗證政策固定實際編譯後 `k1-x_bpi_cm6.dtb` 的 SHA-256 為 `6d8db2aa3dc0a106190052316a0839cf9dda6a64b41ff6fe8fcc317f96a46f67`，同時檢查板級身分、相容字串、必要節點、bus width、boolean 與字串屬性；只要補丁或工具鏈造成 DTB 內容漂移，候選必須重新審查而不能直接沿用 L2 結論。
+
 核心契約涵蓋 SD、SDIO、8-bit HS400 eMMC、雙 GbE、PCIe／NVMe、USB host、USB gadget mass storage、HDMI、IMG GPU、Linlon 視訊、ES8326 音訊、RTL8852BS、Bluetooth、GPIO、I2C、SPI、PWM fan、熱感測、watchdog、遠端處理器與硬體加密。根檔案系統加入 GPIO、I2C、SPI、PCIe、NVMe、USB、音訊、無線網路與乙太網路的標準診斷工具。
 
 `esos.elf` 是不可由本倉庫來源重新建置的預編譯遠端處理器韌體。候選固定其 SHA-256，並安裝 SpacemiT 授權原文及繁體中文來源追溯；雜湊一致不代表其內部行為可審計，對外發布仍須完成授權合規確認。

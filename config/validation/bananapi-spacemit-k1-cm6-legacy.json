@@ -90,6 +90,7 @@
     "bananapicm6": {
       "family": "spacemit",
       "dtb": "spacemit/k1-x_bpi_cm6.dtb",
+      "dtb_sha256": "6d8db2aa3dc0a106190052316a0839cf9dda6a64b41ff6fe8fcc317f96a46f67",
       "model": "BananaPi BPI-CM6",
       "compatible": [
         "bananapi,bpi-cm6",
