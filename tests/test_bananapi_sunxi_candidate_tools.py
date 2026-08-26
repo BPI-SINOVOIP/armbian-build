@@ -17,6 +17,7 @@ H3_CONFIG = ROOT / "config/validation/bananapi-sunxi-h3-current.json"
 H2PLUS_CONFIG = ROOT / "config/validation/bananapi-sunxi-h2plus-current.json"
 M1PLUS_CONFIG = ROOT / "config/validation/bananapi-sunxi-a20-m1plus-current.json"
 R40_CONFIG = ROOT / "config/validation/bananapi-sunxi-r40-current.json"
+R40_6204_CONFIG = ROOT / "config/validation/bananapi-sunxi-r40-6204-legacy.json"
 A31S_CONFIG = ROOT / "config/validation/bananapi-sunxi-a31s-current.json"
 A33_CONFIG = ROOT / "config/validation/bananapi-sunxi-a33-current.json"
 A83T_CONFIG = ROOT / "config/validation/bananapi-sunxi-a83t-current.json"
@@ -251,6 +252,67 @@ class BananaPiSunxiCandidateToolTests(unittest.TestCase):
                 with self.subTest(version=version, overlay=overlay):
                     self.assertTrue((overlay_dir / f"{filename}.dtso").is_file())
                     self.assertIn(f"{filename}.dtbo", makefile)
+
+    def test_6204_legacy_policy_covers_industrial_io_and_boot_layout(self) -> None:
+        config = json.loads(R40_6204_CONFIG.read_text())
+        self.assertEqual(config["candidate_branch"], "legacy")
+        self.assertEqual(config["kernel_family"], "sunxi")
+        self.assertEqual(
+            config["linux_commit"],
+            "2538fbeff8a94ee2b54eb09d92209e24a1e650d4",
+        )
+        self.assertEqual(set(config["boards"]), {"bananapi6204"})
+        policy = config["boards"]["bananapi6204"]
+        self.assertEqual(policy["partition_table"], "msdos")
+        self.assertEqual(policy["partition_start_sector"], 8192)
+        self.assertEqual(
+            policy["dtb_sha256"],
+            "266250249d06a6d217b20d13663b33af6b831d69b9dcd77247d1ea58e5554e11",
+        )
+        self.assertEqual(policy["uboot_target_index"], 1)
+        self.assertEqual(policy["sd_node"], "/soc/mmc@1c0f000")
+        self.assertTrue(
+            {"/soc/mmc@1c10000=4", "/soc/mmc@1c11000=8"}
+            <= set(policy["additional_bus_widths"])
+        )
+        self.assertTrue(
+            {
+                "/soc/spi@1c06000/can@1",
+                "/soc/phy@1c13400",
+                "/soc/serial@1c28000",
+                "/soc/serial@1c28c00",
+                "/soc/serial@1c29000",
+                "/soc/serial@1c29400",
+                "/soc/serial@1c29c00",
+            }
+            <= set(policy["required_status_nodes"])
+        )
+        board_text = (ROOT / "config/boards/bananapi6204.wip").read_text()
+        package_line = next(
+            line for line in board_text.splitlines()
+            if line.startswith('PACKAGE_LIST_BOARD="')
+        )
+        self.assertTrue(
+            set(config["common_packages"])
+            <= set(package_line.split('"', 2)[1].split())
+        )
+
+    def test_6204_patch_keeps_the_complete_dts_hunk(self) -> None:
+        patch = (
+            ROOT
+            / "patch/kernel/archive/sunxi-6.12/patches.armbian/arm-dts-sun8i-r40-add-bpi-6204.patch"
+        ).read_text()
+        hunk = patch.split("@@ -0,0 +1,378 @@\n", 1)[1].split("-- \n", 1)[0]
+        additions = [line for line in hunk.splitlines() if line.startswith("+")]
+        self.assertEqual(len(additions), 378)
+        self.assertIn('+\tpinctrl-0 = <&spi1_pi_pins>, <&spi1_cs1_pi_pin>;', patch)
+        self.assertIn("+&uart7 {", patch)
+        self.assertIn("+&usbphy {", patch)
+
+    def test_partition_table_gate_normalizes_dos_alias(self) -> None:
+        text = VERIFY_SCRIPT.read_text()
+        self.assertIn("normalize_partition_table", text)
+        self.assertIn("dos | msdos) printf 'msdos\\n'", text)
 
     def test_a31s_policy_limits_claims_to_mainline_dtb(self) -> None:
         config = json.loads(A31S_CONFIG.read_text())

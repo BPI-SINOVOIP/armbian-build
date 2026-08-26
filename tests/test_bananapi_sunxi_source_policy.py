@@ -69,6 +69,18 @@ class BananaPiSunxiSourcePolicyTests(unittest.TestCase):
         ).read_text()
         self.assertIn("default 648 if MACH_SUN50I || MACH_SUN50I_H5", patch)
 
+    def test_6204_pins_the_complete_legacy_source_set(self) -> None:
+        board = (ROOT / "config/boards/bananapi6204.wip").read_text()
+        for expected in (
+            'KERNELBRANCH_BOARD="commit:2538fbeff8a94ee2b54eb09d92209e24a1e650d4"',
+            'BOOTBRANCH_BOARD="commit:866ca972d6c3cabeaf6dbac431e8e08bb30b3c8e"',
+            'ARMBIAN_FIRMWARE_GIT_REF_BOARD="commit:f50a2a21bcdb77a562b3976930c5c6b521a1df08"',
+            "post_family_config_branch_legacy__bananapi6204_pin_sources",
+        ):
+            with self.subTest(expected=expected):
+                self.assertIn(expected, board)
+        self.assertNotIn("CONFIG_DRAM_CLK", board)
+
     def test_firmware_artifact_accepts_an_exact_git_ref(self) -> None:
         compile_text = (
             ROOT / "lib/functions/compilation/packages/firmware-deb.sh"

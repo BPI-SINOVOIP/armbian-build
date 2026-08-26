@@ -13,8 +13,8 @@ path enters DDR52 timing.
 
 ---
  arch/arm/boot/dts/allwinner/Makefile           |   1 +
- .../boot/dts/allwinner/sun8i-r40-bpi-6204.dts  | 341 +++++++++++++++++
- 2 files changed, 342 insertions(+)
+ .../boot/dts/allwinner/sun8i-r40-bpi-6204.dts  | 378 +++++++++++++++++
+ 2 files changed, 379 insertions(+)
  create mode 100644 arch/arm/boot/dts/allwinner/sun8i-r40-bpi-6204.dts
 
 diff --git a/arch/arm/boot/dts/allwinner/Makefile b/arch/arm/boot/dts/allwinner/Makefile
@@ -34,7 +34,7 @@ new file mode 100644
 index 000000000000..222222222222
 --- /dev/null
 +++ b/arch/arm/boot/dts/allwinner/sun8i-r40-bpi-6204.dts
-@@ -0,0 +1,341 @@
+@@ -0,0 +1,378 @@
 +// SPDX-License-Identifier: (GPL-2.0+ OR MIT)
 +/*
 + * Copyright (C) 2017 Chen-Yu Tsai <wens@csie.org>
@@ -209,6 +209,8 @@ index 000000000000..222222222222
 +};
 +
 +&spi1 {
++	pinctrl-names = "default";
++	pinctrl-0 = <&spi1_pi_pins>, <&spi1_cs1_pi_pin>;
 +	status = "okay";
 +	clock-frequency = <100000000>;
 +	#address-cells = <1>;
@@ -413,4 +415,3 @@ index 000000000000..222222222222
 +};
 -- 
 Armbian
-

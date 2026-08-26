@@ -25,6 +25,13 @@ fail() {
 	exit 1
 }
 
+normalize_partition_table() {
+	case "$1" in
+		dos | msdos) printf 'msdos\n' ;;
+		*) printf '%s\n' "$1" ;;
+	esac
+}
+
 read_partition_start_sector() {
 	local partition=$1 block_name start_path
 	block_name="$(basename -- "${partition}")"
@@ -186,6 +193,8 @@ validate_boot_area() {
 	[[ -n "${partition_table}" ]] || return 0
 	partition_json="$(sfdisk --json "${image}")" || fail "${board} 無法解析分割表"
 	actual_table="$(printf '%s\n' "${partition_json}" | python3 -c 'import json,sys; print(json.load(sys.stdin)["partitiontable"]["label"])')"
+	actual_table="$(normalize_partition_table "${actual_table}")"
+	partition_table="$(normalize_partition_table "${partition_table}")"
 	[[ "${actual_table}" == "${partition_table}" ]] ||
 		fail "${board} 的分割表不是 ${partition_table}"
 	if [[ "${partition_table}" == gpt ]]; then
