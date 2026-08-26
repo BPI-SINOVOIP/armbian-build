@@ -2,6 +2,7 @@
 set -euo pipefail
 
 repo_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+candidate_builder="${CANDIDATE_BUILDER:-${repo_dir}/tools/build-bananapi-meson-candidates.sh}"
 cache_lower="${CACHE_LOWER:-/media/pi/SMCI/armbian/bpi-v26.2.1/cache}"
 cache_target="${repo_dir}/cache"
 overlay_root="${CACHE_OVERLAY_ROOT:-${repo_dir}/.tmp/bananapi-meson-cache-overlay}"
@@ -17,6 +18,10 @@ done
 
 [[ -d "${cache_lower}" ]] || {
 	echo "找不到唯讀快取下層：${cache_lower}" >&2
+	exit 1
+}
+[[ -x "${candidate_builder}" ]] || {
+	echo "候選建置器不存在或不可執行：${candidate_builder}" >&2
 	exit 1
 }
 [[ "$(findmnt -no FSTYPE -T "${cache_lower}")" != overlay ]] || {
@@ -63,4 +68,4 @@ cleanup_overlay() {
 }
 trap cleanup_overlay EXIT INT TERM
 
-"${repo_dir}/tools/build-bananapi-meson-candidates.sh" "$@"
+"${candidate_builder}" "$@"

@@ -1,0 +1,108 @@
+#!/usr/bin/env python3
+"""Banana Pi Sunxi 候選映像工具回歸測試。"""
+
+from __future__ import annotations
+
+import json
+import os
+import subprocess
+import tempfile
+import unittest
+from pathlib import Path
+
+
+ROOT = Path(__file__).resolve().parents[1]
+CONFIG = ROOT / "config/validation/bananapi-sunxi-a20-current.json"
+BUILD_SCRIPT = ROOT / "tools/build-bananapi-sunxi-candidates.sh"
+VERIFY_SCRIPT = ROOT / "tools/verify-bananapi-sunxi-candidates.sh"
+ISOLATED_RUNNER = ROOT / "tools/run-bananapi-meson-candidates-isolated-cache.sh"
+EXPECTED_BOARDS = {"bananapi", "bananapipro"}
+
+
+class BananaPiSunxiCandidateToolTests(unittest.TestCase):
+    """驗證 A20 代表板來源、映像同一性與開機區守門。"""
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls.config = json.loads(CONFIG.read_text())
+
+    def test_validation_config_has_exact_board_set(self) -> None:
+        self.assertEqual(self.config["schema_version"], 1)
+        self.assertEqual(set(self.config["boards"]), EXPECTED_BOARDS)
+        for board, policy in self.config["boards"].items():
+            with self.subTest(board=board):
+                self.assertEqual(policy["family"], "sun7i")
+                self.assertEqual(policy["uboot_tag"], "v2024.01")
+                self.assertEqual(policy["uboot_offset"], 8192)
+                self.assertEqual(policy["overlay_prefix"], "sun7i-a20")
+
+    def test_board_images_include_standard_io_tools(self) -> None:
+        required = set(self.config["common_packages"])
+        for board in EXPECTED_BOARDS:
+            suffix = "conf" if board == "bananapi" else "csc"
+            text = (ROOT / f"config/boards/{board}.{suffix}").read_text()
+            package_line = next(
+                line for line in text.splitlines()
+                if line.startswith('PACKAGE_LIST_BOARD="')
+            )
+            packages = set(package_line.split('"', 2)[1].split())
+            self.assertTrue(required <= packages)
+
+    def test_build_tool_records_reproducibility_evidence(self) -> None:
+        text = BUILD_SCRIPT.read_text()
+        for required in (
+            "status --porcelain --untracked-files=all",
+            "validate_default_userpatches",
+            "cache 不是 OverlayFS",
+            ".tmp/.bananapi-sunxi-build.lock",
+            "source_commit",
+            "source_tree",
+            "validation_config_sha256",
+            "build_parameters_sha256",
+            "decompressed_sha256",
+            "ARTIFACT_IGNORE_CACHE",
+        ):
+            with self.subTest(required=required):
+                self.assertIn(required, text)
+
+    def test_verifier_checks_sunxi_boot_layout_read_only(self) -> None:
+        text = VERIFY_SCRIPT.read_text()
+        for required in (
+            "--read-only",
+            "mount -o ro,noload",
+            "uboot_offset",
+            'cmp --silent --ignore-initial="0:${offset}"',
+            "u-boot-sunxi-with-spl.bin",
+            "fdtfile=",
+            "overlay_prefix=",
+            "required_status_nodes",
+            "common_kernel_options",
+            "xz -dc",
+        ):
+            with self.subTest(required=required):
+                self.assertIn(required, text if required != "u-boot-sunxi-with-spl.bin" else CONFIG.read_text())
+
+    def test_isolated_runner_accepts_a_family_builder(self) -> None:
+        text = ISOLATED_RUNNER.read_text()
+        self.assertIn("CANDIDATE_BUILDER", text)
+        self.assertIn('"${candidate_builder}" "$@"', text)
+
+    def test_build_tool_rejects_non_reference_release(self) -> None:
+        environment = os.environ.copy()
+        environment["RELEASE"] = "jammy"
+        with tempfile.TemporaryDirectory() as output_dir:
+            environment["OUTPUT_DIR"] = output_dir
+            result = subprocess.run(
+                ["bash", str(BUILD_SCRIPT)],
+                cwd=ROOT,
+                env=environment,
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+        self.assertEqual(result.returncode, 2)
+        self.assertIn("只接受 RELEASE=trixie", result.stderr)
+
+
+if __name__ == "__main__":
+    unittest.main()
