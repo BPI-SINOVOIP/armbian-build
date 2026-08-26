@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 import unittest
 from pathlib import Path
@@ -14,6 +15,7 @@ BOARD = ROOT / "config/boards/bananapir4.csc"
 KERNEL_CONFIG = ROOT / "config/kernel/linux-filogic-current.config"
 RUNNER = ROOT / "tools/run-bananapi-filogic-r4-candidate-isolated-cache.sh"
 VERIFIER = ROOT / "tools/verify-bananapi-filogic-r4-candidate.sh"
+MT7988_FIRMWARE = ROOT / "packages/blobs/filogic/firmware/mediatek/mt7988"
 
 
 class BananaPiFilogicR4CandidateTests(unittest.TestCase):
@@ -41,6 +43,10 @@ class BananaPiFilogicR4CandidateTests(unittest.TestCase):
             self.config["mt76_firmware_commit"],
             "c5a3bd91aa735b669618610d5f0ebfa5786845a6",
         )
+        self.assertEqual(
+            self.config["linux_firmware_commit"],
+            "01205307636157a12c29e6a774bf83b218732050",
+        )
 
     def test_board_pins_sources_and_repairs_standard_boot(self) -> None:
         text = BOARD.read_text()
@@ -61,12 +67,29 @@ class BananaPiFilogicR4CandidateTests(unittest.TestCase):
         mt7996 = [path for path in blobs if "/mediatek/mt7996/" in path]
         mt7988 = [path for path in blobs if "/mediatek/mt7988/" in path]
         self.assertEqual(len(mt7996), 11)
-        self.assertEqual(len(mt7988), 2)
+        self.assertEqual(len(mt7988), 3)
         self.assertTrue(all(len(digest) == 64 for digest in blobs.values()))
         board_text = BOARD.read_text()
         for path in mt7996 + mt7988:
             self.assertIn(Path(path).name, board_text)
         self.assertIn("mt76-firmware.LICENSE", board_text)
+        self.assertIn("linux-firmware.LICENCE.mediatek", board_text)
+        self.assertIn("mt7988-firmware-SOURCE.md", board_text)
+        self.assertNotIn("unresolved", json.dumps(self.config))
+
+    def test_vendored_mt7988_firmware_matches_fixed_linux_firmware(self) -> None:
+        expected = {
+            "i2p5ge-phy-pmb.bin": "643157e984732eccad6aa5e1f80a2be82a6cbf747aac25b54c75eefeccaf8aec",
+            "mt7988_wo_0.bin": "a00b95235a9baa850fe5e9c08562b54279bb5528abad207de6f2e649a8009b15",
+            "mt7988_wo_1.bin": "6d9123b4e8400f93fc40cfe1adcfe67c5a2e9d7c07c168ca05f0eba739e8d39f",
+            "LICENCE.mediatek": "a90d3f66704d85889945fec5525ea77622549da83aced1aac99828383f8f1805",
+        }
+        for filename, digest in expected.items():
+            with self.subTest(filename=filename):
+                actual = hashlib.sha256((MT7988_FIRMWARE / filename).read_bytes()).hexdigest()
+                self.assertEqual(actual, digest)
+        source = (MT7988_FIRMWARE / "SOURCE.md").read_text()
+        self.assertIn("01205307636157a12c29e6a774bf83b218732050", source)
 
     def test_gpt_dtb_and_payload_contract_is_complete(self) -> None:
         self.assertEqual(self.policy["root_partition_number"], 5)

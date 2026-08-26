@@ -9,9 +9,13 @@
   "mt76_firmware_source": "https://github.com/openwrt/mt76.git",
   "mt76_firmware_commit": "c5a3bd91aa735b669618610d5f0ebfa5786845a6",
   "mt76_firmware_license": "firmware/LICENSE",
-  "mt7988_wed_firmware_source": "packages/blobs/filogic/firmware/mediatek/mt7988",
-  "mt7988_wed_firmware_provenance": "repository-pinned-upstream-license-unresolved",
+  "linux_firmware_source": "https://gitlab.com/kernel-firmware/linux-firmware.git",
+  "linux_firmware_commit": "01205307636157a12c29e6a774bf83b218732050",
+  "linux_firmware_license": "LICENSES/LICENCE.mediatek",
+  "mt7988_network_firmware_source": "packages/blobs/filogic/firmware/mediatek/mt7988",
+  "mt7988_network_firmware_provenance": "固定 Linux 韌體提交並附 MediaTek 授權",
   "installed_firmware_blobs": {
+    "/lib/firmware/mediatek/mt7988/i2p5ge-phy-pmb.bin": "643157e984732eccad6aa5e1f80a2be82a6cbf747aac25b54c75eefeccaf8aec",
     "/lib/firmware/mediatek/mt7988/mt7988_wo_0.bin": "a00b95235a9baa850fe5e9c08562b54279bb5528abad207de6f2e649a8009b15",
     "/lib/firmware/mediatek/mt7988/mt7988_wo_1.bin": "6d9123b4e8400f93fc40cfe1adcfe67c5a2e9d7c07c168ca05f0eba739e8d39f",
     "/lib/firmware/mediatek/mt7996/mt7996_dsp.bin": "c2d9e048cc1ce29d472f5bb342445a41bdb2d11c5c904bc904a498ae60ece3f7",
@@ -25,7 +29,9 @@
     "/lib/firmware/mediatek/mt7996/mt7996_wa_233.bin": "b54558552ee4d70794c6772e90cfdcce9d77c9feaaf5ab83e215151c8595e07d",
     "/lib/firmware/mediatek/mt7996/mt7996_wm.bin": "ba5b800e560a7940f1c51db0f99ab4dc249389f6e1a9e4e863f62ff28cc5ff50",
     "/lib/firmware/mediatek/mt7996/mt7996_wm_233.bin": "b41bcbdd69306885c0d94783e0fe25956137489970ef958198d6eec5ef274d72",
-    "/usr/share/doc/armbian-bsp-bananapir4/mt76-firmware.LICENSE": "77c0eb6b7915fdb17b328c1eff3d2074bff2025e88603ac59e01ffc07ba0b541"
+    "/usr/share/doc/armbian-bsp-bananapir4/mt76-firmware.LICENSE": "77c0eb6b7915fdb17b328c1eff3d2074bff2025e88603ac59e01ffc07ba0b541",
+    "/usr/share/doc/armbian-bsp-bananapir4/linux-firmware.LICENCE.mediatek": "a90d3f66704d85889945fec5525ea77622549da83aced1aac99828383f8f1805",
+    "/usr/share/doc/armbian-bsp-bananapir4/mt7988-firmware-SOURCE.md": "a42e86e57a4671ea5f9c28a7bf18c62218db52eef83f28de2ce4fe204140ace3"
   },
   "common_packages": [
     "bridge-utils",
