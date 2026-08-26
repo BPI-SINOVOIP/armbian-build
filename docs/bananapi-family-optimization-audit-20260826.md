@@ -8,7 +8,7 @@
 
 - 板卡總數：48。
 - 正式 `.conf`：12；社群 `.csc`：13；開發中 `.wip`：22；停止支援 `.eos`：1。
-- 證據分布：L0 24；L1 0；L2 22；L3 1；L4 1；L5 0。
+- 證據分布：L0 23；L1 0；L2 23；L3 1；L4 1；L5 0。
 - 未取得實機的板卡最高只能標示 L2；目前 L3／L4 只沿用已納入 Git 的 M4 Zero／M4 Berry 證據。
 
 ## 板卡矩陣
@@ -53,7 +53,7 @@
 | `bananapir1` | 停止支援 | Banana Pi R1 | `sun7i` | `armhf` | `current,edge` | 是 | G | L0 已盤點 | 保留最後可用基線，不列入新發布 |
 | `bananapir2` | 社群 | Banana Pi R2 | `mt7623` | `armhf` | `current` | 是 | D | L0 已盤點 | 建立 Trixie CLI 並完成離線守門 |
 | `bananapir2pro` | 社群 | Banana Pi R2 Pro | `rockchip64` | `arm64` | `current,edge` | 是 | D | L2 軟體候選 | 執行 UART、啟動與基本周邊實機驗證 |
-| `bananapir3` | 開發中 | Banana Pi R3 | `filogic` | `arm64` | `current` | 否 | D | L0 已盤點 | 確認建置鏈並建立 Trixie CLI 候選 |
+| `bananapir3` | 開發中 | Banana Pi R3 | `filogic` | `arm64` | `current` | 否 | D | L2 軟體候選 | 執行 UART、啟動與基本周邊實機驗證 |
 | `bananapir3mini` | 開發中 | Banana Pi R3 Mini | `filogic` | `arm64` | `current` | 否 | D | L0 已盤點 | 確認建置鏈並建立 Trixie CLI 候選 |
 | `bananapir4` | 社群 | Banana Pi R4 | `filogic` | `arm64` | `current` | 否 | D | L0 已盤點 | 建立 Trixie CLI 並完成離線守門 |
 | `bananapir4lite` | 開發中 | Banana Pi R4 Lite | `filogic` | `arm64` | `current` | 否 | D | L0 已盤點 | 確認建置鏈並建立 Trixie CLI 候選 |
