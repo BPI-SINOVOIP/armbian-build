@@ -88,6 +88,10 @@
       "level": "L2",
       "basis": "Trixie current CLI 已由乾淨來源完整建置並通過映像、U-Boot、A20 DTB、核心功能與標準 I/O 工具唯讀守門；仍待實機驗證"
     },
+    "bananapim1plus": {
+      "level": "L2",
+      "basis": "Trixie current CLI 已由乾淨來源完整建置並通過映像、固定 Linux／U-Boot 來源、A20 M1+ DTB、AP6210 Wi-Fi 韌體、12 個 overlay、核心功能與標準 I/O 工具唯讀守門；仍待實機驗證"
+    },
     "bananapim2plus": {
       "level": "L2",
       "basis": "Trixie current CLI 已由乾淨來源完整建置並通過映像、U-Boot、H3 DTB、Wi-Fi／Bluetooth 設定、硬體加速設定、overlay 與標準 I/O 工具唯讀守門；仍待實機驗證"
