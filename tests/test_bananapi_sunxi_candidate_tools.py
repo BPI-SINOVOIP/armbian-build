@@ -16,6 +16,7 @@ CONFIG = ROOT / "config/validation/bananapi-sunxi-a20-current.json"
 H3_CONFIG = ROOT / "config/validation/bananapi-sunxi-h3-current.json"
 H2PLUS_CONFIG = ROOT / "config/validation/bananapi-sunxi-h2plus-current.json"
 M1PLUS_CONFIG = ROOT / "config/validation/bananapi-sunxi-a20-m1plus-current.json"
+R40_CONFIG = ROOT / "config/validation/bananapi-sunxi-r40-current.json"
 BUILD_SCRIPT = ROOT / "tools/build-bananapi-sunxi-candidates.sh"
 VERIFY_SCRIPT = ROOT / "tools/verify-bananapi-sunxi-candidates.sh"
 ISOLATED_RUNNER = ROOT / "tools/run-bananapi-candidates-isolated-cache.sh"
@@ -157,6 +158,89 @@ class BananaPiSunxiCandidateToolTests(unittest.TestCase):
             makefile = (overlay_dir / "Makefile").read_text()
             for overlay in policy["required_overlays"]:
                 filename = f"{policy['overlay_prefix']}-{overlay}"
+                with self.subTest(version=version, overlay=overlay):
+                    self.assertTrue((overlay_dir / f"{filename}.dtso").is_file())
+                    self.assertIn(f"{filename}.dtbo", makefile)
+
+    def test_r40_policy_pins_sources_wireless_storage_and_header_io(self) -> None:
+        config = json.loads(R40_CONFIG.read_text())
+        self.assertEqual(config["candidate_branch"], "current")
+        self.assertEqual(config["kernel_family"], "sunxi")
+        self.assertEqual(
+            config["linux_commit"],
+            "1f99e9ab748fc5c32120de9c4eca31abfe54a4d5",
+        )
+        self.assertEqual(
+            config["firmware_commit"],
+            "f50a2a21bcdb77a562b3976930c5c6b521a1df08",
+        )
+        self.assertEqual(
+            set(config["boards"]),
+            {"bananapim2berry", "bananapim2ultra"},
+        )
+        self.assertEqual(
+            set(config["installed_firmware_blobs"]),
+            {
+                "/lib/firmware/brcm/brcmfmac43430-sdio.bin",
+                "/lib/firmware/brcm/brcmfmac43430-sdio.txt",
+                "/lib/firmware/brcm/brcmfmac43430-sdio.clm_blob",
+                "/lib/firmware/brcm/BCM43430A1.hcd",
+            },
+        )
+        required_overlays = {
+            "i2c2",
+            "i2c3",
+            "spi-spidev0",
+            "spi-spidev1",
+            "uart2",
+            "uart4",
+            "uart5",
+            "uart7",
+        }
+        for board, policy in config["boards"].items():
+            with self.subTest(board=board):
+                self.assertEqual(policy["family"], "sun8i")
+                self.assertEqual(policy["overlay_prefix"], "sun8i-r40")
+                self.assertEqual(policy["sd_node"], "/soc/mmc@1c0f000")
+                self.assertEqual(policy["sd_bus_width"], 4)
+                self.assertEqual(set(policy["required_overlays"]), required_overlays)
+                self.assertEqual(
+                    policy["uboot_revision"],
+                    "866ca972d6c3cabeaf6dbac431e8e08bb30b3c8e",
+                )
+                board_text = next((ROOT / "config/boards").glob(f"{board}.*")).read_text()
+                package_line = next(
+                    line for line in board_text.splitlines()
+                    if line.startswith('PACKAGE_LIST_BOARD="')
+                )
+                self.assertTrue(
+                    set(config["common_packages"])
+                    <= set(package_line.split('"', 2)[1].split())
+                )
+                self.assertIn(
+                    'ARMBIAN_FIRMWARE_GIT_REF_BOARD="commit:f50a2a21bcdb77a562b3976930c5c6b521a1df08"',
+                    board_text,
+                )
+                self.assertNotIn("CONFIG_DRAM_CLK", board_text)
+
+        berry = config["boards"]["bananapim2berry"]
+        ultra = config["boards"]["bananapim2ultra"]
+        self.assertEqual(
+            berry["dtb"],
+            "allwinner/sun8i-v40-bananapi-m2-berry.dtb",
+        )
+        self.assertEqual(
+            ultra["dtb"],
+            "allwinner/sun8i-r40-bananapi-m2-ultra.dtb",
+        )
+        self.assertNotIn("/soc/mmc@1c11000=8", berry["additional_bus_widths"])
+        self.assertIn("/soc/mmc@1c11000=8", ultra["additional_bus_widths"])
+
+        for version in ("6.18", "7.0"):
+            overlay_dir = ROOT / f"patch/kernel/archive/sunxi-{version}/overlay_32"
+            makefile = (overlay_dir / "Makefile").read_text()
+            for overlay in required_overlays:
+                filename = f"sun8i-r40-{overlay}"
                 with self.subTest(version=version, overlay=overlay):
                     self.assertTrue((overlay_dir / f"{filename}.dtso").is_file())
                     self.assertIn(f"{filename}.dtbo", makefile)

@@ -19,9 +19,18 @@ class BananaPiSunxiSourcePolicyTests(unittest.TestCase):
     def test_r40_i2c_overlays_target_r40(self) -> None:
         for version in ("6.18", "7.0"):
             overlay_dir = ROOT / f"patch/kernel/archive/sunxi-{version}/overlay_32"
-            for bus in ("i2c2", "i2c3"):
-                path = overlay_dir / f"sun8i-r40-{bus}.dtso"
-                with self.subTest(version=version, bus=bus):
+            for overlay in (
+                "i2c2",
+                "i2c3",
+                "spi-spidev0",
+                "spi-spidev1",
+                "uart2",
+                "uart4",
+                "uart5",
+                "uart7",
+            ):
+                path = overlay_dir / f"sun8i-r40-{overlay}.dtso"
+                with self.subTest(version=version, overlay=overlay):
                     text = path.read_text()
                     self.assertIn(
                         'compatible = "allwinner,sun8i-r40";',
@@ -31,6 +40,24 @@ class BananaPiSunxiSourcePolicyTests(unittest.TestCase):
                         'compatible = "allwinner,sun8i-h3";',
                         text,
                     )
+
+    def test_firmware_artifact_accepts_an_exact_git_ref(self) -> None:
+        compile_text = (
+            ROOT / "lib/functions/compilation/packages/firmware-deb.sh"
+        ).read_text()
+        self.assertIn(
+            'ARMBIAN_FIRMWARE_GIT_REF:-"branch:${ARMBIAN_FIRMWARE_GIT_BRANCH}"',
+            compile_text,
+        )
+        self.assertIn(
+            '"armbian-firmware-git" "${ARMBIAN_FIRMWARE_GIT_REF}"',
+            compile_text,
+        )
+        for name in ("artifact-firmware.sh", "artifact-full_firmware.sh"):
+            text = (ROOT / f"lib/functions/artifacts/{name}").read_text()
+            with self.subTest(name=name):
+                self.assertIn("ARMBIAN_FIRMWARE_GIT_REF", text)
+                self.assertIn('[GIT_REF]="${ARMBIAN_FIRMWARE_REF}"', text)
 
 
 if __name__ == "__main__":
