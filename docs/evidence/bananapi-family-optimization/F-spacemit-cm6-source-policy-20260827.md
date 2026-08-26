@@ -30,7 +30,7 @@ SpacemiT 家族的 eMMC 寫入函式會把前兩段載荷寫到 eMMC `boot0`，�
 
 ## 板級與功能政策
 
-專用核心補丁建立繼承供應商 `k1-x_deb1.dts` 的 `k1-x_bpi_cm6.dtb`，把板級身分改為 `BananaPi BPI-CM6`，加入 `bananapi,bpi-cm6` 相容字串，並移除繼承的 `debug loglevel=8` 與 `rdinit=/init`。實際核心命令列只由 Armbian extlinux 政策提供；共用 deb1 DTB 不會被候選修改。
+專用核心補丁位於 `patch/kernel/archive/bananapicm6-legacy`，板檔以完整的 `archive/bananapicm6-legacy` 路徑選取，建立繼承供應商 `k1-x_deb1.dts` 的 `k1-x_bpi_cm6.dtb`。該 DTB 把板級身分改為 `BananaPi BPI-CM6`，加入 `bananapi,bpi-cm6` 相容字串，並移除繼承的 `debug loglevel=8` 與 `rdinit=/init`。實際核心命令列只由 Armbian extlinux 政策提供；共用 deb1 DTB 不會被候選修改。
 
 核心契約涵蓋 SD、SDIO、8-bit HS400 eMMC、雙 GbE、PCIe／NVMe、USB host、USB gadget mass storage、HDMI、IMG GPU、Linlon 視訊、ES8326 音訊、RTL8852BS、Bluetooth、GPIO、I2C、SPI、PWM fan、熱感測、watchdog、遠端處理器與硬體加密。根檔案系統加入 GPIO、I2C、SPI、PCIe、NVMe、USB、音訊、無線網路與乙太網路的標準診斷工具。
 

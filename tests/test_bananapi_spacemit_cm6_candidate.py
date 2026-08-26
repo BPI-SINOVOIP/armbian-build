@@ -41,7 +41,9 @@ class BananaPiSpacemitCm6CandidateTests(unittest.TestCase):
             self.assertRegex(source["revision"], r"^[0-9a-f]{40}$")
             self.assertIn(f'commit:{source["revision"]}', self.board)
         self.assertTrue(KERNEL_PATCH.is_file())
-        self.assertIn('KERNELPATCHDIR="bananapicm6-legacy"', self.board)
+        self.assertIn(
+            'KERNELPATCHDIR="archive/bananapicm6-legacy"', self.board
+        )
 
     def test_policy_covers_packages_kernel_and_firmware_license(self) -> None:
         package_line = next(

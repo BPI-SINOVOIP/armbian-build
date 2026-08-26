@@ -22,7 +22,7 @@ function post_family_config__bananapicm6_use_bpi_k1_sources() {
 	declare -g KERNELSOURCE="https://github.com/BPI-SINOVOIP/pi-linux.git"
 	declare -g KERNELBRANCH="commit:0d0af0d895251383baee939d44e523699e31889f"
 	declare -g KERNEL_MAJOR_MINOR="6.6"
-	declare -g KERNELPATCHDIR="bananapicm6-legacy"
+	declare -g KERNELPATCHDIR="archive/bananapicm6-legacy"
 	declare -g LINUXCONFIG="linux-spacemit-legacy"
 }
 
