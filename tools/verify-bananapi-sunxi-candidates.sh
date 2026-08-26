@@ -265,7 +265,7 @@ validate_installed_uboot() {
 	local payload_specs package_only_payloads payload_spec payload_name offset uboot_dir payload
 	local metadata_file md5sums_file payload_size payload_sha256 minimum_spec
 	local rkbin_source rkbin_ref rkbin_revision partition_table partition_start_sector sector_size payload_end first_partition_byte
-	local uboot_target_index uboot_config_file uboot_target_metadata uboot_defconfig option_line target_fragment
+	local uboot_target_index uboot_config_file uboot_target_metadata uboot_defconfig option_line target_fragment forbidden_fragment
 	uboot_tag="$(board_field "${board}" uboot_tag)"
 	uboot_version="$(board_field_optional "${board}" uboot_version)"
 	[[ -n "${uboot_version}" ]] || uboot_version="${uboot_tag#v}"
@@ -354,6 +354,13 @@ validate_installed_uboot() {
 				fail "${board} 的 U-Boot target 缺少：${target_fragment}"
 		done < <(board_values "${board}" uboot_target_make_contains)
 	fi
+	while IFS= read -r forbidden_fragment; do
+		[[ -n "${forbidden_fragment}" ]] || continue
+		[[ -s "${uboot_dir}/u-boot.bin" ]] || fail "${board} 缺少可檢查的 U-Boot 二進位"
+		if grep -aFq -- "${forbidden_fragment}" "${uboot_dir}/u-boot.bin"; then
+			fail "${board} 的 U-Boot 仍含禁止的供應商開機路徑：${forbidden_fragment}"
+		fi
+	done < <(board_values "${board}" uboot_forbidden_binary_strings)
 	uboot_defconfig="$(board_field_optional "${board}" uboot_defconfig)"
 	if [[ -n "${uboot_defconfig}" ]]; then
 		[[ -s "${mount_dir}/usr/lib/u-boot/${uboot_defconfig}" ]] ||
@@ -423,7 +430,7 @@ validate_mounted_image() (
 	local dtb_relative dtb_basename dtb_path fdt_override model compatible expected node node_status option_line option value package
 	local loop_device partition mount_dir config_file overlay_prefix overlay overlay_directory default_overlays overlays_line sd_node sd_bus_width requirement required_node required_width kernel_family root_partition_number
 	local boot_configuration extlinux_fdt expected_start_sector actual_start_sector property_spec property_node property_name property_expected installed_spec installed_path installed_sha256
-	local dtb_sha256 alias_spec alias_name alias_expected
+	local dtb_sha256 alias_spec alias_name alias_expected forbidden_fragment
 	dtb_relative="$(board_field "${board}" dtb)"
 	dtb_basename="$(basename "${dtb_relative}")"
 	mount_dir="$(mktemp -d "${repo_dir}/.tmp/${verify_tmp_prefix}.XXXXXX")"
@@ -495,6 +502,12 @@ validate_mounted_image() (
 		[[ "$(sha256sum "${dtb_path}" | cut -d' ' -f1)" == "${dtb_sha256}" ]] ||
 			fail "${board} 的 DTB 雜湊不符"
 	fi
+	while IFS= read -r forbidden_fragment; do
+		[[ -n "${forbidden_fragment}" ]] || continue
+		if grep -aFq -- "${forbidden_fragment}" "${dtb_path}"; then
+			fail "${board} 的 DTB 仍含禁止的供應商開機路徑：${forbidden_fragment}"
+		fi
+	done < <(board_values "${board}" dtb_forbidden_binary_strings)
 	model="$(fdtget -t s "${dtb_path}" / model)"
 	[[ "${model}" == "$(board_field "${board}" model)" ]] || fail "${board} 的 DTB model 不符"
 	compatible="$(fdtget -t s "${dtb_path}" / compatible)"

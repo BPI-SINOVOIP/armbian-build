@@ -94,7 +94,6 @@
 - `bananapir3`：缺少建議欄位 `BOARD_MAINTAINER`。
 - `bananapir3mini`：缺少建議欄位 `BOARD_MAINTAINER`。
 - `bananapir4`：缺少建議欄位 `BOARD_MAINTAINER`。
-- `bananapir4lite`：缺少建議欄位 `BOARD_MAINTAINER`。
 - `bananapir4pro`：缺少建議欄位 `BOARD_MAINTAINER`。
 - `bananapir64`：缺少建議欄位 `BOARD_MAINTAINER`。
 - `bananapism10`：缺少建議欄位 `KERNEL_TEST_TARGET`。
