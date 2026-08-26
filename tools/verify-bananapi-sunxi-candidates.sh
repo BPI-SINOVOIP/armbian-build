@@ -186,7 +186,7 @@ package_installed() {
 }
 
 validate_boot_area() {
-	local image=$1 board=$2 signature partition_table partition_name partition_json actual_table actual_name
+	local image=$1 board=$2 signature partition_table partition_name partition_json actual_table actual_name required_partitions
 	signature="$(od -An -tx1 -j510 -N2 "${image}" | awk '{ print $1 $2 }')"
 	[[ "${signature}" == 55aa ]] || fail "${image} 缺少 DOS MBR 簽章"
 	partition_table="$(board_field_optional "${board}" partition_table)"
@@ -199,6 +199,35 @@ validate_boot_area() {
 		fail "${board} 的分割表不是 ${partition_table}"
 	if [[ "${partition_table}" == gpt ]]; then
 		sgdisk -v "${image}" >/dev/null || fail "${board} 的 GPT 結構或 CRC 不完整"
+	fi
+	required_partitions="$(board_field_optional "${board}" required_partitions)"
+	if [[ -n "${required_partitions}" ]]; then
+		python3 - "${required_partitions}" "${partition_json}" <<'PY'
+import json
+import sys
+
+specifications = sys.argv[1].split()
+table = json.loads(sys.argv[2])["partitiontable"]
+partitions = table.get("partitions", [])
+if len(partitions) < len(specifications):
+    raise SystemExit("GPT 分割區數量不足")
+for index, specification in enumerate(specifications):
+    number, name, start, size = specification.split(":", 3)
+    if int(number) != index + 1:
+        raise SystemExit(f"GPT 分割區編號不連續：{specification}")
+    partition = partitions[index]
+    actual = (
+        partition.get("name", ""),
+        str(partition.get("start", "")),
+        str(partition.get("size", "")),
+    )
+    expected = (name, start, size)
+    for field, actual_value, expected_value in zip(("名稱", "起點", "大小"), actual, expected):
+        if expected_value != "*" and actual_value != expected_value:
+            raise SystemExit(
+                f"GPT 第 {number} 分割區{field}不符：預期 {expected_value}，實際 {actual_value}"
+            )
+PY
 	fi
 	partition_name="$(board_field_optional "${board}" partition_name)"
 	if [[ -n "${partition_name}" ]]; then
@@ -392,7 +421,7 @@ validate_installed_uboot() {
 validate_mounted_image() (
 	local image=$1 board=$2
 	local dtb_relative dtb_basename dtb_path fdt_override model compatible expected node node_status option_line option value package
-	local loop_device partition mount_dir config_file overlay_prefix overlay overlay_directory default_overlays overlays_line sd_node sd_bus_width requirement required_node required_width kernel_family
+	local loop_device partition mount_dir config_file overlay_prefix overlay overlay_directory default_overlays overlays_line sd_node sd_bus_width requirement required_node required_width kernel_family root_partition_number
 	local boot_configuration extlinux_fdt expected_start_sector actual_start_sector property_spec property_node property_name property_expected installed_spec installed_path installed_sha256
 	local dtb_sha256 alias_spec alias_name alias_expected
 	dtb_relative="$(board_field "${board}" dtb)"
@@ -406,7 +435,10 @@ validate_mounted_image() (
 	}
 	trap cleanup_image EXIT
 	udevadm settle
-	partition="$(lsblk -nrpo NAME,TYPE "${loop_device}" | awk '$2 == "part" { print $1; exit }')"
+	root_partition_number="$(board_field_optional "${board}" root_partition_number)"
+	[[ -n "${root_partition_number}" ]] || root_partition_number=1
+	[[ "${root_partition_number}" =~ ^[1-9][0-9]*$ ]] || fail "${board} 的根分割區編號無效"
+	partition="$(lsblk -nrpo NAME,TYPE "${loop_device}" | awk -v wanted="${root_partition_number}" '$2 == "part" { count++ } count == wanted { print $1; exit }')"
 	[[ -n "${partition}" ]] || fail "${board} 沒有可掛載分割區"
 	expected_start_sector="$(board_field_optional "${board}" partition_start_sector)"
 	if [[ -n "${expected_start_sector}" ]]; then
