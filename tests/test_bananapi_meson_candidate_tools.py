@@ -16,9 +16,8 @@ ROOT = Path(__file__).resolve().parents[1]
 CONFIG = ROOT / "config/validation/bananapi-meson-current.json"
 BUILD_SCRIPT = ROOT / "tools/build-bananapi-meson-candidates.sh"
 VERIFY_SCRIPT = ROOT / "tools/verify-bananapi-meson-candidates.sh"
-ISOLATED_RUNNER = (
-    ROOT / "tools/run-bananapi-meson-candidates-isolated-cache.sh"
-)
+ISOLATED_RUNNER = ROOT / "tools/run-bananapi-candidates-isolated-cache.sh"
+MESON_RUNNER = ROOT / "tools/run-bananapi-meson-candidates-isolated-cache.sh"
 EXPECTED_BOARDS = {
     "bananapim5",
     "bananapim2pro",
@@ -129,6 +128,11 @@ class BananaPiMesonCandidateToolTests(unittest.TestCase):
         ):
             with self.subTest(required=required):
                 self.assertIn(required, text)
+
+    def test_meson_runner_keeps_the_compatible_entrypoint(self) -> None:
+        text = MESON_RUNNER.read_text()
+        self.assertIn("build-bananapi-meson-candidates.sh", text)
+        self.assertIn("run-bananapi-candidates-isolated-cache.sh", text)
 
     def test_build_tool_rejects_non_reference_release(self) -> None:
         environment = os.environ.copy()

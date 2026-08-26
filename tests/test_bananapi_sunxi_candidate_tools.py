@@ -15,7 +15,7 @@ ROOT = Path(__file__).resolve().parents[1]
 CONFIG = ROOT / "config/validation/bananapi-sunxi-a20-current.json"
 BUILD_SCRIPT = ROOT / "tools/build-bananapi-sunxi-candidates.sh"
 VERIFY_SCRIPT = ROOT / "tools/verify-bananapi-sunxi-candidates.sh"
-ISOLATED_RUNNER = ROOT / "tools/run-bananapi-meson-candidates-isolated-cache.sh"
+ISOLATED_RUNNER = ROOT / "tools/run-bananapi-candidates-isolated-cache.sh"
 EXPECTED_BOARDS = {"bananapi", "bananapipro"}
 
 
