@@ -36,3 +36,10 @@
 ## 實機後續
 
 L2 閉合後仍需另行使用 1 GiB 與 2 GiB BPI-M4、UART、SD 與 eMMC 完成冷啟動、網路、USB host／gadget、HDMI、音訊、Wi-Fi、Bluetooth、PCIe、40-pin、重啟、關機與壓力測試。`bluecore.audio`、六個輔助處理器啟動段與內含工具鏈的再散布授權未閉合前，不得對外發布組合映像。
+
+## 執行紀錄
+
+- 來源提交 `5c74ad23df329dd476ab9e97dc43345093d907da` 已推送，525 項全案回歸通過。
+- 第一次正式建置在進入 U-Boot 編譯前拒絕；原因是 `run_host_command_logged` 會將含空白的 `sed` 表達式重新交給 shell 解析，原參數未保留引號。
+- 修正改用 Bash `${parameter@Q}` 對 `sed` 表達式與路徑完整引號化；建置器仍會二次驗證產生的 `root=LABEL=BPI-ROOT rw rootfstype=ext4 rootwait`。
+- 修正後新增實際經過記錄執行器二次 shell 解析的行為測試；M4、W2 元件唯讀驗證與 526 項全案回歸均通過。

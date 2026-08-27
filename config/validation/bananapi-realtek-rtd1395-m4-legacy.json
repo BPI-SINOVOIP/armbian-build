@@ -13,7 +13,7 @@
   "full_rootfs_image_built": false,
   "realtek_family_inventory": {
     "shared_legacy_include": "config/sources/families/include/realtek_bpi_legacy_common.inc",
-    "shared_legacy_include_modified": false,
+    "shared_legacy_include_modified": true,
     "legacy_boards": {
       "bananapim4": {
         "soc": "RTD1395",
@@ -35,7 +35,7 @@
     }
   },
   "source_date_epoch": 1711071187,
-  "source_contract_projection_sha256": "3cc4a311f7f05219b8773322165d40509552527d2302ee444294eaf71488fa63",
+  "source_contract_projection_sha256": "c54393e9e5b70c2e17e6b789ab16fa15ba48301076b28bec3fb50aba63778a72",
   "linux_source": "https://github.com/BPI-SINOVOIP/BPI-M4-bsp.git",
   "linux_ref": "commit:25f5b88ec4ba34029f964693dc34028b26e6c67c",
   "linux_commit": "25f5b88ec4ba34029f964693dc34028b26e6c67c",

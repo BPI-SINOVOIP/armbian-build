@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 import subprocess
+import tempfile
 import unittest
 
 
@@ -72,7 +73,7 @@ class BananaPiRealtekM4CandidateTests(unittest.TestCase):
 
     def test_realtek_family_scope_is_explicit(self) -> None:
         inventory = self.config["realtek_family_inventory"]
-        self.assertFalse(inventory["shared_legacy_include_modified"])
+        self.assertTrue(inventory["shared_legacy_include_modified"])
         self.assertEqual(inventory["legacy_boards"]["bananapim4"]["soc"], "RTD1395")
         self.assertEqual(inventory["legacy_boards"]["bananapiw2"]["soc"], "RTD1296")
         self.assertEqual(
@@ -130,6 +131,48 @@ class BananaPiRealtekM4CandidateTests(unittest.TestCase):
         self.assertEqual(self.policy["root_filesystem_label"], "BPI-ROOT")
         self.assertEqual(self.policy["uboot_write_offset_bytes"], 40960)
         self.assertEqual(self.policy["partition_table"], "msdos")
+        self.assertIn('local sed_expression="s|^root=.*|root=LABEL=', self.family_text)
+        self.assertIn('"${sed_expression@Q}" "${vendor_uenv@Q}"', self.family_text)
+
+    def test_root_label_survives_logged_runner_shell_reparse(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            work = Path(temporary_directory) / "path with space's quote"
+            uenv = work / "rtk-pack/rtk/bpi-m4/configs/default/linux/uEnv.txt"
+            uenv.parent.mkdir(parents=True)
+            uenv.write_text(
+                "root=/dev/mmcblk0p2 rw rootfstype=ext4 rootwait\n",
+                encoding="utf-8",
+            )
+            probe = r'''
+set -euo pipefail
+REALTEK_BPI_VENDOR_BOARD=bpi-m4
+REALTEK_BPI_BSP_REPO=https://example.invalid/bpi-m4.git
+REALTEK_BPI_BSP_BRANCH=commit:0000000000000000000000000000000000000000
+REALTEK_BPI_BSP_BOARD=bpi-m4
+REALTEK_BPI_ROOT_LABEL=BPI-ROOT
+BOARD=bananapim4
+BRANCH=legacy
+LINUXFAMILY=realtek-rtd139x-bpi
+SRC=/tmp
+BOOTCONFIG=rtd1395_bananapi_defconfig
+CREATE_PATCHES=yes
+source "$1"
+display_alert() { :; }
+patch_uboot_target() { :; }
+exit_with_error() { return 1; }
+run_host_command_logged() {
+    /usr/bin/env bash -e -o pipefail -c "$*"
+}
+cd "$2"
+build_custom_uboot__realtek_bpi_legacy_bsp
+grep -Fqx 'root=LABEL=BPI-ROOT rw rootfstype=ext4 rootwait' \
+    rtk-pack/rtk/bpi-m4/configs/default/linux/uEnv.txt
+'''
+            subprocess.run(
+                ["bash", "-c", probe, "bash", str(FAMILY), str(work)],
+                check=True,
+                cwd=ROOT,
+            )
 
     def test_both_dtb_variants_have_explicit_identity(self) -> None:
         patch_text = KERNEL_PATCHES[1].read_text(encoding="utf-8")

@@ -8,7 +8,7 @@
 
 板卡仍保留 `.wip`。目前中央登錄的有效證據仍是 `L1`；機器契約已進入 L2 正式重建過渡狀態，但在來自已推送乾淨提交的完整 IMG、XZ 與唯讀驗證閉合前，不得將中央狀態提升為 `L2`，也不得宣稱可開機、介面可用或硬體通過。既有 2026 年 5 月映像只用來校準分割布局，不作本候選證據。
 
-本候選修改 M4 板級設定、M4 專用修補、機器契約、文件、工具及測試；共用家族建置邏輯不變。共用唯讀映像守門器只新增 `realtek_bpi_uenv` 模式，用來核對 FAT vendor boot 目錄、雙 DTB、根標籤與不封裝 defconfig 的舊 U-Boot 契約。共用 `/media/pi/SMCI/armbian/bpi-v26.2.1/cache` 只作 OverlayFS 的唯讀 lower，不直接修改。
+本候選修改 M4 板級設定、M4 專用修補、機器契約、文件、工具及測試。共用 Realtek legacy include 只修正根標籤 `sed` 參數交給記錄執行器時的 shell 引號，不改變 M4 與 W2 預期的根標籤內容。共用唯讀映像守門器新增 `realtek_bpi_uenv` 模式，用來核對 FAT vendor boot 目錄、雙 DTB、根標籤與不封裝 defconfig 的舊 U-Boot 契約。共用 `/media/pi/SMCI/armbian/bpi-v26.2.1/cache` 只作 OverlayFS 的唯讀 lower，不直接修改。
 
 ## Realtek 家族邊界
 
@@ -16,7 +16,7 @@
 - `bananapiw2` 使用 RTD1296 與 `realtek-rtd129x-bpi`，和 M4 共用 `config/sources/families/include/realtek_bpi_legacy_common.inc`，本次只確認共用關係，不引用 W2 元件作 M4 證據。
 - `xpressreal-t3` 使用 RTD1619B 與獨立的 `realtek-rtd1619b` 整合，來源為不同的 U-Boot 2024.01 與 Linux 6.6 路徑，不屬 M4 legacy 候選。
 
-共用 legacy include 維持基準版本，沒有在本分支修改。M4 最佳化只落在板檔與 M4 專用修補，避免把尚未驗證的儲存、啟動或周邊假設擴散到 W2。
+共用 legacy include 只有 shell 引號修正，沒有將 M4 的儲存、啟動或周邊假設擴散到 W2；W2 日後仍必須使用自身契約重驗。
 
 ## 固定來源
 

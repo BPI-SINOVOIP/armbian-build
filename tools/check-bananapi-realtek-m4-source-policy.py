@@ -173,7 +173,7 @@ def main() -> None:
         family["shared_legacy_include"] == "config/sources/families/include/realtek_bpi_legacy_common.inc",
         "Realtek legacy 共用入口不符",
     )
-    require(family["shared_legacy_include_modified"] is False, "本候選不得修改 Realtek 共用入口")
+    require(family["shared_legacy_include_modified"] is True, "Realtek 共用入口的安全引號修正未登錄")
     require(family["legacy_boards"]["bananapim4"]["soc"] == "RTD1395", "M4 SoC 盤點不符")
     require(family["legacy_boards"]["bananapiw2"]["soc"] == "RTD1296", "W2 SoC 盤點不符")
     require(family["separate_family_boards"]["xpressreal-t3"]["soc"] == "RTD1619B", "RTD1619B 盤點不符")
