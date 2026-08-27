@@ -1,6 +1,6 @@
 # Banana Pi 全系列最佳化盤點
 
-更新日期：2026-08-27
+更新日期：2026-08-28
 
 **歷史快照，非現行發布狀態。** 本報告只呈現指定日期已納入 Git 的證據，不得取代最新候選狀態、實機驗證或對外發布核准。
 
@@ -10,7 +10,7 @@
 
 - 板卡總數：48。
 - 正式 `.conf`：12；社群 `.csc`：14；開發中 `.wip`：21；停止支援 `.eos`：1。
-- 證據分布：L0 3；L1 5；L2 40；L3 0；L4 0；L5 0。
+- 證據分布：L0 3；L1 4；L2 41；L3 0；L4 0；L5 0。
 - 未取得實機的板卡最高只能標示 L2；目前沒有板卡達到完整 L3／L4／L5 門檻。
 
 ## 板卡矩陣
@@ -56,7 +56,7 @@
 | `bananapir2` | 社群 | Banana Pi R2 | `mt7623` | `armhf` | `current` | 是 | D | L2 軟體候選 | 取得五個啟動載荷的再散布核准，再完成 eMMC、網路、SATA、USB 與交換器實測 |
 | `bananapir2pro` | 社群 | Banana Pi R2 Pro | `rockchip64` | `arm64` | `current,edge` | 是 | D | L2 軟體候選 | 完成 SD／eMMC、雙網路、SATA、PCIe、USB、顯示、媒體與 40-pin 實測 |
 | `bananapir3` | 開發中 | Banana Pi R3 | `filogic` | `arm64` | `current` | 否 | D | L2 軟體候選 | 完成 SD／NOR、雙網路、SFP、SATA、PCIe、USB、無線與長時間流量實測 |
-| `bananapir3mini` | 開發中 | Banana Pi R3 Mini | `filogic` | `arm64` | `current` | 否 | D | L1 元件可建置 | 收緊 eMMC user-area／boot0 契約並重建 L2，再做空白 eMMC 冷啟動實測 |
+| `bananapir3mini` | 開發中 | Banana Pi R3 Mini | `filogic` | `arm64` | `current` | 否 | D | L2 軟體候選 | 釐清 ATF MT7986 DRAM 物件再散布範圍，再做空白 eMMC 的 boot0 分離寫入、boot partition enable、冷啟動及網路功能實測 |
 | `bananapir4` | 社群 | Banana Pi R4 | `filogic` | `arm64` | `current` | 否 | D | L2 軟體候選 | 完成 SD／NOR、2.5GbE、SFP、PCIe、USB、Wi-Fi 7 與長時間流量實測 |
 | `bananapir4lite` | 開發中 | Banana Pi R4 Lite | `filogic` | `arm64` | `current` | 否 | D | L2 軟體候選 | 先驗證候選核心穩定性，再完成 2.5GbE、SFP、PCIe、USB 與長時間流量實測 |
 | `bananapir4pro` | 開發中 | Banana Pi R4 Pro 8X | `filogic` | `arm64` | `current` | 否 | D | L2 軟體候選 | 完成候選核心與預編譯 ATF 邊界審查，再做網路、SFP、PCIe、USB 與無線實測 |

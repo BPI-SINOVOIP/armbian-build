@@ -1,6 +1,6 @@
 {
   "schema_version": 2,
-  "updated": "2026-08-27",
+  "updated": "2026-08-28",
   "batches": {
     "A": [
       "bananapim5",
@@ -233,8 +233,8 @@
       "basis": "2026-05-21 的五個發行版、CLI／XFCE 共十組歷史映像已通過 SHA-256、XZ 串流、日誌與說明契約；Trixie CLI 另通過唯讀分割區、EOS 身分、核心、initrd 與 DTB 內容守門。這是歷史／封存 L2，不是本次新建置、現行支援或實機證據"
     },
     "bananapir3mini": {
-      "level": "L1",
-      "basis": "固定 Linux、U-Boot、ATF、firmware、MT76 與板級參考來源已核對；R3 Mini Linux DTB、U-Boot、BL2、BL31 與 FIP 已重建並鎖定雜湊；尚未建立完整 rootfs 映像或驗證 eMMC boot0 冷啟動"
+      "level": "L2",
+      "basis": "Debian Trixie current 精簡 CLI 已由固定提交乾淨重建；IMG、單一 XZ 串流、GPT、唯讀 ext4 根檔案系統、DTB、核心與 U-Boot 設定、BL2、FIP、套件及固定 firmware 來源守門全部通過；仍未驗證空白 eMMC boot0 冷啟動與實機功能"
     },
     "bananapir4pro": {
       "level": "L2",
@@ -303,7 +303,7 @@
     "bananapim6": "固定最終核心設定與專有啟動載荷邊界，完成來源一致的完整映像守門",
     "bananapir2": "取得五個啟動載荷的再散布核准，再完成 eMMC、網路、SATA、USB 與交換器實測",
     "bananapir1": "保留最後可用封存基線與安全限制，不列入新發布",
-    "bananapir3mini": "收緊 eMMC user-area／boot0 契約並重建 L2，再做空白 eMMC 冷啟動實測",
+    "bananapir3mini": "釐清 ATF MT7986 DRAM 物件再散布範圍，再做空白 eMMC 的 boot0 分離寫入、boot partition enable、冷啟動及網路功能實測",
     "bananapir4pro": "完成候選核心與預編譯 ATF 邊界審查，再做網路、SFP、PCIe、USB 與無線實測",
     "bananapiw3": "完成冷啟動、儲存、網路、無線、顯示、GPU、VPU、RGA 與 NPU 實測",
     "bpi-ai2n": "完成 SD 冷啟動、雙網路、USB、PCIe、顯示、相機、Panfrost、DRP-AI 與 40-pin 實測",

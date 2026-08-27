@@ -38,7 +38,7 @@ bananapir1	eos	Banana Pi R1	sun7i	armhf	current,edge	current	yes	G	L2	Lamobo_R1_
 bananapir2	csc	Banana Pi R2	mt7623	armhf	current	current	yes	D	L2	mt7623n_bpir2_defconfig	mt7623n-bananapi-bpi-r2.dtb		取得五個啟動載荷的再散布核准，再完成 eMMC、網路、SATA、USB 與交換器實測
 bananapir2pro	csc	Banana Pi R2 Pro	rockchip64	arm64	current,edge	current	yes	D	L2	bpi-r2-pro-rk3568_defconfig	rockchip/rk3568-bpi-r2-pro.dtb		完成 SD／eMMC、雙網路、SATA、PCIe、USB、顯示、媒體與 40-pin 實測
 bananapir3	wip	Banana Pi R3	filogic	arm64	current	current	no	D	L2	mt7986a_bpir3_sd_defconfig	mediatek/mt7986a-bananapi-bpi-r3-sd-nor.dtb	BOARD_MAINTAINER	完成 SD／NOR、雙網路、SFP、SATA、PCIe、USB、無線與長時間流量實測
-bananapir3mini	wip	Banana Pi R3 Mini	filogic	arm64	current	current	no	D	L1	mt7986a_bpir3mini_emmc_defconfig	mediatek/mt7986a-bananapi-bpi-r3-mini.dtb		收緊 eMMC user-area／boot0 契約並重建 L2，再做空白 eMMC 冷啟動實測
+bananapir3mini	wip	Banana Pi R3 Mini	filogic	arm64	current	current	no	D	L2	mt7986a_bpir3mini_emmc_defconfig	mediatek/mt7986a-bananapi-bpi-r3-mini.dtb		釐清 ATF MT7986 DRAM 物件再散布範圍，再做空白 eMMC 的 boot0 分離寫入、boot partition enable、冷啟動及網路功能實測
 bananapir4	csc	Banana Pi R4	filogic	arm64	current	current	no	D	L2	mt7988a_bananapi_bpi-r4-sdmmc_defconfig	mediatek/mt7988a-bananapi-bpi-r4-sd.dtb	BOARD_MAINTAINER	完成 SD／NOR、2.5GbE、SFP、PCIe、USB、Wi-Fi 7 與長時間流量實測
 bananapir4lite	wip	Banana Pi R4 Lite	filogic	arm64	current	current	no	D	L2	mt7987a_bananapi_bpi-r4-lite-sdmmc_defconfig	mediatek/mt7987a-bananapi-bpi-r4-lite-sd.dtb		先驗證候選核心穩定性，再完成 2.5GbE、SFP、PCIe、USB 與長時間流量實測
 bananapir4pro	wip	Banana Pi R4 Pro 8X	filogic	arm64	current	current	no	D	L2	mt7988a_bananapi_bpi-r4-pro-8x-sdmmc_defconfig	mediatek/mt7988a-bananapi-bpi-r4-pro-8x-sd.dtb		完成候選核心與預編譯 ATF 邊界審查，再做網路、SFP、PCIe、USB 與無線實測
