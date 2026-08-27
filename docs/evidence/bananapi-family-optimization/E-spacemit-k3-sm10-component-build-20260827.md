@@ -7,6 +7,10 @@
 官方 SDK 容器和 SDK GCC 15.2 編譯。過程沒有執行 Armbian 完整映像建置，
 也沒有建立 Buildroot rootfs。
 
+依全系列稽核定義，本次結果為 `L1 元件候選`；只有完整映像通過唯讀內容守門
+後才能升級為 `L2`。元件證據另由
+`tools/verify-bananapi-spacemit-k3-sm10-components.sh` 對照契約重新核對。
+
 這項結果只證明固定來源可編譯及專屬 Linux DTB 可產生，不代表 SM10 已通過
 實機啟動、周邊功能、安全開機或公開散布核准。板檔仍維持 `.wip`，
 `public_release_allowed=false`、`hardware_claims_allowed=false`。
@@ -37,6 +41,10 @@ JOBS=16 ./tools/build-bananapi-spacemit-k3-sm10-components.sh
 out-of-tree 輸出；U-Boot 使用隔離來源複本內建置，原因是 SpacemiT 的板級
 `config.mk` 只有此模式會產生 FSBL、bootinfo、FIT 與預設環境。原始 SDK
 工作樹沒有被元件建置修改。
+
+可保存或交接的證據只包含 `artifacts/`、`source-evidence/`、
+`COMPONENTS.tsv` 與 `COMPONENT_STATUS.json`。建置暫存的 `src/` 可能繼承 SDK
+私鑰，不得複製到證據輸出或對外散布。
 
 ## 元件產物
 

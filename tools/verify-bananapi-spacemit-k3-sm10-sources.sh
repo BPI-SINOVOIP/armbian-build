@@ -7,7 +7,7 @@ sdk_root="${SDK_ROOT:-/media/pi/SMCI/bpi/bpi-sm10/sdk/k3-buildroot-sdk-1.0}"
 output_root="${SOURCE_EVIDENCE_ROOT:-${repo_dir}/.tmp/bananapi-sm10-source-evidence}"
 policy_checker="${repo_dir}/tools/check-bananapi-spacemit-k3-sm10-policy.py"
 
-for command in git python3 repo sha256sum stat; do
+for command in git python3 readlink repo sha256sum stat; do
 	command -v "${command}" >/dev/null || {
 		echo "缺少必要命令：${command}" >&2
 		exit 1
@@ -22,9 +22,12 @@ fail() {
 [[ -f "${config}" ]] || fail "找不到驗證契約：${config}"
 [[ -x "${policy_checker}" ]] || fail "找不到政策檢查器：${policy_checker}"
 [[ -d "${sdk_root}/.repo" ]] || fail "找不到完整 repo SDK：${sdk_root}"
+config="$(readlink -f "${config}")"
+sdk_root="$(readlink -f "${sdk_root}")"
 "${policy_checker}" "${config}"
 
 mkdir -p "${output_root}"
+output_root="$(readlink -f "${output_root}")"
 manifest="${output_root}/resolved-manifest.xml"
 (cd "${sdk_root}" && repo manifest -r -o "${manifest}")
 

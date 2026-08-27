@@ -80,6 +80,7 @@ EEPROM 內容或實機節點對照，可證明 SM10 與 K3-CoM260 參考載板�
 | `tools/check-bananapi-spacemit-k3-sm10-policy.py` | 強制 `.wip`、固定來源與禁止發布／硬體聲明 | 已執行 |
 | `tools/verify-bananapi-spacemit-k3-sm10-sources.sh` | 重建固定 revision manifest 並核對 20 個專案 | 已執行 |
 | `tools/build-bananapi-spacemit-k3-sm10-components.sh` | 在官方 SDK 容器內只編譯 Linux、U-Boot、OpenSBI | 已執行 |
+| `tools/verify-bananapi-spacemit-k3-sm10-components.sh` | 核對元件清單、產物雜湊、組態、來源證據與私鑰隔離 | 已執行 |
 | `tools/build-bananapi-spacemit-k3-sm10-candidate.sh` | 日後建立受控的單一 Trixie CLI 候選映像 | 未執行，避免建立 rootfs |
 | `tools/run-bananapi-spacemit-k3-sm10-candidate-isolated-cache.sh` | 以 OverlayFS 隔離 Armbian 共用快取後呼叫候選建置器 | 未執行，避免建立 rootfs |
 | `tools/verify-bananapi-spacemit-k3-sm10-candidate.sh` | 只讀 loop 掛載 IMG，核對 GPT、檔案、DTB、來源與原始位移載荷 | 未執行，因本次沒有 IMG |

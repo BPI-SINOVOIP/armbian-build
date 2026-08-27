@@ -1,12 +1,86 @@
 {
   "schema_version": 1,
   "candidate_branch": "current",
-  "candidate_level": "實驗性 L2 軟體候選",
+  "candidate_level": "L1 元件候選",
   "candidate_scope": "僅限內部驗證",
   "public_release_allowed": false,
   "public_distribution_approved": false,
   "hardware_claims_allowed": false,
   "secure_boot_claim_allowed": false,
+  "component_build_completed": true,
+  "full_rootfs_image_built": false,
+  "component_build_evidence": {
+    "implementation_commit": "a511c357d1120a18d608cbc798e60f172463c031",
+    "completed_utc": "2026-08-27T03:42:30Z",
+    "manifest_sha256": "14e1f7f8c4ad59493a6a6bae3da9fd8bdeb9bf9e12c5c9156539c1d84ced4931",
+    "status_sha256": "b53d4a5203cc74db77fcf18a388577fb4aa233a4802a2f0d89fdab3a7f17247b",
+    "source_status_sha256": "96460b26ea3ea1a01b5f544acc9b420dd17221274bdbd63ad31f241e126abe75",
+    "source_projects_sha256": "2d7100d2d8c9f9882ab61b5ac84c2de05fff0ca5e6820c61aefaa445ea69e49b",
+    "container_image_id": "sha256:9531810450c5953c0675515ab7deee5d9634966e8abccfcd5ea60f8aee94e335",
+    "compiler_binary_sha256": "7357a5d6e1197ca48da9db6e8a2f7a09784f3b6bb9163acfe213d191ee30bb2d",
+    "artifacts": {
+      "Image": {
+        "component": "linux",
+        "source_revision": "27275ec8240cc49af3a525b8bc325d9b5029fb81",
+        "size": 33821184,
+        "sha256": "7fe1aee56d5b9d49c494e03855d1245262bd13a20c89d5f31af2a8f733c4665d"
+      },
+      "k3-bananapi-sm10.dtb": {
+        "component": "linux",
+        "source_revision": "27275ec8240cc49af3a525b8bc325d9b5029fb81",
+        "size": 142075,
+        "sha256": "a74520d979cc62fcdb12dfddd97c7968900109df6a33ae34c1489d87a34695ba"
+      },
+      "linux.config": {
+        "component": "linux",
+        "source_revision": "27275ec8240cc49af3a525b8bc325d9b5029fb81",
+        "size": 305343,
+        "sha256": "549dd138a5205d71cca5620c4d54f5905d6305dfa502ca80c4d7a319d20d34c5"
+      },
+      "FSBL.bin": {
+        "component": "uboot",
+        "source_revision": "1b10c8119e1a9b5451a4236f6b384f7c91eed1e2",
+        "size": 449984,
+        "sha256": "9a40d9d27ec8de79a38ece8ad00de96d29d45b507c43f46f3bf45589c50034d7"
+      },
+      "bootinfo_block.bin": {
+        "component": "uboot",
+        "source_revision": "1b10c8119e1a9b5451a4236f6b384f7c91eed1e2",
+        "size": 80,
+        "sha256": "8cde21b4e18f0b72f2c98b5ae686dfe8ef75d8dc641393e97b52cf318b294e4b"
+      },
+      "u-boot.itb": {
+        "component": "uboot",
+        "source_revision": "1b10c8119e1a9b5451a4236f6b384f7c91eed1e2",
+        "size": 2134494,
+        "sha256": "f7560b4afd523b484b7f950f038485dea7c28cbf5f9c225290d940ca4461ae13"
+      },
+      "u-boot-env-default.bin": {
+        "component": "uboot",
+        "source_revision": "1b10c8119e1a9b5451a4236f6b384f7c91eed1e2",
+        "size": 16384,
+        "sha256": "e73d2c0c44c6b00019a4c6190e8e7d03a37be710a20fa76b887bdd098fa1ff51"
+      },
+      "uboot.config": {
+        "component": "uboot",
+        "source_revision": "1b10c8119e1a9b5451a4236f6b384f7c91eed1e2",
+        "size": 56594,
+        "sha256": "ffb244d91c6d9ce59f20eeabee15f0391e5d6417548856cacd4720d87cf69b9c"
+      },
+      "fw_dynamic.itb": {
+        "component": "opensbi",
+        "source_revision": "3e2f9efc9660b8d5fcae4e0b6495f306d5c64078",
+        "size": 272223,
+        "sha256": "37dcca0ad696c88900c316a5bab289f1e3e55f09836cb22a4f09c1faa93be86d"
+      },
+      "fw_dynamic.elf": {
+        "component": "opensbi",
+        "source_revision": "3e2f9efc9660b8d5fcae4e0b6495f306d5c64078",
+        "size": 1531736,
+        "sha256": "2820c5181c7925ec5df26dc26d52acbad9ce64393162186f83bb5b9af15fc482"
+      }
+    }
+  },
   "kernel_family": "spacemit-k3-bpi",
   "kernel_version": "6.18",
   "linux_source": "https://github.com/spacemit-com/linux-6.18.git",

@@ -18,6 +18,7 @@ CONFIG = ROOT / "config/validation/bananapi-spacemit-k3-sm10-current.json"
 POLICY = ROOT / "tools/check-bananapi-spacemit-k3-sm10-policy.py"
 SOURCE_VERIFY = ROOT / "tools/verify-bananapi-spacemit-k3-sm10-sources.sh"
 COMPONENT_BUILD = ROOT / "tools/build-bananapi-spacemit-k3-sm10-components.sh"
+COMPONENT_VERIFY = ROOT / "tools/verify-bananapi-spacemit-k3-sm10-components.sh"
 IMAGE_BUILD = ROOT / "tools/build-bananapi-spacemit-k3-sm10-candidate.sh"
 IMAGE_RUNNER = (
     ROOT / "tools/run-bananapi-spacemit-k3-sm10-candidate-isolated-cache.sh"
@@ -75,6 +76,9 @@ class BananaPiSpacemitK3Sm10CandidateTests(unittest.TestCase):
 
     def test_candidate_remains_wip_and_blocks_unsupported_claims(self) -> None:
         self.assertTrue(BOARD.name.endswith(".wip"))
+        self.assertEqual(self.config["candidate_level"], "L1 元件候選")
+        self.assertTrue(self.config["component_build_completed"])
+        self.assertFalse(self.config["full_rootfs_image_built"])
         for field in (
             "public_release_allowed",
             "public_distribution_approved",
@@ -169,6 +173,7 @@ class BananaPiSpacemitK3Sm10CandidateTests(unittest.TestCase):
     def test_dedicated_tools_keep_component_and_full_image_paths_separate(self) -> None:
         source_text = SOURCE_VERIFY.read_text(encoding="utf-8")
         component_text = COMPONENT_BUILD.read_text(encoding="utf-8")
+        component_verify_text = COMPONENT_VERIFY.read_text(encoding="utf-8")
         build_text = IMAGE_BUILD.read_text(encoding="utf-8")
         runner_text = IMAGE_RUNNER.read_text(encoding="utf-8")
         verify_text = IMAGE_VERIFY.read_text(encoding="utf-8")
@@ -181,11 +186,31 @@ class BananaPiSpacemitK3Sm10CandidateTests(unittest.TestCase):
         self.assertIn("COMPONENT_CONTAINER_IMAGE_ID", component_text)
         self.assertIn('"dtb_compatible": compatible.split()', component_text)
         self.assertNotIn("./compile.sh", component_text)
+        self.assertIn("component_build_evidence", component_verify_text)
+        self.assertIn("不得包含 SDK 原始碼或私鑰", component_verify_text)
         self.assertIn("build-bananapi-sunxi-candidates.sh", build_text)
         self.assertIn("bananapi-spacemit-k3-sm10-cache-overlay", runner_text)
         self.assertIn("losetup --find --show --partscan --read-only", verify_text)
         self.assertIn("mount -o ro", verify_text)
         self.assertIn("SDK 私鑰", verify_text)
+
+    def test_component_evidence_locks_actual_outputs(self) -> None:
+        evidence = self.config["component_build_evidence"]
+        self.assertEqual(
+            evidence["implementation_commit"],
+            "a511c357d1120a18d608cbc798e60f172463c031",
+        )
+        self.assertRegex(evidence["manifest_sha256"], r"^[0-9a-f]{64}$")
+        self.assertRegex(evidence["status_sha256"], r"^[0-9a-f]{64}$")
+        self.assertEqual(len(evidence["artifacts"]), 10)
+        self.assertEqual(
+            evidence["artifacts"]["k3-bananapi-sm10.dtb"]["sha256"],
+            "a74520d979cc62fcdb12dfddd97c7968900109df6a33ae34c1489d87a34695ba",
+        )
+        for artifact, values in evidence["artifacts"].items():
+            with self.subTest(artifact=artifact):
+                self.assertGreater(values["size"], 0)
+                self.assertRegex(values["sha256"], r"^[0-9a-f]{64}$")
 
 
 if __name__ == "__main__":
