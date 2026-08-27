@@ -1,0 +1,421 @@
+{
+  "schema_version": 1,
+  "candidate_level": "L1 元件候選",
+  "candidate_scope": "internal-component-only",
+  "candidate_branch": "legacy",
+  "kernel_family": "realtek-rtd139x-bpi",
+  "realtek_family_inventory": {
+    "shared_legacy_include": "config/sources/families/include/realtek_bpi_legacy_common.inc",
+    "shared_legacy_include_modified": false,
+    "legacy_boards": {
+      "bananapim4": {
+        "soc": "RTD1395",
+        "family": "realtek-rtd139x-bpi",
+        "audit_scope": "本候選完整來源與元件稽核"
+      },
+      "bananapiw2": {
+        "soc": "RTD1296",
+        "family": "realtek-rtd129x-bpi",
+        "audit_scope": "僅盤點共用關係；不納入本候選證據"
+      }
+    },
+    "separate_family_boards": {
+      "xpressreal-t3": {
+        "soc": "RTD1619B",
+        "family": "realtek-rtd1619b",
+        "audit_scope": "獨立 U-Boot 與 Linux 整合；不納入本候選證據"
+      }
+    }
+  },
+  "source_date_epoch": 1711071187,
+  "linux_source": "https://github.com/BPI-SINOVOIP/BPI-M4-bsp.git",
+  "linux_ref": "commit:25f5b88ec4ba34029f964693dc34028b26e6c67c",
+  "linux_commit": "25f5b88ec4ba34029f964693dc34028b26e6c67c",
+  "uboot_source": "https://github.com/BPI-SINOVOIP/BPI-M4-bsp.git",
+  "uboot_ref": "commit:25f5b88ec4ba34029f964693dc34028b26e6c67c",
+  "uboot_commit": "25f5b88ec4ba34029f964693dc34028b26e6c67c",
+  "firmware_source": "https://github.com/armbian/firmware",
+  "firmware_ref": "commit:f50a2a21bcdb77a562b3976930c5c6b521a1df08",
+  "firmware_commit": "f50a2a21bcdb77a562b3976930c5c6b521a1df08",
+  "atf_applicable": false,
+  "atf_reason": "此 vendor 啟動路徑不另行建置 TF-A；安全功能與啟動鏈仍含缺少可審計來源的二進位資產",
+  "linux_license_path": "linux-rtk/COPYING",
+  "linux_license_sha256": "af8067302947c01fd9eee72befa54c7e3ef8a48fecde7fd71277f2290b2bf0f7",
+  "uboot_license_path": "u-boot-rtk/Licenses/README",
+  "uboot_license_sha256": "8ce570d60d1fbc0ab8ea22e31e06bd7c9773953ba58fd7075d4e5690de9a08d0",
+  "documentation_evidence": [
+    {
+      "purpose": "Banana Pi BPI-M4 官方產品頁本機快照",
+      "local_path": "/media/pi/SMCI/bpi/doc/banana-pi-doc-benchmark-20260621/downloads/banana-pi-board-pages/batch2_20260621/BPI-DOC-0019_Banana-Pi-BPI-M4.html",
+      "sha256": "981ec43b5db327fc91067f9b9dbb813963f1d8d26f42f97d283c13611ed1471d",
+      "included_in_candidate": false,
+      "redistribution_license_verified": false
+    },
+    {
+      "purpose": "Banana Pi BPI-M4 V1.0 原理圖本機證據",
+      "local_path": "/media/pi/SMCI/bpi/doc/banana-pi-doc-benchmark-20260621/downloads/m4-dxf-schematic-p222-20260622/BPi-M4-V1_0-schematic-diagram-20190614.pdf",
+      "sha256": "dcbf4db5e52824cf3abeb5b562338b0d1b9e594b18aa8140f99a46b388d3e76a",
+      "included_in_candidate": false,
+      "redistribution_license_verified": false
+    },
+    {
+      "purpose": "BPI-WiringPi2 M4 腳位對照來源",
+      "local_path": "/media/pi/SMCI/bpi/BPI-WiringPi2/wiringPi/board/bpi-m4.h",
+      "sha256": "696440e82473796a44307621617cc130cd0753f27b8bc2132565b701ad40bf2b",
+      "included_in_candidate": false,
+      "redistribution_license_verified": false
+    },
+    {
+      "purpose": "RPi.GPIO M4 腳位對照來源",
+      "local_path": "/media/pi/SMCI/bpi/RPi.GPIO/source/bpi-m4.h",
+      "sha256": "7f3b0442fff3730d61a959e9161fed8c6d9a572ba0a73fef123b72b7013d3c7b",
+      "included_in_candidate": false,
+      "redistribution_license_verified": false
+    },
+    {
+      "purpose": "BPI-M4 主線 DTS 存在性基線；不代表開機或周邊驗證",
+      "local_path": "/media/pi/SMCI/bpi/doc/banana-pi-doc-benchmark-20260621/reports/bpi_m4_mainline_dts_baseline_20260623.md",
+      "sha256": "73fc2b4220d6338ef8e7bfea25c5b4d9a19867f1d669f5184eb959a030206ee4",
+      "included_in_candidate": false,
+      "redistribution_license_verified": false
+    }
+  ],
+  "build_toolchain": {
+    "path": "toolchains/gcc-linaro-7.3.1-2018.05-x86_64_aarch64-linux-gnu/bin/aarch64-linux-gnu-gcc",
+    "size": 981408,
+    "sha256": "f6bf7da30e302b1566c9afded7c2a0a32611b83b9e2bab0a4a9208aee420b02c",
+    "manifest_path": "toolchains/gcc-linaro-7.3.1-2018.05-x86_64_aarch64-linux-gnu/gcc-linaro-7.3.1-2018.05-linux-manifest.txt",
+    "manifest_sha256": "3b5e646b365885aa853becf622671757b578c8499626cd64fe706a9379e15b84",
+    "included_in_runtime_image": false,
+    "redistribution_license_verified": false
+  },
+  "conditional_unlinked_prebuilt_assets": {
+    "u-boot-rtk/static_lib/libefuse.a.32": {
+      "purpose": "Makefile 條件引用的 U-Boot eFuse 預建庫；本次 AArch64 連結命令未納入",
+      "size": 21668,
+      "sha256": "d4f2409e059808218fae3d442ec0265d1df42083df24389bfc4dc602183244d3",
+      "source_build_available": false,
+      "included_in_candidate_binary": false,
+      "redistribution_license_verified": false
+    },
+    "u-boot-rtk/static_lib/libsha1_util.a.32": {
+      "purpose": "Makefile 條件引用的 U-Boot SHA1 預建庫；本次 AArch64 連結命令未納入",
+      "size": 8884,
+      "sha256": "df48723ffb4442bb63d8c8e44f1af0dd56290a20e7d49aee1df8338f7c51fb4e",
+      "source_build_available": false,
+      "included_in_candidate_binary": false,
+      "redistribution_license_verified": false
+    },
+    "u-boot-rtk/static_lib/libsecurity.a.32": {
+      "purpose": "Makefile 條件引用的 U-Boot 安全功能預建庫；本次 AArch64 連結命令未納入",
+      "size": 22948,
+      "sha256": "f20288c80a8c6af5109587b90397259a59888b0313c269e66f5024566887cf27",
+      "source_build_available": false,
+      "included_in_candidate_binary": false,
+      "redistribution_license_verified": false
+    },
+    "u-boot-rtk/static_lib/libkeyset.a.32": {
+      "purpose": "Makefile 條件引用的 U-Boot 金鑰處理預建庫；本次 AArch64 連結命令未納入",
+      "size": 37244,
+      "sha256": "6b68dd3d0f203739271dc2316e50e29c7a42bdfa40b293dc795b907ce4a0d743",
+      "source_build_available": false,
+      "included_in_candidate_binary": false,
+      "redistribution_license_verified": false
+    }
+  },
+  "linked_unrebuilt_source_assets": {
+    "u-boot-rtk/image/rtd1395/a_entry.img": {
+      "purpose": "RTD1395 輔助處理器啟動段",
+      "size": 108,
+      "sha256": "250fb292485f13e99bc4c1345a9f2981e468e50e6cd4cadf8960022f13f20af8",
+      "source_files_available": true,
+      "build_toolchain_pinned": false,
+      "rebuilt_in_candidate": false,
+      "included_in_candidate_binary": true,
+      "redistribution_license_verified": false
+    },
+    "u-boot-rtk/image/rtd1395/exc_dispatch.img": {
+      "purpose": "RTD1395 例外分派啟動段",
+      "size": 60,
+      "sha256": "19291706cad998dd82f4708869b4939ff204410cdb5e0c831d0e59017c513bcb",
+      "source_files_available": true,
+      "build_toolchain_pinned": false,
+      "rebuilt_in_candidate": false,
+      "included_in_candidate_binary": true,
+      "redistribution_license_verified": false
+    },
+    "u-boot-rtk/image/rtd1395/exc_redirect.img": {
+      "purpose": "RTD1395 例外轉向啟動段",
+      "size": 68,
+      "sha256": "eebde75179e23ee58769891e5b749a69c77256c7274960f86765b7f986c4a641",
+      "source_files_available": true,
+      "build_toolchain_pinned": false,
+      "rebuilt_in_candidate": false,
+      "included_in_candidate_binary": true,
+      "redistribution_license_verified": false
+    },
+    "u-boot-rtk/image/rtd1395/isr_video.img": {
+      "purpose": "RTD1395 視訊中斷啟動段",
+      "size": 536,
+      "sha256": "a0d128301c71f9605ab0c687ee4646185e93b062e5ebbe55bb8bd537327a75c6",
+      "source_files_available": true,
+      "build_toolchain_pinned": false,
+      "rebuilt_in_candidate": false,
+      "included_in_candidate_binary": true,
+      "redistribution_license_verified": false
+    },
+    "u-boot-rtk/image/rtd1395/ros_bootvector.img": {
+      "purpose": "RTD1395 輔助處理器啟動向量",
+      "size": 64,
+      "sha256": "8d4556e41b858953d79be50296b37cf16f75ff9f92d7a9569e8e804c5048a9cd",
+      "source_files_available": true,
+      "build_toolchain_pinned": false,
+      "rebuilt_in_candidate": false,
+      "included_in_candidate_binary": true,
+      "redistribution_license_verified": false
+    },
+    "u-boot-rtk/image/rtd1395/v_entry.img": {
+      "purpose": "RTD1395 輔助處理器入口啟動段",
+      "size": 448,
+      "sha256": "b1c335ecf998635faa3f91af2514aa0ca28b2af5e12b664937b37f60da1f45b6",
+      "source_files_available": true,
+      "build_toolchain_pinned": false,
+      "rebuilt_in_candidate": false,
+      "included_in_candidate_binary": true,
+      "redistribution_license_verified": false
+    }
+  },
+  "runtime_prebuilt_assets": {
+    "rtk-pack/rtk/bpi-m4/configs/default/linux/bluecore.audio": {
+      "purpose": "Realtek 音訊 DSP 執行載荷",
+      "size": 4319769,
+      "sha256": "774832da0a18c1ba837ff41926502fb8444e83397562c7170c71435416aff4df",
+      "source_build_available": false,
+      "redistribution_license_verified": false
+    }
+  },
+  "excluded_source_assets": {
+    "rtk-pack/rtk/bpi-m4/configs/default/linux/bluecore.audio.enc.A01": {
+      "purpose": "原廠加密音訊載荷；元件候選不封裝",
+      "size": 4320328,
+      "sha256": "93d13a4dc9f5f055c24641fd0b29c987ffb56e5de13c93e96a80d9085d75cf13",
+      "included_in_candidate": false,
+      "redistribution_license_verified": false
+    },
+    "rtk-pack/rtk/bpi-m4/configs/default/linux/u-boot-bpi-m4.bin": {
+      "purpose": "原廠預建 U-Boot；由隔離來源建置產物取代",
+      "size": 551808,
+      "sha256": "7bb1a0310090aac90dcac9a6e792120639039fbdebd4a4789a9770c63df60915",
+      "included_in_candidate": false,
+      "redistribution_license_verified": false
+    },
+    "rtk-pack/rtk/bpi-m4/configs/default/linux/uInitrd": {
+      "purpose": "原廠舊版 initramfs；完整 Armbian 映像應自行產生",
+      "size": 7533416,
+      "sha256": "c92ebc053b255ea7ea51ce625ea5cadd60c3246fbd962a304625ce6c81b53455",
+      "included_in_candidate": false,
+      "redistribution_license_verified": false
+    },
+    "u-boot-rtk/static_lib/libobfuseLib.a.32": {
+      "purpose": "一般候選未連結的混淆功能預建庫",
+      "size": 34976,
+      "sha256": "4c3c974bb0419881880ea58c7f0bd1487941fd6ef5fcd5c8362a35b1207dca63",
+      "included_in_candidate": false,
+      "redistribution_license_verified": false
+    }
+  },
+  "component_build_evidence": {
+    "completed_utc": "2026-08-27T05:37:35Z",
+    "source_revision": "25f5b88ec4ba34029f964693dc34028b26e6c67c",
+    "local_evidence_root": "output/components/2026.08/bananapi-realtek-rtd1395-m4-legacy",
+    "full_rootfs_image_built": false,
+    "uboot_rebuild_hash_match": true,
+    "uboot_rebuild_sha256": "5e91ddf0140820c1f091ac40d8af0daa180bf1e45b851231269e4df7be3e7003",
+    "toolchain_gcc_sha256": "f6bf7da30e302b1566c9afded7c2a0a32611b83b9e2bab0a4a9208aee420b02c",
+    "work_size_kib": 9581700,
+    "uboot_warning_count": 0,
+    "linux_warning_count": 230,
+    "linked_unrebuilt_source_asset_count": 6,
+    "conditional_unlinked_prebuilt_asset_count": 4,
+    "artifacts": {
+      "u-boot.bin": {
+        "size": 521968,
+        "sha256": "5e91ddf0140820c1f091ac40d8af0daa180bf1e45b851231269e4df7be3e7003"
+      },
+      "uEnv.txt": {
+        "size": 1910,
+        "sha256": "29ff514fddf833f2d98629f73e970565176d2f8646dc506b0f88f72ce612b2d4"
+      },
+      "bluecore.audio": {
+        "size": 4319769,
+        "sha256": "774832da0a18c1ba837ff41926502fb8444e83397562c7170c71435416aff4df"
+      },
+      "Image": {
+        "size": 22989312,
+        "sha256": "0d92d435adb9538198f5e813ae386dc0c2ac16fde5ed9e6cdd37aa23101e6b8e"
+      },
+      "rtd-1395-bananapi-m4-1GB.dtb": {
+        "size": 36337,
+        "sha256": "f56d717d71fae35597ba78933dfe29f7e9eed7910aee68c3fb1a22afe084293c"
+      },
+      "rtd-1395-bananapi-m4-2GB.dtb": {
+        "size": 36478,
+        "sha256": "8886772d273898612bd60dd4ae9ecba7ab73663ab3b27b8a996e6f9b9567a461"
+      },
+      "linux.config": {
+        "size": 149697,
+        "sha256": "8ffa22ffd51e6ce989dc7c36c176d383da478a712d3deab51a9098dab2da1fbe"
+      },
+      "linux-modules.tar.xz": {
+        "size": 66977464,
+        "sha256": "216c10fb1f36fbe2b261ad08e7c11abc16915a95f44356f7889c9ace0c89f5fb"
+      },
+      "u-boot-link-command.txt": {
+        "size": 1662,
+        "sha256": "c9a75c6d6fee30fad7c0c301aead212f360c6fb7467ded29021faf42794cb0d9"
+      }
+    }
+  },
+  "full_image_built": false,
+  "component_build_completed": true,
+  "hardware_validated": false,
+  "public_release_allowed": false,
+  "hardware_claims_allowed": false,
+  "common_packages": [
+    "alsa-utils",
+    "ethtool",
+    "evtest",
+    "fio",
+    "gpiod",
+    "hdparm",
+    "i2c-tools",
+    "iperf3",
+    "iproute2",
+    "mmc-utils",
+    "pciutils",
+    "python3-libgpiod",
+    "python3-spidev",
+    "smartmontools",
+    "spi-tools",
+    "stress-ng",
+    "usb-modeswitch",
+    "usbutils",
+    "v4l-utils"
+  ],
+  "common_kernel_options": {
+    "CONFIG_ATA": "y",
+    "CONFIG_BT": "y",
+    "CONFIG_CFG80211": "y",
+    "CONFIG_CONFIGFS_FS": "y",
+    "CONFIG_DRM": "y",
+    "CONFIG_EXT4_FS": "y",
+    "CONFIG_GPIOLIB": "y",
+    "CONFIG_GPIO_SYSFS": "y",
+    "CONFIG_HDMI": "y",
+    "CONFIG_I2C_CHARDEV": "y",
+    "CONFIG_I2C_RTK": "y",
+    "CONFIG_MAC80211": "y",
+    "CONFIG_MMC": "y",
+    "CONFIG_MMC_BLOCK": "y",
+    "CONFIG_PCI": "y",
+    "CONFIG_PWM": "y",
+    "CONFIG_R8168": "y",
+    "CONFIG_RFKILL": "y",
+    "CONFIG_RTL8821CU": "m",
+    "CONFIG_RTK_HDMITX": "y",
+    "CONFIG_RTK_MCP": "y",
+    "CONFIG_RTK_THERMAL": "y",
+    "CONFIG_RTK_WATCHDOG": "y",
+    "CONFIG_SCSI": "y",
+    "CONFIG_SPI_SPIDEV": "y",
+    "CONFIG_THERMAL": "y",
+    "CONFIG_USB": "y",
+    "CONFIG_USB_CONFIGFS": "y",
+    "CONFIG_USB_CONFIGFS_ECM": "y",
+    "CONFIG_USB_CONFIGFS_MASS_STORAGE": "y",
+    "CONFIG_USB_DWC3_DUAL_ROLE": "y",
+    "CONFIG_USB_GADGET": "y",
+    "CONFIG_USB_STORAGE": "y",
+    "CONFIG_VFAT_FS": "y",
+    "CONFIG_WATCHDOG": "y"
+  },
+  "boards": {
+    "bananapim4": {
+      "family": "realtek-rtd139x-bpi",
+      "model": "Banana Pi BPI-M4",
+      "compatible": [
+        "bananapi,bpi-m4",
+        "realtek,rtd1395"
+      ],
+      "memory_variants_mib": [1024, 2048],
+      "dtbs": [
+        "rtd-1395-bananapi-m4-1GB.dtb",
+        "rtd-1395-bananapi-m4-2GB.dtb"
+      ],
+      "uboot_version": "2015.07",
+      "uboot_defconfig": "rtd1395_bananapi_defconfig",
+      "uboot_write_offset_bytes": 40960,
+      "partition_table": "msdos",
+      "boot_partition_number": 1,
+      "root_partition_number": 2,
+      "root_filesystem_label": "BPI-ROOT",
+      "boot_filesystem": "fat",
+      "vendor_boot_directory": "bananapi/bpi-m4/linux",
+      "boot_assets": [
+        "uEnv.txt",
+        "bluecore.audio",
+        "uImage",
+        "uInitrd",
+        "rtd-1395-bananapi-m4-1GB.dtb",
+        "rtd-1395-bananapi-m4-2GB.dtb"
+      ],
+      "storage_contract": {
+        "sd_node": "/sdmmc@98010400",
+        "emmc_node": "/emmc@98012000",
+        "pcie_node": "/pcie@9804E000",
+        "media_hardware_validated": false
+      },
+      "network_contract": {
+        "gmac_node": "/gmac@98016000",
+        "driver_config": "CONFIG_R8168=y",
+        "physical_port_count_claimed": false,
+        "hardware_validated": false
+      },
+      "usb_contract": {
+        "declared_usb_2_port_count": 4,
+        "declared_type_c_port_count": 1,
+        "dual_role_kernel_config": "CONFIG_USB_DWC3_DUAL_ROLE=y",
+        "mass_storage_kernel_config": "CONFIG_USB_CONFIGFS_MASS_STORAGE=y",
+        "hardware_role_validated": false
+      },
+      "display_contract": {
+        "hdmi_tx_node": "/hdmitx@9800D000",
+        "gpu_node": "/gpu@981d0000",
+        "gpu_compatible": ["arm,mali-470", "arm,mali-utgard"],
+        "kernel_gpu_driver_verified": false,
+        "userspace_acceleration_verified": false,
+        "video_decode_verified": false,
+        "hardware_validated": false
+      },
+      "io_contract": {
+        "header_pin_count": 40,
+        "i2c_nodes": [
+          "/i2c@0x98007D00",
+          "/i2c@0x98007C00",
+          "/i2c@0x9801BB00"
+        ],
+        "spi_node": "/spi@9801BD00",
+        "pwm_node": "/pwm@980070D0",
+        "uart_nodes": ["/serial1@9801B200", "/serial2@9801B400"],
+        "pin_mapping_hardware_validated": false
+      },
+      "wireless_contract": {
+        "declared_module_family": "RTL8821",
+        "wifi_driver_config": "CONFIG_RTL8821CU=m",
+        "bluetooth_kernel_config": "CONFIG_BT=y",
+        "firmware_presence_verified": false,
+        "hardware_validated": false
+      }
+    }
+  }
+}

@@ -176,6 +176,10 @@
       "level": "L0",
       "basis": "已辨識 UNC_LINUX_RLS_25C_W26.07.2 的 95 個 repo 專案提交、41 組本機追蹤差異、6,751 個未分類未追蹤檔與歷史 secure PAC；來源尚不可重放，授權、簽署鏈、完整映像與實機證據均未封閉"
     },
+    "bananapim4": {
+      "level": "L1",
+      "basis": "固定 Realtek RTD1395 BSP、firmware 與工具鏈來源已核對；U-Boot 兩次重建雜湊一致，Linux Image、1／2 GiB DTB、517 個模組與來源證據已保存並通過唯讀守門；尚無完整 rootfs／IMG、授權閉合或實機證據"
+    },
     "bananapim4super": {
       "level": "L0",
       "basis": "只建立 ArmSoM Sige3 donor 的固定來源與禁止聲明契約；官方 SYN43752 無線模組及 PCIe lane 資料和 donor 描述尚未閉合，未建立 M4 Super 專屬 DTS、U-Boot、元件或映像"
@@ -307,6 +311,11 @@
       "仍採 secure PAC 與 Yocto 混合流程，尚非一般 Armbian SD 首階段啟動",
       "41 組追蹤差異尚未整理成可重放修補集，55 個專案共有 6,751 個未分類未追蹤檔，Unisoc 遠端也需要授權",
       "chipram、簽署與 PAC 工具、modem、Trusty、GPU、NPU、VPU、GNSS 及其他預建內容缺少完整逐項再散布授權"
+    ],
+    "bananapim4": [
+      "bluecore.audio、六個未以固定 MIPS 工具鏈重建的啟動影像及內含工具鏈缺少完整逐項再散布授權",
+      "Linux 4.9.119 與 U-Boot 2015.07 已停止受維護，核心建置仍有 230 個 vendor 警告",
+      "尚無完整 Armbian 映像，以及 SD、eMMC、網路、USB、HDMI、GPU、VPU、無線與 40-pin 實機證據"
     ]
   }
 }

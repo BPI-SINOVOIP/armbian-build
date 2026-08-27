@@ -8,7 +8,7 @@
 
 - 板卡總數：48。
 - 正式 `.conf`：12；社群 `.csc`：14；開發中 `.wip`：21；停止支援 `.eos`：1。
-- 證據分布：L0 6；L1 8；L2 32；L3 1；L4 1；L5 0。
+- 證據分布：L0 5；L1 9；L2 32；L3 1；L4 1；L5 0。
 - 未取得實機的板卡最高只能標示 L2；目前 L3／L4 只沿用已納入 Git 的 M4 Zero／M4 Berry 證據。
 
 ## 板卡矩陣
@@ -38,7 +38,7 @@
 | `bananapim2ultra` | 社群 | Banana Pi M2 Ultra | `sun8i` | `armhf` | `current,edge,legacy` | 是 | C | L2 軟體候選 | 執行 UART、啟動與基本周邊實機驗證 |
 | `bananapim2zero` | 社群 | Banana Pi M2 Zero | `sun8i` | `armhf` | `current,edge,legacy` | 是 | C | L2 軟體候選 | 執行 UART、啟動與基本周邊實機驗證 |
 | `bananapim3` | 社群 | Banana Pi M3 | `sun8i` | `armhf` | `current,edge,legacy` | 是 | C | L2 軟體候選 | 執行 UART、啟動與基本周邊實機驗證 |
-| `bananapim4` | 開發中 | Banana Pi M4 | `realtek-rtd139x-bpi` | `arm64` | `legacy` | 是 | F | L0 已盤點 | 確認建置鏈並建立 Trixie CLI 候選 |
+| `bananapim4` | 開發中 | Banana Pi M4 | `realtek-rtd139x-bpi` | `arm64` | `legacy` | 是 | F | L1 可建置 | 完成映像內容與來源同一性守門 |
 | `bananapim4berry` | 正式 | BananaPi M4 Berry | `sun50iw9-bpi` | `arm64` | `current,edge` | 是 | R | L4 功能最佳化 | 補齊樣本數、冷啟動與發布門檻 |
 | `bananapim4super` | 開發中 | Banana Pi M4 Super（ArmSoM Sige3 donor-only） | `rk35xx` | `arm64` | `vendor` | 是 | E | L0 已盤點 | 確認建置鏈並建立 Trixie CLI 候選 |
 | `bananapim4zero` | 正式 | BananaPi BPI-M4-Zero | `sun50iw9-bpi` | `arm64` | `current,edge` | 是 | R | L3 實機候選 | 補齊加速、I/O、多板與長時間測試 |
@@ -77,6 +77,9 @@
 - `bananapim2c`：仍採 secure PAC 與 Yocto 混合流程，尚非一般 Armbian SD 首階段啟動。
 - `bananapim2c`：41 組追蹤差異尚未整理成可重放修補集，55 個專案共有 6,751 個未分類未追蹤檔，Unisoc 遠端也需要授權。
 - `bananapim2c`：chipram、簽署與 PAC 工具、modem、Trusty、GPU、NPU、VPU、GNSS 及其他預建內容缺少完整逐項再散布授權。
+- `bananapim4`：bluecore.audio、六個未以固定 MIPS 工具鏈重建的啟動影像及內含工具鏈缺少完整逐項再散布授權。
+- `bananapim4`：Linux 4.9.119 與 U-Boot 2015.07 已停止受維護，核心建置仍有 230 個 vendor 警告。
+- `bananapim4`：尚無完整 Armbian 映像，以及 SD、eMMC、網路、USB、HDMI、GPU、VPU、無線與 40-pin 實機證據。
 - `bananapim4super`：官方 M4 Super 無線模組為 SYN43752，Sige3 donor DTS 為 AP6275S；同一官方頁面的 PCIe 規格也同時出現 x1 與 x2，必須取得原理圖及 PCB 資料後才能建立真正板級描述。
 - `bananapim6`：TZK 與 U-Boot sm.bin 缺少原始碼、重建鏈及逐檔再散布授權，C05 拓撲與實機啟動尚未驗證。
 - `bananapir2`：五個 MediaTek 啟動載荷尚未取得可保存的書面再散布授權。
@@ -96,7 +99,6 @@
 - `bananapim2berry`：缺少建議欄位 `BOARD_MAINTAINER`。
 - `bananapim2magic`：缺少建議欄位 `BOARD_MAINTAINER`。
 - `bananapim2ultra`：缺少建議欄位 `BOARD_MAINTAINER`。
-- `bananapim4`：缺少建議欄位 `BOARD_MAINTAINER`。
 - `bananapim5pro`：缺少建議欄位 `KERNEL_TEST_TARGET`。
 - `bananapip2pro`：缺少建議欄位 `KERNEL_TEST_TARGET`。
 - `bananapip2zero`：缺少建議欄位 `BOARD_MAINTAINER`。
