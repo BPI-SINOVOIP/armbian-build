@@ -23,6 +23,41 @@
   "rootfs_image_built": true,
   "full_image_built": true,
   "full_rootfs_image_built": true,
+  "image_build_evidence": {
+    "status": "complete",
+    "evidence_level": "L2",
+    "full_rootfs_image_built": true,
+    "read_only_content_verified": true,
+    "hardware_tested": false,
+    "source_commit": "ce43f2a3fc93c49e28a4a57ba821b510461b4512",
+    "source_tree": "795fa3fde32fd94d2b41fe9b15c068b4f21263eb",
+    "verifier_commit": "ce43f2a3fc93c49e28a4a57ba821b510461b4512",
+    "source_contract_projection_sha256": "a30c565815b38169f3190253514c6034291d61a0c136ae1244d37eba0f72cb56",
+    "source_date_epoch": 1717001894,
+    "build_validation_config_sha256": "c717302a465e2d179cf4f6113095656672dacec4d0fd79ea9136b51039466880",
+    "verification_config_sha256": "c717302a465e2d179cf4f6113095656672dacec4d0fd79ea9136b51039466880",
+    "candidate_matrix_sha256": "87741b124788ac4db635a3ce0d325d7afb4a727a55a0107e4f2812842b1641d6",
+    "completion_status_sha256": "394e29f16d41b6a10d06a20fecdfc27df9e5b72e21d2deb27d428972a0e1b092",
+    "verification_manifest_sha256": "f80ff8bd179b363e7ae894b7245e0662e8c1fd54b0af84fe1c69dc24393329bf",
+    "uboot_payload_manifest_sha256": "951a791a944e4539c8b505a0bd292c3234e9cc23b5f77b0df3c46bb622e6f474",
+    "final_config_manifest_sha256": "b4a8ba8cd2eda307e232cc4fe5ccd6882ce5c8845db816af530f8475b92453f6",
+    "xz_stream_verified": true,
+    "verified_utc": "2026-08-27T21:55:10Z",
+    "image": {
+      "path": "output/images/2026.08/bananapi-vs680-m6-trixie-legacy-cli/bananapim6/Armbian-unofficial_26.05.0-trunk_Bananapim6_trixie_legacy_5.4.195_minimal.img",
+      "size": 1895825408,
+      "sha256": "83f87457f639daaac2981791cc10a9a8048bb4606466067ab791299d5c959fac"
+    },
+    "archive": {
+      "path": "output/images/2026.08/bananapi-vs680-m6-trixie-legacy-cli/bananapim6/Armbian-unofficial_26.05.0-trunk_Bananapim6_trixie_legacy_5.4.195_minimal.img.xz",
+      "size": 314922984,
+      "sha256": "6e66d1c7312eae214340297955227e637402eea7306f2ee0e3ac5166f8e3e7db"
+    },
+    "linux_dtb": {
+      "path": "synaptics/vs680-a0-bananapi-m6.dtb",
+      "sha256": "52c58e8a1413fd644b812480215350410659371083afa9930684df5752625413"
+    }
+  },
   "component_build_evidence": {
     "source_commit": "b6339cf4a2135e3ad75992f7574889d5ff34a249",
     "completed_utc": "2026-08-27T03:17:12Z",

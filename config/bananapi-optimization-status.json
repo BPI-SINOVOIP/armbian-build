@@ -221,8 +221,8 @@
       "basis": "內部 Trixie legacy minimal CLI 已由隔離快取與固定 BPI-F2S BSP、Armbian firmware 提交完整建置，並通過 XZ、MBR、雙分割區、UUID root、U-Boot 偏移、F2P DTB、核心與 U-Boot 最終設定及禁止 F2S eMMC 資產的唯讀守門；仍未完成實機與再散布授權驗證"
     },
     "bananapim6": {
-      "level": "L1",
-      "basis": "固定 Linux、U-Boot 與 firmware 來源已核對；U-Boot、Linux image、DTB、headers 與 libc-dev 套件已重建並通過獨立內容驗證；尚未建立完整 rootfs 映像或實機驗證"
+      "level": "L2",
+      "basis": "內部 Trixie legacy minimal CLI 已由已推送乾淨提交與隔離快取完整重建，並通過 IMG／XZ 同一性、MBR 雙分割區、唯讀 FAT／ext4、根 UUID、M6 DTB、最終核心與 U-Boot 設定、固定來源及 TZK／U-Boot 受控重疊載荷守門；再散布授權與實機功能仍待驗證"
     },
     "bananapir2": {
       "level": "L2",

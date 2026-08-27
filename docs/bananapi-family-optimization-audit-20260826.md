@@ -10,7 +10,7 @@
 
 - 板卡總數：48。
 - 正式 `.conf`：12；社群 `.csc`：14；開發中 `.wip`：21；停止支援 `.eos`：1。
-- 證據分布：L0 3；L1 4；L2 41；L3 0；L4 0；L5 0。
+- 證據分布：L0 3；L1 3；L2 42；L3 0；L4 0；L5 0。
 - 未取得實機的板卡最高只能標示 L2；目前沒有板卡達到完整 L3／L4／L5 門檻。
 
 ## 板卡矩陣
@@ -46,7 +46,7 @@
 | `bananapim4zero` | 正式 | BananaPi BPI-M4-Zero | `sun50iw9-bpi` | `arm64` | `current,edge` | 是 | R | L2 軟體候選 | 以 2／4 GiB 多批次板完成冷啟動、DDR 壓力、儲存、網路、顯示、媒體與 40-pin 實測 |
 | `bananapim5` | 正式 | Banana Pi M5 | `meson-sm1` | `arm64` | `current,edge` | 是 | A | L2 軟體候選 | 以多家 eMMC 樣品完成冷啟動、重新啟動、關機、HDMI、USB 主機與網路實測 |
 | `bananapim5pro` | 正式 | Banana Pi M5 Pro | `rk35xx` | `arm64` | `edge,vendor` | 是 | B | L2 軟體候選 | 完成儲存、網路、無線、顯示、GPU、VPU、RGA、NPU 與 40-pin 實測 |
-| `bananapim6` | 開發中 | Banana Pi M6 | `vs680` | `arm64` | `legacy` | 是 | F | L1 元件可建置 | 固定最終核心設定與專有啟動載荷邊界，完成來源一致的完整映像守門 |
+| `bananapim6` | 開發中 | Banana Pi M6 | `vs680` | `arm64` | `legacy` | 是 | F | L2 軟體候選 | 固定最終核心設定與專有啟動載荷邊界，完成來源一致的完整映像守門 |
 | `bananapim64` | 社群 | Banana Pi M64 | `sun50iw1` | `arm64` | `current,edge,legacy` | 是 | C | L2 軟體候選 | 完成 SD／eMMC、GbE、Wi-Fi、Bluetooth、USB OTG、HDMI、Lima 與 Cedrus 實測 |
 | `bananapim7` | 正式 | Banana Pi M7 | `rockchip-rk3588` | `arm64` | `current,edge,vendor` | 是 | B | L2 軟體候選 | 完成儲存、網路、顯示、媒體、NPU、USB 與 40-pin 實測 |
 | `bananapip2pro` | 開發中 | Banana Pi P2 Pro | `rockchip64` | `arm64` | `current` | 否 | E | L2 軟體候選 | 完成 SD／eMMC、SDIO、網路、音訊、USB 與 40-pin 實測 |

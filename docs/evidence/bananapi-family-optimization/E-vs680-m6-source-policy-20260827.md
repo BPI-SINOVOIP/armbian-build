@@ -133,6 +133,12 @@ U-Boot 樹含 GPL-2.0 授權文件，Linux 樹依 GPL-2.0 發布；這不會自�
 
 `M6_CALIBRATION.json`、`VERIFICATION_STATUS.json` 與 `M6_MATERIAL_STATUS.json` 已完成原子寫入及二次讀回。L2 重建契約只把候選狀態、完整映像旗標與映像 DTB 證據範圍更新為 L2；不預填尚不存在的 `image_build_evidence`，中央證據也暫時維持 L1。來源契約投影仍為 `a30c565815b38169f3190253514c6034291d61a0c136ae1244d37eba0f72cb56`。此契約推送後必須移除 L1 校準產物，以同一固定輸出位置乾淨重建，再由正式成品產生 L2 物質證據。
 
+### L2 正式映像閉合
+
+已推送重建契約 `ce43f2a3fc93c49e28a4a57ba821b510461b4512` 於 2026-08-28 從空白專用 OverlayFS 上層完成正式重建，主建置耗時 13 分 24 秒。IMG 大小為 `1895825408` 位元組、SHA-256 `83f87457f639daaac2981791cc10a9a8048bb4606466067ab791299d5c959fac`；XZ 大小為 `314922984` 位元組、SHA-256 `6e66d1c7312eae214340297955227e637402eea7306f2ee0e3ac5166f8e3e7db`。
+
+即時物質驗證重新解析 IMG 與 XZ，確認 MBR 雙分割區、`BPI-BOOT`／`BPI-ROOT`、唯一根 UUID、M6 DTB、最終核心與 U-Boot 設定，以及 TZK 前段、完整 U-Boot 與 TZK 尾段均符合契約。`M6_MATERIAL_EVIDENCE.json`、`M6_MATERIAL_STATUS.json` 與 L2 `VERIFICATION_STATUS.json` 已完成原子寫入與二次讀回。validation 現綁定正式成品身分，中央證據提升為 L2；硬體驗證、公開發布與不透明載荷再散布核准仍全部為否。
+
 ### 元件建置證據
 
 2026-08-27 已在獨立 OverlayFS 上層完成 U-Boot 2019.10、Linux 5.4.195 image、DTB、headers 與 libc-dev 元件封裝，完整 IMG 數量為 0。元件來源提交為 `b6339cf4a2135e3ad75992f7574889d5ff34a249`；清單 SHA-256 為 `1eb1cbbe973badcb18c35e46c3e8be147c0fed77a1af940483b41620e153ea7e`，元件驗證狀態 SHA-256 為 `aa1c2474fc1c3d12384ba0b1d6fb13735e360bfc0125d09b817582edcd3268e5`。

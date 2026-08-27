@@ -44,3 +44,7 @@ BPI-M6 已由提交 `9f592fcb5fab6cc3dcfce8ae3a55a8ec7a537956` 完成 L1 完整�
 - `opaque_payload_redistribution_verified=false`
 - 尚無 BPI-M6 實機冷啟動、儲存、網路、USB、顯示、音訊、40-pin、重啟、關機與壓力測試證據。
 - TZK 與 U-Boot `sm.bin` 的原始碼、重建鏈及逐檔再散布授權仍未閉合。
+
+## 正式重建結果
+
+本文件規定的過渡契約已由提交 `ce43f2a3fc93c49e28a4a57ba821b510461b4512` 推送後執行。L1 校準輸出與舊專用 OverlayFS 上層先經掛載、程序、`lsof` 與 Docker 掛載檢查後移除，再由空白專用上層重建。正式 IMG SHA-256 為 `83f87457f639daaac2981791cc10a9a8048bb4606466067ab791299d5c959fac`，XZ SHA-256 為 `6e66d1c7312eae214340297955227e637402eea7306f2ee0e3ac5166f8e3e7db`；L2 即時物質守門與二次讀回均已通過。完整閉合證據記錄於 `I-vs680-m6-L2-build-20260828.md`。
