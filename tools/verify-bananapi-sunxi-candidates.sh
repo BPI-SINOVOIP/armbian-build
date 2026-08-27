@@ -170,7 +170,24 @@ import json
 import sys
 with open(sys.argv[1], encoding="utf-8") as stream:
     value = json.load(stream)["boards"][sys.argv[2]].get(sys.argv[3], "")
-if isinstance(value, list):
+if isinstance(value, bool):
+    print("true" if value else "false")
+elif isinstance(value, list):
+    print(" ".join(str(item) for item in value))
+else:
+    print(value)
+PY
+}
+
+board_nested_field_optional() {
+	python3 - "${validation_config}" "$1" "$2" "$3" <<'PY'
+import json
+import sys
+with open(sys.argv[1], encoding="utf-8") as stream:
+    value = json.load(stream)["boards"][sys.argv[2]].get(sys.argv[3], {}).get(sys.argv[4], "")
+if isinstance(value, bool):
+    print("true" if value else "false")
+elif isinstance(value, list):
     print(" ".join(str(item) for item in value))
 else:
     print(value)
@@ -278,7 +295,7 @@ package_installed() {
 }
 
 validate_boot_area() {
-	local image=$1 board=$2 signature partition_table partition_name partition_json actual_table actual_name required_partitions
+	local image=$1 board=$2 signature partition_table partition_name partition_json actual_table actual_name required_partitions required_partition_types
 	signature="$(od -An -tx1 -j510 -N2 "${image}" | awk '{ print $1 $2 }')"
 	[[ "${signature}" == 55aa ]] || fail "${image} 缺少 DOS MBR 簽章"
 	partition_table="$(board_field_optional "${board}" partition_table)"
@@ -323,6 +340,27 @@ for index, specification in enumerate(specifications):
             )
 PY
 	fi
+	required_partition_types="$(board_field_optional "${board}" required_partition_types)"
+	if [[ -n "${required_partition_types}" ]]; then
+		python3 - "${required_partition_types}" "${partition_json}" <<'PY'
+import json
+import sys
+
+specifications = sys.argv[1].split()
+partitions = json.loads(sys.argv[2])["partitiontable"].get("partitions", [])
+if len(specifications) != len(partitions):
+    raise SystemExit("分割區類型數量與實際分割區不符")
+for index, specification in enumerate(specifications):
+    number, expected_type = specification.split(":", 1)
+    if int(number) != index + 1:
+        raise SystemExit(f"分割區類型編號不連續：{specification}")
+    actual_type = str(partitions[index].get("type", "")).lower().removeprefix("0x")
+    if actual_type != expected_type.lower().removeprefix("0x"):
+        raise SystemExit(
+            f"第 {number} 分割區類型不符：預期 {expected_type}，實際 {actual_type}"
+        )
+PY
+	fi
 	partition_name="$(board_field_optional "${board}" partition_name)"
 	if [[ -n "${partition_name}" ]]; then
 		actual_name="$(printf '%s\n' "${partition_json}" | python3 -c 'import json,sys; p=json.load(sys.stdin)["partitiontable"]["partitions"]; print(p[0].get("name", "") if p else "")')"
@@ -360,8 +398,12 @@ validate_installed_uboot() {
 	local metadata_file md5sums_file payload_size payload_sha256 minimum_spec
 	local rkbin_source rkbin_ref rkbin_revision partition_table partition_start_sector sector_size payload_end first_partition_byte
 	local uboot_target_index uboot_config_file uboot_target_metadata uboot_defconfig option_line target_fragment forbidden_fragment required_fragment
-	local final_uboot_config_sha256 actual_uboot_config_sha256
+	local final_uboot_config_sha256 actual_uboot_config_sha256 exact_size_spec
+	local overlap_allowed earlier_payload later_payload overlap_start write_order
+	local earlier_offset later_offset earlier_size later_size earlier_end later_end prefix_size tail_skip tail_size
 	local uboot_binary_name uboot_binary uboot_version_fallback=no
+	local -a payload_names=()
+	local -A payload_offsets=() payload_paths=() payload_sizes=() payload_hashes=()
 	uboot_tag="$(board_field "${board}" uboot_tag)"
 	uboot_version="$(board_field_optional "${board}" uboot_version)"
 	[[ -n "${uboot_version}" ]] || uboot_version="${uboot_tag#v}"
@@ -508,7 +550,7 @@ validate_installed_uboot() {
 	[[ "${sector_size}" =~ ^[1-9][0-9]*$ ]] || fail "${board} 的邏輯 sector 大小無效"
 	validate_uboot_payload_file() {
 		local checked_payload_name=$1 checked_payload checked_payload_path
-		local checked_expected_md5 checked_actual_md5 checked_size checked_minimum=1
+		local checked_expected_md5 checked_actual_md5 checked_size checked_minimum=1 checked_exact_size=""
 		local checked_sha256_spec checked_expected_sha256="" checked_actual_sha256
 		checked_payload="${uboot_dir}/${checked_payload_name}"
 		checked_payload_path="usr/lib/linux-u-boot-${candidate_branch}-${board}/${checked_payload_name}"
@@ -541,12 +583,25 @@ validate_installed_uboot() {
 		checked_size="$(stat -c %s "${checked_payload}")"
 		(( checked_size >= checked_minimum )) ||
 			fail "${board} 的 U-Boot payload 太小：${checked_payload_name}"
+		for exact_size_spec in $(board_field_optional "${board}" uboot_payload_sizes); do
+			[[ "${exact_size_spec}" =~ ^[^=]+=[1-9][0-9]*$ ]] ||
+				fail "${board} 的 payload 精確大小規格無效"
+			[[ "${exact_size_spec%%=*}" == "${checked_payload_name}" ]] || continue
+			[[ -z "${checked_exact_size}" ]] ||
+				fail "${board} 的 payload 精確大小規格重複：${checked_payload_name}"
+			checked_exact_size="${exact_size_spec#*=}"
+		done
+		if [[ -n "${checked_exact_size}" && "${checked_size}" != "${checked_exact_size}" ]]; then
+			fail "${board} 的 U-Boot payload 精確大小不符：${checked_payload_name}"
+		fi
 		printf '%s\t%s\n' "${checked_payload}" "${checked_size}"
 	}
 	for payload_spec in ${payload_specs}; do
 		[[ "${payload_spec}" =~ ^[^@]+@[0-9]+$ ]] || fail "${board} 的 U-Boot payload 規格不符"
 		payload_name="${payload_spec%@*}"
 		offset="${payload_spec##*@}"
+		[[ -z "${payload_offsets[${payload_name}]+存在}" ]] ||
+			fail "${board} 的 U-Boot payload 名稱重複：${payload_name}"
 		payload="${uboot_dir}/${payload_name}"
 		validate_uboot_payload_file "${payload_name}" >/dev/null
 		payload_size="$(stat -c %s "${payload}")"
@@ -557,12 +612,73 @@ validate_installed_uboot() {
 			(( payload_end <= first_partition_byte )) ||
 				fail "${board} 的 ${payload_name} 超出第一分割區前保留區"
 		fi
-		sudo cmp --silent --ignore-initial="0:${offset}" --bytes="${payload_size}" \
-			"${payload}" "${image}" || fail "${board} 映像 ${offset} 偏移與 ${payload_name} 不同"
-		printf '%s\t%s\timage\t%s\t%s\t%s\n' \
-			"${board}" "${payload_name}" "${offset}" "${payload_size}" "${payload_sha256}" \
-			>>"${output_dir}/UBOOT_PAYLOAD_EVIDENCE.tsv.partial"
+		payload_names+=("${payload_name}")
+		payload_offsets["${payload_name}"]="${offset}"
+		payload_paths["${payload_name}"]="${payload}"
+		payload_sizes["${payload_name}"]="${payload_size}"
+		payload_hashes["${payload_name}"]="${payload_sha256}"
 	done
+	overlap_allowed="$(board_nested_field_optional "${board}" payload_overlap_policy allowed)"
+	case "${overlap_allowed}" in
+	"" | false)
+		for payload_name in "${payload_names[@]}"; do
+			offset="${payload_offsets[${payload_name}]}"
+			payload="${payload_paths[${payload_name}]}"
+			payload_size="${payload_sizes[${payload_name}]}"
+			sudo cmp --silent --ignore-initial="0:${offset}" --bytes="${payload_size}" \
+				"${payload}" "${image}" || fail "${board} 映像 ${offset} 偏移與 ${payload_name} 不同"
+			printf '%s\t%s\timage\t%s\t%s\t%s\n' \
+				"${board}" "${payload_name}" "${offset}" "${payload_size}" \
+				"${payload_hashes[${payload_name}]}" \
+				>>"${output_dir}/UBOOT_PAYLOAD_EVIDENCE.tsv.partial"
+		done
+		;;
+	true)
+		[[ ${#payload_names[@]} -eq 2 ]] || fail "${board} 的受控重疊只允許兩個 payload"
+		earlier_payload="$(board_nested_field_optional "${board}" payload_overlap_policy earlier_payload)"
+		later_payload="$(board_nested_field_optional "${board}" payload_overlap_policy later_payload)"
+		overlap_start="$(board_nested_field_optional "${board}" payload_overlap_policy overlap_starts_at_image_offset)"
+		write_order="$(board_field_optional "${board}" payload_write_order)"
+		[[ -n "${earlier_payload}" && -n "${later_payload}" && "${earlier_payload}" != "${later_payload}" ]] ||
+			fail "${board} 的受控重疊 payload 身分不完整"
+		[[ "${write_order}" == "${earlier_payload} ${later_payload}" ]] ||
+			fail "${board} 的 payload 寫入順序與重疊契約不一致"
+		[[ -n "${payload_offsets[${earlier_payload}]+存在}" &&
+			-n "${payload_offsets[${later_payload}]+存在}" ]] ||
+			fail "${board} 的受控重疊 payload 未完整封裝"
+		earlier_offset="${payload_offsets[${earlier_payload}]}"
+		later_offset="${payload_offsets[${later_payload}]}"
+		earlier_size="${payload_sizes[${earlier_payload}]}"
+		later_size="${payload_sizes[${later_payload}]}"
+		[[ "${overlap_start}" =~ ^[0-9]+$ && "${later_offset}" == "${overlap_start}" ]] ||
+			fail "${board} 的受控重疊起點與後寫 payload 位移不一致"
+		earlier_end=$((earlier_offset + earlier_size))
+		later_end=$((later_offset + later_size))
+		(( earlier_offset < later_offset && later_offset < earlier_end )) ||
+			fail "${board} 的 payload 沒有形成契約指定的重疊"
+		(( later_end < earlier_end )) ||
+			fail "${board} 的後寫 payload 未保留可驗證的先寫 payload 尾段"
+		prefix_size=$((later_offset - earlier_offset))
+		sudo cmp --silent --ignore-initial="0:${earlier_offset}" --bytes="${prefix_size}" \
+			"${payload_paths[${earlier_payload}]}" "${image}" ||
+			fail "${board} 映像的先寫 payload 前段不符"
+		sudo cmp --silent --ignore-initial="0:${later_offset}" --bytes="${later_size}" \
+			"${payload_paths[${later_payload}]}" "${image}" ||
+			fail "${board} 映像的後寫 payload 不符"
+		tail_skip=$((later_end - earlier_offset))
+		tail_size=$((earlier_end - later_end))
+		sudo cmp --silent --ignore-initial="${tail_skip}:${later_end}" --bytes="${tail_size}" \
+			"${payload_paths[${earlier_payload}]}" "${image}" ||
+			fail "${board} 映像的先寫 payload 尾段不符"
+		for payload_name in "${payload_names[@]}"; do
+			printf '%s\t%s\timage-controlled-overlap\t%s\t%s\t%s\n' \
+				"${board}" "${payload_name}" "${payload_offsets[${payload_name}]}" \
+				"${payload_sizes[${payload_name}]}" "${payload_hashes[${payload_name}]}" \
+				>>"${output_dir}/UBOOT_PAYLOAD_EVIDENCE.tsv.partial"
+		done
+		;;
+	*) fail "${board} 的 payload 重疊允許值只接受 true 或 false" ;;
+	esac
 	package_only_payloads="$(board_field_optional "${board}" uboot_package_only_payloads)"
 	for payload_name in ${package_only_payloads}; do
 		validate_uboot_payload_file "${payload_name}" >/dev/null
@@ -578,29 +694,39 @@ validate_installed_uboot() {
 validate_mounted_image() (
 	local image=$1 board=$2
 	local dtb_relative dtb_basename dtb_path fdt_override model compatible expected node node_status option_line option value package
-	local loop_device partition boot_partition mount_dir config_file overlay_prefix overlay overlay_directory default_overlays overlays_line sd_node sd_bus_width requirement required_node required_width kernel_family root_partition_number boot_partition_number
+	local loop_device partition boot_partition mount_dir config_file overlay_prefix overlay overlay_directory default_overlays required_overlays overlays_line sd_node sd_bus_width requirement required_node required_width kernel_family root_partition_number boot_partition_number
 	local boot_configuration extlinux_fdt expected_start_sector actual_start_sector property_spec property_node property_name property_expected installed_manifest installed_spec installed_path installed_sha256
 	local vendor_boot_directory root_uuid final_kernel_config_sha256 actual_kernel_config_sha256 forbidden_asset
+	local boot_partition_label root_partition_label boot_script_source boot_script_source_sha256 boot_script_source_path boot_script_payload
 	local dtb_sha256 alias_spec alias_name alias_expected forbidden_fragment
 	local required_module_path
 	local -a module_matches=() config_files=() config_hashes=()
 	dtb_relative="$(board_field "${board}" dtb)"
 	dtb_basename="$(basename "${dtb_relative}")"
 	mount_dir="$(mktemp -d "${repo_dir}/.tmp/${verify_tmp_prefix}.XXXXXX")"
+	boot_script_payload=""
 	loop_device="$(sudo losetup --find --show --partscan --read-only "${image}")"
 	cleanup_image() {
 		if mountpoint -q "${mount_dir}/boot"; then sudo umount "${mount_dir}/boot"; fi
 		if mountpoint -q "${mount_dir}"; then sudo umount "${mount_dir}"; fi
 		sudo losetup -d "${loop_device}" 2>/dev/null || true
+		[[ -z "${boot_script_payload}" || ! -e "${boot_script_payload}" ]] || unlink "${boot_script_payload}"
 		rmdir "${mount_dir}" 2>/dev/null || true
 	}
 	trap cleanup_image EXIT
 	udevadm settle
+	[[ "$(lsblk -dnro RO "${loop_device}")" == 1 ]] || fail "${board} 的 loop 裝置不是唯讀"
 	root_partition_number="$(board_field_optional "${board}" root_partition_number)"
 	[[ -n "${root_partition_number}" ]] || root_partition_number=1
 	[[ "${root_partition_number}" =~ ^[1-9][0-9]*$ ]] || fail "${board} 的根分割區編號無效"
 	partition="$(lsblk -nrpo NAME,TYPE "${loop_device}" | awk -v wanted="${root_partition_number}" '$2 == "part" { count++ } count == wanted { print $1; exit }')"
 	[[ -n "${partition}" ]] || fail "${board} 沒有可掛載分割區"
+	[[ "$(lsblk -dnro RO "${partition}")" == 1 ]] || fail "${board} 的根分割區不是唯讀"
+	root_partition_label="$(board_field_optional "${board}" root_partition_label)"
+	if [[ -n "${root_partition_label}" ]]; then
+		[[ "$(sudo blkid -s LABEL -o value "${partition}")" == "${root_partition_label}" ]] ||
+			fail "${board} 的根分割區標籤不是 ${root_partition_label}"
+	fi
 	boot_partition_number="$(board_field_optional "${board}" boot_partition_number)"
 	expected_start_sector="$(board_field_optional "${board}" root_partition_start_sector)"
 	if [[ -z "${expected_start_sector}" && -z "${boot_partition_number}" ]]; then
@@ -609,13 +735,19 @@ validate_mounted_image() (
 	if [[ -n "${expected_start_sector}" ]]; then
 		actual_start_sector="$(read_partition_start_sector "${partition}")"
 		[[ "${actual_start_sector}" == "${expected_start_sector}" ]] ||
-			fail "${board} 的第一分割區起點不是 ${expected_start_sector} sector"
+			fail "${board} 的根分割區起點不是 ${expected_start_sector} sector"
 	fi
 	sudo mount -o ro,noload,nosuid,nodev,noexec "${partition}" "${mount_dir}"
 	if [[ -n "${boot_partition_number}" ]]; then
 		[[ "${boot_partition_number}" =~ ^[1-9][0-9]*$ ]] || fail "${board} 的 boot 分割區編號無效"
 		boot_partition="$(lsblk -nrpo NAME,TYPE "${loop_device}" | awk -v wanted="${boot_partition_number}" '$2 == "part" { count++ } count == wanted { print $1; exit }')"
 		[[ -n "${boot_partition}" ]] || fail "${board} 缺少 boot 分割區"
+		[[ "$(lsblk -dnro RO "${boot_partition}")" == 1 ]] || fail "${board} 的 boot 分割區不是唯讀"
+		boot_partition_label="$(board_field_optional "${board}" boot_partition_label)"
+		if [[ -n "${boot_partition_label}" ]]; then
+			[[ "$(sudo blkid -s LABEL -o value "${boot_partition}")" == "${boot_partition_label}" ]] ||
+				fail "${board} 的 boot 分割區標籤不是 ${boot_partition_label}"
+		fi
 		[[ -d "${mount_dir}/boot" ]] || fail "${board} 根檔案系統缺少 /boot 掛載點"
 		sudo mount -o ro,nosuid,nodev,noexec "${boot_partition}" "${mount_dir}/boot"
 	fi
@@ -625,11 +757,16 @@ validate_mounted_image() (
 	[[ -s "${mount_dir}/boot/uInitrd" ]] || fail "${board} 缺少 initrd"
 	boot_configuration="$(board_field_optional "${board}" boot_configuration)"
 	[[ -n "${boot_configuration}" ]] || boot_configuration="armbian_env"
-	overlay_prefix="$(board_field "${board}" overlay_prefix)"
+	if [[ "${boot_configuration}" == separate_fat_armbian_env ]]; then
+		overlay_prefix="$(board_field_optional "${board}" overlay_prefix)"
+	else
+		overlay_prefix="$(board_field "${board}" overlay_prefix)"
+	fi
 	overlay_directory="$(board_field_optional "${board}" overlay_directory)"
 	[[ -n "${overlay_directory}" ]] || overlay_directory="overlay"
 	case "${boot_configuration}" in
 		armbian_env)
+			[[ -n "${overlay_prefix}" ]] || fail "${board} 的 armbian_env 模式缺少 overlay_prefix"
 			[[ -s "${mount_dir}/boot/armbianEnv.txt" ]] || fail "${board} 缺少 armbianEnv.txt"
 			if grep -q '^fdtfile=' "${mount_dir}/boot/armbianEnv.txt"; then
 				fdt_override="$(grep '^fdtfile=' "${mount_dir}/boot/armbianEnv.txt")"
@@ -638,6 +775,53 @@ validate_mounted_image() (
 			fi
 			grep -qx "overlay_prefix=${overlay_prefix}" "${mount_dir}/boot/armbianEnv.txt" ||
 				fail "${board} 的 overlay_prefix 不符"
+			;;
+		separate_fat_armbian_env)
+			command -v dumpimage >/dev/null || fail "${board} 驗證 boot.scr 需要 dumpimage"
+			[[ -n "${boot_partition_number}" ]] || fail "${board} 的獨立 FAT boot 模式缺少 boot 分割區"
+			[[ -s "${mount_dir}/boot/armbianEnv.txt" ]] || fail "${board} 缺少 armbianEnv.txt"
+			[[ "$(grep -Fxc "fdtfile=${dtb_relative}" "${mount_dir}/boot/armbianEnv.txt")" == 1 ]] ||
+				fail "${board} 的 armbianEnv.txt 必須有唯一且精確的 fdtfile"
+			root_uuid="$(sudo blkid -s UUID -o value "${partition}")"
+			[[ -n "${root_uuid}" ]] || fail "${board} 無法讀取根檔案系統 UUID"
+			[[ "$(grep -Fxc "rootdev=UUID=${root_uuid}" "${mount_dir}/boot/armbianEnv.txt")" == 1 ]] ||
+				fail "${board} 的 armbianEnv.txt 未唯一對應第二分割區 UUID"
+			[[ "$(grep -c '^rootdev=' "${mount_dir}/boot/armbianEnv.txt")" == 1 ]] ||
+				fail "${board} 的 armbianEnv.txt 含多重 rootdev"
+			[[ -s "${mount_dir}/boot/boot.scr" ]] || fail "${board} 缺少 boot.scr"
+			boot_script_source="$(board_field "${board}" boot_script_source)"
+			boot_script_source_sha256="$(board_field "${board}" boot_script_source_sha256)"
+			[[ "${boot_script_source}" =~ ^[A-Za-z0-9._/-]+$ && "${boot_script_source}" != *..* ]] ||
+				fail "${board} 的 boot script 來源路徑不合法"
+			boot_script_source_path="$(readlink -f "${repo_dir}/${boot_script_source}")"
+			[[ "${boot_script_source_path}" == "${repo_dir}/"* && -f "${boot_script_source_path}" ]] ||
+				fail "${board} 的 boot script 來源不在倉庫內"
+			[[ "${boot_script_source_sha256}" =~ ^[0-9a-f]{64}$ ]] ||
+				fail "${board} 的 boot script 來源雜湊格式不符"
+			[[ "$(sha256sum "${boot_script_source_path}" | cut -d' ' -f1)" == "${boot_script_source_sha256}" ]] ||
+				fail "${board} 的 boot script 受控來源雜湊不符"
+			boot_script_payload="$(mktemp "${repo_dir}/.tmp/${verify_tmp_prefix}.boot-script.XXXXXX")"
+			dumpimage -T script -p 0 -o "${boot_script_payload}" "${mount_dir}/boot/boot.scr" >/dev/null ||
+				fail "${board} 無法抽取 boot.scr 內容"
+			if ! python3 - "${boot_script_source_path}" "${boot_script_payload}" <<'PY'
+from pathlib import Path
+import sys
+
+source = Path(sys.argv[1]).read_bytes()
+extracted = Path(sys.argv[2]).read_bytes()
+if extracted == source:
+    raise SystemExit(0)
+has_length_prefix = (
+    len(extracted) == len(source) + 8
+    and int.from_bytes(extracted[:4], "big") == len(source)
+    and extracted[4:8] == b"\0" * 4
+    and extracted[8:] == source
+)
+raise SystemExit(0 if has_length_prefix else 1)
+PY
+			then
+				fail "${board} 的 boot.scr 與受控 boot 命令內容不同"
+			fi
 			;;
 		extlinux)
 			extlinux_fdt="$(board_field "${board}" extlinux_fdt)"
@@ -662,14 +846,23 @@ validate_mounted_image() (
 			;;
 		*) fail "${board} 的開機設定類型不支援：${boot_configuration}" ;;
 	esac
-	default_overlays="$(board_field "${board}" default_overlays)"
+	if [[ "${boot_configuration}" == separate_fat_armbian_env ]]; then
+		default_overlays="$(board_field_optional "${board}" default_overlays)"
+	else
+		default_overlays="$(board_field "${board}" default_overlays)"
+	fi
 	if [[ -n "${default_overlays}" ]]; then
 		overlays_line="$(grep '^overlays=' "${mount_dir}/boot/armbianEnv.txt")" || fail "${board} 缺少預設 overlays"
 		for overlay in ${default_overlays}; do
 			[[ " ${overlays_line#overlays=} " == *" ${overlay} "* ]] || fail "${board} 未預設啟用 overlay：${overlay}"
 		done
 	fi
-	for overlay in $(board_field "${board}" required_overlays); do
+	if [[ "${boot_configuration}" == separate_fat_armbian_env ]]; then
+		required_overlays="$(board_field_optional "${board}" required_overlays)"
+	else
+		required_overlays="$(board_field "${board}" required_overlays)"
+	fi
+	for overlay in ${required_overlays}; do
 		[[ -s "${mount_dir}/boot/dtb/${overlay_directory}/${overlay_prefix}-${overlay}.dtbo" ]] ||
 			fail "${board} 缺少 overlay：${overlay_prefix}-${overlay}.dtbo"
 	done

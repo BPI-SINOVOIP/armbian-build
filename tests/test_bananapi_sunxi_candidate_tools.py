@@ -613,6 +613,28 @@ Provides: unavailable-virtual
             with self.subTest(required=required):
                 self.assertIn(required, text)
 
+    def test_verifier_supports_m6_partition_boot_and_overlap_contracts(self) -> None:
+        text = VERIFY_SCRIPT.read_text(encoding="utf-8")
+        for required in (
+            "required_partition_types",
+            "boot_partition_label",
+            "root_partition_label",
+            "separate_fat_armbian_env",
+            "rootdev=UUID=${root_uuid}",
+            "dumpimage -T script -p 0",
+            "boot_script_source_sha256",
+            "payload_overlap_policy",
+            "payload_write_order",
+            "image-controlled-overlap",
+            "先寫 payload 前段",
+            "後寫 payload 不符",
+            "先寫 payload 尾段",
+            "uboot_payload_sizes",
+        ):
+            with self.subTest(required=required):
+                self.assertIn(required, text)
+        self.assertIn("lsblk -dnro RO", text)
+
     def test_verifier_replaces_stale_success_when_required_input_is_missing(self) -> None:
         with tempfile.TemporaryDirectory(dir=ROOT / ".tmp") as directory:
             output = Path(directory)

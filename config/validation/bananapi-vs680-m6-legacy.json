@@ -2,9 +2,13 @@
   "schema_version": 1,
   "candidate_branch": "legacy",
   "kernel_family": "vs680",
+  "candidate_level": "L1 元件候選",
+  "candidate_scope": "internal-component-only",
   "current_evidence_level": "L1",
   "target_evidence_level": "L2",
+  "candidate_public_release_approved": false,
   "public_release_allowed": false,
+  "hardware_validation_complete": false,
   "hardware_claims_allowed": false,
   "component_build_scope": [
     "uboot",
@@ -16,6 +20,8 @@
     "rootfs": "本候選準備任務禁止建立完整 rootfs 映像"
   },
   "component_build_completed": true,
+  "rootfs_image_built": false,
+  "full_image_built": false,
   "full_rootfs_image_built": false,
   "component_build_evidence": {
     "source_commit": "b6339cf4a2135e3ad75992f7574889d5ff34a249",
@@ -87,6 +93,8 @@
   "firmware_source": "https://github.com/armbian/firmware",
   "firmware_ref": "commit:f50a2a21bcdb77a562b3976930c5c6b521a1df08",
   "firmware_commit": "f50a2a21bcdb77a562b3976930c5c6b521a1df08",
+  "verify_firmware_source_resolution": true,
+  "firmware_redistribution_license_verified": false,
   "source_date_epoch": 1717001894,
   "source_commits": {
     "linux": {
@@ -184,7 +192,9 @@
     "bananapim6": {
       "family": "vs680",
       "dtb": "synaptics/vs680-a0-bananapi-m6.dtb",
-      "dtb_sha256": "52c58e8a1413fd644b812480215350410659371083afa9930684df5752625413",
+      "component_dtb_sha256": "52c58e8a1413fd644b812480215350410659371083afa9930684df5752625413",
+      "image_dtb_sha256": null,
+      "dtb_sha256_evidence_scope": "component-only-l1",
       "model": "Banana Pi M6",
       "compatible": [
         "sinovoip,bananapi-m6",
@@ -240,18 +250,35 @@
         "bpi-m6-tzk-4MB.bin=4193792",
         "u-boot.bin=524288"
       ],
+      "uboot_payload_sizes": [
+        "bpi-m6-tzk-4MB.bin=4193792",
+        "u-boot.bin=616575"
+      ],
       "uboot_payload_sha256": [
         "bpi-m6-tzk-4MB.bin=175e9b9313dffb70a97852ae21d855d3472916cc2af28f678ebcddc44828e411",
         "u-boot.bin=4d8158b3ed44de9384fabb009a0639cbe2c83e964a32724b5c87ce9911f72bda"
       ],
       "partition_table": "msdos",
       "partition_start_sector": 204800,
+      "root_partition_start_sector": 729088,
+      "required_partitions": [
+        "1:*:204800:524288",
+        "2:*:729088:*"
+      ],
+      "required_partition_types": [
+        "1:ea",
+        "2:83"
+      ],
       "logical_sector_size": 512,
       "boot_partition_number": 1,
       "root_partition_number": 2,
       "boot_partition_label": "BPI-BOOT",
       "root_partition_label": "BPI-ROOT",
       "boot_configuration": "separate_fat_armbian_env",
+      "boot_script_source": "config/bootscripts/boot-vs680.cmd",
+      "boot_script_source_sha256": "0f8195f5de3c8e83f646e067e1a17b7662b175c1d9bf8bd098df0ebda525bd57",
+      "final_kernel_config_sha256": "b67480db7854ea797a1813102b2ef1c7a1312c9291797912612368821b058786",
+      "final_uboot_config_sha256": "f31af0f1449901eb3834fd17e9c8c69034bd50b126a29108168683ba6b38c1f6",
       "sd_node": "/soc/sdhci@f7ab0000",
       "sd_bus_width": 4,
       "additional_bus_widths": [

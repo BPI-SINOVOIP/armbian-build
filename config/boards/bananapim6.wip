@@ -11,6 +11,7 @@ FULL_DESKTOP="yes"
 BOOT_LOGO="desktop"
 WIREGUARD="no"
 PACKAGE_LIST_BOARD="gpiod i2c-tools python3-libgpiod python3-spidev spi-tools pciutils usbutils usb-modeswitch v4l-utils evtest alsa-utils ethtool iproute2 iperf3"
+ARMBIAN_FIRMWARE_GIT_SOURCE_BOARD="https://github.com/armbian/firmware"
 ARMBIAN_FIRMWARE_GIT_REF_BOARD="commit:f50a2a21bcdb77a562b3976930c5c6b521a1df08"
 VS680_TZK_SHA256="175e9b9313dffb70a97852ae21d855d3472916cc2af28f678ebcddc44828e411"
 SOURCE_DATE_EPOCH="1717001894"
@@ -49,6 +50,7 @@ function post_family_config__bananapim6_pin_vendor_sources() {
 	declare -g KERNELBRANCH='commit:3229415e99a06edc972948c0a856cbcf7de7ce55'
 	declare -g KERNELPATCHDIR="archive/bananapim6-legacy"
 	declare -g LINUXCONFIG="linux-vs680-legacy"
+	declare -g ARMBIAN_FIRMWARE_GIT_SOURCE="${ARMBIAN_FIRMWARE_GIT_SOURCE_BOARD}"
 	declare -g ARMBIAN_FIRMWARE_GIT_REF="${ARMBIAN_FIRMWARE_GIT_REF_BOARD}"
 }
 

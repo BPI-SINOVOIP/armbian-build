@@ -6,6 +6,7 @@ runner="${repo_dir}/tools/run-bananapi-candidates-isolated-cache.sh"
 
 export CANDIDATE_BUILDER="${repo_dir}/tools/build-bananapi-vs680-m6-candidate.sh"
 export CACHE_OVERLAY_ROOT="${repo_dir}/.tmp/bananapi-vs680-m6-candidate-cache-overlay"
+export ALLOW_INTERNAL_M6_CANDIDATE=yes
 
 [[ -x "${runner}" ]] || {
 	echo "找不到隔離快取執行器：${runner}" >&2

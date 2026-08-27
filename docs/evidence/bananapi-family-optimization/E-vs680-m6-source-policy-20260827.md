@@ -80,6 +80,25 @@ U-Boot 樹含 GPL-2.0 授權文件，Linux 樹依 GPL-2.0 發布；這不會自�
 
 ## 可重跑守門
 
+### 內部 L2 守門準備
+
+本次補齊的是未來建立內部 L2 完整映像所需的機器守門，沒有執行完整映像建置，也沒有把 M6 升為 L2。中央盤點與 validation 仍維持 `L1 元件候選`；只有在相同來源提交完成 IMG、XZ 串流與唯讀內容驗證後，才能另行登錄 L2 證據。
+
+新增的政策狀態機會拒絕只改候選標籤的假 L2，並核對下列條件：
+
+- Linux、U-Boot 與 Armbian firmware 都必須解析到已記錄的精確提交。
+- 建置來源提交必須等於驗證器提交；建置與驗證使用的 validation SHA-256 必須相同。
+- `COMPLETION_STATUS.json` 必須綁定來源提交、來源樹、validation 與 `CANDIDATES.tsv` 雜湊。
+- L2 必須驗證 XZ 串流與 IMG 同一性，失敗時覆寫舊成功狀態。
+- 最終核心設定 SHA-256 固定為 `b67480db7854ea797a1813102b2ef1c7a1312c9291797912612368821b058786`。
+- 最終 U-Boot 設定 SHA-256 固定為 `f31af0f1449901eb3834fd17e9c8c69034bd50b126a29108168683ba6b38c1f6`。
+
+映像契約固定為 DOS/MBR 雙分割區：第一分割區 `1:*:204800:524288`、類型 `ea`、標籤 `BPI-BOOT`；第二分割區 `2:*:729088:*`、類型 `83`、標籤 `BPI-ROOT`。驗證器以唯讀 loop 與唯讀掛載檢查兩個分割區，要求 `armbianEnv.txt` 的 `fdtfile` 指向 M6 DTB，且 `rootdev=UUID=...` 唯一對應第二分割區。`boot.scr` 由 `dumpimage` 抽取後，必須與 `config/bootscripts/boot-vs680.cmd` 內容相同。
+
+受控重疊不再以兩個完整 payload 分別比對。驗證器依 `payload_write_order` 檢查 TZK 前段、完整 `u-boot.bin` 與 U-Boot 結尾後的 TZK 尾段，並同時核對套件 MD5、精確大小、SHA-256 及產生 `UBOOT_PAYLOAD_EVIDENCE.tsv`。既有受控元件套件重新量得 TZK 為 `4193792` 位元組、`u-boot.bin` 為 `616575` 位元組；兩者的 SHA-256 均與 validation 相符。核心與 U-Boot 最終設定則寫入 `FINAL_CONFIG_EVIDENCE.tsv`。
+
+完整映像建置入口只接受 M6 專用 OverlayFS runner，固定 `SOURCE_DATE_EPOCH=1717001894`，且可用空間下限不得低於 40 GiB。本次沒有執行該入口，因此沒有新增或修改 `output` 產物。
+
 ### 元件建置證據
 
 2026-08-27 已在獨立 OverlayFS 上層完成 U-Boot 2019.10、Linux 5.4.195 image、DTB、headers 與 libc-dev 元件封裝，完整 IMG 數量為 0。元件來源提交為 `b6339cf4a2135e3ad75992f7574889d5ff34a249`；清單 SHA-256 為 `1eb1cbbe973badcb18c35e46c3e8be147c0fed77a1af940483b41620e153ea7e`，元件驗證狀態 SHA-256 為 `aa1c2474fc1c3d12384ba0b1d6fb13735e360bfc0125d09b817582edcd3268e5`。
