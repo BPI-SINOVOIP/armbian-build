@@ -60,6 +60,9 @@ class BananaPiFilogicR3MiniCandidateTests(unittest.TestCase):
         )
 
     def test_release_gate_remains_blocked(self) -> None:
+        self.assertEqual(self.config["candidate_level"], "L1 元件候選")
+        self.assertTrue(self.config["component_build_completed"])
+        self.assertFalse(self.config["full_rootfs_image_built"])
         self.assertFalse(self.config["public_release_authorized"])
         self.assertFalse(self.config["hardware_validation_completed"])
         self.assertEqual(self.config["release_gate"]["status"], "blocked")
@@ -79,7 +82,8 @@ class BananaPiFilogicR3MiniCandidateTests(unittest.TestCase):
         subprocess.run([str(POLICY_CHECK)], cwd=ROOT, check=True, capture_output=True)
 
     def test_boot_media_requires_emmc_boot0(self) -> None:
-        self.assertEqual(self.policy["supported_boot_media"], ["emmc"])
+        self.assertEqual(self.policy["candidate_boot_media"], ["emmc"])
+        self.assertEqual(self.policy["supported_boot_media"], [])
         self.assertIn("sd", self.policy["unsupported_boot_media"])
         contract = self.policy["boot_media_contract"]
         self.assertEqual(contract["cold_boot_source"], "emmc_boot0")
@@ -91,6 +95,22 @@ class BananaPiFilogicR3MiniCandidateTests(unittest.TestCase):
         self.assertTrue(self.policy["emmc_boot0_force_ro_required"])
         self.assertEqual(self.policy["emmc_boot_partition_enable"], "1 1")
         self.assertFalse(self.policy["automatic_emmc_install_authorized"])
+
+    def test_component_evidence_locks_all_recorded_outputs(self) -> None:
+        evidence = self.config["component_build_evidence"]
+        self.assertEqual(
+            evidence["implementation_commit"],
+            "717cdc7e91231a16d80b189f43dc6819a80fd739",
+        )
+        self.assertEqual(len(evidence["artifacts"]), 6)
+        self.assertEqual(
+            evidence["artifacts"]["linux-dtb"]["sha256"],
+            self.policy["dtb_sha256"],
+        )
+        for name, artifact in evidence["artifacts"].items():
+            with self.subTest(name=name):
+                self.assertGreater(artifact["size"], 0)
+                self.assertRegex(artifact["sha256"], r"^[0-9a-f]{64}$")
 
     def test_gpt_payload_and_environment_contract(self) -> None:
         self.assertEqual(

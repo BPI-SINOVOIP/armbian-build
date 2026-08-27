@@ -1,6 +1,40 @@
 {
   "schema_version": 1,
   "candidate_branch": "current",
+  "candidate_level": "L1 元件候選",
+  "component_build_completed": true,
+  "full_rootfs_image_built": false,
+  "component_build_evidence": {
+    "implementation_commit": "717cdc7e91231a16d80b189f43dc6819a80fd739",
+    "completed_utc": "2026-08-27T01:13:07Z",
+    "artifacts": {
+      "linux-dtb": {
+        "filename": "mediatek/mt7986a-bananapi-bpi-r3-mini.dtb",
+        "size": 23104,
+        "sha256": "5457155de554539c902a22507cbd69ad249fd70a24cf6e24a5753c2b5e8b66ab"
+      },
+      "u-boot.bin": {
+        "size": 470264,
+        "sha256": "cee67b1d090f9d1f3066cd40f11b5d6f122a49bf610e84bf5967ee6e9207afe3"
+      },
+      "u-boot.dtb": {
+        "size": 7272,
+        "sha256": "f5e02788cb3e6ba87195b3f0f8f7d98762cd4f40d6a3c218ad577154abb0f55c"
+      },
+      "bl2.img": {
+        "size": 200793,
+        "sha256": "44d4d6b1bdbfdc1f4d2b302047448788f0256b4d68568e9c9dd809005bccedfd"
+      },
+      "bl31.bin": {
+        "size": 37553,
+        "sha256": "328eedb9b89a8fdf4a137a12a18619cc394429f8f977215807505195ac76ad94"
+      },
+      "r3mini-u-boot.fip": {
+        "size": 507953,
+        "sha256": "8f56c689f10b3aa2367f4290f940451e8d5b766cd3c0120e6aa2cc398db3ff67"
+      }
+    }
+  },
   "kernel_family": "filogic",
   "linux_source": "https://github.com/frank-w/BPI-Router-Linux.git",
   "linux_commit": "4a4506842b77b597f11e7fc53be1dcdbdc97eea9",
@@ -112,9 +146,10 @@
         "bananapi,bpi-r3mini",
         "mediatek,mt7986a"
       ],
-      "supported_boot_media": [
+      "candidate_boot_media": [
         "emmc"
       ],
+      "supported_boot_media": [],
       "unsupported_boot_media": [
         "sd"
       ],

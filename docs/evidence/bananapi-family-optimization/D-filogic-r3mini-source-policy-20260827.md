@@ -4,7 +4,7 @@
 
 ## 階段結論
 
-`bananapir3mini` 已完成固定來源、eMMC 啟動鏈、GPT、BL2／FIP、U-Boot、核心 DTB、網路韌體與板卡專用驗證契約。Linux DTB、U-Boot、ATF BL2／BL31 與 FIP 均已執行套用或元件建置驗證，但依任務限制未建置完整 Armbian 映像，也未進行實體板測試；目前只能視為 L2 建置前候選，不得宣稱可開機、硬體通過或可公開發布。
+`bananapir3mini` 已完成固定來源、eMMC 啟動鏈、GPT、BL2／FIP、U-Boot、核心 DTB、網路韌體與板卡專用驗證契約。Linux DTB、U-Boot、ATF BL2／BL31 與 FIP 均已執行套用或元件建置驗證，但依任務限制未建置完整 Armbian 映像，也未進行實體板測試；目前證據等級是 `L1 元件候選`，不得宣稱可開機、硬體通過或可公開發布。
 
 ## 固定來源
 
@@ -18,7 +18,7 @@
 | Linux firmware | `https://gitlab.com/kernel-firmware/linux-firmware.git` | `01205307636157a12c29e6a774bf83b218732050` |
 | 原廠板級參考 | `https://github.com/BPI-SINOVOIP/BPI-R3MINI-OPENWRT-V21.02.3` | `9bd78779f267a21c04c5bb4d16c32e83aae8d1d3` |
 
-原廠使用說明指出 BPI-R3 Mini 不支援 SD 開機。eMMC 初始化須分成兩部分：整碟映像寫入 `/dev/mmcblk0` 的 user area，另外將 `bl2.img` 寫入 `/dev/mmcblk0boot0`，最後執行 `mmc bootpart enable 1 1 /dev/mmcblk0`。因此一般 IMG 只涵蓋 user area，不是空白 eMMC 的完整冷啟動安裝物。本候選不提供自動 eMMC 安裝，也不把 SD 列為支援媒體。
+原廠使用說明指出 BPI-R3 Mini 不支援 SD 開機。eMMC 初始化須分成兩部分：整碟映像寫入 `/dev/mmcblk0` 的 user area，另外將 `bl2.img` 寫入 `/dev/mmcblk0boot0`，最後執行 `mmc bootpart enable 1 1 /dev/mmcblk0`。因此一般 IMG 只涵蓋 user area，不是空白 eMMC 的完整冷啟動安裝物。本候選不提供自動 eMMC 安裝，也不把 SD 列為支援媒體；eMMC 目前只是候選目標，`supported_boot_media=[]` 明確表示尚未實機核准。
 
 ## GPT 與啟動鏈契約
 
