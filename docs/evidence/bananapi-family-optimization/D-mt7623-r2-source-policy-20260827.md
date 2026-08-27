@@ -45,7 +45,11 @@ Banana Pi R2 的 Linux 與 U-Boot 均已固定至可重建的公開原始碼提�
 - 提交 `4f7241a7b09a4e6a40c2b3b70951df1be82ad747` 已完成一次預檢映像建置；因當時補丁中繼資料仍需重整，該輸出只保留為預檢證據，不升級為正式 L2 候選。
 - 提交 `87099e8c1fa0c82ae06368ed9c1188fe1d365e21` 的第二次預檢已確認 U-Boot 補丁零問題，但唯讀映像檢查發現核心套件把 DTB 安裝為 `/boot/dtb/mt7623n-bananapi-bpi-r2.dtb`，當時 boot script 與 U-Boot 環境卻多加一層 `mediatek/`。該映像無法依設定載入 DTB，同樣不得升級為 L2。
 - 修正版契約要求 `BOOT_FDT_FILE`、boot script、U-Boot 內建環境及驗證器全部使用扁平路徑 `mt7623n-bananapi-bpi-r2.dtb`，並拒絕重新出現 `mediatek/mt7623n-bananapi-bpi-r2.dtb`。
-- 正式候選必須由修正後提交使用全新專用 OverlayFS 重建，並通過映像、壓縮串流、U-Boot 載荷、DTB、核心設定、套件與唯讀內容檢查。
+- 修正後提交 `a07ed672ad6250b1229c70aa4afc5dd76416d00b` 已使用全新專用 OverlayFS 完成正式候選建置，總執行時間為 16 分 59 秒；U-Boot 修補摘要為 10 個全部套用、零問題，核心來源沒有額外修補。
+- 正式 IMG 大小為 1363148800 bytes，SHA-256 為 `6d954e65669eae7883e9acb1496ee6dc3aa551bf46a57241e2a68a72a58ded61`；XZ 大小為 332157056 bytes，SHA-256 為 `7a6962d6b95e029ced0e7ec95b4f7b33c60c7fdab7fe8fac3bd0e3008d282566`。
+- 唯讀掛載確認 `armbianEnv.txt`、`boot.cmd` 與成品 U-Boot 都只使用扁平 DTB 路徑；DTB model 是 `Bananapi BPI-R2`，compatible 是 `bananapi,bpi-r2`、`mediatek,mt7623`，SHA-256 為 `55151de1694bb279e759498eb5f86253e0e90700408044c546b4310a2a81c796`。
+- 成品 U-Boot 大小為 462560 bytes，SHA-256 為 `bc3dffced856d68219ae997e2faa0ee246e8ef64fb2930d65ce1795b34f90cf2`；四個原廠載荷的成品套件雜湊與固定來源完全一致。
+- 建置包裝器在映像與候選中繼資料完成後，第一次卸載專用 OverlayFS 時因短暫忙碌回傳狀態 32；確認沒有殘留建置程序或子掛載後重新執行一般卸載即成功。這項收尾事件不改變映像內容，但已保留於操作紀錄，不能用來省略後續正式驗證。
 - 本次沒有 R2 實體板、SD、eMMC、SATA、PCIe、HDMI、USB、網路交換器、GPIO、I2C 或 SPI 測試，因此不得宣稱上述硬體功能已通過。
 
 ## 發布守門

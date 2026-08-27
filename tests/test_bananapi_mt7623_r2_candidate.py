@@ -45,6 +45,10 @@ class BananaPiMT7623R2CandidateTests(unittest.TestCase):
         self.assertEqual(self.policy["partition_table"], "msdos")
         self.assertEqual(self.policy["partition_start_sector"], 8192)
         self.assertEqual(
+            self.policy["dtb_sha256"],
+            "55151de1694bb279e759498eb5f86253e0e90700408044c546b4310a2a81c796",
+        )
+        self.assertEqual(
             self.policy["uboot_payloads"],
             [
                 "BPI-R2-HEAD440-0k.img@0",

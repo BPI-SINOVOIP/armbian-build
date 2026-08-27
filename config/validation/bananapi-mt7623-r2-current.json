@@ -101,6 +101,7 @@
     "bananapir2": {
       "family": "mt7623",
       "dtb": "mt7623n-bananapi-bpi-r2.dtb",
+      "dtb_sha256": "55151de1694bb279e759498eb5f86253e0e90700408044c546b4310a2a81c796",
       "model": "Bananapi BPI-R2",
       "compatible": [
         "bananapi,bpi-r2",
