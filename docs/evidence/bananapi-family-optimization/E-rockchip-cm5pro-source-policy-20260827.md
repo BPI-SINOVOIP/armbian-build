@@ -1,4 +1,4 @@
-# Banana Pi CM5 Pro 固定來源與內部 L2 候選政策
+# Banana Pi CM5 Pro 固定來源與 L1 元件候選政策
 
 更新日期：2026-08-27
 
@@ -6,7 +6,7 @@
 
 `bananapicm5pro.wip` 已具備獨立 Banana Pi 板檔、Linux 與 U-Boot 專用板級身分、固定來源、機器可讀驗證契約、專用建置入口、隔離快取入口及唯讀驗證入口。固定提交上的 Linux DTB 與 U-Boot 元件已完成交叉編譯及靜態檢查。
 
-本階段只能稱為「內部 L2 軟體候選準備」，不能稱為可公開發布的 L2 映像，也沒有建立任何實機支援聲明。本次依要求沒有建置完整根檔案系統映像；必須等完整映像守門與實體板驗證完成後，才能分別評估 L2 與 L3。
+本階段只能稱為「內部 L1 元件候選」，不能稱為完整 L2 映像，也沒有建立任何實機支援聲明。本次沒有建置完整根檔案系統映像；必須等完整映像守門與實體板驗證完成後，才能分別評估 L2 與 L3。
 
 以下三項阻擋維持有效：
 
@@ -92,6 +92,8 @@ Linux 包裝 DTS 在供應商 donor 上增加 Banana Pi model／compatible，並
 ## 元件建置證據
 
 固定 Linux 提交套用專用 DTS、固定外部 Wi-Fi 驅動與板級核心設定後，使用 `rockchip_linux_defconfig` 完成 `Image + modules + dtbs` 元件建置。39 項核心設定由 Kconfig 重新解析後全部符合契約，完整建置成功產生下列關鍵產物：
+
+可攜元件證據由 `tools/export-bananapi-rockchip-cm5pro-components.sh` 匯出，再由 `tools/verify-bananapi-rockchip-cm5pro-components.sh` 逐檔核對來源提交、大小、SHA-256、DTB 身分、模組架構、授權與核心版本。可攜目錄不包含來源樹或建置樹，也不會把元件建置提升成完整映像或實機證據。
 
 | 產物 | 大小 | 本次 SHA-256 |
 | --- | ---: | --- |

@@ -1,7 +1,11 @@
 {
   "schema_version": 1,
   "candidate_branch": "vendor",
-  "candidate_scope": "內部 L2 軟體候選",
+  "candidate_scope": "internal-component-only",
+  "candidate_level": "L1 元件候選",
+  "evidence_level": "L1",
+  "component_build_completed": true,
+  "rootfs_image_built": false,
   "public_release_allowed": false,
   "hardware_claims_allowed": false,
   "banana_pi_carrier_equivalence_verified": false,
@@ -139,6 +143,83 @@
     "CONFIG_USB_ROLE_SWITCH": "y",
     "CONFIG_USB_XHCI_HCD": "y",
     "CONFIG_VIDEO_ROCKCHIP_RGA": "y"
+  },
+  "component_build_evidence": {
+    "portable_artifact_count": 10,
+    "portable_manifest_sha256": "97842474c73bb70de6ef6efff38f0c74b5046413f7c7a47ef901bee0bf191972",
+    "portable_output_default": "output/components/2026.08/bananapi-rockchip-rk3576-cm5pro-vendor",
+    "artifacts": {
+      "linux_image": {
+        "source_component": "linux",
+        "source_relative": "arch/arm64/boot/Image",
+        "output_relative": "artifacts/Image",
+        "size": 39735808,
+        "sha256": "29f0ca496b3223906daa6ba95a2057f8157ed3878269961e705ea7c43a2bef3c"
+      },
+      "linux_dtb": {
+        "source_component": "linux",
+        "source_relative": "arch/arm64/boot/dts/rockchip/rk3576-bananapi-cm5-pro.dtb",
+        "output_relative": "artifacts/rk3576-bananapi-cm5-pro.dtb",
+        "size": 274879,
+        "sha256": "399683fe7447c160f5e4255309a59f133c5427dc86eab60a93d61a1aab65aee8"
+      },
+      "wifi_module": {
+        "source_component": "linux",
+        "source_relative": "drivers/net/wireless/realtek/rtl8852bs/8852bs.ko",
+        "output_relative": "artifacts/8852bs.ko",
+        "size": 6680656,
+        "sha256": "6e71b698ca4d02ded482777dc485dbf1cc85c54600775223e6332980e9bf8cb6"
+      },
+      "linux_config": {
+        "source_component": "linux",
+        "source_relative": ".config",
+        "output_relative": "artifacts/linux.config",
+        "size": 213856,
+        "sha256": "e5b9bd6fbb879bc6f345030490ee6574f57fc28325ac645c50db2ea22aa372f1"
+      },
+      "uboot_spl": {
+        "source_component": "uboot",
+        "source_relative": "spl/u-boot-spl.bin",
+        "output_relative": "artifacts/u-boot-spl.bin",
+        "size": 240421,
+        "sha256": "65866bf74ee7d02c8653c42ffe4f21d429b39bbaf6e3563f800671e9f02c48b7"
+      },
+      "uboot_dtb": {
+        "source_component": "uboot",
+        "source_relative": "u-boot.dtb",
+        "output_relative": "artifacts/u-boot.dtb",
+        "size": 9426,
+        "sha256": "396a43ce3a5828339f9093dcdee950f38c91e02c60c69b3d95c4e3ba37c15b18"
+      },
+      "uboot_fit": {
+        "source_component": "uboot",
+        "source_relative": "u-boot.itb",
+        "output_relative": "artifacts/u-boot.itb",
+        "size": 1444864,
+        "sha256": "8ab1704b15001f9899d314932687c17dc59681940b772ac4a081a52442197646"
+      },
+      "rkbin_license": {
+        "source_component": "rkbin",
+        "source_relative": "LICENSE.TXT",
+        "output_relative": "licenses/rkbin.LICENSE.TXT",
+        "size": 6585,
+        "sha256": "0b37e1522c36cf4579c45dfb138798c3cb5665fcf6302b95377179fbed38e35c"
+      },
+      "wifi_driver_license": {
+        "source_component": "wifi-rtl8852bs",
+        "source_relative": "LICENSE",
+        "output_relative": "licenses/rtl8852bs.LICENSE",
+        "size": 18092,
+        "sha256": "8177f97513213526df2cf6184d8ff986c675afb514d4e68a404010521b880643"
+      },
+      "firmware_readme": {
+        "source_component": "firmware",
+        "source_relative": "README.md",
+        "output_relative": "licenses/armbian-firmware.README.md",
+        "size": 1405,
+        "sha256": "4fc4f5de2cdd562d64f5079dab855b26a73f35bd93ee59c62e4a2b12fdf09fef"
+      }
+    }
   },
   "boards": {
     "bananapicm5pro": {

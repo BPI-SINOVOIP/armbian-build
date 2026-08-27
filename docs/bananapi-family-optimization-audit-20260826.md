@@ -8,7 +8,7 @@
 
 - 板卡總數：48。
 - 正式 `.conf`：12；社群 `.csc`：14；開發中 `.wip`：21；停止支援 `.eos`：1。
-- 證據分布：L0 7；L1 8；L2 31；L3 1；L4 1；L5 0。
+- 證據分布：L0 6；L1 9；L2 31；L3 1；L4 1；L5 0。
 - 未取得實機的板卡最高只能標示 L2；目前 L3／L4 只沿用已納入 Git 的 M4 Zero／M4 Berry 證據。
 
 ## 板卡矩陣
@@ -20,7 +20,7 @@
 | `bananapiaim7` | 開發中 | Banana Pi AIM7 | `rockchip-rk3588` | `arm64` | `vendor` | 是 | E | L1 可建置 | 完成映像內容與來源同一性守門 |
 | `bananapicm2` | 開發中 | Banana Pi CM2（R2 Pro 軟體參考） | `rockchip64` | `arm64` | `current` | 是 | E | L0 已盤點 | 確認建置鏈並建立 Trixie CLI 候選 |
 | `bananapicm4io` | 正式 | Banana Pi CM4IO | `meson-g12b` | `arm64` | `current,edge` | 是 | A | L2 軟體候選 | 執行 UART、啟動與基本周邊實機驗證 |
-| `bananapicm5pro` | 開發中 | Banana Pi CM5 Pro | `rk35xx` | `arm64` | `vendor` | 是 | E | L0 已盤點 | 確認建置鏈並建立 Trixie CLI 候選 |
+| `bananapicm5pro` | 開發中 | Banana Pi CM5 Pro | `rk35xx` | `arm64` | `vendor` | 是 | E | L1 可建置 | 完成映像內容與來源同一性守門 |
 | `bananapicm6` | 開發中 | BananaPi BPI-CM6 | `spacemit` | `riscv64` | `legacy` | 是 | F | L2 軟體候選 | 執行 UART、啟動與基本周邊實機驗證 |
 | `bananapif2p` | 開發中 | Banana Pi F2P | `sunplus-sp7021-bpi` | `armhf` | `legacy` | 是 | F | L1 可建置 | 完成映像內容與來源同一性守門 |
 | `bananapif2s` | 開發中 | Banana Pi F2S | `sunplus-sp7021-bpi` | `armhf` | `legacy` | 是 | F | L1 可建置 | 完成映像內容與來源同一性守門 |
@@ -68,6 +68,9 @@
 
 - `bananapiaim7`：AIM7 與 ArmSoM AIM7 IO 的原理圖差異尚未閉合，既有 DTS 只啟用單 lane PCIe 且 SPI／DSI 停用；GPU、VPU、RGA、NPU 使用者空間與韌體授權仍待完整映像稽核。
 - `bananapicm2`：尚未取得 BPI-CM2 實際載板原理圖、連接器映射與供電拓撲；R2 Pro 僅可作同 SoC 軟體參考，不能宣稱 CM2 支援。
+- `bananapicm5pro`：Linux 與 U-Boot DTS 仍以 ArmSoM CM5 IO 為 donor；官方產品身分可支持來源關聯，但尚未完成 IO 載板逐網路等同性審查。
+- `bananapicm5pro`：RTL8852BS 韌體缺少逐檔再散布授權，外部驅動也尚未完成上游與安全稽核。
+- `bananapicm5pro`：完整映像、冷啟動、儲存、網路、40-pin、顯示、GPU、VPU、RGA 與 NPU 尚未實機驗證。
 - `bananapif2p`：ISPBOOOT.BIN 與預建工具鏈再散布授權未閉合，且缺少 F2P 專用 eMMC xboot；目前只能保留內部 SD 候選。
 - `bananapif2s`：xboot 與預建工具鏈缺少完整可重建來源或明確再散布授權，完整映像只能作內部驗證。
 - `bananapim1super`：Wi-Fi 量產 BOM 在 SYN43752、AP6275S 與 RTL8852BS 證據間不一致；RKBin 只可依授權隨 Rockchip 平台散布，Armbian 韌體逐檔授權與完整映像仍待驗證。
@@ -85,7 +88,6 @@
 
 ## 欄位品質
 
-- `bananapicm5pro`：缺少建議欄位 `KERNEL_TEST_TARGET`。
 - `bananapim1plus`：缺少建議欄位 `BOARD_MAINTAINER`。
 - `bananapim2`：缺少建議欄位 `BOARD_MAINTAINER`。
 - `bananapim2berry`：缺少建議欄位 `BOARD_MAINTAINER`。

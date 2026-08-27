@@ -33,6 +33,8 @@ DONOR_UBOOT_DEFCONFIG = (
 BUILDER = ROOT / "tools/build-bananapi-rockchip-cm5pro-candidate.sh"
 RUNNER = ROOT / "tools/run-bananapi-rockchip-cm5pro-candidate-isolated-cache.sh"
 VERIFIER = ROOT / "tools/verify-bananapi-rockchip-cm5pro-candidate.sh"
+COMPONENT_EXPORTER = ROOT / "tools/export-bananapi-rockchip-cm5pro-components.sh"
+COMPONENT_VERIFIER = ROOT / "tools/verify-bananapi-rockchip-cm5pro-components.sh"
 ROCKCHIP_BUILDER = ROOT / "tools/build-bananapi-rockchip-candidates.sh"
 ROCKCHIP_VERIFIER = ROOT / "tools/verify-bananapi-rockchip-candidates.sh"
 DRIVER_HARNESS = ROOT / "lib/functions/compilation/patch/drivers_network.sh"
@@ -158,7 +160,11 @@ printf 'linux_source=%s\nlinux=%s\nuboot_source=%s\nuboot=%s\nrkbin=%s\nfirmware
         self.assertEqual(UBOOT_DEFCONFIG.read_text(), expected)
 
     def test_release_and_hardware_claims_are_blocked(self) -> None:
-        self.assertEqual(self.config["candidate_scope"], "內部 L2 軟體候選")
+        self.assertEqual(self.config["candidate_scope"], "internal-component-only")
+        self.assertEqual(self.config["candidate_level"], "L1 元件候選")
+        self.assertEqual(self.config["evidence_level"], "L1")
+        self.assertTrue(self.config["component_build_completed"])
+        self.assertFalse(self.config["rootfs_image_built"])
         self.assertFalse(self.config["public_release_allowed"])
         self.assertFalse(self.config["hardware_claims_allowed"])
         self.assertFalse(self.config["banana_pi_carrier_equivalence_verified"])
@@ -280,9 +286,20 @@ printf 'linux_source=%s\nlinux=%s\nuboot_source=%s\nuboot=%s\nrkbin=%s\nfirmware
         self.assertIn("WIFI_DRIVER_EVIDENCE.tsv", ROCKCHIP_VERIFIER.read_text())
         self.assertIn("wifi_driver_manifest_sha256", ROCKCHIP_VERIFIER.read_text())
 
+        evidence = self.config["component_build_evidence"]
+        self.assertEqual(evidence["portable_artifact_count"], 10)
+        self.assertRegex(evidence["portable_manifest_sha256"], r"^[0-9a-f]{64}$")
+        self.assertEqual(len(evidence["artifacts"]), 10)
+        for item in evidence["artifacts"].values():
+            self.assertGreater(item["size"], 0)
+            self.assertRegex(item["sha256"], r"^[0-9a-f]{64}$")
+        for path in (COMPONENT_EXPORTER, COMPONENT_VERIFIER):
+            self.assertTrue(path.is_file())
+            self.assertIn("component_build_evidence", path.read_text())
+
     def test_policy_does_not_promote_static_results_to_hardware_evidence(self) -> None:
         text = POLICY.read_text()
-        self.assertIn("不能稱為可公開發布的 L2 映像", text)
+        self.assertIn("不能稱為完整 L2 映像", text)
         self.assertIn("不證明任何周邊或加速器功能", text)
         self.assertIn("板檔保留 `.wip`", text)
         self.assertIn("沒有執行以上完整根檔案系統映像建置", text)
