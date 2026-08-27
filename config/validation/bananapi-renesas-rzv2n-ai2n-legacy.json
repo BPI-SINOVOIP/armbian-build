@@ -332,10 +332,10 @@
         "/hdmi-out",
         "/reserved-memory/DRP-AI@D0000000",
         "/reserved-memory/OpenCVA@A8000000",
-        "/soc/gpu@14850000",
-        "/sound"
+        "/soc/gpu@14850000"
       ],
       "required_disabled_nodes": [
+        "/sound",
         "/soc/cru0@16000000",
         "/soc/cru1@16010000",
         "/soc/csi20@16000400",

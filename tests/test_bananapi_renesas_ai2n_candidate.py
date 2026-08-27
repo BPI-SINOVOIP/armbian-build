@@ -247,11 +247,13 @@ class BananaPiRenesasAi2nCandidateTests(unittest.TestCase):
         ):
             self.assertIn(node, self.board["required_status_nodes"])
         for node in (
+            "/sound",
             "/soc/isp@16080000",
             "/soc/spi@12800000",
             "/soc/i2c@14400800",
         ):
             self.assertIn(node, self.board["required_disabled_nodes"])
+        self.assertNotIn("/sound", self.board["required_present_nodes"])
 
     def test_source_tree_binary_inventory_is_explicit(self) -> None:
         inventory = self.config["source_tree_binary_inventory"]
