@@ -229,6 +229,10 @@
         "idbloader.img=311296",
         "u-boot.itb=1320960"
       ],
+      "uboot_payload_sha256": [
+        "idbloader.img=ecd35b1d69c4b87e2ba170017f58c2f67f44c178dbb7df3488d9b88c26847355",
+        "u-boot.itb=ee2067f149cfc6c74f84c5c09880673dcda9133d4593ec20e9fc6e328f6bd59a"
+      ],
       "partition_table": "gpt",
       "partition_name": "rootfs",
       "partition_start_sector": 32768,

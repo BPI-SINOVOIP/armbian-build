@@ -21,6 +21,10 @@ EXPECTED_UBOOT_PAYLOAD_SIZES = [
     "idbloader.img=311296",
     "u-boot.itb=1320960",
 ]
+EXPECTED_UBOOT_PAYLOAD_SHA256 = {
+    "idbloader.img": "ecd35b1d69c4b87e2ba170017f58c2f67f44c178dbb7df3488d9b88c26847355",
+    "u-boot.itb": "ee2067f149cfc6c74f84c5c09880673dcda9133d4593ec20e9fc6e328f6bd59a",
+}
 EXPECTED_PARTITIONS = ["1:*:32768:4691968"]
 EXPECTED_PARTITION_TYPES = ["1:b921b045-1df0-41c3-af44-4c6f280d3fae"]
 EXPECTED_FINAL_KERNEL_CONFIG_SHA256 = (
@@ -65,7 +69,7 @@ def require_commit(value: object, message: str) -> None:
     )
 
 
-def validate_payload_hashes(value: object) -> None:
+def validate_payload_hashes(value: object) -> dict[str, str]:
     require(isinstance(value, list), "U-Boot 載荷雜湊必須是清單")
     hashes = {}
     for item in value:
@@ -78,6 +82,7 @@ def validate_payload_hashes(value: object) -> None:
         set(hashes) == {"idbloader.img", "u-boot.itb"},
         "U-Boot 載荷雜湊檔名集合不符",
     )
+    return hashes
 
 
 def validate_candidate_state(policy: dict) -> None:
@@ -106,8 +111,11 @@ def validate_candidate_state(policy: dict) -> None:
     )
     require(board.get("uboot_payload_sizes") == EXPECTED_UBOOT_PAYLOAD_SIZES, "U-Boot 載荷大小契約不符")
     payload_hashes = board.get("uboot_payload_sha256")
-    if payload_hashes is not None:
-        validate_payload_hashes(payload_hashes)
+    require(payload_hashes is not None, "必須固定 U-Boot 載荷雜湊")
+    require(
+        validate_payload_hashes(payload_hashes) == EXPECTED_UBOOT_PAYLOAD_SHA256,
+        "U-Boot 載荷雜湊與固定預檢證據不符",
+    )
     require(board.get("required_partitions") == EXPECTED_PARTITIONS, "GPT 分割區契約不符")
     require(board.get("required_partition_types") == EXPECTED_PARTITION_TYPES, "GPT 類型契約不符")
     require(board.get("root_partition_start_sector") == 32768, "根分割區起始磁區不符")
@@ -133,7 +141,6 @@ def validate_candidate_state(policy: dict) -> None:
         )
         return
 
-    require(payload_hashes is not None, "L2 必須固定 U-Boot 載荷雜湊")
     require(policy.get("rootfs_image_built") is True, "L2 必須有完整映像建置證據")
     image_evidence = policy.get("image_build_evidence")
     require(isinstance(image_evidence, dict), "L2 缺少完整映像證據")

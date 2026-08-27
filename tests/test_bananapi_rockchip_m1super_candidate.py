@@ -135,10 +135,6 @@ class BananaPiM1SuperCandidateTests(unittest.TestCase):
         candidate["boards"]["bananapim1super"]["image_dtb_sha256"] = image_dtb_sha256
         candidate["boards"]["bananapim1super"]["dtb_sha256"] = image_dtb_sha256
         candidate["boards"]["bananapim1super"]["dtb_sha256_evidence_scope"] = "full-image-l2"
-        candidate["boards"]["bananapim1super"]["uboot_payload_sha256"] = [
-            f"idbloader.img={'8' * 64}",
-            f"u-boot.itb={'9' * 64}",
-        ]
         self.policy_checker.validate_candidate_state(candidate)
 
     def test_state_machine_rejects_mixed_or_unproven_states(self):
@@ -277,7 +273,13 @@ class BananaPiM1SuperCandidateTests(unittest.TestCase):
             self.board["uboot_payload_sizes"],
             ["idbloader.img=311296", "u-boot.itb=1320960"],
         )
-        self.assertNotIn("uboot_payload_sha256", self.board)
+        self.assertEqual(
+            self.board["uboot_payload_sha256"],
+            [
+                "idbloader.img=ecd35b1d69c4b87e2ba170017f58c2f67f44c178dbb7df3488d9b88c26847355",
+                "u-boot.itb=ee2067f149cfc6c74f84c5c09880673dcda9133d4593ec20e9fc6e328f6bd59a",
+            ],
+        )
         self.assertEqual(self.board["required_partitions"], ["1:*:32768:4691968"])
         self.assertEqual(
             self.board["required_partition_types"],
