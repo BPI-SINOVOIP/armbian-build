@@ -763,7 +763,7 @@ Provides: unavailable-virtual
             "FINAL_CONFIG_EVIDENCE.tsv",
             "uboot_target_make_forbidden",
             "forbidden_packaged_assets",
-            "恰好包含一份核心設定檔",
+            "唯一核心設定內容",
         ):
             with self.subTest(required=required):
                 self.assertIn(required, text if required != "u-boot-sunxi-with-spl.bin" else CONFIG.read_text())

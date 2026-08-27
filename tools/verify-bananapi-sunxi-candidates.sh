@@ -583,7 +583,7 @@ validate_mounted_image() (
 	local vendor_boot_directory root_uuid final_kernel_config_sha256 actual_kernel_config_sha256 forbidden_asset
 	local dtb_sha256 alias_spec alias_name alias_expected forbidden_fragment
 	local required_module_path
-	local -a module_matches=() config_files=()
+	local -a module_matches=() config_files=() config_hashes=()
 	dtb_relative="$(board_field "${board}" dtb)"
 	dtb_basename="$(basename "${dtb_relative}")"
 	mount_dir="$(mktemp -d "${repo_dir}/.tmp/${verify_tmp_prefix}.XXXXXX")"
@@ -754,14 +754,19 @@ validate_mounted_image() (
 			fail "${board} 的 ${required_node} 匯流排寬度不是 ${required_width}-bit"
 	done
 
-	mapfile -t config_files < <(find "${mount_dir}/boot" -maxdepth 1 -type f -name 'config-*' -print)
-	[[ ${#config_files[@]} -eq 1 ]] || fail "${board} 必須恰好包含一份核心設定檔，實際 ${#config_files[@]} 份"
+	mapfile -t config_files < <(find "${mount_dir}/boot" -maxdepth 1 -type f -name 'config-*' -print | sort)
+	[[ ${#config_files[@]} -gt 0 ]] || fail "${board} 缺少核心設定檔"
+	mapfile -t config_hashes < <(
+		sha256sum "${config_files[@]}" | awk '{ print $1 }' | sort -u
+	)
+	[[ ${#config_hashes[@]} -eq 1 ]] ||
+		fail "${board} 必須只有一份唯一核心設定內容，實際 ${#config_hashes[@]} 種"
 	config_file="${config_files[0]}"
 	while IFS= read -r option_line; do
 		option="${option_line%%=*}"; value="${option_line#*=}"
 		grep -qx "${option}=${value}" "${config_file}" || fail "${board} 核心設定不符：${option}=${value}"
 	done < <(common_values common_kernel_options)
-	actual_kernel_config_sha256="$(sha256sum "${config_file}" | cut -d' ' -f1)"
+	actual_kernel_config_sha256="${config_hashes[0]}"
 	final_kernel_config_sha256="$(board_field_optional "${board}" final_kernel_config_sha256)"
 	if [[ -n "${final_kernel_config_sha256}" ]]; then
 		[[ "${final_kernel_config_sha256}" =~ ^[0-9a-f]{64}$ ]] ||

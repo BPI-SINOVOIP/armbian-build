@@ -18,6 +18,8 @@ PACKAGE_LIST_BOARD="gpiod i2c-tools python3-libgpiod python3-spidev usbutils v4l
 
 SUNPLUS_BPI_BSP_REPO="https://github.com/BPI-SINOVOIP/BPI-F2S-bsp.git"
 SUNPLUS_BPI_BSP_BRANCH="commit:3eee97bd8fb7582c2d9942a533647c3d78222bb5"
+ARMBIAN_FIRMWARE_GIT_SOURCE_BOARD="https://github.com/armbian/firmware"
+ARMBIAN_FIRMWARE_GIT_REF_BOARD="commit:f50a2a21bcdb77a562b3976930c5c6b521a1df08"
 SUNPLUS_BPI_BSP_BOARD="bpi-f2p"
 SUNPLUS_BPI_VENDOR_BOARD="bpi-f2p"
 SUNPLUS_BPI_VENDOR_CHIP="SP7021"
@@ -34,6 +36,8 @@ function post_family_config__bananapif2p_storage_contract() {
 	[[ -z "${SUNPLUS_BPI_EMMC_XBOOT_ASSET}" ]] || exit_with_error \
 		"F2P SD-only 候選不得指定 eMMC xboot" "${SUNPLUS_BPI_EMMC_XBOOT_ASSET}"
 	declare -g IMAGE_PARTITION_TABLE="msdos"
+	declare -g ARMBIAN_FIRMWARE_GIT_SOURCE="${ARMBIAN_FIRMWARE_GIT_SOURCE_BOARD}"
+	declare -g ARMBIAN_FIRMWARE_GIT_REF="${ARMBIAN_FIRMWARE_GIT_REF_BOARD}"
 }
 
 function custom_kernel_config__bananapif2p_diagnostics() {

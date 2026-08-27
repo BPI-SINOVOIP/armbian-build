@@ -93,6 +93,7 @@ def main() -> None:
     family_text = FAMILY.read_text(encoding="utf-8")
     global_status = json.loads(STATUS.read_text(encoding="utf-8"))
     revision = "3eee97bd8fb7582c2d9942a533647c3d78222bb5"
+    firmware_revision = "f50a2a21bcdb77a562b3976930c5c6b521a1df08"
     ispboot_sha256 = "e01081a92b55156868b9df7918e0d5f503d1dda3af94335ed24637786124964a"
     foreign_asset = "BPI-F2S-xboot-emmc-boot0-0k.img.gz"
 
@@ -106,6 +107,10 @@ def main() -> None:
     for key in ("linux_ref", "uboot_ref"):
         require(data[key] == f"commit:{revision}", f"{key} 不是精確提交")
     require(data["linux_source"] == data["uboot_source"], "Linux 與 U-Boot BSP 來源不一致")
+    require(data["firmware_source"] == "https://github.com/armbian/firmware", "Armbian 韌體來源不符")
+    require(data["firmware_ref"] == f"commit:{firmware_revision}", "Armbian 韌體引用未固定")
+    require(data["firmware_commit"] == firmware_revision, "Armbian 韌體提交不符")
+    require(data["verify_firmware_source_resolution"] is True, "未啟用韌體來源解析守門")
     require(data["atf_applicable"] is False, "SP7021 不應宣稱 TF-A")
     require(data["trusted_firmware_a"]["applicable"] is False, "TF-A 相容欄位不一致")
     for key in ("hardware_validated", "public_release_allowed", "hardware_claims_allowed"):
@@ -169,6 +174,10 @@ def main() -> None:
     for expected in (
         'BOARD_MAINTAINER="BPI-SINOVOIP"',
         f'SUNPLUS_BPI_BSP_BRANCH="commit:{revision}"',
+        'ARMBIAN_FIRMWARE_GIT_SOURCE_BOARD="https://github.com/armbian/firmware"',
+        f'ARMBIAN_FIRMWARE_GIT_REF_BOARD="commit:{firmware_revision}"',
+        'declare -g ARMBIAN_FIRMWARE_GIT_SOURCE="${ARMBIAN_FIRMWARE_GIT_SOURCE_BOARD}"',
+        'declare -g ARMBIAN_FIRMWARE_GIT_REF="${ARMBIAN_FIRMWARE_GIT_REF_BOARD}"',
         'SUNPLUS_BPI_SD_XBOOT_ASSET="sp-pack/sp7021/common/bin/ISPBOOOT.BIN"',
         f'SUNPLUS_BPI_SD_XBOOT_SHA256="{ispboot_sha256}"',
         'SUNPLUS_BPI_EMMC_XBOOT_ASSET=""',
@@ -190,11 +199,25 @@ def main() -> None:
 
     policy = data["boards"]["bananapif2p"]
     require(policy["partition_table"] == "msdos", "分割表契約不符")
-    require(policy["required_partitions"] == ["1:*:8192:*", "2:*:*:*"], "分割區集合不符")
+    require(
+        policy["required_partitions"]
+        == ["1:*:8192:524288", "2:*:532480:2613248"],
+        "分割區集合不符",
+    )
     require(policy["boot_partition_number"] == 1, "boot 分割區編號不符")
     require(policy["root_partition_number"] == 2, "root 分割區編號不符")
     require(policy["boot_configuration"] == "sunplus_uenv", "boot 契約不符")
     require(policy["uboot_payloads"] == ["u-boot.img@17408"], "U-Boot 寫入偏移不符")
+    require(
+        policy["final_kernel_config_sha256"]
+        == "9ce6aa0972e5a29af20b7b6181425ba02c4e78c634727378232050d0796fcd7c",
+        "最終核心設定雜湊不符",
+    )
+    require(
+        policy["final_uboot_config_sha256"]
+        == "a2db480c77031efaa465ad4a550e16ee4649d371d42f403460a957050a117469",
+        "最終 U-Boot 設定雜湊不符",
+    )
     require(policy["uboot_package_only_payloads"] == ["ISPBOOOT.BIN"], "xboot 封裝契約不符")
     require(foreign_asset in policy["forbidden_packaged_assets"], "未禁止 F2S eMMC xboot")
     require(any(foreign_asset in item for item in policy["uboot_target_make_forbidden"]), "U-Boot target 未禁止 F2S 資產")

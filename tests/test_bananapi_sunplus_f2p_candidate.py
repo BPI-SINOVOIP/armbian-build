@@ -60,6 +60,8 @@ class BananaPiSunplusF2PCandidateTests(unittest.TestCase):
             'BOOT_FDT_FILE="sp7021-bpi-f2p.dtb"',
             'SUNPLUS_BPI_EMMC_XBOOT_ASSET=""',
             'SUNPLUS_BPI_SD_XBOOT_ASSET="sp-pack/sp7021/common/bin/ISPBOOOT.BIN"',
+            'ARMBIAN_FIRMWARE_GIT_SOURCE_BOARD="https://github.com/armbian/firmware"',
+            'ARMBIAN_FIRMWARE_GIT_REF_BOARD="commit:f50a2a21bcdb77a562b3976930c5c6b521a1df08"',
             'SUNPLUS_BPI_CANDIDATE_MEDIA="sd-only"',
             'SUNPLUS_BPI_PUBLIC_RELEASE_ALLOWED="no"',
             'SUNPLUS_BPI_HARDWARE_CLAIMS_ALLOWED="no"',
@@ -80,6 +82,11 @@ class BananaPiSunplusF2PCandidateTests(unittest.TestCase):
             self.config["source_commits"]["bsp"]["revision"],
             "3eee97bd8fb7582c2d9942a533647c3d78222bb5",
         )
+        self.assertEqual(
+            self.config["firmware_ref"],
+            "commit:f50a2a21bcdb77a562b3976930c5c6b521a1df08",
+        )
+        self.assertTrue(self.config["verify_firmware_source_resolution"])
 
     def test_f2p_does_not_package_f2s_emmc_xboot(self) -> None:
         foreign_name = "BPI-F2S-xboot-emmc-boot0-0k.img.gz"
@@ -227,12 +234,13 @@ printf 'f2s=%s\n' "$UBOOT_TARGET_MAP"
         self.assertIn("losetup --find --show --partscan --read-only", generic)
         self.assertIn('mount -o ro,noload,nosuid,nodev,noexec', generic)
         self.assertIn("forbidden_packaged_assets", generic)
+        self.assertIn("唯一核心設定內容", generic)
 
     def test_full_image_contract_is_exact_and_sd_only(self) -> None:
         self.assertEqual(self.policy["partition_table"], "msdos")
         self.assertEqual(
             self.policy["required_partitions"],
-            ["1:*:8192:*", "2:*:*:*"],
+            ["1:*:8192:524288", "2:*:532480:2613248"],
         )
         self.assertEqual(self.policy["boot_partition_number"], 1)
         self.assertEqual(self.policy["root_partition_number"], 2)
@@ -246,6 +254,14 @@ printf 'f2s=%s\n' "$UBOOT_TARGET_MAP"
             self.policy["forbidden_packaged_assets"],
         )
         self.assertEqual(self.policy["sd_bus_width"], 4)
+        self.assertEqual(
+            self.policy["final_kernel_config_sha256"],
+            "9ce6aa0972e5a29af20b7b6181425ba02c4e78c634727378232050d0796fcd7c",
+        )
+        self.assertEqual(
+            self.policy["final_uboot_config_sha256"],
+            "a2db480c77031efaa465ad4a550e16ee4649d371d42f403460a957050a117469",
+        )
 
     def test_source_policy_accepts_current_l1_state(self) -> None:
         result = subprocess.run(

@@ -51,6 +51,10 @@
   "linux_source": "https://github.com/BPI-SINOVOIP/BPI-F2S-bsp.git",
   "linux_ref": "commit:3eee97bd8fb7582c2d9942a533647c3d78222bb5",
   "linux_commit": "3eee97bd8fb7582c2d9942a533647c3d78222bb5",
+  "firmware_source": "https://github.com/armbian/firmware",
+  "firmware_ref": "commit:f50a2a21bcdb77a562b3976930c5c6b521a1df08",
+  "firmware_commit": "f50a2a21bcdb77a562b3976930c5c6b521a1df08",
+  "verify_firmware_source_resolution": true,
   "uboot_source": "https://github.com/BPI-SINOVOIP/BPI-F2S-bsp.git",
   "uboot_ref": "commit:3eee97bd8fb7582c2d9942a533647c3d78222bb5",
   "uboot_commit": "3eee97bd8fb7582c2d9942a533647c3d78222bb5",
@@ -204,6 +208,8 @@
       "uboot_revision": "3eee97bd8fb7582c2d9942a533647c3d78222bb5",
       "uboot_defconfig": "sp7021_bpi_f2p_defconfig",
       "uboot_target_index": 1,
+      "final_kernel_config_sha256": "9ce6aa0972e5a29af20b7b6181425ba02c4e78c634727378232050d0796fcd7c",
+      "final_uboot_config_sha256": "a2db480c77031efaa465ad4a550e16ee4649d371d42f403460a957050a117469",
       "uboot_required_config_options": [
         "CONFIG_ARCH_PENTAGRAM=y",
         "CONFIG_TARGET_PENTAGRAM_COMMON=y",
@@ -256,8 +262,8 @@
       "partition_start_sector": 8192,
       "logical_sector_size": 512,
       "required_partitions": [
-        "1:*:8192:*",
-        "2:*:*:*"
+        "1:*:8192:524288",
+        "2:*:532480:2613248"
       ],
       "boot_partition_number": 1,
       "boot_configuration": "sunplus_uenv",

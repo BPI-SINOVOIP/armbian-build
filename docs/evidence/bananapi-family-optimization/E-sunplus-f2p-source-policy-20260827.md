@@ -18,6 +18,7 @@
 | Linux | BSP 內 `linux-sp` | `5.4.35-BPI-F2P-Kernel` | F2P defconfig 與 DTS 存在，元件可編譯 |
 | U-Boot | BSP 內 `u-boot-sp` | `2019.04` | F2P defconfig 與 DTS 存在，套用既有 `yylloc` 主機工具相容修補後可編譯 |
 | 交叉工具鏈 | BSP 內 `toolchains/gcc-linaro-7.3.1-2018.05-x86_64_arm-linux-gnueabihf` | `Linaro GCC 7.3-2018.05` | 可執行，但尚未完成獨立再散布授權稽核 |
+| Armbian 韌體 | `https://github.com/armbian/firmware` | `f50a2a21bcdb77a562b3976930c5c6b521a1df08` | 板檔、驗證契約、建置日誌與映像套件必須解析為同一提交 |
 | 第一階段資產 | BSP 內 `sp-pack/sp7021/common/bin/ISPBOOOT.BIN` | SHA-256 `e01081a92b55156868b9df7918e0d5f503d1dda3af94335ed24637786124964a` | 預建二進位；來源、F2P 板級相容性與再散布授權均未閉合 |
 | TF-A | 不適用 | 不適用 | 現有 32 位元 SP7021 BSP 流程未建置或封裝 TF-A |
 
@@ -49,8 +50,8 @@
 - `tools/check-bananapi-sunplus-f2p-source-policy.py` 驗證固定來源、授權邊界及 L1/L2 狀態機，拒絕只有標籤而沒有完整證據的假 L2。
 - `tools/build-bananapi-sunplus-f2p-candidate.sh` 固定 `SOURCE_DATE_EPOCH=1609074838`，要求至少 `40 GiB` 可用空間，且只接受專用 OverlayFS 入口。
 - `tools/verify-bananapi-sunplus-f2p-candidate.sh` 強制 XZ 串流同一性與 L2 共用驗證，失敗時覆寫舊成功狀態。
-- 驗證契約要求恰好兩個 MBR 分割區、第一分割區起於 sector 8192、`u-boot.img` 位於位元組偏移 17408、`ISPBOOOT.BIN` 為套件與 FAT 開機檔，並在 rootfs 與 FAT 分割區排除 F2S eMMC xboot。
-- 完整映像必須保留唯一核心與 U-Boot 最終設定證據、固定 Git revision、DTB 身分與雜湊、SD/eMMC 匯流排寬度，以及 UUID 根檔案系統路徑。
+- 驗證契約要求恰好兩個 MBR 分割區，分別為 `8192+524288` 與 `532480+2613248` sectors；`u-boot.img` 位於位元組偏移 17408，`ISPBOOOT.BIN` 為套件與 FAT 開機檔，並在 rootfs 與 FAT 分割區排除 F2S eMMC xboot。
+- 完整映像必須保留唯一內容的核心設定與唯一 U-Boot 最終設定證據；舊 BSP 可保留兩個名稱不同但雜湊相同的核心設定檔，不允許出現第二種設定內容。驗證同時固定 Git revision、DTB 身分與雜湊、SD/eMMC 匯流排寬度，以及 UUID 根檔案系統路徑。
 
 ## 授權判定
 
