@@ -25,6 +25,14 @@ EXPECTED_ATF_OBJECTS = {
     "plat/mediatek/mt7988/drivers/efuse/release/efuse_cmd.o",
     "plat/mediatek/mt7988/drivers/efuse/release/plat_efuse.o",
 }
+EXPECTED_UBOOT_PATCHES = {
+    "patch/u-boot/u-boot-filogic-r4pro/0001-BPI-R4-Pro-8X-SD.patch": (
+        "696039c706293e393888ab164a8a8412c9ac6fbfbd311d9262b21fa86a6bc5a7"
+    ),
+    "patch/u-boot/u-boot-filogic-r4pro/0002-R4-Pro-SD.patch": (
+        "10ecafc1603463f2114cb0349b1791bfd2126ba3e208e52fab040d95d9c56a4a"
+    ),
+}
 EXPECTED_DISABLED_UBOOT_OPTIONS = {
     "# CONFIG_AUTOBOOT_KEYED is not set",
     "# CONFIG_AUTOBOOT_MENU_SHOW is not set",
@@ -92,6 +100,10 @@ def main() -> None:
         for digest in config.get("atf_prebuilt_objects", {}).values()
     ):
         fail("ATF 預編譯物件雜湊格式不正確")
+    if config.get("uboot_patch_directory") != "u-boot-filogic-r4pro":
+        fail("U-Boot 未使用 R4 Pro 專用修補目錄")
+    if config.get("uboot_candidate_patches") != EXPECTED_UBOOT_PATCHES:
+        fail("U-Boot 專用修補清單或雜湊不符")
 
     if board.get("uboot_defconfig") != (
         "mt7988a_bananapi_bpi-r4-pro-8x-sdmmc_defconfig"

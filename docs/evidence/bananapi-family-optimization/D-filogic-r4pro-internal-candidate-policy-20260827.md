@@ -4,7 +4,9 @@
 
 ## 階段結論
 
-本變更建立 `bananapir4pro` 的 SD-only 實驗性 L2 軟體候選，但本階段依工作範圍不執行完整建置，也沒有實體板證據。因此目前只完成可重現來源、啟動契約、韌體、授權阻擋與本機靜態回歸；不得宣稱已有可開機 L2 映像、硬體相容性或正式發布資格。
+本變更建立 `bananapir4pro` 的 SD-only 實驗性 L2 軟體候選。提交 `12d304707` 已完成一次完整預檢映像且唯讀內容守門通過，但當時仍使用整個 Filogic 共用 U-Boot 修補佇列；摘要含 16 個 `not_mbox`、兩個 `needs_rebase` 與一個 `invalid_diff`，其中 R4 Pro 專屬修補本身無法被正規 diff parser 解析。因此該映像只保留為預檢，不得升級為正式 L2。
+
+正式候選改用 `u-boot-filogic-r4pro` 專用修補目錄，只納入 R4 Pro 共用 DTS、SD DTS、精簡 SD defconfig 與必要的 extlinux 設定；預設掃描目標限縮為 `mmc0`。專用佇列必須以 mail format 完整解析、全部無偏移套用且零修補問題後重新建置。沒有實體板證據前，不得宣稱可開機、硬體相容性或正式發布資格。
 
 Linux 固定提交的版本是 `6.19.0-rc1`，只適合內部整合與風險盤點。ATF 會連結未提供逐檔授權旁證的預編譯 DRAM／eFuse 物件；在授權釐清前，即使後續完整建置與唯讀映像驗證通過，仍不得核准公開散布。
 
@@ -19,7 +21,7 @@ Linux 固定提交的版本是 `6.19.0-rc1`，只適合內部整合與風險盤�
 | mt76 firmware | `https://github.com/openwrt/mt76.git` | `c5a3bd91aa735b669618610d5f0ebfa5786845a6` |
 | Linux firmware | `https://gitlab.com/kernel-firmware/linux-firmware.git` | `01205307636157a12c29e6a774bf83b218732050` |
 
-板級 U-Boot 修補取自官方 BPI-R4 Pro 8X OpenWrt 儲存庫提交 `56e0e77adad258ba05782fee8f94f00d17b0b991`。官方檔案 SHA-256 是 `e6663063c6cbc563c25290bc274007bc6e594737a29d9499aa3a4518082c0064`；本地 `455-add-bpi-r4-pro-8x.patch` 為配合 U-Boot v2025.04 節點標籤所做的六處相容調整，四個 GPIO 參照由 `gpio` 改為 `pio`，Ethernet 節點由 `eth` 改為 `eth0`，pinctrl 節點由 `pinctrl` 改為 `pio`。本地修補 SHA-256 是 `21e3d83feb8e6a3134e888ea2905104fe00404527efb862e13e5f2cbda909edd`，且已確認可套用固定 U-Boot 提交。
+板級 U-Boot 修補取自官方 BPI-R4 Pro 8X OpenWrt 儲存庫提交 `56e0e77adad258ba05782fee8f94f00d17b0b991`。官方檔案 SHA-256 是 `e6663063c6cbc563c25290bc274007bc6e594737a29d9499aa3a4518082c0064`。專用候選的第一個修補只保留 SD 所需三個檔案，移除供應商預設環境及其 NAND／eMMC 安裝腳本，並配合 U-Boot v2025.04 將 GPIO 參照改為 `pio`、Ethernet 節點改為 `eth0`、pinctrl 節點改為 `pio`，SHA-256 為 `696039c706293e393888ab164a8a8412c9ac6fbfbd311d9262b21fa86a6bc5a7`。第二個修補加入內建 SD extlinux 環境並把掃描目標限制為 `mmc0`，SHA-256 為 `10ecafc1603463f2114cb0349b1791bfd2126ba3e208e52fab040d95d9c56a4a`。
 
 ## SD 啟動契約
 
@@ -27,6 +29,7 @@ Linux 固定提交的版本是 `6.19.0-rc1`，只適合內部整合與風險盤�
 - 映像只封裝 SDMMC BL2、FIP 與五分割區 GPT；BL2 位於 byte `17408`，FIP 位於 byte `6815744`。
 - GPT 分割區依序是 `bl2`、`ubootenv`、`factory`、`fip` 與 Armbian 根檔案系統。
 - U-Boot 停用供應商預設環境、keyed autoboot、自動選單、eMMC boot、HS200、SPI-NAND 與 UBI 命令，改用 BootSTD、extlinux、EXT4 與 SD 自動開機。
+- U-Boot 專用修補不包含 eMMC 或 SPI-NAND DTS、defconfig 與環境，`BOOT_TARGETS` 只允許 `mmc0`。
 - U-Boot 以 `ubootenv` 分割區名稱定位兩份冗餘環境，避免跨入 `factory` 分割區。
 - 驗證器拒絕 `/dev/fit0`、production/recovery、eMMC 寫入與 UBI 安裝字串，防止供應商 OpenWrt 路徑重新進入候選。
 

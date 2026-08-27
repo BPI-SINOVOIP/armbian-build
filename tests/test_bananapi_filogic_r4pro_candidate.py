@@ -15,7 +15,10 @@ ROOT = Path(__file__).resolve().parents[1]
 CONFIG = ROOT / "config/validation/bananapi-filogic-mt7988-r4pro-current.json"
 BOARD = ROOT / "config/boards/bananapir4pro.wip"
 KERNEL_CONFIG = ROOT / "config/kernel/linux-filogic-current.config"
-UBOOT_PATCH = ROOT / "patch/u-boot/u-boot-filogic/455-add-bpi-r4-pro-8x.patch"
+UBOOT_PATCHES = (
+    ROOT / "patch/u-boot/u-boot-filogic-r4pro/0001-BPI-R4-Pro-8X-SD.patch",
+    ROOT / "patch/u-boot/u-boot-filogic-r4pro/0002-R4-Pro-SD.patch",
+)
 POLICY_CHECKER = ROOT / "tools/check-bananapi-filogic-r4pro-policy.py"
 BUILDER = ROOT / "tools/build-bananapi-filogic-r4pro-candidate.sh"
 VERIFIER = ROOT / "tools/verify-bananapi-filogic-r4pro-candidate.sh"
@@ -79,6 +82,7 @@ class BananaPiFilogicR4ProCandidateTests(unittest.TestCase):
         )
         self.assertNotIn("FILOGIC_BOOT_DEVICE=\"emmc\"", self.board_text)
         self.assertNotIn("FILOGIC_BOOT_DEVICE=\"snand\"", self.board_text)
+        self.assertIn('BOOTPATCHDIR="u-boot-filogic-r4pro"', self.board_text)
 
     def test_uboot_uses_bootstd_and_named_redundant_environment(self) -> None:
         for value in (
@@ -239,15 +243,35 @@ class BananaPiFilogicR4ProCandidateTests(unittest.TestCase):
         self.assertIn("未完整停用", rejected.stderr)
 
     def test_official_uboot_patch_provenance_is_locked(self) -> None:
-        digest = hashlib.sha256(UBOOT_PATCH.read_bytes()).hexdigest()
-        self.assertEqual(digest, self.config["uboot_board_patch_local_sha256"])
+        expected = self.config["uboot_candidate_patches"]
+        self.assertEqual(len(expected), 2)
+        for patch in UBOOT_PATCHES:
+            with self.subTest(patch=patch.name):
+                relative = str(patch.relative_to(ROOT))
+                digest = hashlib.sha256(patch.read_bytes()).hexdigest()
+                self.assertEqual(digest, expected[relative])
+                patch_text = patch.read_text(encoding="utf-8")
+                self.assertTrue(patch_text.startswith("From 000000000000"))
         self.assertEqual(
             self.config["uboot_board_patch_source_commit"],
             "56e0e77adad258ba05782fee8f94f00d17b0b991",
         )
-        patch_text = UBOOT_PATCH.read_text(encoding="utf-8")
+        combined = "\n".join(
+            patch.read_text(encoding="utf-8") for patch in UBOOT_PATCHES
+        )
         for value in ("<&pio 13", "<&pio 14", "&eth0", "&pio {"):
-            self.assertIn(value, patch_text)
+            self.assertIn(value, combined)
+        self.assertIn('#define BOOT_TARGETS\t"mmc0"', combined)
+        for forbidden in (
+            "-emmc.dts",
+            "-emmc_defconfig",
+            "-snand_defconfig",
+            "root=/dev/fit0",
+            "emmc_write_bl2=",
+            "ubi_init=",
+            "CONFIG_USE_DEFAULT_ENV_FILE=y",
+        ):
+            self.assertNotIn(forbidden, combined)
 
     def test_dedicated_entrypoints_are_r4pro_only(self) -> None:
         expected_config = "bananapi-filogic-mt7988-r4pro-current.json"

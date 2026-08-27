@@ -42,7 +42,11 @@
   "uboot_board_patch_source": "https://github.com/BPI-SINOVOIP/BPI-R4PRO-8X-OPENWRT-V24.10.0-Master-Devel",
   "uboot_board_patch_source_commit": "56e0e77adad258ba05782fee8f94f00d17b0b991",
   "uboot_board_patch_source_sha256": "e6663063c6cbc563c25290bc274007bc6e594737a29d9499aa3a4518082c0064",
-  "uboot_board_patch_local_sha256": "21e3d83feb8e6a3134e888ea2905104fe00404527efb862e13e5f2cbda909edd",
+  "uboot_patch_directory": "u-boot-filogic-r4pro",
+  "uboot_candidate_patches": {
+    "patch/u-boot/u-boot-filogic-r4pro/0001-BPI-R4-Pro-8X-SD.patch": "696039c706293e393888ab164a8a8412c9ac6fbfbd311d9262b21fa86a6bc5a7",
+    "patch/u-boot/u-boot-filogic-r4pro/0002-R4-Pro-SD.patch": "10ecafc1603463f2114cb0349b1791bfd2126ba3e208e52fab040d95d9c56a4a"
+  },
   "installed_firmware_blobs": {
     "/lib/firmware/mediatek/mt7988/i2p5ge-phy-pmb.bin": "643157e984732eccad6aa5e1f80a2be82a6cbf747aac25b54c75eefeccaf8aec",
     "/lib/firmware/mediatek/mt7988/mt7988_wo_0.bin": "a00b95235a9baa850fe5e9c08562b54279bb5528abad207de6f2e649a8009b15",

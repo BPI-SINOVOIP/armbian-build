@@ -34,6 +34,7 @@ function post_family_config_branch_current__bananapir4pro_pin_sources() {
 	declare -g KERNELBRANCH="${KERNELBRANCH_BOARD}"
 	declare -g BOOTBRANCH="${BOOTBRANCH_BOARD}"
 	declare -g ATFBRANCH="${ATFBRANCH_BOARD}"
+	declare -g BOOTPATCHDIR="u-boot-filogic-r4pro"
 	declare -g ARMBIAN_FIRMWARE_GIT_REF="${ARMBIAN_FIRMWARE_GIT_REF_BOARD}"
 }
 
