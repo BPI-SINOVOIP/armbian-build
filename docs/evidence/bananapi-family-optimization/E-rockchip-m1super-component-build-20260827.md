@@ -4,7 +4,9 @@
 
 2026-08-27 已使用固定 Linux、U-Boot 與 RKBin 提交，成功建置 Banana Pi M1 Super 專屬 Linux DTB、U-Boot SPL、U-Boot DTB、FIT 與 `idbloader.img`。建置結果證明專屬 DTS 與 defconfig 能由固定元件來源產生，不代表板子已開機，也不代表完整 Armbian 修補佇列、根檔案系統或映像已通過。
 
-本次依工作範圍不建置完整根檔案系統映像、不接觸實體板、不推送。候選維持 `.wip`、L2 與禁止公開發布狀態。
+本次依工作範圍不建置完整根檔案系統映像、不接觸實體板。依全系列稽核邊界，本結果是 `L1 元件候選`；候選維持 `.wip` 與禁止公開發布狀態。
+
+五個建置產物與 RKBin 授權檔已保存於 `output/components/2026.08/bananapi-rockchip-rk3528-m1super-vendor`。可攜清單 SHA-256 為 `ef452fbc47115ffc34359c44a202733217ff32e95d946c160f8e4ea1ebc3b22a`，可由 `tools/verify-bananapi-rockchip-m1super-components.sh` 獨立核對。該目錄不含 Linux、U-Boot 或 RKBin 原始碼與建置樹。
 
 `./compile.sh inventory BOARD=bananapim1super BRANCH=vendor` 已成功，證明矩陣解析器可辨識此 `.wip` 板與 vendor 分支。inventory 只展開頂層欄位，不執行板檔 hook，因此來源覆寫另由政策守門與聚焦測試檢查，不能只憑 inventory 結果宣稱完整建置設定已通過。
 
@@ -70,6 +72,9 @@ tools/mkimage -n rk3528 -T rksd \
 # 固定來源、授權與發布阻擋守門
 ./tools/check-bananapi-rockchip-m1super-policy.py
 
+# 核對已保存的可攜元件證據
+./tools/verify-bananapi-rockchip-m1super-components.sh
+
 # 未來需要完整候選時，使用專屬 OverlayFS 隔離快取建置
 ./tools/run-bananapi-rockchip-m1super-candidate-isolated-cache.sh
 
@@ -77,7 +82,7 @@ tools/mkimage -n rk3528 -T rksd \
 ./tools/verify-bananapi-rockchip-m1super-candidate.sh
 ```
 
-本次沒有執行後兩個完整映像入口。`CACHE_OVERLAY_ROOT` 固定在本工作樹的 `.tmp/bananapi-rockchip-m1super-cache-overlay`，避免建置程序寫入共用下層快取；清理仍只能針對這個候選專用路徑。
+本次沒有執行完整映像建置與驗證入口。`CACHE_OVERLAY_ROOT` 固定在本工作樹的 `.tmp/bananapi-rockchip-m1super-cache-overlay`，避免建置程序寫入共用下層快取；清理仍只能針對這個候選專用路徑。
 
 ## 診斷套件
 

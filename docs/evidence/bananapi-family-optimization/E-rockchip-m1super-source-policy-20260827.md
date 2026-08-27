@@ -2,9 +2,9 @@
 
 ## 結論
 
-本候選把 `bananapim1super.wip` 從 ArmSoM Sige1 板檔繼承與 Hinlink H28K U-Boot 身分，改成 Banana Pi M1 Super 專屬板檔、Linux DTS、U-Boot DTS 與 defconfig。候選來源固定，可執行元件與完整映像建置，但目前只具備 L2 軟體候選資格，不是公開發布版，也不代表任何實體板功能已通過。
+本候選把 `bananapim1super.wip` 從 ArmSoM Sige1 板檔繼承與 Hinlink H28K U-Boot 身分，改成 Banana Pi M1 Super 專屬板檔、Linux DTS、U-Boot DTS 與 defconfig。候選來源固定，專屬元件已完成建置，但完整 Armbian 修補佇列、根檔案系統與映像尚未通過，因此目前只具備 `L1 元件候選`資格，不是公開發布版，也不代表任何實體板功能已通過。
 
-保留 `.wip` 的原因不是建置鏈不完整，而是量產料號、實體儲存裝置、網路、顯示、影音與 40-pin 尚未完成跨板次驗證。所有映像必須維持內部測試用途，直到發布守門條件逐項解除。
+保留 `.wip` 的原因包含完整映像建置鏈仍待驗證，以及量產料號、實體儲存裝置、網路、顯示、影音與 40-pin 尚未完成跨板次驗證。未來建立的映像也必須維持內部測試用途，直到發布守門條件逐項解除。
 
 ## 身分證據
 
@@ -52,17 +52,17 @@ RKBin 的 `LICENSE.TXT` 允許在採用 Rockchip 積體電路的平台上，以�
 
 Armbian 韌體倉包含多個不同上游與授權範圍；目前沒有完成 M1 Super 映像實際攜帶檔案的逐檔散布稽核。因此 `firmware_redistribution_audit_complete=false`，即使映像通過軟體驗證，也不得直接對外散布。
 
-## L2 驗證範圍
+## L1 元件驗證範圍
 
-L2 軟體候選允許證明以下事項：
+L1 元件候選只允許證明以下事項：
 
 - 所有 Git 來源與二進位載荷固定且可追溯。
 - 專屬 Linux DTB 與 U-Boot 元件能由固定來源建置。
 - DTB 的 model、compatible、SD、eMMC、I2C、SPI、網路、USB、GPU、VPU 與 HDMI 靜態契約一致。
 - U-Boot 不含 H28K model，載荷偏移不跨越根分割區。
-- 完整映像可由專用 OverlayFS 入口建置並接受唯讀掛載驗證。
+- 已提供專用 OverlayFS 完整映像入口，但本階段尚未執行，不能視為建置證據。
 
-L2 不得證明開機成功、記憶體穩定、儲存壽命、網路吞吐、GPU/VPU 硬體加速、HDMI 相容性、USB OTG、40-pin 電氣安全或量產可用性。
+L1 不得證明完整映像建置成功、開機成功、記憶體穩定、儲存壽命、網路吞吐、GPU／VPU 硬體加速、HDMI 相容性、USB OTG、40-pin 電氣安全或量產可用性。
 
 ## 解除發布阻擋
 

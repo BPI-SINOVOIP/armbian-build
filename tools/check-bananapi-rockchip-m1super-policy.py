@@ -22,13 +22,24 @@ with CONFIG.open(encoding="utf-8") as stream:
 require(BOARD.is_file(), "板檔必須維持 .wip")
 require(not (BOARD.parent / "bananapim1super.conf").exists(), "不得提前升級為正式板檔")
 require(not (BOARD.parent / "bananapim1super.csc").exists(), "不得建立未核准的社群板檔")
-require(policy["candidate_level"] == "L2", "候選層級必須是 L2")
+require(policy["candidate_level"] == "L1 元件候選", "候選層級必須是 L1 元件候選")
+require(policy["candidate_scope"] == "internal-component-only", "候選範圍必須限制為內部元件")
 require(policy["candidate_public_release_approved"] is False, "不得核准公開發布")
+require(policy["public_release_allowed"] is False, "不得允許公開發布")
 require(policy["hardware_validation_complete"] is False, "不得宣稱實機驗證完成")
+require(policy["hardware_claims_allowed"] is False, "不得允許硬體功能聲明")
+require(policy["component_build_completed"] is True, "元件建置必須明確完成")
+require(policy["rootfs_image_built"] is False, "不得宣稱完整根檔案系統映像已建置")
 require(policy["firmware_redistribution_audit_complete"] is False, "韌體授權稽核不得標為完成")
 require(policy["atf_source_build_available"] is False, "不得宣稱 RK3528 TF-A 可由固定來源建置")
 require(policy["identity_evidence"]["wifi_bom_conflict_resolved"] is False, "Wi-Fi 料號矛盾不得標為已解決")
 component_evidence = policy["component_build_evidence"]
+require(
+    component_evidence["portable_manifest_sha256"]
+    == "ef452fbc47115ffc34359c44a202733217ff32e95d946c160f8e4ea1ebc3b22a",
+    "可攜元件清單雜湊不符",
+)
+require(component_evidence["portable_artifact_count"] == 6, "可攜元件數量不符")
 require(component_evidence["full_rootfs_image_built"] is False, "不得宣稱完整根檔案系統映像已建置")
 require(component_evidence["hardware_tested"] is False, "不得宣稱已完成實機測試")
 require(component_evidence["armbian_uboot_patch_stack_complete"] is False, "不得宣稱完整 U-Boot 修補佇列已通過")

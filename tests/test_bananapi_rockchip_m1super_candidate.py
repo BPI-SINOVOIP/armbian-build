@@ -11,6 +11,7 @@ UBOOT_DTS = ROOT / "patch/u-boot/legacy/u-boot-radxa-rk35xx/dt/rk3528-bananapi-m
 UBOOT_CONFIG = ROOT / "patch/u-boot/legacy/u-boot-radxa-rk35xx/defconfig/bananapi-m1-super-rk3528_defconfig"
 POLICY = ROOT / "docs/evidence/bananapi-family-optimization/E-rockchip-m1super-source-policy-20260827.md"
 COMPONENT_EVIDENCE = ROOT / "docs/evidence/bananapi-family-optimization/E-rockchip-m1super-component-build-20260827.md"
+COMPONENT_VERIFIER = ROOT / "tools/verify-bananapi-rockchip-m1super-components.sh"
 
 
 class BananaPiM1SuperCandidateTests(unittest.TestCase):
@@ -61,9 +62,14 @@ class BananaPiM1SuperCandidateTests(unittest.TestCase):
         )
 
     def test_public_release_and_hardware_claims_are_blocked(self):
-        self.assertEqual(self.validation["candidate_level"], "L2")
+        self.assertEqual(self.validation["candidate_level"], "L1 元件候選")
+        self.assertEqual(self.validation["candidate_scope"], "internal-component-only")
+        self.assertTrue(self.validation["component_build_completed"])
+        self.assertFalse(self.validation["rootfs_image_built"])
         self.assertFalse(self.validation["candidate_public_release_approved"])
+        self.assertFalse(self.validation["public_release_allowed"])
         self.assertFalse(self.validation["hardware_validation_complete"])
+        self.assertFalse(self.validation["hardware_claims_allowed"])
         self.assertFalse(self.validation["firmware_redistribution_audit_complete"])
         self.assertFalse(self.validation["atf_source_build_available"])
         self.assertFalse(
@@ -86,6 +92,11 @@ class BananaPiM1SuperCandidateTests(unittest.TestCase):
 
     def test_component_build_hashes_and_limits_are_machine_readable(self):
         evidence = self.validation["component_build_evidence"]
+        self.assertEqual(
+            evidence["portable_manifest_sha256"],
+            "ef452fbc47115ffc34359c44a202733217ff32e95d946c160f8e4ea1ebc3b22a",
+        )
+        self.assertEqual(evidence["portable_artifact_count"], 6)
         self.assertFalse(evidence["full_rootfs_image_built"])
         self.assertFalse(evidence["hardware_tested"])
         self.assertFalse(evidence["armbian_uboot_patch_stack_complete"])
@@ -181,7 +192,7 @@ class BananaPiM1SuperCandidateTests(unittest.TestCase):
 
     def test_policy_document_records_limits_and_evidence(self):
         for required in (
-            "L2 軟體候選",
+            "L1 元件候選",
             "不得直接對外散布",
             "wifi_bom_conflict_resolved=false",
             "BPI-M1S_ArmSoM-Sige1_V1.2_SCH_20240727.pdf",
@@ -205,8 +216,15 @@ class BananaPiM1SuperCandidateTests(unittest.TestCase):
             "tools/run-bananapi-rockchip-m1super-candidate-isolated-cache.sh",
             "tools/verify-bananapi-rockchip-m1super-candidate.sh",
             "tools/check-bananapi-rockchip-m1super-policy.py",
+            "tools/verify-bananapi-rockchip-m1super-components.sh",
         ):
             self.assertTrue((ROOT / relative).is_file(), relative)
+
+    def test_component_verifier_is_evidence_bounded(self):
+        text = COMPONENT_VERIFIER.read_text(encoding="utf-8")
+        self.assertIn("portable_manifest_sha256", text)
+        self.assertIn("不得包含原始碼或建置樹", text)
+        self.assertIn("不代表完整映像、實機或公開發布通過", text)
 
 
 if __name__ == "__main__":
