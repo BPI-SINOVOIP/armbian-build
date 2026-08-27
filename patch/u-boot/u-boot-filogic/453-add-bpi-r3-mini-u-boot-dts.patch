@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Banana Pi -BPI <lionwang@sinovoip.com.cn>
 Date: Fri, 22 May 2026 16:20:00 +0800
-Subject: [PATCH] arm: dts: 新增 Banana Pi R3 Mini eMMC U-Boot DTS
+Subject: [PATCH] arm: dts: BPI-R3 Mini eMMC U-Boot DTS
 
 上游 Linux MT7986A R3 Mini DTS 需要比 U-Boot v2025.04 更新的時脈
 binding。新增僅供 U-Boot 早期啟動使用的最小 DTS，啟用 UART 與

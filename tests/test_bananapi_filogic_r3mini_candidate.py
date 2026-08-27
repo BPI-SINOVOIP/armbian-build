@@ -7,6 +7,7 @@ import hashlib
 import importlib.util
 import json
 import lzma
+import mailbox
 import os
 import subprocess
 import tempfile
@@ -535,6 +536,14 @@ class BananaPiFilogicR3MiniCandidateTests(unittest.TestCase):
         self.assertEqual(contract["storage_node"], "/mmc@11230000")
         self.assertEqual(contract["bus_width"], 8)
         self.assertEqual(contract["max_frequency"], 200000000)
+
+    def test_uboot_patch_mailbox_subject_is_parser_safe(self) -> None:
+        messages = mailbox.mbox(UBOOT_PATCH)
+        self.addCleanup(messages.close)
+        self.assertEqual(len(messages), 1)
+        subject = messages[0]["Subject"]
+        self.assertIsInstance(subject, str)
+        self.assertTrue(subject.strip())
 
     def test_linux_dtb_enables_only_hs200(self) -> None:
         patch_text = KERNEL_PATCH.read_text()
