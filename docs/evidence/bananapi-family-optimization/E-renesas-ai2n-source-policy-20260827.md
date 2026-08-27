@@ -33,6 +33,12 @@
 
 固定 Linux 樹含 `net/wireless/certs/sforshee.hex` 與 `wens.hex`；目前核心設定啟用 `CONFIG_CFG80211_USE_KERNEL_REGDB_KEYS=y`，兩者屬於建置輸入，並受 Linux 來源授權與固定提交約束。固定 U-Boot 樹沒有列入相同副檔名清單的預建依賴。
 
+## GPU 驅動契約修正
+
+第一次完整映像檢查發現，舊核心設定要求 `CONFIG_MALI_MIDGARD=m` 與 `CONFIG_MALI_DEVFREQ=y`，但固定 Linux 提交不含這組供應商 Mali 驅動來源；`olddefconfig` 會靜默移除兩個符號，導致設定檔意圖與實際映像不一致。該映像因此不得當成已完成 GPU 軟體支援的候選。
+
+固定 Linux 提交已含 Panfrost，驅動相容表支援板級 DTS 使用的 `arm,mali-bifrost`。本分支改為 `CONFIG_DRM_PANFROST=m`，並移除固定來源無法解析的舊 Mali 設定。這只建立可重建的開源驅動路徑；模組載入、裝置綁定、圖形堆疊與效能仍須在 AI2N 實體板驗證，不能由 Kconfig 或 DTB 靜態檢查推定。
+
 ## 預建執行期資產
 
 | 安裝用途 | 倉庫檔案 | SHA-256 |

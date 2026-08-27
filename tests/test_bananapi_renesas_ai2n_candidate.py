@@ -208,6 +208,9 @@ class BananaPiRenesasAi2nCandidateTests(unittest.TestCase):
         for option, value in self.config["common_kernel_options"].items():
             with self.subTest(option=option):
                 self.assertIn(f"{option}={value}", kernel_text)
+        self.assertIn("CONFIG_DRM_PANFROST=m", kernel_text)
+        self.assertNotIn("CONFIG_MALI_MIDGARD", kernel_text)
+        self.assertNotIn("CONFIG_MALI_DEVFREQ", kernel_text)
 
     def test_uboot_payload_and_boot_area_are_explicit(self) -> None:
         self.assertEqual(self.board["output_image_prefix"], "Bananapi-Armbian_*_")
