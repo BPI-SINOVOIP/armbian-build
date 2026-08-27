@@ -7,6 +7,7 @@ import hashlib
 import json
 import os
 import subprocess
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -98,6 +99,11 @@ class BananaPiRenesasAi2nCandidateTests(unittest.TestCase):
             with self.subTest(path=path):
                 self.assertEqual(sha256(ROOT / path), digest)
 
+    def test_packaging_temporary_file_is_worktree_scoped(self) -> None:
+        self.assertNotIn("/tmp/bp.bin", self.family_text)
+        self.assertIn('mktemp "${PWD}/${pack_out}/.bp.XXXXXX.bin"', self.family_text)
+        self.assertIn('unlink "${bp_file}"', self.family_text)
+
     def test_proprietary_assets_are_hash_locked(self) -> None:
         assets = self.config["proprietary_assets"]
         self.assertEqual(len(assets), 9)
@@ -121,6 +127,8 @@ class BananaPiRenesasAi2nCandidateTests(unittest.TestCase):
         self.assertFalse(hardware["present"])
         self.assertFalse(hardware["node_presence_is_functional_evidence"])
         self.assertEqual(hardware["validated_features"], [])
+        self.assertEqual(self.config["candidate_scope"], "internal-l0")
+        self.assertEqual(self.config["evidence_level"], "L0")
 
     def test_policy_only_gate_refuses_public_release(self) -> None:
         environment = os.environ.copy()
@@ -151,6 +159,35 @@ class BananaPiRenesasAi2nCandidateTests(unittest.TestCase):
         )
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn("發布政策守門通過", result.stdout)
+
+    def test_public_gate_requires_redistribution_authorization(self) -> None:
+        config = json.loads(VALIDATION.read_text(encoding="utf-8"))
+        config["release_policy"]["public_release_allowed"] = True
+        config["release_policy"]["public_redistribution_authorized"] = False
+        with tempfile.TemporaryDirectory() as directory:
+            validation = Path(directory) / "validation.json"
+            validation.write_text(
+                json.dumps(config, ensure_ascii=False), encoding="utf-8"
+            )
+            environment = os.environ.copy()
+            environment.update(
+                {
+                    "POLICY_ONLY": "yes",
+                    "PUBLIC_RELEASE": "yes",
+                    "VALIDATION_CONFIG": str(validation),
+                }
+            )
+            result = subprocess.run(
+                [str(SOURCE_VERIFIER)],
+                cwd=ROOT,
+                env=environment,
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                check=False,
+            )
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("禁止建立公開發布候選", result.stderr)
 
     def test_kernel_configuration_matches_candidate_contract(self) -> None:
         kernel_text = KERNEL_CONFIG.read_text(encoding="utf-8")
@@ -225,12 +262,13 @@ class BananaPiRenesasAi2nCandidateTests(unittest.TestCase):
         self.assertIn("bananapi-renesas-ai2n-cache-overlay", RUNNER.read_text())
         self.assertIn('BOARDS="bpi-ai2n"', BUILDER.read_text())
         self.assertIn('BOARDS="bpi-ai2n"', VERIFIER.read_text())
+        self.assertIn('VERIFICATION_EVIDENCE_LEVEL="L1"', VERIFIER.read_text())
 
     def test_policy_records_component_and_hardware_boundaries(self) -> None:
         text = POLICY.read_text(encoding="utf-8")
         for expected in (
-            "可進入 L2 完整映像守門的軟體候選",
-            "不是已通過 L2 的發布映像",
+            "目前只能登錄為內部 L0 來源／元件契約",
+            "證據層級最高只能標示為內部 L1",
             "禁止建立公開發布候選",
             "不能以節點存在或核心選項開啟取代",
             "OpenSSL 3.0",
@@ -238,6 +276,14 @@ class BananaPiRenesasAi2nCandidateTests(unittest.TestCase):
         ):
             with self.subTest(expected=expected):
                 self.assertIn(expected, text)
+
+    def test_ai2n_files_do_not_claim_l2_evidence(self) -> None:
+        for path in (VALIDATION, SOURCE_VERIFIER, BUILDER, VERIFIER, RUNNER, POLICY):
+            with self.subTest(path=path.name):
+                text = path.read_text(encoding="utf-8")
+                for forbidden in ("internal-l2", "內部 L2", "L2 完整映像"):
+                    self.assertNotIn(forbidden, text)
+                self.assertNotIn("rm -rf", text)
 
 
 if __name__ == "__main__":

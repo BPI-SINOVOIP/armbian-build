@@ -2,7 +2,7 @@
 
 ## 結論
 
-本候選已把 Linux、U-Boot 與 TF-A 固定到可追溯提交，並以固定 TF-A 原始碼重建 `bptool` 與 `fiptool`。乾淨來源的 AI2N DTB、U-Boot、BL2、BL31、SD BL2 與 FIP 已完成元件建置；完整 Armbian 映像尚未在本階段建置，因此目前是「可進入 L2 完整映像守門的軟體候選」，不是已通過 L2 的發布映像。
+本候選已把 Linux、U-Boot 與 TF-A 固定到可追溯提交，並以固定 TF-A 原始碼重建 `bptool` 與 `fiptool`。乾淨來源的 AI2N DTB、U-Boot、BL2、BL31、SD BL2 與 FIP 已完成元件建置；但尚未建出完整核心與代表性 Armbian 映像，也沒有唯讀映像內容證據，因此目前只能登錄為內部 L0 來源／元件契約，不是發布映像。
 
 映像流程仍會安裝九個缺少可核對再散布授權或 ABI 契約的預建資產。`config/validation/bananapi-renesas-rzv2n-ai2n-legacy.json` 因此固定設定 `public_release_allowed=false`；建置與驗證入口在 `PUBLIC_RELEASE=yes` 時必須拒絕執行。未取得書面授權前，只能用於內部工程驗證。
 
@@ -88,7 +88,7 @@ cd /media/pi/SMCI/armbian/bpi-v26.2.1-bananapi-ai2n-prep
 output/images/2026.08/bananapi-renesas-rzv2n-ai2n-trixie-legacy-cli
 ```
 
-完整驗證通過後，證據層級只能標示為內部 L2。若執行：
+完整映像建置與唯讀驗證通過後，因九個專有資產的再散布授權仍未釐清，證據層級最高只能標示為內部 L1。若執行：
 
 ```bash
 PUBLIC_RELEASE=yes ./tools/run-bananapi-renesas-ai2n-candidate-isolated-cache.sh

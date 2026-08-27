@@ -78,7 +78,7 @@ cmp --silent "${expected_manifest}" "${manifest}" || fail "來源證據清單不
 
 VALIDATION_CONFIG="${validation_config}" OUTPUT_DIR="${output_dir}" \
 	BOARDS="bpi-ai2n" CANDIDATE_FAMILY_NAME="Renesas RZ/V2N" \
-	VERIFY_TMP_PREFIX="renesas-ai2n-verify" \
+	VERIFY_TMP_PREFIX="renesas-ai2n-verify" VERIFICATION_EVIDENCE_LEVEL="L1" \
 	"${generic_verifier}" "$@"
 
 verification_status="${output_dir}/VERIFICATION_STATUS.json"
@@ -90,7 +90,8 @@ path = sys.argv[1]
 with open(path, encoding="utf-8") as stream:
     status = json.load(stream)
 status["renesas_source_manifest_sha256"] = sys.argv[2]
-status["candidate_scope"] = "internal-l2"
+status["evidence_level"] = "L1"
+status["candidate_scope"] = "internal-l1"
 status["public_release_allowed"] = False
 status["hardware_evidence_present"] = False
 temporary = f"{path}.partial"
@@ -102,4 +103,4 @@ PY
 
 trap - EXIT
 cleanup
-echo "AI2N 來源、映像與內部 L2 守門全部通過。"
+echo "AI2N 來源、映像與內部 L1 守門全部通過。"

@@ -45,13 +45,18 @@ print("true" if policy["public_redistribution_authorized"] else "false")
 print("true" if policy["machine_enforced"] else "false")
 print("true" if hardware["present"] else "false")
 print("true" if hardware["node_presence_is_functional_evidence"] else "false")
+print(config["candidate_scope"])
+print(config["evidence_level"])
 PY
 )
 [[ "${policy_values[2]}" == false || "${policy_values[2]}" == true ]] || fail "發布政策格式無效"
 [[ "${policy_values[2]}" == true ]] || fail "發布阻擋未啟用機器守門"
 [[ "${policy_values[3]}" == false ]] || fail "不得宣稱已有實體板證據"
 [[ "${policy_values[4]}" == false ]] || fail "不得把 DT 節點存在視為功能通過"
-if [[ "${public_release}" == yes && "${policy_values[0]}" != true ]]; then
+[[ "${policy_values[5]}" == internal-l0 ]] || fail "目前候選範圍只能是 internal-l0"
+[[ "${policy_values[6]}" == L0 ]] || fail "目前證據層級只能是 L0"
+if [[ "${public_release}" == yes &&
+	( "${policy_values[0]}" != true || "${policy_values[1]}" != true ) ]]; then
 	fail "目前授權與實體證據不足，禁止建立公開發布候選"
 fi
 if [[ "${policy_only}" == yes ]]; then
@@ -218,7 +223,8 @@ import json
 import sys
 status = {
     "status": "complete",
-    "evidence_level": "source-contract",
+    "evidence_level": "L0",
+    "evidence_scope": "source-contract",
     "source_commit": sys.argv[2],
     "validation_config_sha256": sys.argv[3],
     "manifest_sha256": sys.argv[4],

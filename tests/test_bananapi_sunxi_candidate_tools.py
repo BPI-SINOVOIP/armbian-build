@@ -314,6 +314,15 @@ class BananaPiSunxiCandidateToolTests(unittest.TestCase):
         self.assertIn("normalize_partition_table", text)
         self.assertIn("dos | msdos) printf 'msdos\\n'", text)
 
+    def test_verifier_supports_bounded_evidence_level_override(self) -> None:
+        text = VERIFY_SCRIPT.read_text()
+        self.assertIn(
+            'verification_evidence_level="${VERIFICATION_EVIDENCE_LEVEL:-L2}"',
+            text,
+        )
+        self.assertIn("L1 | L2)", text)
+        self.assertIn('"${board}" "${verification_evidence_level}"', text)
+
     def test_a31s_policy_limits_claims_to_mainline_dtb(self) -> None:
         config = json.loads(A31S_CONFIG.read_text())
         self.assertEqual(config["candidate_branch"], "current")

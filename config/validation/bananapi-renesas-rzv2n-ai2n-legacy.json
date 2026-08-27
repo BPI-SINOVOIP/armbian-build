@@ -1,7 +1,8 @@
 {
   "schema_version": 1,
   "candidate_branch": "legacy",
-  "candidate_scope": "internal-l2",
+  "candidate_scope": "internal-l0",
+  "evidence_level": "L0",
   "kernel_family": "renesas",
   "linux_source": "https://github.com/BPI-SINOVOIP/pi-linux.git",
   "linux_ref": "commit:48c742429129c095045823c204209bb2a92fb5b4",

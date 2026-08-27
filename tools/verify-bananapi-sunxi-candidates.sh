@@ -8,6 +8,7 @@ boards_text="${BOARDS:-bananapi bananapipro}"
 verify_archives="${VERIFY_ARCHIVES:-yes}"
 candidate_family_name="${CANDIDATE_FAMILY_NAME:-Sunxi}"
 verify_tmp_prefix="${VERIFY_TMP_PREFIX:-bananapi-verify}"
+verification_evidence_level="${VERIFICATION_EVIDENCE_LEVEL:-L2}"
 
 read -r -a boards <<<"${boards_text}"
 
@@ -79,6 +80,10 @@ esac
 case "${verify_archives}" in
 	yes | no) ;;
 	*) fail "VERIFY_ARCHIVES 只接受 yes 或 no" ;;
+esac
+case "${verification_evidence_level}" in
+	L1 | L2) ;;
+	*) fail "VERIFICATION_EVIDENCE_LEVEL 只接受 L1 或 L2" ;;
 esac
 [[ -z "$(git -C "${repo_dir}" status --porcelain --untracked-files=all)" ]] ||
 	fail "來源工作樹有已追蹤或未追蹤變更"
@@ -730,7 +735,7 @@ while IFS=$'\t' read -r board release profile raw_size raw_sha256 xz_size \
 	done
 	validate_boot_area "${image}" "${board}"
 	validate_mounted_image "${image}" "${board}"
-	printf '%s\tpass\tpass\tL2\n' "${board}" >>"${verification_file}.partial"
+	printf '%s\tpass\tpass\t%s\n' "${board}" "${verification_evidence_level}" >>"${verification_file}.partial"
 done < <(tail -n +2 "${output_dir}/CANDIDATES.tsv")
 
 mv "${verification_file}.partial" "${verification_file}"
@@ -740,7 +745,7 @@ uboot_payload_manifest_sha256="$(sha256sum \
 	"${output_dir}/UBOOT_PAYLOAD_EVIDENCE.tsv" | cut -d' ' -f1)"
 status_file="${output_dir}/VERIFICATION_STATUS.json"
 {
-	printf '{\n  "status": "complete",\n  "evidence_level": "L2",\n'
+	printf '{\n  "status": "complete",\n  "evidence_level": "%s",\n' "${verification_evidence_level}"
 	printf '  "source_commit": "%s",\n' "${candidate_source_commit}"
 	printf '  "verifier_commit": "%s",\n' "${verifier_commit}"
 	printf '  "build_validation_config_sha256": "%s",\n' "${build_validation_config_sha256}"
@@ -749,4 +754,4 @@ status_file="${output_dir}/VERIFICATION_STATUS.json"
 	printf '  "verified_utc": "%s"\n}\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 } >"${status_file}.partial"
 mv "${status_file}.partial" "${status_file}"
-echo "${candidate_family_name} 候選映像全部通過 L2 唯讀守門。"
+echo "${candidate_family_name} 候選映像全部通過 ${verification_evidence_level} 唯讀守門。"
