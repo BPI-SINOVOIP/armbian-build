@@ -128,6 +128,10 @@
       "level": "L2",
       "basis": "Trixie legacy minimal CLI 已由隔離快取完整建置並通過映像、固定 Linux／U-Boot／OpenSBI 來源、六項 SpacemiT 啟動載荷、MBR、CM6 專用 DTB、核心功能、韌體授權與標準 I/O 工具唯讀守門；SD、eMMC 與實體功能仍待實機驗證"
     },
+    "bananapiw2": {
+      "level": "L1",
+      "basis": "固定 BSP 提交的 U-Boot 2015.07、Linux 4.9.119、W2 DTB、核心設定與 modules 已完成隔離元件建置及唯讀守門；未建立 rootfs 或整碟映像，預建資產授權與全部實體功能仍待驗證"
+    },
     "bananapim5pro": {
       "level": "L2",
       "basis": "Trixie edge CLI 已由乾淨來源完整建置並通過映像、固定 Linux／U-Boot／RKBin 來源、雙 U-Boot 載荷、RK3576 M5 Pro DTB、核心功能與標準 I/O 工具唯讀守門；仍待實機驗證"
@@ -234,6 +238,11 @@
     }
   },
   "open_findings": {
+    "bananapiw2": [
+      "四個 U-Boot 靜態庫、bluecore.audio、內含工具鏈與外部文件的再散布授權尚未確認",
+      "完整映像、實體開機、儲存、網路、USB、顯示、音訊及 40-pin I/O 尚未驗證",
+      "Linux 4.9.119、U-Boot 2015.07 與 246 筆 vendor／DT 編譯警告仍有維護及安全風險"
+    ],
     "bananapiaim7": [
       "AIM7 與 ArmSoM AIM7 IO 的原理圖差異尚未閉合，既有 DTS 只啟用單 lane PCIe 且 SPI／DSI 停用；GPU、VPU、RGA、NPU 使用者空間與韌體授權仍待完整映像稽核"
     ],

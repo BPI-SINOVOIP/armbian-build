@@ -1,0 +1,307 @@
+{
+  "schema_version": 1,
+  "candidate_branch": "legacy",
+  "candidate_level": "L1 元件候選",
+  "candidate_scope": "internal-component-only",
+  "kernel_family": "realtek-rtd129x-bpi",
+  "source_date_epoch": 1571768256,
+  "linux_source": "https://github.com/BPI-SINOVOIP/BPI-W2-bsp.git",
+  "linux_ref": "commit:6e6aefc35dc50b1b8231cdb03a995d088f29eb21",
+  "linux_commit": "6e6aefc35dc50b1b8231cdb03a995d088f29eb21",
+  "uboot_source": "https://github.com/BPI-SINOVOIP/BPI-W2-bsp.git",
+  "uboot_ref": "commit:6e6aefc35dc50b1b8231cdb03a995d088f29eb21",
+  "uboot_commit": "6e6aefc35dc50b1b8231cdb03a995d088f29eb21",
+  "firmware_source": "https://github.com/armbian/firmware",
+  "firmware_ref": "commit:f50a2a21bcdb77a562b3976930c5c6b521a1df08",
+  "firmware_commit": "f50a2a21bcdb77a562b3976930c5c6b521a1df08",
+  "atf_applicable": false,
+  "atf_reason": "此 vendor SD 啟動路徑不建置 TF-A；Realtek 安全與金鑰功能由 U-Boot 連結的無來源靜態庫提供",
+  "linux_license_path": "linux-rtk/COPYING",
+  "linux_license_sha256": "af8067302947c01fd9eee72befa54c7e3ef8a48fecde7fd71277f2290b2bf0f7",
+  "uboot_license_path": "u-boot-rtk/Licenses/README",
+  "uboot_license_sha256": "8ce570d60d1fbc0ab8ea22e31e06bd7c9773953ba58fd7075d4e5690de9a08d0",
+  "documentation_evidence": [
+    {
+      "purpose": "Banana Pi BPI-W2 官方產品頁本機快照",
+      "local_path": "/media/pi/SMCI/bpi/doc/banana-pi-doc-benchmark-20260621/downloads/banana-pi-board-pages/batch4_20260621/BPI-DOC-0037_Banana-Pi-BPI-W2.html",
+      "sha256": "4eac1ace24594ee94b8077975caad714d35d943e73b4ed966f2a9a09296e3e50",
+      "included_in_candidate": false,
+      "redistribution_license_verified": false
+    },
+    {
+      "purpose": "Banana Pi BPI-W2 V1.1 原理圖本機證據",
+      "local_path": "/media/pi/SMCI/bpi/doc/banana-pi-doc-benchmark-20260621/downloads/w2-schematic-p231-20260622/BPI-W2-V1_1-Schematic-20190614.pdf",
+      "sha256": "eae6852241874b4b673d636a20869eec69712bee36ab882162ced702d8fbf4cd",
+      "included_in_candidate": false,
+      "redistribution_license_verified": false
+    },
+    {
+      "purpose": "BPI-WiringPi2 W2 腳位對照來源",
+      "local_path": "/media/pi/SMCI/bpi/BPI-WiringPi2/wiringPi/board/bpi-w2.h",
+      "sha256": "6123f3970c59f6cd5eb66ab60fc3863cd83709649efd207445c5fd1a102cb55b",
+      "included_in_candidate": false,
+      "redistribution_license_verified": false
+    },
+    {
+      "purpose": "RPi.GPIO W2 腳位對照來源",
+      "local_path": "/media/pi/SMCI/bpi/RPi.GPIO/source/bpi-w2.h",
+      "sha256": "0d7e5aea47e7718e7b55658621c04d53cda9f1b8c44a127d346be1bcc683d9eb",
+      "included_in_candidate": false,
+      "redistribution_license_verified": false
+    }
+  ],
+  "build_toolchain": {
+    "path": "toolchains/gcc-linaro-7.3.1-2018.05-x86_64_aarch64-linux-gnu/bin/aarch64-linux-gnu-gcc",
+    "size": 981408,
+    "sha256": "f6bf7da30e302b1566c9afded7c2a0a32611b83b9e2bab0a4a9208aee420b02c",
+    "manifest_path": "toolchains/gcc-linaro-7.3.1-2018.05-x86_64_aarch64-linux-gnu/gcc-linaro-7.3.1-2018.05-linux-manifest.txt",
+    "manifest_sha256": "3b5e646b365885aa853becf622671757b578c8499626cd64fe706a9379e15b84",
+    "included_in_runtime_image": false,
+    "redistribution_license_verified": false
+  },
+  "linked_prebuilt_assets": {
+    "u-boot-rtk/static_lib/libefuse.a": {
+      "purpose": "U-Boot eFuse 功能連結輸入",
+      "size": 35152,
+      "sha256": "cb634ff54f9518af59b1bcab784f068036d8af32974583281c85763bcff84b41",
+      "source_build_available": false,
+      "redistribution_license_verified": false
+    },
+    "u-boot-rtk/static_lib/libsha1_util.a": {
+      "purpose": "U-Boot SHA1 工具連結輸入",
+      "size": 15192,
+      "sha256": "fc23654b0d2bfbff349d5385e1722c820fadf4bcb33c2429dbad9dbbd34d4348",
+      "source_build_available": false,
+      "redistribution_license_verified": false
+    },
+    "u-boot-rtk/static_lib/libsecurity.a": {
+      "purpose": "U-Boot 安全功能連結輸入",
+      "size": 39616,
+      "sha256": "c02176718463ce1e5aca67a94ae2fd8e7a16aed88130fb6421a302b9ada68ed7",
+      "source_build_available": false,
+      "redistribution_license_verified": false
+    },
+    "u-boot-rtk/static_lib/libkeyset.a": {
+      "purpose": "U-Boot 金鑰處理連結輸入",
+      "size": 68960,
+      "sha256": "224543a99174bf46f1bd7fb849f40dd2f21ff4026640ff32413d714149d73f9b",
+      "source_build_available": false,
+      "redistribution_license_verified": false
+    }
+  },
+  "runtime_prebuilt_assets": {
+    "rtk-pack/rtk/bpi-w2/configs/default/linux/bluecore.audio": {
+      "purpose": "Realtek 音訊 DSP 執行載荷",
+      "size": 3969840,
+      "sha256": "59252270f05cc55cba0ddeb246bc7c6b20dab9554fa18be4e9595ea549fd9b1c",
+      "source_build_available": false,
+      "redistribution_license_verified": false
+    }
+  },
+  "excluded_source_assets": {
+    "rtk-pack/rtk/bpi-w2/bin/spirom-bpi-w2.bin": {
+      "purpose": "SPI ROM 更新工具載荷；元件候選不封裝",
+      "size": 718472,
+      "sha256": "4a3182af13881e8be982297b3adf017e9b6528628a4504904cabb9d366d97754",
+      "included_in_candidate": false,
+      "redistribution_license_verified": false
+    },
+    "rtk-pack/rtk/bpi-w2/configs/default/linux/uInitrd": {
+      "purpose": "原廠舊版 initramfs；由 Armbian 建置產物取代",
+      "size": 7533416,
+      "sha256": "c92ebc053b255ea7ea51ce625ea5cadd60c3246fbd962a304625ce6c81b53455",
+      "included_in_candidate": false,
+      "redistribution_license_verified": false
+    }
+  },
+  "full_image_built": false,
+  "component_build_completed": true,
+  "component_build_evidence": {
+    "local_evidence_root": "output/components/2026.08/bananapi-realtek-rtd1296-w2-legacy",
+    "completed_utc": "2026-08-27T04:32:00Z",
+    "source_revision": "6e6aefc35dc50b1b8231cdb03a995d088f29eb21",
+    "full_rootfs_image_built": false,
+    "uboot_rebuild_hash_match": true,
+    "uboot_rebuild_sha256": "d4d425862ded2334d354b421ff2df8cdb965041b3b3b2c903fbeddd29ab23890",
+    "toolchain_gcc_sha256": "f6bf7da30e302b1566c9afded7c2a0a32611b83b9e2bab0a4a9208aee420b02c",
+    "work_size_kib": 8171092,
+    "artifacts": {
+      "u-boot.bin": {
+        "size": 432240,
+        "sha256": "d4d425862ded2334d354b421ff2df8cdb965041b3b3b2c903fbeddd29ab23890"
+      },
+      "uEnv.txt": {
+        "size": 1261,
+        "sha256": "5f21667c90fdbd2f8a2011e6c4de3ae85acc79fd1f82b0e929b968c1c16a0594"
+      },
+      "bluecore.audio": {
+        "size": 3969840,
+        "sha256": "59252270f05cc55cba0ddeb246bc7c6b20dab9554fa18be4e9595ea549fd9b1c"
+      },
+      "Image": {
+        "size": 22065664,
+        "sha256": "7b8011d75b477b67ecd3f9bc3e6b9ee3a601b7c8e68b9c4d332e35a80bc3a590"
+      },
+      "rtd-1296-bananapi-w2-2GB.dtb": {
+        "size": 48273,
+        "sha256": "e2f0d51977310ecd06a8b72088a3ee3fbcec439b850ceacd9887c9b557d1c420"
+      },
+      "linux.config": {
+        "size": 139555,
+        "sha256": "b27ab2e9279a67f325a68926f822e3ca7a70da0d2527c9e801ce47ef92d5db1e"
+      },
+      "linux-modules.tar.xz": {
+        "size": 37076636,
+        "sha256": "4e1be051371acb38fee02c4fdafb909f5c1a1feca9aaff051c3ae8b82fd4e124"
+      }
+    }
+  },
+  "hardware_validated": false,
+  "public_release_allowed": false,
+  "hardware_claims_allowed": false,
+  "common_packages": [
+    "alsa-utils",
+    "ethtool",
+    "evtest",
+    "fio",
+    "gpiod",
+    "hdparm",
+    "i2c-tools",
+    "iperf3",
+    "iproute2",
+    "mmc-utils",
+    "pciutils",
+    "python3-libgpiod",
+    "python3-spidev",
+    "smartmontools",
+    "spi-tools",
+    "stress-ng",
+    "usb-modeswitch",
+    "usbutils",
+    "v4l-utils"
+  ],
+  "common_kernel_options": {
+    "CONFIG_ATA": "y",
+    "CONFIG_BT": "y",
+    "CONFIG_CEC": "y",
+    "CONFIG_CFG80211": "y",
+    "CONFIG_CONFIGFS_FS": "y",
+    "CONFIG_DRM": "y",
+    "CONFIG_EXT4_FS": "y",
+    "CONFIG_FB": "y",
+    "CONFIG_GPIOLIB": "y",
+    "CONFIG_GPIO_SYSFS": "y",
+    "CONFIG_HDMI": "y",
+    "CONFIG_I2C_CHARDEV": "y",
+    "CONFIG_I2C_RTK": "y",
+    "CONFIG_MAC80211": "y",
+    "CONFIG_MMC": "y",
+    "CONFIG_MMC_BLOCK": "y",
+    "CONFIG_PCI": "y",
+    "CONFIG_PWM": "y",
+    "CONFIG_R8168": "y",
+    "CONFIG_RFKILL": "y",
+    "CONFIG_RTC_DRV_RTK": "y",
+    "CONFIG_RTK_THERMAL": "y",
+    "CONFIG_RTK_WATCHDOG": "y",
+    "CONFIG_SCSI": "y",
+    "CONFIG_SPI_SPIDEV": "y",
+    "CONFIG_THERMAL": "y",
+    "CONFIG_USB": "y",
+    "CONFIG_USB_CONFIGFS": "y",
+    "CONFIG_USB_CONFIGFS_ECM": "y",
+    "CONFIG_USB_CONFIGFS_MASS_STORAGE": "y",
+    "CONFIG_USB_GADGET": "y",
+    "CONFIG_USB_STORAGE": "y",
+    "CONFIG_VFAT_FS": "y",
+    "CONFIG_WATCHDOG": "y"
+  },
+  "boards": {
+    "bananapiw2": {
+      "family": "realtek-rtd129x-bpi",
+      "model": "Banana Pi BPI-W2",
+      "compatible": [
+        "bananapi,bpi-w2",
+        "realtek,rtd1296"
+      ],
+      "dtb": "rtd-1296-bananapi-w2-2GB.dtb",
+      "dtb_sha256": "e2f0d51977310ecd06a8b72088a3ee3fbcec439b850ceacd9887c9b557d1c420",
+      "dtb_image_path": "/boot/bananapi/bpi-w2/linux/rtd-1296-bananapi-w2-2GB.dtb",
+      "uboot_version": "2015.07",
+      "uboot_defconfig": "rtd1296_sd_bananapi_defconfig",
+      "uboot_write_offset_bytes": 40960,
+      "uboot_required_binary_strings": [
+        "Board: Banana Pi BPI-W2 (RTD1296)",
+        "BPI-W2>",
+        "U-Boot 2015.07"
+      ],
+      "partition_table": "msdos",
+      "boot_partition_number": 1,
+      "root_partition_number": 2,
+      "root_filesystem_label": "BPI-ROOT",
+      "boot_filesystem": "fat",
+      "vendor_boot_directory": "bananapi/bpi-w2/linux",
+      "boot_assets": [
+        "uEnv.txt",
+        "bluecore.audio",
+        "uImage",
+        "uInitrd",
+        "rtd-1296-bananapi-w2-2GB.dtb"
+      ],
+      "storage_contract": {
+        "sd_node": "/sdmmc@98010400",
+        "emmc_node": "/emmc@98012000",
+        "sata_node": "/sata@9803F000",
+        "pcie_nodes": [
+          "/pcie@9804E000",
+          "/pcie2@9803B000"
+        ]
+      },
+      "network_contract": {
+        "gmac_node": "/gmac@98016000",
+        "driver_config": "CONFIG_R8168=y",
+        "physical_port_count_claimed": false
+      },
+      "usb_contract": {
+        "peripheral_node": "/rtk_dwc3_drd@98013200",
+        "peripheral_mode": "peripheral",
+        "usb2_host_node": "/rtk_dwc3_u2host@98013E00",
+        "usb3_host_node": "/rtk_dwc3_u3host@98013E00",
+        "hardware_role_validated": false
+      },
+      "display_contract": {
+        "hdmi_tx_node": "/hdmitx@9800D000",
+        "hdmi_tx_status": "okay",
+        "hdmi_rx_node": "/hdmirx@98034000",
+        "hdmi_rx_status": "disabled",
+        "displayport_tx_node": "/dptx@9803D000",
+        "displayport_tx_status": "okay",
+        "acceleration_validated": false
+      },
+      "io_contract": {
+        "gpio_nodes": [
+          "/rtk_misc_gpio@9801b100",
+          "/rtk_iso_gpio@98007100"
+        ],
+        "i2c_nodes": [
+          "/i2c@0x98007D00",
+          "/i2c@0x98007C00",
+          "/i2c@0x9801B700",
+          "/i2c@0x9801B900",
+          "/i2c@0x9801BA00",
+          "/i2c@0x9801BB00"
+        ],
+        "spi_node": "/spi@9801BD00",
+        "pwm_node": "/pwm@980070D0",
+        "wiringpi_i2c_device": "/dev/i2c-5",
+        "wiringpi_spi_device": "/dev/spidev0.0",
+        "pin_mapping_hardware_validated": false
+      },
+      "wireless_contract": {
+        "onboard_wifi_present": false,
+        "optional_expansion_only": true,
+        "module_bom_fixed": false
+      }
+    }
+  }
+}

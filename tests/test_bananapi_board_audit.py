@@ -56,6 +56,7 @@ class BananaPiBoardAuditTests(unittest.TestCase):
             "bananapir3mini": "L1",
             "bananapir4pro": "L2",
             "bananapiw3": "L2",
+            "bananapiw2": "L1",
         }
         for board_id, level in expected.items():
             with self.subTest(board_id=board_id):

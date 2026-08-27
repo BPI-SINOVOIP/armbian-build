@@ -1,8 +1,8 @@
-# Realtek RTD1296 media/router board.
+# Realtek RTD1296 多媒體與路由板固定來源候選。
 BOARD_NAME="Banana Pi W2"
 BOARD_VENDOR="sinovoip"
 BOARDFAMILY="realtek-rtd129x-bpi"
-BOARD_MAINTAINER=""
+BOARD_MAINTAINER="BPI-SINOVOIP"
 INTRODUCED="2017"
 
 KERNEL_TARGET="legacy"
@@ -12,8 +12,11 @@ BOOT_FDT_FILE="realtek/rtd129x/rtd-1296-bananapi-w2-2GB.dtb"
 SRC_EXTLINUX="no"
 BOOTFS_TYPE="fat"
 BOOTSIZE="256"
+ROOT_FS_LABEL="BPI-ROOT"
+REALTEK_BPI_ROOT_LABEL="BPI-ROOT"
 SERIALCON="ttyS0"
 HAS_VIDEO_OUTPUT="yes"
+PACKAGE_LIST_BOARD="alsa-utils ethtool evtest fio gpiod hdparm i2c-tools iperf3 iproute2 mmc-utils pciutils python3-libgpiod python3-spidev smartmontools spi-tools stress-ng usb-modeswitch usbutils v4l-utils"
 
 REALTEK_BPI_BSP_REPO="https://github.com/BPI-SINOVOIP/BPI-W2-bsp.git"
 REALTEK_BPI_BSP_BRANCH="commit:6e6aefc35dc50b1b8231cdb03a995d088f29eb21"
@@ -21,3 +24,19 @@ REALTEK_BPI_BSP_BOARD="BPI-W2-720P"
 REALTEK_BPI_VENDOR_BOARD="bpi-w2"
 REALTEK_BPI_VENDOR_CHIP="RTD1296"
 REALTEK_BPI_BOOT_DTB_FILES="realtek/rtd129x/rtd-1296-bananapi-w2-2GB.dtb"
+ARMBIAN_FIRMWARE_GIT_REF_BOARD="commit:f50a2a21bcdb77a562b3976930c5c6b521a1df08"
+
+function post_family_config_branch_legacy__bananapiw2_pin_sources() {
+	declare -g ARMBIAN_FIRMWARE_GIT_REF="${ARMBIAN_FIRMWARE_GIT_REF_BOARD}"
+}
+
+function post_family_config__bananapiw2_storage_contract() {
+	# U-Boot 自 40 KiB 寫入；使用 MBR 避免 GPT 項目區與載荷重疊。
+	declare -g IMAGE_PARTITION_TABLE="msdos"
+}
+
+function custom_kernel_config__bananapiw2_diagnostics() {
+	# 僅固定 vendor 核心已有的介面；可用性仍須實機驗證。
+	opts_y+=(CONFIGFS_FS GPIO_SYSFS RTK_THERMAL RTK_WATCHDOG)
+	opts_y+=(USB_CONFIGFS USB_CONFIGFS_ECM USB_CONFIGFS_MASS_STORAGE)
+}

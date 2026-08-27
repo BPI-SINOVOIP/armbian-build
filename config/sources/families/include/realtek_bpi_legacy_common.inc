@@ -62,6 +62,16 @@ function build_custom_uboot__realtek_bpi_legacy_bsp() {
 
 	patch_uboot_target
 
+	if [[ -n "${REALTEK_BPI_ROOT_LABEL:-}" ]]; then
+		local vendor_uenv="rtk-pack/rtk/${REALTEK_BPI_VENDOR_BOARD}/configs/default/linux/uEnv.txt"
+		[[ -f "${vendor_uenv}" ]] || exit_with_error "找不到 Realtek 根標籤設定檔" "${vendor_uenv}"
+		run_host_command_logged sed -i -E \
+			"s|^root=.*|root=LABEL=${REALTEK_BPI_ROOT_LABEL} rw rootfstype=ext4 rootwait|" \
+			"${vendor_uenv}"
+		grep -Fqx "root=LABEL=${REALTEK_BPI_ROOT_LABEL} rw rootfstype=ext4 rootwait" \
+			"${vendor_uenv}" || exit_with_error "Realtek 根標籤正規化失敗" "${vendor_uenv}"
+	fi
+
 	if [[ "${CREATE_PATCHES}" == "yes" ]]; then
 		return 0
 	fi
