@@ -162,6 +162,12 @@ class BananaPiMT7623R2CandidateTests(unittest.TestCase):
             'sudo sha256sum "${mount_dir}${installed_path}"',
             text,
         )
+        self.assertIn('sudo md5sum "${checked_payload}"', text)
+        self.assertIn('sudo sha256sum "${checked_payload}"', text)
+        self.assertIn(
+            'sudo cmp --silent --ignore-initial="0:${offset}"',
+            text,
+        )
         self.assertIn("payload SHA-256 不符", text)
 
     def test_shell_entrypoints_are_valid(self) -> None:

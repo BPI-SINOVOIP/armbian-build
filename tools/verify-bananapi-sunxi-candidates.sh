@@ -392,7 +392,7 @@ validate_installed_uboot() {
 		checked_expected_md5="$(awk -v path="${checked_payload_path}" '$2 == path { print $1 }' "${md5sums_file}")"
 		[[ "${checked_expected_md5}" =~ ^[0-9a-f]{32}$ ]] ||
 			fail "${board} 缺少唯一 payload MD5：${checked_payload_name}"
-		checked_actual_md5="$(md5sum "${checked_payload}" | cut -d' ' -f1)"
+		checked_actual_md5="$(sudo md5sum "${checked_payload}" | cut -d' ' -f1)"
 		[[ "${checked_actual_md5}" == "${checked_expected_md5}" ]] ||
 			fail "${board} 的 U-Boot payload 已被修改：${checked_payload_name}"
 		for checked_sha256_spec in $(board_field_optional "${board}" uboot_payload_sha256); do
@@ -404,7 +404,7 @@ validate_installed_uboot() {
 			checked_expected_sha256="${checked_sha256_spec#*=}"
 		done
 		if [[ -n "${checked_expected_sha256}" ]]; then
-			checked_actual_sha256="$(sha256sum "${checked_payload}" | cut -d' ' -f1)"
+			checked_actual_sha256="$(sudo sha256sum "${checked_payload}" | cut -d' ' -f1)"
 			[[ "${checked_actual_sha256}" == "${checked_expected_sha256}" ]] ||
 				fail "${board} 的 payload SHA-256 不符：${checked_payload_name}"
 		fi
@@ -426,14 +426,14 @@ validate_installed_uboot() {
 		payload="${uboot_dir}/${payload_name}"
 		validate_uboot_payload_file "${payload_name}" >/dev/null
 		payload_size="$(stat -c %s "${payload}")"
-		payload_sha256="$(sha256sum "${payload}" | cut -d' ' -f1)"
+		payload_sha256="$(sudo sha256sum "${payload}" | cut -d' ' -f1)"
 		if [[ -n "${partition_start_sector}" ]]; then
 			payload_end=$((offset + payload_size))
 			first_partition_byte=$((partition_start_sector * sector_size))
 			(( payload_end <= first_partition_byte )) ||
 				fail "${board} 的 ${payload_name} 超出第一分割區前保留區"
 		fi
-		cmp --silent --ignore-initial="0:${offset}" --bytes="${payload_size}" \
+		sudo cmp --silent --ignore-initial="0:${offset}" --bytes="${payload_size}" \
 			"${payload}" "${image}" || fail "${board} 映像 ${offset} 偏移與 ${payload_name} 不同"
 		printf '%s\t%s\timage\t%s\t%s\t%s\n' \
 			"${board}" "${payload_name}" "${offset}" "${payload_size}" "${payload_sha256}" \
@@ -444,7 +444,7 @@ validate_installed_uboot() {
 		validate_uboot_payload_file "${payload_name}" >/dev/null
 		payload="${uboot_dir}/${payload_name}"
 		payload_size="$(stat -c %s "${payload}")"
-		payload_sha256="$(sha256sum "${payload}" | cut -d' ' -f1)"
+		payload_sha256="$(sudo sha256sum "${payload}" | cut -d' ' -f1)"
 		printf '%s\t%s\tpackage-only\t-\t%s\t%s\n' \
 			"${board}" "${payload_name}" "${payload_size}" "${payload_sha256}" \
 			>>"${output_dir}/UBOOT_PAYLOAD_EVIDENCE.tsv.partial"
