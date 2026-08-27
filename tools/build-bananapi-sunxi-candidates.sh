@@ -11,6 +11,7 @@ artifact_ignore_cache="${ARTIFACT_IGNORE_CACHE:-yes}"
 minimum_free_gib="${MINIMUM_FREE_GIB:-80}"
 hard_minimum_free_gib=40
 require_isolated_cache="${REQUIRE_ISOLATED_CACHE:-yes}"
+require_source_date_epoch_metadata="${REQUIRE_SOURCE_DATE_EPOCH_METADATA:-no}"
 candidate_family_name="${CANDIDATE_FAMILY_NAME:-Sunxi}"
 candidate_lock_file="${CANDIDATE_LOCK_FILE:-.bananapi-sunxi-build.lock}"
 
@@ -73,6 +74,10 @@ esac
 case "${require_isolated_cache}" in
 	yes | no) ;;
 	*) echo "REQUIRE_ISOLATED_CACHE 只接受 yes 或 no。" >&2; exit 2 ;;
+esac
+case "${require_source_date_epoch_metadata}" in
+	yes | no) ;;
+	*) echo "REQUIRE_SOURCE_DATE_EPOCH_METADATA 只接受 yes 或 no。" >&2; exit 2 ;;
 esac
 [[ "${minimum_free_gib}" =~ ^[0-9]+$ ]] || {
 	echo "MINIMUM_FREE_GIB 必須是整數。" >&2
@@ -234,6 +239,16 @@ case "${verify_firmware_source_resolution}" in
 		;;
 	*) fail "verify_firmware_source_resolution 只接受 true 或 false" ;;
 esac
+source_date_epoch=""
+if [[ "${require_source_date_epoch_metadata}" == yes ]]; then
+	source_date_epoch="$(top_field_optional source_date_epoch)"
+	[[ "${source_date_epoch}" =~ ^[1-9][0-9]*$ ]] ||
+		fail "驗證設定缺少有效的 source_date_epoch 正整數"
+	if [[ -n "${SOURCE_DATE_EPOCH:-}" && "${SOURCE_DATE_EPOCH}" != "${source_date_epoch}" ]]; then
+		fail "SOURCE_DATE_EPOCH 與驗證設定的固定契約不符"
+	fi
+	export SOURCE_DATE_EPOCH="${source_date_epoch}"
+fi
 
 for board in "${boards[@]}"; do
 	validate_board "${board}" || { echo "驗證設定未登錄板卡：${board}" >&2; exit 2; }
@@ -267,6 +282,7 @@ for board in "${boards[@]}"; do
 	crust_revision="$(board_field_optional "${board}" crust_revision)"
 	dtb="$(board_field "${board}" dtb)"
 	build_parameters="BOARD=${board} BRANCH=${branch} RELEASE=${release} BUILD_DESKTOP=no BUILD_MINIMAL=yes KERNEL_CONFIGURE=no EXPERT=yes ARTIFACT_IGNORE_CACHE=${artifact_ignore_cache} COMPRESS_OUTPUTIMAGE=sha,img"
+	[[ -z "${source_date_epoch}" ]] || build_parameters+=" SOURCE_DATE_EPOCH=${source_date_epoch}"
 	if [[ "${artifact_ignore_cache}" == yes ]]; then
 		build_parameters+=" CLEAN_LEVEL=make-kernel,make-uboot,make-atf,make-crust"
 	fi
@@ -297,7 +313,8 @@ for board in "${boards[@]}"; do
 			"rkbin_git_ref ${rkbin_git_ref}" "rkbin_revision ${rkbin_revision}" \
 			"verify_firmware_source_resolution ${verify_firmware_source_resolution}" \
 			"firmware_git_source ${firmware_git_source}" \
-			"firmware_git_ref ${firmware_git_ref}" "firmware_revision ${firmware_revision}"; do
+			"firmware_git_ref ${firmware_git_ref}" "firmware_revision ${firmware_revision}" \
+			"source_date_epoch ${source_date_epoch}"; do
 			read -r key expected <<<"${item}"
 			[[ -z "${expected}" ]] ||
 				require_metadata_value "${metadata}" "${key}" "${expected}"
@@ -315,6 +332,7 @@ for board in "${boards[@]}"; do
 			"ARTIFACT_IGNORE_CACHE=${artifact_ignore_cache}"
 			"COMPRESS_OUTPUTIMAGE=sha,img"
 		)
+		[[ -z "${source_date_epoch}" ]] || build_args+=("SOURCE_DATE_EPOCH=${source_date_epoch}")
 		if [[ "${artifact_ignore_cache}" == yes ]]; then
 			build_args+=("CLEAN_LEVEL=make-kernel,make-uboot,make-atf,make-crust")
 		fi
@@ -346,6 +364,7 @@ for board in "${boards[@]}"; do
 			printf 'build_method=full_compile_sh_build\nbuild_parameters_sha256=%s\n' "${build_parameters_sha256}"
 			printf 'artifact_ignore_cache=%s\nsource_commit=%s\nsource_tree=%s\n' "${artifact_ignore_cache}" "${source_commit}" "${source_tree}"
 			printf 'validation_config_sha256=%s\nfamily=%s\ndtb=%s\nuboot_tag=%s\n' "${validation_config_sha256}" "${family}" "${dtb}" "${uboot_tag}"
+			[[ -z "${source_date_epoch}" ]] || printf 'source_date_epoch=%s\n' "${source_date_epoch}"
 			for item in "uboot_git_source ${uboot_git_source}" \
 				"uboot_git_ref ${uboot_git_ref}" "uboot_revision ${uboot_revision}" \
 				"uboot_version ${uboot_version}" \

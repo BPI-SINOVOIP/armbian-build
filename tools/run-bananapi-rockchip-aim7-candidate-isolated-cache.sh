@@ -17,6 +17,7 @@ minimum_free_gib="${MINIMUM_FREE_GIB:-80}"
 export CANDIDATE_BUILDER="${repo_dir}/tools/build-bananapi-rockchip-aim7-candidate.sh"
 export CACHE_OVERLAY_ROOT="${repo_dir}/.tmp/bananapi-rockchip-aim7-cache-overlay"
 export ALLOW_INTERNAL_AIM7_CANDIDATE=yes
+export REQUIRE_ISOLATED_CACHE=yes
 export MINIMUM_FREE_GIB="${minimum_free_gib}"
 
 [[ -x "${runner}" ]] || {

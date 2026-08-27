@@ -4,8 +4,12 @@
 from __future__ import annotations
 
 import json
+import hashlib
+import lzma
+import os
 from pathlib import Path
 import re
+import subprocess
 import sys
 
 
@@ -14,12 +18,18 @@ DEFAULT_CONFIG = (
     ROOT / "config/validation/bananapi-rockchip-rk3588-aim7-vendor.json"
 )
 BOARD = ROOT / "config/boards/bananapiaim7.wip"
+OUTPUT_DIR = (
+    ROOT
+    / "output/images/2026.08/bananapi-rockchip-rk3588-aim7-trixie-vendor-cli"
+)
 
 LINUX_REVISION = "c6157104418d012823413c02f9222f3fe123dd25"
 UBOOT_REVISION = "39cd993e5d6296635438e84f4576b3a9bf76f86e"
 RKBIN_REVISION = "1d3c61008fa823936ae7a59615393f8294b64456"
 FIRMWARE_REVISION = "f50a2a21bcdb77a562b3976930c5c6b521a1df08"
 COMPONENT_DTB = "fdf3d029773c5374411a08edc6fcfe65532c5fa94d7845b05e28988f338e796f"
+EXPECTED_PARTITIONS = ["1:*:32768:4691968"]
+EXPECTED_PARTITION_TYPES = ["1:b921b045-1df0-41c3-af44-4c6f280d3fae"]
 
 
 def fail(message: str) -> None:
@@ -46,6 +56,58 @@ def valid_artifact_path(value: object, suffix: str) -> bool:
     return not path.is_absolute() and ".." not in path.parts and len(path.parts) >= 2
 
 
+def sha256_path(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as stream:
+        for block in iter(lambda: stream.read(1024 * 1024), b""):
+            digest.update(block)
+    return digest.hexdigest()
+
+
+def read_json(path: Path, description: str) -> dict[str, object]:
+    require(path.is_file(), f"缺少真實 {description}：{path}")
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as error:
+        fail(f"無法讀取 {description}：{error}")
+    require(isinstance(data, dict), f"{description} 不是 JSON 物件")
+    return data
+
+
+def git_output(*arguments: str) -> str:
+    result = subprocess.run(
+        ["git", "-C", str(ROOT), *arguments],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    require(result.returncode == 0, f"Git 證據查詢失敗：{' '.join(arguments)}")
+    return result.stdout.strip()
+
+
+def read_metadata(path: Path) -> dict[str, str]:
+    require(path.is_file(), f"缺少真實產物中繼資料：{path}")
+    values: dict[str, str] = {}
+    for line in path.read_text(encoding="utf-8").splitlines():
+        require("=" in line, "產物中繼資料含無效列")
+        key, value = line.split("=", 1)
+        require(key and key not in values, f"產物中繼資料欄位重複：{key}")
+        values[key] = value
+    return values
+
+
+def require_child_path(relative: object, suffix: str) -> Path:
+    require(valid_artifact_path(relative, suffix), f"L2 產物路徑不安全：{relative}")
+    resolved = (OUTPUT_DIR / str(relative)).resolve()
+    require(
+        os.path.commonpath((str(OUTPUT_DIR.resolve()), str(resolved)))
+        == str(OUTPUT_DIR.resolve()),
+        "L2 產物路徑離開固定輸出目錄",
+    )
+    require(resolved.is_file(), f"L2 產物不存在：{relative}")
+    return resolved
+
+
 def assignments(values: object, field: str) -> dict[str, str]:
     require(isinstance(values, list), f"{field} 必須是清單")
     parsed: dict[str, str] = {}
@@ -68,8 +130,10 @@ def validate_l2_evidence(data: dict[str, object], board: dict[str, object]) -> N
     require(evidence.get("read_only_content_verified") is True, "L2 缺少唯讀內容驗證")
     require(evidence.get("hardware_tested") is False, "內部 L2 不得冒充實機驗證")
     require(evidence.get("public_release_authorized") is False, "內部 L2 不得冒充公開發布核准")
+    require(evidence.get("full_rootfs_image_built") is True, "L2 未確認完整根檔案系統映像")
 
     require(valid_commit(evidence.get("source_commit")), "L2 來源提交格式不符")
+    require(valid_commit(evidence.get("source_tree")), "L2 來源樹格式不符")
     require(valid_commit(evidence.get("verifier_commit")), "L2 驗證提交格式不符")
     require(
         evidence["source_commit"] == evidence["verifier_commit"],
@@ -84,6 +148,7 @@ def validate_l2_evidence(data: dict[str, object], board: dict[str, object]) -> N
         "final_kernel_config_sha256",
         "final_uboot_config_sha256",
         "linux_dtb_sha256",
+        "rkbin_manifest_sha256",
     ):
         require(valid_sha256(evidence.get(key)), f"L2 {key} 格式不符")
     require(
@@ -91,6 +156,7 @@ def validate_l2_evidence(data: dict[str, object], board: dict[str, object]) -> N
         == evidence["verification_config_sha256"],
         "L2 建置與驗證契約雜湊不一致",
     )
+    require(evidence.get("rkbin_commit") == RKBIN_REVISION, "L2 RKBin 提交不符")
 
     for name, suffix in (("image", ".img"), ("archive", ".img.xz")):
         artifact = evidence.get(name)
@@ -130,6 +196,189 @@ def validate_l2_evidence(data: dict[str, object], board: dict[str, object]) -> N
         "L2 payload 雜湊項目不完整",
     )
     require(all(valid_sha256(value) for value in payloads.values()), "L2 payload 雜湊格式不符")
+
+    source_commit = str(evidence["source_commit"])
+    source_tree = str(evidence["source_tree"])
+    require(git_output("rev-parse", f"{source_commit}^{{tree}}") == source_tree, "L2 來源樹不屬於來源提交")
+    config_relative = DEFAULT_CONFIG.relative_to(ROOT).as_posix()
+    build_config = subprocess.run(
+        ["git", "-C", str(ROOT), "show", f"{source_commit}:{config_relative}"],
+        capture_output=True,
+        check=False,
+    )
+    require(build_config.returncode == 0, "L2 來源提交缺少 AIM7 validation")
+    require(
+        hashlib.sha256(build_config.stdout).hexdigest()
+        == evidence["build_validation_config_sha256"],
+        "L2 建置 validation 並非來自來源提交",
+    )
+
+    matrix = OUTPUT_DIR / "CANDIDATES.tsv"
+    completion = read_json(OUTPUT_DIR / "COMPLETION_STATUS.json", "建置完成狀態")
+    verification = read_json(OUTPUT_DIR / "VERIFICATION_STATUS.json", "驗證完成狀態")
+    rkbin_status = read_json(OUTPUT_DIR / "RKBIN_STATUS.json", "RKBin 狀態")
+    rkbin_manifest = OUTPUT_DIR / "RKBIN_EVIDENCE.tsv"
+    payload_manifest = OUTPUT_DIR / "UBOOT_PAYLOAD_EVIDENCE.tsv"
+    config_manifest = OUTPUT_DIR / "FINAL_CONFIG_EVIDENCE.tsv"
+    for path, description in (
+        (matrix, "候選矩陣"),
+        (rkbin_manifest, "RKBin 清單"),
+        (payload_manifest, "U-Boot 載荷清單"),
+        (config_manifest, "最終設定清單"),
+    ):
+        require(path.is_file(), f"缺少真實{description}")
+
+    require(sha256_path(matrix) == evidence["candidate_matrix_sha256"], "L2 候選矩陣雜湊不符")
+    require(sha256_path(rkbin_manifest) == evidence["rkbin_manifest_sha256"], "L2 RKBin 清單雜湊不符")
+    require(sha256_path(payload_manifest) == evidence["uboot_payload_manifest_sha256"], "L2 載荷清單雜湊不符")
+    require(sha256_path(config_manifest) == evidence["final_config_manifest_sha256"], "L2 最終設定清單雜湊不符")
+
+    payload_lines = payload_manifest.read_text(encoding="utf-8").splitlines()
+    require(
+        payload_lines and payload_lines[0] == "board\tpayload\tplacement\toffset\tsize\tsha256",
+        "L2 載荷清單欄位不符",
+    )
+    payload_rows: dict[str, str] = {}
+    for line in payload_lines[1:]:
+        fields = line.split("\t")
+        require(len(fields) == 6 and fields[0] == "bananapiaim7", "L2 載荷清單列不符")
+        require(fields[1] not in payload_rows, "L2 載荷清單項目重複")
+        payload_rows[fields[1]] = fields[5]
+    require(payload_rows == payloads, "L2 載荷清單內容與 validation 不符")
+
+    config_lines = config_manifest.read_text(encoding="utf-8").splitlines()
+    require(
+        config_lines and config_lines[0] == "board\tcomponent\tpath\tsha256",
+        "L2 最終設定清單欄位不符",
+    )
+    config_rows: dict[str, str] = {}
+    for line in config_lines[1:]:
+        fields = line.split("\t")
+        require(len(fields) == 4 and fields[0] == "bananapiaim7", "L2 最終設定清單列不符")
+        require(fields[1] not in config_rows, "L2 最終設定清單項目重複")
+        config_rows[fields[1]] = fields[3]
+    require(
+        config_rows
+        == {
+            "kernel": board["final_kernel_config_sha256"],
+            "uboot": board["final_uboot_config_sha256"],
+        },
+        "L2 最終設定清單內容與 validation 不符",
+    )
+
+    status_expected = {
+        "status": "complete",
+        "evidence_level": "L2",
+        "source_commit": source_commit,
+        "source_tree": source_tree,
+        "verifier_commit": source_commit,
+        "build_validation_config_sha256": evidence["build_validation_config_sha256"],
+        "verification_config_sha256": evidence["verification_config_sha256"],
+        "candidate_matrix_sha256": evidence["candidate_matrix_sha256"],
+        "uboot_payload_manifest_sha256": evidence["uboot_payload_manifest_sha256"],
+        "final_config_manifest_sha256": evidence["final_config_manifest_sha256"],
+        "rkbin_commit": RKBIN_REVISION,
+        "rkbin_manifest_sha256": evidence["rkbin_manifest_sha256"],
+    }
+    require(
+        all(verification.get(key) == value for key, value in status_expected.items()),
+        "L2 映像證據未由真實 VERIFICATION_STATUS 閉合",
+    )
+    build_expected = {
+        "status": "complete",
+        "source_commit": source_commit,
+        "source_tree": source_tree,
+        "validation_config_sha256": evidence["build_validation_config_sha256"],
+        "candidates_sha256": evidence["candidate_matrix_sha256"],
+    }
+    require(
+        all(completion.get(key) == value for key, value in build_expected.items()),
+        "L2 建置狀態未綁定真實候選矩陣",
+    )
+    rkbin_expected = {
+        "status": "complete",
+        "source_commit": source_commit,
+        "rkbin_commit": RKBIN_REVISION,
+        "validation_config_sha256": evidence["build_validation_config_sha256"],
+        "manifest_sha256": evidence["rkbin_manifest_sha256"],
+    }
+    require(
+        all(rkbin_status.get(key) == value for key, value in rkbin_expected.items()),
+        "L2 RKBin 狀態未綁定來源提交與清單",
+    )
+    rkbin_blobs = data.get("rkbin_blobs")
+    require(isinstance(rkbin_blobs, dict), "L2 RKBin 契約不是物件")
+    expected_rkbin = [
+        "path\tsha256",
+        *(f"{path}\t{digest}" for path, digest in sorted(rkbin_blobs.items())),
+    ]
+    require(rkbin_manifest.read_text(encoding="utf-8").splitlines() == expected_rkbin, "L2 RKBin 清單內容不符")
+
+    lines = matrix.read_text(encoding="utf-8").splitlines()
+    require(len(lines) == 2, "L2 候選矩陣必須只有 AIM7 一筆產物")
+    header = lines[0].split("\t")
+    values = lines[1].split("\t")
+    expected_header = [
+        "board", "release", "profile", "raw_size", "raw_sha256", "xz_size",
+        "xz_sha256", "img_path", "xz_path", "source_commit", "uboot_tag",
+    ]
+    require(header == expected_header and len(values) == len(header), "L2 候選矩陣欄位不符")
+    row = dict(zip(header, values, strict=True))
+    require(row.get("board") == "bananapiaim7", "L2 候選矩陣板名不符")
+    require(row.get("release") == "trixie" and row.get("profile") == "cli", "L2 候選設定不符")
+    require(row.get("uboot_tag") == board.get("uboot_tag"), "L2 U-Boot 標籤不符")
+    require(row.get("source_commit") == source_commit, "L2 候選矩陣來源提交不符")
+
+    image = require_child_path(evidence["image"].get("path"), ".img")
+    archive = require_child_path(evidence["archive"].get("path"), ".img.xz")
+    for name, path, size_key, hash_key in (
+        ("image", image, "raw_size", "raw_sha256"),
+        ("archive", archive, "xz_size", "xz_sha256"),
+    ):
+        artifact = evidence[name]
+        require(path.stat().st_size == artifact["size"] == int(row[size_key]), f"L2 {name} 大小與實檔不符")
+        require(sha256_path(path) == artifact["sha256"] == row[hash_key], f"L2 {name} 雜湊與實檔不符")
+    require(row["img_path"] == evidence["image"]["path"], "L2 IMG 路徑與候選矩陣不符")
+    require(row["xz_path"] == evidence["archive"]["path"], "L2 XZ 路徑與候選矩陣不符")
+
+    decompressed = hashlib.sha256()
+    try:
+        with lzma.open(archive, "rb") as stream:
+            for block in iter(lambda: stream.read(1024 * 1024), b""):
+                decompressed.update(block)
+    except (OSError, lzma.LZMAError) as error:
+        fail(f"L2 XZ 串流無法解壓：{error}")
+    require(decompressed.hexdigest() == evidence["image"]["sha256"], "L2 XZ 解壓資料與 IMG 不一致")
+
+    metadata = read_metadata(OUTPUT_DIR / "bananapiaim7/artifact.metadata.txt")
+    metadata_expected = {
+        "source_commit": source_commit,
+        "source_tree": source_tree,
+        "validation_config_sha256": evidence["build_validation_config_sha256"],
+        "source_date_epoch": str(data["source_date_epoch"]),
+        "raw_size": str(evidence["image"]["size"]),
+        "raw_sha256": evidence["image"]["sha256"],
+        "xz_size": str(evidence["archive"]["size"]),
+        "xz_sha256": evidence["archive"]["sha256"],
+        "artifact_ignore_cache": "yes",
+        "image_filename": image.name,
+        "archive_filename": archive.name,
+    }
+    require(
+        all(metadata.get(key) == value for key, value in metadata_expected.items()),
+        "L2 產物中繼資料未綁定來源、時間戳或實檔",
+    )
+    build_parameters = (
+        "BOARD=bananapiaim7 BRANCH=vendor RELEASE=trixie BUILD_DESKTOP=no "
+        "BUILD_MINIMAL=yes KERNEL_CONFIGURE=no EXPERT=yes ARTIFACT_IGNORE_CACHE=yes "
+        "COMPRESS_OUTPUTIMAGE=sha,img SOURCE_DATE_EPOCH=1777288768 "
+        "CLEAN_LEVEL=make-kernel,make-uboot,make-atf,make-crust"
+    )
+    require(
+        metadata.get("build_parameters_sha256")
+        == hashlib.sha256(f"{build_parameters}\n".encode()).hexdigest(),
+        "L2 建置參數未固定 SOURCE_DATE_EPOCH",
+    )
 
 
 def validate_candidate_state(data: dict[str, object], board: dict[str, object]) -> None:
@@ -220,6 +469,12 @@ def main() -> None:
     )
     require(board.get("partition_table") == "gpt", "分割表不是 GPT")
     require(board.get("partition_start_sector") == 32768, "根分割區起點不符")
+    require(board.get("root_partition_number") == 1, "根分割區編號不符")
+    require(board.get("root_partition_start_sector") == 32768, "根分割區實際起點契約不符")
+    require(board.get("required_partitions") == EXPECTED_PARTITIONS, "GPT 根分割區大小契約不符")
+    require(board.get("required_partition_types") == EXPECTED_PARTITION_TYPES, "GPT 根分割區類型契約不符")
+    require(board.get("root_partition_label") == "armbi_root", "根檔案系統標籤不符")
+    require(board.get("root_partition_filesystem_type") == "ext4", "根檔案系統類型不符")
 
     require(data.get("rkbin_copy_and_distribution_grant_present") is True, "RKBin 散布條款證據缺失")
     require(data.get("rkbin_standalone_distribution_authorized") is False, "不得允許 RKBin 獨立散布")

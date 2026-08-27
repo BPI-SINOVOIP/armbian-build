@@ -3,7 +3,11 @@
 
 from __future__ import annotations
 
+import hashlib
+import importlib.util
 import json
+import lzma
+import os
 from pathlib import Path
 import subprocess
 import sys
@@ -46,6 +50,9 @@ class BananaPiRockchipAim7CandidateTests(unittest.TestCase):
         cls.config = json.loads(CONFIG.read_text())
         cls.policy = cls.config["boards"]["bananapiaim7"]
         cls.board_text = BOARD.read_text()
+        spec = importlib.util.spec_from_file_location("aim7_policy_checker", POLICY_CHECK)
+        cls.policy_checker = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(cls.policy_checker)
 
     def run_policy(self, data: dict[str, object]) -> subprocess.CompletedProcess[bytes]:
         with tempfile.NamedTemporaryFile(suffix=".json") as stream:
@@ -60,6 +67,30 @@ class BananaPiRockchipAim7CandidateTests(unittest.TestCase):
 
     def valid_l2_config(self) -> dict[str, object]:
         promoted = json.loads(json.dumps(self.config))
+        source_commit = subprocess.run(
+            ["git", "-C", str(ROOT), "rev-parse", "HEAD"],
+            capture_output=True,
+            text=True,
+            check=True,
+        ).stdout.strip()
+        source_tree = subprocess.run(
+            ["git", "-C", str(ROOT), "rev-parse", "HEAD^{tree}"],
+            capture_output=True,
+            text=True,
+            check=True,
+        ).stdout.strip()
+        source_config = subprocess.run(
+            [
+                "git",
+                "-C",
+                str(ROOT),
+                "show",
+                f"{source_commit}:{CONFIG.relative_to(ROOT).as_posix()}",
+            ],
+            capture_output=True,
+            check=True,
+        ).stdout
+        source_config_sha256 = hashlib.sha256(source_config).hexdigest()
         promoted["candidate_level"] = "L2 內部軟體候選"
         promoted["candidate_scope"] = "internal-l2"
         promoted["current_evidence_level"] = "L2"
@@ -79,17 +110,21 @@ class BananaPiRockchipAim7CandidateTests(unittest.TestCase):
         promoted["image_build_evidence"] = {
             "status": "complete",
             "evidence_level": "L2",
-            "source_commit": "1" * 40,
-            "verifier_commit": "1" * 40,
-            "build_validation_config_sha256": "2" * 64,
-            "verification_config_sha256": "2" * 64,
+            "source_commit": source_commit,
+            "source_tree": source_tree,
+            "verifier_commit": source_commit,
+            "build_validation_config_sha256": source_config_sha256,
+            "verification_config_sha256": source_config_sha256,
             "candidate_matrix_sha256": "8" * 64,
             "uboot_payload_manifest_sha256": "9" * 64,
             "final_config_manifest_sha256": "a" * 64,
             "final_kernel_config_sha256": "4" * 64,
             "final_uboot_config_sha256": "5" * 64,
             "linux_dtb_sha256": "3" * 64,
+            "rkbin_commit": "1d3c61008fa823936ae7a59615393f8294b64456",
+            "rkbin_manifest_sha256": "d" * 64,
             "read_only_content_verified": True,
+            "full_rootfs_image_built": True,
             "hardware_tested": False,
             "public_release_authorized": False,
             "image": {
@@ -104,6 +139,130 @@ class BananaPiRockchipAim7CandidateTests(unittest.TestCase):
             },
         }
         return promoted
+
+    def write_l2_fixture(self, output: Path) -> dict[str, object]:
+        candidate = self.valid_l2_config()
+        evidence = candidate["image_build_evidence"]
+        board = candidate["boards"]["bananapiaim7"]
+        board_dir = output / "bananapiaim7"
+        board_dir.mkdir(parents=True)
+        image = board_dir / "aim7.img"
+        archive = board_dir / "aim7.img.xz"
+        image.write_bytes((b"BPI-AIM7\x00" * 128) + b"rootfs")
+        with lzma.open(archive, "wb") as stream:
+            stream.write(image.read_bytes())
+        evidence["image"] = {
+            "path": "bananapiaim7/aim7.img",
+            "size": image.stat().st_size,
+            "sha256": hashlib.sha256(image.read_bytes()).hexdigest(),
+        }
+        evidence["archive"] = {
+            "path": "bananapiaim7/aim7.img.xz",
+            "size": archive.stat().st_size,
+            "sha256": hashlib.sha256(archive.read_bytes()).hexdigest(),
+        }
+
+        rkbin_manifest = output / "RKBIN_EVIDENCE.tsv"
+        rkbin_manifest.write_text(
+            "path\tsha256\n"
+            + "".join(
+                f"{path}\t{digest}\n"
+                for path, digest in sorted(candidate["rkbin_blobs"].items())
+            )
+        )
+        payload_manifest = output / "UBOOT_PAYLOAD_EVIDENCE.tsv"
+        payload_manifest.write_text(
+            "board\tpayload\tplacement\toffset\tsize\tsha256\n"
+            f"bananapiaim7\tidbloader.img\tboot-area\t32768\t1\t{'6' * 64}\n"
+            f"bananapiaim7\tu-boot.itb\tboot-area\t8388608\t1\t{'7' * 64}\n"
+        )
+        config_manifest = output / "FINAL_CONFIG_EVIDENCE.tsv"
+        config_manifest.write_text(
+            "board\tcomponent\tpath\tsha256\n"
+            f"bananapiaim7\tkernel\t/boot/config\t{'4' * 64}\n"
+            f"bananapiaim7\tuboot\t/u-boot/.config\t{'5' * 64}\n"
+        )
+        evidence["rkbin_manifest_sha256"] = hashlib.sha256(
+            rkbin_manifest.read_bytes()
+        ).hexdigest()
+        evidence["uboot_payload_manifest_sha256"] = hashlib.sha256(
+            payload_manifest.read_bytes()
+        ).hexdigest()
+        evidence["final_config_manifest_sha256"] = hashlib.sha256(
+            config_manifest.read_bytes()
+        ).hexdigest()
+
+        matrix = output / "CANDIDATES.tsv"
+        matrix.write_text(
+            "board\trelease\tprofile\traw_size\traw_sha256\txz_size\txz_sha256\t"
+            "img_path\txz_path\tsource_commit\tuboot_tag\n"
+            f"bananapiaim7\ttrixie\tcli\t{evidence['image']['size']}\t"
+            f"{evidence['image']['sha256']}\t{evidence['archive']['size']}\t"
+            f"{evidence['archive']['sha256']}\t{evidence['image']['path']}\t"
+            f"{evidence['archive']['path']}\t{evidence['source_commit']}\tv2017.09\n"
+        )
+        evidence["candidate_matrix_sha256"] = hashlib.sha256(
+            matrix.read_bytes()
+        ).hexdigest()
+
+        completion = {
+            "status": "complete",
+            "source_commit": evidence["source_commit"],
+            "source_tree": evidence["source_tree"],
+            "validation_config_sha256": evidence["build_validation_config_sha256"],
+            "candidates_sha256": evidence["candidate_matrix_sha256"],
+        }
+        verification = {
+            "status": "complete",
+            "evidence_level": "L2",
+            "source_commit": evidence["source_commit"],
+            "source_tree": evidence["source_tree"],
+            "verifier_commit": evidence["verifier_commit"],
+            "build_validation_config_sha256": evidence["build_validation_config_sha256"],
+            "verification_config_sha256": evidence["verification_config_sha256"],
+            "candidate_matrix_sha256": evidence["candidate_matrix_sha256"],
+            "uboot_payload_manifest_sha256": evidence["uboot_payload_manifest_sha256"],
+            "final_config_manifest_sha256": evidence["final_config_manifest_sha256"],
+            "rkbin_commit": evidence["rkbin_commit"],
+            "rkbin_manifest_sha256": evidence["rkbin_manifest_sha256"],
+        }
+        rkbin_status = {
+            "status": "complete",
+            "source_commit": evidence["source_commit"],
+            "rkbin_commit": evidence["rkbin_commit"],
+            "validation_config_sha256": evidence["build_validation_config_sha256"],
+            "manifest_sha256": evidence["rkbin_manifest_sha256"],
+        }
+        (output / "COMPLETION_STATUS.json").write_text(json.dumps(completion))
+        (output / "VERIFICATION_STATUS.json").write_text(json.dumps(verification))
+        (output / "RKBIN_STATUS.json").write_text(json.dumps(rkbin_status))
+
+        build_parameters = (
+            "BOARD=bananapiaim7 BRANCH=vendor RELEASE=trixie BUILD_DESKTOP=no "
+            "BUILD_MINIMAL=yes KERNEL_CONFIGURE=no EXPERT=yes ARTIFACT_IGNORE_CACHE=yes "
+            "COMPRESS_OUTPUTIMAGE=sha,img SOURCE_DATE_EPOCH=1777288768 "
+            "CLEAN_LEVEL=make-kernel,make-uboot,make-atf,make-crust"
+        )
+        metadata = {
+            "source_commit": evidence["source_commit"],
+            "source_tree": evidence["source_tree"],
+            "validation_config_sha256": evidence["build_validation_config_sha256"],
+            "source_date_epoch": "1777288768",
+            "raw_size": str(evidence["image"]["size"]),
+            "raw_sha256": evidence["image"]["sha256"],
+            "xz_size": str(evidence["archive"]["size"]),
+            "xz_sha256": evidence["archive"]["sha256"],
+            "artifact_ignore_cache": "yes",
+            "image_filename": image.name,
+            "archive_filename": archive.name,
+            "build_parameters_sha256": hashlib.sha256(
+                f"{build_parameters}\n".encode()
+            ).hexdigest(),
+        }
+        (board_dir / "artifact.metadata.txt").write_text(
+            "".join(f"{key}={value}\n" for key, value in metadata.items())
+        )
+        return candidate
 
     def test_board_is_self_contained_and_vendor_only(self) -> None:
         self.assertNotIn(
@@ -225,6 +384,17 @@ printf 'firmware_source=%s\nfirmware=%s\n' "$ARMBIAN_FIRMWARE_GIT_SOURCE" "$ARMB
             ["idbloader.img@32768", "u-boot.itb@8388608"],
         )
         self.assertEqual(self.policy["partition_start_sector"], 32768)
+        self.assertEqual(self.policy["root_partition_start_sector"], 32768)
+        self.assertEqual(
+            self.policy["required_partitions"],
+            ["1:*:32768:4691968"],
+        )
+        self.assertEqual(
+            self.policy["required_partition_types"],
+            ["1:b921b045-1df0-41c3-af44-4c6f280d3fae"],
+        )
+        self.assertEqual(self.policy["root_partition_label"], "armbi_root")
+        self.assertEqual(self.policy["root_partition_filesystem_type"], "ext4")
 
     def test_rkbin_policy_hashes_blobs_and_installed_license(self) -> None:
         self.assertEqual(self.config["rkbin_license_path"], "LICENSE.TXT")
@@ -397,33 +567,25 @@ printf '%s\n' "${{opts_y[@]}}"
                 self.assertIn("check-bananapi-rockchip-aim7-policy.py", text)
         build_text = BUILD.read_text()
         self.assertIn("ALLOW_INTERNAL_AIM7_CANDIDATE", build_text)
+        self.assertIn("export REQUIRE_ISOLATED_CACHE=yes", build_text)
+        self.assertIn("export REQUIRE_SOURCE_DATE_EPOCH_METADATA=yes", build_text)
         self.assertIn('expected_source_date_epoch="1777288768"', build_text)
         self.assertIn('MINIMUM_FREE_GIB="${MINIMUM_FREE_GIB:-80}"', build_text)
         verify_text = VERIFY.read_text()
         self.assertIn('policy_evidence_level="$(python3', verify_text)
         self.assertIn('VERIFICATION_EVIDENCE_LEVEL="${policy_evidence_level}"', verify_text)
-        self.assertIn("verify-bananapi-sunxi-candidates.sh", verify_text)
         self.assertIn("verify-bananapi-rockchip-candidates.sh", verify_text)
-        self.assertIn("verify_l1_rkbin_evidence", verify_text)
-        self.assertIn("RKBIN_EVIDENCE.tsv", verify_text)
-        self.assertIn("RKBIN_STATUS.json", verify_text)
-        self.assertIn('config["rkbin_blobs"]', verify_text)
-        self.assertNotIn('"${status}" +', verify_text)
-        self.assertRegex(
-            verify_text,
-            r'L1\)\s+verify_l1_rkbin_evidence\s+'
-            r'verifier="\${generic_verifier}"',
-        )
-        self.assertRegex(
-            verify_text,
-            r'L2\)\s+verifier="\${rockchip_verifier}"',
-        )
+        self.assertIn("write_entry_state in_progress", verify_text)
+        self.assertIn("禁止沿用舊成功狀態", verify_text)
+        self.assertIn("REQUIRE_BUILD_VERIFIER_IDENTITY=yes", verify_text)
+        self.assertIn("REQUIRE_SOURCE_DATE_EPOCH_METADATA=yes", verify_text)
         isolated_text = ISOLATED.read_text()
         self.assertIn("build-bananapi-rockchip-aim7-candidate.sh", isolated_text)
         self.assertIn("bananapi-rockchip-aim7-cache-overlay", isolated_text)
         self.assertIn('minimum_free_gib="${MINIMUM_FREE_GIB:-80}"', isolated_text)
         self.assertIn("minimum_free_gib >= 40", isolated_text)
         self.assertIn("ALLOW_INTERNAL_AIM7_CANDIDATE=yes", isolated_text)
+        self.assertIn("REQUIRE_ISOLATED_CACHE=yes", isolated_text)
         self.assertNotIn("compile.sh", isolated_text)
 
     def test_direct_build_and_low_space_override_are_rejected(self) -> None:
@@ -445,6 +607,71 @@ printf '%s\n' "${{opts_y[@]}}"
         )
         self.assertEqual(low_space.returncode, 2)
         self.assertIn("不得低於 40 GiB", low_space.stderr.decode())
+
+        timestamp_override = subprocess.run(
+            [str(BUILD)],
+            cwd=ROOT,
+            env={
+                **os.environ,
+                "ALLOW_INTERNAL_AIM7_CANDIDATE": "yes",
+                "SOURCE_DATE_EPOCH": "1777288769",
+            },
+            capture_output=True,
+            check=False,
+        )
+        self.assertEqual(timestamp_override.returncode, 2)
+        self.assertIn("SOURCE_DATE_EPOCH 必須是", timestamp_override.stderr.decode())
+
+        overlay_bypass = subprocess.run(
+            [str(BUILD)],
+            cwd=ROOT,
+            env={
+                **os.environ,
+                "ALLOW_INTERNAL_AIM7_CANDIDATE": "yes",
+                "REQUIRE_ISOLATED_CACHE": "no",
+            },
+            capture_output=True,
+            check=False,
+        )
+        self.assertNotEqual(overlay_bypass.returncode, 0)
+
+    def test_preflight_failure_atomically_invalidates_old_success(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            output = Path(temporary)
+            status = output / "VERIFICATION_STATUS.json"
+            status.write_text('{"status":"complete","evidence_level":"L1"}\n')
+            result = subprocess.run(
+                [str(VERIFY)],
+                cwd=ROOT,
+                env={**os.environ, "OUTPUT_DIR": str(output)},
+                capture_output=True,
+                check=False,
+            )
+            self.assertNotEqual(result.returncode, 0)
+            failed = json.loads(status.read_text())
+            self.assertEqual(failed["status"], "failed")
+            self.assertIn("禁止沿用舊成功狀態", failed["detail"])
+
+    def test_common_tools_bind_timestamp_tree_and_strict_identity(self) -> None:
+        build_text = (
+            ROOT / "tools/build-bananapi-sunxi-candidates.sh"
+        ).read_text()
+        verify_text = (
+            ROOT / "tools/verify-bananapi-sunxi-candidates.sh"
+        ).read_text()
+        for required in (
+            'source_date_epoch="$(top_field_optional source_date_epoch)"',
+            'build_parameters+=" SOURCE_DATE_EPOCH=${source_date_epoch}"',
+            "source_date_epoch=%s",
+            "SOURCE_DATE_EPOCH 與驗證設定的固定契約不符",
+        ):
+            self.assertIn(required, build_text)
+        for required in (
+            "REQUIRE_BUILD_VERIFIER_IDENTITY",
+            '"source_tree": "%s"',
+            '"source_tree", "verifier_commit"',
+        ):
+            self.assertIn(required, verify_text)
 
     def test_policy_accepts_current_l1_and_rejects_label_only_promotion(self) -> None:
         accepted = self.run_policy(self.config)
@@ -484,9 +711,55 @@ printf '%s\n' "${{opts_y[@]}}"
         rejected = self.run_policy(invalid)
         self.assertNotEqual(rejected.returncode, 0)
 
-    def test_policy_accepts_fully_evidenced_internal_l2(self) -> None:
-        accepted = self.run_policy(self.valid_l2_config())
-        self.assertEqual(accepted.returncode, 0, accepted.stderr.decode())
+    def test_policy_rejects_well_formed_but_unbacked_internal_l2(self) -> None:
+        rejected = self.run_policy(self.valid_l2_config())
+        self.assertNotEqual(rejected.returncode, 0)
+        self.assertIn("真實", rejected.stderr.decode())
+
+    def test_l2_policy_closes_real_files_and_rejects_evidence_drift(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            output = Path(temporary)
+            candidate = self.write_l2_fixture(output)
+            original_output = self.policy_checker.OUTPUT_DIR
+            self.policy_checker.OUTPUT_DIR = output
+            try:
+                self.policy_checker.validate_l2_evidence(
+                    candidate,
+                    candidate["boards"]["bananapiaim7"],
+                )
+
+                image = output / "bananapiaim7/aim7.img"
+                original_image = image.read_bytes()
+                image.write_bytes(original_image + b"drift")
+                with self.assertRaises(SystemExit):
+                    self.policy_checker.validate_l2_evidence(
+                        candidate,
+                        candidate["boards"]["bananapiaim7"],
+                    )
+                image.write_bytes(original_image)
+
+                verification_path = output / "VERIFICATION_STATUS.json"
+                verification = json.loads(verification_path.read_text())
+                verification["source_tree"] = "0" * 40
+                verification_path.write_text(json.dumps(verification))
+                with self.assertRaises(SystemExit):
+                    self.policy_checker.validate_l2_evidence(
+                        candidate,
+                        candidate["boards"]["bananapiaim7"],
+                    )
+
+                verification["source_tree"] = candidate["image_build_evidence"][
+                    "source_tree"
+                ]
+                verification_path.write_text(json.dumps(verification))
+                (output / "RKBIN_STATUS.json").unlink()
+                with self.assertRaises(SystemExit):
+                    self.policy_checker.validate_l2_evidence(
+                        candidate,
+                        candidate["boards"]["bananapiaim7"],
+                    )
+            finally:
+                self.policy_checker.OUTPUT_DIR = original_output
 
     def test_policy_rejects_incomplete_or_overclaimed_l2(self) -> None:
         mutations = {

@@ -10,6 +10,8 @@ expected_source_date_epoch="1777288768"
 	echo "BPI-AIM7 目前只允許專用 OverlayFS 入口建立內部候選。" >&2
 	exit 2
 }
+export REQUIRE_ISOLATED_CACHE=yes
+export REQUIRE_SOURCE_DATE_EPOCH_METADATA=yes
 
 if [[ "${SOURCE_DATE_EPOCH:-${expected_source_date_epoch}}" != "${expected_source_date_epoch}" ]]; then
 	echo "BPI-AIM7 建置拒絕：SOURCE_DATE_EPOCH 必須是 ${expected_source_date_epoch}。" >&2

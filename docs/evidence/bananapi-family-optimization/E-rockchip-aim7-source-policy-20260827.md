@@ -47,6 +47,9 @@ AIM7 採用 RK3588，符合平台範圍；映像建置仍必須保留未修改�
 - `idbloader.img` 映像偏移：32768 bytes
 - `u-boot.itb` 映像偏移：8388608 bytes
 - GPT 第一分割區起點：32768 sectors
+- GPT 第一分割區大小：4691968 sectors
+- GPT 第一分割區類型：`b921b045-1df0-41c3-af44-4c6f280d3fae`
+- 根檔案系統：標籤 `armbi_root`、類型 `ext4`
 - DDR：`rk3588_ddr_lp4_2112MHz_lp5_2400MHz_v1.20_20250926.bin`
 - BL31：`rk3588_bl31_v1.48.elf`
 
@@ -95,7 +98,11 @@ U-Boot 以 `SOURCE_DATE_EPOCH=1777288768`、`KBUILD_BUILD_USER=bananapi` 與 `KB
 
 L2 只代表內部軟體候選。唯讀內容驗證必須為真，但 `hardware_tested` 與 `public_release_authorized` 必須維持假值。RKBin 限制、firmware 再散布稽核、GPU／VPU／RGA／NPU 使用者空間驗證及所有實機缺口不會因升為 L2 而解除。
 
-專用驗證入口會依契約選擇證據層級：L1 預檢先核對 `RKBIN_EVIDENCE.tsv`、`RKBIN_STATUS.json`、固定提交及建置時契約，再使用共用唯讀驗證器的 L1 模式，不會寫成 L2；只有契約已具備完整 L2 證據時，才進入 Rockchip L2 驗證鏈。
+專用驗證入口不論 L1 或 L2 都使用 Rockchip 固定來源驗證鏈。入口會先以原子寫入把舊 `VERIFICATION_STATUS.json` 改成 `in_progress`；政策、RKBin 或完整映像前置檢查任一失敗時，再原子改成 `failed`，因此不能沿用舊的成功狀態。
+
+L1 與 L2 都強制要求 `CANDIDATES.tsv` 的來源提交等於驗證器提交，並核對來源樹、建置與驗證 validation 雜湊、`RKBIN_STATUS.json`、RKBin 提交及 RKBin 清單雜湊。Rockchip 建置後處理只採用候選矩陣鎖定的來源提交，建立證據前後也會拒絕 `HEAD` 漂移，不再於長時間建置後把目前 `HEAD` 誤當成候選來源。
+
+L2 政策不接受只有格式正確的手寫欄位。守門器會讀取固定輸出目錄中的 `VERIFICATION_STATUS.json`、`COMPLETION_STATUS.json`、`CANDIDATES.tsv`、`RKBIN_STATUS.json`、RKBin 清單、載荷清單、最終設定清單、IMG、XZ 與產物中繼資料；逐一核對實際大小、SHA-256、來源提交、來源樹、validation、RKBin、解壓資料同一性及固定時間戳。任何檔案缺失或內容漂移都必須拒絕 L2。
 
 政策檢查：
 
@@ -110,6 +117,8 @@ python3 ./tools/check-bananapi-rockchip-aim7-policy.py
 ```bash
 ./tools/run-bananapi-rockchip-aim7-candidate-isolated-cache.sh
 ```
+
+專用建置器會無條件設定 `REQUIRE_ISOLATED_CACHE=yes`，呼叫端不能以環境變數降級。validation 的 `source_date_epoch=1777288768` 會同時進入實際 `compile.sh` 參數、建置參數雜湊與 `artifact.metadata.txt`；預先提供不同 `SOURCE_DATE_EPOCH` 時會在建置前拒絕。
 
 第一次完整映像產生後執行 L1 唯讀預檢：
 

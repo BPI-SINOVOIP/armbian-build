@@ -10,6 +10,8 @@ candidate_family_name="${CANDIDATE_FAMILY_NAME:-Sunxi}"
 verify_tmp_prefix="${VERIFY_TMP_PREFIX:-bananapi-verify}"
 verification_evidence_level="${VERIFICATION_EVIDENCE_LEVEL:-L2}"
 verification_extra_status_json="${VERIFICATION_EXTRA_STATUS_JSON:-}"
+require_build_verifier_identity="${REQUIRE_BUILD_VERIFIER_IDENTITY:-no}"
+require_source_date_epoch_metadata="${REQUIRE_SOURCE_DATE_EPOCH_METADATA:-no}"
 verification_pre_complete_hook="${VERIFICATION_PRE_COMPLETE_HOOK:-}"
 
 read -r -a boards <<<"${boards_text}"
@@ -137,6 +139,14 @@ esac
 case "${verification_evidence_level}" in
 	L1 | L2) ;;
 	*) fail "VERIFICATION_EVIDENCE_LEVEL 只接受 L1 或 L2" ;;
+esac
+case "${require_build_verifier_identity}" in
+	yes | no) ;;
+	*) fail "REQUIRE_BUILD_VERIFIER_IDENTITY 只接受 yes 或 no" ;;
+esac
+case "${require_source_date_epoch_metadata}" in
+	yes | no) ;;
+	*) fail "REQUIRE_SOURCE_DATE_EPOCH_METADATA 只接受 yes 或 no" ;;
 esac
 if [[ "${verification_evidence_level}" == L2 && "${verify_archives}" != yes ]]; then
 	fail "L2 驗證不得停用 XZ 串流同一性檢查"
@@ -1036,11 +1046,11 @@ git -C "${repo_dir}" cat-file -e "${candidate_source_commit}:${validation_config
 build_validation_config_sha256="$(git -C "${repo_dir}" show \
 	"${candidate_source_commit}:${validation_config_relative}" | sha256sum | cut -d' ' -f1)"
 candidate_matrix_sha256="$(sha256sum "${output_dir}/CANDIDATES.tsv" | cut -d' ' -f1)"
-if [[ "${verification_evidence_level}" == L2 ]]; then
+if [[ "${verification_evidence_level}" == L2 || "${require_build_verifier_identity}" == yes ]]; then
 	[[ "${candidate_source_commit}" == "${verifier_commit}" ]] ||
-		fail "L2 候選來源提交與驗證器提交不一致"
+		fail "候選來源提交與驗證器提交不一致"
 	[[ "${build_validation_config_sha256}" == "${verification_config_sha256}" ]] ||
-		fail "L2 建置與驗證使用的 validation 雜湊不一致"
+		fail "建置與驗證使用的 validation 雜湊不一致"
 fi
 python3 - "${output_dir}/COMPLETION_STATUS.json" "${candidate_source_commit}" \
 	"${candidate_source_tree}" "${build_validation_config_sha256}" \
@@ -1104,6 +1114,12 @@ while IFS=$'\t' read -r board release profile raw_size raw_sha256 xz_size \
 		read -r key expected <<<"${item}"
 		require_metadata_value "${metadata}" "${key}" "${expected}"
 	done
+	if [[ "${require_source_date_epoch_metadata}" == yes ]]; then
+		source_date_epoch="$(top_field_optional source_date_epoch)"
+		[[ "${source_date_epoch}" =~ ^[1-9][0-9]*$ ]] ||
+			fail "驗證設定缺少有效的 source_date_epoch 正整數"
+		require_metadata_value "${metadata}" source_date_epoch "${source_date_epoch}"
+	fi
 	for key in uboot_git_source uboot_git_ref uboot_revision uboot_version \
 		atf_git_source atf_git_ref atf_revision \
 		crust_git_source crust_git_ref crust_revision; do
@@ -1164,6 +1180,7 @@ final_config_manifest_sha256="$(sha256sum \
 {
 	printf '{\n  "status": "complete",\n  "evidence_level": "%s",\n' "${verification_evidence_level}"
 	printf '  "source_commit": "%s",\n' "${candidate_source_commit}"
+	printf '  "source_tree": "%s",\n' "${candidate_source_tree}"
 	printf '  "verifier_commit": "%s",\n' "${verifier_commit}"
 	printf '  "build_validation_config_sha256": "%s",\n' "${build_validation_config_sha256}"
 	printf '  "verification_config_sha256": "%s",\n' "${verification_config_sha256}"
@@ -1194,7 +1211,7 @@ with open(status_path, encoding="utf-8") as stream:
 with open(extra_path, encoding="utf-8") as stream:
     extra = json.load(stream)
 protected = {
-    "status", "evidence_level", "source_commit", "verifier_commit",
+    "status", "evidence_level", "source_commit", "source_tree", "verifier_commit",
     "build_validation_config_sha256", "verification_config_sha256",
     "candidate_matrix_sha256", "uboot_payload_manifest_sha256",
     "final_config_manifest_sha256", "verified_utc",
@@ -1210,7 +1227,7 @@ os.replace(temporary, status_path)
 PY
 fi
 python3 - "${status_file}.partial" "${verification_evidence_level}" \
-	"${candidate_source_commit}" "${verifier_commit}" \
+	"${candidate_source_commit}" "${candidate_source_tree}" "${verifier_commit}" \
 	"${build_validation_config_sha256}" "${verification_config_sha256}" \
 	"${candidate_matrix_sha256}" "${uboot_payload_manifest_sha256}" \
 	"${final_config_manifest_sha256}" <<'PY' || fail "驗證完成狀態的受保護欄位遭到修改"
@@ -1223,12 +1240,13 @@ expected = {
     "status": "complete",
     "evidence_level": sys.argv[2],
     "source_commit": sys.argv[3],
-    "verifier_commit": sys.argv[4],
-    "build_validation_config_sha256": sys.argv[5],
-    "verification_config_sha256": sys.argv[6],
-    "candidate_matrix_sha256": sys.argv[7],
-    "uboot_payload_manifest_sha256": sys.argv[8],
-    "final_config_manifest_sha256": sys.argv[9],
+    "source_tree": sys.argv[4],
+    "verifier_commit": sys.argv[5],
+    "build_validation_config_sha256": sys.argv[6],
+    "verification_config_sha256": sys.argv[7],
+    "candidate_matrix_sha256": sys.argv[8],
+    "uboot_payload_manifest_sha256": sys.argv[9],
+    "final_config_manifest_sha256": sys.argv[10],
 }
 raise SystemExit(0 if all(status.get(key) == value for key, value in expected.items()) else 1)
 PY
