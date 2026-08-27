@@ -8,7 +8,7 @@
 
 - 板卡總數：48。
 - 正式 `.conf`：12；社群 `.csc`：14；開發中 `.wip`：21；停止支援 `.eos`：1。
-- 證據分布：L0 8；L1 7；L2 31；L3 1；L4 1；L5 0。
+- 證據分布：L0 7；L1 8；L2 31；L3 1；L4 1；L5 0。
 - 未取得實機的板卡最高只能標示 L2；目前 L3／L4 只沿用已納入 Git 的 M4 Zero／M4 Berry 證據。
 
 ## 板卡矩陣
@@ -60,7 +60,7 @@
 | `bananapir4pro` | 開發中 | Banana Pi R4 Pro 8X | `filogic` | `arm64` | `current` | 否 | D | L2 軟體候選 | 執行 UART、啟動與基本周邊實機驗證 |
 | `bananapir64` | 社群 | Banana Pi R64 | `filogic` | `arm64` | `current` | 否 | D | L2 軟體候選 | 執行 UART、啟動與基本周邊實機驗證 |
 | `bananapism10` | 開發中 | BananaPi BPI-SM10 | `spacemit-k3-bpi` | `riscv64` | `current` | 是 | F | L1 可建置 | 完成映像內容與來源同一性守門 |
-| `bananapiw2` | 開發中 | Banana Pi W2 | `realtek-rtd129x-bpi` | `arm64` | `legacy` | 是 | F | L0 已盤點 | 確認建置鏈並建立 Trixie CLI 候選 |
+| `bananapiw2` | 開發中 | Banana Pi W2 | `realtek-rtd129x-bpi` | `arm64` | `legacy` | 是 | F | L1 可建置 | 完成映像內容與來源同一性守門 |
 | `bananapiw3` | 開發中 | Banana Pi W3 | `rockchip-rk3588` | `arm64` | `vendor` | 是 | E | L2 軟體候選 | 執行 UART、啟動與基本周邊實機驗證 |
 | `bpi-ai2n` | 正式 | Banana Pi AI2N | `renesas-rzv2n-bpi` | `arm64` | `legacy` | 是 | B | L0 已盤點 | 建立 Trixie CLI 並完成離線守門 |
 
@@ -76,6 +76,9 @@
 - `bananapir3mini`：ATF MT7986 預編譯 DRAM 物件再散布範圍未確認，eMMC boot0 安裝與 boot partition enable 尚未實機驗證。
 - `bananapir4pro`：Linux 6.19.0-rc1 與 ATF MT7988 預編譯 DRAM／eFuse 物件不得視為公開發布核准。
 - `bananapism10`：ESOS、PowerVR 與 VPU 韌體授權尚未閉合，載板拓撲與所有啟動媒體仍待實機驗證。
+- `bananapiw2`：四個 U-Boot 靜態庫、bluecore.audio、內含工具鏈與外部文件的再散布授權尚未確認。
+- `bananapiw2`：完整映像、實體開機、儲存、網路、USB、顯示、音訊及 40-pin I/O 尚未驗證。
+- `bananapiw2`：Linux 4.9.119、U-Boot 2015.07 與 246 筆 vendor／DT 編譯警告仍有維護及安全風險。
 - `bananapiw3`：尚未完成實機冷啟動、儲存、網路、無線、顯示與硬體加速驗證。
 - `bpi-ai2n`：九個 DRP、Codec、相機與 RTL8821CU runtime 資產缺少可核對再散布授權或 ABI 契約，且尚無完整映像與實機證據。
 
@@ -97,7 +100,6 @@
 - `bananapir3`：缺少建議欄位 `BOARD_MAINTAINER`。
 - `bananapir4`：缺少建議欄位 `BOARD_MAINTAINER`。
 - `bananapir64`：缺少建議欄位 `BOARD_MAINTAINER`。
-- `bananapiw2`：缺少建議欄位 `BOARD_MAINTAINER`。
 
 ## 判讀限制
 
