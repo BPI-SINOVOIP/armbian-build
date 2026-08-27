@@ -1,0 +1,251 @@
+{
+  "schema_version": 1,
+  "evidence_class": "L2（歷史／封存）",
+  "board": {
+    "current_id": "bananapir1",
+    "current_file": "config/boards/bananapir1.eos",
+    "legacy_id": "lamobo-r1",
+    "legacy_file": "config/boards/lamobo-r1.eos",
+    "legacy_commit": "556a14dde79770826d825ef845c430c754d55f9f",
+    "required_status_suffix": ".eos",
+    "equivalent_fields": {
+      "BOARD_VENDOR": "sinovoip",
+      "BOARDFAMILY": "sun7i",
+      "INTRODUCED": "2014",
+      "BOOTCONFIG": "Lamobo_R1_defconfig",
+      "KERNEL_TARGET": "current,edge",
+      "CONFIG_DRAM_CLK": "384"
+    }
+  },
+  "claims": {
+    "new_build_completed": false,
+    "currently_supported": false,
+    "hardware_tested": false,
+    "public_release_allowed": false
+  },
+  "archive_roots": {
+    "images": "/media/pi/SMCI/armbian/bpi-v26.2.1/output/images/2026.05/bpi-r1",
+    "logs": "/media/pi/SMCI/armbian/bpi-v26.2.1/output/bananapi-2026/20260520T131850Z"
+  },
+  "metadata": {
+    "Vendor": "Armbian-unofficial",
+    "Revision": "26.05.0-trunk",
+    "Board": "Lamobo-r1",
+    "Kernel": "Linux 6.18.32 (current)",
+    "Build date": "21.05.2026",
+    "Sources": "git@github.com:BPI-SINOVOIP/armbian-build.git",
+    "Sources rev": "556a14dde"
+  },
+  "representative_content_check": {
+    "release": "trixie",
+    "profile": "cli",
+    "partition_table": "dos",
+    "sector_size": 512,
+    "partition_start": 8192,
+    "partition_size": 3563520,
+    "partition_type": "83",
+    "filesystem": "ext4",
+    "filesystem_label": "armbi_root",
+    "required_paths": [
+      "boot/zImage",
+      "boot/uInitrd",
+      "boot/armbianEnv.txt",
+      "etc/armbian-release",
+      "etc/os-release",
+      "var/lib/dpkg/status"
+    ],
+    "required_globs": [
+      "boot/config-6.18.32-current-sunxi",
+      "boot/dtb-6.18.32-current-sunxi/sun7i-a20-lamobo-r1.dtb"
+    ],
+    "required_file_lines": {
+      "boot/armbianEnv.txt": [
+        "overlay_prefix=sun7i-a20",
+        "rootfstype=ext4"
+      ],
+      "etc/armbian-release": [
+        "BOARD=lamobo-r1",
+        "BOARDFAMILY=sun7i",
+        "BUILD_REPOSITORY_COMMIT=556a14dde",
+        "BOARD_TYPE=eos",
+        "KERNEL_IMAGE_TYPE=zImage"
+      ],
+      "etc/os-release": [
+        "VERSION_CODENAME=trixie",
+        "ID=debian"
+      ]
+    }
+  },
+  "archives": [
+    {
+      "release": "bookworm",
+      "profile": "cli",
+      "image": "Armbian-unofficial_26.05.0-trunk_Lamobo-r1_bookworm_current_6.18.32.img.xz",
+      "image_size": 433316520,
+      "image_sha256": "87a1cc4dba40a6ee2eb0dd6d126edf6933a9c6a87d9142eab01c2c62f5da1e43",
+      "uncompressed_size": 1723858944,
+      "sidecar": "Armbian-unofficial_26.05.0-trunk_Lamobo-r1_bookworm_current_6.18.32.img.xz.sha",
+      "sidecar_size": 155,
+      "sidecar_sha256": "5dbc09d67e0ef4a72b23d72d4c210f4e8adaae7cdc440adb7b368201d14e37f5",
+      "metadata_file": "Armbian-unofficial_26.05.0-trunk_Lamobo-r1_bookworm_current_6.18.32.img.txt",
+      "metadata_size": 19730,
+      "metadata_sha256": "5e36e7ae0ff2f36e09729cbf3e632871a8c91fa770fd1b698c102f1b2fef1c67",
+      "log": "lamobo-r1-current-bookworm-server.log",
+      "log_size": 37919,
+      "log_sha256": "20fab030eaa89f83ceaa95bfde4fcfcc890577c0fa26db085e2c2286dadfa44c"
+    },
+    {
+      "release": "bookworm",
+      "profile": "xfce",
+      "image": "Armbian-unofficial_26.05.0-trunk_Lamobo-r1_bookworm_current_6.18.32_xfce_desktop.img.xz",
+      "image_size": 964207956,
+      "image_sha256": "859a4c108903cbddbfb1cedbfa5c162b08dab75beabf6a2035ea3cd4cf2c486c",
+      "uncompressed_size": 4043309056,
+      "sidecar": "Armbian-unofficial_26.05.0-trunk_Lamobo-r1_bookworm_current_6.18.32_xfce_desktop.img.xz.sha",
+      "sidecar_size": 168,
+      "sidecar_sha256": "e9625de9ccd42f4594ae113d6e507aa48e6b214b5b6c1cb29cdc3488d79340ef",
+      "metadata_file": "Armbian-unofficial_26.05.0-trunk_Lamobo-r1_bookworm_current_6.18.32_xfce_desktop.img.txt",
+      "metadata_size": 19808,
+      "metadata_sha256": "49d4d631b1dab363c8266ce84bb675dd7a52680720882f1f13dac20570125f51",
+      "log": "lamobo-r1-current-bookworm-desktop.log",
+      "log_size": 32285,
+      "log_sha256": "750187a87e3ce0bbd37562f3e5fefe2500d1189f6133e482720e973a22341670"
+    },
+    {
+      "release": "jammy",
+      "profile": "cli",
+      "image": "Armbian-unofficial_26.05.0-trunk_Lamobo-r1_jammy_current_6.18.32.img.xz",
+      "image_size": 434382396,
+      "image_sha256": "f980c1a2813f479c96d81997e9ac4fccecb1d3294e81c91f5171e48d2c436212",
+      "uncompressed_size": 1648361472,
+      "sidecar": "Armbian-unofficial_26.05.0-trunk_Lamobo-r1_jammy_current_6.18.32.img.xz.sha",
+      "sidecar_size": 152,
+      "sidecar_sha256": "38d387134d1c47d1aa59ec31e076639e4aad3aeb8dea8b4355725a6a91837208",
+      "metadata_file": "Armbian-unofficial_26.05.0-trunk_Lamobo-r1_jammy_current_6.18.32.img.txt",
+      "metadata_size": 19712,
+      "metadata_sha256": "e2203892c374581d445aa618bede48a6a3dc8d365ed9cde5c7c2b601d3fbcd08",
+      "log": "lamobo-r1-current-jammy-server.log",
+      "log_size": 30971,
+      "log_sha256": "95d28e76720333d064d1e31c7f98e4fc181f638f9b322d8b86c8e00df8b78b57"
+    },
+    {
+      "release": "jammy",
+      "profile": "xfce",
+      "image": "Armbian-unofficial_26.05.0-trunk_Lamobo-r1_jammy_current_6.18.32_xfce_desktop.img.xz",
+      "image_size": 815728700,
+      "image_sha256": "fe281630763df2b08785322041aaa0a6ecfcccb62441f62322aa002df6d6e7c6",
+      "uncompressed_size": 3447717888,
+      "sidecar": "Armbian-unofficial_26.05.0-trunk_Lamobo-r1_jammy_current_6.18.32_xfce_desktop.img.xz.sha",
+      "sidecar_size": 165,
+      "sidecar_sha256": "c9e6aa7e5dedf8e33908754326065ce24add3176f8bae583767b85ecd51726fc",
+      "metadata_file": "Armbian-unofficial_26.05.0-trunk_Lamobo-r1_jammy_current_6.18.32_xfce_desktop.img.txt",
+      "metadata_size": 19790,
+      "metadata_sha256": "261b2b9f3cf4a771057fe7d960c9e3b35080fecb9eedc2a4c2ef585c9a59bc3d",
+      "log": "lamobo-r1-current-jammy-desktop.log",
+      "log_size": 32298,
+      "log_sha256": "ba887e39fe469e7a72fe51250f23d6a3b1a6e7cb50f6db43ec4bd92c12b6d18b"
+    },
+    {
+      "release": "noble",
+      "profile": "cli",
+      "image": "Armbian-unofficial_26.05.0-trunk_Lamobo-r1_noble_current_6.18.32.img.xz",
+      "image_size": 429747620,
+      "image_sha256": "bc71a6da701fc2734af338a7641b1ce513ab26a8f0f8733a44bf3c102466e26c",
+      "uncompressed_size": 1719664640,
+      "sidecar": "Armbian-unofficial_26.05.0-trunk_Lamobo-r1_noble_current_6.18.32.img.xz.sha",
+      "sidecar_size": 152,
+      "sidecar_sha256": "5da39a541931db9ba82a59677778c4227fd587ad8d72f728a71cd1925fbfd986",
+      "metadata_file": "Armbian-unofficial_26.05.0-trunk_Lamobo-r1_noble_current_6.18.32.img.txt",
+      "metadata_size": 19712,
+      "metadata_sha256": "2ef3d76f7fa4ed8bcf92ab352ab34215c2f72620fda49199656cb856562193d8",
+      "log": "lamobo-r1-current-noble-server.log",
+      "log_size": 30688,
+      "log_sha256": "5874b91a534f7d34ad0a76c081ae2a708841e5b0482f420132b87dcb62251c79"
+    },
+    {
+      "release": "noble",
+      "profile": "xfce",
+      "image": "Armbian-unofficial_26.05.0-trunk_Lamobo-r1_noble_current_6.18.32_xfce_desktop.img.xz",
+      "image_size": 872966448,
+      "image_sha256": "43dc4c36696a0021d9b2c476504fd5e7666883e45e2f4386c928014bea5ed71a",
+      "uncompressed_size": 3770679296,
+      "sidecar": "Armbian-unofficial_26.05.0-trunk_Lamobo-r1_noble_current_6.18.32_xfce_desktop.img.xz.sha",
+      "sidecar_size": 165,
+      "sidecar_sha256": "99fb1bc71932a347d4293f40db019eaa5e3fa2d7ae65057337f2f3b02e5f510c",
+      "metadata_file": "Armbian-unofficial_26.05.0-trunk_Lamobo-r1_noble_current_6.18.32_xfce_desktop.img.txt",
+      "metadata_size": 19790,
+      "metadata_sha256": "fbd67bc4ca91b48c46fa105f24a86dc029e291f53dea50fe8c3803c74ed29876",
+      "log": "lamobo-r1-current-noble-desktop.log",
+      "log_size": 32015,
+      "log_sha256": "f315353cb291d80059ead03c91cbedb3b9a48317e908b6a46a8b6396043f6ec9"
+    },
+    {
+      "release": "resolute",
+      "profile": "cli",
+      "image": "Armbian-unofficial_26.05.0-trunk_Lamobo-r1_resolute_current_6.18.32.img.xz",
+      "image_size": 445070936,
+      "image_sha256": "81919ff1f483ff4e672d929cc89aa91fdd915a617c84ec041e2bb2037330e00e",
+      "uncompressed_size": 1845493760,
+      "sidecar": "Armbian-unofficial_26.05.0-trunk_Lamobo-r1_resolute_current_6.18.32.img.xz.sha",
+      "sidecar_size": 155,
+      "sidecar_sha256": "68ca420fbf110b129473cfe5bec6f6241c058e86966c535d87fecc53c61b568d",
+      "metadata_file": "Armbian-unofficial_26.05.0-trunk_Lamobo-r1_resolute_current_6.18.32.img.txt",
+      "metadata_size": 19730,
+      "metadata_sha256": "f634391114661d0704105b93c7ba537c8fccf2ce708b781bda4ae1e0ffe8dc77",
+      "log": "lamobo-r1-current-resolute-server.log",
+      "log_size": 30745,
+      "log_sha256": "8390b83ebdec330f0ce6b3be333cfd672d9dad37014f1120a5e6bb03f6a7a1a6"
+    },
+    {
+      "release": "resolute",
+      "profile": "xfce",
+      "image": "Armbian-unofficial_26.05.0-trunk_Lamobo-r1_resolute_current_6.18.32_xfce_desktop.img.xz",
+      "image_size": 932715580,
+      "image_sha256": "c1693081c3c059c2e610cff1f756904bddb77fcfc90cc143e76adca30ceb3fd7",
+      "uncompressed_size": 4273995776,
+      "sidecar": "Armbian-unofficial_26.05.0-trunk_Lamobo-r1_resolute_current_6.18.32_xfce_desktop.img.xz.sha",
+      "sidecar_size": 168,
+      "sidecar_sha256": "5541631ace98f7f0472dceac7dcd52c89ec60902642262c1e3e9b09c2b6f344e",
+      "metadata_file": "Armbian-unofficial_26.05.0-trunk_Lamobo-r1_resolute_current_6.18.32_xfce_desktop.img.txt",
+      "metadata_size": 19808,
+      "metadata_sha256": "473a6a0494b3c7c44e5239c34659bfbb2b0736cd2b4bdcb462065df2f195b7f8",
+      "log": "lamobo-r1-current-resolute-desktop.log",
+      "log_size": 32072,
+      "log_sha256": "82f1f319f1e7f1302ebe80bf5d13aef0829ddd6ce6f8541c1fe6a3c0913dc539"
+    },
+    {
+      "release": "trixie",
+      "profile": "cli",
+      "image": "Armbian-unofficial_26.05.0-trunk_Lamobo-r1_trixie_current_6.18.32.img.xz",
+      "image_size": 444326156,
+      "image_sha256": "ca2c4ca6d9c6c73e1276bb808d689945bc1ac61abb5d7c0a4c82a67e07e5f8d8",
+      "uncompressed_size": 1828716544,
+      "sidecar": "Armbian-unofficial_26.05.0-trunk_Lamobo-r1_trixie_current_6.18.32.img.xz.sha",
+      "sidecar_size": 153,
+      "sidecar_sha256": "fc10e6a9b48f49e73e96c375b8eae7be2878ee9ddf315ce8360234ef4859a141",
+      "metadata_file": "Armbian-unofficial_26.05.0-trunk_Lamobo-r1_trixie_current_6.18.32.img.txt",
+      "metadata_size": 19718,
+      "metadata_sha256": "b6e3495df1d5f089029d4e10033b4c821adcc42a4cb485e5464b0cb5f8dadb85",
+      "log": "lamobo-r1-current-trixie-server.log",
+      "log_size": 30024,
+      "log_sha256": "dce73a420516c4ae0b6bb64b19939284656b74d93dbdc0fe4d2ea54c71cfac2b"
+    },
+    {
+      "release": "trixie",
+      "profile": "xfce",
+      "image": "Armbian-unofficial_26.05.0-trunk_Lamobo-r1_trixie_current_6.18.32_xfce_desktop.img.xz",
+      "image_size": 1039652336,
+      "image_sha256": "41869948e883e7bdf49a943769dec25b19b72bd06720792dc5845e985e676f13",
+      "uncompressed_size": 4647288832,
+      "sidecar": "Armbian-unofficial_26.05.0-trunk_Lamobo-r1_trixie_current_6.18.32_xfce_desktop.img.xz.sha",
+      "sidecar_size": 166,
+      "sidecar_sha256": "9cf6307c70b03c29558abbf88ed7bf2c940ccf90657fa7faad1eee7ffff95c3c",
+      "metadata_file": "Armbian-unofficial_26.05.0-trunk_Lamobo-r1_trixie_current_6.18.32_xfce_desktop.img.txt",
+      "metadata_size": 19796,
+      "metadata_sha256": "53c802ef8710e29b13e1fb55f88d9e033e94d5947271f8482e2990650fe7a975",
+      "log": "lamobo-r1-current-trixie-desktop.log",
+      "log_size": 31351,
+      "log_sha256": "ff9e5fb93ea3edd3f2d2085f50dd79aa72420f20c66e615313a19cd95bcefb1a"
+    }
+  ]
+}

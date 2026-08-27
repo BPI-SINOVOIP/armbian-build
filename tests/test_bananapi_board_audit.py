@@ -57,6 +57,7 @@ class BananaPiBoardAuditTests(unittest.TestCase):
             "bananapim4": "L1",
             "bananapim4super": "L0",
             "bananapim6": "L1",
+            "bananapir1": "L2",
             "bananapir2": "L2",
             "bananapir3mini": "L1",
             "bananapir4pro": "L2",

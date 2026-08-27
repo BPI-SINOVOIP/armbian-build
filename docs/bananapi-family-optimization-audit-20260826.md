@@ -8,7 +8,7 @@
 
 - 板卡總數：48。
 - 正式 `.conf`：12；社群 `.csc`：14；開發中 `.wip`：21；停止支援 `.eos`：1。
-- 證據分布：L0 5；L1 9；L2 32；L3 1；L4 1；L5 0。
+- 證據分布：L0 4；L1 9；L2 33；L3 1；L4 1；L5 0。
 - 未取得實機的板卡最高只能標示 L2；目前 L3／L4 只沿用已納入 Git 的 M4 Zero／M4 Berry 證據。
 
 ## 板卡矩陣
@@ -17,17 +17,17 @@
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | `bananapi` | 正式 | Banana Pi | `sun7i` | `armhf` | `current,edge,legacy` | 是 | B | L2 軟體候選 | 執行 UART、啟動與基本周邊實機驗證 |
 | `bananapi6204` | 開發中 | Banana Pi BPI-6204 | `sun8i` | `armhf` | `legacy` | 是 | C | L2 軟體候選 | 執行 UART、啟動與基本周邊實機驗證 |
-| `bananapiaim7` | 開發中 | Banana Pi AIM7 | `rockchip-rk3588` | `arm64` | `vendor` | 是 | E | L1 可建置 | 完成映像內容與來源同一性守門 |
+| `bananapiaim7` | 開發中 | Banana Pi AIM7 | `rockchip-rk3588` | `arm64` | `vendor` | 是 | E | L1 元件可建置 | 完成映像內容與來源同一性守門 |
 | `bananapicm2` | 開發中 | Banana Pi CM2（R2 Pro 軟體參考） | `rockchip64` | `arm64` | `current` | 是 | E | L0 已盤點 | 確認建置鏈並建立 Trixie CLI 候選 |
 | `bananapicm4io` | 正式 | Banana Pi CM4IO | `meson-g12b` | `arm64` | `current,edge` | 是 | A | L2 軟體候選 | 執行 UART、啟動與基本周邊實機驗證 |
 | `bananapicm5pro` | 開發中 | Banana Pi CM5 Pro | `rk35xx` | `arm64` | `vendor` | 是 | E | L2 軟體候選 | 執行 UART、啟動與基本周邊實機驗證 |
 | `bananapicm6` | 開發中 | BananaPi BPI-CM6 | `spacemit` | `riscv64` | `legacy` | 是 | F | L2 軟體候選 | 執行 UART、啟動與基本周邊實機驗證 |
-| `bananapif2p` | 開發中 | Banana Pi F2P | `sunplus-sp7021-bpi` | `armhf` | `legacy` | 是 | F | L1 可建置 | 完成映像內容與來源同一性守門 |
-| `bananapif2s` | 開發中 | Banana Pi F2S | `sunplus-sp7021-bpi` | `armhf` | `legacy` | 是 | F | L1 可建置 | 完成映像內容與來源同一性守門 |
+| `bananapif2p` | 開發中 | Banana Pi F2P | `sunplus-sp7021-bpi` | `armhf` | `legacy` | 是 | F | L1 元件可建置 | 完成映像內容與來源同一性守門 |
+| `bananapif2s` | 開發中 | Banana Pi F2S | `sunplus-sp7021-bpi` | `armhf` | `legacy` | 是 | F | L1 元件可建置 | 完成映像內容與來源同一性守門 |
 | `bananapif3` | 正式 | BananaPi BPI-F3 | `spacemit` | `riscv64` | `legacy,current,edge` | 是 | B | L2 軟體候選 | 執行 UART、啟動與基本周邊實機驗證 |
 | `bananapiforge1` | 開發中 | Banana Pi BPI-Forge1 | `rockchip` | `armhf` | `vendor` | 是 | E | L2 軟體候選 | 執行 UART、啟動與基本周邊實機驗證 |
 | `bananapim1plus` | 社群 | Banana Pi M1+ | `sun7i` | `armhf` | `current,edge,legacy` | 是 | C | L2 軟體候選 | 執行 UART、啟動與基本周邊實機驗證 |
-| `bananapim1super` | 開發中 | Banana Pi M1 Super | `rk35xx` | `arm64` | `vendor` | 是 | E | L1 可建置 | 完成映像內容與來源同一性守門 |
+| `bananapim1super` | 開發中 | Banana Pi M1 Super | `rk35xx` | `arm64` | `vendor` | 是 | E | L1 元件可建置 | 完成映像內容與來源同一性守門 |
 | `bananapim2` | 社群 | Banana Pi M2 | `sun6i` | `armhf` | `current,legacy` | 是 | C | L2 軟體候選 | 執行 UART、啟動與基本周邊實機驗證 |
 | `bananapim2berry` | 社群 | Banana Pi M2 Berry | `sun8i` | `armhf` | `current,edge,legacy` | 是 | C | L2 軟體候選 | 執行 UART、啟動與基本周邊實機驗證 |
 | `bananapim2c` | 開發中 | Banana Pi M2C | `unisoc-uis7885-bpi` | `arm64` | `vendor` | 是 | F | L0 已盤點 | 確認建置鏈並建立 Trixie CLI 候選 |
@@ -38,29 +38,29 @@
 | `bananapim2ultra` | 社群 | Banana Pi M2 Ultra | `sun8i` | `armhf` | `current,edge,legacy` | 是 | C | L2 軟體候選 | 執行 UART、啟動與基本周邊實機驗證 |
 | `bananapim2zero` | 社群 | Banana Pi M2 Zero | `sun8i` | `armhf` | `current,edge,legacy` | 是 | C | L2 軟體候選 | 執行 UART、啟動與基本周邊實機驗證 |
 | `bananapim3` | 社群 | Banana Pi M3 | `sun8i` | `armhf` | `current,edge,legacy` | 是 | C | L2 軟體候選 | 執行 UART、啟動與基本周邊實機驗證 |
-| `bananapim4` | 開發中 | Banana Pi M4 | `realtek-rtd139x-bpi` | `arm64` | `legacy` | 是 | F | L1 可建置 | 完成映像內容與來源同一性守門 |
+| `bananapim4` | 開發中 | Banana Pi M4 | `realtek-rtd139x-bpi` | `arm64` | `legacy` | 是 | F | L1 元件可建置 | 完成映像內容與來源同一性守門 |
 | `bananapim4berry` | 正式 | BananaPi M4 Berry | `sun50iw9-bpi` | `arm64` | `current,edge` | 是 | R | L4 功能最佳化 | 補齊樣本數、冷啟動與發布門檻 |
 | `bananapim4super` | 開發中 | Banana Pi M4 Super（ArmSoM Sige3 donor-only） | `rk35xx` | `arm64` | `vendor` | 是 | E | L0 已盤點 | 確認建置鏈並建立 Trixie CLI 候選 |
 | `bananapim4zero` | 正式 | BananaPi BPI-M4-Zero | `sun50iw9-bpi` | `arm64` | `current,edge` | 是 | R | L3 實機候選 | 補齊加速、I/O、多板與長時間測試 |
 | `bananapim5` | 正式 | Banana Pi M5 | `meson-sm1` | `arm64` | `current,edge` | 是 | A | L2 軟體候選 | 執行 UART、啟動與基本周邊實機驗證 |
 | `bananapim5pro` | 正式 | Banana Pi M5 Pro | `rk35xx` | `arm64` | `edge,vendor` | 是 | B | L2 軟體候選 | 執行 UART、啟動與基本周邊實機驗證 |
-| `bananapim6` | 開發中 | Banana Pi M6 | `vs680` | `arm64` | `legacy` | 是 | F | L1 可建置 | 完成映像內容與來源同一性守門 |
+| `bananapim6` | 開發中 | Banana Pi M6 | `vs680` | `arm64` | `legacy` | 是 | F | L1 元件可建置 | 完成映像內容與來源同一性守門 |
 | `bananapim64` | 社群 | Banana Pi M64 | `sun50iw1` | `arm64` | `current,edge,legacy` | 是 | C | L2 軟體候選 | 執行 UART、啟動與基本周邊實機驗證 |
 | `bananapim7` | 正式 | Banana Pi M7 | `rockchip-rk3588` | `arm64` | `current,edge,vendor` | 是 | B | L2 軟體候選 | 執行 UART、啟動與基本周邊實機驗證 |
 | `bananapip2pro` | 開發中 | Banana Pi P2 Pro | `rockchip64` | `arm64` | `current` | 否 | E | L2 軟體候選 | 執行 UART、啟動與基本周邊實機驗證 |
 | `bananapip2zero` | 社群 | Banana Pi P2 Zero | `sun8i` | `armhf` | `current,edge,legacy` | 是 | C | L2 軟體候選 | 執行 UART、啟動與基本周邊實機驗證 |
 | `bananapipro` | 社群 | Banana Pi Pro | `sun7i` | `armhf` | `current,edge,legacy` | 是 | C | L2 軟體候選 | 執行 UART、啟動與基本周邊實機驗證 |
-| `bananapir1` | 停止支援 | Banana Pi R1 | `sun7i` | `armhf` | `current,edge` | 是 | G | L0 已盤點 | 保留最後可用基線，不列入新發布 |
+| `bananapir1` | 停止支援 | Banana Pi R1 | `sun7i` | `armhf` | `current,edge` | 是 | G | L2 軟體候選 | 保留最後可用基線，不列入新發布 |
 | `bananapir2` | 社群 | Banana Pi R2 | `mt7623` | `armhf` | `current` | 是 | D | L2 軟體候選 | 執行 UART、啟動與基本周邊實機驗證 |
 | `bananapir2pro` | 社群 | Banana Pi R2 Pro | `rockchip64` | `arm64` | `current,edge` | 是 | D | L2 軟體候選 | 執行 UART、啟動與基本周邊實機驗證 |
 | `bananapir3` | 開發中 | Banana Pi R3 | `filogic` | `arm64` | `current` | 否 | D | L2 軟體候選 | 執行 UART、啟動與基本周邊實機驗證 |
-| `bananapir3mini` | 開發中 | Banana Pi R3 Mini | `filogic` | `arm64` | `current` | 否 | D | L1 可建置 | 完成映像內容與來源同一性守門 |
+| `bananapir3mini` | 開發中 | Banana Pi R3 Mini | `filogic` | `arm64` | `current` | 否 | D | L1 元件可建置 | 完成映像內容與來源同一性守門 |
 | `bananapir4` | 社群 | Banana Pi R4 | `filogic` | `arm64` | `current` | 否 | D | L2 軟體候選 | 執行 UART、啟動與基本周邊實機驗證 |
 | `bananapir4lite` | 開發中 | Banana Pi R4 Lite | `filogic` | `arm64` | `current` | 否 | D | L2 軟體候選 | 執行 UART、啟動與基本周邊實機驗證 |
 | `bananapir4pro` | 開發中 | Banana Pi R4 Pro 8X | `filogic` | `arm64` | `current` | 否 | D | L2 軟體候選 | 執行 UART、啟動與基本周邊實機驗證 |
 | `bananapir64` | 社群 | Banana Pi R64 | `filogic` | `arm64` | `current` | 否 | D | L2 軟體候選 | 執行 UART、啟動與基本周邊實機驗證 |
-| `bananapism10` | 開發中 | BananaPi BPI-SM10 | `spacemit-k3-bpi` | `riscv64` | `current` | 是 | F | L1 可建置 | 完成映像內容與來源同一性守門 |
-| `bananapiw2` | 開發中 | Banana Pi W2 | `realtek-rtd129x-bpi` | `arm64` | `legacy` | 是 | F | L1 可建置 | 完成映像內容與來源同一性守門 |
+| `bananapism10` | 開發中 | BananaPi BPI-SM10 | `spacemit-k3-bpi` | `riscv64` | `current` | 是 | F | L1 元件可建置 | 完成映像內容與來源同一性守門 |
+| `bananapiw2` | 開發中 | Banana Pi W2 | `realtek-rtd129x-bpi` | `arm64` | `legacy` | 是 | F | L1 元件可建置 | 完成映像內容與來源同一性守門 |
 | `bananapiw3` | 開發中 | Banana Pi W3 | `rockchip-rk3588` | `arm64` | `vendor` | 是 | E | L2 軟體候選 | 執行 UART、啟動與基本周邊實機驗證 |
 | `bpi-ai2n` | 正式 | Banana Pi AI2N | `renesas-rzv2n-bpi` | `arm64` | `legacy` | 是 | B | L0 已盤點 | 建立 Trixie CLI 並完成離線守門 |
 
@@ -82,6 +82,7 @@
 - `bananapim4`：尚無完整 Armbian 映像，以及 SD、eMMC、網路、USB、HDMI、GPU、VPU、無線與 40-pin 實機證據。
 - `bananapim4super`：官方 M4 Super 無線模組為 SYN43752，Sige3 donor DTS 為 AP6275S；同一官方頁面的 PCIe 規格也同時出現 x1 與 x2，必須取得原理圖及 PCB 資料後才能建立真正板級描述。
 - `bananapim6`：TZK 與 U-Boot sm.bin 缺少原始碼、重建鏈及逐檔再散布授權，C05 拓撲與實機啟動尚未驗證。
+- `bananapir1`：板卡維持 EOS；歷史映像沒有目前來源重建、實機開機、安全更新、授權審查或公開發布證據。
 - `bananapir2`：五個 MediaTek 啟動載荷尚未取得可保存的書面再散布授權。
 - `bananapir3mini`：ATF MT7986 預編譯 DRAM 物件再散布範圍未確認，eMMC boot0 安裝與 boot partition enable 尚未實機驗證。
 - `bananapir4pro`：Linux 6.19.0-rc1 與 ATF MT7988 預編譯 DRAM／eFuse 物件不得視為公開發布核准。

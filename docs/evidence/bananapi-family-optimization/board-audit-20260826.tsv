@@ -34,7 +34,7 @@ bananapim7	conf	Banana Pi M7	rockchip-rk3588	arm64	current,edge,vendor	current	y
 bananapip2pro	wip	Banana Pi P2 Pro	rockchip64	arm64	current	current	no	E	L2	bpi-p2-pro-rk3308_defconfig	rockchip/rk3308-bpi-p2-pro.dtb	KERNEL_TEST_TARGET	執行 UART、啟動與基本周邊實機驗證
 bananapip2zero	csc	Banana Pi P2 Zero	sun8i	armhf	current,edge,legacy	current	yes	C	L2	bananapi_p2_zero_defconfig	allwinner/sun8i-h2-plus-bananapi-p2-zero.dtb	BOARD_MAINTAINER	執行 UART、啟動與基本周邊實機驗證
 bananapipro	csc	Banana Pi Pro	sun7i	armhf	current,edge,legacy	current	yes	C	L2	Bananapro_defconfig		BOARD_MAINTAINER	執行 UART、啟動與基本周邊實機驗證
-bananapir1	eos	Banana Pi R1	sun7i	armhf	current,edge	current	yes	G	L0	Lamobo_R1_defconfig		BOARD_MAINTAINER,KERNEL_TEST_TARGET	保留最後可用基線，不列入新發布
+bananapir1	eos	Banana Pi R1	sun7i	armhf	current,edge	current	yes	G	L2	Lamobo_R1_defconfig		BOARD_MAINTAINER,KERNEL_TEST_TARGET	保留最後可用基線，不列入新發布
 bananapir2	csc	Banana Pi R2	mt7623	armhf	current	current	yes	D	L2	mt7623n_bpir2_defconfig	mt7623n-bananapi-bpi-r2.dtb		執行 UART、啟動與基本周邊實機驗證
 bananapir2pro	csc	Banana Pi R2 Pro	rockchip64	arm64	current,edge	current	yes	D	L2	bpi-r2-pro-rk3568_defconfig	rockchip/rk3568-bpi-r2-pro.dtb		執行 UART、啟動與基本周邊實機驗證
 bananapir3	wip	Banana Pi R3	filogic	arm64	current	current	no	D	L2	mt7986a_bpir3_sd_defconfig	mediatek/mt7986a-bananapi-bpi-r3-sd-nor.dtb	BOARD_MAINTAINER	執行 UART、啟動與基本周邊實機驗證

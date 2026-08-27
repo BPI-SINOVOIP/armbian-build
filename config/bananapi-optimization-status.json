@@ -228,6 +228,10 @@
       "level": "L2",
       "basis": "Trixie current CLI 已由固定來源完整建置，並通過 IMG／XZ 同一性、分割表、五個啟動載荷、R2 DTB、核心設定、套件與唯讀根檔案系統守門；啟動載荷再散布授權與實機功能仍待驗證"
     },
+    "bananapir1": {
+      "level": "L2",
+      "basis": "2026-05-21 的五個發行版、CLI／XFCE 共十組歷史映像已通過 SHA-256、XZ 串流、日誌與說明契約；Trixie CLI 另通過唯讀分割區、EOS 身分、核心、initrd 與 DTB 內容守門。這是歷史／封存 L2，不是本次新建置、現行支援或實機證據"
+    },
     "bananapir3mini": {
       "level": "L1",
       "basis": "固定 Linux、U-Boot、ATF、firmware、MT76 與板級參考來源已核對；R3 Mini Linux DTB、U-Boot、BL2、BL31 與 FIP 已重建並鎖定雜湊；尚未建立完整 rootfs 映像或驗證 eMMC boot0 冷啟動"
@@ -288,6 +292,9 @@
     ],
     "bananapir2": [
       "五個 MediaTek 啟動載荷尚未取得可保存的書面再散布授權"
+    ],
+    "bananapir1": [
+      "板卡維持 EOS；歷史映像沒有目前來源重建、實機開機、安全更新、授權審查或公開發布證據"
     ],
     "bananapir3mini": [
       "ATF MT7986 預編譯 DRAM 物件再散布範圍未確認，eMMC boot0 安裝與 boot partition enable 尚未實機驗證"
