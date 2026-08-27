@@ -27,6 +27,7 @@ ARMSOM_DEFCONFIG = (
 )
 BUILD = ROOT / "tools/build-bananapi-rockchip-aim7-candidate.sh"
 VERIFY = ROOT / "tools/verify-bananapi-rockchip-aim7-candidate.sh"
+COMPONENT_VERIFY = ROOT / "tools/verify-bananapi-rockchip-aim7-components.sh"
 ISOLATED = ROOT / "tools/run-bananapi-rockchip-aim7-candidate-isolated-cache.sh"
 POLICY = (
     ROOT
@@ -184,6 +185,19 @@ printf 'rkbin_source=%s\nrkbin=%s\n' "$RKBIN_GIT_URL" "$RKBIN_GIT_REF"
 
     def test_component_evidence_is_machine_readable(self) -> None:
         evidence = self.config["component_build_evidence"]
+        self.assertEqual(self.config["candidate_level"], "L1 元件候選")
+        self.assertEqual(self.config["candidate_scope"], "internal-component-only")
+        self.assertTrue(self.config["component_build_completed"])
+        self.assertFalse(self.config["rootfs_image_built"])
+        self.assertFalse(self.config["hardware_claims_allowed"])
+        self.assertFalse(self.config["public_release_allowed"])
+        self.assertFalse(self.config["firmware_redistribution_audit_complete"])
+        self.assertEqual(evidence["source_date_epoch"], 1777288768)
+        self.assertEqual(
+            evidence["portable_manifest_sha256"],
+            "164033bb5c82577eed3797bf55091a81d0945d7e5332666b55e508850ec42e96",
+        )
+        self.assertEqual(evidence["portable_artifact_count"], 6)
         self.assertEqual(evidence["linux_dtb_size"], 265522)
         self.assertEqual(evidence["idbloader_size"], 323584)
         self.assertEqual(evidence["uboot_spl_size"], 242776)
@@ -294,6 +308,12 @@ printf '%s\n' "${{opts_y[@]}}"
         self.assertIn("build-bananapi-rockchip-aim7-candidate.sh", isolated_text)
         self.assertIn("bananapi-rockchip-aim7-cache-overlay", isolated_text)
         self.assertNotIn("compile.sh", isolated_text)
+
+    def test_component_verifier_preserves_evidence_boundaries(self) -> None:
+        text = COMPONENT_VERIFY.read_text()
+        self.assertIn("portable_manifest_sha256", text)
+        self.assertIn("不得包含原始碼或建置樹", text)
+        self.assertIn("不代表完整映像、實機或公開發布通過", text)
 
     def test_policy_rejects_hardware_and_release_overclaim(self) -> None:
         text = POLICY.read_text()

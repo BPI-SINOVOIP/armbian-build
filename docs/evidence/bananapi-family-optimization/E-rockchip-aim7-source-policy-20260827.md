@@ -8,7 +8,7 @@
 
 本候選改為自足 Banana Pi 板檔，新增 Banana Pi 專用 Linux／U-Boot DTS wrapper 與專用 U-Boot defconfig。wrapper 只覆寫 `model` 與 `compatible`，底層硬體描述仍明確繼承 `rk3588-armsom-aim7-io.dts`；沒有原理圖與實機證據的差異一律不猜測。
 
-目前完成的是可重現 L2 軟體候選準備，不等於正式 L2 映像已通過。這次依要求沒有建置完整根檔案系統映像，也沒有實體板 L3 證據；在完整映像與硬體守門完成前，不得宣稱硬體介面已通過，也不得核准候選對外發布。
+目前完成的是可重現的 `L1 元件候選`，不等於正式 L2 映像已通過。這次沒有建置完整根檔案系統映像，也沒有實體板 L3 證據；在完整映像與硬體守門完成前，不得宣稱硬體介面已通過，也不得核准候選對外發布。
 
 ## 稽核依據
 
@@ -54,15 +54,23 @@ Linux 與 U-Boot 二進位都必須含 `Banana Pi AIM7` 與 `bananapi,bpi-aim7`�
 
 本次只在乾淨固定提交上執行 Linux DTB 與 U-Boot 元件建置，沒有執行完整映像建置。
 
+U-Boot 以 `SOURCE_DATE_EPOCH=1777288768`、`KBUILD_BUILD_USER=bananapi` 與 `KBUILD_BUILD_HOST=armbian` 重建，連續建置的四個 U-Boot 產物雜湊一致。五個建置產物與 RKBin 授權檔已保存於 `output/components/2026.08/bananapi-rockchip-rk3588-aim7-vendor`；可攜清單 SHA-256 為 `164033bb5c82577eed3797bf55091a81d0945d7e5332666b55e508850ec42e96`，該目錄不含來源樹或建置樹。
+
 | 元件 | 大小 | SHA-256 |
 | --- | ---: | --- |
 | Linux `rk3588-bananapi-aim7.dtb` | 265522 | `fdf3d029773c5374411a08edc6fcfe65532c5fa94d7845b05e28988f338e796f` |
-| U-Boot `idbloader.img` | 323584 | `6980555b2aacaec0ec8dee312ffe6c0e7c74c2f4f8a8ece49c3ca69b263328ae` |
-| U-Boot `spl/u-boot-spl.bin` | 242776 | `d20221a30b870fbbeeb30ada7a021b068181f817ff6b2d883dfb7a52f33a7dcb` |
+| U-Boot `idbloader.img` | 323584 | `67395e437c84be124cc3d9cd95716459ffbadf788fbcebb7e6addd5589ce2e23` |
+| U-Boot `spl/u-boot-spl.bin` | 242776 | `b090249035a2061e531d79665208a8d2b5caf736698ac47ace81c6eba49ea8b5` |
 | U-Boot `u-boot.dtb` | 10735 | `9fa10b2d75ecfbad937c3add9c1c7214eaf83a149d46b13f7cc696c309719a69` |
-| U-Boot `u-boot.itb` | 1462784 | `e09369b519700d6916889d9ad9ccfb8bef1616405c22e3d7e00098ab845f3f6f` |
+| U-Boot `u-boot.itb` | 1462784 | `892095d646d01f9f050750741e63a6351758845053dfa7c21b03648a587dd2b7` |
 
 這些雜湊證明固定來源與本次板級 wrapper 可建置，不是正式候選映像的雜湊，也不能替代 SD／eMMC 開機證據。
+
+可攜元件唯讀驗證：
+
+```bash
+./tools/verify-bananapi-rockchip-aim7-components.sh
+```
 
 ## 靜態 I/O 與加速器邊界
 

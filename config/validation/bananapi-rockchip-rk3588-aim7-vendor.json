@@ -1,6 +1,13 @@
 {
   "schema_version": 1,
   "candidate_branch": "vendor",
+  "candidate_level": "L1 元件候選",
+  "candidate_scope": "internal-component-only",
+  "component_build_completed": true,
+  "rootfs_image_built": false,
+  "hardware_claims_allowed": false,
+  "public_release_allowed": false,
+  "firmware_redistribution_audit_complete": false,
   "kernel_family": "rk35xx",
   "linux_source": "https://github.com/armbian/linux-rockchip.git",
   "linux_ref": "commit:c6157104418d012823413c02f9222f3fe123dd25",
@@ -30,15 +37,21 @@
     "/usr/share/doc/armbian-bsp-bananapiaim7/rkbin.LICENSE.TXT": "0b37e1522c36cf4579c45dfb138798c3cb5665fcf6302b95377179fbed38e35c"
   },
   "component_build_evidence": {
+    "portable_evidence_root": "output/components/2026.08/bananapi-rockchip-rk3588-aim7-vendor",
+    "portable_manifest_sha256": "164033bb5c82577eed3797bf55091a81d0945d7e5332666b55e508850ec42e96",
+    "portable_artifact_count": 6,
+    "source_date_epoch": 1777288768,
+    "build_user": "bananapi",
+    "build_host": "armbian",
     "linux_dtb_sha256": "fdf3d029773c5374411a08edc6fcfe65532c5fa94d7845b05e28988f338e796f",
     "linux_dtb_size": 265522,
-    "idbloader_sha256": "6980555b2aacaec0ec8dee312ffe6c0e7c74c2f4f8a8ece49c3ca69b263328ae",
+    "idbloader_sha256": "67395e437c84be124cc3d9cd95716459ffbadf788fbcebb7e6addd5589ce2e23",
     "idbloader_size": 323584,
-    "uboot_spl_sha256": "d20221a30b870fbbeeb30ada7a021b068181f817ff6b2d883dfb7a52f33a7dcb",
+    "uboot_spl_sha256": "b090249035a2061e531d79665208a8d2b5caf736698ac47ace81c6eba49ea8b5",
     "uboot_spl_size": 242776,
     "uboot_dtb_sha256": "9fa10b2d75ecfbad937c3add9c1c7214eaf83a149d46b13f7cc696c309719a69",
     "uboot_dtb_size": 10735,
-    "uboot_itb_sha256": "e09369b519700d6916889d9ad9ccfb8bef1616405c22e3d7e00098ab845f3f6f",
+    "uboot_itb_sha256": "892095d646d01f9f050750741e63a6351758845053dfa7c21b03648a587dd2b7",
     "uboot_itb_size": 1462784
   },
   "common_packages": [
