@@ -148,6 +148,10 @@
       "level": "L2",
       "basis": "Trixie current CLI 已由乾淨來源完整建置並通過映像、U-Boot、固定 RKBin 啟動依賴、RK3308 DTB、SD／eMMC／SDIO、overlay 與標準 I/O 工具唯讀守門；仍待實機驗證"
     },
+    "bananapiaim7": {
+      "level": "L1",
+      "basis": "固定 Linux、U-Boot 與 RKBin 來源已核對；AIM7 專屬 Linux DTB、U-Boot SPL／DTB／FIT 與 idbloader 已以固定時間戳重建成可攜證據，連續建置雜湊一致並通過身分及授權檔守門；尚未通過完整映像或實機驗證"
+    },
     "bananapiforge1": {
       "level": "L2",
       "basis": "Trixie vendor minimal CLI 已由隔離快取完整建置並通過映像、固定 Linux／U-Boot／RKBin 來源、GPT、U-Boot 載荷、Banana Pi 專用 DTB、雙乙太網路、USB gadget、顯示、音訊、CAN 與標準 I/O 工具唯讀守門；供應商核心、預編譯 RKBin、硬體描述等同性與實體功能仍待驗證"
@@ -230,6 +234,9 @@
     }
   },
   "open_findings": {
+    "bananapiaim7": [
+      "AIM7 與 ArmSoM AIM7 IO 的原理圖差異尚未閉合，既有 DTS 只啟用單 lane PCIe 且 SPI／DSI 停用；GPU、VPU、RGA、NPU 使用者空間與韌體授權仍待完整映像稽核"
+    ],
     "bananapif2s": [
       "xboot 與預建工具鏈缺少完整可重建來源或明確再散布授權，完整映像只能作內部驗證"
     ],
