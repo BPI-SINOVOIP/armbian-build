@@ -179,12 +179,28 @@ package_installed() {
 	awk -v package="$2" '
 		BEGIN { RS = ""; FS = "\n" }
 		{
-			name = ""; status = ""
+			name = ""; status = ""; provides = ""; reading_provides = 0
 			for (field_index = 1; field_index <= NF; field_index++) {
 				if ($field_index ~ /^Package: /) name = substr($field_index, 10)
 				if ($field_index ~ /^Status: /) status = substr($field_index, 9)
+				if ($field_index ~ /^Provides: /) {
+					provides = substr($field_index, 11)
+					reading_provides = 1
+				} else if (reading_provides && $field_index ~ /^[[:space:]]/) {
+					provides = provides " " $field_index
+				} else {
+					reading_provides = 0
+				}
 			}
-			if (name == package && status == "install ok installed") found = 1
+			if (status != "install ok installed") next
+			if (name == package) found = 1
+			provided_count = split(provides, provided_packages, ",")
+			for (provided_index = 1; provided_index <= provided_count; provided_index++) {
+				provided = provided_packages[provided_index]
+				sub(/[[:space:]]*\(.*/, "", provided)
+				gsub(/^[[:space:]]+|[[:space:]]+$/, "", provided)
+				if (provided == package) found = 1
+			}
 		}
 		END { exit found ? 0 : 1 }
 	' "$1/var/lib/dpkg/status"

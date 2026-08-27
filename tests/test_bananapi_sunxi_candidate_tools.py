@@ -63,6 +63,47 @@ class BananaPiSunxiCandidateToolTests(unittest.TestCase):
             packages = set(package_line.split('"', 2)[1].split())
             self.assertTrue(required <= packages)
 
+    def test_generic_verifier_accepts_installed_virtual_package_provider(self) -> None:
+        verifier = VERIFY_SCRIPT.read_text()
+        function_start = verifier.index("package_installed() {")
+        function_end = verifier.index("\n}\n\nvalidate_boot_area()", function_start) + 3
+        package_function = verifier[function_start:function_end]
+        status = """Package: glmark2-es2-x11
+Status: install ok installed
+Provides: glmark2-es2,
+ glmark2-es2-versioned (= 2023.01)
+
+Package: ignored-provider
+Status: deinstall ok config-files
+Provides: unavailable-virtual
+"""
+        with tempfile.TemporaryDirectory() as temporary:
+            status_path = Path(temporary) / "var/lib/dpkg/status"
+            status_path.parent.mkdir(parents=True)
+            status_path.write_text(status)
+            for package, expected_status in (
+                ("glmark2-es2-x11", 0),
+                ("glmark2-es2", 0),
+                ("glmark2-es2-versioned", 0),
+                ("unavailable-virtual", 1),
+                ("missing-package", 1),
+            ):
+                with self.subTest(package=package):
+                    result = subprocess.run(
+                        [
+                            "bash",
+                            "-c",
+                            package_function + '\npackage_installed "$1" "$2"',
+                            "package-test",
+                            temporary,
+                            package,
+                        ],
+                        capture_output=True,
+                        text=True,
+                        check=False,
+                    )
+                    self.assertEqual(result.returncode, expected_status, result.stderr)
+
     def test_h3_reference_policy_covers_wireless_and_header_io(self) -> None:
         config = json.loads(H3_CONFIG.read_text())
         self.assertEqual(set(config["boards"]), {"bananapim2plus"})
