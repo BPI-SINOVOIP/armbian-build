@@ -227,6 +227,17 @@ class BananaPiSunplusF2SCandidateTests(unittest.TestCase):
             with self.subTest(required=required):
                 self.assertIn(required, text)
 
+    def test_legacy_uboot_version_fallback_stays_strict(self) -> None:
+        text = GENERIC_VERIFIER.read_text(encoding="utf-8")
+        for required in (
+            'declare UBOOT_VERSION="0"',
+            'declare UBOOT_ARTIFACT_VERSION=',
+            'grep -aFq -- "U-Boot ${uboot_version}"',
+            "uboot_version_fallback=yes",
+        ):
+            with self.subTest(required=required):
+                self.assertIn(required, text)
+
     def test_component_builder_never_builds_a_rootfs_image(self) -> None:
         text = COMPONENT_BUILDER.read_text(encoding="utf-8")
         self.assertNotIn("compile.sh build", text)

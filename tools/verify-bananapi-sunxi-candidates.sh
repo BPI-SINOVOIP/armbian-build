@@ -287,7 +287,7 @@ validate_installed_uboot() {
 	local metadata_file md5sums_file payload_size payload_sha256 minimum_spec
 	local rkbin_source rkbin_ref rkbin_revision partition_table partition_start_sector sector_size payload_end first_partition_byte
 	local uboot_target_index uboot_config_file uboot_target_metadata uboot_defconfig option_line target_fragment forbidden_fragment required_fragment
-	local uboot_binary_name uboot_binary
+	local uboot_binary_name uboot_binary uboot_version_fallback=no
 	uboot_tag="$(board_field "${board}" uboot_tag)"
 	uboot_version="$(board_field_optional "${board}" uboot_version)"
 	[[ -n "${uboot_version}" ]] || uboot_version="${uboot_tag#v}"
@@ -308,8 +308,15 @@ validate_installed_uboot() {
 
 	[[ -s "${metadata_file}" && -s "${md5sums_file}" ]] ||
 		fail "${board} 缺少可驗證的 U-Boot 套件 payload"
-	grep -Fqx "declare UBOOT_VERSION=\"${uboot_version}\"" "${metadata_file}" ||
+	if grep -Fqx "declare UBOOT_VERSION=\"${uboot_version}\"" "${metadata_file}"; then
+		:
+	elif grep -Fqx 'declare UBOOT_VERSION="0"' "${metadata_file}" &&
+		grep -Fq "declare UBOOT_ARTIFACT_VERSION=\"${uboot_version}-" "${metadata_file}"; then
+		# 部分舊 vendor 樹跳過 Makefile 版本；稍後仍須核對二進位版本字串。
+		uboot_version_fallback=yes
+	else
 		fail "${board} 的 U-Boot 版本不是 ${uboot_tag}"
+	fi
 	grep -Fqx "declare UBOOT_GIT_BRANCH=\"${uboot_git_ref}\"" "${metadata_file}" ||
 		fail "${board} 的 U-Boot Git 分支不符"
 	if [[ -n "${uboot_git_source}" ]]; then
@@ -381,6 +388,11 @@ validate_installed_uboot() {
 	[[ "${uboot_binary_name}" =~ ^[A-Za-z0-9._+-]+$ ]] ||
 		fail "${board} 的 U-Boot 字串檢查載荷名稱無效"
 	uboot_binary="${uboot_dir}/${uboot_binary_name}"
+	if [[ "${uboot_version_fallback}" == yes ]]; then
+		[[ -s "${uboot_binary}" ]] || fail "${board} 缺少可檢查的 U-Boot 載荷：${uboot_binary_name}"
+		grep -aFq -- "U-Boot ${uboot_version}" "${uboot_binary}" ||
+			fail "${board} 的 U-Boot 二進位版本字串不是 ${uboot_version}"
+	fi
 	while IFS= read -r forbidden_fragment; do
 		[[ -n "${forbidden_fragment}" ]] || continue
 		[[ -s "${uboot_binary}" ]] || fail "${board} 缺少可檢查的 U-Boot 載荷：${uboot_binary_name}"
