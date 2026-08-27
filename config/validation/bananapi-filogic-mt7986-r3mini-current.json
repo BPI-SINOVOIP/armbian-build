@@ -6,7 +6,7 @@
   "current_evidence_level": "L2",
   "target_evidence_level": "L2",
   "source_date_epoch": 1787793187,
-  "source_contract_projection_sha256": "e8f9f506599c5d7e0099265871208b13c4eed5ac5f4c7d6fd05f5413d2979dc7",
+  "source_contract_projection_sha256": "ad08cf7707aa0dfc69bf997a3da3ebb098f23237db9cb2881d5e592d7c0a6b0c",
   "l2_contract_calibration_required": false,
   "allowed_evidence_levels": [
     "L1",
@@ -283,9 +283,9 @@
         "gpt"
       ],
       "uboot_payload_sha256": [
-        "bl2.img=6a7a83f1406d51227b169af1a30b4d84da42867785021deaf901595531421c8b",
+        "bl2.img=fcc79a31bc4ea8a1104584991b53ed61834a40171c765a3e3859270ba7509b9e",
         "gpt=beb31c2284ec7b8e910faeea8d323f40532b26010e87d0bae851d823705efa1d",
-        "u-boot.fip=4f25bdd6d6085226a8807615bfc5d13e98b27289a389a9fab90ad417950f949e"
+        "u-boot.fip=848ee9f1f6f451658ad179f240231dde24831f301ef8e9a43744621bf6d18408"
       ],
       "uboot_payload_minimum_sizes": [
         "bl2.img=180000",

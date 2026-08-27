@@ -140,9 +140,9 @@ class BananaPiFilogicR3MiniCandidateTests(unittest.TestCase):
         payload.write_text(
             "board\tpayload\tplacement\toffset\tsize\tsha256\n"
             "bananapir3mini\tbl2.img\timage\t17408\t204889\t"
-            "6a7a83f1406d51227b169af1a30b4d84da42867785021deaf901595531421c8b\n"
+            "fcc79a31bc4ea8a1104584991b53ed61834a40171c765a3e3859270ba7509b9e\n"
             "bananapir3mini\tu-boot.fip\timage\t6815744\t510681\t"
-            "4f25bdd6d6085226a8807615bfc5d13e98b27289a389a9fab90ad417950f949e\n"
+            "848ee9f1f6f451658ad179f240231dde24831f301ef8e9a43744621bf6d18408\n"
             "bananapir3mini\tgpt\tpackage-only\t-\t17408\t"
             "beb31c2284ec7b8e910faeea8d323f40532b26010e87d0bae851d823705efa1d\n"
         )
@@ -521,9 +521,9 @@ class BananaPiFilogicR3MiniCandidateTests(unittest.TestCase):
         self.assertEqual(
             self.policy["uboot_payload_sha256"],
             [
-                "bl2.img=6a7a83f1406d51227b169af1a30b4d84da42867785021deaf901595531421c8b",
+                "bl2.img=fcc79a31bc4ea8a1104584991b53ed61834a40171c765a3e3859270ba7509b9e",
                 "gpt=beb31c2284ec7b8e910faeea8d323f40532b26010e87d0bae851d823705efa1d",
-                "u-boot.fip=4f25bdd6d6085226a8807615bfc5d13e98b27289a389a9fab90ad417950f949e",
+                "u-boot.fip=848ee9f1f6f451658ad179f240231dde24831f301ef8e9a43744621bf6d18408",
             ],
         )
 
@@ -770,9 +770,9 @@ class BananaPiFilogicR3MiniCandidateTests(unittest.TestCase):
             evidence.write_text(
                 "board\tpayload\tplacement\toffset\tsize\tsha256\n"
                 "bananapir3mini\tbl2.img\timage\t17408\t204889\t"
-                + "6a7a83f1406d51227b169af1a30b4d84da42867785021deaf901595531421c8b"
+                + "fcc79a31bc4ea8a1104584991b53ed61834a40171c765a3e3859270ba7509b9e"
                 + "\nbananapir3mini\tu-boot.fip\timage\t6815744\t510681\t"
-                + "4f25bdd6d6085226a8807615bfc5d13e98b27289a389a9fab90ad417950f949e"
+                + "848ee9f1f6f451658ad179f240231dde24831f301ef8e9a43744621bf6d18408"
                 + "\nbananapir3mini\tgpt\tpackage-only\t-\t17408\t"
                 + "beb31c2284ec7b8e910faeea8d323f40532b26010e87d0bae851d823705efa1d"
                 + "\n"
@@ -831,7 +831,7 @@ class BananaPiFilogicR3MiniCandidateTests(unittest.TestCase):
                 evidence.read_text()
                 .replace("\t4194305\t", "\t510681\t")
                 .replace(
-                    "4f25bdd6d6085226a8807615bfc5d13e98b27289a389a9fab90ad417950f949e",
+                    "848ee9f1f6f451658ad179f240231dde24831f301ef8e9a43744621bf6d18408",
                     "0f25bdd6d6085226a8807615bfc5d13e98b27289a389a9fab90ad417950f949e",
                 )
             )
@@ -850,9 +850,9 @@ class BananaPiFilogicR3MiniCandidateTests(unittest.TestCase):
             (output / "UBOOT_PAYLOAD_EVIDENCE.tsv").write_text(
                 "board\tpayload\tplacement\toffset\tsize\tsha256\n"
                 "bananapir3mini\tbl2.img\timage\t17408\t204889\t"
-                "6a7a83f1406d51227b169af1a30b4d84da42867785021deaf901595531421c8b\n"
+                "fcc79a31bc4ea8a1104584991b53ed61834a40171c765a3e3859270ba7509b9e\n"
                 "bananapir3mini\tu-boot.fip\timage\t6815744\t510681\t"
-                "4f25bdd6d6085226a8807615bfc5d13e98b27289a389a9fab90ad417950f949e\n"
+                "848ee9f1f6f451658ad179f240231dde24831f301ef8e9a43744621bf6d18408\n"
                 "bananapir3mini\tgpt\tpackage-only\t-\t17408\t"
                 "beb31c2284ec7b8e910faeea8d323f40532b26010e87d0bae851d823705efa1d\n"
             )
