@@ -8,6 +8,12 @@
   "rkbin_source": "https://github.com/armbian/rkbin",
   "rkbin_ref": "commit:1d3c61008fa823936ae7a59615393f8294b64456",
   "rkbin_commit": "1d3c61008fa823936ae7a59615393f8294b64456",
+  "rkbin_license_path": "LICENSE.TXT",
+  "rkbin_copy_and_distribution_grant_present": true,
+  "rkbin_standalone_distribution_authorized": false,
+  "rkbin_binary_modification_authorized": false,
+  "rkbin_license_must_accompany_distribution": true,
+  "rkbin_platform_constraint": "僅可隨採用 Rockchip 積體電路的平台以二進位形式散布",
   "rkbin_blobs": {
     "LICENSE.TXT": "0b37e1522c36cf4579c45dfb138798c3cb5665fcf6302b95377179fbed38e35c",
     "rk35/rk3588_bl31_v1.38.elf": "51848cc64e12e0fe82a23e43b4628b5b5805b4ec689b260f27fb409d30d3b30b",

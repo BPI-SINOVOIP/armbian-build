@@ -18,6 +18,12 @@ Banana Pi W3 原板檔直接繼承 ArmSoM W3，U-Boot 也使用 ArmSoM defconfig
 
 RKBin 的 DDR v1.11、BL31 v1.38、RockUSB loader 與 `LICENSE.TXT` 均由 SHA-256 固定。候選映像還必須安裝相同雜湊的 RKBin 授權檔，讓二進位來源與授權可由唯讀映像守門核對。
 
+## RKBin 發布限制
+
+固定提交中的 `LICENSE.TXT` 第 1.1 條提供二進位軟體的複製與散布授權；第 2.1 條同時限制只能以二進位形式、隨採用 Rockchip 積體電路的平台散布，不得獨立散布或修改；第 2.2 條要求散布時遵守相同條款並附上授權文件。W3 採用 RK3588，符合平台條件，但映像發布流程仍必須保留未修改的 RKBin 載荷，並把雜湊相同的 `LICENSE.TXT` 放入 BSP 文件目錄。
+
+機器可讀契約因此要求複製與散布授權存在、禁止獨立散布、禁止修改二進位、限制 Rockchip 平台，且必須隨散布內容附上相同授權文件。任一條件未滿足時，都不得把該映像核准為可對外發布版本。
+
 ## 板級身分與啟動鏈
 
 - Linux DTB：`rockchip/rk3588-bananapi-w3.dtb`

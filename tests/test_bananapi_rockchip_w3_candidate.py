@@ -157,6 +157,12 @@ printf 'rkbin_source=%s\nrkbin=%s\n' "$RKBIN_GIT_URL" "$RKBIN_GIT_REF"
         self.assertEqual(self.policy["partition_table"], "gpt")
 
     def test_rkbin_blobs_and_installed_license_are_hashed(self) -> None:
+        self.assertEqual(self.config["rkbin_license_path"], "LICENSE.TXT")
+        self.assertTrue(self.config["rkbin_copy_and_distribution_grant_present"])
+        self.assertFalse(self.config["rkbin_standalone_distribution_authorized"])
+        self.assertFalse(self.config["rkbin_binary_modification_authorized"])
+        self.assertTrue(self.config["rkbin_license_must_accompany_distribution"])
+        self.assertIn("Rockchip 積體電路", self.config["rkbin_platform_constraint"])
         blobs = self.config["rkbin_blobs"]
         self.assertEqual(
             set(blobs),
@@ -244,6 +250,8 @@ printf 'rkbin_source=%s\nrkbin=%s\n' "$RKBIN_GIT_URL" "$RKBIN_GIT_REF"
         self.assertIn("目前只建立 L2 軟體候選", text)
         self.assertIn("尚未建立實體板 L3 證據", text)
         self.assertIn("不得宣稱硬體介面已通過", text)
+        self.assertIn("不得獨立散布", text)
+        self.assertIn("必須隨散布內容附上相同授權文件", text)
 
 
 if __name__ == "__main__":
