@@ -65,6 +65,7 @@ import json
 import sys
 with open(sys.argv[1], encoding="utf-8") as stream:
     config = json.load(stream)
+print(f"source\tfirmware\t{config['firmware_source']}\t{config['firmware_ref']}\t{config['firmware_commit']}\t-")
 for name in sorted(config["source_commits"]):
     item = config["source_commits"][name]
     print(f"source\t{name}\t{item['source']}\t{item['ref']}\t{item['revision']}\t{item['license_sha256']}")

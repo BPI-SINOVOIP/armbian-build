@@ -81,6 +81,15 @@ class BananaPiRenesasAi2nCandidateTests(unittest.TestCase):
         self.assertEqual(self.config["linux_commit"], expected["linux"])
         self.assertEqual(self.board["uboot_revision"], expected["uboot"])
         self.assertEqual(self.board["atf_revision"], expected["atf"])
+        firmware = "f50a2a21bcdb77a562b3976930c5c6b521a1df08"
+        self.assertEqual(self.config["firmware_source"], "https://github.com/armbian/firmware")
+        self.assertEqual(self.config["firmware_ref"], f"commit:{firmware}")
+        self.assertEqual(self.config["firmware_commit"], firmware)
+        self.assertTrue(self.config["verify_firmware_source_resolution"])
+        self.assertIn(
+            f'ARMBIAN_FIRMWARE_GIT_REF_BOARD="commit:{firmware}"',
+            self.board_text,
+        )
 
     def test_packaging_tools_are_built_from_fixed_atf_source(self) -> None:
         self.assertNotIn(
@@ -211,6 +220,10 @@ class BananaPiRenesasAi2nCandidateTests(unittest.TestCase):
         self.assertIn("CONFIG_DRM_PANFROST=m", kernel_text)
         self.assertNotIn("CONFIG_MALI_MIDGARD", kernel_text)
         self.assertNotIn("CONFIG_MALI_DEVFREQ", kernel_text)
+        self.assertEqual(
+            self.config["required_kernel_module_paths"],
+            ["kernel/drivers/gpu/drm/panfrost/panfrost.ko"],
+        )
 
     def test_uboot_payload_and_boot_area_are_explicit(self) -> None:
         self.assertEqual(self.board["output_image_prefix"], "Bananapi-Armbian_*_")
@@ -298,7 +311,7 @@ class BananaPiRenesasAi2nCandidateTests(unittest.TestCase):
     def test_policy_records_component_and_hardware_boundaries(self) -> None:
         text = POLICY.read_text(encoding="utf-8")
         for expected in (
-            "目前只能登錄為內部 L0 來源／元件契約",
+            "目前仍只能登錄為內部 L0 來源／元件契約",
             "通過後才可標示為內部 L2",
             "禁止建立公開發布候選",
             "不能以節點存在或核心選項開啟取代",

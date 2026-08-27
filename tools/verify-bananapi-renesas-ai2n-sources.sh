@@ -4,6 +4,7 @@ set -euo pipefail
 repo_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 validation_config="${VALIDATION_CONFIG:-${repo_dir}/config/validation/bananapi-renesas-rzv2n-ai2n-legacy.json}"
 family_config="${repo_dir}/config/sources/families/renesas-rzv2n-bpi.conf"
+board_config="${repo_dir}/config/boards/bpi-ai2n.conf"
 uboot_compat_extension="${repo_dir}/extensions/uboot-binman-fix-pkg-resources.sh"
 main_config="${repo_dir}/lib/functions/configuration/main-config.sh"
 source_cache_root="${SOURCE_CACHE_ROOT:-${repo_dir}/cache/sources}"
@@ -26,6 +27,7 @@ fail() {
 
 [[ -f "${validation_config}" ]] || fail "找不到驗證設定：${validation_config}"
 [[ -f "${family_config}" ]] || fail "找不到 RZ/V2N family 設定"
+[[ -f "${board_config}" ]] || fail "找不到 AI2N 板卡設定"
 case "${public_release}" in
 	yes | no) ;;
 	*) fail "PUBLIC_RELEASE 只接受 yes 或 no" ;;
@@ -76,6 +78,29 @@ if [[ "${policy_only}" == yes ]]; then
 	echo "AI2N 發布政策守門通過。"
 	exit 0
 fi
+
+readarray -t firmware_values < <(python3 - "${validation_config}" <<'PY'
+import json
+import sys
+with open(sys.argv[1], encoding="utf-8") as stream:
+    config = json.load(stream)
+print(config["firmware_source"])
+print(config["firmware_ref"])
+print(config["firmware_commit"])
+print("true" if config["verify_firmware_source_resolution"] else "false")
+PY
+)
+[[ "${firmware_values[2]}" =~ ^[0-9a-f]{40}$ &&
+	"${firmware_values[1]}" == "commit:${firmware_values[2]}" &&
+	"${firmware_values[3]}" == true ]] || fail "Armbian 韌體固定來源政策不完整"
+grep -Fq "ARMBIAN_FIRMWARE_GIT_SOURCE_BOARD=\"${firmware_values[0]}\"" "${board_config}" ||
+	fail "板卡設定未固定 Armbian 韌體來源"
+grep -Fq "ARMBIAN_FIRMWARE_GIT_REF_BOARD=\"${firmware_values[1]}\"" "${board_config}" ||
+	fail "板卡設定未固定 Armbian 韌體提交"
+grep -Fq "declare -g ARMBIAN_FIRMWARE_GIT_SOURCE=\"\${ARMBIAN_FIRMWARE_GIT_SOURCE_BOARD}\"" "${board_config}" ||
+	fail "板卡設定未套用 Armbian 韌體來源"
+grep -Fq "declare -g ARMBIAN_FIRMWARE_GIT_REF=\"\${ARMBIAN_FIRMWARE_GIT_REF_BOARD}\"" "${board_config}" ||
+	fail "板卡設定未套用 Armbian 韌體提交"
 
 for assignment in \
 	'KERNELBRANCH="commit:48c742429129c095045823c204209bb2a92fb5b4"' \
@@ -235,6 +260,7 @@ import json
 import sys
 with open(sys.argv[1], encoding="utf-8") as stream:
     config = json.load(stream)
+print(f"source\tfirmware\t{config['firmware_source']}\t{config['firmware_ref']}\t{config['firmware_commit']}\t-")
 for name in sorted(config["source_commits"]):
     item = config["source_commits"][name]
     print(f"source\t{name}\t{item['source']}\t{item['ref']}\t{item['revision']}\t{item['license_sha256']}")

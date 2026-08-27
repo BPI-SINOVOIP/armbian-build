@@ -594,6 +594,24 @@ Provides: unavailable-virtual
             with self.subTest(required=required):
                 self.assertIn(required, text)
 
+    def test_optional_firmware_and_kernel_module_gates_are_machine_checked(self) -> None:
+        build_text = BUILD_SCRIPT.read_text()
+        verify_text = VERIFY_SCRIPT.read_text()
+        for required in (
+            "verify_firmware_source_resolution",
+            "firmware_git_source",
+            "firmware_git_ref",
+            "firmware_revision",
+            "validate_firmware_source_log",
+            "Fetching SHA1 of 'commit'",
+            "armbian-firmware-git ${firmware_revision}",
+        ):
+            with self.subTest(required=required):
+                self.assertIn(required, build_text)
+                self.assertIn(required, verify_text)
+        self.assertIn("required_kernel_module_paths", verify_text)
+        self.assertIn("module_matches", verify_text)
+
     def test_64_bit_sunxi_firmware_chain_is_traceable(self) -> None:
         build_text = BUILD_SCRIPT.read_text()
         verify_text = VERIFY_SCRIPT.read_text()

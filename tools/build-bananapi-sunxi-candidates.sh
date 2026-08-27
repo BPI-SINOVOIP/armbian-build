@@ -128,6 +128,18 @@ print(value)
 PY
 }
 
+validate_firmware_source_log() {
+	local log_file=$1
+	grep -Fq "Fetching SHA1 of 'commit' '${firmware_revision}'" "${log_file}" ||
+		fail "建置日誌未以精確提交解析 Armbian 韌體"
+	grep -Fq "SHA1 of commit ${firmware_revision}" "${log_file}" ||
+		fail "建置日誌缺少 Armbian 韌體完整提交解析結果"
+	grep -Fq "${firmware_git_source}" "${log_file}" ||
+		fail "建置日誌缺少 Armbian 韌體來源"
+	grep -Fq "armbian-firmware-git ${firmware_revision}" "${log_file}" ||
+		fail "建置日誌缺少 Armbian 韌體固定來源取用紀錄"
+}
+
 validate_board() {
 	python3 - "${validation_config}" "$1" <<'PY'
 import json
@@ -194,6 +206,23 @@ rkbin_git_source="$(top_field_optional rkbin_source)"
 [[ -n "${rkbin_git_source}" || -z "${rkbin_revision}" ]] || rkbin_git_source="https://github.com/armbian/rkbin"
 rkbin_git_ref="$(top_field_optional rkbin_ref)"
 [[ -n "${rkbin_git_ref}" || -z "${rkbin_revision}" ]] || rkbin_git_ref="commit:${rkbin_revision}"
+verify_firmware_source_resolution="$(top_field_optional verify_firmware_source_resolution)"
+firmware_git_source=""
+firmware_git_ref=""
+firmware_revision=""
+case "${verify_firmware_source_resolution}" in
+	"" | false) verify_firmware_source_resolution="" ;;
+	true)
+		firmware_git_source="$(top_field_optional firmware_source)"
+		firmware_git_ref="$(top_field_optional firmware_ref)"
+		firmware_revision="$(top_field_optional firmware_commit)"
+		[[ -n "${firmware_git_source}" &&
+			"${firmware_git_ref}" == "commit:${firmware_revision}" &&
+			"${firmware_revision}" =~ ^[0-9a-f]{40}$ ]] ||
+			fail "Armbian 韌體固定來源政策欄位不完整"
+		;;
+	*) fail "verify_firmware_source_resolution 只接受 true 或 false" ;;
+esac
 
 for board in "${boards[@]}"; do
 	validate_board "${board}" || { echo "驗證設定未登錄板卡：${board}" >&2; exit 2; }
@@ -254,7 +283,10 @@ for board in "${boards[@]}"; do
 			"crust_git_ref ${crust_git_ref}" "crust_revision ${crust_revision}" \
 			"linux_git_source ${linux_git_source}" "linux_git_ref ${linux_git_ref}" \
 			"linux_revision ${linux_revision}" "rkbin_git_source ${rkbin_git_source}" \
-			"rkbin_git_ref ${rkbin_git_ref}" "rkbin_revision ${rkbin_revision}"; do
+			"rkbin_git_ref ${rkbin_git_ref}" "rkbin_revision ${rkbin_revision}" \
+			"verify_firmware_source_resolution ${verify_firmware_source_resolution}" \
+			"firmware_git_source ${firmware_git_source}" \
+			"firmware_git_ref ${firmware_git_ref}" "firmware_revision ${firmware_revision}"; do
 			read -r key expected <<<"${item}"
 			[[ -z "${expected}" ]] ||
 				require_metadata_value "${metadata}" "${key}" "${expected}"
@@ -313,7 +345,10 @@ for board in "${boards[@]}"; do
 				"crust_git_ref ${crust_git_ref}" "crust_revision ${crust_revision}" \
 				"linux_git_source ${linux_git_source}" "linux_git_ref ${linux_git_ref}" \
 				"linux_revision ${linux_revision}" "rkbin_git_source ${rkbin_git_source}" \
-				"rkbin_git_ref ${rkbin_git_ref}" "rkbin_revision ${rkbin_revision}"; do
+				"rkbin_git_ref ${rkbin_git_ref}" "rkbin_revision ${rkbin_revision}" \
+				"verify_firmware_source_resolution ${verify_firmware_source_resolution}" \
+				"firmware_git_source ${firmware_git_source}" \
+				"firmware_git_ref ${firmware_git_ref}" "firmware_revision ${firmware_revision}"; do
 				read -r key value <<<"${item}"
 				[[ -z "${value}" ]] || printf '%s=%s\n' "${key}" "${value}"
 			done
@@ -322,6 +357,15 @@ for board in "${boards[@]}"; do
 			printf 'build_log=logs/%s.log\nevidence_level=L1\nbuilt_at_utc=%s\n' "${board}" "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 		} >"${metadata}.partial"
 		mv "${metadata}.partial" "${metadata}"
+	fi
+	if [[ "${verify_firmware_source_resolution}" == true ]]; then
+		build_log_relative="$(read_metadata_value "${metadata}" build_log)" ||
+			fail "${board} 的中繼資料缺少建置日誌"
+		[[ "${build_log_relative}" =~ ^logs/[A-Za-z0-9._+-]+\.log$ ]] ||
+			fail "${board} 的建置日誌路徑不合法"
+		[[ -f "${output_dir}/${build_log_relative}" ]] ||
+			fail "${board} 缺少建置日誌"
+		validate_firmware_source_log "${output_dir}/${build_log_relative}"
 	fi
 
 	image="${board_dir}/$(read_metadata_value "${metadata}" image_filename)"

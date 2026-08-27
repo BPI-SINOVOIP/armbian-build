@@ -160,6 +160,18 @@ print(value)
 PY
 }
 
+validate_firmware_source_log() {
+	local log_file=$1
+	grep -Fq "Fetching SHA1 of 'commit' '${firmware_revision}'" "${log_file}" ||
+		fail "建置日誌未以精確提交解析 Armbian 韌體"
+	grep -Fq "SHA1 of commit ${firmware_revision}" "${log_file}" ||
+		fail "建置日誌缺少 Armbian 韌體完整提交解析結果"
+	grep -Fq "${firmware_git_source}" "${log_file}" ||
+		fail "建置日誌缺少 Armbian 韌體來源"
+	grep -Fq "armbian-firmware-git ${firmware_revision}" "${log_file}" ||
+		fail "建置日誌缺少 Armbian 韌體固定來源取用紀錄"
+}
+
 read_metadata_value() {
 	local metadata_file=$1 key=$2 matches=()
 	mapfile -t matches < <(grep -E "^${key}=" "${metadata_file}")
@@ -491,6 +503,8 @@ validate_mounted_image() (
 	local boot_configuration extlinux_fdt expected_start_sector actual_start_sector property_spec property_node property_name property_expected installed_manifest installed_spec installed_path installed_sha256
 	local vendor_boot_directory root_uuid
 	local dtb_sha256 alias_spec alias_name alias_expected forbidden_fragment
+	local required_module_path
+	local -a module_matches=()
 	dtb_relative="$(board_field "${board}" dtb)"
 	dtb_basename="$(basename "${dtb_relative}")"
 	mount_dir="$(mktemp -d "${repo_dir}/.tmp/${verify_tmp_prefix}.XXXXXX")"
@@ -667,6 +681,16 @@ validate_mounted_image() (
 		option="${option_line%%=*}"; value="${option_line#*=}"
 		grep -qx "${option}=${value}" "${config_file}" || fail "${board} 核心設定不符：${option}=${value}"
 	done < <(common_values common_kernel_options)
+	while IFS= read -r required_module_path; do
+		[[ -n "${required_module_path}" ]] || continue
+		[[ "${required_module_path}" =~ ^kernel/[A-Za-z0-9_./+-]+\.ko([.](xz|zst))?$ &&
+			"${required_module_path}" != *..* ]] ||
+			fail "${board} 的必要核心模組路徑不合法：${required_module_path}"
+		mapfile -t module_matches < <(find "${mount_dir}/lib/modules" -type f \
+			-path "*/${required_module_path}" -print)
+		[[ ${#module_matches[@]} -eq 1 ]] ||
+			fail "${board} 找到 ${#module_matches[@]} 個必要核心模組：${required_module_path}"
+	done < <(common_values required_kernel_module_paths 2>/dev/null || true)
 	for package in $(common_values common_packages); do
 		package_installed "${mount_dir}" "${package}" || fail "${board} 缺少套件 ${package}"
 	done
@@ -708,6 +732,23 @@ git -C "${repo_dir}" cat-file -e "${candidate_source_commit}:${validation_config
 	fail "候選來源提交缺少建置時驗證設定"
 build_validation_config_sha256="$(git -C "${repo_dir}" show \
 	"${candidate_source_commit}:${validation_config_relative}" | sha256sum | cut -d' ' -f1)"
+verify_firmware_source_resolution="$(top_field_optional verify_firmware_source_resolution)"
+firmware_git_source=""
+firmware_git_ref=""
+firmware_revision=""
+case "${verify_firmware_source_resolution}" in
+	"" | false) verify_firmware_source_resolution="" ;;
+	true)
+		firmware_git_source="$(top_field_optional firmware_source)"
+		firmware_git_ref="$(top_field_optional firmware_ref)"
+		firmware_revision="$(top_field_optional firmware_commit)"
+		[[ -n "${firmware_git_source}" &&
+			"${firmware_git_ref}" == "commit:${firmware_revision}" &&
+			"${firmware_revision}" =~ ^[0-9a-f]{40}$ ]] ||
+			fail "Armbian 韌體固定來源政策欄位不完整"
+		;;
+	*) fail "verify_firmware_source_resolution 只接受 true 或 false" ;;
+esac
 
 verification_file="${output_dir}/VERIFICATION.tsv"
 printf 'board\tidentity\tread_only_content\tevidence_level\n' >"${verification_file}.partial"
@@ -761,6 +802,23 @@ while IFS=$'\t' read -r board release profile raw_size raw_sha256 xz_size \
 		esac
 		[[ -z "${expected}" ]] || require_metadata_value "${metadata}" "${key}" "${expected}"
 	done
+	if [[ "${verify_firmware_source_resolution}" == true ]]; then
+		for item in \
+			"verify_firmware_source_resolution true" \
+			"firmware_git_source ${firmware_git_source}" \
+			"firmware_git_ref ${firmware_git_ref}" \
+			"firmware_revision ${firmware_revision}"; do
+			read -r key expected <<<"${item}"
+			require_metadata_value "${metadata}" "${key}" "${expected}"
+		done
+		build_log_relative="$(read_metadata_value "${metadata}" build_log)" ||
+			fail "${board} 的中繼資料缺少建置日誌"
+		[[ "${build_log_relative}" =~ ^logs/[A-Za-z0-9._+-]+\.log$ ]] ||
+			fail "${board} 的建置日誌路徑不合法"
+		[[ -f "${output_dir}/${build_log_relative}" ]] ||
+			fail "${board} 缺少建置日誌"
+		validate_firmware_source_log "${output_dir}/${build_log_relative}"
+	fi
 	validate_boot_area "${image}" "${board}"
 	validate_mounted_image "${image}" "${board}"
 	printf '%s\tpass\tpass\t%s\n' "${board}" "${verification_evidence_level}" >>"${verification_file}.partial"

@@ -2,7 +2,7 @@
 
 ## 結論
 
-本候選已把 Linux、U-Boot 與 TF-A 固定到可追溯提交，並以固定 TF-A 原始碼重建 `bptool` 與 `fiptool`。乾淨來源的 AI2N DTB、U-Boot、BL2、BL31、SD BL2 與 FIP 已完成元件建置；但尚未建出完整核心與代表性 Armbian 映像，也沒有唯讀映像內容證據，因此目前只能登錄為內部 L0 來源／元件契約，不是發布映像。
+本候選已把 Linux、U-Boot、TF-A 與 Armbian 韌體固定到可追溯提交，並以固定 TF-A 原始碼重建 `bptool` 與 `fiptool`。乾淨來源的 AI2N DTB、U-Boot、BL2、BL31、SD BL2、FIP、Linux 6.1.107 與 Panfrost 模組均曾完成建置；截至固定韌體提交尚未重新建置及通過唯讀映像守門前，目前仍只能登錄為內部 L0 來源／元件契約，不是發布映像。
 
 映像流程仍會安裝九個缺少可核對再散布授權或 ABI 契約的預建資產。`config/validation/bananapi-renesas-rzv2n-ai2n-legacy.json` 因此固定設定 `public_release_allowed=false`；建置與驗證入口在 `PUBLIC_RELEASE=yes` 時必須拒絕執行。未取得書面授權前，只能用於內部工程驗證。
 
@@ -13,6 +13,7 @@
 | Linux 6.1.107 | `https://github.com/BPI-SINOVOIP/pi-linux.git` | `48c742429129c095045823c204209bb2a92fb5b4` | `COPYING`，SHA-256 `fb5a425bd3b3cd6071a3a9aff9909a859e7c1158d54d32e07658398cd67eb6a0` |
 | U-Boot 2021.10 | `https://github.com/BPI-SINOVOIP/pi-u-boot.git` | `8aec7f20bcf5555d7d219c2bad295b4a627b6521` | `Licenses/README`，SHA-256 `050bd541ef2ab90bb0b55359756832bb9281b4554be0e9be6b33eea3be8669f0` |
 | TF-A 2.10 衍生來源 | `https://github.com/BPI-SINOVOIP/arm-trusted-firmware` | `a011da37865c7649db48efc29b18b36cf87e4bb3` | `license.rst`，SHA-256 `e3f7de3cd0aea44aad09419b6dc5e6356d3d43c7bd850801a44a6211b94162b0` |
+| Armbian 韌體 | `https://github.com/armbian/firmware` | `f50a2a21bcdb77a562b3976930c5c6b521a1df08` | 建置日誌必須記錄精確 `commit:` 解析；授權仍依個別韌體檔案審查 |
 
 原板檔追蹤 `rzv2n-6.1`、`rzv2n-v2021.10` 與 `rzv2n-v2.10` 分支；2026-08-27 解析結果分別為上述三個提交。本候選直接使用 `commit:`，避免分支後續移動改變產物。
 
@@ -37,7 +38,7 @@
 
 第一次完整映像檢查發現，舊核心設定要求 `CONFIG_MALI_MIDGARD=m` 與 `CONFIG_MALI_DEVFREQ=y`，但固定 Linux 提交不含這組供應商 Mali 驅動來源；`olddefconfig` 會靜默移除兩個符號，導致設定檔意圖與實際映像不一致。該映像因此不得當成已完成 GPU 軟體支援的候選。
 
-固定 Linux 提交已含 Panfrost，驅動相容表支援板級 DTS 使用的 `arm,mali-bifrost`。本分支改為 `CONFIG_DRM_PANFROST=m`，並移除固定來源無法解析的舊 Mali 設定。這只建立可重建的開源驅動路徑；模組載入、裝置綁定、圖形堆疊與效能仍須在 AI2N 實體板驗證，不能由 Kconfig 或 DTB 靜態檢查推定。
+固定 Linux 提交已含 Panfrost，驅動相容表支援板級 DTS 使用的 `arm,mali-bifrost`。本分支改為 `CONFIG_DRM_PANFROST=m`，並移除固定來源無法解析的舊 Mali 設定。第四次完整建置已實際產生 `kernel/drivers/gpu/drm/panfrost/panfrost.ko`；後續唯讀映像守門也必須確認該模組檔案唯一存在，不能只檢查 Kconfig。這仍只建立可重建的開源驅動路徑；模組載入、裝置綁定、圖形堆疊與效能仍須在 AI2N 實體板驗證。
 
 ## 預建執行期資產
 
@@ -74,7 +75,8 @@ U-Boot 2021.10 在 OpenSSL 3.0 會出現已棄用 API 警告，但本次沒有�
 - `u-boot.bin` 只存在 U-Boot 套件；FIP 內以 BL33 形式攜帶。
 - 核心 DTB 固定為 `renesas/bananapi-ai2n.dtb`。
 - 18 個 BPI 前綴 overlay 必須進入映像，但預設不啟用。
-- 核心、DTB、U-Boot、TF-A 來源中繼資料與九個安裝資產必須在唯讀掛載中核對。
+- 核心、DTB、U-Boot、TF-A 來源中繼資料、Panfrost 模組與九個安裝資產必須在唯讀掛載中核對。
+- Armbian 韌體建置日誌必須同時記錄固定來源、`commit:` 解析、完整提交結果與固定來源取用紀錄。
 
 DTB 的節點、`status`、匯流排寬度與 alias 只用來防止軟體契約退化。GPU、DRP-AI、相機、顯示、PCIe、雙乙太網、SD、eMMC、USB gadget、Wi-Fi 與 40-pin I/O 均仍需實體板測試，不能以節點存在或核心選項開啟取代。
 
@@ -94,7 +96,7 @@ cd /media/pi/SMCI/armbian/bpi-v26.2.1-bananapi-optimize
 output/images/2026.08/bananapi-renesas-rzv2n-ai2n-trixie-legacy-cli
 ```
 
-建置入口會先在 AI2N 專屬 OverlayFS upper 內把 Linux、U-Boot 與 TF-A 恢復為固定提交，移除舊建置殘留，再要求三個實際來源工作樹完全乾淨。唯讀 lower cache 不會被修改；必要的 Python `binman` 相容改動由框架受控的 `uboot-binman-fix-pkg-resources` 擴充在建置階段重放，不依賴快取內手工差異或重複 patch。
+建置入口會先在 AI2N 專屬 OverlayFS upper 內把 Linux、U-Boot 與 TF-A 恢復為固定提交，移除舊建置殘留，再要求三個實際來源工作樹完全乾淨；板卡設定另在設定準備階段把 Armbian 韌體固定到完整提交。唯讀 lower cache 不會被修改；必要的 Python `binman` 相容改動由框架受控的 `uboot-binman-fix-pkg-resources` 擴充在建置階段重放，不依賴快取內手工差異或重複 patch。
 
 完整映像建置與唯讀驗證通過後才可標示為內部 L2。L2 只代表 IMG／XZ、來源、套件、啟動載荷、DTB、核心設定與唯讀檔案內容守門通過；因九個專有資產的再散布授權仍未釐清，仍不得公開發布，也不代表實體功能成立。若執行：
 
@@ -109,3 +111,11 @@ PUBLIC_RELEASE=yes ./tools/run-bananapi-renesas-ai2n-candidate-isolated-cache.sh
 2026-08-27 第一次完整建置 UUID 為 `1e3ca6f9-900f-4c9d-a53e-f61d9306b813`。固定來源的 TF-A、U-Boot 2021.10、Linux 6.1.107、Trixie rootfs 與 1,866,465,280 位元組整碟映像均已完成，但外層候選建置器依通用 `Armbian-*_<board>_...img` 格式搜尋，未接受 AI2N 實際輸出的 `Bananapi-Armbian_*_Bpi-ai2n_...img`，因此正確拒絕升級證據並留下 `status=failed`。
 
 修正方式是在板級 validation 明列 `output_image_prefix=Bananapi-Armbian_*_` 與 `output_image_board_token=Bpi-ai2n`，由共用建置器受控讀取；未宣告特例的其他板卡仍使用原本格式。第一次產物只保存為拒絕證據，不會手工補寫中繼資料或冒充通過候選；修正提交推送後必須重新執行完整建置與 L2 唯讀驗證。
+
+## 後續完整建置拒絕紀錄
+
+第二次建置在核心階段中斷，只保留日誌與狀態，不存在可驗證的完整整碟映像。
+
+第三次建置完成 IMG 與 XZ，但最終核心設定移除了來源樹不存在的舊供應商 Mali 選項，映像內也沒有可用的 Panfrost 模組，因此保存於 `bananapi-renesas-rzv2n-ai2n-trixie-legacy-cli-rejected-missing-panfrost-073ab0484`，不得升級 L2。
+
+第四次建置改用 `CONFIG_DRM_PANFROST=m`，完成 Linux 6.1.107、實際 `panfrost.ko`、IMG、XZ 與解壓資料雜湊檢查；但日誌顯示 Armbian 韌體由 `refs/heads/master` 解析。該次雖碰巧解析到 `f50a2a21bcdb77a562b3976930c5c6b521a1df08`，設定本身仍是可移動分支，因此保存於 `bananapi-renesas-rzv2n-ai2n-trixie-legacy-cli-rejected-moving-firmware-073ab0484`，不得升級 L2。只有從固定韌體提交的新來源提交重新建置，並通過實際模組與唯讀內容守門，才能登錄為內部 L2。
