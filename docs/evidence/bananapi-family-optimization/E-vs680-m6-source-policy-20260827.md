@@ -82,7 +82,7 @@ U-Boot 樹含 GPL-2.0 授權文件，Linux 樹依 GPL-2.0 發布；這不會自�
 
 ### 內部 L2 守門準備
 
-本次補齊的是未來建立內部 L2 完整映像所需的機器守門，沒有執行完整映像建置，也沒有把 M6 升為 L2。中央盤點與 validation 仍維持 `L1 元件候選`；只有在相同來源提交完成 IMG、XZ 串流與唯讀內容驗證後，才能另行登錄 L2 證據。
+本次補齊的是未來建立內部 L2 完整映像所需的機器守門，沒有執行完整映像建置，也沒有把 M6 升為 L2。中央盤點與 validation 仍維持 `L1 元件候選`；第一次完整映像預檢及其失敗狀態都必須標示為 L1，不得因執行唯讀內容檢查就誤標為 L2。專用驗證入口會依 validation 的候選層級與目前證據等級成對選擇 L1 或 L2；只有在相同來源提交完成 IMG、XZ 串流與唯讀內容驗證、回填完整證據並通過政策狀態機後，才能另行登錄 L2 證據。
 
 新增的政策狀態機會拒絕只改候選標籤的假 L2，並核對下列條件：
 
@@ -93,11 +93,13 @@ U-Boot 樹含 GPL-2.0 授權文件，Linux 樹依 GPL-2.0 發布；這不會自�
 - 最終核心設定 SHA-256 固定為 `b67480db7854ea797a1813102b2ef1c7a1312c9291797912612368821b058786`。
 - 最終 U-Boot 設定 SHA-256 固定為 `f31af0f1449901eb3834fd17e9c8c69034bd50b126a29108168683ba6b38c1f6`。
 
-映像契約固定為 DOS/MBR 雙分割區：第一分割區 `1:*:204800:524288`、類型 `ea`、標籤 `BPI-BOOT`；第二分割區 `2:*:729088:*`、類型 `83`、標籤 `BPI-ROOT`。驗證器以唯讀 loop 與唯讀掛載檢查兩個分割區，要求 `armbianEnv.txt` 的 `fdtfile` 指向 M6 DTB，且 `rootdev=UUID=...` 唯一對應第二分割區。`boot.scr` 由 `dumpimage` 抽取後，必須與 `config/bootscripts/boot-vs680.cmd` 內容相同。
+映像契約固定為 DOS/MBR 雙分割區：第一分割區 `1:*:204800:524288`、類型 `ea`、標籤 `BPI-BOOT`、檔案系統 `vfat`；第二分割區 `2:*:729088:*`、類型 `83`、標籤 `BPI-ROOT`、檔案系統 `ext4`。不同時核對兩個檔案系統類型的共用驗證器版本不得用於 M6 正式預檢。完整驗證必須以唯讀 loop 與唯讀掛載檢查兩個分割區，要求 `armbianEnv.txt` 的 `fdtfile` 指向 M6 DTB，且 `rootdev=UUID=...` 唯一對應第二分割區。`boot.scr` 由 `dumpimage` 抽取後，必須與 `config/bootscripts/boot-vs680.cmd` 內容相同。
 
 受控重疊不再以兩個完整 payload 分別比對。驗證器依 `payload_write_order` 檢查 TZK 前段、完整 `u-boot.bin` 與 U-Boot 結尾後的 TZK 尾段，並同時核對套件 MD5、精確大小、SHA-256 及產生 `UBOOT_PAYLOAD_EVIDENCE.tsv`。既有受控元件套件重新量得 TZK 為 `4193792` 位元組、`u-boot.bin` 為 `616575` 位元組；兩者的 SHA-256 均與 validation 相符。核心與 U-Boot 最終設定則寫入 `FINAL_CONFIG_EVIDENCE.tsv`。
 
 完整映像建置入口只接受 M6 專用 OverlayFS runner，固定 `SOURCE_DATE_EPOCH=1717001894`，且可用空間下限不得低於 40 GiB。本次沒有執行該入口，因此沒有新增或修改 `output` 產物。
+
+2026-08-27 預檢就緒稽核確認，共用唯讀下層快取尚未包含固定的 Armbian firmware 提交 `f50a2a21bcdb77a562b3976930c5c6b521a1df08`。因此第一次完整映像預檢必須能連線至已記錄的 firmware 來源，將精確提交取入專用 OverlayFS 上層；建置日誌必須保存來源網址、完整提交解析結果與實際取用紀錄。完成一次受控抓取前，不得宣稱 M6 候選可離線重建，也不得以其他快取版本替代固定提交。
 
 ### 元件建置證據
 
@@ -124,7 +126,7 @@ U-Boot 樹含 GPL-2.0 授權文件，Linux 樹依 GPL-2.0 發布；這不會自�
 
 ## 未解除 blocker
 
-1. TZK 與 U-Boot `sm.bin` 缺少原始碼、重建鏈與逐檔再散布授權。
+1. TZK 與 U-Boot `sm.bin` 缺少原始碼、重建鏈與逐檔再散布授權；完成 L1 或 L2 映像預檢都不會解除此限制。
 2. 固定 `chipid`、TZ/VPPTA 與記憶體保留區缺少公開規格及板級對照。
 3. 沒有可對應此啟動鏈的公開 ATF 原始碼與獨立建置方式。
 4. 沒有精確 BPI-M6 主線 Linux 支援。

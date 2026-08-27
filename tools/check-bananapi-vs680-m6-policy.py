@@ -195,6 +195,14 @@ def main() -> None:
     require(board.get("root_partition_number") == 2, "root 分割區編號不符")
     require(board.get("boot_partition_label") == "BPI-BOOT", "boot 標籤不符")
     require(board.get("root_partition_label") == "BPI-ROOT", "root 標籤不符")
+    require(
+        board.get("boot_partition_filesystem_type") == "vfat",
+        "boot 分割區檔案系統類型不符",
+    )
+    require(
+        board.get("root_partition_filesystem_type") == "ext4",
+        "root 分割區檔案系統類型不符",
+    )
     require(board.get("boot_configuration") == "separate_fat_armbian_env", "boot 模式不符")
     require(board.get("boot_script_source") == "config/bootscripts/boot-vs680.cmd", "boot script 來源不符")
     require(

@@ -185,6 +185,8 @@ printf '%s\n' "$BOOTBRANCH" "$KERNELBRANCH" \
         self.assertEqual(self.policy["required_partition_types"], ["1:ea", "2:83"])
         self.assertEqual(self.policy["boot_partition_label"], "BPI-BOOT")
         self.assertEqual(self.policy["root_partition_label"], "BPI-ROOT")
+        self.assertEqual(self.policy["boot_partition_filesystem_type"], "vfat")
+        self.assertEqual(self.policy["root_partition_filesystem_type"], "ext4")
         self.assertEqual(self.policy["boot_configuration"], "separate_fat_armbian_env")
         self.assertEqual(
             self.policy["uboot_payload_sizes"],
@@ -285,7 +287,13 @@ printf '%s\n' "$BOOTBRANCH" "$KERNELBRANCH" \
         self.assertIn("check-bananapi-vs680-m6-policy.py", verifier)
         self.assertIn("verify-bananapi-vs680-m6-sources.sh", verifier)
         self.assertIn("VERIFY_ARCHIVES=yes", verifier)
-        self.assertIn("VERIFICATION_EVIDENCE_LEVEL=L2", verifier)
+        self.assertIn('validation_config="${VALIDATION_CONFIG:-', verifier)
+        self.assertIn('evidence_level not in {"L1", "L2"}', verifier)
+        self.assertIn(
+            'export VERIFICATION_EVIDENCE_LEVEL="${verification_evidence_level}"',
+            verifier,
+        )
+        self.assertNotIn('"evidence_level": "L2"', verifier)
         self.assertIn("禁止沿用舊成功狀態", verifier)
         for required in (
             "losetup --find --show --partscan --read-only",
@@ -342,8 +350,23 @@ printf '%s\n' "$BOOTBRANCH" "$KERNELBRANCH" \
             with self.subTest(path=path):
                 self.assertNotEqual(self.run_policy(mutated).returncode, 0)
 
+    def test_policy_rejects_missing_or_wrong_filesystem_contract(self) -> None:
+        for field, value in (
+            ("boot_partition_filesystem_type", None),
+            ("boot_partition_filesystem_type", "ext4"),
+            ("root_partition_filesystem_type", None),
+            ("root_partition_filesystem_type", "vfat"),
+        ):
+            mutated = json.loads(CONFIG.read_text(encoding="utf-8"))
+            if value is None:
+                del mutated["boards"]["bananapim6"][field]
+            else:
+                mutated["boards"]["bananapim6"][field] = value
+            with self.subTest(field=field, value=value):
+                self.assertNotEqual(self.run_policy(mutated).returncode, 0)
+
     def test_m6_verifier_invalidates_stale_success(self) -> None:
-        with tempfile.TemporaryDirectory(dir=ROOT / ".tmp") as directory:
+        with tempfile.TemporaryDirectory() as directory:
             output = Path(directory)
             status = output / "VERIFICATION_STATUS.json"
             status.write_text(
@@ -362,14 +385,50 @@ printf '%s\n' "$BOOTBRANCH" "$KERNELBRANCH" \
                 check=False,
             )
             self.assertNotEqual(result.returncode, 0)
-            self.assertEqual(
-                json.loads(status.read_text(encoding="utf-8"))["status"],
-                "failed",
+            state = json.loads(status.read_text(encoding="utf-8"))
+            self.assertEqual(state["status"], "failed")
+            self.assertEqual(state["evidence_level"], "L1")
+
+    def test_m6_verifier_uses_l2_for_l2_validation_state(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory)
+            status = output / "VERIFICATION_STATUS.json"
+            validation = output / "m6-l2-validation.json"
+            mutated = json.loads(CONFIG.read_text(encoding="utf-8"))
+            mutated["candidate_level"] = "L2 內部軟體候選"
+            mutated["candidate_scope"] = "internal-l2"
+            mutated["current_evidence_level"] = "L2"
+            validation.write_text(
+                json.dumps(mutated, ensure_ascii=False),
+                encoding="utf-8",
             )
+            environment = os.environ.copy()
+            environment["OUTPUT_DIR"] = str(output)
+            environment["VALIDATION_CONFIG"] = str(validation)
+            result = subprocess.run(
+                [str(CANDIDATE_VERIFY)],
+                cwd=ROOT,
+                env=environment,
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                check=False,
+            )
+            self.assertNotEqual(result.returncode, 0)
+            state = json.loads(status.read_text(encoding="utf-8"))
+            self.assertEqual(state["status"], "failed")
+            self.assertEqual(state["evidence_level"], "L2")
 
     def test_evidence_document_keeps_internal_l1_and_hardware_limits(self) -> None:
         text = EVIDENCE_DOCUMENT.read_text(encoding="utf-8")
-        for expected in ("現階段證據等級為 L1", "不產生實機支援聲明", "不得公開發布完整映像"):
+        for expected in (
+            "現階段證據等級為 L1",
+            "不產生實機支援聲明",
+            "不得公開發布完整映像",
+            "第一次完整映像預檢必須能連線",
+            "TZK 與 U-Boot `sm.bin` 缺少原始碼",
+            "尚未以本候選完成 SD/eMMC",
+        ):
             with self.subTest(expected=expected):
                 self.assertIn(expected, text)
 
