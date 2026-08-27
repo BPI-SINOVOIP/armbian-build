@@ -89,7 +89,20 @@ function build_custom_uboot__sunplus_sp7021_bpi_legacy_bsp() {
 	run_host_command_logged make -C u-boot-sp "${BOOTCONFIG}" "CROSS_COMPILE=${uboot_cross_compile}"
 	run_host_command_logged make -C u-boot-sp all "CROSS_COMPILE=${uboot_cross_compile}"
 
+	local -a target_dst_files=()
 	loop_over_uboot_targets_and_do deploy_built_uboot_bins_for_one_target_to_packaging_area
+
+	local evidence_dir="${uboottempdir}/usr/lib/${uboot_name}"
+	run_host_command_logged cp -v u-boot-sp/.config \
+		"${evidence_dir}/u-boot-config-target-1"
+	run_host_command_logged cp -v u-boot-sp/.config \
+		"${uboottempdir}/usr/lib/u-boot/${BOOTCONFIG}"
+	cat <<- UBOOT_TARGET_METADATA > "${evidence_dir}/u-boot-metadata-target-1.sh"
+		declare -a UBOOT_TARGET_BINS=(${target_dst_files[@]@Q})
+		declare UBOOT_TARGET_MAKE=""
+		declare UBOOT_TARGET_MAP=${UBOOT_TARGET_MAP@Q}
+		declare UBOOT_TARGET_CONFIG="u-boot-config-target-1"
+	UBOOT_TARGET_METADATA
 	declare -g EXTENSION_BUILT_UBOOT="yes"
 }
 

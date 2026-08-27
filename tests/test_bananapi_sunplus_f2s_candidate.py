@@ -184,6 +184,16 @@ class BananaPiSunplusF2SCandidateTests(unittest.TestCase):
         self.assertNotIn("setenv root /dev/mmcblk1p2", self.family)
         self.assertIn("sunplus_sp7021_bpi_verify_prebuilt_boot_asset", self.family)
 
+    def test_custom_uboot_packages_target_configuration_evidence(self) -> None:
+        for required in (
+            "u-boot-config-target-1",
+            "u-boot-metadata-target-1.sh",
+            "declare UBOOT_TARGET_MAP=",
+            '"${uboottempdir}/usr/lib/u-boot/${BOOTCONFIG}"',
+        ):
+            with self.subTest(required=required):
+                self.assertIn(required, self.family)
+
     def test_kernel_diagnostic_options_and_packages_are_controlled(self) -> None:
         packages = set(
             next(
