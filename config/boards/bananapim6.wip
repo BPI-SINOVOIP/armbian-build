@@ -37,6 +37,20 @@ function post_family_tweaks__bananapim6_naming_audios() {
 	return 0
 }
 
+function image_specific_armbian_env_ready__bananapim6_stable_boot_target() {
+	local env_file="${SDCARD}/boot/armbianEnv.txt"
+	local root_target="${rootfs:?缺少 M6 根檔案系統識別}"
+	local fdt_target="${BOOT_FDT_FILE:?缺少 M6 裝置樹識別}"
+
+	[[ -f "${env_file}" ]] ||
+		exit_with_error "缺少 M6 映像專屬開機環境" "${env_file}"
+	[[ "${root_target}" == UUID=* ]] ||
+		exit_with_error "M6 根檔案系統未使用 UUID" "${root_target}"
+
+	sed -i -e '/^rootdev=/d' -e '/^fdtfile=/d' "${env_file}"
+	printf 'rootdev=%s\nfdtfile=%s\n' "${root_target}" "${fdt_target}" >> "${env_file}"
+}
+
 # 以精確提交覆寫 family 內僅供相容的可移動分支。
 function post_family_config__bananapim6_pin_vendor_sources() {
 	declare -g IMAGE_PARTITION_TABLE="msdos"

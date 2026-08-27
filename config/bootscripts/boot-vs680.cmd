@@ -7,6 +7,7 @@ setenv initrd_high 0xffffffffffffffff
 setenv overlay_error "false"
 # default values
 setenv rootdev "/dev/mmcblk1p2"
+setenv fdtfile "synaptics/vs680-a0-bananapi-m6.dtb"
 setenv loglevel "1"
 setenv verbosity "1"
 setenv console "both"
@@ -45,8 +46,8 @@ echo bootargs=${bootargs}
 
 mmc list
 
-echo "load ${devtype} ${devnum} 0x15a00000 dtb/synaptics/vs680-a0-bananapi-m6.dtb"
-load ${devtype} ${devnum} 0x15a00000 dtb/synaptics/vs680-a0-bananapi-m6.dtb
+echo "load ${devtype} ${devnum} 0x15a00000 dtb/${fdtfile}"
+load ${devtype} ${devnum} 0x15a00000 dtb/${fdtfile}
 
 echo "load ${devtype} ${devnum} 0x0ca00000 uInitrd"
 load ${devtype} ${devnum} 0x0ca00000 uInitrd

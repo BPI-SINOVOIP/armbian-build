@@ -113,9 +113,17 @@ U-Boot 樹含 GPL-2.0 授權文件，Linux 樹依 GPL-2.0 發布；這不會自�
 
 正式執行前新增兩階段證據流程。第一階段以現有 L1 契約完整建置映像，共用驗證器只產生延後中的 `VERIFICATION_STATUS.json.partial`；M6 專用守門重新解析 IMG、XZ、雙分割區、映像 DTB、最終核心與 U-Boot 設定，以及 TZK 前段、完整 U-Boot 與 TZK 尾段，原子寫入 `M6_CALIBRATION.json` 後才升級 L1 成功狀態。第二階段由校準值建立並先推送 L2 重建契約，再從乾淨專用 OverlayFS 重建正式映像；`M6_MATERIAL_EVIDENCE.json` 與 `M6_MATERIAL_STATUS.json` 寫入且二次讀回成功後，才允許共用 `.partial` 狀態原子升級。
 
-穩定來源契約投影 SHA-256 固定為 `223f4c9e7bb7ec9ae7bc35182694db17823c307590073027ee3136d23098e925`。候選層級、建置完成旗標、映像雜湊與映像 DTB 等狀態欄位不納入投影；Linux、U-Boot、韌體、來源檔、分割區、payload、必要套件與功能需求仍納入，因此 L1 與 L2 可以共用來源需求身分，卻不能藉改狀態欄位掩蓋需求漂移。
+穩定來源契約投影 SHA-256 固定為 `a30c565815b38169f3190253514c6034291d61a0c136ae1244d37eba0f72cb56`。候選層級、建置完成旗標、映像雜湊與映像 DTB 等狀態欄位不納入投影；Linux、U-Boot、韌體、來源檔、分割區、payload、必要套件與功能需求仍納入，因此 L1 與 L2 可以共用來源需求身分，卻不能藉改狀態欄位掩蓋需求漂移。
 
 建置入口同時固定輸出目錄、唯讀 lowerdir、專用 upperdir／workdir 與掛載目標，並拒絕任一 `OUTPUT_DIR` 或 OverlayFS 身分覆寫。共用建置器依 validation 的 `current_evidence_level` 寫入中繼資料，不再把正式 L2 硬編碼成 L1。此節只記錄建置前契約已就緒；在後續 L1 校準與 L2 正式建置證據落地前，M6 仍維持 L1，且不增加任何硬體或公開發布聲明。
+
+### L1 首次完整映像發現
+
+2026-08-28 以來源提交 `be8ba24ef7eae1d85f99a78498f14e1467d88732` 完成第一次 L1 完整映像建置。原始 IMG 大小為 `1895825408` 位元組、SHA-256 為 `8d67df8e8ea36973739eea1fcf19f31c5651c9fc2cc3afe998ac7138a7bc8069`；XZ 大小為 `317933532` 位元組、SHA-256 為 `ffae48214cd1234a35996e78f23012f91fca7e6b6b96a59eb94d771c8f42a3c9`。這些數值只識別失敗校準輸入，不是可沿用的正式映像證據。
+
+唯讀驗證確認映像具有預期的 MBR 雙分割區與 `BPI-BOOT`，但 FAT 分割區的 `armbianEnv.txt` 只有 `rootfstype=ext4`。根因是獨立 FAT boot 流程在根檔案系統階段尚未建立開機環境，待映像分割完成後又只補 `rootfstype`，因而遺漏 `rootdev=UUID=...` 與 `fdtfile`。驗證器依契約拒絕該映像，並把 `VERIFICATION_STATUS.json` 與 `M6_MATERIAL_STATUS.json` 原子改為失敗，未產生 `M6_CALIBRATION.json`。
+
+修正由 M6 板級 `image_specific_armbian_env_ready` 鉤子在根分割區 UUID 已確定後，刪除舊的重複鍵並各寫入唯一的 `rootdev` 與 `fdtfile`。受控 `boot-vs680.cmd` 也改為設定預設 `fdtfile` 並從匯入後的變數載入 DTB，使開機環境不再只是未使用的宣告。修正後 boot 命令 SHA-256 為 `9a82b02bd19e194eb82f7c0d8465ec987fcf270e326a3b156f6866e83c9c8ec1`。必須由包含此修正的乾淨提交重新建置 L1，舊映像不得就地修改或晉級。
 
 ### 元件建置證據
 

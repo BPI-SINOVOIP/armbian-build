@@ -135,6 +135,55 @@ printf '%s\n' "$BOOTBRANCH" "$KERNELBRANCH" \
             ],
         )
 
+    def test_image_hook_pins_root_uuid_and_fdt_once(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            boot = Path(directory) / "boot"
+            boot.mkdir()
+            environment = boot / "armbianEnv.txt"
+            environment.write_text(
+                "rootfstype=ext4\nrootdev=/dev/mmcblk1p2\n"
+                "fdtfile=old.dtb\nrootdev=duplicate\nfdtfile=duplicate.dtb\n",
+                encoding="utf-8",
+            )
+            script = f"""
+set -euo pipefail
+source {BOARD}
+SDCARD={directory!s}
+rootfs=UUID=01234567-89ab-cdef-0123-456789abcdef
+image_specific_armbian_env_ready__bananapim6_stable_boot_target
+cat "$SDCARD/boot/armbianEnv.txt"
+"""
+            result = subprocess.run(
+                ["bash", "-c", script],
+                cwd=ROOT,
+                env=os.environ.copy(),
+                capture_output=True,
+                text=True,
+                check=True,
+            )
+        self.assertEqual(
+            result.stdout.splitlines(),
+            [
+                "rootfstype=ext4",
+                "rootdev=UUID=01234567-89ab-cdef-0123-456789abcdef",
+                "fdtfile=synaptics/vs680-a0-bananapi-m6.dtb",
+            ],
+        )
+
+    def test_boot_script_uses_the_controlled_fdtfile(self) -> None:
+        boot_script = (ROOT / self.policy["boot_script_source"]).read_text(
+            encoding="utf-8"
+        )
+        self.assertIn(
+            'setenv fdtfile "synaptics/vs680-a0-bananapi-m6.dtb"',
+            boot_script,
+        )
+        self.assertEqual(boot_script.count("dtb/${fdtfile}"), 2)
+        self.assertNotIn(
+            "0x15a00000 dtb/synaptics/vs680-a0-bananapi-m6.dtb",
+            boot_script,
+        )
+
     def test_exact_identity_is_added_and_inheritance_is_explicit(self) -> None:
         kernel_patch = KERNEL_PATCH.read_text(encoding="utf-8")
         uboot_patch = UBOOT_PATCH.read_text(encoding="utf-8")

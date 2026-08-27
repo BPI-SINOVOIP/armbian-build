@@ -96,7 +96,7 @@
   "verify_firmware_source_resolution": true,
   "firmware_redistribution_license_verified": false,
   "source_date_epoch": 1717001894,
-  "source_contract_projection_sha256": "223f4c9e7bb7ec9ae7bc35182694db17823c307590073027ee3136d23098e925",
+  "source_contract_projection_sha256": "a30c565815b38169f3190253514c6034291d61a0c136ae1244d37eba0f72cb56",
   "source_commits": {
     "linux": {
       "source": "https://github.com/BPI-SINOVOIP/pi-linux.git",
@@ -120,7 +120,7 @@
     }
   },
   "source_file_sha256": {
-    "config/bootscripts/boot-vs680.cmd": "0f8195f5de3c8e83f646e067e1a17b7662b175c1d9bf8bd098df0ebda525bd57",
+    "config/bootscripts/boot-vs680.cmd": "9a82b02bd19e194eb82f7c0d8465ec987fcf270e326a3b156f6866e83c9c8ec1",
     "config/kernel/linux-vs680-legacy.config": "4a1475e883edbac2899acf105033f9dc26230772f3d6e65dbd46c7f626bef4f5",
     "packages/blobs/vs680/SOURCE.zh-TW.md": "b463786969373390b26600b5dd08a0c234f4def01b0d88322d9eece7f844e84e"
   },
@@ -279,7 +279,7 @@
       "root_partition_filesystem_type": "ext4",
       "boot_configuration": "separate_fat_armbian_env",
       "boot_script_source": "config/bootscripts/boot-vs680.cmd",
-      "boot_script_source_sha256": "0f8195f5de3c8e83f646e067e1a17b7662b175c1d9bf8bd098df0ebda525bd57",
+      "boot_script_source_sha256": "9a82b02bd19e194eb82f7c0d8465ec987fcf270e326a3b156f6866e83c9c8ec1",
       "final_kernel_config_sha256": "b67480db7854ea797a1813102b2ef1c7a1312c9291797912612368821b058786",
       "final_uboot_config_sha256": "f31af0f1449901eb3834fd17e9c8c69034bd50b126a29108168683ba6b38c1f6",
       "sd_node": "/soc/sdhci@f7ab0000",
