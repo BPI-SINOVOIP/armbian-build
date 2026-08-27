@@ -148,8 +148,8 @@ class BananaPiRenesasAi2nCandidateTests(unittest.TestCase):
         self.assertFalse(hardware["present"])
         self.assertFalse(hardware["node_presence_is_functional_evidence"])
         self.assertEqual(hardware["validated_features"], [])
-        self.assertEqual(self.config["candidate_scope"], "internal-l0")
-        self.assertEqual(self.config["evidence_level"], "L0")
+        self.assertEqual(self.config["candidate_scope"], "internal-l2")
+        self.assertEqual(self.config["evidence_level"], "L2")
         self.assertEqual(self.config["target_evidence_level"], "L2")
         self.assertEqual(self.config["allowed_evidence_levels"], ["L0", "L2"])
 
@@ -311,8 +311,8 @@ class BananaPiRenesasAi2nCandidateTests(unittest.TestCase):
     def test_policy_records_component_and_hardware_boundaries(self) -> None:
         text = POLICY.read_text(encoding="utf-8")
         for expected in (
-            "目前仍只能登錄為內部 L0 來源／元件契約",
-            "通過後才可標示為內部 L2",
+            "已登錄為內部 L2 軟體候選",
+            "完整映像建置與唯讀驗證已通過",
             "禁止建立公開發布候選",
             "不能以節點存在或核心選項開啟取代",
             "OpenSSL 3.0",

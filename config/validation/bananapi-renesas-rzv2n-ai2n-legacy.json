@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
   "candidate_branch": "legacy",
-  "candidate_scope": "internal-l0",
-  "evidence_level": "L0",
+  "candidate_scope": "internal-l2",
+  "evidence_level": "L2",
   "target_evidence_level": "L2",
   "allowed_evidence_levels": [
     "L0",

@@ -46,4 +46,4 @@ bananapir64	csc	Banana Pi R64	filogic	arm64	current	current	no	D	L2	mt7622_banan
 bananapism10	wip	BananaPi BPI-SM10	spacemit-k3-bpi	riscv64	current	current	yes	F	L1		spacemit/k3-bananapi-sm10.dtb		完成映像內容與來源同一性守門
 bananapiw2	wip	Banana Pi W2	realtek-rtd129x-bpi	arm64	legacy	legacy	yes	F	L1	rtd1296_sd_bananapi_defconfig	realtek/rtd129x/rtd-1296-bananapi-w2-2GB.dtb		完成映像內容與來源同一性守門
 bananapiw3	wip	Banana Pi W3	rockchip-rk3588	arm64	vendor	vendor	yes	E	L2	bananapi-w3-rk3588_defconfig	rockchip/rk3588-bananapi-w3.dtb		執行 UART、啟動與基本周邊實機驗證
-bpi-ai2n	conf	Banana Pi AI2N	renesas-rzv2n-bpi	arm64	legacy	legacy	yes	B	L0	bananapi_ai2n_defconfig	renesas/bananapi-ai2n.dtb		建立 Trixie CLI 並完成離線守門
+bpi-ai2n	conf	Banana Pi AI2N	renesas-rzv2n-bpi	arm64	legacy	legacy	yes	B	L2	bananapi_ai2n_defconfig	renesas/bananapi-ai2n.dtb		執行 UART、啟動與基本周邊實機驗證

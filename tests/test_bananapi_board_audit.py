@@ -99,7 +99,7 @@ class BananaPiBoardAuditTests(unittest.TestCase):
 
     def test_ai2n_supported_fields_are_complete(self) -> None:
         self.assertEqual(AUDIT.field_gaps(self.by_id["bpi-ai2n"]), [])
-        self.assertEqual(self.by_id["bpi-ai2n"].level, "L0")
+        self.assertEqual(self.by_id["bpi-ai2n"].level, "L2")
 
     def test_generated_outputs_cover_every_board(self) -> None:
         report = AUDIT.markdown_text(self.boards, "2026-08-26")

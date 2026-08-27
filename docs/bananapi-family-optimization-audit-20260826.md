@@ -8,7 +8,7 @@
 
 - 板卡總數：48。
 - 正式 `.conf`：12；社群 `.csc`：14；開發中 `.wip`：21；停止支援 `.eos`：1。
-- 證據分布：L0 4；L1 8；L2 34；L3 1；L4 1；L5 0。
+- 證據分布：L0 3；L1 8；L2 35；L3 1；L4 1；L5 0。
 - 未取得實機的板卡最高只能標示 L2；目前 L3／L4 只沿用已納入 Git 的 M4 Zero／M4 Berry 證據。
 
 ## 板卡矩陣
@@ -62,7 +62,7 @@
 | `bananapism10` | 開發中 | BananaPi BPI-SM10 | `spacemit-k3-bpi` | `riscv64` | `current` | 是 | F | L1 元件可建置 | 完成映像內容與來源同一性守門 |
 | `bananapiw2` | 開發中 | Banana Pi W2 | `realtek-rtd129x-bpi` | `arm64` | `legacy` | 是 | F | L1 元件可建置 | 完成映像內容與來源同一性守門 |
 | `bananapiw3` | 開發中 | Banana Pi W3 | `rockchip-rk3588` | `arm64` | `vendor` | 是 | E | L2 軟體候選 | 執行 UART、啟動與基本周邊實機驗證 |
-| `bpi-ai2n` | 正式 | Banana Pi AI2N | `renesas-rzv2n-bpi` | `arm64` | `legacy` | 是 | B | L0 已盤點 | 建立 Trixie CLI 並完成離線守門 |
+| `bpi-ai2n` | 正式 | Banana Pi AI2N | `renesas-rzv2n-bpi` | `arm64` | `legacy` | 是 | B | L2 軟體候選 | 執行 UART、啟動與基本周邊實機驗證 |
 
 ## 目前開放問題
 
@@ -91,7 +91,7 @@
 - `bananapiw2`：完整映像、實體開機、儲存、網路、USB、顯示、音訊及 40-pin I/O 尚未驗證。
 - `bananapiw2`：Linux 4.9.119、U-Boot 2015.07 與 246 筆 vendor／DT 編譯警告仍有維護及安全風險。
 - `bananapiw3`：尚未完成實機冷啟動、儲存、網路、無線、顯示與硬體加速驗證。
-- `bpi-ai2n`：九個 DRP、Codec、相機與 RTL8821CU runtime 資產缺少可核對再散布授權或 ABI 契約，且尚無完整映像與實機證據。
+- `bpi-ai2n`：九個 DRP、Codec、相機與 RTL8821CU runtime 資產缺少可核對再散布授權或 ABI 契約；完整映像已通過內部 L2 軟體守門，但仍無實機證據。
 
 ## 欄位品質
 
