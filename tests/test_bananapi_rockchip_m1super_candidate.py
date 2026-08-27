@@ -42,6 +42,10 @@ L2_EVIDENCE = (
     ROOT
     / "docs/evidence/bananapi-family-optimization/F-rockchip-m1super-L2-build-20260827.md"
 )
+CURRENT_L2_EVIDENCE = (
+    ROOT
+    / "docs/evidence/bananapi-family-optimization/I-rockchip-m1super-L2-build-20260828.md"
+)
 
 
 class BananaPiM1SuperCandidateTests(unittest.TestCase):
@@ -113,8 +117,8 @@ class BananaPiM1SuperCandidateTests(unittest.TestCase):
         self.assertEqual(self.validation["candidate_level"], "L2 內部軟體候選")
         self.assertEqual(self.validation["candidate_scope"], "internal-l2")
         self.assertTrue(self.validation["component_build_completed"])
-        self.assertFalse(self.validation["full_image_built"])
-        self.assertFalse(self.validation["rootfs_image_built"])
+        self.assertTrue(self.validation["full_image_built"])
+        self.assertTrue(self.validation["rootfs_image_built"])
         self.assertFalse(self.validation["candidate_public_release_approved"])
         self.assertFalse(self.validation["public_release_allowed"])
         self.assertFalse(self.validation["hardware_validation_complete"])
@@ -125,12 +129,25 @@ class BananaPiM1SuperCandidateTests(unittest.TestCase):
             self.validation["identity_evidence"]["wifi_bom_conflict_resolved"]
         )
 
-    def test_current_state_is_l2_rebuild_contract_without_material_evidence(self):
+    def test_current_state_is_l2_with_formal_material_evidence(self):
         self.policy_checker.validate_contract_projection(self.validation, False)
-        self.policy_checker.validate_candidate_state(
-            self.validation, require_material_binding=False
+        self.policy_checker.validate_candidate_state(self.validation)
+        evidence = self.validation["image_build_evidence"]
+        self.assertEqual(evidence["status"], "complete")
+        self.assertEqual(evidence["evidence_level"], "L2")
+        self.assertEqual(
+            evidence["source_commit"],
+            "d2cc8559662e69a4b083cedc2efc85c80e26144c",
         )
-        self.assertNotIn("image_build_evidence", self.validation)
+        self.assertEqual(evidence["source_commit"], evidence["verifier_commit"])
+        self.assertEqual(
+            evidence["image"]["sha256"],
+            "192269a97910729304d635e80921b3fef647a2036d4013958c4cd81cbd4752f8",
+        )
+        self.assertEqual(
+            evidence["archive"]["sha256"],
+            "b3b640fc04116f0193832354bda899aadcb8f894a22e8b6fed4b1d463fa06b63",
+        )
         self.assertEqual(
             self.board["image_dtb_sha256"],
             "68c0d6c27d2802abee0b7ab4b0569581048b14fc651d55c103392d81e00f2eb6",
@@ -464,8 +481,7 @@ class BananaPiM1SuperCandidateTests(unittest.TestCase):
             )
 
         unproven_l2 = json.loads(json.dumps(self.validation))
-        unproven_l2["full_image_built"] = True
-        unproven_l2["rootfs_image_built"] = True
+        del unproven_l2["image_build_evidence"]
         with self.assertRaises(SystemExit):
             self.policy_checker.validate_candidate_state(unproven_l2)
 
@@ -838,6 +854,19 @@ class BananaPiM1SuperCandidateTests(unittest.TestCase):
             "L2",
             "未進行實機",
             "不得公開發布",
+        ):
+            self.assertIn(required, text)
+
+    def test_current_l2_document_records_formal_material_evidence_and_limits(self):
+        text = CURRENT_L2_EVIDENCE.read_text(encoding="utf-8")
+        for required in (
+            "d2cc8559662e69a4b083cedc2efc85c80e26144c",
+            "192269a97910729304d635e80921b3fef647a2036d4013958c4cd81cbd4752f8",
+            "b3b640fc04116f0193832354bda899aadcb8f894a22e8b6fed4b1d463fa06b63",
+            "02e194c3c925b72238a65c9af1755aa4a594a84e5c6b2ecaecc0622d70062b40",
+            "二次回讀",
+            "不得據此宣稱硬體功能",
+            "public_release_allowed=false",
         ):
             self.assertIn(required, text)
 

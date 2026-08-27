@@ -237,4 +237,8 @@ Meson 四板至少完成下列共同檢查：
 
 截至 2026-08-28，48 板盤點與本機確定性守門持續維護中。`bananapir3mini` 已由固定提交 `c0200a46b` 完成 Debian Trixie current 精簡 CLI 的乾淨正式重建，IMG、XZ、唯讀根檔案系統、GPT、DTB、核心與 U-Boot 設定、BL2、FIP、套件及固定韌體來源均通過 L2 軟體候選守門。
 
-R3 Mini 尚未取得空白 eMMC 的 `boot0` 分離寫入、boot partition enable、冷啟動與網路功能實機證據，也尚未釐清 ATF MT7986 DRAM 預編譯物件的再散布範圍，因此不得宣稱 L3、硬體通過或公開發布。後續依序閉合 M1 Super、M6 與 M4 的完整映像契約；每板正式映像與證據閉合後，才回收該板專用 OverlayFS 上層。
+R3 Mini 尚未取得空白 eMMC 的 `boot0` 分離寫入、boot partition enable、冷啟動與網路功能實機證據，也尚未釐清 ATF MT7986 DRAM 預編譯物件的再散布範圍，因此不得宣稱 L3、硬體通過或公開發布。
+
+`bananapim1super` 已由已推送提交 `d2cc85596` 完成 Debian Trixie vendor 精簡 CLI 的乾淨正式重建，IMG、XZ、GPT、唯讀 ext4、專屬 DTB、U-Boot 載荷、最終設定、固定來源、必要套件與核心模組均通過 L2 即時物質守門及二次回讀。量產無線 BOM、韌體逐檔授權與所有實機功能仍未閉合，因此維持 `.wip`，不得宣稱 L3、硬體通過或公開發布。
+
+後續依序閉合 M6 與 M4 的完整映像契約；每板正式映像與證據閉合後，才回收該板專用 OverlayFS 上層。

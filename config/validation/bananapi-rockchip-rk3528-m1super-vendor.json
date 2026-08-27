@@ -10,8 +10,43 @@
   "hardware_validation_complete": false,
   "hardware_claims_allowed": false,
   "component_build_completed": true,
-  "full_image_built": false,
-  "rootfs_image_built": false,
+  "full_image_built": true,
+  "rootfs_image_built": true,
+  "image_build_evidence": {
+    "status": "complete",
+    "evidence_level": "L2",
+    "full_rootfs_image_built": true,
+    "hardware_tested": false,
+    "read_only_content_verified": true,
+    "source_commit": "d2cc8559662e69a4b083cedc2efc85c80e26144c",
+    "source_tree": "c53ce0af035f95b9565481be0fc5345b501a8d15",
+    "verifier_commit": "d2cc8559662e69a4b083cedc2efc85c80e26144c",
+    "contract_projection_sha256": "5c5d6570f8a9e72f6c150dab4314de9d2bca7afdb89e796f36d9e41247e22d3d",
+    "source_date_epoch": 1787082913,
+    "build_validation_config_sha256": "8a426455536755783ce45ea8804ab0fd5e577838e252630867dac44bc8b5a074",
+    "verification_config_sha256": "8a426455536755783ce45ea8804ab0fd5e577838e252630867dac44bc8b5a074",
+    "candidate_matrix_sha256": "1b2eb459d8b7e90734b09428024b478348bcb874393baa42e3a000f684652dfe",
+    "verification_manifest_sha256": "edf3d706096d8072610ac452f06d2fb198bf2b63d1af9d9e09b1f3ef9e005cc4",
+    "uboot_payload_manifest_sha256": "c26193529828daf0c80cb0980dd20b1c06dc802992708a340b4b63bfa622479b",
+    "final_config_manifest_sha256": "e40d737d10a0494a58eedfb5831bf28113ce13a1e618fe78d2c70329ee70e67c",
+    "rkbin_commit": "1d3c61008fa823936ae7a59615393f8294b64456",
+    "rkbin_manifest_sha256": "79a10a440ef02ceb9353ec8f5f8914d9981a47a83e0f291b700ac168be64e458",
+    "verified_utc": "2026-08-27T19:50:21Z",
+    "image": {
+      "path": "output/images/2026.08/bananapi-rockchip-rk3528-m1super-trixie-vendor-cli/bananapim1super/Armbian-unofficial_26.05.0-trunk_Bananapim1super_trixie_vendor_6.1.115_minimal.img",
+      "size": 2420113408,
+      "sha256": "192269a97910729304d635e80921b3fef647a2036d4013958c4cd81cbd4752f8"
+    },
+    "archive": {
+      "path": "output/images/2026.08/bananapi-rockchip-rk3528-m1super-trixie-vendor-cli/bananapim1super/Armbian-unofficial_26.05.0-trunk_Bananapim1super_trixie_vendor_6.1.115_minimal.img.xz",
+      "size": 468870520,
+      "sha256": "b3b640fc04116f0193832354bda899aadcb8f894a22e8b6fed4b1d463fa06b63"
+    },
+    "linux_dtb": {
+      "path": "rockchip/rk3528-bananapi-m1-super.dtb",
+      "sha256": "68c0d6c27d2802abee0b7ab4b0569581048b14fc651d55c103392d81e00f2eb6"
+    }
+  },
   "kernel_family": "rk35xx",
   "linux_source": "https://github.com/armbian/linux-rockchip.git",
   "linux_ref": "commit:c6157104418d012823413c02f9222f3fe123dd25",
