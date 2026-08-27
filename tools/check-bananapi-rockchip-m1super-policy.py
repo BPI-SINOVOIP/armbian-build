@@ -16,6 +16,19 @@ UBOOT_CONFIG = ROOT / "patch/u-boot/legacy/u-boot-radxa-rk35xx/defconfig/bananap
 EXPECTED_COMPONENT_DTB_SHA256 = (
     "68c0d6c27d2802abee0b7ab4b0569581048b14fc651d55c103392d81e00f2eb6"
 )
+EXPECTED_SOURCE_DATE_EPOCH = 1787082913
+EXPECTED_UBOOT_PAYLOAD_SIZES = [
+    "idbloader.img=311296",
+    "u-boot.itb=1320960",
+]
+EXPECTED_PARTITIONS = ["1:*:32768:4691968"]
+EXPECTED_PARTITION_TYPES = ["1:b921b045-1df0-41c3-af44-4c6f280d3fae"]
+EXPECTED_FINAL_KERNEL_CONFIG_SHA256 = (
+    "24edbbaabf1bd7960e7c2647ec7e96c25e2e9bf4de5a440c30827eb15b162e9e"
+)
+EXPECTED_FINAL_UBOOT_CONFIG_SHA256 = (
+    "c56f7986bc9d636d51439509c4ad43b8adc247b97783717de61553bba8c7bf60"
+)
 EXPECTED_FIRMWARE_BLOBS = {
     "/lib/firmware/brcm/brcmfmac43752-sdio.bin": (
         "46f62076768e50938d0e29b306b24d4663de20b07b474c4759d5801fcbf0bdde"
@@ -52,6 +65,21 @@ def require_commit(value: object, message: str) -> None:
     )
 
 
+def validate_payload_hashes(value: object) -> None:
+    require(isinstance(value, list), "U-Boot 載荷雜湊必須是清單")
+    hashes = {}
+    for item in value:
+        require(isinstance(item, str) and "=" in item, "U-Boot 載荷雜湊格式不符")
+        name, digest = item.split("=", 1)
+        require(name not in hashes, f"U-Boot 載荷雜湊重複：{name}")
+        require_sha256(digest, f"U-Boot 載荷雜湊格式不符：{name}")
+        hashes[name] = digest
+    require(
+        set(hashes) == {"idbloader.img", "u-boot.itb"},
+        "U-Boot 載荷雜湊檔名集合不符",
+    )
+
+
 def validate_candidate_state(policy: dict) -> None:
     level = policy.get("candidate_level")
     require(level in {"L1 元件候選", "L2 內部軟體候選"}, "候選層級只允許 L1 或內部 L2")
@@ -66,24 +94,46 @@ def validate_candidate_state(policy: dict) -> None:
     require(policy.get("public_release_allowed") is False, "不得允許公開發布")
     require(policy.get("hardware_validation_complete") is False, "不得宣稱實機驗證完成")
     require(policy.get("hardware_claims_allowed") is False, "不得允許硬體功能聲明")
+    require(
+        policy.get("source_date_epoch") == EXPECTED_SOURCE_DATE_EPOCH,
+        "可重現建置時間戳不符",
+    )
 
     board = policy["boards"]["bananapim1super"]
     require(
         board.get("component_dtb_sha256") == EXPECTED_COMPONENT_DTB_SHA256,
         "元件 DTB 雜湊不符",
     )
+    require(board.get("uboot_payload_sizes") == EXPECTED_UBOOT_PAYLOAD_SIZES, "U-Boot 載荷大小契約不符")
+    payload_hashes = board.get("uboot_payload_sha256")
+    if payload_hashes is not None:
+        validate_payload_hashes(payload_hashes)
+    require(board.get("required_partitions") == EXPECTED_PARTITIONS, "GPT 分割區契約不符")
+    require(board.get("required_partition_types") == EXPECTED_PARTITION_TYPES, "GPT 類型契約不符")
+    require(board.get("root_partition_start_sector") == 32768, "根分割區起始磁區不符")
+    require(board.get("root_partition_label") == "armbi_root", "根分割區標籤不符")
+    require(board.get("root_partition_filesystem_type") == "ext4", "根檔案系統型別不符")
+    require(
+        board.get("final_kernel_config_sha256") == EXPECTED_FINAL_KERNEL_CONFIG_SHA256,
+        "最終核心設定雜湊不符",
+    )
+    require(
+        board.get("final_uboot_config_sha256") == EXPECTED_FINAL_UBOOT_CONFIG_SHA256,
+        "最終 U-Boot 設定雜湊不符",
+    )
 
     if level == "L1 元件候選":
         require(policy.get("rootfs_image_built") is False, "L1 不得宣稱完整映像已建置")
         require("image_build_evidence" not in policy, "L1 不得攜帶正式完整映像證據")
         require(board.get("image_dtb_sha256") is None, "L1 不得宣稱已有完整映像 DTB 雜湊")
-        require("dtb_sha256" not in board, "L1 不得把元件 DTB 雜湊冒充完整映像契約")
+        require(board.get("dtb_sha256") == EXPECTED_COMPONENT_DTB_SHA256, "L1 預檢 DTB 契約不符")
         require(
-            board.get("dtb_sha256_evidence_scope") == "component-only-l1",
-            "L1 DTB 欄位缺少元件證據範圍標記",
+            board.get("dtb_sha256_evidence_scope") == "preflight-contract-l1",
+            "L1 DTB 欄位缺少預檢契約範圍標記",
         )
         return
 
+    require(payload_hashes is not None, "L2 必須固定 U-Boot 載荷雜湊")
     require(policy.get("rootfs_image_built") is True, "L2 必須有完整映像建置證據")
     image_evidence = policy.get("image_build_evidence")
     require(isinstance(image_evidence, dict), "L2 缺少完整映像證據")

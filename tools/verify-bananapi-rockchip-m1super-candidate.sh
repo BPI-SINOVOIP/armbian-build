@@ -7,22 +7,38 @@ policy_checker="${repo_dir}/tools/check-bananapi-rockchip-m1super-policy.py"
 validation_config="${repo_dir}/config/validation/bananapi-rockchip-rk3528-m1super-vendor.json"
 output_dir="${OUTPUT_DIR:-${repo_dir}/output/images/2026.08/bananapi-rockchip-rk3528-m1super-trixie-vendor-cli}"
 status_file="${output_dir}/VERIFICATION_STATUS.json"
+candidate_level="$(python3 - "${validation_config}" <<'PY'
+import json
+import sys
+
+with open(sys.argv[1], encoding="utf-8") as stream:
+    print(json.load(stream)["candidate_level"])
+PY
+)"
+case "${candidate_level}" in
+	"L1 元件候選") verification_evidence_level=L1 ;;
+	"L2 內部軟體候選") verification_evidence_level=L2 ;;
+	*)
+		echo "BPI-M1 Super 候選層級不在允許的狀態機內：${candidate_level}" >&2
+		exit 1
+		;;
+esac
 
 write_entry_state() {
-	python3 - "${status_file}" "$1" "$2" <<'PY'
+	python3 - "${status_file}" "$1" "$2" "${verification_evidence_level}" <<'PY'
 import json
 import os
 import sys
 from datetime import datetime, timezone
 
-path, state, detail = sys.argv[1:]
+path, state, detail, evidence_level = sys.argv[1:]
 temporary = path + ".m1super-entry.partial"
 with open(temporary, "w", encoding="utf-8") as stream:
     json.dump(
         {
             "status": state,
             "detail": detail,
-            "evidence_level": "L2",
+            "evidence_level": evidence_level,
             "updated_utc": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         },
         stream,
@@ -63,7 +79,7 @@ export HARDWARE_CLAIMS=no
 "${policy_checker}"
 
 export VERIFY_ARCHIVES=yes
-export VERIFICATION_EVIDENCE_LEVEL=L2
+export VERIFICATION_EVIDENCE_LEVEL="${verification_evidence_level}"
 "${verifier}" "$@"
 
 entry_state_active=no

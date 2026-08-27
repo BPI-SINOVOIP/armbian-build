@@ -17,6 +17,8 @@ COMPONENT_VERIFIER = ROOT / "tools/verify-bananapi-rockchip-m1super-components.s
 POLICY_CHECKER = ROOT / "tools/check-bananapi-rockchip-m1super-policy.py"
 BUILD_ENTRY = ROOT / "tools/build-bananapi-rockchip-m1super-candidate.sh"
 VERIFY_ENTRY = ROOT / "tools/verify-bananapi-rockchip-m1super-candidate.sh"
+ROCKCHIP_BUILD = ROOT / "tools/build-bananapi-rockchip-candidates.sh"
+PREFLIGHT_EVIDENCE = ROOT / "docs/evidence/bananapi-family-optimization/F-rockchip-m1super-L1-preflight-20260827.md"
 
 
 class BananaPiM1SuperCandidateTests(unittest.TestCase):
@@ -97,12 +99,12 @@ class BananaPiM1SuperCandidateTests(unittest.TestCase):
         self.policy_checker.validate_candidate_state(self.validation)
         self.assertNotIn("image_build_evidence", self.validation)
         self.assertIsNone(self.board["image_dtb_sha256"])
-        self.assertEqual(self.board["dtb_sha256_evidence_scope"], "component-only-l1")
+        self.assertEqual(self.board["dtb_sha256_evidence_scope"], "preflight-contract-l1")
         self.assertEqual(
             self.board["component_dtb_sha256"],
             "68c0d6c27d2802abee0b7ab4b0569581048b14fc651d55c103392d81e00f2eb6",
         )
-        self.assertNotIn("dtb_sha256", self.board)
+        self.assertEqual(self.board["dtb_sha256"], self.board["component_dtb_sha256"])
 
     def test_state_machine_accepts_a_complete_internal_l2_shape(self):
         candidate = copy.deepcopy(self.validation)
@@ -133,6 +135,10 @@ class BananaPiM1SuperCandidateTests(unittest.TestCase):
         candidate["boards"]["bananapim1super"]["image_dtb_sha256"] = image_dtb_sha256
         candidate["boards"]["bananapim1super"]["dtb_sha256"] = image_dtb_sha256
         candidate["boards"]["bananapim1super"]["dtb_sha256_evidence_scope"] = "full-image-l2"
+        candidate["boards"]["bananapim1super"]["uboot_payload_sha256"] = [
+            f"idbloader.img={'8' * 64}",
+            f"u-boot.itb={'9' * 64}",
+        ]
         self.policy_checker.validate_candidate_state(candidate)
 
     def test_state_machine_rejects_mixed_or_unproven_states(self):
@@ -251,8 +257,8 @@ class BananaPiM1SuperCandidateTests(unittest.TestCase):
             "68c0d6c27d2802abee0b7ab4b0569581048b14fc651d55c103392d81e00f2eb6",
         )
         self.assertIsNone(self.board["image_dtb_sha256"])
-        self.assertNotIn("dtb_sha256", self.board)
-        self.assertEqual(self.board["dtb_sha256_evidence_scope"], "component-only-l1")
+        self.assertEqual(self.board["dtb_sha256"], self.board["component_dtb_sha256"])
+        self.assertEqual(self.board["dtb_sha256_evidence_scope"], "preflight-contract-l1")
         self.assertEqual(
             self.board["uboot_defconfig"],
             "bananapi-m1-super-rk3528_defconfig",
@@ -264,6 +270,30 @@ class BananaPiM1SuperCandidateTests(unittest.TestCase):
         self.assertIn("Hinlink H28K", self.board["uboot_forbidden_binary_strings"])
         self.assertIn("idbloader.img@32768", self.board["uboot_payloads"])
         self.assertIn("u-boot.itb@8388608", self.board["uboot_payloads"])
+
+    def test_preflight_contract_is_exact_but_not_formal_image_evidence(self):
+        self.assertEqual(self.validation["source_date_epoch"], 1787082913)
+        self.assertEqual(
+            self.board["uboot_payload_sizes"],
+            ["idbloader.img=311296", "u-boot.itb=1320960"],
+        )
+        self.assertNotIn("uboot_payload_sha256", self.board)
+        self.assertEqual(self.board["required_partitions"], ["1:*:32768:4691968"])
+        self.assertEqual(
+            self.board["required_partition_types"],
+            ["1:b921b045-1df0-41c3-af44-4c6f280d3fae"],
+        )
+        self.assertEqual(self.board["root_partition_start_sector"], 32768)
+        self.assertEqual(self.board["root_partition_label"], "armbi_root")
+        self.assertEqual(self.board["root_partition_filesystem_type"], "ext4")
+        self.assertEqual(
+            self.board["final_kernel_config_sha256"],
+            "24edbbaabf1bd7960e7c2647ec7e96c25e2e9bf4de5a440c30827eb15b162e9e",
+        )
+        self.assertEqual(
+            self.board["final_uboot_config_sha256"],
+            "c56f7986bc9d636d51439509c4ad43b8adc247b97783717de61553bba8c7bf60",
+        )
 
     def test_packages_cover_requested_diagnostics_without_duplicates(self):
         packages = self.validation["common_packages"]
@@ -340,10 +370,35 @@ class BananaPiM1SuperCandidateTests(unittest.TestCase):
         build_text = BUILD_ENTRY.read_text(encoding="utf-8")
         verify_text = VERIFY_ENTRY.read_text(encoding="utf-8")
         self.assertIn('"L1 元件候選" | "L2 內部軟體候選"', build_text)
+        self.assertIn('export SOURCE_DATE_EPOCH="${source_date_epoch}"', build_text)
+        self.assertIn("SOURCE_DATE_EPOCH 與固定契約不符", build_text)
         self.assertIn("write_entry_state failed", verify_text)
         self.assertIn("verify-bananapi-rockchip-candidates.sh", verify_text)
         self.assertIn("export VERIFY_ARCHIVES=yes", verify_text)
-        self.assertIn("export VERIFICATION_EVIDENCE_LEVEL=L2", verify_text)
+        self.assertIn('"L1 元件候選") verification_evidence_level=L1', verify_text)
+        self.assertIn('export VERIFICATION_EVIDENCE_LEVEL="${verification_evidence_level}"', verify_text)
+
+    def test_common_rockchip_builder_rejects_source_commit_races(self):
+        text = ROCKCHIP_BUILD.read_text(encoding="utf-8")
+        for required in (
+            'matrix_file="${output_dir}/CANDIDATES.tsv"',
+            "候選映像矩陣包含不一致的來源提交",
+            "建置期間來源提交已改變",
+            "建立來源證據期間來源提交已改變",
+            'source_commit="${candidate_commit}"',
+        ):
+            self.assertIn(required, text)
+
+    def test_preflight_document_records_the_race_and_evidence_limits(self):
+        text = PREFLIGHT_EVIDENCE.read_text(encoding="utf-8")
+        for required in (
+            "b78271c3fda74adcf060ac61a7f8363023a006a7eceee0661d1a511db927691a",
+            "370136e6613aea22fbf46aa4effb2db86a71747668885e6deb498e3cc6551356",
+            "來源提交競態",
+            "L1",
+            "不代表實機",
+        ):
+            self.assertIn(required, text)
 
     def test_component_verifier_is_evidence_bounded(self):
         text = COMPONENT_VERIFIER.read_text(encoding="utf-8")

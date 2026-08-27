@@ -1,5 +1,6 @@
 {
   "schema_version": 1,
+  "source_date_epoch": 1787082913,
   "candidate_branch": "vendor",
   "candidate_level": "L1 元件候選",
   "candidate_scope": "internal-component-only",
@@ -172,7 +173,8 @@
         "dtb": "rockchip/rk3528-bananapi-m1-super.dtb",
         "component_dtb_sha256": "68c0d6c27d2802abee0b7ab4b0569581048b14fc651d55c103392d81e00f2eb6",
         "image_dtb_sha256": null,
-        "dtb_sha256_evidence_scope": "component-only-l1",
+        "dtb_sha256": "68c0d6c27d2802abee0b7ab4b0569581048b14fc651d55c103392d81e00f2eb6",
+        "dtb_sha256_evidence_scope": "preflight-contract-l1",
       "model": "Banana Pi M1 Super",
       "compatible": [
         "bananapi,bpi-m1-super",
@@ -223,11 +225,26 @@
         "idbloader.img=65536",
         "u-boot.itb=262144"
       ],
+      "uboot_payload_sizes": [
+        "idbloader.img=311296",
+        "u-boot.itb=1320960"
+      ],
       "partition_table": "gpt",
       "partition_name": "rootfs",
       "partition_start_sector": 32768,
       "logical_sector_size": 512,
       "root_partition_number": 1,
+      "root_partition_start_sector": 32768,
+      "required_partitions": [
+        "1:*:32768:4691968"
+      ],
+      "required_partition_types": [
+        "1:b921b045-1df0-41c3-af44-4c6f280d3fae"
+      ],
+      "root_partition_label": "armbi_root",
+      "root_partition_filesystem_type": "ext4",
+      "final_kernel_config_sha256": "24edbbaabf1bd7960e7c2647ec7e96c25e2e9bf4de5a440c30827eb15b162e9e",
+      "final_uboot_config_sha256": "c56f7986bc9d636d51439509c4ad43b8adc247b97783717de61553bba8c7bf60",
       "boot_configuration": "armbian_env",
       "overlay_prefix": "rk35xx",
       "overlay_directory": "rockchip/overlay",

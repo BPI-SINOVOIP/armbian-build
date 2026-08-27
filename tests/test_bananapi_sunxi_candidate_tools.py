@@ -619,6 +619,7 @@ Provides: unavailable-virtual
             "required_partition_types",
             "boot_partition_label",
             "root_partition_label",
+            "root_partition_filesystem_type",
             "separate_fat_armbian_env",
             "rootdev=UUID=${root_uuid}",
             "dumpimage -T script -p 0",

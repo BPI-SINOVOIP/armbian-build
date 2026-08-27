@@ -15,14 +15,18 @@ export BOARDS="bananapim1super"
 }
 
 "${policy_checker}"
-candidate_level="$(python3 - "${VALIDATION_CONFIG}" <<'PY'
+mapfile -t build_policy < <(python3 - "${VALIDATION_CONFIG}" <<'PY'
 import json
 import sys
 
 with open(sys.argv[1], encoding="utf-8") as stream:
-    print(json.load(stream)["candidate_level"])
+    policy = json.load(stream)
+print(policy["candidate_level"])
+print(policy["source_date_epoch"])
 PY
-)"
+)
+candidate_level="${build_policy[0]:-}"
+source_date_epoch="${build_policy[1]:-}"
 case "${candidate_level}" in
 	"L1 元件候選" | "L2 內部軟體候選") ;;
 	*)
@@ -30,5 +34,14 @@ case "${candidate_level}" in
 		exit 1
 		;;
 esac
+[[ "${source_date_epoch}" =~ ^[1-9][0-9]*$ ]] || {
+	echo "BPI-M1 Super 缺少有效的可重現建置時間戳" >&2
+	exit 1
+}
+if [[ -n "${SOURCE_DATE_EPOCH:-}" && "${SOURCE_DATE_EPOCH}" != "${source_date_epoch}" ]]; then
+	echo "BPI-M1 Super SOURCE_DATE_EPOCH 與固定契約不符" >&2
+	exit 1
+fi
+export SOURCE_DATE_EPOCH="${source_date_epoch}"
 echo "開始建置 BPI-M1 Super ${candidate_level} 的內部完整映像。"
 exec "${builder}" "$@"

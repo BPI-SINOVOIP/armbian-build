@@ -7,7 +7,7 @@ output_dir="${OUTPUT_DIR:-${repo_dir}/output/images/2026.08/bananapi-rockchip-rk
 boards_text="${BOARDS:-bananapip2pro}"
 generic_builder="${GENERIC_CANDIDATE_BUILDER:-${repo_dir}/tools/build-bananapi-sunxi-candidates.sh}"
 
-for command in cut date git grep mv python3 sha256sum; do
+for command in awk cut date git grep mv python3 sha256sum; do
 	command -v "${command}" >/dev/null || {
 		echo "缺少必要命令：${command}" >&2
 		exit 1
@@ -46,6 +46,22 @@ mark_evidence_failure() {
 }
 trap mark_evidence_failure EXIT
 
+matrix_file="${output_dir}/CANDIDATES.tsv"
+[[ -s "${matrix_file}" ]] || fail "缺少候選映像矩陣"
+candidate_commit="$(awk -F '\t' '
+	NR == 1 { next }
+	NR == 2 { commit = $10; next }
+	$10 != commit { exit 2 }
+	END {
+		if (NR < 2) exit 3
+		print commit
+	}
+' "${matrix_file}")" || fail "候選映像矩陣包含不一致的來源提交"
+[[ "${candidate_commit}" =~ ^[0-9a-f]{40}$ ]] || fail "候選來源提交格式不符"
+current_commit="$(git -C "${repo_dir}" rev-parse HEAD)"
+[[ "${current_commit}" == "${candidate_commit}" ]] ||
+	fail "建置期間來源提交已改變：候選 ${candidate_commit}，目前 ${current_commit}"
+
 rkbin_dir="${repo_dir}/cache/sources/rkbin-tools"
 [[ -d "${rkbin_dir}/.git" ]] || fail "找不到 rkbin 來源工作樹"
 expected_commit="$(python3 - "${validation_config}" <<'PY'
@@ -82,7 +98,7 @@ PY
 )
 mv "${manifest}.partial" "${manifest}"
 
-source_commit="$(git -C "${repo_dir}" rev-parse HEAD)"
+source_commit="${candidate_commit}"
 config_sha256="$(sha256sum "${validation_config}" | cut -d' ' -f1)"
 manifest_sha256="$(sha256sum "${manifest}" | cut -d' ' -f1)"
 status="${output_dir}/RKBIN_STATUS.json"
@@ -149,6 +165,10 @@ PY
 	} >"${wifi_status}.partial"
 	mv "${wifi_status}.partial" "${wifi_status}"
 fi
+
+current_commit="$(git -C "${repo_dir}" rev-parse HEAD)"
+[[ "${current_commit}" == "${candidate_commit}" ]] ||
+	fail "建立來源證據期間來源提交已改變：候選 ${candidate_commit}，目前 ${current_commit}"
 
 trap - EXIT
 echo "Rockchip 固定來源證據完成：${output_dir}"

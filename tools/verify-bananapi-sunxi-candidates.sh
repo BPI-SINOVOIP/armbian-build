@@ -697,7 +697,7 @@ validate_mounted_image() (
 	local loop_device partition boot_partition mount_dir config_file overlay_prefix overlay overlay_directory default_overlays required_overlays overlays_line sd_node sd_bus_width requirement required_node required_width kernel_family root_partition_number boot_partition_number
 	local boot_configuration extlinux_fdt expected_start_sector actual_start_sector property_spec property_node property_name property_expected installed_manifest installed_spec installed_path installed_sha256
 	local vendor_boot_directory root_uuid final_kernel_config_sha256 actual_kernel_config_sha256 forbidden_asset
-	local boot_partition_label root_partition_label boot_script_source boot_script_source_sha256 boot_script_source_path boot_script_payload
+	local boot_partition_label root_partition_label root_partition_filesystem_type boot_script_source boot_script_source_sha256 boot_script_source_path boot_script_payload
 	local dtb_sha256 alias_spec alias_name alias_expected forbidden_fragment
 	local required_module_path
 	local -a module_matches=() config_files=() config_hashes=()
@@ -726,6 +726,11 @@ validate_mounted_image() (
 	if [[ -n "${root_partition_label}" ]]; then
 		[[ "$(sudo blkid -s LABEL -o value "${partition}")" == "${root_partition_label}" ]] ||
 			fail "${board} 的根分割區標籤不是 ${root_partition_label}"
+	fi
+	root_partition_filesystem_type="$(board_field_optional "${board}" root_partition_filesystem_type)"
+	if [[ -n "${root_partition_filesystem_type}" ]]; then
+		[[ "$(sudo blkid -s TYPE -o value "${partition}")" == "${root_partition_filesystem_type}" ]] ||
+			fail "${board} 的根分割區檔案系統不是 ${root_partition_filesystem_type}"
 	fi
 	boot_partition_number="$(board_field_optional "${board}" boot_partition_number)"
 	expected_start_sector="$(board_field_optional "${board}" root_partition_start_sector)"

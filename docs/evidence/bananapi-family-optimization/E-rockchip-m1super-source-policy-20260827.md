@@ -2,7 +2,7 @@
 
 ## 結論
 
-本候選把 `bananapim1super.wip` 從 ArmSoM Sige1 板檔繼承與 Hinlink H28K U-Boot 身分，改成 Banana Pi M1 Super 專屬板檔、Linux DTS、U-Boot DTS 與 defconfig。候選來源固定，專屬元件已完成建置，但完整 Armbian 修補佇列、根檔案系統與映像尚未通過，因此目前只具備 `L1 元件候選`資格，不是公開發布版，也不代表任何實體板功能已通過。
+本候選把 `bananapim1super.wip` 從 ArmSoM Sige1 板檔繼承與 Hinlink H28K U-Boot 身分，改成 Banana Pi M1 Super 專屬板檔、Linux DTS、U-Boot DTS 與 defconfig。候選來源固定，專屬元件已完成建置；另有一份完整映像預檢成功，唯讀內容檢查亦通過，但後段 RKBin 證據揭露建置期間來源提交競態。該映像因此只用來建立下一輪的精確契約，不能作為正式完整映像證據。目前仍只具備 `L1 元件候選`資格，不是公開發布版，也不代表任何實體板功能已通過。
 
 保留 `.wip` 的原因包含完整映像建置鏈仍待驗證，以及量產料號、實體儲存裝置、網路、顯示、影音與 40-pin 尚未完成跨板次驗證。未來建立的映像也必須維持內部測試用途，直到發布守門條件逐項解除。
 
@@ -41,9 +41,9 @@ Armbian 韌體來源與引用現在同時固定為 `https://github.com/armbian/f
 | `L1 元件候選` | `internal-component-only` | 必須不存在 | 否 | 否 |
 | `L2 內部軟體候選` | `internal-l2` | 必須為完成，且含完整映像 DTB 雜湊 | 否 | 否 |
 
-目前沒有新建置的完整映像，因此仍維持 `L1 元件候選`、`rootfs_image_built=false`。未來即使升為內部 L2，也只代表固定來源完整映像通過唯讀軟體守門，不代表實機、量產或對外發布通過。L2 驗證入口會強制檢查 XZ 串流同一性；L1 狀態不能呼叫該入口產生 L2 結果。
+目前雖有一份成功建立的完整預檢映像，但其來源證據不具原子性，因此仍維持 `L1 元件候選`、`rootfs_image_built=false`，也不寫入正式 `image_build_evidence`。專用驗證入口會依候選層級產生 L1 或 L2 狀態，不再讓 L1 呼叫被標成 L2。未來即使升為內部 L2，也只代表固定來源完整映像通過唯讀軟體守門，不代表實機、量產或對外發布通過；L2 仍強制檢查 XZ 串流同一性。
 
-元件建置所得 Linux DTB 雜湊固定保存在 `component_build_evidence.linux_dtb.sha256` 與板級 `component_dtb_sha256`。L1 明確不設定共用完整映像欄位 `dtb_sha256`，並標記 `dtb_sha256_evidence_scope=component-only-l1`，避免元件雜湊在第一次完整映像建置前被誤用。只有取得正式完整映像證據後，才能把映像中的 DTB 雜湊分別寫入 `image_build_evidence.linux_dtb.sha256`、`image_dtb_sha256` 與 `dtb_sha256`，並把範圍改成 `full-image-l2`。政策守門器會拒絕交叉組合，因此元件雜湊不會被無標記地冒充完整 Armbian 修補佇列結果。
+元件建置所得 Linux DTB 雜湊固定保存在 `component_build_evidence.linux_dtb.sha256` 與板級 `component_dtb_sha256`。第一次完整映像預檢確認映像內 DTB 相同，因此 L1 可把該值作為第二次預檢的拒絕式契約，但必須標記 `dtb_sha256_evidence_scope=preflight-contract-l1`，且 `image_dtb_sha256` 維持空值。只有取得同一提交、固定時間戳的正式完整映像證據後，才能設定 `image_build_evidence.linux_dtb.sha256` 與 `image_dtb_sha256`，並把範圍改成 `full-image-l2`。政策守門器會拒絕交叉組合，避免預檢期待值被誤認為正式證據。
 
 ## 專屬實作邊界
 
@@ -85,7 +85,7 @@ L1 元件候選只允許證明以下事項：
 - 專屬 Linux DTB 與 U-Boot 元件能由固定來源建置。
 - DTB 的 model、compatible、SD、eMMC、I2C、SPI、網路、USB、GPU、VPU 與 HDMI 靜態契約一致。
 - U-Boot 不含 H28K model，載荷偏移不跨越根分割區。
-- 已提供專用 OverlayFS 完整映像入口，但本階段尚未執行，不能視為建置證據。
+- 專用 OverlayFS 完整映像入口已完成一次預檢，證明建置鏈與唯讀內容可執行；因來源提交競態，該結果只可建立第二輪契約，不能視為正式 L2 證據。
 
 L1 不得證明完整映像建置成功、開機成功、記憶體穩定、儲存壽命、網路吞吐、GPU／VPU 硬體加速、HDMI 相容性、USB OTG、40-pin 電氣安全或量產可用性。
 

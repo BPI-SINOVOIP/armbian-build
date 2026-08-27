@@ -6,6 +6,7 @@ validation_config="${VALIDATION_CONFIG:-${repo_dir}/config/validation/bananapi-r
 output_dir="${OUTPUT_DIR:-${repo_dir}/output/images/2026.08/bananapi-rockchip-rk3308-trixie-current-cli}"
 boards_text="${BOARDS:-bananapip2pro}"
 generic_verifier="${GENERIC_CANDIDATE_VERIFIER:-${repo_dir}/tools/verify-bananapi-sunxi-candidates.sh}"
+verification_evidence_level="${VERIFICATION_EVIDENCE_LEVEL:-L2}"
 
 for command in mv python3; do
 	command -v "${command}" >/dev/null || {
@@ -20,22 +21,26 @@ fail() {
 }
 
 [[ -d "${output_dir}" ]] || fail "找不到 Rockchip 候選輸出目錄：${output_dir}"
+case "${verification_evidence_level}" in
+	L1 | L2) ;;
+	*) fail "VERIFICATION_EVIDENCE_LEVEL 只接受 L1 或 L2" ;;
+esac
 verification_status="${output_dir}/VERIFICATION_STATUS.json"
 write_entry_state() {
-	python3 - "${verification_status}" "$1" "$2" <<'PY'
+	python3 - "${verification_status}" "$1" "$2" "${verification_evidence_level}" <<'PY'
 import json
 import os
 import sys
 from datetime import datetime, timezone
 
-path, state, detail = sys.argv[1:]
+path, state, detail, evidence_level = sys.argv[1:]
 temporary = path + ".entry.partial"
 with open(temporary, "w", encoding="utf-8") as stream:
     json.dump(
         {
             "status": state,
             "detail": detail,
-            "evidence_level": "L2",
+            "evidence_level": evidence_level,
             "updated_utc": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         },
         stream,
@@ -207,4 +212,4 @@ VALIDATION_CONFIG="${validation_config}" OUTPUT_DIR="${output_dir}" \
 	"${generic_verifier}" "$@"
 entry_state_active=no
 
-echo "Rockchip 固定來源與映像 L2 守門全部通過。"
+echo "Rockchip 固定來源與映像 ${verification_evidence_level} 守門全部通過。"
