@@ -18,6 +18,8 @@
 
 逐行比較兩份 `u-boot-config-target-1`，唯一差異是 `CONFIG_LOCALVERSION` 的 Armbian 內容識別碼由 `H1124` 變成 `Hdb47`。校準後把 `CONFIG_CMD_BOOTMENU=n` 固定進板級來源，會依法改變 U-Boot 建置輸入雜湊與套件識別碼；其餘 U-Boot 功能設定沒有差異。
 
+第一次正式建置的來源提交為 `39f5699eea6f99589bcb6b1adac8970d8565578e`，原始 IMG 大小為 `1426063360` 位元組，SHA-256 為 `67d8f77541e377e06c1263065218b11b4254afa24dccc2fd863fd3df1747d6ec`；XZ 大小為 `329969312` 位元組，SHA-256 為 `196632df7a905fc3b14f7f51faee5ca17470465f2c9aa79463e7104bf958d74e`。`COMPLETION_STATUS.json` 為 `complete`，但 `VERIFICATION_STATUS.json` 為 `failed`，此組合明確禁止將映像當成 L2。
+
 因此不能沿用提交前校準套件的完整設定檔雜湊，也不能略過守門直接放行。正式來源已固定板級設定，驗證契約改採第一次乾淨正式重建實際產生的完整設定雜湊，來源契約投影同步更新為：
 
 `e8f9f506599c5d7e0099265871208b13c4eed5ac5f4c7d6fd05f5413d2979dc7`
