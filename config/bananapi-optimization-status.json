@@ -152,6 +152,10 @@
       "level": "L2",
       "basis": "Trixie vendor minimal CLI 已由隔離快取完整建置並通過映像、固定 Linux／U-Boot／RKBin 來源、GPT、U-Boot 載荷、Banana Pi 專用 DTB、雙乙太網路、USB gadget、顯示、音訊、CAN 與標準 I/O 工具唯讀守門；供應商核心、預編譯 RKBin、硬體描述等同性與實體功能仍待驗證"
     },
+    "bananapim1super": {
+      "level": "L1",
+      "basis": "固定 Linux、U-Boot、RKBin 與 firmware 來源已核對；M1 Super 專屬 Linux DTB、U-Boot SPL／DTB／FIT 與 idbloader 已重建成可攜證據並通過雜湊、身分及授權檔守門；尚未通過完整 Armbian 修補佇列、rootfs 映像或實機驗證"
+    },
     "bananapir2pro": {
       "level": "L2",
       "basis": "Trixie current CLI 已由乾淨來源完整建置並通過映像、固定 Linux／U-Boot／RKBin／firmware 來源、GPT、雙啟動載荷、RK3568 R2 Pro DTB、雙乙太網路、MT7531、SATA、雙 PCIe、USB host、顯示與媒體設定唯讀守門；仍待實機驗證"
@@ -249,6 +253,9 @@
     ],
     "bananapiw3": [
       "尚未完成實機冷啟動、儲存、網路、無線、顯示與硬體加速驗證"
+    ],
+    "bananapim1super": [
+      "Wi-Fi 量產 BOM 在 SYN43752、AP6275S 與 RTL8852BS 證據間不一致；RKBin 只可依授權隨 Rockchip 平台散布，Armbian 韌體逐檔授權與完整映像仍待驗證"
     ],
     "bpi-ai2n": [
       "九個 DRP、Codec、相機與 RTL8821CU runtime 資產缺少可核對再散布授權或 ABI 契約，且尚無完整映像與實機證據"
