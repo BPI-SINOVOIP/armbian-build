@@ -1,4 +1,4 @@
-# Sunplus SP7021 industrial control gateway board.
+# Sunplus SP7021 工業控制閘道板；候選僅限內部 SD 研究用途。
 BOARD_NAME="Banana Pi F2P"
 BOARD_VENDOR="sinovoip"
 BOARDFAMILY="sunplus-sp7021-bpi"
@@ -14,9 +14,14 @@ BOOTFS_TYPE="fat"
 BOOTSIZE="256"
 SERIALCON="ttyS0"
 HAS_VIDEO_OUTPUT="yes"
+PACKAGE_LIST_BOARD="gpiod i2c-tools python3-libgpiod python3-spidev usbutils v4l-utils ethtool mtd-utils mmc-utils tpm2-tools"
 
 SUNPLUS_BPI_BSP_REPO="https://github.com/BPI-SINOVOIP/BPI-F2S-bsp.git"
 SUNPLUS_BPI_BSP_BRANCH="commit:3eee97bd8fb7582c2d9942a533647c3d78222bb5"
 SUNPLUS_BPI_BSP_BOARD="bpi-f2p"
 SUNPLUS_BPI_VENDOR_BOARD="bpi-f2p"
 SUNPLUS_BPI_VENDOR_CHIP="SP7021"
+SUNPLUS_BPI_EMMC_XBOOT_ASSET=""
+SUNPLUS_BPI_CANDIDATE_MEDIA="sd-only"
+SUNPLUS_BPI_PUBLIC_RELEASE_ALLOWED="no"
+SUNPLUS_BPI_HARDWARE_CLAIMS_ALLOWED="no"
