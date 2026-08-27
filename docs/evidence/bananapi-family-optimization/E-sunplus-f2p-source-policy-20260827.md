@@ -2,7 +2,7 @@
 
 ## 結論
 
-本候選只建立 **內部使用、SD-only、可追溯的 L2 軟體基線**。F2P 專用 Linux DTS、U-Boot DTS 與 defconfig 可由固定 BSP 提交編譯，但現有 BSP 沒有 F2P 專用 eMMC xboot，預建 `ISPBOOOT.BIN` 也沒有足以支持再散布的明確授權證據。因此：
+本候選只建立 **內部使用、SD-only、可追溯的 L1 元件候選**。F2P 專用 Linux DTS、U-Boot DTS 與 defconfig 可由固定 BSP 提交編譯，但現有 BSP 沒有 F2P 專用 eMMC xboot，預建 `ISPBOOOT.BIN` 也沒有足以支持再散布的明確授權證據。因此：
 
 - 板檔維持 `.wip`。
 - `public_release_allowed=false`。

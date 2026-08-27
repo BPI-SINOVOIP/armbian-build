@@ -1,11 +1,50 @@
 {
   "schema_version": 1,
   "candidate_branch": "legacy",
+  "candidate_level": "L1 元件候選",
   "kernel_family": "sunplus-sp7021-bpi",
   "candidate_scope": "internal-sd-only",
   "public_release_allowed": false,
   "hardware_claims_allowed": false,
+  "component_build_completed": true,
   "rootfs_image_built": false,
+  "component_build_evidence": {
+    "implementation_commit": "a35a6652cc745ec156a1190e315664d6b415d212",
+    "completed_utc": "2026-08-27T02:46:07Z",
+    "manifest_sha256": "689295b34a18a0ef242cc22bbfe061d030a97215aeb37aefac57efa72d2d6506",
+    "artifacts": {
+      "ispboot": {
+        "path": "artifacts/ISPBOOOT.BIN",
+        "size": 65536,
+        "sha256": "e01081a92b55156868b9df7918e0d5f503d1dda3af94335ed24637786124964a"
+      },
+      "linux_dtb": {
+        "path": "artifacts/sp7021-bpi-f2p.dtb",
+        "size": 20851,
+        "sha256": "85405ed87704f984aa72b4c83e56b14b0190909517352d89d4a22e3047b1ef24"
+      },
+      "linux_modules": {
+        "path": "artifacts/linux-modules.tar",
+        "size": 337920,
+        "sha256": "277fad328019d19fb21790382f567078fbd4c7e7008732d97a5ec6227c65ece5"
+      },
+      "linux_uimage": {
+        "path": "artifacts/uImage",
+        "size": 5078848,
+        "sha256": "56b555a066ad4dfb67ce56e6a168aba7c081b80abee5744f9f0aa47d0f4bd0a4"
+      },
+      "uboot_dtb": {
+        "path": "artifacts/u-boot.dtb",
+        "size": 20639,
+        "sha256": "f77611c2753bc3e1424f6e656d867e23383499a44d206fee8a57be3c5ca69c9f"
+      },
+      "uboot_image": {
+        "path": "artifacts/u-boot.img",
+        "size": 432487,
+        "sha256": "0936db799ddc212c40c2ac8f13239972637ed412beb161302ccb752e92bd4a09"
+      }
+    }
+  },
   "linux_source": "https://github.com/BPI-SINOVOIP/BPI-F2S-bsp.git",
   "linux_ref": "commit:3eee97bd8fb7582c2d9942a533647c3d78222bb5",
   "linux_commit": "3eee97bd8fb7582c2d9942a533647c3d78222bb5",
@@ -115,6 +154,10 @@
       "boot_media_scope": [
         "microSD"
       ],
+      "candidate_boot_media": [
+        "microSD"
+      ],
+      "supported_boot_media": [],
       "emmc_install_allowed": false,
       "boot_configuration": "uEnv",
       "uenv_fdt": "bananapi/bpi-f2p/linux/sp7021-bpi-f2p.dtb",

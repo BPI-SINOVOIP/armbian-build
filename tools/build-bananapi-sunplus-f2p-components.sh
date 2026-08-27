@@ -4,13 +4,14 @@ set -euo pipefail
 repo_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 validation_config="${repo_dir}/config/validation/bananapi-sunplus-sp7021-f2p-legacy.json"
 component_root="${F2P_COMPONENT_ROOT:-${repo_dir}/.tmp/bananapi-sunplus-f2p-component}"
+evidence_root="${F2P_EVIDENCE_ROOT:-${repo_dir}/output/components/2026.08/bananapi-sunplus-f2p-legacy}"
 source_dir="${component_root}/source"
-manifest="${component_root}/COMPONENT_BUILD_MANIFEST.json"
-build_log="${component_root}/component-build.log"
+manifest="${evidence_root}/COMPONENT_BUILD_MANIFEST.json"
+build_log="${evidence_root}/component-build.log"
 clone_source="${F2P_BSP_GIT_SOURCE:-https://github.com/BPI-SINOVOIP/BPI-F2S-bsp.git}"
 jobs="${F2P_JOBS:-$(nproc)}"
 
-for command in date fdtget git jq make nproc sha256sum stat tee; do
+for command in date fdtget git install jq make nproc sha256sum stat tar tee; do
 	command -v "${command}" >/dev/null || {
 		echo "缺少必要命令：${command}" >&2
 		exit 1
@@ -25,9 +26,10 @@ fail() {
 [[ -f "${validation_config}" ]] || fail "找不到驗證契約"
 [[ "${jobs}" =~ ^[1-9][0-9]*$ ]] || fail "F2P_JOBS 必須是正整數"
 [[ ! -e "${source_dir}" ]] || fail "目標來源目錄已存在；請指定新的 F2P_COMPONENT_ROOT"
+[[ ! -e "${evidence_root}" ]] || fail "證據輸出已存在；請指定新的 F2P_EVIDENCE_ROOT"
 
 bsp_commit="$(jq -r '.source_commits.bsp.revision' "${validation_config}")"
-mkdir -p "${component_root}"
+mkdir -p "${component_root}" "${evidence_root}/artifacts"
 exec > >(tee "${build_log}") 2>&1
 
 echo "建立 F2P 固定來源元件工作目錄：${component_root}"
@@ -81,10 +83,33 @@ compatible="$(fdtget -t s "${source_dir}/${artifacts[linux_dtb]}" / compatible)"
 module_count="$(find "${source_dir}/linux-sp" -type f -name '*.ko' | wc -l)"
 (( module_count > 0 )) || fail "沒有產生 Linux 模組"
 
+artifact_dir="${evidence_root}/artifacts"
+install -m 0644 "${source_dir}/${artifacts[uboot_image]}" "${artifact_dir}/u-boot.img"
+install -m 0644 "${source_dir}/${artifacts[uboot_dtb]}" "${artifact_dir}/u-boot.dtb"
+install -m 0644 "${source_dir}/${artifacts[linux_uimage]}" "${artifact_dir}/uImage"
+install -m 0644 "${source_dir}/${artifacts[linux_dtb]}" "${artifact_dir}/sp7021-bpi-f2p.dtb"
+install -m 0644 "${source_dir}/${artifacts[ispboot]}" "${artifact_dir}/ISPBOOOT.BIN"
+mapfile -d '' module_files < <(
+	find "${source_dir}/linux-sp" -type f -name '*.ko' -printf '%P\0' | sort -z
+)
+tar --sort=name --mtime="@${commit_epoch}" --owner=0 --group=0 --numeric-owner \
+	-cf "${artifact_dir}/linux-modules.tar" -C "${source_dir}/linux-sp" \
+	"${module_files[@]}"
+
+declare -A portable_artifacts=(
+	[ispboot]="artifacts/ISPBOOOT.BIN"
+	[linux_dtb]="artifacts/sp7021-bpi-f2p.dtb"
+	[linux_modules]="artifacts/linux-modules.tar"
+	[linux_uimage]="artifacts/uImage"
+	[uboot_dtb]="artifacts/u-boot.dtb"
+	[uboot_image]="artifacts/u-boot.img"
+)
+artifact_names=(ispboot linux_dtb linux_modules linux_uimage uboot_dtb uboot_image)
+
 artifact_json='{}'
-for name in "${!artifacts[@]}"; do
-	relative="${artifacts[${name}]}"
-	path="${source_dir}/${relative}"
+for name in "${artifact_names[@]}"; do
+	relative="${portable_artifacts[${name}]}"
+	path="${evidence_root}/${relative}"
 	artifact_json="$(jq \
 		--arg name "${name}" --arg path "${relative}" \
 		--arg sha256 "$(sha256sum "${path}" | cut -d' ' -f1)" \
@@ -116,4 +141,4 @@ jq -n \
 	}' >"${manifest}.partial"
 mv "${manifest}.partial" "${manifest}"
 
-echo "F2P 元件建置完成：${manifest}"
+echo "F2P 可攜元件證據建置完成：${manifest}"

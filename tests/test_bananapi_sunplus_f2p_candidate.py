@@ -117,10 +117,14 @@ printf 'f2s=%s\n' "$UBOOT_TARGET_MAP"
 
     def test_validation_contract_keeps_release_closed(self) -> None:
         self.assertEqual(self.config["candidate_branch"], "legacy")
+        self.assertEqual(self.config["candidate_level"], "L1 元件候選")
         self.assertEqual(self.config["candidate_scope"], "internal-sd-only")
         self.assertFalse(self.config["public_release_allowed"])
         self.assertFalse(self.config["hardware_claims_allowed"])
+        self.assertTrue(self.config["component_build_completed"])
         self.assertFalse(self.config["rootfs_image_built"])
+        self.assertEqual(self.policy["candidate_boot_media"], ["microSD"])
+        self.assertEqual(self.policy["supported_boot_media"], [])
         self.assertFalse(self.config["firmware_redistribution_license_verified"])
         self.assertFalse(
             self.config["toolchain"]["separate_redistribution_audit_complete"]
@@ -172,6 +176,26 @@ printf 'f2s=%s\n' "$UBOOT_TARGET_MAP"
         self.assertIn("uImage dtbs modules", build_text)
         self.assertIn("rootfs_image_built: false", build_text)
         self.assertIn("rootfs_image_built", verify_text)
+        self.assertIn("output/components/2026.08/bananapi-sunplus-f2p-legacy", build_text)
+        self.assertIn("linux-modules.tar", build_text)
+        self.assertIn("component_build_evidence", verify_text)
+        self.assertNotIn('git -C "${source_dir}"', verify_text)
+
+    def test_component_evidence_locks_portable_outputs(self) -> None:
+        evidence = self.config["component_build_evidence"]
+        self.assertEqual(
+            evidence["implementation_commit"],
+            "a35a6652cc745ec156a1190e315664d6b415d212",
+        )
+        self.assertEqual(len(evidence["artifacts"]), 6)
+        self.assertEqual(
+            evidence["artifacts"]["linux_dtb"]["sha256"],
+            self.policy["dtb_sha256"],
+        )
+        for name, artifact in evidence["artifacts"].items():
+            with self.subTest(name=name):
+                self.assertGreater(artifact["size"], 0)
+                self.assertRegex(artifact["sha256"], r"^[0-9a-f]{64}$")
 
     def test_full_image_entrypoint_is_internal_and_overlay_isolated(self) -> None:
         build_text = IMAGE_BUILD.read_text(encoding="utf-8")
@@ -194,7 +218,7 @@ printf 'f2s=%s\n' "$UBOOT_TARGET_MAP"
         policy_text = POLICY.read_text(encoding="utf-8")
         evidence_text = BUILD_EVIDENCE.read_text(encoding="utf-8")
         for expected in (
-            "內部使用、SD-only、可追溯的 L2 軟體基線",
+            "內部使用、SD-only、可追溯的 L1 元件候選",
             "禁止使用 `BPI-F2S-xboot-emmc-boot0-0k.img.gz`",
             "不宣稱可開機或介面可用",
             "尚未完成獨立再散布授權稽核",
