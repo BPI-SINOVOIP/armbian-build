@@ -213,8 +213,8 @@
       "basis": "原廠固定 manifest 與 20 個專案已核對；Linux 6.18 Image、SM10 專屬 DTB、U-Boot FSBL／FIT 與 OpenSBI 已在官方 SDK 容器內重建並通過獨立雜湊、組態及私鑰隔離守門；尚未建立完整 rootfs 映像或實機驗證"
     },
     "bananapif2s": {
-      "level": "L1",
-      "basis": "固定 BPI-F2S BSP 提交、Linux 5.4.35、U-Boot 2019.04 與 GCC 7.3.1 已核對；U-Boot、uImage、DTB 與 modules 元件已重建並通過雜湊與授權邊界守門；尚未建立完整 rootfs 映像或實機驗證"
+      "level": "L2",
+      "basis": "內部 Trixie legacy minimal CLI 已由隔離快取與固定 BPI-F2S BSP 提交完整建置，並通過 MBR、FAT boot、UUID root、U-Boot 2019.04、Linux 5.4.35、F2S DTB、核心功能、套件與唯讀映像守門；xboot 與工具鏈授權及實機功能仍待驗證"
     },
     "bananapif2p": {
       "level": "L1",

@@ -63,7 +63,29 @@
       "redistribution_license_verified": false
     }
   },
-  "full_image_built": false,
+  "full_image_built": true,
+  "image_build_evidence": {
+    "evidence_level": "L2",
+    "completed_utc": "2026-08-27T06:59:31Z",
+    "source_commit": "132646e1eb53644bdc4112cd7af4d9cc54502aca",
+    "verifier_commit": "132646e1eb53644bdc4112cd7af4d9cc54502aca",
+    "build_validation_config_sha256": "ebcc16ed50a12100e465884ca3bffbe3bc14f9eb9f7c40c02d221b749aea2e25",
+    "verification_config_sha256": "ebcc16ed50a12100e465884ca3bffbe3bc14f9eb9f7c40c02d221b749aea2e25",
+    "uboot_payload_manifest_sha256": "530a58d29e445d85b9240dda0b43aa092312441090ba660b1e07b1b259ac9043",
+    "release": "trixie",
+    "profile": "cli",
+    "read_only_content_verified": true,
+    "image": {
+      "path": "output/images/2026.08/bananapi-sunplus-sp7021-f2s-trixie-legacy-cli/bananapif2s/Armbian-unofficial_26.05.0-trunk_Bananapif2s_trixie_legacy_0_minimal.img",
+      "size": 1832910848,
+      "sha256": "08aa83f5e0f002d607214e42b1c67a0a4dc64a341f9567f047b1d1102af60dd3"
+    },
+    "archive": {
+      "path": "output/images/2026.08/bananapi-sunplus-sp7021-f2s-trixie-legacy-cli/bananapif2s/Armbian-unofficial_26.05.0-trunk_Bananapif2s_trixie_legacy_0_minimal.img.xz",
+      "size": 357232960,
+      "sha256": "76c4f116512f5ffc6b39a7a90a21def1c0849d6b0b9d4fbcecc02ca391d3a736"
+    }
+  },
   "component_build_completed": true,
   "component_build_evidence": {
     "completed_utc": "2026-08-27T03:02:31Z",

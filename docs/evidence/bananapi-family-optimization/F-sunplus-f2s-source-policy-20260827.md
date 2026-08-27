@@ -6,7 +6,7 @@
 
 `bananapif2s` 已建立可追溯的 Sunplus SP7021 legacy 候選契約。候選固定供應商 BSP 提交、Linux、U-Boot、第一階段預建啟動資產、板級 DT 身分、MBR/FAT boot 佈局及根檔案系統 UUID 政策，並補上元件建置、OverlayFS 隔離與完整映像唯讀驗證入口。
 
-本板仍維持 `.wip`。兩個第一階段啟動二進位沒有可對應的原始碼或明確再散布授權，供應商核心停留在 Linux 5.4.35，且本次沒有建立完整 rootfs 映像、沒有燒錄、沒有 UART 或實機介面證據。因此 `public_release_allowed=false`、`hardware_claims_allowed=false`，不得把元件成功編譯描述成可公開發布或實機支援完成。
+本板仍維持 `.wip`。本次已建立完整 Trixie minimal CLI 映像並通過 L2 唯讀軟體守門，但兩個第一階段啟動二進位沒有可對應的原始碼或明確再散布授權，供應商核心停留在 Linux 5.4.35，且沒有燒錄、UART 或實機介面證據。因此 `public_release_allowed=false`、`hardware_claims_allowed=false`，不得把 L2 軟體證據描述成可公開發布或實機支援完成。
 
 ## 固定來源
 
@@ -76,9 +76,9 @@ SP7021 是四核心 32 位元 Cortex-A7，Armbian 架構為 `armhf`。此平台�
 
 診斷套件涵蓋 GPIO、I2C、SPI、MMC、USB、視訊、網路與壓力工具。供應商核心沒有 DRM，顯示使用專有 framebuffer／video 路徑；不得宣稱具備現代 DRM、Mesa OpenGL ES 或硬體視訊解碼支援。
 
-## 本次元件驗證
+## 元件驗證
 
-本次只允許下列元件建置，不建立 Debian/Ubuntu rootfs 或整碟映像：
+完整映像建置前先執行下列元件建置與驗證，將供應商來源、工具鏈及啟動資產問題與 rootfs 封裝問題分離：
 
 ```bash
 ./tools/build-bananapi-sunplus-f2s-components.sh
@@ -104,21 +104,30 @@ SP7021 是四核心 32 位元 Cortex-A7，Armbian 架構為 `armhf`。此平台�
 
 初次稽核發現舊版 U-Boot 的 `quickboot` 映像類型直接採用輸入檔時間，繞過既有的 `SOURCE_DATE_EPOCH` 支援。候選已修補 `qkboot_image.c` 改用 `imagetool_get_source_date()`；元件建置器會改變 `u-boot.bin` 檔案時間、重新產生 `u-boot.img` 並要求兩次 SHA-256 相同。這項守門只證明同一來源樹與工具鏈下的 U-Boot 封裝不受該檔案時間影響，不能擴張成所有元件、所有主機或完整映像皆達位元級可重現。
 
-## 後續完整候選入口
+## 完整候選建置與 L2 證據
 
-建立完整 Trixie CLI 候選的入口如下，但本次依任務限制不執行：
+完整 Trixie minimal CLI 候選以 F2S 專屬 OverlayFS 入口建置：
 
 ```bash
 ./tools/run-bananapi-sunplus-f2s-candidate-isolated-cache.sh
 ```
 
-完整映像完成後才執行：
+建置完成後執行唯讀驗證：
 
 ```bash
 ./tools/verify-bananapi-sunplus-f2s-candidate.sh
 ```
 
 OverlayFS 入口只把既有 Armbian cache 當唯讀 lower，所有變更寫入 F2S 專屬 upper；不得直接修改或清除共用 lower cache。
+
+2026-08-27 以提交 `132646e1eb53644bdc4112cd7af4d9cc54502aca` 完成建置與驗證。驗證器確認 MBR、FAT boot 分割區、ext4 root 分割區、實際 root UUID、核心、initrd、F2S DTB、U-Boot target 組態與三個受控啟動載荷；掛載全程使用唯讀模式。第一次完整建置因舊版 Sunplus U-Boot 套件缺少 target 組態證據而被拒絕，修正封裝後重新完整建置，不沿用第一次產物作為通過證據。
+
+| 產物 | 大小（位元組） | SHA-256 |
+| --- | ---: | --- |
+| 原始 IMG | 1832910848 | `08aa83f5e0f002d607214e42b1c67a0a4dc64a341f9567f047b1d1102af60dd3` |
+| XZ 封裝 | 357232960 | `76c4f116512f5ffc6b39a7a90a21def1c0849d6b0b9d4fbcecc02ca391d3a736` |
+
+建置時與驗證時的機器契約 SHA-256 均為 `ebcc16ed50a12100e465884ca3bffbe3bc14f9eb9f7c40c02d221b749aea2e25`，U-Boot 載荷清單 SHA-256 為 `530a58d29e445d85b9240dda0b43aa092312441090ba660b1e07b1b259ac9043`。目前證據等級為內部 L2，不是實機或發布許可。
 
 ## 實機與發布阻礙事項
 
@@ -129,4 +138,4 @@ OverlayFS 入口只把既有 Armbian cache 當唯讀 lower，所有變更寫入 
 5. 驗證 thermal、watchdog、USB mass storage 及壓力情境，監看核心錯誤、儲存錯誤與網路錯包。
 6. 為 Linux 5.4.35 與 U-Boot 2019.04 建立安全維護政策，或完成較新核心與啟動器移植。
 
-在這些阻礙事項完成前，候選最高只能是內部 L1 元件證據；即使未來完整映像通過唯讀檢查，也會受啟動 blob 授權阻擋而不能直接公開發布。
+在這些阻礙事項完成前，候選只能維持內部 L2 軟體證據；完整映像已通過唯讀檢查，但仍受啟動 blob 授權、老舊供應商基線與缺少實機證據阻擋，不能直接公開發布。

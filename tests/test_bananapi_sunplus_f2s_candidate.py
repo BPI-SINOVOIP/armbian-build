@@ -93,12 +93,34 @@ class BananaPiSunplusF2SCandidateTests(unittest.TestCase):
                 self.assertIn(asset["sha256"], self.board)
 
     def test_release_and_hardware_claims_remain_blocked(self) -> None:
-        self.assertFalse(self.config["full_image_built"])
+        self.assertTrue(self.config["full_image_built"])
         self.assertTrue(self.config["component_build_completed"])
         self.assertFalse(self.config["hardware_validated"])
         self.assertFalse(self.config["public_release_allowed"])
         self.assertFalse(self.config["hardware_claims_allowed"])
         self.assertFalse(self.config["atf_applicable"])
+
+    def test_complete_image_has_read_only_l2_evidence(self) -> None:
+        evidence = self.config["image_build_evidence"]
+        self.assertEqual(evidence["evidence_level"], "L2")
+        self.assertTrue(evidence["read_only_content_verified"])
+        self.assertEqual(
+            evidence["source_commit"],
+            "132646e1eb53644bdc4112cd7af4d9cc54502aca",
+        )
+        self.assertEqual(
+            evidence["verifier_commit"], evidence["source_commit"]
+        )
+        self.assertEqual(
+            evidence["image"]["sha256"],
+            "08aa83f5e0f002d607214e42b1c67a0a4dc64a341f9567f047b1d1102af60dd3",
+        )
+        self.assertEqual(evidence["image"]["size"], 1832910848)
+        self.assertEqual(
+            evidence["archive"]["sha256"],
+            "76c4f116512f5ffc6b39a7a90a21def1c0849d6b0b9d4fbcecc02ca391d3a736",
+        )
+        self.assertEqual(evidence["archive"]["size"], 357232960)
 
     def test_component_evidence_is_complete_but_not_a_rootfs(self) -> None:
         evidence = self.config["component_build_evidence"]
@@ -284,10 +306,10 @@ class BananaPiSunplusF2SCandidateTests(unittest.TestCase):
         text = POLICY.read_text(encoding="utf-8")
         for required in (
             "沒有可對應的原始碼或明確再散布授權",
-            "不得把元件成功編譯描述成可公開發布",
+            "不得把 L2 軟體證據描述成可公開發布",
             "本候選沒有驗證 eMMC `boot0` 寫入流程",
             "不得宣稱具備現代 DRM",
-            "不建立 Debian/Ubuntu rootfs 或整碟映像",
+            "完整 Trixie minimal CLI 映像",
         ):
             with self.subTest(required=required):
                 self.assertIn(required, text)

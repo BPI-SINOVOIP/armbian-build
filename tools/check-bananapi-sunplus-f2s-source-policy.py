@@ -58,13 +58,31 @@ def main() -> None:
     for key in ("linux_ref", "uboot_ref"):
         require(data[key] == f"commit:{revision}", f"{key} 不是精確提交")
     require(data["atf_applicable"] is False, "SP7021 不應宣告 TF-A")
+    require(data["full_image_built"] is True,
+            "完整映像建置狀態必須為 true")
     for key in (
-        "full_image_built",
         "hardware_validated",
         "public_release_allowed",
         "hardware_claims_allowed",
     ):
         require(data[key] is False, f"{key} 必須維持 false")
+    image_evidence = data["image_build_evidence"]
+    require(image_evidence["evidence_level"] == "L2",
+            "完整映像證據不是 L2")
+    require(image_evidence["source_commit"] ==
+            "132646e1eb53644bdc4112cd7af4d9cc54502aca",
+            "完整映像來源提交不符")
+    require(image_evidence["verifier_commit"] ==
+            "132646e1eb53644bdc4112cd7af4d9cc54502aca",
+            "完整映像驗證器提交不符")
+    require(image_evidence["read_only_content_verified"] is True,
+            "完整映像沒有唯讀內容驗證證據")
+    for artifact_name in ("image", "archive"):
+        artifact = image_evidence[artifact_name]
+        require(artifact["size"] > 0,
+                f"{artifact_name} 的完整映像大小無效")
+        require(re.fullmatch(r"[0-9a-f]{64}", artifact["sha256"])
+                is not None, f"{artifact_name} 的 SHA-256 格式不符")
     require(data["component_build_completed"] is True,
             "元件編譯完成狀態必須為 true")
     component_evidence = data["component_build_evidence"]
