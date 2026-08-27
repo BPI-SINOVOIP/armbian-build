@@ -217,8 +217,8 @@
       "basis": "內部 Trixie legacy minimal CLI 已由隔離快取與固定 BPI-F2S BSP 提交完整建置，並通過 MBR、FAT boot、UUID root、U-Boot 2019.04、Linux 5.4.35、F2S DTB、核心功能、套件與唯讀映像守門；xboot 與工具鏈授權及實機功能仍待驗證"
     },
     "bananapif2p": {
-      "level": "L1",
-      "basis": "固定 BPI-F2S BSP 容器提交、F2P Linux 5.4.35、U-Boot 2019.04 與 GCC 7.3.1 已核對；U-Boot、uImage、雙 DTB 與 11 個 modules 已重建成可攜證據並通過內容守門；尚未建立完整 rootfs 映像或實機驗證"
+      "level": "L2",
+      "basis": "內部 Trixie legacy minimal CLI 已由隔離快取與固定 BPI-F2S BSP、Armbian firmware 提交完整建置，並通過 XZ、MBR、雙分割區、UUID root、U-Boot 偏移、F2P DTB、核心與 U-Boot 最終設定及禁止 F2S eMMC 資產的唯讀守門；仍未完成實機與再散布授權驗證"
     },
     "bananapim6": {
       "level": "L1",
@@ -299,7 +299,7 @@
     "bananapi6204": "完成 eMMC、SATA、GMAC、CAN、雙 RTC、UART、USB、工控 I/O 與長時間實測",
     "bananapism10": "機器化預建載荷身分，固定最終核心設定並完成來源一致的完整映像守門",
     "bananapif2s": "閉合 xboot 與工具鏈授權，再完成 SD／eMMC、網路、USB、顯示與 40-pin 實測",
-    "bananapif2p": "收緊 SD-only 完整映像守門並重建 L2；eMMC 維持禁止直到取得專用 xboot",
+    "bananapif2p": "閉合 ISPBOOOT.BIN 與工具鏈授權，再完成 microSD 冷啟動、網路、USB、顯示、TPM 與 GPIO 實測；eMMC 維持禁止直到取得專用 xboot",
     "bananapim6": "固定最終核心設定與專有啟動載荷邊界，完成來源一致的完整映像守門",
     "bananapir2": "取得五個啟動載荷的再散布核准，再完成 eMMC、網路、SATA、USB 與交換器實測",
     "bananapir1": "保留最後可用封存基線與安全限制，不列入新發布",

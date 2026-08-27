@@ -10,7 +10,7 @@
 
 - 板卡總數：48。
 - 正式 `.conf`：12；社群 `.csc`：14；開發中 `.wip`：21；停止支援 `.eos`：1。
-- 證據分布：L0 3；L1 8；L2 37；L3 0；L4 0；L5 0。
+- 證據分布：L0 3；L1 7；L2 38；L3 0；L4 0；L5 0。
 - 未取得實機的板卡最高只能標示 L2；目前沒有板卡達到完整 L3／L4／L5 門檻。
 
 ## 板卡矩陣
@@ -24,7 +24,7 @@
 | `bananapicm4io` | 正式 | Banana Pi CM4IO | `meson-g12b` | `arm64` | `current,edge` | 是 | A | L2 軟體候選 | 以 Hynix eMMC 完成多輪冷啟動、重新啟動、關機、網路與 USB 實測 |
 | `bananapicm5pro` | 開發中 | Banana Pi CM5 Pro | `rk35xx` | `arm64` | `vendor` | 是 | E | L2 軟體候選 | 完成載板等同性與 RTL8852BS 授權審查，再做冷啟動及全介面實測 |
 | `bananapicm6` | 開發中 | BananaPi BPI-CM6 | `spacemit` | `riscv64` | `legacy` | 是 | F | L2 軟體候選 | 完成 SD／eMMC 冷啟動、網路、USB、顯示與加速器實測 |
-| `bananapif2p` | 開發中 | Banana Pi F2P | `sunplus-sp7021-bpi` | `armhf` | `legacy` | 是 | F | L1 元件可建置 | 收緊 SD-only 完整映像守門並重建 L2；eMMC 維持禁止直到取得專用 xboot |
+| `bananapif2p` | 開發中 | Banana Pi F2P | `sunplus-sp7021-bpi` | `armhf` | `legacy` | 是 | F | L2 軟體候選 | 閉合 ISPBOOOT.BIN 與工具鏈授權，再完成 microSD 冷啟動、網路、USB、顯示、TPM 與 GPIO 實測；eMMC 維持禁止直到取得專用 xboot |
 | `bananapif2s` | 開發中 | Banana Pi F2S | `sunplus-sp7021-bpi` | `armhf` | `legacy` | 是 | F | L2 軟體候選 | 閉合 xboot 與工具鏈授權，再完成 SD／eMMC、網路、USB、顯示與 40-pin 實測 |
 | `bananapif3` | 正式 | BananaPi BPI-F3 | `spacemit` | `riscv64` | `legacy,current,edge` | 是 | B | L2 軟體候選 | 完成 SD／eMMC、GbE、PCIe、USB、GPU、VPU、NPU 與 40-pin 實測 |
 | `bananapiforge1` | 開發中 | Banana Pi BPI-Forge1 | `rockchip` | `armhf` | `vendor` | 是 | E | L2 軟體候選 | 完成冷啟動、雙網路、USB gadget、顯示、CAN、音訊與 40-pin 實測 |

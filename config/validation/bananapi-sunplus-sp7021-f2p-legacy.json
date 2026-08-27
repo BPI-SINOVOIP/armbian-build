@@ -1,16 +1,39 @@
 {
   "schema_version": 1,
   "candidate_branch": "legacy",
-  "candidate_level": "L1 元件候選",
+  "candidate_level": "L2 內部軟體候選",
   "kernel_family": "sunplus-sp7021-bpi",
   "source_date_epoch": 1609074838,
   "candidate_scope": "internal-sd-only",
   "public_release_allowed": false,
   "hardware_claims_allowed": false,
   "hardware_validated": false,
-  "full_image_built": false,
+  "full_image_built": true,
   "component_build_completed": true,
-  "rootfs_image_built": false,
+  "rootfs_image_built": true,
+  "image_build_evidence": {
+    "evidence_level": "L2",
+    "source_commit": "b43611d8aa22cee547474492b81413568611b343",
+    "verifier_commit": "b43611d8aa22cee547474492b81413568611b343",
+    "build_validation_config_sha256": "1268bef1fd85eca59afedd1afcff7a5a8c7fc0e5ba19ba6502383fd0c68b0a75",
+    "verification_config_sha256": "1268bef1fd85eca59afedd1afcff7a5a8c7fc0e5ba19ba6502383fd0c68b0a75",
+    "candidate_matrix_sha256": "8a717e32e41edf95f4649c85140934860d932ed134a96e43224109f55090db87",
+    "uboot_payload_manifest_sha256": "85563416e4ab85a0d4a3731b40b439fb24d7fc549654eacaf6d990479e80a81b",
+    "final_config_manifest_sha256": "4dfaee50a78dc67058c25cf64407cd57338854d412fa365816b84d0f11261bea",
+    "read_only_content_verified": true,
+    "hardware_tested": false,
+    "verified_utc": "2026-08-27T12:09:55Z",
+    "image": {
+      "path": "output/images/2026.08/bananapi-sunplus-sp7021-f2p-trixie-legacy-cli/bananapif2p/Armbian-unofficial_26.05.0-trunk_Bananapif2p_trixie_legacy_0_minimal.img",
+      "size": 1610612736,
+      "sha256": "96dfc6e066adbde20c6cff83b8c95301f0cf76ebf0ee87888f13a2cc3587d3d7"
+    },
+    "archive": {
+      "path": "output/images/2026.08/bananapi-sunplus-sp7021-f2p-trixie-legacy-cli/bananapif2p/Armbian-unofficial_26.05.0-trunk_Bananapif2p_trixie_legacy_0_minimal.img.xz",
+      "size": 315675248,
+      "sha256": "aedf581c5167dc330c5531fa60b78faafac6f46ffbd20e20a376be8330cf1c9b"
+    }
+  },
   "component_build_evidence": {
     "implementation_commit": "a35a6652cc745ec156a1190e315664d6b415d212",
     "completed_utc": "2026-08-27T02:46:07Z",

@@ -2,13 +2,13 @@
 
 ## 結論
 
-目前證據仍是 **內部使用、SD-only、可追溯的 L1 元件候選**。本階段已補齊完整映像的 L2 守門，下一步會由同一來源提交實際重建與唯讀驗證；在成功證據產生前不提前升級。F2P 專用 Linux DTS、U-Boot DTS 與 defconfig 可由固定 BSP 提交編譯，但現有 BSP 沒有 F2P 專用 eMMC xboot，預建 `ISPBOOOT.BIN` 也沒有足以支持再散布的明確授權證據。因此：
+目前證據是 **內部使用、SD-only、可追溯的 L2 軟體候選**。完整 Trixie minimal CLI 已由同一來源提交建立並通過唯讀內容守門；這證明映像內部結構、來源與載荷契約一致，不等於板上可開機或介面已實測。F2P 專用 Linux DTS、U-Boot DTS 與 defconfig 可由固定 BSP 提交編譯，但現有 BSP 沒有 F2P 專用 eMMC xboot，預建 `ISPBOOOT.BIN` 也沒有足以支持再散布的明確授權證據。因此：
 
 - 板檔維持 `.wip`。
 - `public_release_allowed=false`。
 - `hardware_claims_allowed=false`。
 - 禁止使用 `BPI-F2S-xboot-emmc-boot0-0k.img.gz` 建立 F2P eMMC 候選。
-- 完整 rootfs 建置與 L2 唯讀驗證已列入本階段執行範圍；完成前不宣稱可開機或介面可用。
+- 完整 rootfs 建置與 L2 唯讀驗證已完成；仍不宣稱可開機或介面可用。
 
 ## 固定來源
 

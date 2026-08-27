@@ -130,13 +130,20 @@ printf 'f2s=%s\n' "$UBOOT_TARGET_MAP"
 
     def test_validation_contract_keeps_release_closed(self) -> None:
         self.assertEqual(self.config["candidate_branch"], "legacy")
-        self.assertEqual(self.config["candidate_level"], "L1 元件候選")
+        self.assertEqual(self.config["candidate_level"], "L2 內部軟體候選")
         self.assertEqual(self.config["candidate_scope"], "internal-sd-only")
         self.assertFalse(self.config["public_release_allowed"])
         self.assertFalse(self.config["hardware_claims_allowed"])
         self.assertTrue(self.config["component_build_completed"])
-        self.assertFalse(self.config["rootfs_image_built"])
-        self.assertFalse(self.config["full_image_built"])
+        self.assertTrue(self.config["rootfs_image_built"])
+        self.assertTrue(self.config["full_image_built"])
+        image_evidence = self.config["image_build_evidence"]
+        self.assertEqual(image_evidence["evidence_level"], "L2")
+        self.assertEqual(
+            image_evidence["source_commit"], image_evidence["verifier_commit"]
+        )
+        self.assertTrue(image_evidence["read_only_content_verified"])
+        self.assertFalse(image_evidence["hardware_tested"])
         self.assertEqual(self.policy["candidate_boot_media"], ["microSD"])
         self.assertEqual(self.policy["supported_boot_media"], [])
         self.assertFalse(self.config["firmware_redistribution_license_verified"])
@@ -263,7 +270,7 @@ printf 'f2s=%s\n' "$UBOOT_TARGET_MAP"
             "a2db480c77031efaa465ad4a550e16ee4649d371d42f403460a957050a117469",
         )
 
-    def test_source_policy_accepts_current_l1_state(self) -> None:
+    def test_source_policy_accepts_current_l2_state(self) -> None:
         result = subprocess.run(
             ["python3", str(SOURCE_POLICY), str(CONFIG)],
             capture_output=True,
@@ -274,7 +281,7 @@ printf 'f2s=%s\n' "$UBOOT_TARGET_MAP"
 
     def test_source_policy_rejects_label_only_l2(self) -> None:
         mutated = json.loads(CONFIG.read_text(encoding="utf-8"))
-        mutated["candidate_level"] = "L2 內部軟體候選"
+        mutated.pop("image_build_evidence")
         with tempfile.NamedTemporaryFile(
             mode="w", suffix=".json", encoding="utf-8"
         ) as stream:
@@ -292,7 +299,7 @@ printf 'f2s=%s\n' "$UBOOT_TARGET_MAP"
         policy_text = POLICY.read_text(encoding="utf-8")
         evidence_text = BUILD_EVIDENCE.read_text(encoding="utf-8")
         for expected in (
-            "內部使用、SD-only、可追溯的 L1 元件候選",
+            "內部使用、SD-only、可追溯的 L2 軟體候選",
             "禁止使用 `BPI-F2S-xboot-emmc-boot0-0k.img.gz`",
             "不宣稱可開機或介面可用",
             "尚未完成獨立再散布授權稽核",

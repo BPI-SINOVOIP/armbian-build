@@ -6,7 +6,7 @@ bananapicm2	wip	Banana Pi CM2（R2 Pro 軟體參考）	rockchip64	arm64	current	
 bananapicm4io	conf	Banana Pi CM4IO	meson-g12b	arm64	current,edge	current	yes	A	L2	bananapi-cm4-cm4io_defconfig	amlogic/meson-g12b-bananapi-cm4-cm4io.dtb		以 Hynix eMMC 完成多輪冷啟動、重新啟動、關機、網路與 USB 實測
 bananapicm5pro	wip	Banana Pi CM5 Pro	rk35xx	arm64	vendor	vendor	yes	E	L2	bananapi-cm5-pro-rk3576_defconfig	rockchip/rk3576-bananapi-cm5-pro.dtb		完成載板等同性與 RTL8852BS 授權審查，再做冷啟動及全介面實測
 bananapicm6	wip	BananaPi BPI-CM6	spacemit	riscv64	legacy	legacy	yes	F	L2		spacemit/k1-x_bpi_cm6.dtb		完成 SD／eMMC 冷啟動、網路、USB、顯示與加速器實測
-bananapif2p	wip	Banana Pi F2P	sunplus-sp7021-bpi	armhf	legacy	legacy	yes	F	L1	sp7021_bpi_f2p_defconfig	sp7021-bpi-f2p.dtb		收緊 SD-only 完整映像守門並重建 L2；eMMC 維持禁止直到取得專用 xboot
+bananapif2p	wip	Banana Pi F2P	sunplus-sp7021-bpi	armhf	legacy	legacy	yes	F	L2	sp7021_bpi_f2p_defconfig	sp7021-bpi-f2p.dtb		閉合 ISPBOOOT.BIN 與工具鏈授權，再完成 microSD 冷啟動、網路、USB、顯示、TPM 與 GPIO 實測；eMMC 維持禁止直到取得專用 xboot
 bananapif2s	wip	Banana Pi F2S	sunplus-sp7021-bpi	armhf	legacy	legacy	yes	F	L2	sp7021_bpi_f2s_defconfig	sp7021-bpi-f2s.dtb		閉合 xboot 與工具鏈授權，再完成 SD／eMMC、網路、USB、顯示與 40-pin 實測
 bananapif3	conf	BananaPi BPI-F3	spacemit	riscv64	legacy,current,edge	current	yes	B	L2		spacemit/k1-bananapi-f3.dtb		完成 SD／eMMC、GbE、PCIe、USB、GPU、VPU、NPU 與 40-pin 實測
 bananapiforge1	wip	Banana Pi BPI-Forge1	rockchip	armhf	vendor	vendor	yes	E	L2	forge1-rk3506j_defconfig	rk3506b-bananapi-forge1.dtb		完成冷啟動、雙網路、USB gadget、顯示、CAN、音訊與 40-pin 實測
