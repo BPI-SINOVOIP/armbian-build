@@ -2,7 +2,7 @@
 
 ## 結論
 
-Banana Pi R3 Mini 目前維持 L1 元件候選。既有固定來源與元件證據足以規劃一次完整映像預檢，但政策狀態機、韌體來源解析、最終設定與 eMMC 冷啟動邊界尚未閉合，不能直接提升為內部 L2。
+Banana Pi R3 Mini 目前維持 L1 元件候選。固定時間戳、OverlayFS、來源競態、狀態廢止、實檔 L2 政策、分割區類型、root 標籤／檔案系統與 eMMC 冷啟動邊界已閉合到工具與回歸測試；但本次禁止完整映像建置，因此精確根分割區大小、映像 DTB 與最終核心／U-Boot 設定雜湊仍須由首次隔離預檢產生，不能直接提升為內部 L2。
 
 本稽核只讀取設定、工具、測試與既有元件證據；沒有執行映像建置、寫入 eMMC、修改板卡或宣稱實機功能通過。
 
@@ -14,11 +14,11 @@ Banana Pi R3 Mini 目前維持 L1 元件候選。既有固定來源與元件證�
 - 現有共用建置器預設要求至少 80 GiB 可用空間；預檢前應保留 100 GiB 以上，避免映像與隔離快取上層耗盡磁碟。
 - 只能使用 R3 Mini 專用 OverlayFS 上層，共用 `/media/pi/SMCI/armbian/bpi-v26.2.1/cache` 維持唯讀下層。
 
-## 阻擋 L2 的問題
+## 原始缺口與目前狀態
 
-### 狀態機可接受假 L2
+### 狀態機可接受假 L2：已修正
 
-目前政策檢查只核對層級、範圍與布林狀態，沒有要求 `image_build_evidence`。現有測試也接受沒有映像雜湊的 L2 標籤。修正後必須要求：
+政策檢查器已改為核對真實檔案與 Git 證據，不接受重複字元製造的提交或雜湊，並要求：
 
 - 來源提交與驗證器提交相同。
 - 建置與驗證所用 validation SHA-256 相同。
@@ -28,16 +28,16 @@ Banana Pi R3 Mini 目前維持 L1 元件候選。既有固定來源與元件證�
 
 第一次 L1 預檢只能校準契約，不得直接以改標籤方式升級。
 
-### 韌體來源解析未閉合
+### 韌體來源解析未閉合：已修正
 
-Armbian firmware 提交雖已固定，但仍缺少完整的板級來源及解析守門：
+Armbian firmware 已固定 source、ref 與 commit，建置日誌必須證明實際解析到相同提交；`SOURCE_DATE_EPOCH=1787793187` 同時進入參數雜湊與 metadata，且不可由環境變數覆寫：
 
 - validation 必須有精確 `firmware_ref`。
 - validation 必須設定 `verify_firmware_source_resolution=true`。
 - 板檔必須固定 `ARMBIAN_FIRMWARE_GIT_SOURCE_BOARD` 與 ref。
 - 建置日誌必須證明實際解析到相同來源與提交。
 
-### 完整映像契約不足
+### 完整映像契約不足：保留首次預檢校準門檻
 
 - 既有 `bl2.img`、GPT 與 FIP 雜湊來自獨立元件建置，不能直接冒充完整映像證據。
 - 缺少 `final_kernel_config_sha256` 與 `final_uboot_config_sha256`。

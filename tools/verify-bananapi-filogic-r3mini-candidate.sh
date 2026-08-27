@@ -4,7 +4,7 @@ set -euo pipefail
 repo_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 verifier="${repo_dir}/tools/verify-bananapi-filogic-candidates.sh"
 validation_config="${repo_dir}/config/validation/bananapi-filogic-mt7986-r3mini-current.json"
-output_dir="${repo_dir}/output/images/2026.08/bananapi-filogic-mt7986-r3mini-emmc-trixie-current-cli"
+output_dir="${OUTPUT_DIR:-${repo_dir}/output/images/2026.08/bananapi-filogic-mt7986-r3mini-emmc-trixie-current-cli}"
 status_file="${output_dir}/VERIFICATION_STATUS.json"
 
 write_entry_state() {
@@ -79,6 +79,8 @@ write_entry_state in_progress "R3 Mini ${policy_evidence_level} 完整驗證執�
 	"${policy_evidence_level}"
 export VERIFY_ARCHIVES=yes
 export VERIFICATION_EVIDENCE_LEVEL="${policy_evidence_level}"
+export REQUIRE_BUILD_VERIFIER_IDENTITY=yes
+export REQUIRE_SOURCE_DATE_EPOCH_METADATA=yes
 
 "${verifier}" "$@"
 entry_state_active=no

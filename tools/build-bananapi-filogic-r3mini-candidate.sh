@@ -3,6 +3,19 @@ set -euo pipefail
 
 repo_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 builder="${repo_dir}/tools/build-bananapi-filogic-candidates.sh"
+expected_source_date_epoch=1787793187
+
+[[ "${ALLOW_INTERNAL_R3MINI_CANDIDATE:-no}" == yes ]] || {
+	echo "R3 Mini 只允許從專用 OverlayFS 入口建立內部候選" >&2
+	exit 2
+}
+export REQUIRE_ISOLATED_CACHE=yes
+export REQUIRE_SOURCE_DATE_EPOCH_METADATA=yes
+if [[ -n "${SOURCE_DATE_EPOCH:-}" && "${SOURCE_DATE_EPOCH}" != "${expected_source_date_epoch}" ]]; then
+	echo "R3 Mini SOURCE_DATE_EPOCH 與固定契約不符" >&2
+	exit 2
+fi
+export SOURCE_DATE_EPOCH="${expected_source_date_epoch}"
 
 [[ "${PUBLIC_RELEASE:-no}" == no ]] || {
 	echo "R3 Mini 候選只允許內部建置，不得啟用公開發布" >&2

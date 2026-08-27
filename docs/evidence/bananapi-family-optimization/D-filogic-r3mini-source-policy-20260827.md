@@ -6,7 +6,7 @@
 
 `bananapir3mini` 已完成固定來源、eMMC 啟動鏈、GPT、BL2／FIP、U-Boot、核心 DTB、網路韌體與板卡專用驗證契約。Linux DTB、U-Boot、ATF BL2／BL31 與 FIP 均已執行套用或元件建置驗證，但依任務限制未建置完整 Armbian 映像，也未進行實體板測試；目前證據等級是 `L1 元件候選`，不得宣稱可開機、硬體通過或可公開發布。
 
-候選政策採用受控 L1/L2 狀態機。現行狀態固定為 `candidate_scope=internal-component-only`、`full_rootfs_image_built=false`，而且 L1 明確禁止攜帶 `image_build_evidence`；僅改寫層級名稱或夾帶未受控映像欄位都會被政策檢查器拒絕。
+候選政策採用受控 L1/L2 狀態機。現行狀態固定為 `candidate_scope=internal-component-only`、`current_evidence_level=L1`、`full_rootfs_image_built=false`，並以 `l2_contract_calibration_required=true` 記錄首次完整映像的精確根分割區大小、映像 DTB 與最終核心／U-Boot 設定雜湊尚未回填。L1 明確禁止攜帶 `image_build_evidence`；僅改寫層級名稱或夾帶未受控映像欄位都會被政策檢查器拒絕。
 
 未來升為 `L2 內部軟體候選` 時，必須同時滿足 `candidate_scope=internal-l2`、完整映像狀態為真及下列不可省略的映像證據：
 
@@ -16,7 +16,7 @@
 - IMG 與 XZ 都記錄非零大小、路徑與 SHA-256。
 - 唯讀內容驗證為真，實機驗證為假。
 
-上述契約只建立未來 L2 的軟體證據格式，不代表本次已完成映像建置。兩個層級都固定禁止公開發布與硬體通過聲明。
+上述契約已改為實檔導向的 L2 守門，不再接受只有格式正確的虛構提交、雜湊或產物。它會核對 Git 來源 tree、IMG、XZ、矩陣、metadata、建置／驗證狀態與證據清單；但本次沒有執行完整映像建置，所以現行狀態仍是 L1。兩個層級都固定禁止公開發布與硬體通過聲明。
 
 ## 固定來源
 
@@ -67,7 +67,9 @@ ATF 建置會連結 `plat/mediatek/mt7986/drivers/dram/release/dram.o`，其 SHA
 
 即使後續完整映像通過 L2，未解除上述阻擋前仍不得對外發布。
 
-## 專用入口
+## 專用入口與可重現建置
+
+建置契約固定 `SOURCE_DATE_EPOCH=1787793187`，並將它納入建置參數雜湊與 `artifact.metadata.txt`。建置期間只要 HEAD、tree 或工作樹改變，候選建置立即失敗。
 
 未來受控建置使用：
 
@@ -75,7 +77,7 @@ ATF 建置會連結 `plat/mediatek/mt7986/drivers/dram/release/dram.o`，其 SHA
 ./tools/run-bananapi-filogic-r3mini-candidate-isolated-cache.sh
 ```
 
-直接建置入口：
+下列直接建置封裝只接受專用 OverlayFS runner 設定的內部解鎖，不是可繞過隔離快取的第二入口：
 
 ```bash
 ./tools/build-bananapi-filogic-r3mini-candidate.sh
@@ -87,7 +89,7 @@ ATF 建置會連結 `plat/mediatek/mt7986/drivers/dram/release/dram.o`，其 SHA
 ./tools/verify-bananapi-filogic-r3mini-candidate.sh
 ```
 
-三個入口只選取 `bananapir3mini`、固定驗證 JSON 與獨立 OverlayFS 上層。專用隔離入口明確呼叫 R3 Mini 專用建置封裝，預設保留共用建置器的 80 GiB 空間要求；使用者可提高要求，但任何低於 40 GiB 的值都會先由專用入口拒絕，之後仍須再通過共用建置器的硬下限與其他隔離保護。本次依任務限制只驗證入口與元件，沒有執行上述完整映像建置。
+三個工具只選取 `bananapir3mini` 與固定驗證 JSON；只有專用 runner 能解鎖建置，並強制使用獨立 OverlayFS 上層。預設保留共用建置器的 80 GiB 空間要求；使用者可提高要求，但任何低於 40 GiB 的值都會先由專用入口拒絕，之後仍須再通過共用建置器的硬下限與其他隔離保護。本次依任務限制只驗證入口與元件，沒有執行上述完整映像建置。
 
 驗證入口固定啟用 XZ 完整性與解壓串流同一性，不接受環境變數降級。板卡專用收尾器會把載荷證據視為不可信輸入，要求 BL2、FIP、GPT 各自恰好一筆，逐項核對板卡、位置、偏移、大小上下限及 SHA-256；BL2 不得超過 `4176896` bytes、FIP 不得超過 `4194304` bytes，GPT 必須恰為 `17408` bytes。
 

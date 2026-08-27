@@ -3,6 +3,10 @@
   "candidate_branch": "current",
   "candidate_level": "L1 元件候選",
   "candidate_scope": "internal-component-only",
+  "current_evidence_level": "L1",
+  "target_evidence_level": "L2",
+  "source_date_epoch": 1787793187,
+  "l2_contract_calibration_required": true,
   "allowed_evidence_levels": [
     "L1",
     "L2"
@@ -150,7 +154,10 @@
     "bananapir3mini": {
       "family": "mt7986",
       "dtb": "mediatek/mt7986a-bananapi-bpi-r3-mini.dtb",
+      "component_dtb_sha256": "5457155de554539c902a22507cbd69ad249fd70a24cf6e24a5753c2b5e8b66ab",
+      "image_dtb_sha256": null,
       "dtb_sha256": "5457155de554539c902a22507cbd69ad249fd70a24cf6e24a5753c2b5e8b66ab",
+      "dtb_sha256_evidence_scope": "component-only-l1",
       "model": "Bananapi BPI-R3 Mini",
       "compatible": [
         "bananapi,bpi-r3mini",
@@ -264,18 +271,33 @@
         "gpt=17408",
         "u-boot.fip=4194304"
       ],
+      "uboot_payload_sizes": [
+        "bl2.img=200793",
+        "gpt=17408",
+        "u-boot.fip=507953"
+      ],
       "partition_table": "gpt",
       "gpt_template_sha256": "beb31c2284ec7b8e910faeea8d323f40532b26010e87d0bae851d823705efa1d",
       "partition_name": "bl2",
       "partition_start_sector": 32768,
       "logical_sector_size": 512,
       "root_partition_number": 5,
+      "root_partition_start_sector": 32768,
+      "root_partition_label": "armbi_root",
+      "root_partition_filesystem_type": "ext4",
       "required_partitions": [
         "1:bl2:34:8158",
         "2:ubootenv:8192:1024",
         "3:factory:9216:4096",
         "4:fip:13312:8192",
         "5:*:32768:*"
+      ],
+      "required_partition_types": [
+        "1:0fc63daf-8483-4772-8e79-3d69d8477de4",
+        "2:0fc63daf-8483-4772-8e79-3d69d8477de4",
+        "3:0fc63daf-8483-4772-8e79-3d69d8477de4",
+        "4:c12a7328-f81f-11d2-ba4b-00a0c93ec93b",
+        "5:0fc63daf-8483-4772-8e79-3d69d8477de4"
       ],
       "uboot_environment_contract": {
         "partition_name": "ubootenv",

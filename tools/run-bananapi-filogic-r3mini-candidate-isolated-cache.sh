@@ -20,5 +20,7 @@ export BOARDS="bananapir3mini"
 export CACHE_OVERLAY_ROOT="${repo_dir}/.tmp/bananapi-filogic-r3mini-cache-overlay"
 export CANDIDATE_BUILDER="${repo_dir}/tools/build-bananapi-filogic-r3mini-candidate.sh"
 export MINIMUM_FREE_GIB="${minimum_free_gib}"
+export ALLOW_INTERNAL_R3MINI_CANDIDATE=yes
+export REQUIRE_ISOLATED_CACHE=yes
 
 exec "${runner}" "$@"

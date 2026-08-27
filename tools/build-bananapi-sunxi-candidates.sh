@@ -98,6 +98,15 @@ source_commit="$(git -C "${repo_dir}" rev-parse HEAD)"
 source_tree="$(git -C "${repo_dir}" rev-parse 'HEAD^{tree}')"
 validation_config_sha256="$(sha256sum "${validation_config}" | cut -d' ' -f1)"
 
+assert_source_identity() {
+	[[ "$(git -C "${repo_dir}" rev-parse HEAD)" == "${source_commit}" ]] ||
+		fail "建置期間來源 HEAD 已改變"
+	[[ "$(git -C "${repo_dir}" rev-parse 'HEAD^{tree}')" == "${source_tree}" ]] ||
+		fail "建置期間來源 tree 已改變"
+	[[ -z "$(git -C "${repo_dir}" status --porcelain --untracked-files=all)" ]] ||
+		fail "建置期間來源工作樹已改變"
+}
+
 board_field() {
 	python3 - "${validation_config}" "$1" "$2" <<'PY'
 import json
@@ -338,6 +347,7 @@ for board in "${boards[@]}"; do
 		fi
 		echo "完整建置 ${board} ${release} ${branch} CLI。"
 		(cd "${repo_dir}" && ./compile.sh "${build_args[@]}") |& tee "${log_file}"
+		assert_source_identity
 
 		mapfile -t candidates < <(find "${repo_dir}/output/images" -maxdepth 1 \
 			-type f -iname "${output_image_glob}" \
@@ -420,6 +430,8 @@ for board in "${boards[@]}"; do
 		"${board}/$(basename "${archive}")" "${source_commit}" "${uboot_tag}" \
 		>>"${matrix_file}.partial"
 done
+
+assert_source_identity
 
 actual_rows="$(awk 'NR > 1 { count++ } END { print count + 0 }' "${matrix_file}.partial")"
 [[ "${actual_rows}" -eq "${#boards[@]}" ]] || fail "候選矩陣筆數不符"
