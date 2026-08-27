@@ -1,4 +1,4 @@
-# Synaptics VS680 SoC quad core A73(2.1Ghz) 4GB SoC eMMC USB3
+# Synaptics VS680 四核心 Cortex-A73、4GB LPDDR4、eMMC 與 USB 3.0
 BOARD_NAME="Banana Pi M6"
 BOARD_VENDOR="sinovoip"
 BOARDFAMILY="vs680"
@@ -6,10 +6,15 @@ BOARD_MAINTAINER="BPI-SINOVOIP"
 INTRODUCED="2026"
 BOOTCONFIG="vs680_oemboot_c05_defconfig"
 KERNEL_TARGET="legacy"
+KERNEL_TEST_TARGET="legacy"
 FULL_DESKTOP="yes"
 BOOT_LOGO="desktop"
 WIREGUARD="no"
-#
+PACKAGE_LIST_BOARD="gpiod i2c-tools python3-libgpiod python3-spidev spi-tools pciutils usbutils usb-modeswitch v4l-utils evtest alsa-utils ethtool iproute2 iperf3"
+ARMBIAN_FIRMWARE_GIT_REF_BOARD="commit:f50a2a21bcdb77a562b3976930c5c6b521a1df08"
+VS680_TZK_SHA256="175e9b9313dffb70a97852ae21d855d3472916cc2af28f678ebcddc44828e411"
+SOURCE_DATE_EPOCH="1717001894"
+
 OFFSET="100"
 BOOT_FS_LABEL="BPI-BOOT"
 ROOT_FS_LABEL="BPI-ROOT"
@@ -31,16 +36,39 @@ function post_family_tweaks__bananapim6_naming_audios() {
 	return 0
 }
 
-# Override family config for this board; let's avoid conditionals in family config.
-function post_family_config__bananapim6_use_vendor_uboot() {
+# 以精確提交覆寫 family 內僅供相容的可移動分支。
+function post_family_config__bananapim6_pin_vendor_sources() {
+	declare -g IMAGE_PARTITION_TABLE="msdos"
 	declare -g BOOTSOURCE='https://github.com/BPI-SINOVOIP/pi-u-boot.git'
-	declare -g BOOTBRANCH='branch:v2019.10-vs680-hdmi-rx'
-	declare -g BOOTPATCHDIR="legacy"
+	declare -g BOOTBRANCH='commit:ccca1c75bb6d06470b8a3f6104068b43763ee468'
+	declare -g BOOTPATCHDIR="legacy/u-boot-vs680-bananapim6"
+	declare -g UBOOT_TARGET_MAP=';;u-boot.bin bpi-m6-tzk-4MB.bin'
+	declare -g ATF_COMPILE="no"
+	declare -g KERNEL_MAJOR_MINOR="5.4" # 此核心的主版本與次版本。
+	declare -g KERNELSOURCE='https://github.com/BPI-SINOVOIP/pi-linux.git'
+	declare -g KERNELBRANCH='commit:3229415e99a06edc972948c0a856cbcf7de7ce55'
+	declare -g KERNELPATCHDIR="archive/bananapim6-legacy"
+	declare -g LINUXCONFIG="linux-vs680-legacy"
+	declare -g ARMBIAN_FIRMWARE_GIT_REF="${ARMBIAN_FIRMWARE_GIT_REF_BOARD}"
 }
 
-function post_family_config__bananapim6_use_vendor_kernel() {
-	declare -g KERNEL_MAJOR_MINOR="5.4" # Major and minor versions of this kernel.
-	declare -g KERNELSOURCE='https://github.com/BPI-SINOVOIP/pi-linux.git'
-	declare -g KERNELBRANCH='branch:pi-5.4-vs680-hdmi-rx'
-	declare -g KERNELPATCHDIR="legacy"
+function post_uboot_custom_postprocess__bananapim6_stage_tzk_payload() {
+	local source_payload="${SRC}/packages/blobs/vs680/bpi-m6-tzk-4MB.bin"
+	local actual_sha256
+
+	[[ -f "${source_payload}" ]] ||
+		exit_with_error "缺少 VS680 TZK 啟動載荷" "${source_payload}"
+	actual_sha256="$(sha256sum "${source_payload}" | cut -d' ' -f1)"
+	[[ "${actual_sha256}" == "${VS680_TZK_SHA256}" ]] ||
+		exit_with_error "VS680 TZK 啟動載荷雜湊不符" "${actual_sha256}"
+	run_host_command_logged install -m 0644 "${source_payload}" ./bpi-m6-tzk-4MB.bin
+}
+
+function post_family_tweaks_bsp__bananapim6_install_tzk_provenance() {
+	local documentation_dir="${destination}/usr/share/doc/armbian-bsp-bananapim6"
+
+	run_host_command_logged mkdir -pv "${documentation_dir}"
+	run_host_command_logged install -m 0644 \
+		"${SRC}/packages/blobs/vs680/SOURCE.zh-TW.md" \
+		"${documentation_dir}/bpi-m6-tzk-4MB.bin.SOURCE.zh-TW.md"
 }

@@ -1,0 +1,22 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Banana Pi -BPI <lionwang@sinovoip.com.cn>
+Date: Thu, 27 Aug 2026 11:30:00 +0800
+Subject: [PATCH] arm: dts: vs680: Banana Pi M6 identity
+
+加入精確板級 compatible，並保留 vendor 啟動流程所需的舊 Synaptics 根節點
+compatible。
+---
+ arch/arm/dts/vs680-bananapi-m6.dts | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/arch/arm/dts/vs680-bananapi-m6.dts b/arch/arm/dts/vs680-bananapi-m6.dts
+index 8afc2e1e73e2bb29fbdf0790a620500cfa21fec2..30d3c76ef729c84a1f2aa72c325f90e8a0a85899 100755
+--- a/arch/arm/dts/vs680-bananapi-m6.dts
++++ b/arch/arm/dts/vs680-bananapi-m6.dts
+@@ -14,4 +14,4 @@
+ / {
+-	model = "Synaptics VS680 Bananapi-M6";
+-	compatible = "Synaptics,vs680", "Synaptics,asserial";
++	model = "Banana Pi M6";
++	compatible = "sinovoip,bananapi-m6", "Synaptics,vs680", "Synaptics,asserial";
+ 
