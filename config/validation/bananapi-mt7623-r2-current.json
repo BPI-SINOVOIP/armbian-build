@@ -100,7 +100,7 @@
   "boards": {
     "bananapir2": {
       "family": "mt7623",
-      "dtb": "mediatek/mt7623n-bananapi-bpi-r2.dtb",
+      "dtb": "mt7623n-bananapi-bpi-r2.dtb",
       "model": "Bananapi BPI-R2",
       "compatible": [
         "bananapi,bpi-r2",
@@ -131,7 +131,7 @@
       "uboot_target_make_contains": [],
       "uboot_required_binary_strings": [
         "boot/boot.scr",
-        "boot/dtb/mediatek/mt7623n-bananapi-bpi-r2.dtb"
+        "boot/dtb/mt7623n-bananapi-bpi-r2.dtb"
       ],
       "uboot_payloads": [
         "BPI-R2-HEAD440-0k.img@0",

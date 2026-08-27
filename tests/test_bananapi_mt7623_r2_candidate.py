@@ -88,8 +88,9 @@ class BananaPiMT7623R2CandidateTests(unittest.TestCase):
         self.assertIn("part uuid ${devtype} ${devnum}:${mmcpart} rootuuid", text)
         self.assertIn('setenv rootdev "PARTUUID=${rootuuid}"', text)
         self.assertIn(
-            'setenv fdtfile "mediatek/mt7623n-bananapi-bpi-r2.dtb"', text
+            'setenv fdtfile "mt7623n-bananapi-bpi-r2.dtb"', text
         )
+        self.assertNotIn("mediatek/mt7623n-bananapi-bpi-r2.dtb", text)
         self.assertNotIn("/dev/mmcblk", text)
 
     def test_uboot_patch_has_deterministic_environment(self) -> None:
@@ -100,9 +101,10 @@ class BananaPiMT7623R2CandidateTests(unittest.TestCase):
             "+CONFIG_CMD_BOOTZ=y",
             "+CONFIG_CMD_EXT4=y",
             "mmcinitrdfile=boot/uInitrd",
-            "boot/dtb/mediatek/mt7623n-bananapi-bpi-r2.dtb",
+            "boot/dtb/mt7623n-bananapi-bpi-r2.dtb",
         ):
             self.assertIn(required, text)
+        self.assertNotIn("boot/dtb/mediatek/mt7623n-bananapi-bpi-r2.dtb", text)
         self.assertNotIn("#define CONFIG_BOOTCOMMAND", text)
         self.assertNotIn("index 111111111111..222222222222", text)
         self.assertIn(
@@ -112,7 +114,7 @@ class BananaPiMT7623R2CandidateTests(unittest.TestCase):
         )
         self.assertIn(
             "index fca234a1dc71a85f4982a49db4f1ab53e30b9ed7"
-            "..92094d87072852c5c3e7a1370a7fb57492031c75",
+            "..8a1b013d211678373861dc6b2599dae8a3bdbf35",
             text,
         )
         for header in ("@@ -32,7 +34,8 @@", "@@ -20,9 +20,27 @@", "@@ -35,8 +53,22 @@"):
@@ -130,6 +132,8 @@ class BananaPiMT7623R2CandidateTests(unittest.TestCase):
         ):
             self.assertIn(symbol, text)
         self.assertIn(self.config["firmware_commit"], text)
+        self.assertIn('BOOT_FDT_FILE="mt7623n-bananapi-bpi-r2.dtb"', text)
+        self.assertEqual(self.policy["dtb"], "mt7623n-bananapi-bpi-r2.dtb")
         package_line = next(
             line for line in text.splitlines()
             if line.startswith('PACKAGE_LIST_BOARD="')

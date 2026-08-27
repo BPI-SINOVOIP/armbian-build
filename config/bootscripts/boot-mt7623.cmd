@@ -7,7 +7,7 @@ setenv rootfs "ext4"
 setenv verbosity "1"
 setenv devtype "mmc"
 setenv prefix "boot/"
-setenv fdtfile "mediatek/mt7623n-bananapi-bpi-r2.dtb"
+setenv fdtfile "mt7623n-bananapi-bpi-r2.dtb"
 
 echo "Boot script loaded from device ${devnum}"
 

@@ -44,7 +44,7 @@ index 4c3d90a1b7b05d128b572c608c666f0405d226fb..455d085c569ab500d10494fb1a59b15b
 +CONFIG_CMD_EXT4=y
 +CONFIG_CMD_EXT4_WRITE=y
 diff --git a/include/configs/mt7623.h b/include/configs/mt7623.h
-index fca234a1dc71a85f4982a49db4f1ab53e30b9ed7..92094d87072852c5c3e7a1370a7fb57492031c75 100644
+index fca234a1dc71a85f4982a49db4f1ab53e30b9ed7..8a1b013d211678373861dc6b2599dae8a3bdbf35 100644
 --- a/include/configs/mt7623.h
 +++ b/include/configs/mt7623.h
 @@ -20,9 +20,27 @@
@@ -92,7 +92,7 @@ index fca234a1dc71a85f4982a49db4f1ab53e30b9ed7..92094d87072852c5c3e7a1370a7fb574
 +	"bootm_size=0x10000000\0" \
 +	"mmckernfile=boot/zImage\0" \
 +	"mmcinitrdfile=boot/uInitrd\0" \
-+	"mmcfdtfile=boot/dtb/mediatek/mt7623n-bananapi-bpi-r2.dtb\0" \
++	"mmcfdtfile=boot/dtb/mt7623n-bananapi-bpi-r2.dtb\0" \
 +	"mmcscriptfile=boot/boot.scr\0" \
 +	"mmctype=ext4\0" \
 +	"devnum=1\0" \

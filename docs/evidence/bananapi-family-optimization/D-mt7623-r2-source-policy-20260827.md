@@ -41,8 +41,10 @@ Banana Pi R2 的 Linux 與 U-Boot 均已固定至可重建的公開原始碼提�
 
 ## 建置與驗證邊界
 
-- 固定 U-Boot 已單獨交叉編譯，`u-boot.bin` 大小為 463704 bytes，SHA-256 為 `b885bd9af2c7013771ae6a3eb0794403246d5193a9dc17c5895569e296548fa9`。
+- 扁平 DTB 路徑修正版 U-Boot 已單獨交叉編譯，該次 `u-boot.bin` 大小為 463696 bytes，SHA-256 為 `c0a88952f1f6fef0f28fa4f63975325d00d30c1b7af1f7d666f9ef923e64fb7b`；二進位只包含 `boot/dtb/mt7623n-bananapi-bpi-r2.dtb`，不含錯誤的 `boot/dtb/mediatek/` 路徑。
 - 提交 `4f7241a7b09a4e6a40c2b3b70951df1be82ad747` 已完成一次預檢映像建置；因當時補丁中繼資料仍需重整，該輸出只保留為預檢證據，不升級為正式 L2 候選。
+- 提交 `87099e8c1fa0c82ae06368ed9c1188fe1d365e21` 的第二次預檢已確認 U-Boot 補丁零問題，但唯讀映像檢查發現核心套件把 DTB 安裝為 `/boot/dtb/mt7623n-bananapi-bpi-r2.dtb`，當時 boot script 與 U-Boot 環境卻多加一層 `mediatek/`。該映像無法依設定載入 DTB，同樣不得升級為 L2。
+- 修正版契約要求 `BOOT_FDT_FILE`、boot script、U-Boot 內建環境及驗證器全部使用扁平路徑 `mt7623n-bananapi-bpi-r2.dtb`，並拒絕重新出現 `mediatek/mt7623n-bananapi-bpi-r2.dtb`。
 - 正式候選必須由修正後提交使用全新專用 OverlayFS 重建，並通過映像、壓縮串流、U-Boot 載荷、DTB、核心設定、套件與唯讀內容檢查。
 - 本次沒有 R2 實體板、SD、eMMC、SATA、PCIe、HDMI、USB、網路交換器、GPIO、I2C 或 SPI 測試，因此不得宣稱上述硬體功能已通過。
 
