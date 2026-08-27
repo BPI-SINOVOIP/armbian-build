@@ -192,6 +192,63 @@ class BananaPiM1SuperCandidateTests(unittest.TestCase):
                     image, archive, evidence
                 )
 
+    def test_xz_structure_rejects_trailing_garbage(self):
+        image_bytes = b"M1-Super-XZ" * 4096
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            image = root / "candidate.img"
+            archive = root / "candidate.img.xz"
+            image.write_bytes(image_bytes)
+            archive.write_bytes(lzma.compress(image_bytes) + b"trailing-garbage")
+            evidence = {"image": {"sha256": hashlib.sha256(image_bytes).hexdigest()}}
+            with self.assertRaises(SystemExit):
+                self.policy_checker.validate_xz_stream_matches_image(
+                    image, archive, evidence
+                )
+
+    def test_artifact_paths_are_confined_to_the_fixed_output_directory(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            output = root / "output/fixed-m1super"
+            board_dir = output / "bananapim1super"
+            board_dir.mkdir(parents=True)
+            image = board_dir / "candidate.img"
+            image.write_bytes(b"image")
+            with (
+                mock.patch.object(self.policy_checker, "ROOT", root),
+                mock.patch.object(self.policy_checker, "OUTPUT_DIR", output),
+            ):
+                self.assertEqual(
+                    self.policy_checker.resolve_artifact(
+                        "output/fixed-m1super/bananapim1super/candidate.img",
+                        "測試 IMG",
+                    ),
+                    image,
+                )
+                self.assertEqual(
+                    self.policy_checker.resolve_matrix_artifact(
+                        "bananapim1super/candidate.img", "測試矩陣 IMG"
+                    ),
+                    image,
+                )
+                for escaped in (
+                    "output/fixed-m1super/bananapim1super/../bananapim1super/candidate.img",
+                    "../fixed-m1super/bananapim1super/candidate.img",
+                ):
+                    with self.assertRaises(SystemExit):
+                        self.policy_checker.resolve_artifact(escaped, "偽造 IMG")
+                with self.assertRaises(SystemExit):
+                    self.policy_checker.resolve_matrix_artifact(
+                        "bananapim1super/../candidate.img", "偽造矩陣 IMG"
+                    )
+
+    def test_linux_dtb_claim_must_match_board_contract(self):
+        evidence = json.loads(json.dumps(self.validation["image_build_evidence"]))
+        self.policy_checker.validate_linux_dtb_claim(self.validation, evidence)
+        evidence["linux_dtb"]["path"] = "rockchip/foreign-board.dtb"
+        with self.assertRaises(SystemExit):
+            self.policy_checker.validate_linux_dtb_claim(self.validation, evidence)
+
     def test_uboot_manifest_is_rechecked_against_contract_and_image_bytes(self):
         payload = "固定載荷內容".encode("utf-8")
         digest = hashlib.sha256(payload).hexdigest()
@@ -281,6 +338,112 @@ class BananaPiM1SuperCandidateTests(unittest.TestCase):
                 )
                 with self.assertRaises(SystemExit):
                     self.policy_checker.validate_final_config_manifest(policy)
+
+    def test_fixed_timestamp_is_bound_across_evidence_status_and_metadata(self):
+        expected = self.validation["source_date_epoch"]
+        evidence = {"source_date_epoch": expected}
+        completion = {"source_date_epoch": expected}
+        verification = {"source_date_epoch": expected}
+        metadata = {"source_date_epoch": str(expected)}
+        self.policy_checker.validate_source_date_epoch_binding(
+            self.validation, evidence, completion, verification, metadata
+        )
+        verification["source_date_epoch"] = expected + 1
+        with self.assertRaises(SystemExit):
+            self.policy_checker.validate_source_date_epoch_binding(
+                self.validation, evidence, completion, verification, metadata
+            )
+
+    def test_material_completion_rejects_stale_or_jointly_edited_status(self):
+        record = {
+            "source_commit": "1" * 40,
+            "verifier_commit": "2" * 40,
+            "contract_projection_sha256": "3" * 64,
+            "source_date_epoch": 1787082913,
+            "common_verification_status_sha256": "4" * 64,
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory)
+            evidence_path = output / "M1SUPER_MATERIAL_EVIDENCE.json"
+            status_path = output / "M1SUPER_MATERIAL_STATUS.json"
+            with (
+                mock.patch.object(self.policy_checker, "OUTPUT_DIR", output),
+                mock.patch.object(
+                    self.policy_checker, "MATERIAL_EVIDENCE", evidence_path
+                ),
+                mock.patch.object(self.policy_checker, "MATERIAL_STATUS", status_path),
+            ):
+                self.policy_checker.write_material_completion(record)
+                self.policy_checker.validate_material_completion(record)
+                stale = json.loads(status_path.read_text(encoding="utf-8"))
+                stale["common_verification_status_sha256"] = "5" * 64
+                status_path.write_text(
+                    json.dumps(stale, ensure_ascii=False, indent=2) + "\n",
+                    encoding="utf-8",
+                )
+                with self.assertRaises(SystemExit):
+                    self.policy_checker.validate_material_completion(record)
+
+    def test_gpt_contract_rejects_partition_drift(self):
+        board = self.validation["boards"]["bananapim1super"]
+        partition_table = {
+            "partitiontable": {
+                "label": "gpt",
+                "unit": "sectors",
+                "sectorsize": 512,
+                "partitions": [
+                    {
+                        "start": 32768,
+                        "size": 4691968,
+                        "type": board["required_partition_types"][0].split(":", 1)[1],
+                        "name": "rootfs",
+                    }
+                ],
+            }
+        }
+        completed = mock.Mock(returncode=0, stdout="No problems found")
+        with tempfile.TemporaryDirectory() as directory:
+            image = Path(directory) / "candidate.img"
+            image.write_bytes(b"gpt")
+            with (
+                mock.patch.object(
+                    self.policy_checker.shutil, "which", return_value="/usr/bin/tool"
+                ),
+                mock.patch.object(
+                    self.policy_checker.subprocess, "run", return_value=completed
+                ),
+                mock.patch.object(
+                    self.policy_checker.subprocess,
+                    "check_output",
+                    side_effect=lambda *args, **kwargs: json.dumps(partition_table),
+                ),
+            ):
+                summary = self.policy_checker.validate_gpt_contract(
+                    self.validation, image
+                )
+                self.assertTrue(summary["crc_and_structure_verified"])
+                partition_table["partitiontable"]["partitions"][0]["size"] -= 1
+                with self.assertRaises(SystemExit):
+                    self.policy_checker.validate_gpt_contract(self.validation, image)
+
+    def test_package_parser_accepts_installed_packages_and_provides(self):
+        status_text = (
+            "Package: direct-package\n"
+            "Status: install ok installed\n\n"
+            "Package: provider-package\n"
+            "Status: install ok installed\n"
+            "Provides: virtual-package (= 1), another-virtual\n\n"
+            "Package: removed-package\n"
+            "Status: deinstall ok config-files\n"
+        )
+        with tempfile.TemporaryDirectory() as directory:
+            status = Path(directory) / "status"
+            status.write_text(status_text, encoding="utf-8")
+            installed = self.policy_checker.installed_package_names(status)
+        self.assertIn("direct-package", installed)
+        self.assertIn("virtual-package", installed)
+        self.assertIn("another-virtual", installed)
+        self.assertNotIn("removed-package", installed)
 
     def test_state_machine_rejects_mixed_or_unproven_states(self):
         mixed = json.loads(json.dumps(self.validation))
@@ -519,17 +682,40 @@ class BananaPiM1SuperCandidateTests(unittest.TestCase):
         self.assertIn('export SOURCE_DATE_EPOCH="${source_date_epoch}"', build_text)
         self.assertIn("SOURCE_DATE_EPOCH 與固定契約不符", build_text)
         self.assertIn('"${policy_checker}" --phase source-contract', build_text)
+        self.assertIn("export REQUIRE_SOURCE_DATE_EPOCH_METADATA=yes", build_text)
+        self.assertIn("pending_verification", build_text)
+        self.assertIn("write_material_state failed", build_text)
         self.assertIn("write_entry_state failed", verify_text)
+        self.assertIn("write_material_state failed", verify_text)
         self.assertIn("verify-bananapi-rockchip-candidates.sh", verify_text)
         self.assertIn("export VERIFY_ARCHIVES=yes", verify_text)
+        self.assertIn("export REQUIRE_SOURCE_DATE_EPOCH_METADATA=yes", verify_text)
         self.assertIn('"L1 元件候選") verification_evidence_level=L1', verify_text)
         self.assertIn(
             'export VERIFICATION_EVIDENCE_LEVEL="${verification_evidence_level}"',
             verify_text,
         )
+        common_position = verify_text.index('"${verifier}" "$@"')
+        finalize_position = verify_text.index("--finalize-material-status")
+        readback_position = verify_text.rindex(
+            '"${policy_checker}" --phase material-evidence --evidence-source live'
+        )
+        self.assertLess(common_position, finalize_position)
+        self.assertLess(finalize_position, readback_position)
+        self.assertIn('rm -f "${material_evidence}"', verify_text)
         checker_text = POLICY_CHECKER.read_text(encoding="utf-8")
         self.assertIn('choices=("source-contract", "material-evidence")', checker_text)
         self.assertIn('"--read-only"', checker_text)
+        for required in (
+            '"sgdisk", "--verify"',
+            '"sfdisk", "--json"',
+            "installed_package_names",
+            "required_kernel_module_paths",
+            "armbianEnv.txt",
+            "validate_image_source_metadata",
+            "M1SUPER_MATERIAL_STATUS.json",
+        ):
+            self.assertIn(required, checker_text)
 
     def test_common_rockchip_builder_rejects_source_commit_races(self):
         text = ROCKCHIP_BUILD.read_text(encoding="utf-8")

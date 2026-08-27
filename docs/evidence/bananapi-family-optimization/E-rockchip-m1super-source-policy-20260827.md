@@ -47,6 +47,10 @@ Armbian 韌體來源與引用現在同時固定為 `https://github.com/armbian/f
 
 守門分為兩個階段。`source-contract` 只驗證可重建所需的固定來源與現行契約，不讀取舊輸出，因此 L2 狀態下刪除 `output/` 仍可從固定來源重新建置；`material-evidence` 才要求完整 IMG、XZ、狀態與清單，並直接核對映像內容。validation 另保存不含候選狀態、證據本體及影像衍生欄位的規範投影 SHA-256；來源提交、現行契約與 L2 證據必須具有相同投影。這個設計避免 JSON 自我雜湊循環，也確保新增套件、核心選項或載荷要求時，舊 L2 證據不能繼續通過。
 
+正式流程進一步區分建置與促進。建置完成只寫入 `pending_verification`，並立即廢止舊的 M1 Super 物質證據；正式驗證會先執行共用唯讀守門，再從本次 `CANDIDATES.tsv`、完成狀態與實檔建立即時證據。政策重查全部通過後才原子寫入 `M1SUPER_MATERIAL_EVIDENCE.json` 與 `M1SUPER_MATERIAL_STATUS.json`，接著重新讀回兩者；任何階段失敗都會刪除證據並把狀態改為 `failed`，因此新映像不能沿用舊映像的 `complete`。
+
+物質重查會執行嚴格 `xz -t`、解壓串流同一性、GPT 主表與備份表 CRC／結構、分割區大小與類型、唯讀 ext4 標籤、必要套件、核心模組、核心與 U-Boot 來源中繼資料、`armbianEnv.txt`、DTB、U-Boot 偏移載荷及受控韌體檢查。IMG、XZ 與矩陣路徑只能位於固定 M1 Super 輸出目錄，不接受 `..`；DTB 宣稱路徑必須等於板級 `dtb`。建置與驗證入口也強制 `REQUIRE_SOURCE_DATE_EPOCH_METADATA=yes`，固定時間戳必須同時出現在 validation、產物中繼資料、建置狀態、驗證狀態與專用完成狀態。
+
 ## 專屬實作邊界
 
 Linux 專屬 DTS 從經原理圖證明的 Sige1 設計繼承，覆寫 Banana Pi model 與 compatible，並只額外啟用官方 40-pin 表與原理圖都能確認的 `I2C0`、`I2C1` 與 `SPI0`。`SPI0` 提供兩個 `spidev` 端點，頻率上限保守設為 24 MHz。

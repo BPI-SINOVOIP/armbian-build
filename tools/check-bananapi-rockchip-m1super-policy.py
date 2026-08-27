@@ -10,6 +10,7 @@ import shutil
 import subprocess
 import tempfile
 from copy import deepcopy
+from datetime import datetime, timezone
 from pathlib import Path
 
 
@@ -37,6 +38,9 @@ RKBIN_STATUS = OUTPUT_DIR / "RKBIN_STATUS.json"
 RKBIN_EVIDENCE = OUTPUT_DIR / "RKBIN_EVIDENCE.tsv"
 UBOOT_PAYLOAD_EVIDENCE = OUTPUT_DIR / "UBOOT_PAYLOAD_EVIDENCE.tsv"
 FINAL_CONFIG_EVIDENCE = OUTPUT_DIR / "FINAL_CONFIG_EVIDENCE.tsv"
+VERIFICATION_MANIFEST = OUTPUT_DIR / "VERIFICATION.tsv"
+MATERIAL_EVIDENCE = OUTPUT_DIR / "M1SUPER_MATERIAL_EVIDENCE.json"
+MATERIAL_STATUS = OUTPUT_DIR / "M1SUPER_MATERIAL_STATUS.json"
 METADATA = OUTPUT_DIR / "bananapim1super/artifact.metadata.txt"
 
 EXPECTED_COMPONENT_DTB_SHA256 = (
@@ -144,6 +148,40 @@ def validate_contract_projection(policy: dict, require_evidence_binding: bool) -
         )
 
 
+def validate_linux_dtb_claim(policy: dict, evidence: dict) -> None:
+    board = policy["boards"]["bananapim1super"]
+    require(
+        evidence.get("linux_dtb", {}).get("path") == board["dtb"],
+        "L2 Linux DTB 宣稱路徑與板級契約不符",
+    )
+    require(
+        evidence.get("linux_dtb", {}).get("sha256") == board["image_dtb_sha256"],
+        "L2 Linux DTB 雜湊與板級契約不符",
+    )
+
+
+def validate_source_date_epoch_binding(
+    policy: dict,
+    evidence: dict,
+    completion: dict,
+    verification: dict,
+    metadata: dict[str, str] | None = None,
+) -> None:
+    expected = policy["source_date_epoch"]
+    require(evidence.get("source_date_epoch") == expected, "L2 證據固定時間戳不符")
+    require(
+        completion.get("source_date_epoch") == expected, "L2 建置狀態固定時間戳不符"
+    )
+    require(
+        verification.get("source_date_epoch") == expected, "L2 驗證狀態固定時間戳不符"
+    )
+    if metadata is not None:
+        require(
+            metadata.get("source_date_epoch") == str(expected),
+            "L2 產物中繼資料固定時間戳不符",
+        )
+
+
 def load_json(path: Path, description: str) -> dict:
     require(path.is_file(), f"缺少 {description}：{display_path(path)}")
     with path.open(encoding="utf-8") as stream:
@@ -165,8 +203,40 @@ def load_metadata(path: Path) -> dict[str, str]:
 
 def resolve_artifact(relative: object, description: str) -> Path:
     require(isinstance(relative, str) and relative, f"{description} 路徑無效")
+    require("\\" not in relative, f"{description} 路徑含有非 POSIX 分隔符")
+    segments = relative.split("/")
+    require(
+        all(segment not in {"", ".", ".."} for segment in segments),
+        f"{description} 路徑含有不允許的區段",
+    )
     path = (ROOT / relative).resolve()
-    require(path.is_relative_to(ROOT.resolve()), f"{description} 路徑逸出儲存庫")
+    require(
+        path.is_relative_to(OUTPUT_DIR.resolve()),
+        f"{description} 路徑不在固定 M1 Super 輸出目錄",
+    )
+    require(
+        path.parent == (OUTPUT_DIR / "bananapim1super").resolve(),
+        f"{description} 路徑不在固定板卡產物目錄",
+    )
+    require(path.is_file(), f"缺少 {description}：{relative}")
+    return path
+
+
+def resolve_matrix_artifact(relative: object, description: str) -> Path:
+    require(isinstance(relative, str) and relative, f"{description} 路徑無效")
+    require("\\" not in relative, f"{description} 路徑含有非 POSIX 分隔符")
+    segments = relative.split("/")
+    require(
+        len(segments) == 2
+        and segments[0] == "bananapim1super"
+        and all(segment not in {"", ".", ".."} for segment in segments),
+        f"{description} 路徑不在固定板卡產物目錄",
+    )
+    path = (OUTPUT_DIR / relative).resolve()
+    require(
+        path.parent == (OUTPUT_DIR / "bananapim1super").resolve(),
+        f"{description} 路徑逸出固定輸出目錄",
+    )
     require(path.is_file(), f"缺少 {description}：{relative}")
     return path
 
@@ -198,6 +268,14 @@ def load_tsv(
 def validate_xz_stream_matches_image(
     image: Path, archive: Path, evidence: dict
 ) -> None:
+    require(shutil.which("xz") is not None, "缺少嚴格 XZ 結構驗證命令：xz")
+    structure_check = subprocess.run(
+        ["xz", "-t", "--", str(archive)],
+        check=False,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
+    require(structure_check.returncode == 0, "L2 XZ 結構、結尾或校驗碼不符")
     try:
         with lzma.open(archive, "rb") as stream:
             decoded_size, decoded_sha256 = sha256_stream(stream)
@@ -332,11 +410,152 @@ def validate_rkbin_manifest(policy: dict) -> None:
     require(actual == expected, "RKBin 證據清單與固定 blob 契約不符")
 
 
+def validate_gpt_contract(policy: dict, image: Path) -> dict:
+    for command in ("sfdisk", "sgdisk"):
+        require(shutil.which(command) is not None, f"缺少 GPT 驗證命令：{command}")
+    verification = subprocess.run(
+        ["sgdisk", "--verify", str(image)],
+        check=False,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        text=True,
+    )
+    require(
+        verification.returncode == 0 and "No problems found" in verification.stdout,
+        "GPT 主表、備份表或 CRC 驗證失敗",
+    )
+    partition_table = json.loads(
+        subprocess.check_output(["sfdisk", "--json", str(image)], text=True)
+    ).get("partitiontable", {})
+    board = policy["boards"]["bananapim1super"]
+    require(partition_table.get("label") == "gpt", "映像分割表不是 GPT")
+    require(partition_table.get("unit") == "sectors", "GPT 單位不是 sectors")
+    require(
+        partition_table.get("sectorsize") == board["logical_sector_size"],
+        "GPT 邏輯 sector 大小不符",
+    )
+    partitions = partition_table.get("partitions", [])
+    require(len(partitions) == 1, "GPT 分割區數量不符")
+    partition = partitions[0]
+    expected_size = int(board["required_partitions"][0].rsplit(":", 1)[1])
+    expected_type = board["required_partition_types"][0].split(":", 1)[1]
+    require(
+        partition.get("start") == board["root_partition_start_sector"],
+        "GPT 根分割區起始 sector 不符",
+    )
+    require(partition.get("size") == expected_size, "GPT 根分割區大小不符")
+    require(
+        str(partition.get("type", "")).lower() == expected_type.lower(),
+        "GPT 根分割區類型不符",
+    )
+    require(partition.get("name") == board["partition_name"], "GPT 根分割區名稱不符")
+    return {
+        "crc_and_structure_verified": True,
+        "label": "gpt",
+        "logical_sector_size": board["logical_sector_size"],
+        "root_start_sector": partition["start"],
+        "root_size_sectors": partition["size"],
+        "root_type": str(partition["type"]).lower(),
+        "root_name": partition["name"],
+    }
+
+
+def installed_package_names(status_path: Path) -> set[str]:
+    require(status_path.is_file(), "映像缺少 dpkg 狀態資料庫")
+    installed: set[str] = set()
+    for paragraph in status_path.read_text(encoding="utf-8", errors="strict").split(
+        "\n\n"
+    ):
+        fields: dict[str, str] = {}
+        current = ""
+        for line in paragraph.splitlines():
+            if line.startswith((" ", "\t")) and current:
+                fields[current] += " " + line.strip()
+            elif ": " in line:
+                current, value = line.split(": ", 1)
+                fields[current] = value
+            else:
+                current = ""
+        if fields.get("Status") != "install ok installed":
+            continue
+        if fields.get("Package"):
+            installed.add(fields["Package"])
+        for provided in fields.get("Provides", "").split(","):
+            name = re.sub(r"\s*\(.*", "", provided).strip()
+            if name:
+                installed.add(name)
+    return installed
+
+
+def require_exact_line(path: Path, expected: str, description: str) -> None:
+    require(path.is_file(), f"映像缺少{description}")
+    lines = path.read_text(encoding="utf-8", errors="strict").splitlines()
+    require(lines.count(expected) == 1, f"{description}缺少唯一固定欄位：{expected}")
+
+
+def validate_image_source_metadata(policy: dict, mount_dir: Path) -> dict:
+    kernel_metadata = list(
+        (mount_dir / "usr/lib").glob("**/linux-image-*/armbian-kernel-metadata.sh")
+    )
+    require(len(kernel_metadata) == 1, "映像缺少唯一 Linux 來源中繼資料")
+    kernel_path = kernel_metadata[0]
+    require_exact_line(
+        kernel_path,
+        f'declare KERNEL_GIT_SOURCE="{policy["linux_source"]}"',
+        " Linux 來源中繼資料",
+    )
+    require_exact_line(
+        kernel_path,
+        f'declare KERNEL_GIT_BRANCH="{policy["linux_ref"]}"',
+        " Linux 來源中繼資料",
+    )
+    require_exact_line(
+        kernel_path,
+        f'declare KERNEL_GIT_REVISION="{policy["linux_commit"]}"',
+        " Linux 來源中繼資料",
+    )
+
+    board = policy["boards"]["bananapim1super"]
+    uboot_metadata = (
+        mount_dir / "usr/lib/linux-u-boot-vendor-bananapim1super/u-boot-metadata.sh"
+    )
+    for expected in (
+        f'declare UBOOT_GIT_SOURCE="{board["uboot_git_source"]}"',
+        f'declare UBOOT_GIT_BRANCH="{board["uboot_git_ref"]}"',
+        f'declare UBOOT_GIT_REVISION="{board["uboot_revision"]}"',
+        f'declare UBOOT_RKBIN_GIT_SOURCE="{policy["rkbin_source"]}"',
+        f'declare UBOOT_RKBIN_GIT_BRANCH="{policy["rkbin_ref"]}"',
+        f'declare UBOOT_RKBIN_GIT_REVISION="{policy["rkbin_commit"]}"',
+        'declare UBOOT_PARTITION_TYPE="gpt"',
+    ):
+        require_exact_line(uboot_metadata, expected, " U-Boot 來源中繼資料")
+    return {
+        "linux_source": policy["linux_source"],
+        "linux_ref": policy["linux_ref"],
+        "linux_commit": policy["linux_commit"],
+        "uboot_source": board["uboot_git_source"],
+        "uboot_ref": board["uboot_git_ref"],
+        "uboot_commit": board["uboot_revision"],
+        "rkbin_source": policy["rkbin_source"],
+        "rkbin_ref": policy["rkbin_ref"],
+        "rkbin_commit": policy["rkbin_commit"],
+    }
+
+
 def validate_read_only_rootfs(
     policy: dict, image: Path, expected_files: dict[str, str]
-) -> None:
-    for command in ("findmnt", "losetup", "lsblk", "mount", "sudo", "umount"):
+) -> dict:
+    for command in (
+        "blkid",
+        "findmnt",
+        "losetup",
+        "lsblk",
+        "mount",
+        "sudo",
+        "umount",
+    ):
         require(shutil.which(command) is not None, f"缺少唯讀映像驗證命令：{command}")
+    gpt_summary = validate_gpt_contract(policy, image)
     temporary_root = ROOT / ".tmp"
     temporary_root.mkdir(exist_ok=True)
     loop_device = ""
@@ -383,6 +602,22 @@ def validate_read_only_rootfs(
             ]
             require(len(partitions) >= partition_number, "IMG 缺少根分割區")
             partition = partitions[partition_number - 1]
+            blkid_output = subprocess.check_output(
+                ["sudo", "-n", "blkid", "-p", "-o", "export", partition],
+                text=True,
+            )
+            blkid_fields = dict(
+                line.split("=", 1) for line in blkid_output.splitlines() if "=" in line
+            )
+            board = policy["boards"]["bananapim1super"]
+            require(
+                blkid_fields.get("TYPE") == board["root_partition_filesystem_type"],
+                "根分割區檔案系統型別不符",
+            )
+            require(
+                blkid_fields.get("LABEL") == board["root_partition_label"],
+                "根分割區標籤不符",
+            )
             subprocess.run(
                 [
                     "sudo",
@@ -424,6 +659,79 @@ def validate_read_only_rootfs(
                     sha256_file(path) == expected_sha256,
                     f"映像受控內容雜湊不符：/{relative}",
                 )
+            installed = installed_package_names(mount_dir / "var/lib/dpkg/status")
+            missing_packages = sorted(set(policy["common_packages"]) - installed)
+            require(
+                not missing_packages, f"映像缺少必要套件：{' '.join(missing_packages)}"
+            )
+
+            module_matches: dict[str, str] = {}
+            for required_module in sorted(policy["required_kernel_module_paths"]):
+                matches = []
+                for modules_root in (mount_dir / "lib/modules").iterdir():
+                    base = modules_root / required_module
+                    matches.extend(
+                        path
+                        for path in (base, Path(f"{base}.xz"), Path(f"{base}.zst"))
+                        if path.is_file()
+                    )
+                require(
+                    len(matches) == 1,
+                    f"映像必要核心模組數量不符：{required_module}",
+                )
+                module_matches[required_module] = str(matches[0].relative_to(mount_dir))
+
+            kernel_candidates = [
+                path
+                for path in (
+                    mount_dir / "boot/Image",
+                    mount_dir / "boot/zImage",
+                    mount_dir / "boot/uImage",
+                )
+                if path.is_file() and path.stat().st_size > 0
+            ]
+            require(len(kernel_candidates) == 1, "映像缺少唯一可用核心映像")
+            initrd = mount_dir / "boot/uInitrd"
+            require(initrd.is_file() and initrd.stat().st_size > 0, "映像缺少 uInitrd")
+            armbian_env = mount_dir / "boot/armbianEnv.txt"
+            require(armbian_env.is_file(), "映像缺少 armbianEnv.txt")
+            env_lines = armbian_env.read_text(
+                encoding="utf-8", errors="strict"
+            ).splitlines()
+            expected_overlay = f"overlay_prefix={board['overlay_prefix']}"
+            require(
+                env_lines.count(expected_overlay) == 1, "armbianEnv overlay_prefix 不符"
+            )
+            fdt_lines = [line for line in env_lines if line.startswith("fdtfile=")]
+            allowed_fdt = {
+                f"fdtfile={board['dtb']}",
+                f"fdtfile={Path(board['dtb']).name}",
+            }
+            require(
+                len(fdt_lines) <= 1 and all(line in allowed_fdt for line in fdt_lines),
+                "armbianEnv fdtfile 覆寫不符",
+            )
+            source_summary = validate_image_source_metadata(policy, mount_dir)
+            return {
+                "gpt": gpt_summary,
+                "rootfs": {
+                    "filesystem": blkid_fields["TYPE"],
+                    "label": blkid_fields["LABEL"],
+                    "read_only": True,
+                },
+                "packages": sorted(policy["common_packages"]),
+                "kernel_modules": module_matches,
+                "boot": {
+                    "configuration": board["boot_configuration"],
+                    "kernel": str(kernel_candidates[0].relative_to(mount_dir)),
+                    "initrd": "boot/uInitrd",
+                    "overlay_prefix": board["overlay_prefix"],
+                    "fdtfile": fdt_lines[0].removeprefix("fdtfile=")
+                    if fdt_lines
+                    else None,
+                },
+                "source_metadata": source_summary,
+            }
         except subprocess.CalledProcessError as error:
             raise SystemExit(
                 "BPI-M1 Super 政策守門失敗：唯讀映像檢查命令執行失敗"
@@ -621,12 +929,175 @@ def validate_candidate_state(
         )
 
 
-def validate_l2_material_evidence(policy: dict) -> None:
-    if policy.get("candidate_level") != "L2 內部軟體候選":
-        return
+def load_candidate_row() -> dict[str, str]:
+    rows = load_tsv(
+        MATRIX,
+        [
+            "board",
+            "release",
+            "profile",
+            "raw_size",
+            "raw_sha256",
+            "xz_size",
+            "xz_sha256",
+            "img_path",
+            "xz_path",
+            "source_commit",
+            "uboot_tag",
+        ],
+        "候選矩陣",
+    )
+    require(
+        len(rows) == 1 and rows[0]["board"] == "bananapim1super",
+        "候選矩陣板卡集合不符",
+    )
+    return rows[0]
 
-    evidence = policy["image_build_evidence"]
+
+def load_live_material_evidence(policy: dict) -> dict:
+    row = load_candidate_row()
+    image = resolve_matrix_artifact(row["img_path"], "L2 IMG")
+    archive = resolve_matrix_artifact(row["xz_path"], "L2 XZ")
+    completion = load_json(COMPLETION_STATUS, "建置完成狀態")
+    verification = load_json(VERIFICATION_STATUS, "驗證完成狀態")
+    rkbin_status = load_json(RKBIN_STATUS, "RKBin 完成狀態")
+    require(completion.get("status") == "complete", "建置完成狀態不是 complete")
+    require(verification.get("status") == "complete", "共用驗證狀態不是 complete")
+    require(rkbin_status.get("status") == "complete", "RKBin 狀態不是 complete")
+    board = policy["boards"]["bananapim1super"]
+    return {
+        "status": "complete",
+        "evidence_level": "L2",
+        "full_rootfs_image_built": True,
+        "hardware_tested": False,
+        "read_only_content_verified": True,
+        "source_commit": row["source_commit"],
+        "source_tree": completion.get("source_tree"),
+        "verifier_commit": verification.get("verifier_commit"),
+        "contract_projection_sha256": policy["contract_projection_sha256"],
+        "source_date_epoch": policy["source_date_epoch"],
+        "build_validation_config_sha256": completion.get("validation_config_sha256"),
+        "verification_config_sha256": verification.get("verification_config_sha256"),
+        "candidate_matrix_sha256": sha256_file(MATRIX),
+        "verification_manifest_sha256": sha256_file(VERIFICATION_MANIFEST),
+        "uboot_payload_manifest_sha256": sha256_file(UBOOT_PAYLOAD_EVIDENCE),
+        "final_config_manifest_sha256": sha256_file(FINAL_CONFIG_EVIDENCE),
+        "rkbin_commit": rkbin_status.get("rkbin_commit"),
+        "rkbin_manifest_sha256": sha256_file(RKBIN_EVIDENCE),
+        "verified_utc": verification.get("verified_utc"),
+        "image": {
+            "path": str(image.relative_to(ROOT)),
+            "size": int(row["raw_size"]),
+            "sha256": row["raw_sha256"],
+        },
+        "archive": {
+            "path": str(archive.relative_to(ROOT)),
+            "size": int(row["xz_size"]),
+            "sha256": row["xz_sha256"],
+        },
+        "linux_dtb": {
+            "path": board["dtb"],
+            "sha256": board["image_dtb_sha256"],
+        },
+    }
+
+
+def validate_verification_manifest() -> str:
+    rows = load_tsv(
+        VERIFICATION_MANIFEST,
+        ["board", "identity", "read_only_content", "evidence_level"],
+        "共用驗證清單",
+    )
+    require(
+        rows
+        == [
+            {
+                "board": "bananapim1super",
+                "identity": "pass",
+                "read_only_content": "pass",
+                "evidence_level": "L2",
+            }
+        ],
+        "共用驗證清單結果不符",
+    )
+    return sha256_file(VERIFICATION_MANIFEST)
+
+
+def material_record_bytes(record: dict) -> bytes:
+    return (
+        json.dumps(record, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+        + "\n"
+    ).encode("utf-8")
+
+
+def write_material_completion(record: dict) -> None:
+    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    evidence_temporary = Path(f"{MATERIAL_EVIDENCE}.partial")
+    evidence_temporary.write_bytes(material_record_bytes(record))
+    os.replace(evidence_temporary, MATERIAL_EVIDENCE)
+    status = {
+        "status": "complete",
+        "evidence_level": "L2",
+        "source_commit": record["source_commit"],
+        "verifier_commit": record["verifier_commit"],
+        "contract_projection_sha256": record["contract_projection_sha256"],
+        "source_date_epoch": record["source_date_epoch"],
+        "common_verification_status_sha256": record[
+            "common_verification_status_sha256"
+        ],
+        "material_evidence_sha256": sha256_file(MATERIAL_EVIDENCE),
+        "finalized_utc": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+    }
+    status_temporary = Path(f"{MATERIAL_STATUS}.partial")
+    status_temporary.write_text(
+        json.dumps(status, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
+    )
+    os.replace(status_temporary, MATERIAL_STATUS)
+
+
+def validate_material_completion(record: dict) -> None:
+    stored_evidence = load_json(MATERIAL_EVIDENCE, "M1 Super 物質證據")
+    require(stored_evidence == record, "M1 Super 物質證據與實際重查結果不符")
+    status = load_json(MATERIAL_STATUS, "M1 Super 物質完成狀態")
+    expected = {
+        "status": "complete",
+        "evidence_level": "L2",
+        "source_commit": record["source_commit"],
+        "verifier_commit": record["verifier_commit"],
+        "contract_projection_sha256": record["contract_projection_sha256"],
+        "source_date_epoch": record["source_date_epoch"],
+        "common_verification_status_sha256": record[
+            "common_verification_status_sha256"
+        ],
+        "material_evidence_sha256": sha256_file(MATERIAL_EVIDENCE),
+    }
+    for key, value in expected.items():
+        require(status.get(key) == value, f"M1 Super 物質完成狀態 {key} 不符")
+    require(
+        isinstance(status.get("finalized_utc"), str) and status["finalized_utc"],
+        "M1 Super 物質完成狀態缺少完成時間",
+    )
+
+
+def validate_l2_material_evidence(
+    policy: dict, evidence_source: str = "validation"
+) -> dict:
+    if policy.get("candidate_level") != "L2 內部軟體候選":
+        return {}
+
+    evidence = (
+        load_live_material_evidence(policy)
+        if evidence_source == "live"
+        else deepcopy(policy["image_build_evidence"])
+    )
+    evidence.setdefault("source_date_epoch", policy["source_date_epoch"])
+    evidence.setdefault(
+        "verification_manifest_sha256", sha256_file(VERIFICATION_MANIFEST)
+    )
     source_commit = evidence["source_commit"]
+    verifier_commit = evidence.get("verifier_commit")
+    require_commit(source_commit, "L2 來源提交格式不符")
+    require_commit(verifier_commit, "L2 驗證器提交格式不符")
     source_tree = evidence.get("source_tree")
     require_commit(source_tree, "L2 來源 tree 格式不符")
     commit_check = subprocess.run(
@@ -664,6 +1135,27 @@ def validate_l2_material_evidence(policy: dict) -> None:
         evidence["contract_projection_sha256"] == policy["contract_projection_sha256"],
         "L2 證據未綁定現行規範投影",
     )
+    verifier_validation = subprocess.check_output(
+        [
+            "git",
+            "show",
+            f"{verifier_commit}:config/validation/{CONFIG.name}",
+        ],
+        cwd=ROOT,
+    )
+    require(
+        hashlib.sha256(verifier_validation).hexdigest()
+        == evidence["verification_config_sha256"],
+        "L2 驗證 validation 不屬於記錄的驗證器提交",
+    )
+    verifier_policy = json.loads(verifier_validation.decode("utf-8"))
+    require(
+        contract_projection_sha256(verifier_policy)
+        == evidence["contract_projection_sha256"],
+        "L2 驗證器的規範投影與建置來源不一致",
+    )
+    board = policy["boards"]["bananapim1super"]
+    validate_linux_dtb_claim(policy, evidence)
 
     image = resolve_artifact(evidence["image"].get("path"), "L2 IMG")
     archive = resolve_artifact(evidence["archive"].get("path"), "L2 XZ")
@@ -673,18 +1165,11 @@ def validate_l2_material_evidence(policy: dict) -> None:
         require(sha256_file(path) == artifact["sha256"], f"L2 {name} 雜湊與實檔不符")
     validate_xz_stream_matches_image(image, archive, evidence)
 
-    require(MATRIX.is_file(), "L2 缺少候選矩陣")
     require(
         sha256_file(MATRIX) == evidence["candidate_matrix_sha256"],
         "L2 候選矩陣雜湊不符",
     )
-    with MATRIX.open(encoding="utf-8", newline="") as stream:
-        rows = list(csv.DictReader(stream, delimiter="\t"))
-    require(
-        len(rows) == 1 and rows[0].get("board") == "bananapim1super",
-        "L2 候選矩陣板卡集合不符",
-    )
-    row = rows[0]
+    row = load_candidate_row()
     require(row.get("source_commit") == source_commit, "L2 候選矩陣來源提交不符")
     require(
         row.get("raw_size") == str(image.stat().st_size), "L2 候選矩陣 IMG 大小不符"
@@ -699,10 +1184,12 @@ def validate_l2_material_evidence(policy: dict) -> None:
         row.get("xz_sha256") == evidence["archive"]["sha256"], "L2 候選矩陣 XZ 雜湊不符"
     )
     require(
-        (OUTPUT_DIR / row["img_path"]).resolve() == image, "L2 候選矩陣 IMG 路徑不符"
+        resolve_matrix_artifact(row["img_path"], "候選矩陣 IMG") == image,
+        "L2 候選矩陣 IMG 路徑不符",
     )
     require(
-        (OUTPUT_DIR / row["xz_path"]).resolve() == archive, "L2 候選矩陣 XZ 路徑不符"
+        resolve_matrix_artifact(row["xz_path"], "候選矩陣 XZ") == archive,
+        "L2 候選矩陣 XZ 路徑不符",
     )
 
     completion = load_json(COMPLETION_STATUS, "建置完成狀態")
@@ -744,6 +1231,10 @@ def validate_l2_material_evidence(policy: dict) -> None:
     require(
         verification.get("rkbin_manifest_sha256") == evidence["rkbin_manifest_sha256"],
         "L2 驗證狀態 RKBin 清單不符",
+    )
+    require(
+        validate_verification_manifest() == evidence["verification_manifest_sha256"],
+        "L2 共用驗證清單雜湊不符",
     )
 
     require(rkbin_status.get("status") == "complete", "L2 RKBin 狀態不是 complete")
@@ -791,7 +1282,7 @@ def validate_l2_material_evidence(policy: dict) -> None:
             f"受控映像路徑不是絕對路徑：{installed_path}",
         )
         rootfs_files[installed_path.removeprefix("/")] = expected_sha256
-    validate_read_only_rootfs(policy, image, rootfs_files)
+    content_summary = validate_read_only_rootfs(policy, image, rootfs_files)
 
     metadata = load_metadata(METADATA)
     expected_metadata = {
@@ -804,6 +1295,7 @@ def validate_l2_material_evidence(policy: dict) -> None:
         "source_commit": source_commit,
         "source_tree": source_tree,
         "validation_config_sha256": evidence["build_validation_config_sha256"],
+        "source_date_epoch": str(policy["source_date_epoch"]),
         "raw_size": str(evidence["image"]["size"]),
         "raw_sha256": evidence["image"]["sha256"],
         "xz_size": str(evidence["archive"]["size"]),
@@ -811,6 +1303,48 @@ def validate_l2_material_evidence(policy: dict) -> None:
     }
     for key, expected in expected_metadata.items():
         require(metadata.get(key) == expected, f"L2 產物中繼資料 {key} 不符")
+    validate_source_date_epoch_binding(
+        policy, evidence, completion, verification, metadata
+    )
+    source_metadata = {
+        "linux_git_source": policy["linux_source"],
+        "linux_git_ref": policy["linux_ref"],
+        "linux_revision": policy["linux_commit"],
+        "rkbin_git_source": policy["rkbin_source"],
+        "rkbin_git_ref": policy["rkbin_ref"],
+        "rkbin_revision": policy["rkbin_commit"],
+        "firmware_git_source": policy["firmware_source"],
+        "firmware_git_ref": policy["firmware_ref"],
+        "firmware_revision": policy["firmware_commit"],
+    }
+    board_metadata = {
+        "uboot_git_source": board["uboot_git_source"],
+        "uboot_git_ref": board["uboot_git_ref"],
+        "uboot_revision": board["uboot_revision"],
+    }
+    for key, expected in (source_metadata | board_metadata).items():
+        require(metadata.get(key) == expected, f"L2 來源中繼資料 {key} 不符")
+
+    return {
+        "schema_version": 1,
+        "status": "complete",
+        "evidence_level": "L2",
+        "source_commit": source_commit,
+        "source_tree": source_tree,
+        "verifier_commit": verifier_commit,
+        "contract_projection_sha256": evidence["contract_projection_sha256"],
+        "source_date_epoch": policy["source_date_epoch"],
+        "image": evidence["image"],
+        "archive": evidence["archive"],
+        "linux_dtb": evidence["linux_dtb"],
+        "candidate_matrix_sha256": evidence["candidate_matrix_sha256"],
+        "common_verification_manifest_sha256": evidence["verification_manifest_sha256"],
+        "common_verification_status_sha256": sha256_file(VERIFICATION_STATUS),
+        "uboot_payload_manifest_sha256": evidence["uboot_payload_manifest_sha256"],
+        "final_config_manifest_sha256": evidence["final_config_manifest_sha256"],
+        "rkbin_manifest_sha256": evidence["rkbin_manifest_sha256"],
+        "checks": content_summary,
+    }
 
 
 def validate_firmware_contract(policy: dict, board_text: str) -> None:
@@ -888,6 +1422,17 @@ def main() -> None:
         default="material-evidence",
         help="建置前只檢查來源契約；提升或稽核時檢查完整物質證據",
     )
+    parser.add_argument(
+        "--evidence-source",
+        choices=("validation", "live"),
+        default="validation",
+        help="使用已發布 validation 證據，或從本次候選矩陣與完成狀態即時建立證據",
+    )
+    parser.add_argument(
+        "--finalize-material-status",
+        action="store_true",
+        help="物質重查全部通過後原子寫入本次證據與完成狀態",
+    )
     arguments = parser.parse_args()
     with CONFIG.open(encoding="utf-8") as stream:
         policy = json.load(stream)
@@ -907,11 +1452,25 @@ def main() -> None:
         os.environ.get("HARDWARE_CLAIMS", "no").lower() not in {"1", "true", "yes"},
         "此候選禁止硬體通過聲明",
     )
-    require_material_binding = arguments.phase == "material-evidence"
+    require(
+        not arguments.finalize_material_status
+        or (
+            arguments.phase == "material-evidence"
+            and arguments.evidence_source == "live"
+        ),
+        "只有即時物質驗證可以寫入完成狀態",
+    )
+    material_phase = arguments.phase == "material-evidence"
+    require_material_binding = (
+        material_phase and arguments.evidence_source == "validation"
+    )
     validate_contract_projection(policy, require_material_binding)
     validate_candidate_state(policy, require_material_binding=require_material_binding)
-    if require_material_binding:
-        validate_l2_material_evidence(policy)
+    material_record = (
+        validate_l2_material_evidence(policy, arguments.evidence_source)
+        if material_phase
+        else {}
+    )
     with STATUS.open(encoding="utf-8") as stream:
         global_level = json.load(stream)["evidence"]["bananapim1super"]["level"]
     expected_global_level = "L1" if policy["candidate_level"] == "L1 元件候選" else "L2"
@@ -1033,7 +1592,12 @@ def main() -> None:
         "U-Boot defconfig 不得保留 H28K DTS",
     )
 
-    phase_text = "完整物質證據" if require_material_binding else "建置前來源契約"
+    if material_phase:
+        if arguments.finalize_material_status:
+            write_material_completion(material_record)
+        validate_material_completion(material_record)
+
+    phase_text = "完整物質證據" if material_phase else "建置前來源契約"
     print(
         f"BPI-M1 Super {policy['candidate_level']} {phase_text}、授權與發布政策守門通過。"
     )
