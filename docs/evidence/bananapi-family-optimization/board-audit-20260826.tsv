@@ -2,7 +2,7 @@ board_id	status	board_name	family	architecture	kernel_targets	preferred_target	v
 bananapi	conf	Banana Pi	sun7i	armhf	current,edge,legacy	current	yes	B	L2	Bananapi_defconfig			執行 UART、啟動與基本周邊實機驗證
 bananapi6204	wip	Banana Pi BPI-6204	sun8i	armhf	legacy	legacy	yes	C	L2	Bananapi_M2_Ultra_defconfig	allwinner/sun8i-r40-bpi-6204.dtb		執行 UART、啟動與基本周邊實機驗證
 bananapiaim7	wip	Banana Pi AIM7	rockchip-rk3588	arm64	vendor	vendor	yes	E	L1	bananapi-aim7-rk3588_defconfig	rockchip/rk3588-bananapi-aim7.dtb		完成映像內容與來源同一性守門
-bananapicm2	wip	Banana Pi CM2	rockchip64	arm64	current,edge	current	yes	E	L0	bpi-r2-pro-rk3568_defconfig	rockchip/rk3568-bpi-r2-pro.dtb		確認建置鏈並建立 Trixie CLI 候選
+bananapicm2	wip	Banana Pi CM2（R2 Pro 軟體參考）	rockchip64	arm64	current	current	yes	E	L0	bpi-r2-pro-rk3568_defconfig	rockchip/rk3568-bpi-r2-pro.dtb		確認建置鏈並建立 Trixie CLI 候選
 bananapicm4io	conf	Banana Pi CM4IO	meson-g12b	arm64	current,edge	current	yes	A	L2	bananapi-cm4-cm4io_defconfig	amlogic/meson-g12b-bananapi-cm4-cm4io.dtb		執行 UART、啟動與基本周邊實機驗證
 bananapicm5pro	wip	Banana Pi CM5 Pro	rk35xx	arm64	vendor	vendor	yes	E	L0	armsom-cm5-io-rk3576_defconfig	rockchip/rk3576-armsom-cm5-io.dtb	KERNEL_TEST_TARGET	確認建置鏈並建立 Trixie CLI 候選
 bananapicm6	wip	BananaPi BPI-CM6	spacemit	riscv64	legacy	legacy	yes	F	L2		spacemit/k1-x_bpi_cm6.dtb		執行 UART、啟動與基本周邊實機驗證
