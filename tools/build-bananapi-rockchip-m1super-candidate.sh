@@ -4,9 +4,16 @@ set -euo pipefail
 repo_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 builder="${repo_dir}/tools/build-bananapi-rockchip-candidates.sh"
 policy_checker="${repo_dir}/tools/check-bananapi-rockchip-m1super-policy.py"
+fixed_output_dir="${repo_dir}/output/images/2026.08/bananapi-rockchip-rk3528-m1super-trixie-vendor-cli"
+requested_output_dir="${OUTPUT_DIR:-}"
+
+if [[ -n "${requested_output_dir}" && "$(realpath -m -- "${requested_output_dir}")" != "$(realpath -m -- "${fixed_output_dir}")" ]]; then
+	echo "BPI-M1 Super 只允許固定輸出目錄：${fixed_output_dir}" >&2
+	exit 1
+fi
 
 export VALIDATION_CONFIG="${repo_dir}/config/validation/bananapi-rockchip-rk3528-m1super-vendor.json"
-export OUTPUT_DIR="${repo_dir}/output/images/2026.08/bananapi-rockchip-rk3528-m1super-trixie-vendor-cli"
+export OUTPUT_DIR="${fixed_output_dir}"
 export BOARDS="bananapim1super"
 export REQUIRE_SOURCE_DATE_EPOCH_METADATA=yes
 

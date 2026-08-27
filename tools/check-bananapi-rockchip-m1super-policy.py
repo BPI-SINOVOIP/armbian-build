@@ -1079,12 +1079,11 @@ def validate_material_completion(record: dict) -> None:
     )
 
 
-def validate_l2_material_evidence(
-    policy: dict, evidence_source: str = "validation"
-) -> dict:
+def validate_l2_material_evidence(policy: dict, evidence_source: str) -> dict:
     if policy.get("candidate_level") != "L2 內部軟體候選":
         return {}
 
+    require(evidence_source in {"historical", "live"}, "L2 證據來源無效")
     evidence = (
         load_live_material_evidence(policy)
         if evidence_source == "live"
@@ -1419,14 +1418,13 @@ def main() -> None:
     parser.add_argument(
         "--phase",
         choices=("source-contract", "material-evidence"),
-        default="material-evidence",
+        default="source-contract",
         help="建置前只檢查來源契約；提升或稽核時檢查完整物質證據",
     )
     parser.add_argument(
         "--evidence-source",
-        choices=("validation", "live"),
-        default="validation",
-        help="使用已發布 validation 證據，或從本次候選矩陣與完成狀態即時建立證據",
+        choices=("historical", "live"),
+        help="明確選擇已提交的歷史證據，或從本次候選矩陣與完成狀態即時建立證據",
     )
     parser.add_argument(
         "--finalize-material-status",
@@ -1445,12 +1443,22 @@ def main() -> None:
         not (BOARD.parent / "bananapim1super.csc").exists(), "不得建立未核准的社群板檔"
     )
     require(
-        os.environ.get("PUBLIC_RELEASE", "no").lower() not in {"1", "true", "yes"},
+        os.environ.get("PUBLIC_RELEASE", "no") == "no",
         "此候選禁止公開發布",
     )
     require(
-        os.environ.get("HARDWARE_CLAIMS", "no").lower() not in {"1", "true", "yes"},
+        os.environ.get("HARDWARE_CLAIMS", "no") == "no",
         "此候選禁止硬體通過聲明",
+    )
+    material_phase = arguments.phase == "material-evidence"
+    require(
+        (material_phase and arguments.evidence_source is not None)
+        or (not material_phase and arguments.evidence_source is None),
+        "物質驗證必須明確選擇 historical 或 live；來源契約不得指定物質證據",
+    )
+    require(
+        not material_phase or policy.get("candidate_level") == "L2 內部軟體候選",
+        "L1 校準狀態不得執行 L2 物質驗證",
     )
     require(
         not arguments.finalize_material_status
@@ -1460,9 +1468,8 @@ def main() -> None:
         ),
         "只有即時物質驗證可以寫入完成狀態",
     )
-    material_phase = arguments.phase == "material-evidence"
     require_material_binding = (
-        material_phase and arguments.evidence_source == "validation"
+        material_phase and arguments.evidence_source == "historical"
     )
     validate_contract_projection(policy, require_material_binding)
     validate_candidate_state(policy, require_material_binding=require_material_binding)
@@ -1473,8 +1480,15 @@ def main() -> None:
     )
     with STATUS.open(encoding="utf-8") as stream:
         global_level = json.load(stream)["evidence"]["bananapim1super"]["level"]
-    expected_global_level = "L1" if policy["candidate_level"] == "L1 元件候選" else "L2"
-    require(global_level == expected_global_level, "全域證據等級與 M1 Super 契約不一致")
+    if policy["candidate_level"] == "L1 元件候選":
+        require(global_level == "L1", "L1 契約必須對應全域 L1 證據等級")
+    elif material_phase and arguments.evidence_source == "historical":
+        require(global_level == "L2", "歷史 L2 稽核必須對應全域 L2 證據等級")
+    else:
+        require(
+            global_level in {"L1", "L2"},
+            "L2 正式重建期間的全域證據等級只能是 L1 或 L2",
+        )
     require(
         policy["firmware_redistribution_audit_complete"] is False,
         "韌體授權稽核不得標為完成",
@@ -1592,7 +1606,7 @@ def main() -> None:
         "U-Boot defconfig 不得保留 H28K DTS",
     )
 
-    if material_phase:
+    if material_phase and arguments.evidence_source == "live":
         if arguments.finalize_material_status:
             write_material_completion(material_record)
         validate_material_completion(material_record)

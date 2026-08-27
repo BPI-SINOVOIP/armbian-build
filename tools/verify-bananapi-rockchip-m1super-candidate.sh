@@ -5,7 +5,14 @@ repo_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 verifier="${repo_dir}/tools/verify-bananapi-rockchip-candidates.sh"
 policy_checker="${repo_dir}/tools/check-bananapi-rockchip-m1super-policy.py"
 validation_config="${repo_dir}/config/validation/bananapi-rockchip-rk3528-m1super-vendor.json"
-output_dir="${OUTPUT_DIR:-${repo_dir}/output/images/2026.08/bananapi-rockchip-rk3528-m1super-trixie-vendor-cli}"
+fixed_output_dir="${repo_dir}/output/images/2026.08/bananapi-rockchip-rk3528-m1super-trixie-vendor-cli"
+requested_output_dir="${OUTPUT_DIR:-}"
+
+if [[ -n "${requested_output_dir}" && "$(realpath -m -- "${requested_output_dir}")" != "$(realpath -m -- "${fixed_output_dir}")" ]]; then
+	echo "BPI-M1 Super 只允許固定輸出目錄：${fixed_output_dir}" >&2
+	exit 1
+fi
+output_dir="${fixed_output_dir}"
 status_file="${output_dir}/VERIFICATION_STATUS.json"
 material_status="${output_dir}/M1SUPER_MATERIAL_STATUS.json"
 material_evidence="${output_dir}/M1SUPER_MATERIAL_EVIDENCE.json"
@@ -140,8 +147,13 @@ with open(temporary, "w", encoding="utf-8") as stream:
 os.replace(temporary, path)
 PY
 
-"${policy_checker}" --phase material-evidence --evidence-source live --finalize-material-status
-"${policy_checker}" --phase material-evidence --evidence-source live
+if [[ "${candidate_level}" == "L2 內部軟體候選" ]]; then
+	"${policy_checker}" --phase material-evidence --evidence-source live --finalize-material-status
+	"${policy_checker}" --phase material-evidence --evidence-source live
+else
+	rm -f "${material_evidence}"
+	write_material_state calibration_complete "BPI-M1 Super L1 校準映像完成共用唯讀驗證；尚未建立正式 L2 物質證據"
+fi
 
 entry_state_active=no
 trap - EXIT

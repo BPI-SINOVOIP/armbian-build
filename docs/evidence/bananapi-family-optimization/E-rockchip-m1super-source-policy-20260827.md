@@ -2,7 +2,7 @@
 
 ## 結論
 
-本候選把 `bananapim1super.wip` 從 ArmSoM Sige1 板檔繼承與 Hinlink H28K U-Boot 身分，改成 Banana Pi M1 Super 專屬板檔、Linux DTS、U-Boot DTS 與 defconfig。第一次完整映像預檢揭露並修正建置期間來源提交競態；其後已從固定提交重新完整建置，通過 L1 與 L2 唯讀內容守門，目前為 `L2 內部軟體候選`。這不是公開發布版，也不代表任何實體板功能已通過。
+本候選把 `bananapim1super.wip` 從 ArmSoM Sige1 板檔繼承與 Hinlink H28K U-Boot 身分，改成 Banana Pi M1 Super 專屬板檔、Linux DTS、U-Boot DTS 與 defconfig。提交 `8c6533a10` 的歷史完整映像曾通過 L1 與 L2 唯讀內容守門；整合到現行全板最佳化分支後，為避免舊產物冒充新提交證據，中央狀態暫時回到 `L1 元件候選`，等待重新校準與正式重建。這不是公開發布版，也不代表任何實體板功能已通過。
 
 保留 `.wip` 的原因包含量產料號、韌體與預建載荷授權，以及實體儲存裝置、網路、顯示、影音與 40-pin 尚未完成跨板次驗證。現有映像必須維持內部測試用途，直到發布守門條件逐項解除。
 
@@ -41,11 +41,11 @@ Armbian 韌體來源與引用現在同時固定為 `https://github.com/armbian/f
 | `L1 元件候選` | `internal-component-only` | 必須不存在 | 否 | 否 |
 | `L2 內部軟體候選` | `internal-l2` | 必須為完成，且含完整映像 DTB 雜湊 | 否 | 否 |
 
-第一次完整預檢映像的來源證據不具原子性，因此只用於建立精確契約。修正後的正式映像從提交 `8c6533a10c3ec97e0565c46ef34ab857fca7d4d4` 完整重建，建置與驗證 validation SHA-256 均為 `2026b2786f523bcb158f6eb70674535d8e134df690b31a17e76b26d878412f1c`，並通過 L1 與 L2 守門；目前設定為 `L2 內部軟體候選`、`rootfs_image_built=true`，正式證據記於 `F-rockchip-m1super-L2-build-20260827.md`。專用驗證入口依候選層級產生 L1 或 L2 狀態。內部 L2 只代表固定來源完整映像通過 XZ 串流與唯讀軟體守門，不代表實機、量產或對外發布通過。
+第一次完整預檢映像的來源證據不具原子性，因此只用於建立精確契約。修正後的歷史正式映像從提交 `8c6533a10c3ec97e0565c46ef34ab857fca7d4d4` 完整重建，建置與驗證 validation SHA-256 均為 `2026b2786f523bcb158f6eb70674535d8e134df690b31a17e76b26d878412f1c`，並通過當時的 L1 與 L2 守門；該結果記於 `F-rockchip-m1super-L2-build-20260827.md`，但不能代表現行整合提交。現行 validation 設定為 `L1 元件候選`、`rootfs_image_built=false`，不攜帶正式映像證據。專用驗證入口依候選層級產生 L1 或 L2 狀態；內部 L2 只代表固定來源完整映像通過 XZ 串流與唯讀軟體守門，不代表實機、量產或對外發布通過。
 
-元件建置所得 Linux DTB 雜湊固定保存在 `component_build_evidence.linux_dtb.sha256` 與板級 `component_dtb_sha256`。第一次完整映像預檢把相同雜湊建立為拒絕式契約；正式映像再次驗證後，已設定 `image_build_evidence.linux_dtb.sha256` 與 `image_dtb_sha256`，並把範圍標為 `full-image-l2`。政策守門器會拒絕交叉組合，並直接核對 Git 建置提交、本機 IMG／XZ、候選矩陣及完成狀態，避免格式正確但不存在的假證據通過。
+元件建置所得 Linux DTB 雜湊固定保存在 `component_build_evidence.linux_dtb.sha256` 與板級 `component_dtb_sha256`。歷史正式映像驗證時曾設定 `image_build_evidence.linux_dtb.sha256` 與 `image_dtb_sha256`，並把範圍標為 `full-image-l2`；現行 L1 已把 `image_dtb_sha256` 重設為空值，範圍標為 `preflight-contract-l1`。新正式映像再次通過後，才能重新建立完整映像欄位。政策守門器會拒絕交叉組合，並直接核對 Git 建置提交、本機 IMG／XZ、候選矩陣及完成狀態，避免格式正確但不存在的假證據通過。
 
-守門分為兩個階段。`source-contract` 只驗證可重建所需的固定來源與現行契約，不讀取舊輸出，因此 L2 狀態下刪除 `output/` 仍可從固定來源重新建置；`material-evidence` 才要求完整 IMG、XZ、狀態與清單，並直接核對映像內容。validation 另保存不含候選狀態、證據本體及影像衍生欄位的規範投影 SHA-256；來源提交、現行契約與 L2 證據必須具有相同投影。這個設計避免 JSON 自我雜湊循環，也確保新增套件、核心選項或載荷要求時，舊 L2 證據不能繼續通過。
+守門分為兩個階段。預設 `source-contract` 只驗證可重建所需的固定來源與現行契約，不讀取舊輸出；`material-evidence` 必須明確選擇 `historical` 或 `live`，才要求完整 IMG、XZ、狀態與清單並直接核對映像內容。只有 `live` 可以寫入本次原子完成狀態，`historical` 永遠不能促進新候選。validation 另保存不含候選狀態、證據本體及影像衍生欄位的規範投影 SHA-256；來源提交、現行契約與 L2 證據必須具有相同投影。這個設計避免 JSON 自我雜湊循環，也確保新增套件、核心選項或載荷要求時，舊 L2 證據不能繼續通過。
 
 正式流程進一步區分建置與促進。建置完成只寫入 `pending_verification`，並立即廢止舊的 M1 Super 物質證據；正式驗證會先執行共用唯讀守門，再從本次 `CANDIDATES.tsv`、完成狀態與實檔建立即時證據。政策重查全部通過後才原子寫入 `M1SUPER_MATERIAL_EVIDENCE.json` 與 `M1SUPER_MATERIAL_STATUS.json`，接著重新讀回兩者；任何階段失敗都會刪除證據並把狀態改為 `failed`，因此新映像不能沿用舊映像的 `complete`。
 
@@ -93,7 +93,7 @@ L1 元件候選只允許證明以下事項：
 - U-Boot 不含 H28K model，載荷偏移不跨越根分割區。
 - 專用 OverlayFS 完整映像入口已完成一次預檢，證明建置鏈與唯讀內容可執行；因來源提交競態，該結果只可建立第二輪契約，不能視為正式 L2 證據。
 
-L1 不得證明完整映像建置成功。現行 L2 已補上完整映像的軟體內容證據，但仍不得證明開機成功、記憶體穩定、儲存壽命、網路吞吐、GPU／VPU 硬體加速、HDMI 相容性、USB OTG、40-pin 電氣安全或量產可用性。
+L1 不得證明現行提交已有正式完整映像。歷史 L2 曾補上舊提交的軟體內容證據，但仍不得證明開機成功、記憶體穩定、儲存壽命、網路吞吐、GPU／VPU 硬體加速、HDMI 相容性、USB OTG、40-pin 電氣安全或量產可用性。
 
 ## 解除發布阻擋
 

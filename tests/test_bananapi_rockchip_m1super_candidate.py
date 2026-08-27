@@ -2,6 +2,8 @@ import importlib.util
 import hashlib
 import json
 import lzma
+import os
+import subprocess
 import tempfile
 import unittest
 from pathlib import Path
@@ -108,11 +110,11 @@ class BananaPiM1SuperCandidateTests(unittest.TestCase):
         )
 
     def test_public_release_and_hardware_claims_are_blocked(self):
-        self.assertEqual(self.validation["candidate_level"], "L2 內部軟體候選")
-        self.assertEqual(self.validation["candidate_scope"], "internal-l2")
+        self.assertEqual(self.validation["candidate_level"], "L1 元件候選")
+        self.assertEqual(self.validation["candidate_scope"], "internal-component-only")
         self.assertTrue(self.validation["component_build_completed"])
-        self.assertTrue(self.validation["full_image_built"])
-        self.assertTrue(self.validation["rootfs_image_built"])
+        self.assertFalse(self.validation["full_image_built"])
+        self.assertFalse(self.validation["rootfs_image_built"])
         self.assertFalse(self.validation["candidate_public_release_approved"])
         self.assertFalse(self.validation["public_release_allowed"])
         self.assertFalse(self.validation["hardware_validation_complete"])
@@ -123,18 +125,14 @@ class BananaPiM1SuperCandidateTests(unittest.TestCase):
             self.validation["identity_evidence"]["wifi_bom_conflict_resolved"]
         )
 
-    def test_current_state_is_honest_internal_l2_with_material_evidence(self):
-        self.policy_checker.validate_contract_projection(self.validation, True)
+    def test_current_state_is_honest_l1_without_material_evidence(self):
+        self.policy_checker.validate_contract_projection(self.validation, False)
         self.policy_checker.validate_candidate_state(self.validation)
-        evidence = self.validation["image_build_evidence"]
-        self.assertEqual(evidence["evidence_level"], "L2")
-        self.assertTrue(evidence["read_only_content_verified"])
-        self.assertFalse(evidence["hardware_tested"])
+        self.assertNotIn("image_build_evidence", self.validation)
+        self.assertIsNone(self.board["image_dtb_sha256"])
         self.assertEqual(
-            self.board["image_dtb_sha256"],
-            "68c0d6c27d2802abee0b7ab4b0569581048b14fc651d55c103392d81e00f2eb6",
+            self.board["dtb_sha256_evidence_scope"], "preflight-contract-l1"
         )
-        self.assertEqual(self.board["dtb_sha256_evidence_scope"], "full-image-l2")
         self.assertEqual(
             self.board["component_dtb_sha256"],
             "68c0d6c27d2802abee0b7ab4b0569581048b14fc651d55c103392d81e00f2eb6",
@@ -143,12 +141,14 @@ class BananaPiM1SuperCandidateTests(unittest.TestCase):
 
     def test_source_contract_phase_does_not_require_existing_output(self):
         rebuild_policy = json.loads(json.dumps(self.validation))
-        rebuild_policy.pop("image_build_evidence")
-        rebuild_policy["full_image_built"] = False
-        rebuild_policy["rootfs_image_built"] = False
         self.policy_checker.validate_contract_projection(rebuild_policy, False)
+        self.policy_checker.validate_candidate_state(rebuild_policy)
+
+        promoted_policy = json.loads(json.dumps(rebuild_policy))
+        promoted_policy["candidate_level"] = "L2 內部軟體候選"
+        promoted_policy["candidate_scope"] = "internal-l2"
         self.policy_checker.validate_candidate_state(
-            rebuild_policy, require_material_binding=False
+            promoted_policy, require_material_binding=False
         )
         build_text = BUILD_ENTRY.read_text(encoding="utf-8")
         verify_text = VERIFY_ENTRY.read_text(encoding="utf-8")
@@ -167,6 +167,13 @@ class BananaPiM1SuperCandidateTests(unittest.TestCase):
             self.policy_checker.validate_contract_projection(forgotten_hash, False)
 
         stale_evidence = json.loads(json.dumps(forgotten_hash))
+        stale_evidence["candidate_level"] = "L2 內部軟體候選"
+        stale_evidence["candidate_scope"] = "internal-l2"
+        stale_evidence["image_build_evidence"] = {
+            "contract_projection_sha256": self.validation[
+                "contract_projection_sha256"
+            ]
+        }
         stale_evidence["contract_projection_sha256"] = (
             self.policy_checker.contract_projection_sha256(stale_evidence)
         )
@@ -243,11 +250,14 @@ class BananaPiM1SuperCandidateTests(unittest.TestCase):
                     )
 
     def test_linux_dtb_claim_must_match_board_contract(self):
-        evidence = json.loads(json.dumps(self.validation["image_build_evidence"]))
-        self.policy_checker.validate_linux_dtb_claim(self.validation, evidence)
+        policy = json.loads(json.dumps(self.validation))
+        digest = policy["boards"]["bananapim1super"]["component_dtb_sha256"]
+        policy["boards"]["bananapim1super"]["image_dtb_sha256"] = digest
+        evidence = {"linux_dtb": {"path": self.board["dtb"], "sha256": digest}}
+        self.policy_checker.validate_linux_dtb_claim(policy, evidence)
         evidence["linux_dtb"]["path"] = "rockchip/foreign-board.dtb"
         with self.assertRaises(SystemExit):
-            self.policy_checker.validate_linux_dtb_claim(self.validation, evidence)
+            self.policy_checker.validate_linux_dtb_claim(policy, evidence)
 
     def test_uboot_manifest_is_rechecked_against_contract_and_image_bytes(self):
         payload = "固定載荷內容".encode("utf-8")
@@ -447,12 +457,15 @@ class BananaPiM1SuperCandidateTests(unittest.TestCase):
 
     def test_state_machine_rejects_mixed_or_unproven_states(self):
         mixed = json.loads(json.dumps(self.validation))
-        mixed["candidate_scope"] = "internal-component-only"
+        mixed["candidate_scope"] = "internal-l2"
         with self.assertRaises(SystemExit):
             self.policy_checker.validate_candidate_state(mixed)
 
         unproven_l2 = json.loads(json.dumps(self.validation))
-        unproven_l2.pop("image_build_evidence")
+        unproven_l2["candidate_level"] = "L2 內部軟體候選"
+        unproven_l2["candidate_scope"] = "internal-l2"
+        unproven_l2["full_image_built"] = True
+        unproven_l2["rootfs_image_built"] = True
         with self.assertRaises(SystemExit):
             self.policy_checker.validate_candidate_state(unproven_l2)
 
@@ -556,12 +569,11 @@ class BananaPiM1SuperCandidateTests(unittest.TestCase):
             self.board["component_dtb_sha256"],
             "68c0d6c27d2802abee0b7ab4b0569581048b14fc651d55c103392d81e00f2eb6",
         )
-        self.assertEqual(
-            self.board["image_dtb_sha256"],
-            "68c0d6c27d2802abee0b7ab4b0569581048b14fc651d55c103392d81e00f2eb6",
-        )
+        self.assertIsNone(self.board["image_dtb_sha256"])
         self.assertEqual(self.board["dtb_sha256"], self.board["component_dtb_sha256"])
-        self.assertEqual(self.board["dtb_sha256_evidence_scope"], "full-image-l2")
+        self.assertEqual(
+            self.board["dtb_sha256_evidence_scope"], "preflight-contract-l1"
+        )
         self.assertEqual(
             self.board["uboot_defconfig"],
             "bananapi-m1-super-rk3528_defconfig",
@@ -685,8 +697,11 @@ class BananaPiM1SuperCandidateTests(unittest.TestCase):
         self.assertIn("export REQUIRE_SOURCE_DATE_EPOCH_METADATA=yes", build_text)
         self.assertIn("pending_verification", build_text)
         self.assertIn("write_material_state failed", build_text)
+        self.assertIn("只允許固定輸出目錄", build_text)
         self.assertIn("write_entry_state failed", verify_text)
         self.assertIn("write_material_state failed", verify_text)
+        self.assertIn("只允許固定輸出目錄", verify_text)
+        self.assertIn("calibration_complete", verify_text)
         self.assertIn("verify-bananapi-rockchip-candidates.sh", verify_text)
         self.assertIn("export VERIFY_ARCHIVES=yes", verify_text)
         self.assertIn("export REQUIRE_SOURCE_DATE_EPOCH_METADATA=yes", verify_text)
@@ -705,6 +720,8 @@ class BananaPiM1SuperCandidateTests(unittest.TestCase):
         self.assertIn('rm -f "${material_evidence}"', verify_text)
         checker_text = POLICY_CHECKER.read_text(encoding="utf-8")
         self.assertIn('choices=("source-contract", "material-evidence")', checker_text)
+        self.assertIn('default="source-contract"', checker_text)
+        self.assertIn('choices=("historical", "live")', checker_text)
         self.assertIn('"--read-only"', checker_text)
         for required in (
             '"sgdisk", "--verify"',
@@ -716,6 +733,75 @@ class BananaPiM1SuperCandidateTests(unittest.TestCase):
             "M1SUPER_MATERIAL_STATUS.json",
         ):
             self.assertIn(required, checker_text)
+
+    def test_entrypoints_reject_nonfixed_output_directory_before_writing(self):
+        with tempfile.TemporaryDirectory() as directory:
+            rejected = Path(directory) / "不得寫入"
+            environment = os.environ.copy()
+            environment["OUTPUT_DIR"] = str(rejected)
+            for entrypoint in (BUILD_ENTRY, VERIFY_ENTRY):
+                result = subprocess.run(
+                    [str(entrypoint)],
+                    cwd=ROOT,
+                    env=environment,
+                    check=False,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    text=True,
+                )
+                self.assertNotEqual(result.returncode, 0, entrypoint.name)
+                self.assertIn("只允許固定輸出目錄", result.stderr)
+                self.assertFalse(rejected.exists())
+
+    def test_policy_cli_requires_explicit_material_evidence_source(self):
+        environment = os.environ.copy()
+        environment["PUBLIC_RELEASE"] = "no"
+        environment["HARDWARE_CLAIMS"] = "no"
+
+        source = subprocess.run(
+            [str(POLICY_CHECKER)],
+            cwd=ROOT,
+            env=environment,
+            check=False,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+        )
+        self.assertEqual(source.returncode, 0, source.stderr)
+        self.assertIn("建置前來源契約", source.stdout)
+
+        for arguments in (
+            ["--phase", "material-evidence"],
+            ["--phase", "source-contract", "--evidence-source", "live"],
+        ):
+            result = subprocess.run(
+                [str(POLICY_CHECKER), *arguments],
+                cwd=ROOT,
+                env=environment,
+                check=False,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+            )
+            self.assertNotEqual(result.returncode, 0, arguments)
+            self.assertIn("物質驗證必須明確選擇", result.stderr)
+
+    def test_policy_rejects_ambiguous_release_environment_values(self):
+        for variable in ("PUBLIC_RELEASE", "HARDWARE_CLAIMS"):
+            environment = os.environ.copy()
+            environment["PUBLIC_RELEASE"] = "no"
+            environment["HARDWARE_CLAIMS"] = "no"
+            environment[variable] = "NO"
+            result = subprocess.run(
+                [str(POLICY_CHECKER)],
+                cwd=ROOT,
+                env=environment,
+                check=False,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+            )
+            self.assertNotEqual(result.returncode, 0, variable)
 
     def test_common_rockchip_builder_rejects_source_commit_races(self):
         text = ROCKCHIP_BUILD.read_text(encoding="utf-8")

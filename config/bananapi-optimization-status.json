@@ -169,8 +169,8 @@
       "basis": "Trixie vendor minimal CLI 已由隔離快取完整建置並通過映像、固定 Linux／U-Boot／RKBin 來源、GPT、U-Boot 載荷、Banana Pi 專用 DTB、雙乙太網路、USB gadget、顯示、音訊、CAN 與標準 I/O 工具唯讀守門；供應商核心、預編譯 RKBin、硬體描述等同性與實體功能仍待驗證"
     },
     "bananapim1super": {
-      "level": "L2",
-      "basis": "內部 Trixie vendor minimal CLI 已由隔離快取與固定 Linux、U-Boot、firmware、RKBin 來源完整建置；ATF／BL31 使用固定 RKBin 預建載荷，並非由 ATF 原始碼建置。映像已通過 XZ 串流、GPT、ext4 root、M1 Super DTB、U-Boot 載荷、最終設定、套件與唯讀映像守門；無線 BOM、授權及實機功能仍待驗證"
+      "level": "L1",
+      "basis": "固定 Linux、U-Boot、firmware、RKBin、專屬 DTB 與元件證據仍有效；提交 8c6533a10 的舊 L2 映像已保留為歷史證據，但尚未由現行整合提交重新校準及正式重建，故目前不以舊產物代表新主線 L2"
     },
     "bananapim2c": {
       "level": "L0",
@@ -287,7 +287,7 @@
     "bananapicm2": "取得 CM2 載板原理圖與連接器映射，建立專屬 DTS 後再建置候選",
     "bananapicm5pro": "完成載板等同性與 RTL8852BS 授權審查，再做冷啟動及全介面實測",
     "bananapiforge1": "完成冷啟動、雙網路、USB gadget、顯示、CAN、音訊與 40-pin 實測",
-    "bananapim1super": "釐清量產無線 BOM 與韌體授權，再完成 SD／eMMC、網路、無線、顯示、GPU、VPU、USB 與 40-pin 實測",
+    "bananapim1super": "先由現行整合提交完成 L1 校準、固定載荷契約及乾淨 L2 重建，再釐清量產無線 BOM、韌體授權與實機功能",
     "bananapim2c": "整理 41 組差異與 6,751 個未分類檔，閉合簽署鏈後建立可重放映像",
     "bananapim4": "建立固定來源的完整 rootfs／IMG，閉合啟動資產、工具鏈與音訊授權邊界",
     "bananapim4super": "取得原理圖、量產 BOM 與 PCIe lane 資料，完成專屬 DTS 後再建置候選",
@@ -390,7 +390,7 @@
     ],
     "bananapim1super": [
       "Wi-Fi 量產 BOM 在 SYN43752、AP6275S 與 RTL8852BS 證據間不一致；RKBin 只可依授權隨 Rockchip 平台散布，Armbian 韌體逐檔授權仍待確認",
-      "完整映像已通過內部 L2 軟體守門；SD／eMMC 冷啟動、網路、無線、顯示、GPU、VPU、USB 與 40-pin 尚無實機證據"
+      "提交 8c6533a10 的歷史完整映像曾通過內部 L2 軟體守門；現行整合提交尚待重新校準及正式重建，且 SD／eMMC 冷啟動、網路、無線、顯示、GPU、VPU、USB 與 40-pin 仍無實機證據"
     ],
     "bpi-ai2n": [
       "九個 DRP、Codec、相機與 RTL8821CU runtime 資產缺少可核對再散布授權或 ABI 契約；完整映像已通過內部 L2 軟體守門，但仍無實機證據"
