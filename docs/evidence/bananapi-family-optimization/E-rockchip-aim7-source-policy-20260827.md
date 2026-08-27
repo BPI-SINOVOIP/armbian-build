@@ -8,7 +8,7 @@
 
 本候選改為自足 Banana Pi 板檔，新增 Banana Pi 專用 Linux／U-Boot DTS wrapper 與專用 U-Boot defconfig。wrapper 只覆寫 `model` 與 `compatible`，底層硬體描述仍明確繼承 `rk3588-armsom-aim7-io.dts`；沒有原理圖與實機證據的差異一律不猜測。
 
-目前完成的是可重現的 `L1 元件候選`，不等於正式 L2 映像已通過。這次沒有建置完整根檔案系統映像，也沒有實體板 L3 證據；在完整映像與硬體守門完成前，不得宣稱硬體介面已通過，也不得核准候選對外發布。
+目前完成的是可重現的 `L1 元件候選`與完整映像預檢守門準備，不等於正式 L2 映像已通過。這次沒有建置完整根檔案系統映像，也沒有實體板 L3 證據；在完整映像與硬體守門完成前，不得宣稱硬體介面已通過，也不得核准候選對外發布。
 
 ## 稽核依據
 
@@ -18,6 +18,7 @@ Banana Pi 官方 AIM7 頁面將 Linux BSP、Linux 核心與 U-Boot 來源指向 
 - Linux 固定來源：`https://github.com/armbian/linux-rockchip.git`
 - U-Boot 固定來源：`https://github.com/radxa/u-boot.git`
 - RKBin 固定來源：`https://github.com/armbian/rkbin`
+- Armbian firmware 固定來源：`https://github.com/armbian/firmware`
 
 ## 固定來源
 
@@ -26,8 +27,9 @@ Banana Pi 官方 AIM7 頁面將 Linux BSP、Linux 核心與 U-Boot 來源指向 
 | Linux 6.1.115 | `c6157104418d012823413c02f9222f3fe123dd25` | 建置 `rk3588-bananapi-aim7.dtb` |
 | U-Boot 2017.09 | `39cd993e5d6296635438e84f4576b3a9bf76f86e` | 建置 AIM7 SPL、U-Boot DTB 與 FIT |
 | RKBin | `1d3c61008fa823936ae7a59615393f8294b64456` | 提供 DDR v1.20、BL31 v1.48 與 RockUSB loader |
+| Armbian firmware | `f50a2a21bcdb77a562b3976930c5c6b521a1df08` | 提供固定提交的根檔案系統韌體集合 |
 
-板檔固定 `BOOTBRANCH_BOARD`、`KERNELBRANCH_BOARD` 與 `RKBIN_GIT_REF`，並在 vendor 分支設定階段覆寫家族的可移動分支。RKBin 的 `LICENSE.TXT`、DDR、BL31 與 RockUSB loader 另以 SHA-256 固定。
+板檔固定 `BOOTBRANCH_BOARD`、`KERNELBRANCH_BOARD`、`RKBIN_GIT_REF`、`ARMBIAN_FIRMWARE_GIT_SOURCE_BOARD` 與 `ARMBIAN_FIRMWARE_GIT_REF_BOARD`，並在 vendor 分支設定階段覆寫家族的可移動分支。完整映像建置與驗證另要求從日誌及中繼資料核對 firmware 實際解析來源與提交。RKBin 的 `LICENSE.TXT`、DDR、BL31 與 RockUSB loader 另以 SHA-256 固定。
 
 ## RKBin 散布政策
 
@@ -54,7 +56,7 @@ Linux 與 U-Boot 二進位都必須含 `Banana Pi AIM7` 與 `bananapi,bpi-aim7`�
 
 本次只在乾淨固定提交上執行 Linux DTB 與 U-Boot 元件建置，沒有執行完整映像建置。
 
-U-Boot 以 `SOURCE_DATE_EPOCH=1777288768`、`KBUILD_BUILD_USER=bananapi` 與 `KBUILD_BUILD_HOST=armbian` 重建，連續建置的四個 U-Boot 產物雜湊一致。五個建置產物與 RKBin 授權檔已保存於 `output/components/2026.08/bananapi-rockchip-rk3588-aim7-vendor`；可攜清單 SHA-256 為 `164033bb5c82577eed3797bf55091a81d0945d7e5332666b55e508850ec42e96`，該目錄不含來源樹或建置樹。
+U-Boot 以 `SOURCE_DATE_EPOCH=1777288768`、`KBUILD_BUILD_USER=bananapi` 與 `KBUILD_BUILD_HOST=armbian` 重建，連續建置的四個 U-Boot 產物雜湊一致。這個時間戳已提升為驗證契約頂層欄位，專用完整映像建置入口會拒絕其他值並強制匯出固定值。五個建置產物與 RKBin 授權檔已保存於 `output/components/2026.08/bananapi-rockchip-rk3588-aim7-vendor`；可攜清單 SHA-256 為 `164033bb5c82577eed3797bf55091a81d0945d7e5332666b55e508850ec42e96`，該目錄不含來源樹或建置樹。
 
 | 元件 | 大小 | SHA-256 |
 | --- | ---: | --- |
@@ -84,25 +86,38 @@ U-Boot 以 `SOURCE_DATE_EPOCH=1777288768`、`KBUILD_BUILD_USER=bananapi` 與 `KB
 - GPU、VPU、RGA 與 NPU 節點啟用，不代表使用者空間驅動、韌體、效能或穩定性已通過。
 - 目前 USB DRD 節點設定為 host；核心具備 gadget 功能不代表該連接器已驗證裝置模式。
 
-## 後續入口
+## L1 與 L2 狀態守門
 
-完整候選建置：
+專用政策檢查器只接受以下成對狀態：
+
+- L1：`candidate_scope=internal-component-only`、`current_evidence_level=L1`，完整映像相關布林值必須為 `false`，且禁止存在 `image_build_evidence`、映像 DTB、最終核心設定、最終 U-Boot 設定及完整映像 payload 雜湊。
+- L2：`candidate_scope=internal-l2`、`current_evidence_level=L2`，必須提供相同來源與驗證提交、相同建置與驗證契約雜湊、候選矩陣、payload 清單、最終設定清單、IMG、XZ、映像 DTB、最終核心與 U-Boot 設定的完整證據。
+
+L2 只代表內部軟體候選。唯讀內容驗證必須為真，但 `hardware_tested` 與 `public_release_authorized` 必須維持假值。RKBin 限制、firmware 再散布稽核、GPU／VPU／RGA／NPU 使用者空間驗證及所有實機缺口不會因升為 L2 而解除。
+
+專用驗證入口會依契約選擇證據層級：L1 預檢先核對 `RKBIN_EVIDENCE.tsv`、`RKBIN_STATUS.json`、固定提交及建置時契約，再使用共用唯讀驗證器的 L1 模式，不會寫成 L2；只有契約已具備完整 L2 證據時，才進入 Rockchip L2 驗證鏈。
+
+政策檢查：
 
 ```bash
-./tools/build-bananapi-rockchip-aim7-candidate.sh
+python3 ./tools/check-bananapi-rockchip-aim7-policy.py
 ```
 
-使用唯讀下層快取與專用 OverlayFS：
+## 後續入口
+
+完整候選只允許透過唯讀下層快取與專用 OverlayFS 入口建置。入口預設要求至少 80 GiB 可用空間，任何覆寫都不得低於 40 GiB：
 
 ```bash
 ./tools/run-bananapi-rockchip-aim7-candidate-isolated-cache.sh
 ```
 
-完整映像產生後執行唯讀驗證：
+第一次完整映像產生後執行 L1 唯讀預檢：
 
 ```bash
 ./tools/verify-bananapi-rockchip-aim7-candidate.sh
 ```
+
+第一次預檢只用來取得實際分割區、payload、最終設定、映像 DTB、IMG 與 XZ 雜湊，不能直接宣稱 L2。回填精確契約並完成同提交建置與驗證後，才可依證據升為內部 L2。
 
 ## 正式 L2 與 L3 尚缺證據
 

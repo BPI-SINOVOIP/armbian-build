@@ -6,6 +6,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 import subprocess
+import sys
+import tempfile
 import unittest
 
 
@@ -29,6 +31,7 @@ BUILD = ROOT / "tools/build-bananapi-rockchip-aim7-candidate.sh"
 VERIFY = ROOT / "tools/verify-bananapi-rockchip-aim7-candidate.sh"
 COMPONENT_VERIFY = ROOT / "tools/verify-bananapi-rockchip-aim7-components.sh"
 ISOLATED = ROOT / "tools/run-bananapi-rockchip-aim7-candidate-isolated-cache.sh"
+POLICY_CHECK = ROOT / "tools/check-bananapi-rockchip-aim7-policy.py"
 POLICY = (
     ROOT
     / "docs/evidence/bananapi-family-optimization/E-rockchip-aim7-source-policy-20260827.md"
@@ -43,6 +46,64 @@ class BananaPiRockchipAim7CandidateTests(unittest.TestCase):
         cls.config = json.loads(CONFIG.read_text())
         cls.policy = cls.config["boards"]["bananapiaim7"]
         cls.board_text = BOARD.read_text()
+
+    def run_policy(self, data: dict[str, object]) -> subprocess.CompletedProcess[bytes]:
+        with tempfile.NamedTemporaryFile(suffix=".json") as stream:
+            stream.write(json.dumps(data, ensure_ascii=False).encode())
+            stream.flush()
+            return subprocess.run(
+                [sys.executable, str(POLICY_CHECK), stream.name],
+                cwd=ROOT,
+                capture_output=True,
+                check=False,
+            )
+
+    def valid_l2_config(self) -> dict[str, object]:
+        promoted = json.loads(json.dumps(self.config))
+        promoted["candidate_level"] = "L2 內部軟體候選"
+        promoted["candidate_scope"] = "internal-l2"
+        promoted["current_evidence_level"] = "L2"
+        promoted["rootfs_image_built"] = True
+        promoted["full_image_built"] = True
+        promoted["full_rootfs_image_built"] = True
+        board = promoted["boards"]["bananapiaim7"]
+        board["image_dtb_sha256"] = "3" * 64
+        board["dtb_sha256"] = "3" * 64
+        board["dtb_sha256_evidence_scope"] = "full-image-l2"
+        board["final_kernel_config_sha256"] = "4" * 64
+        board["final_uboot_config_sha256"] = "5" * 64
+        board["uboot_payload_sha256"] = [
+            f"idbloader.img={'6' * 64}",
+            f"u-boot.itb={'7' * 64}",
+        ]
+        promoted["image_build_evidence"] = {
+            "status": "complete",
+            "evidence_level": "L2",
+            "source_commit": "1" * 40,
+            "verifier_commit": "1" * 40,
+            "build_validation_config_sha256": "2" * 64,
+            "verification_config_sha256": "2" * 64,
+            "candidate_matrix_sha256": "8" * 64,
+            "uboot_payload_manifest_sha256": "9" * 64,
+            "final_config_manifest_sha256": "a" * 64,
+            "final_kernel_config_sha256": "4" * 64,
+            "final_uboot_config_sha256": "5" * 64,
+            "linux_dtb_sha256": "3" * 64,
+            "read_only_content_verified": True,
+            "hardware_tested": False,
+            "public_release_authorized": False,
+            "image": {
+                "path": "bananapiaim7/aim7.img",
+                "size": 1024,
+                "sha256": "b" * 64,
+            },
+            "archive": {
+                "path": "bananapiaim7/aim7.img.xz",
+                "size": 512,
+                "sha256": "c" * 64,
+            },
+        }
+        return promoted
 
     def test_board_is_self_contained_and_vendor_only(self) -> None:
         self.assertNotIn(
@@ -66,6 +127,8 @@ class BananaPiRockchipAim7CandidateTests(unittest.TestCase):
             'BOOTBRANCH_BOARD="commit:39cd993e5d6296635438e84f4576b3a9bf76f86e"',
             'KERNELBRANCH_BOARD="commit:c6157104418d012823413c02f9222f3fe123dd25"',
             'RKBIN_GIT_REF="commit:1d3c61008fa823936ae7a59615393f8294b64456"',
+            'ARMBIAN_FIRMWARE_GIT_SOURCE_BOARD="https://github.com/armbian/firmware"',
+            'ARMBIAN_FIRMWARE_GIT_REF_BOARD="commit:f50a2a21bcdb77a562b3976930c5c6b521a1df08"',
             'DDR_BLOB="rk35/rk3588_ddr_lp4_2112MHz_lp5_2400MHz_v1.20_20250926.bin"',
             'BL31_BLOB="rk35/rk3588_bl31_v1.48.elf"',
         ):
@@ -90,6 +153,7 @@ post_family_config_branch_vendor__bananapiaim7_pin_sources
 printf 'uboot_source=%s\nuboot=%s\n' "$BOOTSOURCE" "$BOOTBRANCH"
 printf 'kernel_source=%s\nkernel=%s\n' "$KERNELSOURCE" "$KERNELBRANCH"
 printf 'rkbin_source=%s\nrkbin=%s\n' "$RKBIN_GIT_URL" "$RKBIN_GIT_REF"
+printf 'firmware_source=%s\nfirmware=%s\n' "$ARMBIAN_FIRMWARE_GIT_SOURCE" "$ARMBIAN_FIRMWARE_GIT_REF"
 '''
         result = subprocess.run(
             ["bash", "-c", harness],
@@ -110,6 +174,14 @@ printf 'rkbin_source=%s\nrkbin=%s\n' "$RKBIN_GIT_URL" "$RKBIN_GIT_REF"
         )
         self.assertIn(
             "rkbin=commit:1d3c61008fa823936ae7a59615393f8294b64456",
+            result.stdout,
+        )
+        self.assertIn(
+            "firmware_source=https://github.com/armbian/firmware",
+            result.stdout,
+        )
+        self.assertIn(
+            "firmware=commit:f50a2a21bcdb77a562b3976930c5c6b521a1df08",
             result.stdout,
         )
 
@@ -187,11 +259,29 @@ printf 'rkbin_source=%s\nrkbin=%s\n' "$RKBIN_GIT_URL" "$RKBIN_GIT_REF"
         evidence = self.config["component_build_evidence"]
         self.assertEqual(self.config["candidate_level"], "L1 元件候選")
         self.assertEqual(self.config["candidate_scope"], "internal-component-only")
+        self.assertEqual(self.config["current_evidence_level"], "L1")
+        self.assertEqual(self.config["target_evidence_level"], "L2")
+        self.assertEqual(self.config["allowed_evidence_levels"], ["L1", "L2"])
         self.assertTrue(self.config["component_build_completed"])
         self.assertFalse(self.config["rootfs_image_built"])
+        self.assertFalse(self.config["full_image_built"])
+        self.assertFalse(self.config["full_rootfs_image_built"])
         self.assertFalse(self.config["hardware_claims_allowed"])
         self.assertFalse(self.config["public_release_allowed"])
         self.assertFalse(self.config["firmware_redistribution_audit_complete"])
+        self.assertFalse(self.config["firmware_redistribution_license_verified"])
+        self.assertEqual(self.config["source_date_epoch"], 1777288768)
+        self.assertEqual(
+            self.config["firmware_commit"],
+            "f50a2a21bcdb77a562b3976930c5c6b521a1df08",
+        )
+        self.assertTrue(self.config["verify_firmware_source_resolution"])
+        self.assertNotIn("image_build_evidence", self.config)
+        self.assertIsNone(self.policy["image_dtb_sha256"])
+        self.assertEqual(
+            self.policy["dtb_sha256_evidence_scope"],
+            "component-only-l1",
+        )
         self.assertEqual(evidence["source_date_epoch"], 1777288768)
         self.assertEqual(
             evidence["portable_manifest_sha256"],
@@ -304,10 +394,146 @@ printf '%s\n' "${{opts_y[@]}}"
                 self.assertIn("bananapi-rockchip-rk3588-aim7-trixie-vendor-cli", text)
                 self.assertIn('BOARDS="bananapiaim7"', text)
                 self.assertNotIn("compile.sh", text)
+                self.assertIn("check-bananapi-rockchip-aim7-policy.py", text)
+        build_text = BUILD.read_text()
+        self.assertIn("ALLOW_INTERNAL_AIM7_CANDIDATE", build_text)
+        self.assertIn('expected_source_date_epoch="1777288768"', build_text)
+        self.assertIn('MINIMUM_FREE_GIB="${MINIMUM_FREE_GIB:-80}"', build_text)
+        verify_text = VERIFY.read_text()
+        self.assertIn('policy_evidence_level="$(python3', verify_text)
+        self.assertIn('VERIFICATION_EVIDENCE_LEVEL="${policy_evidence_level}"', verify_text)
+        self.assertIn("verify-bananapi-sunxi-candidates.sh", verify_text)
+        self.assertIn("verify-bananapi-rockchip-candidates.sh", verify_text)
+        self.assertIn("verify_l1_rkbin_evidence", verify_text)
+        self.assertIn("RKBIN_EVIDENCE.tsv", verify_text)
+        self.assertIn("RKBIN_STATUS.json", verify_text)
+        self.assertIn('config["rkbin_blobs"]', verify_text)
+        self.assertNotIn('"${status}" +', verify_text)
+        self.assertRegex(
+            verify_text,
+            r'L1\)\s+verify_l1_rkbin_evidence\s+'
+            r'verifier="\${generic_verifier}"',
+        )
+        self.assertRegex(
+            verify_text,
+            r'L2\)\s+verifier="\${rockchip_verifier}"',
+        )
         isolated_text = ISOLATED.read_text()
         self.assertIn("build-bananapi-rockchip-aim7-candidate.sh", isolated_text)
         self.assertIn("bananapi-rockchip-aim7-cache-overlay", isolated_text)
+        self.assertIn('minimum_free_gib="${MINIMUM_FREE_GIB:-80}"', isolated_text)
+        self.assertIn("minimum_free_gib >= 40", isolated_text)
+        self.assertIn("ALLOW_INTERNAL_AIM7_CANDIDATE=yes", isolated_text)
         self.assertNotIn("compile.sh", isolated_text)
+
+    def test_direct_build_and_low_space_override_are_rejected(self) -> None:
+        direct = subprocess.run(
+            [str(BUILD)],
+            cwd=ROOT,
+            capture_output=True,
+            check=False,
+        )
+        self.assertEqual(direct.returncode, 2)
+        self.assertIn("OverlayFS", direct.stderr.decode())
+
+        low_space = subprocess.run(
+            [str(ISOLATED)],
+            cwd=ROOT,
+            env={"PATH": "/usr/bin:/bin", "MINIMUM_FREE_GIB": "39"},
+            capture_output=True,
+            check=False,
+        )
+        self.assertEqual(low_space.returncode, 2)
+        self.assertIn("不得低於 40 GiB", low_space.stderr.decode())
+
+    def test_policy_accepts_current_l1_and_rejects_label_only_promotion(self) -> None:
+        accepted = self.run_policy(self.config)
+        self.assertEqual(accepted.returncode, 0, accepted.stderr.decode())
+
+        promoted = json.loads(json.dumps(self.config))
+        promoted["candidate_level"] = "L2 內部軟體候選"
+        rejected = self.run_policy(promoted)
+        self.assertNotEqual(rejected.returncode, 0)
+
+    def test_policy_rejects_fixed_source_or_timestamp_drift(self) -> None:
+        mutations = {
+            "firmware 來源漂移": (
+                "firmware_source",
+                "https://example.invalid/firmware",
+            ),
+            "firmware 引用漂移": ("firmware_ref", "branch:master"),
+            "firmware 提交漂移": ("firmware_commit", "8" * 40),
+            "停用 firmware 解析守門": (
+                "verify_firmware_source_resolution",
+                False,
+            ),
+            "固定時間戳漂移": ("source_date_epoch", 1777288769),
+        }
+        for name, (field, value) in mutations.items():
+            with self.subTest(name=name):
+                invalid = json.loads(json.dumps(self.config))
+                invalid[field] = value
+                rejected = self.run_policy(invalid)
+                self.assertNotEqual(rejected.returncode, 0)
+
+    def test_policy_rejects_image_evidence_on_l1(self) -> None:
+        invalid = json.loads(json.dumps(self.config))
+        invalid["image_build_evidence"] = self.valid_l2_config()[
+            "image_build_evidence"
+        ]
+        rejected = self.run_policy(invalid)
+        self.assertNotEqual(rejected.returncode, 0)
+
+    def test_policy_accepts_fully_evidenced_internal_l2(self) -> None:
+        accepted = self.run_policy(self.valid_l2_config())
+        self.assertEqual(accepted.returncode, 0, accepted.stderr.decode())
+
+    def test_policy_rejects_incomplete_or_overclaimed_l2(self) -> None:
+        mutations = {
+            "缺少映像證據": lambda data: data.pop("image_build_evidence"),
+            "來源與驗證提交不同": lambda data: data[
+                "image_build_evidence"
+            ].__setitem__("verifier_commit", "8" * 40),
+            "建置與驗證契約不同": lambda data: data[
+                "image_build_evidence"
+            ].__setitem__("verification_config_sha256", "8" * 64),
+            "候選矩陣雜湊無效": lambda data: data[
+                "image_build_evidence"
+            ].__setitem__("candidate_matrix_sha256", "無效"),
+            "載荷清單雜湊無效": lambda data: data[
+                "image_build_evidence"
+            ].__setitem__("uboot_payload_manifest_sha256", "無效"),
+            "最終設定清單雜湊無效": lambda data: data[
+                "image_build_evidence"
+            ].__setitem__("final_config_manifest_sha256", "無效"),
+            "未完成唯讀驗證": lambda data: data[
+                "image_build_evidence"
+            ].__setitem__("read_only_content_verified", False),
+            "冒充實機驗證": lambda data: data[
+                "image_build_evidence"
+            ].__setitem__("hardware_tested", True),
+            "冒充公開發布": lambda data: data[
+                "image_build_evidence"
+            ].__setitem__("public_release_authorized", True),
+            "映像大小無效": lambda data: data["image_build_evidence"][
+                "image"
+            ].__setitem__("size", 0),
+            "壓縮檔路徑越界": lambda data: data["image_build_evidence"][
+                "archive"
+            ].__setitem__("path", "../aim7.img.xz"),
+            "最終核心設定不一致": lambda data: data["boards"][
+                "bananapiaim7"
+            ].__setitem__("final_kernel_config_sha256", "d" * 64),
+            "payload 雜湊不完整": lambda data: data["boards"][
+                "bananapiaim7"
+            ].__setitem__("uboot_payload_sha256", [f"idbloader.img={'6' * 64}"]),
+        }
+        for name, mutate in mutations.items():
+            with self.subTest(name=name):
+                invalid = self.valid_l2_config()
+                mutate(invalid)
+                rejected = self.run_policy(invalid)
+                self.assertNotEqual(rejected.returncode, 0)
 
     def test_component_verifier_preserves_evidence_boundaries(self) -> None:
         text = COMPONENT_VERIFY.read_text()
