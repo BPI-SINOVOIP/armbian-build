@@ -68,7 +68,7 @@ PUBLIC_RELEASE=no HARDWARE_CLAIMS=no \
   --phase material-evidence --evidence-source historical
 ```
 
-正式建置只允許固定輸出目錄，並以共用 `/media/pi/SMCI/armbian/bpi-v26.2.1/cache` 作唯讀下層。專用 OverlayFS 上層必須等本文件、validation、中央盤點與回歸測試提交並推送後，才可在無掛載、程序、開啟檔案或容器引用的條件下精確移除。
+正式建置只允許固定輸出目錄，並以共用 `/media/pi/SMCI/armbian/bpi-v26.2.1/cache` 作唯讀下層。本文件、validation、中央盤點與回歸測試已由提交 `eac5ec7f7` 推送；確認無掛載、程序、開啟檔案或容器引用後，專用 OverlayFS 上層與已被取代的歷史大型輸出已精確移除，正式 IMG 與 XZ 保留且刪除前後雜湊一致。
 
 ## 尚未完成
 
