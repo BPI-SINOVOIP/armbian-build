@@ -143,6 +143,18 @@ class BananaPiRealtekM4CandidateTests(unittest.TestCase):
                 "root=/dev/mmcblk0p2 rw rootfstype=ext4 rootwait\n",
                 encoding="utf-8",
             )
+            configure = work / "configure"
+            configure.write_text("#!/usr/bin/env bash\nexit 0\n", encoding="utf-8")
+            configure.chmod(0o755)
+            fake_make = work / "fake-bin/make"
+            fake_make.parent.mkdir()
+            fake_make.write_text(
+                "#!/usr/bin/env bash\n"
+                "test \"${SOURCE_DATE_EPOCH:-}\" = 1711071187\n"
+                "printf '%s\\n' \"$*\" >>\"${M4_ENV_PROBE}\"\n",
+                encoding="utf-8",
+            )
+            fake_make.chmod(0o755)
             probe = r'''
 set -euo pipefail
 REALTEK_BPI_VENDOR_BOARD=bpi-m4
@@ -155,16 +167,34 @@ BRANCH=legacy
 LINUXFAMILY=realtek-rtd139x-bpi
 SRC=/tmp
 BOOTCONFIG=rtd1395_bananapi_defconfig
-CREATE_PATCHES=yes
+CREATE_PATCHES=no
+SOURCE_DATE_EPOCH=1711071187
+REALTEK_BPI_UBOOT_CROSS_COMPILE=toolchains/fake/bin/aarch64-linux-gnu-
+M4_ENV_PROBE="$2/env-probe"
+PATH="$2/fake-bin:$PATH"
+export M4_ENV_PROBE PATH
 source "$1"
 display_alert() { :; }
 patch_uboot_target() { :; }
 exit_with_error() { return 1; }
+loop_over_uboot_targets_and_do() { :; }
 run_host_command_logged() {
     /usr/bin/env bash -e -o pipefail -c "$*"
 }
 cd "$2"
 build_custom_uboot__realtek_bpi_legacy_bsp
+test "$(wc -l <"${M4_ENV_PROBE}")" -eq 2
+if /usr/bin/env | grep -q '^SOURCE_DATE_EPOCH='; then
+    exit 1
+fi
+: >"${M4_ENV_PROBE}"
+unset REALTEK_BPI_UBOOT_CROSS_COMPILE
+build_custom_uboot__realtek_bpi_legacy_bsp
+test "$(wc -l <"${M4_ENV_PROBE}")" -eq 1
+grep -Fqx 'u-boot' "${M4_ENV_PROBE}"
+if /usr/bin/env | grep -q '^SOURCE_DATE_EPOCH='; then
+    exit 1
+fi
 grep -Fqx 'root=LABEL=BPI-ROOT rw rootfstype=ext4 rootwait' \
     rtk-pack/rtk/bpi-m4/configs/default/linux/uEnv.txt
 '''

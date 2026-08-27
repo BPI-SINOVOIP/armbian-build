@@ -59,6 +59,9 @@ function late_family_config__realtek_bpi_legacy() {
 
 function build_custom_uboot__realtek_bpi_legacy_bsp() {
 	display_alert "${BOARD}" "building Realtek vendor BSP U-Boot" "info"
+	if [[ -n "${SOURCE_DATE_EPOCH:-}" ]]; then
+		local -x SOURCE_DATE_EPOCH="${SOURCE_DATE_EPOCH}"
+	fi
 
 	patch_uboot_target
 
@@ -79,8 +82,8 @@ function build_custom_uboot__realtek_bpi_legacy_bsp() {
 
 	if [[ -n "${REALTEK_BPI_UBOOT_CROSS_COMPILE:-}" ]]; then
 		local uboot_cross_compile="${PWD}/${REALTEK_BPI_UBOOT_CROSS_COMPILE}"
-		run_host_command_logged make -C u-boot-rtk "${BOOTCONFIG}" "CROSS_COMPILE=${uboot_cross_compile}"
-		run_host_command_logged make -C u-boot-rtk "CROSS_COMPILE=${uboot_cross_compile}" BUILD_BOOTCODE_ONLY=true
+		run_host_command_logged make -C u-boot-rtk "${BOOTCONFIG@Q}" "CROSS_COMPILE=${uboot_cross_compile@Q}"
+		run_host_command_logged make -C u-boot-rtk "CROSS_COMPILE=${uboot_cross_compile@Q}" BUILD_BOOTCODE_ONLY=true
 	else
 		run_host_command_logged make u-boot
 	fi
