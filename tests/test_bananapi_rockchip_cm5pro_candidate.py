@@ -45,6 +45,11 @@ POLICY = (
     / "docs/evidence/bananapi-family-optimization"
     / "E-rockchip-cm5pro-source-policy-20260827.md"
 )
+L2_EVIDENCE = (
+    ROOT
+    / "docs/evidence/bananapi-family-optimization"
+    / "E-rockchip-cm5pro-L2-build-20260827.md"
+)
 
 
 class BananaPiRockchipCm5ProCandidateTests(unittest.TestCase):
@@ -159,12 +164,13 @@ printf 'linux_source=%s\nlinux=%s\nuboot_source=%s\nuboot=%s\nrkbin=%s\nfirmware
         )
         self.assertEqual(UBOOT_DEFCONFIG.read_text(), expected)
 
-    def test_release_and_hardware_claims_are_blocked(self) -> None:
-        self.assertEqual(self.config["candidate_scope"], "internal-component-only")
-        self.assertEqual(self.config["candidate_level"], "L1 元件候選")
-        self.assertEqual(self.config["evidence_level"], "L1")
+    def test_l2_image_does_not_enable_release_or_hardware_claims(self) -> None:
+        self.assertEqual(self.config["candidate_scope"], "internal-full-image")
+        self.assertEqual(self.config["candidate_level"], "L2 軟體候選")
+        self.assertEqual(self.config["evidence_level"], "L2")
         self.assertTrue(self.config["component_build_completed"])
-        self.assertFalse(self.config["rootfs_image_built"])
+        self.assertTrue(self.config["rootfs_image_built"])
+        self.assertTrue(self.config["full_image_verified"])
         self.assertFalse(self.config["public_release_allowed"])
         self.assertFalse(self.config["hardware_claims_allowed"])
         self.assertFalse(self.config["banana_pi_carrier_equivalence_verified"])
@@ -299,10 +305,26 @@ printf 'linux_source=%s\nlinux=%s\nuboot_source=%s\nuboot=%s\nrkbin=%s\nfirmware
 
     def test_policy_does_not_promote_static_results_to_hardware_evidence(self) -> None:
         text = POLICY.read_text()
-        self.assertIn("不能稱為完整 L2 映像", text)
+        self.assertIn("完整 L2 軟體候選", text)
         self.assertIn("不證明任何周邊或加速器功能", text)
         self.assertIn("板檔保留 `.wip`", text)
-        self.assertIn("沒有執行以上完整根檔案系統映像建置", text)
+        self.assertIn("完整根檔案系統映像已通過", text)
+
+        image = self.config["full_image_evidence"]
+        self.assertEqual(image["raw_size"], 2403336192)
+        self.assertEqual(image["xz_size"], 473269684)
+        for field in (
+            "source_commit",
+            "verifier_commit",
+            "raw_sha256",
+            "xz_sha256",
+            "uboot_payload_manifest_sha256",
+        ):
+            self.assertRegex(image[field], r"^[0-9a-f]{40}$" if "commit" in field else r"^[0-9a-f]{64}$")
+        evidence_text = L2_EVIDENCE.read_text()
+        self.assertIn(image["raw_sha256"], evidence_text)
+        self.assertIn(image["xz_sha256"], evidence_text)
+        self.assertIn("不代表實體板已開機", evidence_text)
 
 
 if __name__ == "__main__":

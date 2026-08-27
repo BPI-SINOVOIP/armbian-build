@@ -49,7 +49,7 @@ class BananaPiBoardAuditTests(unittest.TestCase):
         expected = {
             "bananapiaim7": "L1",
             "bananapicm2": "L0",
-            "bananapicm5pro": "L1",
+            "bananapicm5pro": "L2",
             "bananapif2p": "L1",
             "bananapif2s": "L1",
             "bananapim1super": "L1",

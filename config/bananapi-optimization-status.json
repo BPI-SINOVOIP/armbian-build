@@ -161,8 +161,8 @@
       "basis": "固定 Linux 6.18.46、U-Boot 2024.01、RKBin 與 firmware 來源及 R2 Pro 參考板契約已建立；目前沒有證據證明 R2 Pro 是 CM2 載板，也沒有可接受的 CM2 元件、完整映像或實機證據，故維持 L0"
     },
     "bananapicm5pro": {
-      "level": "L1",
-      "basis": "固定 Linux 6.1.115、U-Boot 2017.09、RKBin、firmware 與 RTL8852BS 來源已核對；Linux Image、專用包裝 DTB、RTL8852BS 模組、核心設定、U-Boot SPL／DTB／FIT 及授權檔已匯出成可攜證據並通過唯讀守門；尚未建立完整映像或實機證據"
+      "level": "L2",
+      "basis": "Trixie vendor minimal CLI 已由隔離快取完整建置，IMG／XZ、GPT、U-Boot 載荷、固定 Linux／U-Boot／RKBin／firmware／RTL8852BS 來源、專用包裝 DTB、核心設定、診斷套件與授權副本均通過唯讀守門；載板等同性、韌體散布授權與實體功能仍待驗證"
     },
     "bananapiforge1": {
       "level": "L2",
@@ -260,7 +260,7 @@
     "bananapicm5pro": [
       "Linux 與 U-Boot DTS 仍以 ArmSoM CM5 IO 為 donor；官方產品身分可支持來源關聯，但尚未完成 IO 載板逐網路等同性審查",
       "RTL8852BS 韌體缺少逐檔再散布授權，外部驅動也尚未完成上游與安全稽核",
-      "完整映像、冷啟動、儲存、網路、40-pin、顯示、GPU、VPU、RGA 與 NPU 尚未實機驗證"
+      "完整映像已通過 L2 軟體守門；冷啟動、儲存、網路、40-pin、顯示、GPU、VPU、RGA 與 NPU 尚未實機驗證"
     ],
     "bananapif2s": [
       "xboot 與預建工具鏈缺少完整可重建來源或明確再散布授權，完整映像只能作內部驗證"

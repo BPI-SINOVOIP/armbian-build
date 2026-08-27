@@ -1,11 +1,12 @@
 {
   "schema_version": 1,
   "candidate_branch": "vendor",
-  "candidate_scope": "internal-component-only",
-  "candidate_level": "L1 元件候選",
-  "evidence_level": "L1",
+  "candidate_scope": "internal-full-image",
+  "candidate_level": "L2 軟體候選",
+  "evidence_level": "L2",
   "component_build_completed": true,
-  "rootfs_image_built": false,
+  "rootfs_image_built": true,
+  "full_image_verified": true,
   "public_release_allowed": false,
   "hardware_claims_allowed": false,
   "banana_pi_carrier_equivalence_verified": false,
@@ -220,6 +221,22 @@
         "sha256": "4fc4f5de2cdd562d64f5079dab855b26a73f35bd93ee59c62e4a2b12fdf09fef"
       }
     }
+  },
+  "full_image_evidence": {
+    "source_commit": "eaf942d9f72a6bfe8a32fc2d497b62f1c97b7f99",
+    "verifier_commit": "6c90fdef300e48354c5bee62f33df5939ae7c041",
+    "output_default": "output/images/2026.08/bananapi-rockchip-rk3576-cm5pro-trixie-vendor-cli",
+    "image_relative": "bananapicm5pro/Armbian-unofficial_26.05.0-trunk_Bananapicm5pro_trixie_vendor_6.1.115_minimal.img",
+    "archive_relative": "bananapicm5pro/Armbian-unofficial_26.05.0-trunk_Bananapicm5pro_trixie_vendor_6.1.115_minimal.img.xz",
+    "raw_size": 2403336192,
+    "raw_sha256": "0d0c2f69c81b75f9d70a08f40807d26821e1cdbe513e9bf72b47a447cba91767",
+    "xz_size": 473269684,
+    "xz_sha256": "29f00fd69a3ef1ad72c08c32a4068ee11ebd8e3393ba2420bfbc0679a0e18e74",
+    "uboot_payload_manifest_sha256": "8f46f200caf571b1ef3f810edf4b33ec3d4f9d1955ea111446162d7a49dca56c",
+    "partition_table": "gpt",
+    "root_filesystem": "ext4",
+    "release": "trixie",
+    "profile": "minimal-cli"
   },
   "boards": {
     "bananapicm5pro": {
