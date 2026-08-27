@@ -18,19 +18,21 @@ Banana Pi R3 Mini 目前維持 L1 元件候選。固定時間戳、OverlayFS、�
 
 ### 狀態機可接受假 L2：已修正
 
-政策檢查器已改為核對真實檔案與 Git 證據，不接受重複字元製造的提交或雜湊，並要求：
+來源契約檢查與物質證據檢查已分離。前者不依賴舊 output；後者會重新解析真實 IMG，不接受重複字元製造的提交、雜湊、人工 manifest 或過小假映像，並要求：
 
 - 來源提交與驗證器提交相同。
 - 建置與驗證所用 validation SHA-256 相同。
 - `CANDIDATES.tsv`、U-Boot 載荷與最終設定清單雜湊。
 - IMG、XZ 的路徑、大小及 SHA-256。
+- MBR、GPT 主／備份結構與 CRC、五個分割區大小與類型。
+- BL2／FIP 的實際映像偏移，以及 rootfs、DTB、最終 config、必要套件與韌體來源。
 - 唯讀內容驗證成功，且 `hardware_tested=false`。
 
 第一次 L1 預檢只能校準契約，不得直接以改標籤方式升級。
 
 ### 韌體來源解析未閉合：已修正
 
-Armbian firmware 已固定 source、ref 與 commit，建置日誌必須證明實際解析到相同提交；`SOURCE_DATE_EPOCH=1787793187` 同時進入參數雜湊與 metadata，且不可由環境變數覆寫：
+Armbian firmware、MT76 與 Linux firmware 已固定 source、ref 與 commit。建置日誌與映像內 `firmware-source-contract.tsv` 必須閉合相同來源；`SOURCE_DATE_EPOCH=1787793187` 同時進入參數雜湊與 metadata，且不可由環境變數覆寫：
 
 - validation 必須有精確 `firmware_ref`。
 - validation 必須設定 `verify_firmware_source_resolution=true`。
@@ -51,9 +53,9 @@ Armbian firmware 已固定 source、ref 與 commit，建置日誌必須證明實
 2. 最終核心設定、U-Boot 設定、映像 DTB 與 U-Boot payload SHA-256。
 3. 五個 GPT 分割區的精確起點、大小、標籤及檔案系統。
 4. `root_partition_start_sector=32768` 與根檔案系統解析契約。
-5. 完整 `image_build_evidence`，包含來源、validation、候選矩陣、載荷、最終設定、IMG、XZ 及唯讀驗證證據。
+5. 重新計算 `source_contract_projection_sha256`；動態映像證據不得寫回 validation。
 
-回填後先提交，再由同一提交正式重建及唯讀驗證，才可形成內部 L2。
+首次 L1 預檢會輸出機器可讀的 `R3MINI_CALIBRATION.json`。回填後先提交、清除首次 output，再由同一提交正式重建及唯讀驗證，才可形成內部 L2。
 
 ## eMMC user area 邊界
 
@@ -80,4 +82,4 @@ Armbian firmware 已固定 source、ref 與 commit，建置日誌必須證明實
 
 ## 本次守門結果
 
-R3 Mini 13 項測試、Filogic 共用 6 項測試、Shell 語法、ShellCheck 與政策檢查均通過。這些結果只證明目前 L1 工具與政策可執行，不補足上述 L2 與實機證據缺口。
+本文件的數量紀錄以最終提交驗證結果為準。通過工具、政策與負向回歸只證明目前 L1 流程可執行，不補足上述 L2 與實機證據缺口。

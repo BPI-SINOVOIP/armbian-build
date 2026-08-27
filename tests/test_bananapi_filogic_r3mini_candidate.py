@@ -49,14 +49,29 @@ class BananaPiFilogicR3MiniCandidateTests(unittest.TestCase):
         cls.policy = cls.config["boards"]["bananapir3mini"]
         cls.board_text = BOARD.read_text()
 
-    def run_policy(self, config: dict[str, object]) -> subprocess.CompletedProcess[bytes]:
+    def refresh_projection(self, config: dict[str, object]) -> None:
+        config["source_contract_projection_sha256"] = (
+            POLICY_MODULE.source_contract_projection_sha256(config)
+        )
+
+    def run_policy(
+        self,
+        config: dict[str, object],
+        *arguments: str,
+        refresh_projection: bool = True,
+        output: Path | None = None,
+    ) -> subprocess.CompletedProcess[bytes]:
+        if refresh_projection:
+            self.refresh_projection(config)
         with tempfile.TemporaryDirectory() as directory:
             policy = Path(directory) / "r3mini-policy.json"
             policy.write_text(json.dumps(config, ensure_ascii=False))
             environment = os.environ.copy()
             environment["VALIDATION_CONFIG"] = str(policy)
+            if output is not None:
+                environment["OUTPUT_DIR"] = str(output)
             return subprocess.run(
-                [str(POLICY_CHECK)],
+                [str(POLICY_CHECK), *arguments],
                 cwd=ROOT,
                 env=environment,
                 check=False,
@@ -80,39 +95,12 @@ class BananaPiFilogicR3MiniCandidateTests(unittest.TestCase):
         promoted["boards"]["bananapir3mini"]["image_dtb_sha256"] = "a" * 64
         promoted["boards"]["bananapir3mini"]["dtb_sha256"] = "a" * 64
         promoted["boards"]["bananapir3mini"]["dtb_sha256_evidence_scope"] = "full-image-l2"
-        promoted["image_build_evidence"] = {
-            "status": "complete",
-            "evidence_level": "L2",
-            "full_rootfs_image_built": True,
-            "source_commit": "1" * 40,
-            "source_tree": "0" * 40,
-            "verifier_commit": "1" * 40,
-            "build_validation_config_sha256": "2" * 64,
-            "verification_config_sha256": "2" * 64,
-            "candidate_matrix_sha256": "3" * 64,
-            "uboot_payload_manifest_sha256": "4" * 64,
-            "final_config_manifest_sha256": "5" * 64,
-            "read_only_content_verified": True,
-            "hardware_tested": False,
-            "public_release_authorized": False,
-            "linux_dtb": {"sha256": "a" * 64},
-            "image": {
-                "path": "output/images/r3mini/bananapir3mini.img",
-                "size": 1610612736,
-                "sha256": "6" * 64,
-            },
-            "archive": {
-                "path": "output/images/r3mini/bananapir3mini.img.xz",
-                "size": 314572800,
-                "sha256": "7" * 64,
-            },
-        }
+        promoted.pop("image_build_evidence", None)
+        self.refresh_projection(promoted)
         return promoted
 
-    def write_l2_fixture(self, output: Path) -> dict[str, object]:
+    def write_fake_l2_fixture(self, output: Path) -> tuple[dict[str, object], Path]:
         candidate = self.valid_l2_config()
-        board = candidate["boards"]["bananapir3mini"]
-        evidence = candidate["image_build_evidence"]
         source_commit = subprocess.run(
             ["git", "-C", str(ROOT), "rev-parse", "HEAD"],
             capture_output=True,
@@ -137,16 +125,6 @@ class BananaPiFilogicR3MiniCandidateTests(unittest.TestCase):
             check=True,
         ).stdout
         config_hash = hashlib.sha256(committed_config).hexdigest()
-        evidence.update(
-            {
-                "source_commit": source_commit,
-                "source_tree": source_tree,
-                "verifier_commit": source_commit,
-                "build_validation_config_sha256": config_hash,
-                "verification_config_sha256": config_hash,
-            }
-        )
-
         board_dir = output / "bananapir3mini"
         board_dir.mkdir(parents=True)
         image = board_dir / "r3mini.img"
@@ -154,16 +132,8 @@ class BananaPiFilogicR3MiniCandidateTests(unittest.TestCase):
         image.write_bytes((b"BPI-R3-MINI\0" * 128) + b"rootfs")
         with lzma.open(archive, "wb") as stream:
             stream.write(image.read_bytes())
-        evidence["image"] = {
-            "path": "bananapir3mini/r3mini.img",
-            "size": image.stat().st_size,
-            "sha256": hashlib.sha256(image.read_bytes()).hexdigest(),
-        }
-        evidence["archive"] = {
-            "path": "bananapir3mini/r3mini.img.xz",
-            "size": archive.stat().st_size,
-            "sha256": hashlib.sha256(archive.read_bytes()).hexdigest(),
-        }
+        image_sha256 = hashlib.sha256(image.read_bytes()).hexdigest()
+        archive_sha256 = hashlib.sha256(archive.read_bytes()).hexdigest()
 
         payload = output / "UBOOT_PAYLOAD_EVIDENCE.tsv"
         payload.write_text(
@@ -185,21 +155,28 @@ class BananaPiFilogicR3MiniCandidateTests(unittest.TestCase):
         matrix.write_text(
             "board\trelease\tprofile\traw_size\traw_sha256\txz_size\txz_sha256\t"
             "img_path\txz_path\tsource_commit\tuboot_tag\n"
-            f"bananapir3mini\ttrixie\tcli\t{evidence['image']['size']}\t"
-            f"{evidence['image']['sha256']}\t{evidence['archive']['size']}\t"
-            f"{evidence['archive']['sha256']}\t{evidence['image']['path']}\t"
-            f"{evidence['archive']['path']}\t{source_commit}\tv2025.04\n"
+            f"bananapir3mini\ttrixie\tcli\t{image.stat().st_size}\t"
+            f"{image_sha256}\t{archive.stat().st_size}\t{archive_sha256}\t"
+            f"bananapir3mini/r3mini.img\tbananapir3mini/r3mini.img.xz\t"
+            f"{source_commit}\tv2025.04\n"
         )
-        evidence["candidate_matrix_sha256"] = hashlib.sha256(matrix.read_bytes()).hexdigest()
-        evidence["uboot_payload_manifest_sha256"] = hashlib.sha256(payload.read_bytes()).hexdigest()
-        evidence["final_config_manifest_sha256"] = hashlib.sha256(final_config.read_bytes()).hexdigest()
+        matrix_hash = hashlib.sha256(matrix.read_bytes()).hexdigest()
+        payload_hash = hashlib.sha256(payload.read_bytes()).hexdigest()
+        final_config_hash = hashlib.sha256(final_config.read_bytes()).hexdigest()
+        runtime_hash = POLICY_MODULE.canonical_sha256(
+            candidate["firmware_runtime_sources"]
+        )
 
         completion = {
             "status": "complete",
             "source_commit": source_commit,
             "source_tree": source_tree,
             "validation_config_sha256": config_hash,
-            "candidates_sha256": evidence["candidate_matrix_sha256"],
+            "candidates_sha256": matrix_hash,
+            "source_contract_projection_sha256": candidate[
+                "source_contract_projection_sha256"
+            ],
+            "firmware_runtime_sources_sha256": runtime_hash,
         }
         verification = {
             "status": "complete",
@@ -209,13 +186,19 @@ class BananaPiFilogicR3MiniCandidateTests(unittest.TestCase):
             "verifier_commit": source_commit,
             "build_validation_config_sha256": config_hash,
             "verification_config_sha256": config_hash,
-            "candidate_matrix_sha256": evidence["candidate_matrix_sha256"],
-            "uboot_payload_manifest_sha256": evidence[
-                "uboot_payload_manifest_sha256"
+            "candidate_matrix_sha256": matrix_hash,
+            "uboot_payload_manifest_sha256": payload_hash,
+            "final_config_manifest_sha256": final_config_hash,
+            "source_contract_projection_sha256": candidate[
+                "source_contract_projection_sha256"
             ],
-            "final_config_manifest_sha256": evidence[
-                "final_config_manifest_sha256"
-            ],
+            "firmware_runtime_sources_sha256": runtime_hash,
+            "material_reparsed": True,
+            "calibration_mode": "formal",
+            "material_image_sha256": image_sha256,
+            "material_archive_sha256": archive_sha256,
+            "read_only_content_verified": True,
+            "hardware_tested": False,
             "emmc_image_contract": {
                 "user_area": {"image_is_complete_cold_boot_installer": False},
                 "boot0": {
@@ -225,32 +208,24 @@ class BananaPiFilogicR3MiniCandidateTests(unittest.TestCase):
             },
         }
         (output / "COMPLETION_STATUS.json").write_text(json.dumps(completion))
-        (output / "VERIFICATION_STATUS.json").write_text(json.dumps(verification))
-        build_parameters = (
-            "BOARD=bananapir3mini BRANCH=current RELEASE=trixie BUILD_DESKTOP=no "
-            "BUILD_MINIMAL=yes KERNEL_CONFIGURE=no EXPERT=yes ARTIFACT_IGNORE_CACHE=yes "
-            "COMPRESS_OUTPUTIMAGE=sha,img SOURCE_DATE_EPOCH=1787793187 "
-            "CLEAN_LEVEL=make-kernel,make-uboot,make-atf,make-crust"
-        )
-        metadata = {
+        status_path = output / "VERIFICATION_STATUS.json"
+        status_path.write_text(json.dumps(verification))
+        calibration = {
+            "mode": "formal",
             "source_commit": source_commit,
             "source_tree": source_tree,
             "validation_config_sha256": config_hash,
-            "source_date_epoch": "1787793187",
-            "build_parameters_sha256": hashlib.sha256(
-                f"{build_parameters}\n".encode()
-            ).hexdigest(),
-            "artifact_ignore_cache": "yes",
-            "raw_size": str(evidence["image"]["size"]),
-            "raw_sha256": evidence["image"]["sha256"],
-            "xz_size": str(evidence["archive"]["size"]),
-            "xz_sha256": evidence["archive"]["sha256"],
-            "firmware_revision": "f50a2a21bcdb77a562b3976930c5c6b521a1df08",
+            "source_contract_projection_sha256": candidate[
+                "source_contract_projection_sha256"
+            ],
         }
-        (board_dir / "artifact.metadata.txt").write_text(
-            "".join(f"{key}={value}\n" for key, value in metadata.items())
-        )
-        return candidate
+        calibration_path = output / "R3MINI_CALIBRATION.json"
+        calibration_path.write_text(json.dumps(calibration))
+        verification["calibration_manifest_sha256"] = hashlib.sha256(
+            calibration_path.read_bytes()
+        ).hexdigest()
+        status_path.write_text(json.dumps(verification))
+        return candidate, status_path
 
     def test_sources_are_exactly_pinned(self) -> None:
         expected = {
@@ -274,6 +249,15 @@ class BananaPiFilogicR3MiniCandidateTests(unittest.TestCase):
             "commit:f50a2a21bcdb77a562b3976930c5c6b521a1df08",
         )
         self.assertTrue(self.config["verify_firmware_source_resolution"])
+        self.assertTrue(self.config["verify_mt76_firmware_source_resolution"])
+        self.assertTrue(self.config["verify_linux_firmware_source_contract"])
+        self.assertEqual(
+            [source["commit"] for source in self.config["firmware_runtime_sources"]],
+            [
+                "c5a3bd91aa735b669618610d5f0ebfa5786845a6",
+                "01205307636157a12c29e6a774bf83b218732050",
+            ],
+        )
         self.assertIn(
             'declare -g ARMBIAN_FIRMWARE_GIT_SOURCE="${ARMBIAN_FIRMWARE_GIT_SOURCE_BOARD}"',
             self.board_text,
@@ -330,89 +314,106 @@ class BananaPiFilogicR3MiniCandidateTests(unittest.TestCase):
 
     def test_policy_state_machine_rejects_image_evidence_on_l1(self) -> None:
         invalid = json.loads(json.dumps(self.config))
-        invalid["image_build_evidence"] = self.valid_l2_config()["image_build_evidence"]
+        invalid["image_build_evidence"] = {"status": "complete"}
         rejected = self.run_policy(invalid)
         self.assertNotEqual(rejected.returncode, 0)
 
-    def test_policy_rejects_well_formed_but_unbacked_internal_l2(self) -> None:
+    def test_l2_source_contract_can_rebuild_without_old_output(self) -> None:
+        accepted = self.run_policy(
+            self.valid_l2_config(), "--source-contract-only"
+        )
+        self.assertEqual(accepted.returncode, 0, accepted.stderr.decode())
+
         rejected = self.run_policy(self.valid_l2_config())
         self.assertNotEqual(rejected.returncode, 0)
-        self.assertIn("Git 證據", rejected.stderr.decode())
+        self.assertIn("CANDIDATES.tsv", rejected.stderr.decode())
 
-    def test_policy_state_machine_rejects_incomplete_l2_evidence(self) -> None:
+    def test_policy_state_machine_rejects_incomplete_l2_contract(self) -> None:
         mutations = {
-            "缺少映像證據": lambda data: data.pop("image_build_evidence"),
-            "來源與驗證提交不同": lambda data: data["image_build_evidence"].__setitem__(
-                "verifier_commit", "8" * 40
+            "保留萬用分割區": lambda data: data["boards"]["bananapir3mini"][
+                "required_partitions"
+            ].__setitem__(-1, "5:*:32768:*"),
+            "缺少映像 DTB": lambda data: data["boards"]["bananapir3mini"].__setitem__(
+                "image_dtb_sha256", None
             ),
-            "建置與驗證契約不同": lambda data: data["image_build_evidence"].__setitem__(
-                "verification_config_sha256", "8" * 64
+            "缺少核心設定": lambda data: data["boards"]["bananapir3mini"].pop(
+                "final_kernel_config_sha256"
             ),
-            "候選清單雜湊無效": lambda data: data["image_build_evidence"].__setitem__(
-                "candidate_matrix_sha256", "無效"
+            "缺少 U-Boot 設定": lambda data: data["boards"]["bananapir3mini"].pop(
+                "final_uboot_config_sha256"
             ),
-            "載荷清單雜湊無效": lambda data: data["image_build_evidence"].__setitem__(
-                "uboot_payload_manifest_sha256", "無效"
-            ),
-            "最終設定清單雜湊無效": lambda data: data["image_build_evidence"].__setitem__(
-                "final_config_manifest_sha256", "無效"
-            ),
-            "未完成唯讀驗證": lambda data: data["image_build_evidence"].__setitem__(
-                "read_only_content_verified", False
-            ),
-            "冒充實機驗證": lambda data: data["image_build_evidence"].__setitem__(
-                "hardware_tested", True
-            ),
-            "映像大小無效": lambda data: data["image_build_evidence"]["image"].__setitem__(
-                "size", 0
-            ),
-            "壓縮檔雜湊無效": lambda data: data["image_build_evidence"]["archive"].__setitem__(
-                "sha256", "無效"
+            "校準仍未完成": lambda data: data.__setitem__(
+                "l2_contract_calibration_required", True
             ),
         }
         for name, mutate in mutations.items():
             with self.subTest(name=name):
                 invalid = self.valid_l2_config()
                 mutate(invalid)
-                rejected = self.run_policy(invalid)
+                rejected = self.run_policy(invalid, "--source-contract-only")
                 self.assertNotEqual(rejected.returncode, 0)
 
-    def test_l2_evidence_closes_real_files_and_rejects_drift(self) -> None:
+    def test_fake_tiny_image_and_manual_manifests_never_close_l2(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             output = Path(directory)
-            candidate = self.write_l2_fixture(output)
+            candidate, status = self.write_fake_l2_fixture(output)
             board = candidate["boards"]["bananapir3mini"]
-            POLICY_MODULE.validate_l2_evidence(candidate, board, CONFIG, output)
+            with self.assertRaisesRegex(SystemExit, "IMG 過小"):
+                POLICY_MODULE.validate_l2_material(
+                    candidate, board, CONFIG, output, status
+                )
+            policy = output / "l2-policy.json"
+            policy.write_text(json.dumps(candidate, ensure_ascii=False))
+            inspected = subprocess.run(
+                [
+                    "python3",
+                    str(ROOT / "tools/inspect-bananapi-filogic-r3mini-material.py"),
+                    "--validation",
+                    str(policy),
+                    "--output",
+                    str(output),
+                    "--mode",
+                    "formal",
+                    "--status",
+                    str(status),
+                ],
+                cwd=ROOT,
+                check=False,
+                capture_output=True,
+            )
+            self.assertNotEqual(inspected.returncode, 0)
+            self.assertIn("32 MiB", inspected.stderr.decode())
+            policy_rejected = self.run_policy(
+                candidate,
+                "--material-evidence-only",
+                "--output",
+                str(output),
+                "--status",
+                str(status),
+                output=output,
+            )
+            self.assertNotEqual(policy_rejected.returncode, 0)
+            self.assertIn("32 MiB", policy_rejected.stderr.decode())
 
-            image = output / "bananapir3mini/r3mini.img"
-            original_image = image.read_bytes()
-            image.write_bytes(original_image + b"drift")
-            with self.assertRaises(SystemExit):
-                POLICY_MODULE.validate_l2_evidence(candidate, board, CONFIG, output)
-            image.write_bytes(original_image)
+    def test_projection_excludes_dynamic_evidence_but_invalidates_contract_drift(self) -> None:
+        dynamic = json.loads(json.dumps(self.config))
+        dynamic["component_build_evidence"]["completed_utc"] = "2099-01-01T00:00:00Z"
+        accepted = self.run_policy(
+            dynamic,
+            "--source-contract-only",
+            refresh_projection=False,
+        )
+        self.assertEqual(accepted.returncode, 0, accepted.stderr.decode())
 
-            verification_path = output / "VERIFICATION_STATUS.json"
-            verification = json.loads(verification_path.read_text())
-            verification["source_tree"] = "f" * 40
-            verification_path.write_text(json.dumps(verification))
-            with self.assertRaises(SystemExit):
-                POLICY_MODULE.validate_l2_evidence(candidate, board, CONFIG, output)
-            verification["source_tree"] = candidate["image_build_evidence"][
-                "source_tree"
-            ]
-            verification_path.write_text(json.dumps(verification))
-
-            payload = output / "UBOOT_PAYLOAD_EVIDENCE.tsv"
-            payload.write_text(payload.read_text().replace("\t507953\t", "\t507954\t"))
-            drifted_manifest = hashlib.sha256(payload.read_bytes()).hexdigest()
-            candidate["image_build_evidence"][
-                "uboot_payload_manifest_sha256"
-            ] = drifted_manifest
-            verification = json.loads(verification_path.read_text())
-            verification["uboot_payload_manifest_sha256"] = drifted_manifest
-            verification_path.write_text(json.dumps(verification))
-            with self.assertRaises(SystemExit):
-                POLICY_MODULE.validate_l2_evidence(candidate, board, CONFIG, output)
+        drifted = json.loads(json.dumps(self.config))
+        drifted["boards"]["bananapir3mini"]["root_partition_label"] = "漂移"
+        rejected = self.run_policy(
+            drifted,
+            "--source-contract-only",
+            refresh_projection=False,
+        )
+        self.assertNotEqual(rejected.returncode, 0)
+        self.assertIn("規範投影", rejected.stderr.decode())
 
     def test_l1_marks_unresolved_full_image_calibration(self) -> None:
         self.assertEqual(self.config["current_evidence_level"], "L1")
@@ -576,6 +577,15 @@ class BananaPiFilogicR3MiniCandidateTests(unittest.TestCase):
             len([path for path in firmware if path.startswith("/lib/firmware/mediatek/")]),
             12,
         )
+        self.assertIn("R3 Mini MT76 韌體固定來源", self.board_text)
+        self.assertIn("R3 Mini Linux firmware 固定來源", self.board_text)
+        self.assertIn("firmware-source-contract.tsv", self.board_text)
+        self.assertEqual(
+            self.config["installed_file_sha256"][
+                "/usr/share/doc/armbian-bsp-bananapir3mini/firmware-source-contract.tsv"
+            ],
+            "b6dba3eaffbb1eb6eb4d9506e4be8c57d51a31619cabbbb52e133a02190cd74c",
+        )
 
     def test_dedicated_entrypoints_select_only_r3mini(self) -> None:
         for path in (BUILD, RUNNER, VERIFIER):
@@ -597,6 +607,11 @@ class BananaPiFilogicR3MiniCandidateTests(unittest.TestCase):
         self.assertIn('export MINIMUM_FREE_GIB="${minimum_free_gib}"', RUNNER.read_text())
         self.assertIn("ALLOW_INTERNAL_R3MINI_CANDIDATE=yes", RUNNER.read_text())
         self.assertIn("REQUIRE_ISOLATED_CACHE=yes", RUNNER.read_text())
+        self.assertIn("禁止覆寫 ${variable}", RUNNER.read_text())
+        self.assertIn('fixed_cache_lower="/media/pi/SMCI/armbian/bpi-v26.2.1/cache"', RUNNER.read_text())
+        self.assertIn("validate_fixed_overlay_mount", BUILD.read_text())
+        for identity in ("lowerdir", "upperdir", "workdir"):
+            self.assertIn(identity, BUILD.read_text())
         self.assertIn("check-bananapi-filogic-r3mini-policy.sh", BUILD.read_text())
         self.assertIn("check-bananapi-filogic-r3mini-policy.sh", VERIFIER.read_text())
         self.assertIn("finalize-bananapi-filogic-r3mini-verification.sh", VERIFIER.read_text())
@@ -612,6 +627,9 @@ class BananaPiFilogicR3MiniCandidateTests(unittest.TestCase):
         self.assertIn("write_entry_state failed", VERIFIER.read_text())
         self.assertIn("REQUIRE_BUILD_VERIFIER_IDENTITY=yes", VERIFIER.read_text())
         self.assertIn("REQUIRE_SOURCE_DATE_EPOCH_METADATA=yes", VERIFIER.read_text())
+        self.assertIn("VERIFICATION_DEFER_STATUS_PROMOTION=yes", VERIFIER.read_text())
+        self.assertIn("inspect-bananapi-filogic-r3mini-material.py", VERIFIER.read_text())
+        self.assertIn("--material-evidence-only", VERIFIER.read_text())
         self.assertIn("ALLOW_INTERNAL_R3MINI_CANDIDATE", BUILD.read_text())
         self.assertIn("REQUIRE_SOURCE_DATE_EPOCH_METADATA=yes", BUILD.read_text())
         self.assertIn("PUBLIC_RELEASE=no", BUILD.read_text())
@@ -640,6 +658,18 @@ class BananaPiFilogicR3MiniCandidateTests(unittest.TestCase):
         )
         self.assertNotEqual(rejected.returncode, 0)
         self.assertIn("不得低於 40 GiB", rejected.stderr.decode())
+
+        for variable in ("CACHE_LOWER", "CACHE_TARGET", "CACHE_OVERLAY_ROOT"):
+            overridden = subprocess.run(
+                [str(RUNNER)],
+                cwd=ROOT,
+                env={**os.environ, variable: "/tmp/覆寫"},
+                check=False,
+                capture_output=True,
+            )
+            with self.subTest(variable=variable):
+                self.assertEqual(overridden.returncode, 2)
+                self.assertIn("禁止覆寫", overridden.stderr.decode())
 
         timestamp_override = subprocess.run(
             [str(BUILD)],
@@ -701,6 +731,9 @@ class BananaPiFilogicR3MiniCandidateTests(unittest.TestCase):
             "REQUIRE_SOURCE_DATE_EPOCH_METADATA",
             '"source_tree": "%s"',
             '"source_tree", "verifier_commit"',
+            "assert_verifier_identity",
+            "驗證期間 validation 已改變",
+            "VERIFICATION_DEFER_STATUS_PROMOTION",
         ):
             self.assertIn(value, verifier)
 

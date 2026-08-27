@@ -9,14 +9,19 @@
 ## 已閉合項目
 
 - 固定 `SOURCE_DATE_EPOCH=1787793187`，納入 `compile.sh` 參數、建置參數 SHA-256 與 `artifact.metadata.txt`，拒絕外部覆寫。
-- R3 Mini 建置封裝只接受專用 OverlayFS runner 的內部解鎖，並強制 `REQUIRE_ISOLATED_CACHE=yes`。
+- 來源契約與物質證據已分離；validation 不再內嵌會自我參照的 `image_build_evidence`。L2 來源契約可在沒有舊 output 時預檢與重建，正式 L2 則必須由該次 IMG 重新產生物質證據。
+- `source_contract_projection_sha256` 只排除元件／映像等動態證據；分割區、DTB、config、韌體來源或其他未來契約一旦改動，舊建置與驗證證據立即失效。
+- R3 Mini 建置封裝只接受專用 OverlayFS runner 的內部解鎖，並固定 lowerdir、upperdir、workdir 與 mountpoint；`CACHE_LOWER` 等身分變數不得覆寫，建置器會核對實際掛載參數。
 - 共用建置器在建置返回及候選矩陣完成前核對 HEAD、tree 與乾淨工作樹，拒絕建置期間來源漂移。
-- L1 與 L2 都強制候選來源提交等於驗證器提交，建置與驗證 validation SHA-256 相同。
+- 共用驗證器在成功狀態原子發布前，再次核對 HEAD、tree、乾淨工作樹與 validation SHA-256；R3 Mini 在第二次物質檢查後還會再核對一次。
+- L1 與 L2 都強制候選來源提交等於驗證器提交，建置與驗證 validation SHA-256、來源契約投影及韌體來源集合相同。
 - 驗證入口在前置政策、來源或內容檢查失敗時原子寫入 `failed`，不沿用舊的 `complete` 狀態。
-- L2 固定啟用 XZ 完整性與解壓串流同一性，並以唯讀 loop 裝置檢查完整映像內容。
+- L2 固定啟用單一 XZ 串流完整性與解壓同一性；共用驗證後，R3 Mini 專用物質檢查器會再次建立唯讀 loop 並掛載 rootfs，不接受人工清單代替 IMG。
 - GPT 類型固定為三個 Linux filesystem、一個 EFI System Partition 與一個 Linux root；根分割區固定由 sector 32768 開始，標籤 `armbi_root`、檔案系統 `ext4`。
-- BL2、FIP 與 GPT 固定來源、精確大小、SHA-256、映像偏移及套件內容；最終核心與 U-Boot 設定須由映像內套件產生清單。
-- 政策檢查器實際讀取 IMG、XZ、矩陣、metadata、建置／驗證狀態與證據清單，不接受只有格式正確的虛構值。
+- BL2、FIP 與 GPT 固定來源、精確大小、SHA-256、映像偏移及套件內容；最終核心與 U-Boot 設定必須直接取自唯讀 rootfs。
+- MT76 與 Linux firmware 的 source、ref、commit、執行期日誌及映像內來源契約檔均受守門；對應韌體與授權檔仍須逐檔核對 SHA-256。
+- `R3MINI_CALIBRATION.json` 會記錄五個實際分割區、rootfs、DTB、最終 config、載荷、必要套件與受控韌體。L1 清單只供回填，只有正式重建產生的 `mode=formal` 清單可閉合 L2。
+- 負向回歸明確拒絕約 1.5 KiB 假 IMG、人工 manifest、OverlayFS 路徑覆寫、來源投影漂移與舊成功狀態。
 
 ## eMMC 證據語意
 
@@ -34,7 +39,7 @@ R3 Mini 的一般 IMG 是 eMMC user-area 映像。它包含 GPT、user-area BL2 
 ./tools/run-bananapi-filogic-r3mini-candidate-isolated-cache.sh
 ```
 
-首次預檢通過後，先保存精確根分割區名稱與 sector 數、映像 DTB、最終核心／U-Boot 設定及全部狀態與清單雜湊。接著在新的固定提交中回填契約，再從該提交正式重建並以 L2 模式驗證；不得直接修改層級標籤沿用預檢產物。
+首次預檢通過後，從 `R3MINI_CALIBRATION.json` 回填精確根分割區名稱與 sector 數、映像 DTB、最終核心／U-Boot 設定。接著更新來源契約投影、提交新的固定提交、清除首次預檢 output，再從該提交正式重建並以 L2 模式驗證；不得直接修改層級標籤或沿用預檢產物。
 
 ## 剩餘限制
 

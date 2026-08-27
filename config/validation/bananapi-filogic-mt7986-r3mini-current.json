@@ -6,6 +6,7 @@
   "current_evidence_level": "L1",
   "target_evidence_level": "L2",
   "source_date_epoch": 1787793187,
+  "source_contract_projection_sha256": "263f2c657a935339d6638692974e369a9c0a5e7cec67b0359eaef7a49ce6da29",
   "l2_contract_calibration_required": true,
   "allowed_evidence_levels": [
     "L1",
@@ -52,10 +53,32 @@
   "firmware_commit": "f50a2a21bcdb77a562b3976930c5c6b521a1df08",
   "verify_firmware_source_resolution": true,
   "mt76_firmware_source": "https://github.com/openwrt/mt76.git",
+  "mt76_firmware_ref": "commit:c5a3bd91aa735b669618610d5f0ebfa5786845a6",
   "mt76_firmware_commit": "c5a3bd91aa735b669618610d5f0ebfa5786845a6",
+  "verify_mt76_firmware_source_resolution": true,
   "mt76_firmware_license": "firmware/LICENSE",
   "linux_firmware_source": "https://gitlab.com/kernel-firmware/linux-firmware.git",
+  "linux_firmware_ref": "commit:01205307636157a12c29e6a774bf83b218732050",
   "linux_firmware_commit": "01205307636157a12c29e6a774bf83b218732050",
+  "verify_linux_firmware_source_contract": true,
+  "firmware_runtime_sources": [
+    {
+      "name": "mt76",
+      "source": "https://github.com/openwrt/mt76.git",
+      "ref": "commit:c5a3bd91aa735b669618610d5f0ebfa5786845a6",
+      "commit": "c5a3bd91aa735b669618610d5f0ebfa5786845a6",
+      "evidence_role": "installed-content",
+      "log_marker": "R3 Mini MT76 韌體固定來源"
+    },
+    {
+      "name": "linux-firmware",
+      "source": "https://gitlab.com/kernel-firmware/linux-firmware.git",
+      "ref": "commit:01205307636157a12c29e6a774bf83b218732050",
+      "commit": "01205307636157a12c29e6a774bf83b218732050",
+      "evidence_role": "local-content-provenance",
+      "log_marker": "R3 Mini Linux firmware 固定來源"
+    }
+  ],
   "vendor_reference_source": "https://github.com/BPI-SINOVOIP/BPI-R3MINI-OPENWRT-V21.02.3",
   "vendor_reference_commit": "9bd78779f267a21c04c5bb4d16c32e83aae8d1d3",
   "public_release_authorized": false,
@@ -101,6 +124,7 @@
   "installed_file_sha256": {
     "/usr/share/doc/armbian-bsp-bananapir3mini/LICENSE.airoha": "ad548ca0ffb91ec655de0f28e13089ef1cd4e0deabb2f15a9289194990e62252",
     "/usr/share/doc/armbian-bsp-bananapir3mini/airoha-firmware-SOURCE.md": "06480315ef0caa8a8ddfec7b1a01f73b5b712922d4705c85eda3719a476495aa",
+    "/usr/share/doc/armbian-bsp-bananapir3mini/firmware-source-contract.tsv": "b6dba3eaffbb1eb6eb4d9506e4be8c57d51a31619cabbbb52e133a02190cd74c",
     "/usr/share/doc/armbian-bsp-bananapir3mini/mt76-firmware.LICENSE": "77c0eb6b7915fdb17b328c1eff3d2074bff2025e88603ac59e01ffc07ba0b541"
   },
   "common_packages": [

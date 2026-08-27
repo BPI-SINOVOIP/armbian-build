@@ -74,8 +74,12 @@ function post_config_uboot_target__bananapir3mini_standard_boot() {
 # 內建 MT7986 Wi-Fi 與兩個 EN8811H PHY 的韌體皆以固定來源收入 BSP。
 function post_family_tweaks_bsp__bananapir3mini_network_firmware() {
 	local firmware_commit="${MT76_FIRMWARE_GIT_REF_BOARD#commit:}"
-	local firmware_source firmware_file
+	local firmware_source firmware_file source_contract
 	local airoha_source="${SRC}/packages/blobs/filogic/firmware/airoha"
+	display_alert "R3 Mini MT76 韌體固定來源" \
+	  "${MT76_FIRMWARE_GIT_SOURCE_BOARD} ${MT76_FIRMWARE_GIT_REF_BOARD} ${firmware_commit}" "info"
+	display_alert "R3 Mini Linux firmware 固定來源" \
+	  "${LINUX_FIRMWARE_GIT_SOURCE_BOARD} ${LINUX_FIRMWARE_GIT_REF_BOARD} ${LINUX_FIRMWARE_GIT_REF_BOARD#commit:}" "info"
 	fetch_from_repo "${MT76_FIRMWARE_GIT_SOURCE_BOARD}" "mt76-firmware" \
 	  "${MT76_FIRMWARE_GIT_REF_BOARD}" "yes"
 	firmware_source="${SRC}/cache/sources/mt76-firmware/${firmware_commit}/firmware"
@@ -101,4 +105,14 @@ function post_family_tweaks_bsp__bananapir3mini_network_firmware() {
 	  "${destination}/usr/share/doc/armbian-bsp-${BOARD}/LICENSE.airoha"
 	run_host_command_logged install -Dm0644 "${airoha_source}/SOURCE.md" \
 	  "${destination}/usr/share/doc/armbian-bsp-${BOARD}/airoha-firmware-SOURCE.md"
+	source_contract="${destination}/usr/share/doc/armbian-bsp-${BOARD}/firmware-source-contract.tsv"
+	run_host_command_logged mkdir -p "$(dirname "${source_contract}")"
+	printf 'name\tsource\tref\tcommit\tevidence_role\n' >"${source_contract}"
+	printf 'mt76\t%s\t%s\t%s\tinstalled-content\n' \
+	  "${MT76_FIRMWARE_GIT_SOURCE_BOARD}" "${MT76_FIRMWARE_GIT_REF_BOARD}" \
+	  "${MT76_FIRMWARE_GIT_REF_BOARD#commit:}" >>"${source_contract}"
+	printf 'linux-firmware\t%s\t%s\t%s\tlocal-content-provenance\n' \
+	  "${LINUX_FIRMWARE_GIT_SOURCE_BOARD}" "${LINUX_FIRMWARE_GIT_REF_BOARD}" \
+	  "${LINUX_FIRMWARE_GIT_REF_BOARD#commit:}" >>"${source_contract}"
+	run_host_command_logged chmod 0644 "${source_contract}"
 }

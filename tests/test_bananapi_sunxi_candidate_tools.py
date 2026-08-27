@@ -609,9 +609,55 @@ Provides: unavailable-virtual
             "禁止沿用舊成功狀態",
             "VERIFICATION_PRE_COMPLETE_HOOK",
             "VERIFICATION_EXTRA_STATUS_JSON",
+            "VERIFICATION_DEFER_STATUS_PROMOTION",
+            "assert_verifier_identity",
+            "驗證期間來源 HEAD 已改變",
+            "驗證期間來源 tree 已改變",
+            "驗證期間來源工作樹已改變",
+            "驗證期間 validation 已改變",
         ):
             with self.subTest(required=required):
                 self.assertIn(required, text)
+
+    def test_final_identity_guard_rechecks_validation_atomically(self) -> None:
+        text = VERIFY_SCRIPT.read_text(encoding="utf-8")
+        start = text.index("assert_verifier_identity() {")
+        end = text.index("\n}\n", start) + 3
+        helper = text[start:end]
+        with tempfile.TemporaryDirectory() as directory:
+            temporary = Path(directory)
+            repository = temporary / "repo"
+            repository.mkdir()
+            subprocess.run(["git", "init", "-q", str(repository)], check=True)
+            (repository / "source").write_text("固定來源\n", encoding="utf-8")
+            subprocess.run(["git", "-C", str(repository), "add", "source"], check=True)
+            subprocess.run(
+                [
+                    "git", "-C", str(repository), "-c", "user.name=測試",
+                    "-c", "user.email=test@example.invalid", "commit", "-qm", "固定來源",
+                ],
+                check=True,
+            )
+            validation = temporary / "validation.json"
+            validation.write_text('{"固定":true}\n', encoding="utf-8")
+            script = (
+                'fail() { echo "$*" >&2; exit 1; }\n'
+                + helper
+                + '\nrepo_dir="$1"\nvalidation_config="$2"\n'
+                + 'verifier_commit="$(git -C "$repo_dir" rev-parse HEAD)"\n'
+                + 'verifier_tree="$(git -C "$repo_dir" rev-parse HEAD^{tree})"\n'
+                + 'verification_config_sha256="$(sha256sum "$validation_config" | cut -d" " -f1)"\n'
+                + 'printf \'{"固定":false}\\n\' >"$validation_config"\n'
+                + "assert_verifier_identity\n"
+            )
+            rejected = subprocess.run(
+                ["bash", "-c", script, "原子核對", str(repository), str(validation)],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            self.assertNotEqual(rejected.returncode, 0)
+            self.assertIn("validation 已改變", rejected.stderr)
 
     def test_verifier_supports_m6_partition_boot_and_overlap_contracts(self) -> None:
         text = VERIFY_SCRIPT.read_text(encoding="utf-8")
@@ -690,6 +736,8 @@ Provides: unavailable-virtual
             "firmware_git_ref",
             "firmware_revision",
             "validate_firmware_source_log",
+            "firmware_runtime_sources_sha256",
+            "validate_firmware_runtime_sources_log",
             "Fetching SHA1 of 'commit'",
             "armbian-firmware-git ${firmware_revision}",
         ):

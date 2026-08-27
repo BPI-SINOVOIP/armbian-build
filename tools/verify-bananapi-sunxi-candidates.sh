@@ -13,6 +13,7 @@ verification_extra_status_json="${VERIFICATION_EXTRA_STATUS_JSON:-}"
 require_build_verifier_identity="${REQUIRE_BUILD_VERIFIER_IDENTITY:-no}"
 require_source_date_epoch_metadata="${REQUIRE_SOURCE_DATE_EPOCH_METADATA:-no}"
 verification_pre_complete_hook="${VERIFICATION_PRE_COMPLETE_HOOK:-}"
+verification_defer_status_promotion="${VERIFICATION_DEFER_STATUS_PROMOTION:-no}"
 
 read -r -a boards <<<"${boards_text}"
 
@@ -148,6 +149,10 @@ case "${require_source_date_epoch_metadata}" in
 	yes | no) ;;
 	*) fail "REQUIRE_SOURCE_DATE_EPOCH_METADATA 只接受 yes 或 no" ;;
 esac
+case "${verification_defer_status_promotion}" in
+	yes | no) ;;
+	*) fail "VERIFICATION_DEFER_STATUS_PROMOTION 只接受 yes 或 no" ;;
+esac
 if [[ "${verification_evidence_level}" == L2 && "${verify_archives}" != yes ]]; then
 	fail "L2 驗證不得停用 XZ 串流同一性檢查"
 fi
@@ -157,7 +162,19 @@ validate_default_userpatches
 sudo -n true || fail "唯讀掛載驗證需要免互動 sudo"
 
 verifier_commit="$(git -C "${repo_dir}" rev-parse HEAD)"
+verifier_tree="$(git -C "${repo_dir}" rev-parse 'HEAD^{tree}')"
 verification_config_sha256="$(sha256sum "${validation_config}" | cut -d' ' -f1)"
+
+assert_verifier_identity() {
+	[[ "$(git -C "${repo_dir}" rev-parse HEAD)" == "${verifier_commit}" ]] ||
+		fail "驗證期間來源 HEAD 已改變"
+	[[ "$(git -C "${repo_dir}" rev-parse 'HEAD^{tree}')" == "${verifier_tree}" ]] ||
+		fail "驗證期間來源 tree 已改變"
+	[[ -z "$(git -C "${repo_dir}" status --porcelain --untracked-files=all)" ]] ||
+		fail "驗證期間來源工作樹已改變"
+	[[ "$(sha256sum "${validation_config}" | cut -d' ' -f1)" == \
+		"${verification_config_sha256}" ]] || fail "驗證期間 validation 已改變"
+}
 
 board_field() {
 	python3 - "${validation_config}" "$1" "$2" <<'PY'
@@ -256,6 +273,39 @@ validate_firmware_source_log() {
 		fail "建置日誌缺少 Armbian 韌體來源"
 	grep -Fq "armbian-firmware-git ${firmware_revision}" "${log_file}" ||
 		fail "建置日誌缺少 Armbian 韌體固定來源取用紀錄"
+}
+
+validate_firmware_runtime_sources_log() {
+	local log_file=$1
+	[[ -z "${firmware_runtime_sources_sha256}" ]] && return 0
+	python3 - "${validation_config}" "${log_file}" <<'PY'
+import json
+import re
+import sys
+
+with open(sys.argv[1], encoding="utf-8") as stream:
+    sources = json.load(stream).get("firmware_runtime_sources", [])
+with open(sys.argv[2], encoding="utf-8", errors="replace") as stream:
+    lines = [re.sub(r"\x1b\[[0-9;]*[A-Za-z]", "", line) for line in stream]
+if not isinstance(sources, list) or not sources:
+    raise SystemExit("韌體執行期來源契約不是非空清單")
+for source in sources:
+    commit = source.get("commit", "") if isinstance(source, dict) else ""
+    expected = (
+        source.get("log_marker", "") if isinstance(source, dict) else "",
+        source.get("source", "") if isinstance(source, dict) else "",
+        source.get("ref", "") if isinstance(source, dict) else "",
+        commit,
+    )
+    if (
+        not all(expected)
+        or source.get("ref") != f"commit:{commit}"
+        or re.fullmatch(r"[0-9a-f]{40}", commit) is None
+    ):
+        raise SystemExit("韌體執行期來源契約欄位不完整")
+    if not any(all(value in line for value in expected) for line in lines):
+        raise SystemExit(f"建置日誌缺少韌體來源原子紀錄：{source.get('name', '未命名')}")
+PY
 }
 
 read_metadata_value() {
@@ -1046,6 +1096,28 @@ git -C "${repo_dir}" cat-file -e "${candidate_source_commit}:${validation_config
 build_validation_config_sha256="$(git -C "${repo_dir}" show \
 	"${candidate_source_commit}:${validation_config_relative}" | sha256sum | cut -d' ' -f1)"
 candidate_matrix_sha256="$(sha256sum "${output_dir}/CANDIDATES.tsv" | cut -d' ' -f1)"
+source_contract_projection_sha256="$(top_field_optional source_contract_projection_sha256)"
+firmware_runtime_sources_sha256="$(python3 - "${validation_config}" <<'PY'
+import hashlib
+import json
+import sys
+
+with open(sys.argv[1], encoding="utf-8") as stream:
+    sources = json.load(stream).get("firmware_runtime_sources")
+if sources is None:
+    print("")
+else:
+    encoded = json.dumps(
+        sources, ensure_ascii=False, sort_keys=True, separators=(",", ":")
+    ).encode()
+    print(hashlib.sha256(encoded).hexdigest())
+PY
+)"
+for digest_name in source_contract_projection_sha256 firmware_runtime_sources_sha256; do
+	digest_value="${!digest_name}"
+	[[ -z "${digest_value}" || "${digest_value}" =~ ^[0-9a-f]{64}$ ]] ||
+		fail "${digest_name} 格式不符"
+done
 if [[ "${verification_evidence_level}" == L2 || "${require_build_verifier_identity}" == yes ]]; then
 	[[ "${candidate_source_commit}" == "${verifier_commit}" ]] ||
 		fail "候選來源提交與驗證器提交不一致"
@@ -1054,7 +1126,8 @@ if [[ "${verification_evidence_level}" == L2 || "${require_build_verifier_identi
 fi
 python3 - "${output_dir}/COMPLETION_STATUS.json" "${candidate_source_commit}" \
 	"${candidate_source_tree}" "${build_validation_config_sha256}" \
-	"${candidate_matrix_sha256}" <<'PY' || fail "建置完成狀態未綁定候選來源與矩陣"
+	"${candidate_matrix_sha256}" "${source_contract_projection_sha256}" \
+	"${firmware_runtime_sources_sha256}" <<'PY' || fail "建置完成狀態未綁定候選來源與矩陣"
 import json
 import sys
 with open(sys.argv[1], encoding="utf-8") as stream:
@@ -1066,6 +1139,10 @@ expected = {
     "validation_config_sha256": sys.argv[4],
     "candidates_sha256": sys.argv[5],
 }
+if sys.argv[6]:
+    expected["source_contract_projection_sha256"] = sys.argv[6]
+if sys.argv[7]:
+    expected["firmware_runtime_sources_sha256"] = sys.argv[7]
 raise SystemExit(0 if all(status.get(key) == value for key, value in expected.items()) else 1)
 PY
 verify_firmware_source_resolution="$(top_field_optional verify_firmware_source_resolution)"
@@ -1113,6 +1190,12 @@ while IFS=$'\t' read -r board release profile raw_size raw_sha256 xz_size \
 		"xz_sha256 ${xz_sha256}" "branch ${candidate_branch}"; do
 		read -r key expected <<<"${item}"
 		require_metadata_value "${metadata}" "${key}" "${expected}"
+	done
+	for item in \
+		"source_contract_projection_sha256 ${source_contract_projection_sha256}" \
+		"firmware_runtime_sources_sha256 ${firmware_runtime_sources_sha256}"; do
+		read -r key expected <<<"${item}"
+		[[ -z "${expected}" ]] || require_metadata_value "${metadata}" "${key}" "${expected}"
 	done
 	if [[ "${require_source_date_epoch_metadata}" == yes ]]; then
 		source_date_epoch="$(top_field_optional source_date_epoch)"
@@ -1163,6 +1246,14 @@ while IFS=$'\t' read -r board release profile raw_size raw_sha256 xz_size \
 			fail "${board} 缺少建置日誌"
 		validate_firmware_source_log "${output_dir}/${build_log_relative}"
 	fi
+	if [[ -n "${firmware_runtime_sources_sha256}" ]]; then
+		build_log_relative="$(read_metadata_value "${metadata}" build_log)" ||
+			fail "${board} 的中繼資料缺少建置日誌"
+		[[ "${build_log_relative}" =~ ^logs/[A-Za-z0-9._+-]+\.log$ &&
+			-f "${output_dir}/${build_log_relative}" ]] ||
+			fail "${board} 缺少合法的建置日誌"
+		validate_firmware_runtime_sources_log "${output_dir}/${build_log_relative}"
+	fi
 	validate_boot_area "${image}" "${board}"
 	validate_mounted_image "${image}" "${board}"
 	printf '%s\tpass\tpass\t%s\n' "${board}" "${verification_evidence_level}" >>"${verification_file}.partial"
@@ -1184,6 +1275,10 @@ final_config_manifest_sha256="$(sha256sum \
 	printf '  "verifier_commit": "%s",\n' "${verifier_commit}"
 	printf '  "build_validation_config_sha256": "%s",\n' "${build_validation_config_sha256}"
 	printf '  "verification_config_sha256": "%s",\n' "${verification_config_sha256}"
+	[[ -z "${source_contract_projection_sha256}" ]] || printf \
+		'  "source_contract_projection_sha256": "%s",\n' "${source_contract_projection_sha256}"
+	[[ -z "${firmware_runtime_sources_sha256}" ]] || printf \
+		'  "firmware_runtime_sources_sha256": "%s",\n' "${firmware_runtime_sources_sha256}"
 	printf '  "candidate_matrix_sha256": "%s",\n' "${candidate_matrix_sha256}"
 	printf '  "uboot_payload_manifest_sha256": "%s",\n' "${uboot_payload_manifest_sha256}"
 	printf '  "final_config_manifest_sha256": "%s",\n' "${final_config_manifest_sha256}"
@@ -1215,6 +1310,7 @@ protected = {
     "build_validation_config_sha256", "verification_config_sha256",
     "candidate_matrix_sha256", "uboot_payload_manifest_sha256",
     "final_config_manifest_sha256", "verified_utc",
+    "source_contract_projection_sha256", "firmware_runtime_sources_sha256",
 }
 if not isinstance(extra, dict) or protected.intersection(extra):
     raise SystemExit("附加驗證狀態格式不合法或覆寫受保護欄位")
@@ -1230,7 +1326,8 @@ python3 - "${status_file}.partial" "${verification_evidence_level}" \
 	"${candidate_source_commit}" "${candidate_source_tree}" "${verifier_commit}" \
 	"${build_validation_config_sha256}" "${verification_config_sha256}" \
 	"${candidate_matrix_sha256}" "${uboot_payload_manifest_sha256}" \
-	"${final_config_manifest_sha256}" <<'PY' || fail "驗證完成狀態的受保護欄位遭到修改"
+	"${final_config_manifest_sha256}" "${source_contract_projection_sha256}" \
+	"${firmware_runtime_sources_sha256}" <<'PY' || fail "驗證完成狀態的受保護欄位遭到修改"
 import json
 import sys
 
@@ -1248,9 +1345,18 @@ expected = {
     "uboot_payload_manifest_sha256": sys.argv[9],
     "final_config_manifest_sha256": sys.argv[10],
 }
+if sys.argv[11]:
+    expected["source_contract_projection_sha256"] = sys.argv[11]
+if sys.argv[12]:
+    expected["firmware_runtime_sources_sha256"] = sys.argv[12]
 raise SystemExit(0 if all(status.get(key) == value for key, value in expected.items()) else 1)
 PY
-mv "${status_file}.partial" "${status_file}"
-verification_state_active=no
-trap - EXIT
-echo "${candidate_family_name} 候選映像全部通過 ${verification_evidence_level} 唯讀守門。"
+assert_verifier_identity
+if [[ "${verification_defer_status_promotion}" == yes ]]; then
+	echo "${candidate_family_name} 候選映像通過共用唯讀守門，成功狀態等待專用政策閉合。"
+else
+	mv "${status_file}.partial" "${status_file}"
+	verification_state_active=no
+	trap - EXIT
+	echo "${candidate_family_name} 候選映像全部通過 ${verification_evidence_level} 唯讀守門。"
+fi

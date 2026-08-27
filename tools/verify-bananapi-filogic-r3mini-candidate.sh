@@ -37,12 +37,17 @@ PY
 	echo "找不到 R3 Mini 候選輸出目錄：${output_dir}" >&2
 	exit 1
 }
+for stale in VERIFICATION_STATUS.json.partial R3MINI_CALIBRATION.json \
+	R3MINI_CALIBRATION.json.partial; do
+	[[ ! -e "${output_dir}/${stale}" ]] || unlink "${output_dir}/${stale}"
+done
 write_entry_state in_progress "R3 Mini 前置政策檢查執行中" L1
 entry_state_active=yes
 finish_entry_state() {
 	local exit_status=$?
 	trap - EXIT
 	if [[ ${exit_status} -ne 0 && "${entry_state_active}" == yes ]]; then
+		[[ ! -e "${status_file}.partial" ]] || unlink "${status_file}.partial"
 		write_entry_state failed "R3 Mini 前置或完整驗證失敗" "${policy_evidence_level:-L1}"
 	fi
 	exit "${exit_status}"
@@ -55,7 +60,7 @@ export BOARDS="bananapir3mini"
 export VERIFY_TMP_PREFIX="filogic-r3mini-verify"
 export VERIFICATION_PRE_COMPLETE_HOOK="${repo_dir}/tools/finalize-bananapi-filogic-r3mini-verification.sh"
 
-"${repo_dir}/tools/check-bananapi-filogic-r3mini-policy.sh"
+"${repo_dir}/tools/check-bananapi-filogic-r3mini-policy.sh" --source-contract-only
 [[ "${PUBLIC_RELEASE:-no}" == no ]] || {
 	echo "R3 Mini 候選不得要求公開發布" >&2
 	exit 1
@@ -81,7 +86,39 @@ export VERIFY_ARCHIVES=yes
 export VERIFICATION_EVIDENCE_LEVEL="${policy_evidence_level}"
 export REQUIRE_BUILD_VERIFIER_IDENTITY=yes
 export REQUIRE_SOURCE_DATE_EPOCH_METADATA=yes
+export VERIFICATION_DEFER_STATUS_PROMOTION=yes
+
+entry_commit="$(git -C "${repo_dir}" rev-parse HEAD)"
+entry_tree="$(git -C "${repo_dir}" rev-parse 'HEAD^{tree}')"
+entry_validation_sha256="$(sha256sum "${validation_config}" | cut -d' ' -f1)"
 
 "${verifier}" "$@"
+if [[ "${policy_evidence_level}" == L1 ]]; then
+	python3 "${repo_dir}/tools/inspect-bananapi-filogic-r3mini-material.py" \
+		--validation "${validation_config}" --output "${output_dir}" \
+		--mode calibration --status "${status_file}.partial"
+else
+	"${repo_dir}/tools/check-bananapi-filogic-r3mini-policy.sh" \
+		--material-evidence-only --output "${output_dir}" --status "${status_file}.partial"
+fi
+[[ "$(git -C "${repo_dir}" rev-parse HEAD)" == "${entry_commit}" ]] || {
+	echo "R3 Mini 物質驗證期間來源 HEAD 已改變" >&2
+	exit 1
+}
+[[ "$(git -C "${repo_dir}" rev-parse 'HEAD^{tree}')" == "${entry_tree}" ]] || {
+	echo "R3 Mini 物質驗證期間來源 tree 已改變" >&2
+	exit 1
+}
+[[ -z "$(git -C "${repo_dir}" status --porcelain --untracked-files=all)" ]] || {
+	echo "R3 Mini 物質驗證期間來源工作樹已改變" >&2
+	exit 1
+}
+[[ "$(sha256sum "${validation_config}" | cut -d' ' -f1)" == \
+	"${entry_validation_sha256}" ]] || {
+	echo "R3 Mini 物質驗證期間 validation 已改變" >&2
+	exit 1
+}
+mv "${status_file}.partial" "${status_file}"
 entry_state_active=no
 trap - EXIT
+echo "R3 Mini ${policy_evidence_level} 候選證據已原子閉合。"

@@ -160,6 +160,39 @@ validate_firmware_source_log() {
 		fail "建置日誌缺少 Armbian 韌體固定來源取用紀錄"
 }
 
+validate_firmware_runtime_sources_log() {
+	local log_file=$1
+	[[ -z "${firmware_runtime_sources_sha256}" ]] && return 0
+	python3 - "${validation_config}" "${log_file}" <<'PY'
+import json
+import re
+import sys
+
+with open(sys.argv[1], encoding="utf-8") as stream:
+    sources = json.load(stream).get("firmware_runtime_sources", [])
+with open(sys.argv[2], encoding="utf-8", errors="replace") as stream:
+    lines = [re.sub(r"\x1b\[[0-9;]*[A-Za-z]", "", line) for line in stream]
+if not isinstance(sources, list) or not sources:
+    raise SystemExit("韌體執行期來源契約不是非空清單")
+for source in sources:
+    if not isinstance(source, dict):
+        raise SystemExit("韌體執行期來源契約格式不符")
+    commit = source.get("commit", "")
+    expected = (
+        source.get("log_marker", ""), source.get("source", ""),
+        source.get("ref", ""), commit,
+    )
+    if (
+        not all(expected)
+        or source.get("ref") != f"commit:{commit}"
+        or re.fullmatch(r"[0-9a-f]{40}", commit) is None
+    ):
+        raise SystemExit("韌體執行期來源契約欄位不完整")
+    if not any(all(value in line for value in expected) for line in lines):
+        raise SystemExit(f"建置日誌缺少韌體來源原子紀錄：{source.get('name', '未命名')}")
+PY
+}
+
 validate_board() {
 	python3 - "${validation_config}" "$1" <<'PY'
 import json
@@ -194,6 +227,14 @@ write_status() {
 		printf '  "source_commit": "%s",\n' "${source_commit}"
 		printf '  "source_tree": "%s",\n' "${source_tree}"
 		printf '  "validation_config_sha256": "%s",\n' "${validation_config_sha256}"
+		if [[ -n "${source_contract_projection_sha256}" ]]; then
+			printf '  "source_contract_projection_sha256": "%s",\n' \
+				"${source_contract_projection_sha256}"
+		fi
+		if [[ -n "${firmware_runtime_sources_sha256}" ]]; then
+			printf '  "firmware_runtime_sources_sha256": "%s",\n' \
+				"${firmware_runtime_sources_sha256}"
+		fi
 		if [[ -n "${candidates_sha256}" ]]; then
 			printf '  "candidates_sha256": "%s",\n' "${candidates_sha256}"
 		fi
@@ -202,6 +243,29 @@ write_status() {
 	} >"${temporary}"
 	mv "${temporary}" "${status_file}"
 }
+
+source_contract_projection_sha256="$(top_field_optional source_contract_projection_sha256)"
+firmware_runtime_sources_sha256="$(python3 - "${validation_config}" <<'PY'
+import hashlib
+import json
+import sys
+
+with open(sys.argv[1], encoding="utf-8") as stream:
+    sources = json.load(stream).get("firmware_runtime_sources")
+if sources is None:
+    print("")
+else:
+    encoded = json.dumps(
+        sources, ensure_ascii=False, sort_keys=True, separators=(",", ":")
+    ).encode()
+    print(hashlib.sha256(encoded).hexdigest())
+PY
+)"
+for digest_name in source_contract_projection_sha256 firmware_runtime_sources_sha256; do
+	digest_value="${!digest_name}"
+	[[ -z "${digest_value}" || "${digest_value}" =~ ^[0-9a-f]{64}$ ]] ||
+		fail "${digest_name} 格式不符"
+done
 
 mkdir -p "${output_dir}/logs" "${repo_dir}/.tmp"
 exec 9>"${repo_dir}/.tmp/${candidate_lock_file}"
@@ -323,6 +387,8 @@ for board in "${boards[@]}"; do
 			"verify_firmware_source_resolution ${verify_firmware_source_resolution}" \
 			"firmware_git_source ${firmware_git_source}" \
 			"firmware_git_ref ${firmware_git_ref}" "firmware_revision ${firmware_revision}" \
+			"source_contract_projection_sha256 ${source_contract_projection_sha256}" \
+			"firmware_runtime_sources_sha256 ${firmware_runtime_sources_sha256}" \
 			"source_date_epoch ${source_date_epoch}"; do
 			read -r key expected <<<"${item}"
 			[[ -z "${expected}" ]] ||
@@ -374,6 +440,10 @@ for board in "${boards[@]}"; do
 			printf 'build_method=full_compile_sh_build\nbuild_parameters_sha256=%s\n' "${build_parameters_sha256}"
 			printf 'artifact_ignore_cache=%s\nsource_commit=%s\nsource_tree=%s\n' "${artifact_ignore_cache}" "${source_commit}" "${source_tree}"
 			printf 'validation_config_sha256=%s\nfamily=%s\ndtb=%s\nuboot_tag=%s\n' "${validation_config_sha256}" "${family}" "${dtb}" "${uboot_tag}"
+			[[ -z "${source_contract_projection_sha256}" ]] || printf \
+				'source_contract_projection_sha256=%s\n' "${source_contract_projection_sha256}"
+			[[ -z "${firmware_runtime_sources_sha256}" ]] || printf \
+				'firmware_runtime_sources_sha256=%s\n' "${firmware_runtime_sources_sha256}"
 			[[ -z "${source_date_epoch}" ]] || printf 'source_date_epoch=%s\n' "${source_date_epoch}"
 			for item in "uboot_git_source ${uboot_git_source}" \
 				"uboot_git_ref ${uboot_git_ref}" "uboot_revision ${uboot_revision}" \
@@ -406,6 +476,14 @@ for board in "${boards[@]}"; do
 		[[ -f "${output_dir}/${build_log_relative}" ]] ||
 			fail "${board} 缺少建置日誌"
 		validate_firmware_source_log "${output_dir}/${build_log_relative}"
+	fi
+	if [[ -n "${firmware_runtime_sources_sha256}" ]]; then
+		build_log_relative="$(read_metadata_value "${metadata}" build_log)" ||
+			fail "${board} 的中繼資料缺少建置日誌"
+		[[ "${build_log_relative}" =~ ^logs/[A-Za-z0-9._+-]+\.log$ &&
+			-f "${output_dir}/${build_log_relative}" ]] ||
+			fail "${board} 缺少合法的建置日誌"
+		validate_firmware_runtime_sources_log "${output_dir}/${build_log_relative}"
 	fi
 
 	image="${board_dir}/$(read_metadata_value "${metadata}" image_filename)"
