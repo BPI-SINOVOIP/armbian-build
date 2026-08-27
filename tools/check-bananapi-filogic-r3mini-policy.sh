@@ -3,6 +3,7 @@ set -euo pipefail
 
 repo_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 policy="${VALIDATION_CONFIG:-${repo_dir}/config/validation/bananapi-filogic-mt7986-r3mini-current.json}"
+board="${repo_dir}/config/boards/bananapir3mini.wip"
 
 [[ -s "${policy}" ]] || {
 	echo "找不到 R3 Mini 驗證政策：${policy}" >&2
@@ -12,8 +13,40 @@ command -v jq >/dev/null || {
 	echo "缺少 R3 Mini 政策檢查所需的 jq" >&2
 	exit 1
 }
+[[ -s "${board}" ]] || {
+	echo "找不到 R3 Mini 板檔：${board}" >&2
+	exit 1
+}
 
 jq -e '
+  def sha256:
+    type == "string" and test("^[0-9a-f]{64}$");
+  def commit:
+    type == "string" and test("^[0-9a-f]{40}$");
+  def artifact:
+    type == "object"
+    and (.path | type == "string" and length > 0)
+    and (.size | type == "number" and . > 0 and floor == .)
+    and (.sha256 | sha256);
+  def l2_image_evidence:
+    type == "object"
+    and .status == "complete"
+    and .evidence_level == "L2"
+    and .full_rootfs_image_built == true
+    and .read_only_content_verified == true
+    and .hardware_tested == false
+    and (.source_commit | commit)
+    and (.verifier_commit | commit)
+    and .source_commit == .verifier_commit
+    and (.build_validation_config_sha256 | sha256)
+    and (.verification_config_sha256 | sha256)
+    and .build_validation_config_sha256 == .verification_config_sha256
+    and (.candidate_matrix_sha256 | sha256)
+    and (.uboot_payload_manifest_sha256 | sha256)
+    and (.final_config_manifest_sha256 | sha256)
+    and (.image | artifact)
+    and (.archive | artifact);
+
   .public_release_authorized == false
   and .hardware_claims_allowed == false
   and .hardware_validation_completed == false
@@ -26,17 +59,23 @@ jq -e '
   and (.atf_prebuilt_objects["plat/mediatek/mt7986/drivers/dram/release/dram.o"].redistribution_authorized == false)
   and (.allowed_evidence_levels == ["L1", "L2"])
   and (.component_build_completed == true)
+  and (.firmware_source == "https://github.com/armbian/firmware")
+  and (.firmware_ref == "commit:f50a2a21bcdb77a562b3976930c5c6b521a1df08")
+  and (.firmware_commit == "f50a2a21bcdb77a562b3976930c5c6b521a1df08")
+  and (.verify_firmware_source_resolution == true)
   and (
     if .candidate_level == "L1 元件候選" then
       .candidate_scope == "internal-component-only"
       and .full_rootfs_image_built == false
       and .release_gate.full_image_built == false
       and .release_gate.component_validation_only == true
+      and (has("image_build_evidence") | not)
     elif .candidate_level == "L2 內部軟體候選" then
       .candidate_scope == "internal-l2"
       and .full_rootfs_image_built == true
       and .release_gate.full_image_built == true
       and .release_gate.component_validation_only == false
+      and (.image_build_evidence | l2_image_evidence)
     else
       false
     end
@@ -70,5 +109,16 @@ jq -e '
 	echo "R3 Mini 發布或 eMMC boot0 政策不符" >&2
 	exit 1
 }
+
+for required in \
+	'ARMBIAN_FIRMWARE_GIT_SOURCE_BOARD="https://github.com/armbian/firmware"' \
+	'ARMBIAN_FIRMWARE_GIT_REF_BOARD="commit:f50a2a21bcdb77a562b3976930c5c6b521a1df08"' \
+	"declare -g ARMBIAN_FIRMWARE_GIT_SOURCE=\"\${ARMBIAN_FIRMWARE_GIT_SOURCE_BOARD}\"" \
+	"declare -g ARMBIAN_FIRMWARE_GIT_REF=\"\${ARMBIAN_FIRMWARE_GIT_REF_BOARD}\""; do
+	grep -Fq "${required}" "${board}" || {
+		echo "R3 Mini 板檔缺少固定韌體設定：${required}" >&2
+		exit 1
+	}
+done
 
 echo "R3 Mini L1/L2 狀態、發布阻擋與 eMMC boot0 政策通過"

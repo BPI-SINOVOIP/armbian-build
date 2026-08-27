@@ -17,6 +17,7 @@ KERNELSOURCE_BOARD="https://github.com/frank-w/BPI-Router-Linux.git"
 KERNELBRANCH_BOARD="commit:4a4506842b77b597f11e7fc53be1dcdbdc97eea9"
 BOOTBRANCH_BOARD="commit:34820924edbc4ec7803eb89d9852f4b870fa760a"
 ATFBRANCH_BOARD="commit:c34e37802efaea356991a0811c8fc50f8a810f5b"
+ARMBIAN_FIRMWARE_GIT_SOURCE_BOARD="https://github.com/armbian/firmware"
 ARMBIAN_FIRMWARE_GIT_REF_BOARD="commit:f50a2a21bcdb77a562b3976930c5c6b521a1df08"
 MT76_FIRMWARE_GIT_SOURCE_BOARD="https://github.com/openwrt/mt76.git"
 MT76_FIRMWARE_GIT_REF_BOARD="commit:c5a3bd91aa735b669618610d5f0ebfa5786845a6"
@@ -33,6 +34,7 @@ function post_family_config_branch_current__bananapir3mini_pin_sources() {
 	declare -g KERNELBRANCH="${KERNELBRANCH_BOARD}"
 	declare -g BOOTBRANCH="${BOOTBRANCH_BOARD}"
 	declare -g ATFBRANCH="${ATFBRANCH_BOARD}"
+	declare -g ARMBIAN_FIRMWARE_GIT_SOURCE="${ARMBIAN_FIRMWARE_GIT_SOURCE_BOARD}"
 	declare -g ARMBIAN_FIRMWARE_GIT_REF="${ARMBIAN_FIRMWARE_GIT_REF_BOARD}"
 }
 

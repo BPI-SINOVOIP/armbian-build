@@ -42,11 +42,59 @@ class BananaPiFilogicR3MiniCandidateTests(unittest.TestCase):
         cls.policy = cls.config["boards"]["bananapir3mini"]
         cls.board_text = BOARD.read_text()
 
+    def run_policy(self, config: dict[str, object]) -> subprocess.CompletedProcess[bytes]:
+        with tempfile.TemporaryDirectory() as directory:
+            policy = Path(directory) / "r3mini-policy.json"
+            policy.write_text(json.dumps(config, ensure_ascii=False))
+            environment = os.environ.copy()
+            environment["VALIDATION_CONFIG"] = str(policy)
+            return subprocess.run(
+                [str(POLICY_CHECK)],
+                cwd=ROOT,
+                env=environment,
+                check=False,
+                capture_output=True,
+            )
+
+    def valid_l2_config(self) -> dict[str, object]:
+        promoted = json.loads(json.dumps(self.config))
+        promoted["candidate_level"] = "L2 內部軟體候選"
+        promoted["candidate_scope"] = "internal-l2"
+        promoted["full_rootfs_image_built"] = True
+        promoted["release_gate"]["full_image_built"] = True
+        promoted["release_gate"]["component_validation_only"] = False
+        promoted["image_build_evidence"] = {
+            "status": "complete",
+            "evidence_level": "L2",
+            "full_rootfs_image_built": True,
+            "source_commit": "1" * 40,
+            "verifier_commit": "1" * 40,
+            "build_validation_config_sha256": "2" * 64,
+            "verification_config_sha256": "2" * 64,
+            "candidate_matrix_sha256": "3" * 64,
+            "uboot_payload_manifest_sha256": "4" * 64,
+            "final_config_manifest_sha256": "5" * 64,
+            "read_only_content_verified": True,
+            "hardware_tested": False,
+            "image": {
+                "path": "output/images/r3mini/bananapir3mini.img",
+                "size": 1610612736,
+                "sha256": "6" * 64,
+            },
+            "archive": {
+                "path": "output/images/r3mini/bananapir3mini.img.xz",
+                "size": 314572800,
+                "sha256": "7" * 64,
+            },
+        }
+        return promoted
+
     def test_sources_are_exactly_pinned(self) -> None:
         expected = {
             'KERNELBRANCH_BOARD="commit:4a4506842b77b597f11e7fc53be1dcdbdc97eea9"',
             'BOOTBRANCH_BOARD="commit:34820924edbc4ec7803eb89d9852f4b870fa760a"',
             'ATFBRANCH_BOARD="commit:c34e37802efaea356991a0811c8fc50f8a810f5b"',
+            'ARMBIAN_FIRMWARE_GIT_SOURCE_BOARD="https://github.com/armbian/firmware"',
             'ARMBIAN_FIRMWARE_GIT_REF_BOARD="commit:f50a2a21bcdb77a562b3976930c5c6b521a1df08"',
             'MT76_FIRMWARE_GIT_REF_BOARD="commit:c5a3bd91aa735b669618610d5f0ebfa5786845a6"',
             'LINUX_FIRMWARE_GIT_REF_BOARD="commit:01205307636157a12c29e6a774bf83b218732050"',
@@ -58,6 +106,29 @@ class BananaPiFilogicR3MiniCandidateTests(unittest.TestCase):
             self.config["vendor_reference_commit"],
             "9bd78779f267a21c04c5bb4d16c32e83aae8d1d3",
         )
+        self.assertEqual(
+            self.config["firmware_ref"],
+            "commit:f50a2a21bcdb77a562b3976930c5c6b521a1df08",
+        )
+        self.assertTrue(self.config["verify_firmware_source_resolution"])
+        self.assertIn(
+            'declare -g ARMBIAN_FIRMWARE_GIT_SOURCE="${ARMBIAN_FIRMWARE_GIT_SOURCE_BOARD}"',
+            self.board_text,
+        )
+
+    def test_policy_rejects_firmware_source_drift(self) -> None:
+        mutations = {
+            "來源漂移": ("firmware_source", "https://example.invalid/firmware"),
+            "引用漂移": ("firmware_ref", "branch:main"),
+            "提交漂移": ("firmware_commit", "0" * 40),
+            "停用解析守門": ("verify_firmware_source_resolution", False),
+        }
+        for name, (field, value) in mutations.items():
+            with self.subTest(name=name):
+                invalid = json.loads(json.dumps(self.config))
+                invalid[field] = value
+                rejected = self.run_policy(invalid)
+                self.assertNotEqual(rejected.returncode, 0)
 
     def test_release_gate_remains_blocked(self) -> None:
         self.assertEqual(self.config["candidate_level"], "L1 元件候選")
@@ -73,6 +144,7 @@ class BananaPiFilogicR3MiniCandidateTests(unittest.TestCase):
         self.assertFalse(self.config["release_gate"]["hardware_claims_allowed"])
         self.assertFalse(self.config["release_gate"]["full_image_built"])
         self.assertTrue(self.config["release_gate"]["component_validation_only"])
+        self.assertNotIn("image_build_evidence", self.config)
         self.assertEqual(
             set(self.config["release_gate"]["required_blockers"]),
             set(self.config["public_release_blockers"]),
@@ -90,40 +162,56 @@ class BananaPiFilogicR3MiniCandidateTests(unittest.TestCase):
     def test_policy_state_machine_rejects_label_only_promotion(self) -> None:
         promoted = json.loads(json.dumps(self.config))
         promoted["candidate_level"] = "L2 內部軟體候選"
-        with tempfile.TemporaryDirectory() as directory:
-            policy = Path(directory) / "r3mini-policy.json"
-            policy.write_text(json.dumps(promoted, ensure_ascii=False))
-            environment = os.environ.copy()
-            environment["VALIDATION_CONFIG"] = str(policy)
-            rejected = subprocess.run(
-                [str(POLICY_CHECK)],
-                cwd=ROOT,
-                env=environment,
-                check=False,
-                capture_output=True,
-            )
+        rejected = self.run_policy(promoted)
         self.assertNotEqual(rejected.returncode, 0)
 
-    def test_policy_state_machine_accepts_consistent_internal_l2(self) -> None:
-        promoted = json.loads(json.dumps(self.config))
-        promoted["candidate_level"] = "L2 內部軟體候選"
-        promoted["candidate_scope"] = "internal-l2"
-        promoted["full_rootfs_image_built"] = True
-        promoted["release_gate"]["full_image_built"] = True
-        promoted["release_gate"]["component_validation_only"] = False
-        with tempfile.TemporaryDirectory() as directory:
-            policy = Path(directory) / "r3mini-policy.json"
-            policy.write_text(json.dumps(promoted, ensure_ascii=False))
-            environment = os.environ.copy()
-            environment["VALIDATION_CONFIG"] = str(policy)
-            accepted = subprocess.run(
-                [str(POLICY_CHECK)],
-                cwd=ROOT,
-                env=environment,
-                check=False,
-                capture_output=True,
-            )
+    def test_policy_state_machine_rejects_image_evidence_on_l1(self) -> None:
+        invalid = json.loads(json.dumps(self.config))
+        invalid["image_build_evidence"] = self.valid_l2_config()["image_build_evidence"]
+        rejected = self.run_policy(invalid)
+        self.assertNotEqual(rejected.returncode, 0)
+
+    def test_policy_state_machine_accepts_fully_evidenced_internal_l2(self) -> None:
+        accepted = self.run_policy(self.valid_l2_config())
         self.assertEqual(accepted.returncode, 0, accepted.stderr.decode())
+
+    def test_policy_state_machine_rejects_incomplete_l2_evidence(self) -> None:
+        mutations = {
+            "缺少映像證據": lambda data: data.pop("image_build_evidence"),
+            "來源與驗證提交不同": lambda data: data["image_build_evidence"].__setitem__(
+                "verifier_commit", "8" * 40
+            ),
+            "建置與驗證契約不同": lambda data: data["image_build_evidence"].__setitem__(
+                "verification_config_sha256", "8" * 64
+            ),
+            "候選清單雜湊無效": lambda data: data["image_build_evidence"].__setitem__(
+                "candidate_matrix_sha256", "無效"
+            ),
+            "載荷清單雜湊無效": lambda data: data["image_build_evidence"].__setitem__(
+                "uboot_payload_manifest_sha256", "無效"
+            ),
+            "最終設定清單雜湊無效": lambda data: data["image_build_evidence"].__setitem__(
+                "final_config_manifest_sha256", "無效"
+            ),
+            "未完成唯讀驗證": lambda data: data["image_build_evidence"].__setitem__(
+                "read_only_content_verified", False
+            ),
+            "冒充實機驗證": lambda data: data["image_build_evidence"].__setitem__(
+                "hardware_tested", True
+            ),
+            "映像大小無效": lambda data: data["image_build_evidence"]["image"].__setitem__(
+                "size", 0
+            ),
+            "壓縮檔雜湊無效": lambda data: data["image_build_evidence"]["archive"].__setitem__(
+                "sha256", "無效"
+            ),
+        }
+        for name, mutate in mutations.items():
+            with self.subTest(name=name):
+                invalid = self.valid_l2_config()
+                mutate(invalid)
+                rejected = self.run_policy(invalid)
+                self.assertNotEqual(rejected.returncode, 0)
 
     def test_boot_media_requires_emmc_boot0(self) -> None:
         self.assertEqual(self.policy["candidate_boot_media"], ["emmc"])
@@ -275,6 +363,13 @@ class BananaPiFilogicR3MiniCandidateTests(unittest.TestCase):
                 )
                 self.assertIn('BOARDS="bananapir3mini"', text)
         self.assertIn("bananapi-filogic-r3mini-cache-overlay", RUNNER.read_text())
+        self.assertIn(
+            'CANDIDATE_BUILDER="${repo_dir}/tools/build-bananapi-filogic-r3mini-candidate.sh"',
+            RUNNER.read_text(),
+        )
+        self.assertIn('minimum_free_gib="${MINIMUM_FREE_GIB:-80}"', RUNNER.read_text())
+        self.assertIn("((minimum_free_gib >= 40))", RUNNER.read_text())
+        self.assertIn('export MINIMUM_FREE_GIB="${minimum_free_gib}"', RUNNER.read_text())
         self.assertIn("check-bananapi-filogic-r3mini-policy.sh", BUILD.read_text())
         self.assertIn("check-bananapi-filogic-r3mini-policy.sh", VERIFIER.read_text())
         self.assertIn("finalize-bananapi-filogic-r3mini-verification.sh", VERIFIER.read_text())
@@ -302,6 +397,18 @@ class BananaPiFilogicR3MiniCandidateTests(unittest.TestCase):
             )
             with self.subTest(variable=variable):
                 self.assertNotEqual(rejected.returncode, 0)
+
+        environment = os.environ.copy()
+        environment["MINIMUM_FREE_GIB"] = "39"
+        rejected = subprocess.run(
+            [str(RUNNER)],
+            cwd=ROOT,
+            env=environment,
+            check=False,
+            capture_output=True,
+        )
+        self.assertNotEqual(rejected.returncode, 0)
+        self.assertIn("不得低於 40 GiB", rejected.stderr.decode())
 
     def test_finalizer_enforces_payload_bounds_and_release_block(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

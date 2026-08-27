@@ -6,7 +6,17 @@
 
 `bananapir3mini` 已完成固定來源、eMMC 啟動鏈、GPT、BL2／FIP、U-Boot、核心 DTB、網路韌體與板卡專用驗證契約。Linux DTB、U-Boot、ATF BL2／BL31 與 FIP 均已執行套用或元件建置驗證，但依任務限制未建置完整 Armbian 映像，也未進行實體板測試；目前證據等級是 `L1 元件候選`，不得宣稱可開機、硬體通過或可公開發布。
 
-候選政策採用受控 L1/L2 狀態機。現行狀態固定為 `candidate_scope=internal-component-only`、`full_rootfs_image_built=false`；僅改寫層級名稱會被政策檢查器拒絕。未來只有在 validation 同時改為 `L2 內部軟體候選`、`candidate_scope=internal-l2`、完整映像狀態為真，並由該提交重新完整建置及通過同一提交的 IMG／XZ 驗證後，才可產生 L2 狀態。兩個層級都固定禁止公開發布與硬體通過聲明。
+候選政策採用受控 L1/L2 狀態機。現行狀態固定為 `candidate_scope=internal-component-only`、`full_rootfs_image_built=false`，而且 L1 明確禁止攜帶 `image_build_evidence`；僅改寫層級名稱或夾帶未受控映像欄位都會被政策檢查器拒絕。
+
+未來升為 `L2 內部軟體候選` 時，必須同時滿足 `candidate_scope=internal-l2`、完整映像狀態為真及下列不可省略的映像證據：
+
+- 來源提交與驗證器提交都是完整 40 位十六進位提交碼，而且兩者相同。
+- 建置與驗證使用的 validation SHA-256 都有效，而且兩者相同。
+- `CANDIDATES.tsv`、U-Boot 載荷清單及最終核心／U-Boot 設定清單各有獨立 SHA-256。
+- IMG 與 XZ 都記錄非零大小、路徑與 SHA-256。
+- 唯讀內容驗證為真，實機驗證為假。
+
+上述契約只建立未來 L2 的軟體證據格式，不代表本次已完成映像建置。兩個層級都固定禁止公開發布與硬體通過聲明。
 
 ## 固定來源
 
@@ -19,6 +29,8 @@
 | MT76 firmware | `https://github.com/openwrt/mt76.git` | `c5a3bd91aa735b669618610d5f0ebfa5786845a6` |
 | Linux firmware | `https://gitlab.com/kernel-firmware/linux-firmware.git` | `01205307636157a12c29e6a774bf83b218732050` |
 | 原廠板級參考 | `https://github.com/BPI-SINOVOIP/BPI-R3MINI-OPENWRT-V21.02.3` | `9bd78779f267a21c04c5bb4d16c32e83aae8d1d3` |
+
+板檔同時固定 `ARMBIAN_FIRMWARE_GIT_SOURCE` 與 `ARMBIAN_FIRMWARE_GIT_REF`，validation 另外保存 source、ref、commit，並啟用 `verify_firmware_source_resolution=true`。未來完整建置時，共用建置器必須從日誌證明實際解析到同一來源與提交，不能只接受欄位宣告。
 
 原廠使用說明指出 BPI-R3 Mini 不支援 SD 開機。eMMC 初始化須分成兩部分：整碟映像寫入 `/dev/mmcblk0` 的 user area，另外將 `bl2.img` 寫入 `/dev/mmcblk0boot0`，最後執行 `mmc bootpart enable 1 1 /dev/mmcblk0`。因此一般 IMG 只涵蓋 user area，不是空白 eMMC 的完整冷啟動安裝物。本候選不提供自動 eMMC 安裝，也不把 SD 列為支援媒體；eMMC 目前只是候選目標，`supported_boot_media=[]` 明確表示尚未實機核准。
 
@@ -75,7 +87,7 @@ ATF 建置會連結 `plat/mediatek/mt7986/drivers/dram/release/dram.o`，其 SHA
 ./tools/verify-bananapi-filogic-r3mini-candidate.sh
 ```
 
-三個入口只選取 `bananapir3mini`、固定驗證 JSON 與獨立 OverlayFS 上層。本次依任務限制只驗證入口與元件，沒有執行上述完整映像建置。
+三個入口只選取 `bananapir3mini`、固定驗證 JSON 與獨立 OverlayFS 上層。專用隔離入口明確呼叫 R3 Mini 專用建置封裝，預設保留共用建置器的 80 GiB 空間要求；使用者可提高要求，但任何低於 40 GiB 的值都會先由專用入口拒絕，之後仍須再通過共用建置器的硬下限與其他隔離保護。本次依任務限制只驗證入口與元件，沒有執行上述完整映像建置。
 
 驗證入口固定啟用 XZ 完整性與解壓串流同一性，不接受環境變數降級。板卡專用收尾器會把載荷證據視為不可信輸入，要求 BL2、FIP、GPT 各自恰好一筆，逐項核對板卡、位置、偏移、大小上下限及 SHA-256；BL2 不得超過 `4176896` bytes、FIP 不得超過 `4194304` bytes，GPT 必須恰為 `17408` bytes。
 
