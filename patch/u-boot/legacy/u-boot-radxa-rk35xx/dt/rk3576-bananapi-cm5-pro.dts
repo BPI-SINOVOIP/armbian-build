@@ -1,0 +1,10 @@
+// SPDX-License-Identifier: (GPL-2.0+ OR MIT)
+
+/dts-v1/;
+
+#include "rk3576-armsom-cm5-io.dts"
+
+/ {
+	model = "Banana Pi CM5 Pro";
+	compatible = "bananapi,bpi-cm5-pro", "armsom,cm5-io", "rockchip,rk3576";
+};

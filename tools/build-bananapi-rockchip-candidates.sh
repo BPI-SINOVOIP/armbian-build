@@ -34,7 +34,7 @@ mark_evidence_failure() {
 		{
 			printf '{\n'
 			printf '  "status": "failed",\n'
-			printf '  "detail": "rkbin 來源證據建立失敗",\n'
+			printf '  "detail": "Rockchip 固定來源證據建立失敗",\n'
 			printf '  "source_commit": "%s",\n' "$(git -C "${repo_dir}" rev-parse HEAD)"
 			printf '  "updated_utc": "%s"\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 			printf '}\n'
@@ -98,5 +98,57 @@ status="${output_dir}/RKBIN_STATUS.json"
 } >"${status}.partial"
 mv "${status}.partial" "${status}"
 
+wifi_expected_commit="$(python3 - "${validation_config}" <<'PY'
+import json
+import sys
+with open(sys.argv[1], encoding="utf-8") as stream:
+    print(json.load(stream).get("wifi_driver_commit", ""))
+PY
+)"
+if [[ -n "${wifi_expected_commit}" ]]; then
+	wifi_dir="${repo_dir}/cache/sources/rtl8852bs/${wifi_expected_commit}"
+	[[ -e "${wifi_dir}/.git" ]] || fail "找不到 RTL8852BS 固定來源工作樹"
+	wifi_actual_commit="$(git -C "${wifi_dir}" rev-parse HEAD)"
+	[[ "${wifi_actual_commit}" == "${wifi_expected_commit}" ]] ||
+		fail "RTL8852BS 提交不符：預期 ${wifi_expected_commit}，實際 ${wifi_actual_commit}"
+	wifi_unexpected_changes="$(git -C "${wifi_dir}" status --porcelain --untracked-files=all |
+		grep -v '^?? .commit_id$' || true)"
+	[[ -z "${wifi_unexpected_changes}" ]] || fail "RTL8852BS 工作樹含有非預期變更"
+
+	wifi_manifest="${output_dir}/WIFI_DRIVER_EVIDENCE.tsv"
+	printf 'path\tsha256\n' >"${wifi_manifest}.partial"
+	while IFS=$'\t' read -r relative expected_sha256; do
+		path="${wifi_dir}/${relative}"
+		[[ -f "${path}" ]] || fail "RTL8852BS 缺少檔案：${relative}"
+		actual_sha256="$(sha256sum "${path}" | cut -d' ' -f1)"
+		[[ "${actual_sha256}" == "${expected_sha256}" ]] ||
+			fail "RTL8852BS 檔案雜湊不符：${relative}"
+		printf '%s\t%s\n' "${relative}" "${actual_sha256}" >>"${wifi_manifest}.partial"
+	done < <(python3 - "${validation_config}" <<'PY'
+import json
+import sys
+with open(sys.argv[1], encoding="utf-8") as stream:
+    files = json.load(stream)["wifi_driver_files"]
+for path in sorted(files):
+    print(f"{path}\t{files[path]}")
+PY
+)
+	mv "${wifi_manifest}.partial" "${wifi_manifest}"
+
+	wifi_manifest_sha256="$(sha256sum "${wifi_manifest}" | cut -d' ' -f1)"
+	wifi_status="${output_dir}/WIFI_DRIVER_STATUS.json"
+	{
+		printf '{\n'
+		printf '  "status": "complete",\n'
+		printf '  "source_commit": "%s",\n' "${source_commit}"
+		printf '  "wifi_driver_commit": "%s",\n' "${wifi_actual_commit}"
+		printf '  "validation_config_sha256": "%s",\n' "${config_sha256}"
+		printf '  "manifest_sha256": "%s",\n' "${wifi_manifest_sha256}"
+		printf '  "updated_utc": "%s"\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+		printf '}\n'
+	} >"${wifi_status}.partial"
+	mv "${wifi_status}.partial" "${wifi_status}"
+fi
+
 trap - EXIT
-echo "Rockchip rkbin 來源證據完成：${output_dir}"
+echo "Rockchip 固定來源證據完成：${output_dir}"

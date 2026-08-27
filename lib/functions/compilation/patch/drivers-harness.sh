@@ -39,7 +39,10 @@ function kernel_drivers_create_patches() {
 	declare hash_files="${driver_bash_hash:0:8}_${driver_patches_hash_all:0:8}"
 
 	declare hash_variables="undetermined"
-	do_normalize_src_path="no" calculate_hash_for_variables "${KERNEL_DRIVERS_SKIP[*]}"
+	do_normalize_src_path="no" calculate_hash_for_variables \
+		"${KERNEL_DRIVERS_SKIP[*]}" \
+		"${RTL8852BS_GIT_SOURCE:-"${GITHUB_SOURCE}/armbian/wifi-rtl8852bs"}" \
+		"${RTL8852BS_GIT_REF:-"commit:35d3e2660fd912c36777cc50dd43b3fbc805d56a"}"
 	declare hash_variables_short="${hash_variables:0:8}"
 
 	# Sanity check, the KERNEL_GIT_SHA1 gotta be sane.
