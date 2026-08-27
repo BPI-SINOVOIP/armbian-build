@@ -158,6 +158,10 @@ class BananaPiMT7623R2CandidateTests(unittest.TestCase):
         text = GENERIC_VERIFIER.read_text()
         self.assertIn("uboot_payload_sha256", text)
         self.assertIn("installed_file_sha256", text)
+        self.assertIn(
+            'sudo sha256sum "${mount_dir}${installed_path}"',
+            text,
+        )
         self.assertIn("payload SHA-256 不符", text)
 
     def test_shell_entrypoints_are_valid(self) -> None:

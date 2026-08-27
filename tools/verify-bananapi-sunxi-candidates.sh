@@ -609,7 +609,7 @@ validate_mounted_image() (
 			installed_path="${installed_spec%%=*}"
 			installed_sha256="${installed_spec#*=}"
 			[[ -f "${mount_dir}${installed_path}" ]] || fail "${board} 缺少受控檔案 ${installed_path}"
-			[[ "$(sha256sum "${mount_dir}${installed_path}" | cut -d' ' -f1)" == "${installed_sha256}" ]] ||
+			[[ "$(sudo sha256sum "${mount_dir}${installed_path}" | cut -d' ' -f1)" == "${installed_sha256}" ]] ||
 				fail "${board} 的受控檔案雜湊不符：${installed_path}"
 		done < <(common_values "${installed_manifest}" 2>/dev/null || true)
 	done
