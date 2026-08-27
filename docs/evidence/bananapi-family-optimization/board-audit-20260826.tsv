@@ -11,7 +11,7 @@ bananapif2s	wip	Banana Pi F2S	sunplus-sp7021-bpi	armhf	legacy	legacy	yes	F	L2	sp
 bananapif3	conf	BananaPi BPI-F3	spacemit	riscv64	legacy,current,edge	current	yes	B	L2		spacemit/k1-bananapi-f3.dtb		完成 SD／eMMC、GbE、PCIe、USB、GPU、VPU、NPU 與 40-pin 實測
 bananapiforge1	wip	Banana Pi BPI-Forge1	rockchip	armhf	vendor	vendor	yes	E	L2	forge1-rk3506j_defconfig	rk3506b-bananapi-forge1.dtb		完成冷啟動、雙網路、USB gadget、顯示、CAN、音訊與 40-pin 實測
 bananapim1plus	csc	Banana Pi M1+	sun7i	armhf	current,edge,legacy	current	yes	C	L2	bananapi_m1_plus_defconfig		BOARD_MAINTAINER	完成 SD、GbE、SATA、Wi-Fi、Bluetooth、USB 與 40-pin 實測
-bananapim1super	wip	Banana Pi M1 Super	rk35xx	arm64	vendor	vendor	yes	E	L1	bananapi-m1-super-rk3528_defconfig	rockchip/rk3528-bananapi-m1-super.dtb		釐清量產無線 BOM，固定韌體契約並完成來源一致的完整映像守門
+bananapim1super	wip	Banana Pi M1 Super	rk35xx	arm64	vendor	vendor	yes	E	L2	bananapi-m1-super-rk3528_defconfig	rockchip/rk3528-bananapi-m1-super.dtb		釐清量產無線 BOM 與韌體授權，再完成 SD／eMMC、網路、無線、顯示、GPU、VPU、USB 與 40-pin 實測
 bananapim2	csc	Banana Pi M2	sun6i	armhf	current,legacy	current	yes	C	L2	Sinovoip_BPI_M2_defconfig		BOARD_MAINTAINER	完成 SD、eMMC、Wi-Fi、Bluetooth、HDMI、USB 與 40-pin 實測
 bananapim2berry	csc	Banana Pi M2 Berry	sun8i	armhf	current,edge,legacy	current	yes	C	L2	bananapi_m2_berry_defconfig		BOARD_MAINTAINER	完成 SD／eMMC、SATA、GbE、無線網路、USB、顯示與 40-pin 實測
 bananapim2c	wip	Banana Pi M2C	unisoc-uis7885-bpi	arm64	vendor	vendor	yes	F	L0				整理 41 組差異與 6,751 個未分類檔，閉合簽署鏈後建立可重放映像

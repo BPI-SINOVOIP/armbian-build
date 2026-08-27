@@ -1,4 +1,3 @@
-import copy
 import importlib.util
 import json
 import unittest
@@ -19,6 +18,7 @@ BUILD_ENTRY = ROOT / "tools/build-bananapi-rockchip-m1super-candidate.sh"
 VERIFY_ENTRY = ROOT / "tools/verify-bananapi-rockchip-m1super-candidate.sh"
 ROCKCHIP_BUILD = ROOT / "tools/build-bananapi-rockchip-candidates.sh"
 PREFLIGHT_EVIDENCE = ROOT / "docs/evidence/bananapi-family-optimization/F-rockchip-m1super-L1-preflight-20260827.md"
+L2_EVIDENCE = ROOT / "docs/evidence/bananapi-family-optimization/F-rockchip-m1super-L2-build-20260827.md"
 
 
 class BananaPiM1SuperCandidateTests(unittest.TestCase):
@@ -81,10 +81,11 @@ class BananaPiM1SuperCandidateTests(unittest.TestCase):
         )
 
     def test_public_release_and_hardware_claims_are_blocked(self):
-        self.assertEqual(self.validation["candidate_level"], "L1 元件候選")
-        self.assertEqual(self.validation["candidate_scope"], "internal-component-only")
+        self.assertEqual(self.validation["candidate_level"], "L2 內部軟體候選")
+        self.assertEqual(self.validation["candidate_scope"], "internal-l2")
         self.assertTrue(self.validation["component_build_completed"])
-        self.assertFalse(self.validation["rootfs_image_built"])
+        self.assertTrue(self.validation["full_image_built"])
+        self.assertTrue(self.validation["rootfs_image_built"])
         self.assertFalse(self.validation["candidate_public_release_approved"])
         self.assertFalse(self.validation["public_release_allowed"])
         self.assertFalse(self.validation["hardware_validation_complete"])
@@ -95,62 +96,36 @@ class BananaPiM1SuperCandidateTests(unittest.TestCase):
             self.validation["identity_evidence"]["wifi_bom_conflict_resolved"]
         )
 
-    def test_current_state_is_honest_l1_without_image_evidence(self):
+    def test_current_state_is_honest_internal_l2_with_material_evidence(self):
         self.policy_checker.validate_candidate_state(self.validation)
-        self.assertNotIn("image_build_evidence", self.validation)
-        self.assertIsNone(self.board["image_dtb_sha256"])
-        self.assertEqual(self.board["dtb_sha256_evidence_scope"], "preflight-contract-l1")
+        self.policy_checker.validate_l2_material_evidence(self.validation)
+        evidence = self.validation["image_build_evidence"]
+        self.assertEqual(evidence["evidence_level"], "L2")
+        self.assertTrue(evidence["read_only_content_verified"])
+        self.assertFalse(evidence["hardware_tested"])
+        self.assertEqual(
+            self.board["image_dtb_sha256"],
+            "68c0d6c27d2802abee0b7ab4b0569581048b14fc651d55c103392d81e00f2eb6",
+        )
+        self.assertEqual(self.board["dtb_sha256_evidence_scope"], "full-image-l2")
         self.assertEqual(
             self.board["component_dtb_sha256"],
             "68c0d6c27d2802abee0b7ab4b0569581048b14fc651d55c103392d81e00f2eb6",
         )
         self.assertEqual(self.board["dtb_sha256"], self.board["component_dtb_sha256"])
 
-    def test_state_machine_accepts_a_complete_internal_l2_shape(self):
-        candidate = copy.deepcopy(self.validation)
-        image_dtb_sha256 = "a" * 64
-        candidate["candidate_level"] = "L2 內部軟體候選"
-        candidate["candidate_scope"] = "internal-l2"
-        candidate["rootfs_image_built"] = True
-        candidate["image_build_evidence"] = {
-            "status": "complete",
-            "evidence_level": "L2",
-            "full_rootfs_image_built": True,
-            "hardware_tested": False,
-            "read_only_content_verified": True,
-            "source_commit": "1" * 40,
-            "verifier_commit": "1" * 40,
-            "build_validation_config_sha256": "2" * 64,
-            "verification_config_sha256": "2" * 64,
-            "candidate_matrix_sha256": "3" * 64,
-            "uboot_payload_manifest_sha256": "4" * 64,
-            "final_config_manifest_sha256": "5" * 64,
-            "image": {"size": 1, "sha256": "6" * 64},
-            "archive": {"size": 1, "sha256": "7" * 64},
-            "linux_dtb": {
-                "path": "rockchip/rk3528-bananapi-m1-super.dtb",
-                "sha256": image_dtb_sha256,
-            },
-        }
-        candidate["boards"]["bananapim1super"]["image_dtb_sha256"] = image_dtb_sha256
-        candidate["boards"]["bananapim1super"]["dtb_sha256"] = image_dtb_sha256
-        candidate["boards"]["bananapim1super"]["dtb_sha256_evidence_scope"] = "full-image-l2"
-        self.policy_checker.validate_candidate_state(candidate)
-
     def test_state_machine_rejects_mixed_or_unproven_states(self):
-        mixed = copy.deepcopy(self.validation)
-        mixed["candidate_scope"] = "internal-l2"
+        mixed = json.loads(json.dumps(self.validation))
+        mixed["candidate_scope"] = "internal-component-only"
         with self.assertRaises(SystemExit):
             self.policy_checker.validate_candidate_state(mixed)
 
-        unproven_l2 = copy.deepcopy(self.validation)
-        unproven_l2["candidate_level"] = "L2 內部軟體候選"
-        unproven_l2["candidate_scope"] = "internal-l2"
-        unproven_l2["rootfs_image_built"] = True
+        unproven_l2 = json.loads(json.dumps(self.validation))
+        unproven_l2.pop("image_build_evidence")
         with self.assertRaises(SystemExit):
             self.policy_checker.validate_candidate_state(unproven_l2)
 
-        false_claim = copy.deepcopy(self.validation)
+        false_claim = json.loads(json.dumps(self.validation))
         false_claim["hardware_claims_allowed"] = True
         with self.assertRaises(SystemExit):
             self.policy_checker.validate_candidate_state(false_claim)
@@ -252,9 +227,12 @@ class BananaPiM1SuperCandidateTests(unittest.TestCase):
             self.board["component_dtb_sha256"],
             "68c0d6c27d2802abee0b7ab4b0569581048b14fc651d55c103392d81e00f2eb6",
         )
-        self.assertIsNone(self.board["image_dtb_sha256"])
+        self.assertEqual(
+            self.board["image_dtb_sha256"],
+            "68c0d6c27d2802abee0b7ab4b0569581048b14fc651d55c103392d81e00f2eb6",
+        )
         self.assertEqual(self.board["dtb_sha256"], self.board["component_dtb_sha256"])
-        self.assertEqual(self.board["dtb_sha256_evidence_scope"], "preflight-contract-l1")
+        self.assertEqual(self.board["dtb_sha256_evidence_scope"], "full-image-l2")
         self.assertEqual(
             self.board["uboot_defconfig"],
             "bananapi-m1-super-rk3528_defconfig",
@@ -399,6 +377,18 @@ class BananaPiM1SuperCandidateTests(unittest.TestCase):
             "來源提交競態",
             "L1",
             "不代表實機",
+        ):
+            self.assertIn(required, text)
+
+    def test_l2_document_records_material_evidence_and_limits(self):
+        text = L2_EVIDENCE.read_text(encoding="utf-8")
+        for required in (
+            "bc30fcb7016b3f4fb2b0888ca130646465857fe38c8041c75b4d05ea27f43324",
+            "480e845023f838208f6099d29fb291a337fbd2c54aaa8a70df6a8e6252ebd9f4",
+            "8c6533a10c3ec97e0565c46ef34ab857fca7d4d4",
+            "L2",
+            "未進行實機",
+            "不得公開發布",
         ):
             self.assertIn(required, text)
 

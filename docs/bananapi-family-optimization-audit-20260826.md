@@ -10,7 +10,7 @@
 
 - 板卡總數：48。
 - 正式 `.conf`：12；社群 `.csc`：14；開發中 `.wip`：21；停止支援 `.eos`：1。
-- 證據分布：L0 3；L1 7；L2 38；L3 0；L4 0；L5 0。
+- 證據分布：L0 3；L1 6；L2 39；L3 0；L4 0；L5 0。
 - 未取得實機的板卡最高只能標示 L2；目前沒有板卡達到完整 L3／L4／L5 門檻。
 
 ## 板卡矩陣
@@ -29,7 +29,7 @@
 | `bananapif3` | 正式 | BananaPi BPI-F3 | `spacemit` | `riscv64` | `legacy,current,edge` | 是 | B | L2 軟體候選 | 完成 SD／eMMC、GbE、PCIe、USB、GPU、VPU、NPU 與 40-pin 實測 |
 | `bananapiforge1` | 開發中 | Banana Pi BPI-Forge1 | `rockchip` | `armhf` | `vendor` | 是 | E | L2 軟體候選 | 完成冷啟動、雙網路、USB gadget、顯示、CAN、音訊與 40-pin 實測 |
 | `bananapim1plus` | 社群 | Banana Pi M1+ | `sun7i` | `armhf` | `current,edge,legacy` | 是 | C | L2 軟體候選 | 完成 SD、GbE、SATA、Wi-Fi、Bluetooth、USB 與 40-pin 實測 |
-| `bananapim1super` | 開發中 | Banana Pi M1 Super | `rk35xx` | `arm64` | `vendor` | 是 | E | L1 元件可建置 | 釐清量產無線 BOM，固定韌體契約並完成來源一致的完整映像守門 |
+| `bananapim1super` | 開發中 | Banana Pi M1 Super | `rk35xx` | `arm64` | `vendor` | 是 | E | L2 軟體候選 | 釐清量產無線 BOM 與韌體授權，再完成 SD／eMMC、網路、無線、顯示、GPU、VPU、USB 與 40-pin 實測 |
 | `bananapim2` | 社群 | Banana Pi M2 | `sun6i` | `armhf` | `current,legacy` | 是 | C | L2 軟體候選 | 完成 SD、eMMC、Wi-Fi、Bluetooth、HDMI、USB 與 40-pin 實測 |
 | `bananapim2berry` | 社群 | Banana Pi M2 Berry | `sun8i` | `armhf` | `current,edge,legacy` | 是 | C | L2 軟體候選 | 完成 SD／eMMC、SATA、GbE、無線網路、USB、顯示與 40-pin 實測 |
 | `bananapim2c` | 開發中 | Banana Pi M2C | `unisoc-uis7885-bpi` | `arm64` | `vendor` | 是 | F | L0 已盤點 | 整理 41 組差異與 6,751 個未分類檔，閉合簽署鏈後建立可重放映像 |
@@ -75,7 +75,8 @@
 - `bananapicm5pro`：完整映像已通過 L2 軟體守門；冷啟動、儲存、網路、40-pin、顯示、GPU、VPU、RGA 與 NPU 尚未實機驗證。
 - `bananapif2p`：ISPBOOOT.BIN 與預建工具鏈再散布授權未閉合，且缺少 F2P 專用 eMMC xboot；目前只能保留內部 SD 候選。
 - `bananapif2s`：xboot 與預建工具鏈缺少完整可重建來源或明確再散布授權，完整映像只能作內部驗證。
-- `bananapim1super`：Wi-Fi 量產 BOM 在 SYN43752、AP6275S 與 RTL8852BS 證據間不一致；RKBin 只可依授權隨 Rockchip 平台散布，Armbian 韌體逐檔授權與完整映像仍待驗證。
+- `bananapim1super`：Wi-Fi 量產 BOM 在 SYN43752、AP6275S 與 RTL8852BS 證據間不一致；RKBin 只可依授權隨 Rockchip 平台散布，Armbian 韌體逐檔授權仍待確認。
+- `bananapim1super`：完整映像已通過內部 L2 軟體守門；SD／eMMC 冷啟動、網路、無線、顯示、GPU、VPU、USB 與 40-pin 尚無實機證據。
 - `bananapim2c`：仍採 secure PAC 與 Yocto 混合流程，尚非一般 Armbian SD 首階段啟動。
 - `bananapim2c`：41 組追蹤差異尚未整理成可重放修補集，55 個專案共有 6,751 個未分類未追蹤檔，Unisoc 遠端也需要授權。
 - `bananapim2c`：chipram、簽署與 PAC 工具、modem、Trusty、GPU、NPU、VPU、GNSS 及其他預建內容缺少完整逐項再散布授權。

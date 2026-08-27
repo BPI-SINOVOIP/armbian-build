@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
+import csv
+import hashlib
 import json
 import os
 import re
+import subprocess
 from pathlib import Path
 
 
@@ -12,6 +15,19 @@ STATUS = ROOT / "config/bananapi-optimization-status.json"
 LINUX_DTS = ROOT / "patch/kernel/rk35xx-vendor-6.1/dt/rk3528-bananapi-m1-super.dts"
 UBOOT_DTS = ROOT / "patch/u-boot/legacy/u-boot-radxa-rk35xx/dt/rk3528-bananapi-m1-super.dts"
 UBOOT_CONFIG = ROOT / "patch/u-boot/legacy/u-boot-radxa-rk35xx/defconfig/bananapi-m1-super-rk3528_defconfig"
+OUTPUT_DIR = (
+    ROOT
+    / "output/images/2026.08"
+    / "bananapi-rockchip-rk3528-m1super-trixie-vendor-cli"
+)
+MATRIX = OUTPUT_DIR / "CANDIDATES.tsv"
+COMPLETION_STATUS = OUTPUT_DIR / "COMPLETION_STATUS.json"
+VERIFICATION_STATUS = OUTPUT_DIR / "VERIFICATION_STATUS.json"
+RKBIN_STATUS = OUTPUT_DIR / "RKBIN_STATUS.json"
+RKBIN_EVIDENCE = OUTPUT_DIR / "RKBIN_EVIDENCE.tsv"
+UBOOT_PAYLOAD_EVIDENCE = OUTPUT_DIR / "UBOOT_PAYLOAD_EVIDENCE.tsv"
+FINAL_CONFIG_EVIDENCE = OUTPUT_DIR / "FINAL_CONFIG_EVIDENCE.tsv"
+METADATA = OUTPUT_DIR / "bananapim1super/artifact.metadata.txt"
 
 EXPECTED_COMPONENT_DTB_SHA256 = (
     "68c0d6c27d2802abee0b7ab4b0569581048b14fc651d55c103392d81e00f2eb6"
@@ -48,6 +64,41 @@ EXPECTED_MODULE_PATHS = {
     "kernel/drivers/bluetooth/hci_uart.ko",
     "kernel/drivers/net/wireless/broadcom/brcm80211/brcmfmac/brcmfmac.ko",
 }
+
+
+def sha256_file(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as stream:
+        for chunk in iter(lambda: stream.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def load_json(path: Path, description: str) -> dict:
+    require(path.is_file(), f"缺少 {description}：{path.relative_to(ROOT)}")
+    with path.open(encoding="utf-8") as stream:
+        value = json.load(stream)
+    require(isinstance(value, dict), f"{description} 格式不符")
+    return value
+
+
+def load_metadata(path: Path) -> dict[str, str]:
+    require(path.is_file(), f"缺少產物中繼資料：{path.relative_to(ROOT)}")
+    result: dict[str, str] = {}
+    for line in path.read_text(encoding="utf-8").splitlines():
+        require("=" in line, "產物中繼資料含有無效列")
+        key, value = line.split("=", 1)
+        require(key not in result, f"產物中繼資料欄位重複：{key}")
+        result[key] = value
+    return result
+
+
+def resolve_artifact(relative: object, description: str) -> Path:
+    require(isinstance(relative, str) and relative, f"{description} 路徑無效")
+    path = (ROOT / relative).resolve()
+    require(path.is_relative_to(ROOT.resolve()), f"{description} 路徑逸出儲存庫")
+    require(path.is_file(), f"缺少 {description}：{relative}")
+    return path
 
 
 def require(condition: bool, message: str) -> None:
@@ -131,6 +182,7 @@ def validate_candidate_state(policy: dict) -> None:
     )
 
     if level == "L1 元件候選":
+        require(policy.get("full_image_built") in {None, False}, "L1 不得宣稱完整映像已建置")
         require(policy.get("rootfs_image_built") is False, "L1 不得宣稱完整映像已建置")
         require("image_build_evidence" not in policy, "L1 不得攜帶正式完整映像證據")
         require(board.get("image_dtb_sha256") is None, "L1 不得宣稱已有完整映像 DTB 雜湊")
@@ -141,6 +193,7 @@ def validate_candidate_state(policy: dict) -> None:
         )
         return
 
+    require(policy.get("full_image_built") is True, "L2 必須有完整 IMG 建置證據")
     require(policy.get("rootfs_image_built") is True, "L2 必須有完整映像建置證據")
     image_evidence = policy.get("image_build_evidence")
     require(isinstance(image_evidence, dict), "L2 缺少完整映像證據")
@@ -183,6 +236,141 @@ def validate_candidate_state(policy: dict) -> None:
         board.get("dtb_sha256_evidence_scope") == "full-image-l2",
         "L2 相容 DTB 欄位未標示完整映像證據範圍",
     )
+
+
+def validate_l2_material_evidence(policy: dict) -> None:
+    if policy.get("candidate_level") != "L2 內部軟體候選":
+        return
+
+    evidence = policy["image_build_evidence"]
+    source_commit = evidence["source_commit"]
+    source_tree = evidence.get("source_tree")
+    require_commit(source_tree, "L2 來源 tree 格式不符")
+    commit_check = subprocess.run(
+        ["git", "cat-file", "-e", f"{source_commit}^{{commit}}"],
+        cwd=ROOT,
+        check=False,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
+    require(commit_check.returncode == 0, "L2 來源提交不存在於 Git")
+    actual_tree = subprocess.check_output(
+        ["git", "show", "-s", "--format=%T", source_commit], cwd=ROOT, text=True
+    ).strip()
+    require(actual_tree == source_tree, "L2 來源 tree 與 Git 提交不一致")
+    built_validation = subprocess.check_output(
+        [
+            "git",
+            "show",
+            f"{source_commit}:config/validation/{CONFIG.name}",
+        ],
+        cwd=ROOT,
+    )
+    require(
+        hashlib.sha256(built_validation).hexdigest()
+        == evidence["build_validation_config_sha256"],
+        "L2 建置 validation 不屬於記錄的來源提交",
+    )
+
+    image = resolve_artifact(evidence["image"].get("path"), "L2 IMG")
+    archive = resolve_artifact(evidence["archive"].get("path"), "L2 XZ")
+    for name, path in (("image", image), ("archive", archive)):
+        artifact = evidence[name]
+        require(path.stat().st_size == artifact["size"], f"L2 {name} 大小與實檔不符")
+        require(sha256_file(path) == artifact["sha256"], f"L2 {name} 雜湊與實檔不符")
+
+    require(MATRIX.is_file(), "L2 缺少候選矩陣")
+    require(
+        sha256_file(MATRIX) == evidence["candidate_matrix_sha256"],
+        "L2 候選矩陣雜湊不符",
+    )
+    with MATRIX.open(encoding="utf-8", newline="") as stream:
+        rows = list(csv.DictReader(stream, delimiter="\t"))
+    require(len(rows) == 1 and rows[0].get("board") == "bananapim1super", "L2 候選矩陣板卡集合不符")
+    row = rows[0]
+    require(row.get("source_commit") == source_commit, "L2 候選矩陣來源提交不符")
+    require(row.get("raw_size") == str(image.stat().st_size), "L2 候選矩陣 IMG 大小不符")
+    require(row.get("raw_sha256") == evidence["image"]["sha256"], "L2 候選矩陣 IMG 雜湊不符")
+    require(row.get("xz_size") == str(archive.stat().st_size), "L2 候選矩陣 XZ 大小不符")
+    require(row.get("xz_sha256") == evidence["archive"]["sha256"], "L2 候選矩陣 XZ 雜湊不符")
+    require((OUTPUT_DIR / row["img_path"]).resolve() == image, "L2 候選矩陣 IMG 路徑不符")
+    require((OUTPUT_DIR / row["xz_path"]).resolve() == archive, "L2 候選矩陣 XZ 路徑不符")
+
+    completion = load_json(COMPLETION_STATUS, "建置完成狀態")
+    verification = load_json(VERIFICATION_STATUS, "驗證完成狀態")
+    rkbin_status = load_json(RKBIN_STATUS, "RKBin 完成狀態")
+    require(completion.get("status") == "complete", "L2 建置完成狀態不是 complete")
+    require(completion.get("source_commit") == source_commit, "L2 建置狀態來源提交不符")
+    require(completion.get("source_tree") == source_tree, "L2 建置狀態來源 tree 不符")
+    require(
+        completion.get("validation_config_sha256")
+        == evidence["build_validation_config_sha256"],
+        "L2 建置狀態 validation 雜湊不符",
+    )
+    require(
+        completion.get("candidates_sha256") == evidence["candidate_matrix_sha256"],
+        "L2 建置狀態候選矩陣雜湊不符",
+    )
+
+    require(verification.get("status") == "complete", "L2 驗證狀態不是 complete")
+    require(verification.get("evidence_level") == "L2", "L2 驗證狀態層級不符")
+    require(verification.get("verified_utc") == evidence.get("verified_utc"), "L2 驗證時間不符")
+    for key in ("source_commit", "verifier_commit"):
+        require(verification.get(key) == evidence[key], f"L2 驗證狀態 {key} 不符")
+    for key in (
+        "build_validation_config_sha256",
+        "verification_config_sha256",
+        "candidate_matrix_sha256",
+        "uboot_payload_manifest_sha256",
+        "final_config_manifest_sha256",
+    ):
+        require(verification.get(key) == evidence[key], f"L2 驗證狀態 {key} 不符")
+    require(verification.get("rkbin_commit") == evidence["rkbin_commit"], "L2 驗證狀態 RKBin 提交不符")
+    require(
+        verification.get("rkbin_manifest_sha256") == evidence["rkbin_manifest_sha256"],
+        "L2 驗證狀態 RKBin 清單不符",
+    )
+
+    require(rkbin_status.get("status") == "complete", "L2 RKBin 狀態不是 complete")
+    require(rkbin_status.get("source_commit") == source_commit, "L2 RKBin 狀態來源提交不符")
+    require(rkbin_status.get("rkbin_commit") == evidence["rkbin_commit"], "L2 RKBin 狀態提交不符")
+    require(evidence["rkbin_commit"] == policy["rkbin_commit"], "L2 RKBin 提交與來源契約不符")
+    require(
+        rkbin_status.get("validation_config_sha256")
+        == evidence["build_validation_config_sha256"],
+        "L2 RKBin 狀態 validation 雜湊不符",
+    )
+    require(
+        rkbin_status.get("manifest_sha256") == evidence["rkbin_manifest_sha256"],
+        "L2 RKBin 狀態清單雜湊不符",
+    )
+
+    for path, key, description in (
+        (UBOOT_PAYLOAD_EVIDENCE, "uboot_payload_manifest_sha256", "U-Boot 載荷清單"),
+        (FINAL_CONFIG_EVIDENCE, "final_config_manifest_sha256", "最終設定清單"),
+        (RKBIN_EVIDENCE, "rkbin_manifest_sha256", "RKBin 證據清單"),
+    ):
+        require(path.is_file(), f"L2 缺少{description}")
+        require(sha256_file(path) == evidence[key], f"L2 {description}雜湊不符")
+
+    metadata = load_metadata(METADATA)
+    expected_metadata = {
+        "board": "bananapim1super",
+        "release": "trixie",
+        "branch": "vendor",
+        "profile": "cli",
+        "build_method": "full_compile_sh_build",
+        "artifact_ignore_cache": "yes",
+        "source_commit": source_commit,
+        "source_tree": source_tree,
+        "validation_config_sha256": evidence["build_validation_config_sha256"],
+        "raw_size": str(evidence["image"]["size"]),
+        "raw_sha256": evidence["image"]["sha256"],
+        "xz_size": str(evidence["archive"]["size"]),
+        "xz_sha256": evidence["archive"]["sha256"],
+    }
+    for key, expected in expected_metadata.items():
+        require(metadata.get(key) == expected, f"L2 產物中繼資料 {key} 不符")
 
 
 def validate_firmware_contract(policy: dict, board_text: str) -> None:
@@ -255,6 +443,7 @@ def main() -> None:
         "此候選禁止硬體通過聲明",
     )
     validate_candidate_state(policy)
+    validate_l2_material_evidence(policy)
     with STATUS.open(encoding="utf-8") as stream:
         global_level = json.load(stream)["evidence"]["bananapim1super"]["level"]
     expected_global_level = "L1" if policy["candidate_level"] == "L1 元件候選" else "L2"
