@@ -209,6 +209,8 @@
       "atf_git_source": "https://github.com/BPI-SINOVOIP/arm-trusted-firmware",
       "atf_git_ref": "commit:a011da37865c7649db48efc29b18b36cf87e4bb3",
       "atf_revision": "a011da37865c7649db48efc29b18b36cf87e4bb3",
+      "output_image_prefix": "Bananapi-Armbian_*_",
+      "output_image_board_token": "Bpi-ai2n",
       "uboot_defconfig": "bananapi_ai2n_defconfig",
       "uboot_target_index": 1,
       "uboot_required_config_options": [

@@ -210,6 +210,15 @@ for board in "${boards[@]}"; do
 	uboot_git_ref="$(board_field_optional "${board}" uboot_git_ref)"
 	uboot_revision="$(board_field_optional "${board}" uboot_revision)"
 	uboot_version="$(board_field_optional "${board}" uboot_version)"
+	output_image_prefix="$(board_field_optional "${board}" output_image_prefix)"
+	output_image_board_token="$(board_field_optional "${board}" output_image_board_token)"
+	output_image_prefix_effective="${output_image_prefix:-Armbian-*_}"
+	output_image_board_token_effective="${output_image_board_token:-${board}}"
+	[[ "${output_image_prefix_effective}" =~ ^[[:alnum:]._*+-]+$ ]] ||
+		fail "${board} 的輸出映像前綴不合法"
+	[[ "${output_image_board_token_effective}" =~ ^[[:alnum:].+-]+$ ]] ||
+		fail "${board} 的輸出映像板名 token 不合法"
+	output_image_glob="${output_image_prefix_effective}${output_image_board_token_effective}_${release}_${branch}_*.img"
 	atf_git_source="$(board_field_optional "${board}" atf_git_source)"
 	atf_git_ref="$(board_field_optional "${board}" atf_git_ref)"
 	atf_revision="$(board_field_optional "${board}" atf_revision)"
@@ -238,6 +247,8 @@ for board in "${boards[@]}"; do
 		for item in "uboot_git_source ${uboot_git_source}" \
 			"uboot_git_ref ${uboot_git_ref}" "uboot_revision ${uboot_revision}" \
 			"uboot_version ${uboot_version}" \
+			"output_image_prefix ${output_image_prefix}" \
+			"output_image_board_token ${output_image_board_token}" \
 			"atf_git_source ${atf_git_source}" "atf_git_ref ${atf_git_ref}" \
 			"atf_revision ${atf_revision}" "crust_git_source ${crust_git_source}" \
 			"crust_git_ref ${crust_git_ref}" "crust_revision ${crust_revision}" \
@@ -268,7 +279,7 @@ for board in "${boards[@]}"; do
 		(cd "${repo_dir}" && ./compile.sh "${build_args[@]}") |& tee "${log_file}"
 
 		mapfile -t candidates < <(find "${repo_dir}/output/images" -maxdepth 1 \
-			-type f -iname "Armbian-*_${board}_${release}_${branch}_*.img" \
+			-type f -iname "${output_image_glob}" \
 			-newer "${marker}" -print)
 		unlink "${marker}"
 		[[ ${#candidates[@]} -eq 1 ]] ||
@@ -295,6 +306,8 @@ for board in "${boards[@]}"; do
 			for item in "uboot_git_source ${uboot_git_source}" \
 				"uboot_git_ref ${uboot_git_ref}" "uboot_revision ${uboot_revision}" \
 				"uboot_version ${uboot_version}" \
+				"output_image_prefix ${output_image_prefix}" \
+				"output_image_board_token ${output_image_board_token}" \
 				"atf_git_source ${atf_git_source}" "atf_git_ref ${atf_git_ref}" \
 				"atf_revision ${atf_revision}" "crust_git_source ${crust_git_source}" \
 				"crust_git_ref ${crust_git_ref}" "crust_revision ${crust_revision}" \

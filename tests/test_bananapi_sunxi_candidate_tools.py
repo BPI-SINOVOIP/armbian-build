@@ -364,6 +364,24 @@ Provides: unavailable-virtual
         self.assertIn("L1 | L2)", text)
         self.assertIn('"${board}" "${verification_evidence_level}"', text)
 
+    def test_builder_supports_bounded_board_output_name_override(self) -> None:
+        text = BUILD_SCRIPT.read_text()
+        self.assertIn(
+            'output_image_prefix_effective="${output_image_prefix:-Armbian-*_}"',
+            text,
+        )
+        self.assertIn(
+            'output_image_board_token_effective="${output_image_board_token:-${board}}"',
+            text,
+        )
+        self.assertIn('-iname "${output_image_glob}"', text)
+        self.assertIn(
+            '"${output_image_prefix_effective}" =~ ^[[:alnum:]._*+-]+$', text
+        )
+        self.assertIn(
+            '"${output_image_board_token_effective}" =~ ^[[:alnum:].+-]+$', text
+        )
+
     def test_a31s_policy_limits_claims_to_mainline_dtb(self) -> None:
         config = json.loads(A31S_CONFIG.read_text())
         self.assertEqual(config["candidate_branch"], "current")

@@ -97,3 +97,9 @@ PUBLIC_RELEASE=yes ./tools/run-bananapi-renesas-ai2n-candidate-isolated-cache.sh
 ```
 
 守門器必須禁止建立公開發布候選。只有在九個資產取得可核對的再散布授權、更新驗證設定，並完成實體板測試後，才能另行審查公開發布。
+
+## 第一次完整建置拒絕紀錄
+
+2026-08-27 第一次完整建置 UUID 為 `1e3ca6f9-900f-4c9d-a53e-f61d9306b813`。固定來源的 TF-A、U-Boot 2021.10、Linux 6.1.107、Trixie rootfs 與 1,866,465,280 位元組整碟映像均已完成，但外層候選建置器依通用 `Armbian-*_<board>_...img` 格式搜尋，未接受 AI2N 實際輸出的 `Bananapi-Armbian_*_Bpi-ai2n_...img`，因此正確拒絕升級證據並留下 `status=failed`。
+
+修正方式是在板級 validation 明列 `output_image_prefix=Bananapi-Armbian_*_` 與 `output_image_board_token=Bpi-ai2n`，由共用建置器受控讀取；未宣告特例的其他板卡仍使用原本格式。第一次產物只保存為拒絕證據，不會手工補寫中繼資料或冒充通過候選；修正提交推送後必須重新執行完整建置與 L2 唯讀驗證。

@@ -210,6 +210,8 @@ class BananaPiRenesasAi2nCandidateTests(unittest.TestCase):
                 self.assertIn(f"{option}={value}", kernel_text)
 
     def test_uboot_payload_and_boot_area_are_explicit(self) -> None:
+        self.assertEqual(self.board["output_image_prefix"], "Bananapi-Armbian_*_")
+        self.assertEqual(self.board["output_image_board_token"], "Bpi-ai2n")
         self.assertEqual(
             self.board["uboot_payloads"],
             ["bl2_bp_sd.bin@512", "fip.bin@393216"],
@@ -277,6 +279,14 @@ class BananaPiRenesasAi2nCandidateTests(unittest.TestCase):
         self.assertIn('BOARDS="bpi-ai2n"', BUILDER.read_text())
         self.assertIn('BOARDS="bpi-ai2n"', VERIFIER.read_text())
         self.assertIn('VERIFICATION_EVIDENCE_LEVEL="L2"', VERIFIER.read_text())
+        generic_builder = (
+            ROOT / "tools/build-bananapi-sunxi-candidates.sh"
+        ).read_text(encoding="utf-8")
+        self.assertIn(
+            'output_image_glob="${output_image_prefix_effective}'
+            '${output_image_board_token_effective}_${release}_${branch}_*.img"',
+            generic_builder,
+        )
         self.assertIn(str(SOURCE_PREPARER.relative_to(ROOT)), BUILDER.read_text())
         self.assertTrue(SOURCE_PREPARER.stat().st_mode & 0o111)
 
