@@ -36,9 +36,11 @@ EXPECTED_UBOOT_PATCHES = {
 EXPECTED_DISABLED_UBOOT_OPTIONS = {
     "# CONFIG_AUTOBOOT_KEYED is not set",
     "# CONFIG_AUTOBOOT_MENU_SHOW is not set",
+    "# CONFIG_BOARD_LATE_INIT is not set",
     "# CONFIG_CMD_UBI is not set",
     "# CONFIG_MMC_HS200_SUPPORT is not set",
     "# CONFIG_MTD_SPI_NAND is not set",
+    "# CONFIG_OF_SYSTEM_SETUP is not set",
     "# CONFIG_SUPPORT_EMMC_BOOT is not set",
     "# CONFIG_USE_DEFAULT_ENV_FILE is not set",
 }

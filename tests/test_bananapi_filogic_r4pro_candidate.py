@@ -89,9 +89,11 @@ class BananaPiFilogicR4ProCandidateTests(unittest.TestCase):
             "post_config_uboot_target__bananapir4pro_sd_standard_boot",
             "scripts/config --disable CONFIG_USE_DEFAULT_ENV_FILE",
             "scripts/config --disable CONFIG_AUTOBOOT_KEYED",
+            "scripts/config --disable CONFIG_BOARD_LATE_INIT",
             "scripts/config --disable CONFIG_ENV_IS_IN_UBI",
             "scripts/config --disable CONFIG_SUPPORT_EMMC_BOOT",
             "scripts/config --disable CONFIG_MTD_SPI_NAND",
+            "scripts/config --disable CONFIG_OF_SYSTEM_SETUP",
             "scripts/config --disable CONFIG_CMD_UBI",
             "CONFIG_ENV_MMC_PARTITION ubootenv",
             "CONFIG_ENV_OFFSET 0x400000",
@@ -105,6 +107,8 @@ class BananaPiFilogicR4ProCandidateTests(unittest.TestCase):
         self.assertIn("CONFIG_ENV_MMC_PARTITION=\"ubootenv\"", required)
         self.assertIn("# CONFIG_SUPPORT_EMMC_BOOT is not set", required)
         self.assertIn("# CONFIG_MTD_SPI_NAND is not set", required)
+        self.assertIn("# CONFIG_BOARD_LATE_INIT is not set", required)
+        self.assertIn("# CONFIG_OF_SYSTEM_SETUP is not set", required)
         self.assertIn("# CONFIG_CMD_UBI is not set", required)
         self.assertIn("# CONFIG_USE_DEFAULT_ENV_FILE is not set", required)
         for forbidden in (

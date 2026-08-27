@@ -43,6 +43,7 @@ function post_config_uboot_target__bananapir4pro_sd_standard_boot() {
 	run_host_command_logged scripts/config --enable CONFIG_AUTOBOOT
 	run_host_command_logged scripts/config --disable CONFIG_AUTOBOOT_KEYED
 	run_host_command_logged scripts/config --disable CONFIG_AUTOBOOT_MENU_SHOW
+	run_host_command_logged scripts/config --disable CONFIG_BOARD_LATE_INIT
 	run_host_command_logged scripts/config --set-val CONFIG_BOOTDELAY 1
 	run_host_command_logged scripts/config --disable CONFIG_USE_DEFAULT_ENV_FILE
 	run_host_command_logged scripts/config --enable CONFIG_BOOTSTD
@@ -57,6 +58,7 @@ function post_config_uboot_target__bananapir4pro_sd_standard_boot() {
 	run_host_command_logged scripts/config --disable CONFIG_SUPPORT_EMMC_BOOT
 	run_host_command_logged scripts/config --disable CONFIG_MMC_HS200_SUPPORT
 	run_host_command_logged scripts/config --disable CONFIG_MTD_SPI_NAND
+	run_host_command_logged scripts/config --disable CONFIG_OF_SYSTEM_SETUP
 	run_host_command_logged scripts/config --disable CONFIG_CMD_UBI
 	run_host_command_logged scripts/config --disable CONFIG_CMD_UBI_RENAME
 	run_host_command_logged scripts/config --set-str CONFIG_DEFAULT_FDT_FILE \
