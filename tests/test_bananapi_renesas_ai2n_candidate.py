@@ -24,11 +24,8 @@ BUILDER = ROOT / "tools/build-bananapi-renesas-ai2n-candidate.sh"
 VERIFIER = ROOT / "tools/verify-bananapi-renesas-ai2n-candidate.sh"
 RUNNER = ROOT / "tools/run-bananapi-renesas-ai2n-candidate-isolated-cache.sh"
 SOURCE_PREPARER = ROOT / "tools/prepare-bananapi-renesas-ai2n-overlay-sources.sh"
-UBOOT_COMPAT_PATCH = (
-    ROOT
-    / "patch/u-boot/legacy/u-boot-rzv2n-v2021.10"
-    / "0001-tools-binman-use-importlib-resources.patch"
-)
+UBOOT_COMPAT_EXTENSION = ROOT / "extensions/uboot-binman-fix-pkg-resources.sh"
+MAIN_CONFIG = ROOT / "lib/functions/configuration/main-config.sh"
 POLICY = (
     ROOT
     / "docs/evidence/bananapi-family-optimization/E-renesas-ai2n-source-policy-20260827.md"
@@ -110,13 +107,13 @@ class BananaPiRenesasAi2nCandidateTests(unittest.TestCase):
         self.assertIn('mktemp "${PWD}/${pack_out}/.bp.XXXXXX.bin"', self.family_text)
         self.assertIn('unlink "${bp_file}"', self.family_text)
 
-    def test_uboot_python_compatibility_is_a_controlled_patch(self) -> None:
-        text = UBOOT_COMPAT_PATCH.read_text(encoding="utf-8")
+    def test_uboot_python_compatibility_uses_framework_extension(self) -> None:
+        text = UBOOT_COMPAT_EXTENSION.read_text(encoding="utf-8")
         self.assertIn("importlib_resources.files", text)
         self.assertIn("pkg_resources.resource_string", text)
         self.assertIn(
-            'BOOTPATCHDIR="legacy/u-boot-rzv2n-v2021.10"',
-            self.family_text,
+            'enable_extension "uboot-binman-fix-pkg-resources"',
+            MAIN_CONFIG.read_text(encoding="utf-8"),
         )
 
     def test_proprietary_assets_are_hash_locked(self) -> None:
@@ -324,6 +321,7 @@ class BananaPiRenesasAi2nCandidateTests(unittest.TestCase):
             '== overlay',
             "checkout-index --force --",
             "ls-files --others --exclude-standard -z",
+            "ls-files --others --ignored --exclude-standard -z",
             "status --porcelain --untracked-files=all",
         ):
             with self.subTest(required=required):

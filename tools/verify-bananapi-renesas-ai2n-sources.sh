@@ -4,7 +4,8 @@ set -euo pipefail
 repo_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 validation_config="${VALIDATION_CONFIG:-${repo_dir}/config/validation/bananapi-renesas-rzv2n-ai2n-legacy.json}"
 family_config="${repo_dir}/config/sources/families/renesas-rzv2n-bpi.conf"
-uboot_compat_patch="${repo_dir}/patch/u-boot/legacy/u-boot-rzv2n-v2021.10/0001-tools-binman-use-importlib-resources.patch"
+uboot_compat_extension="${repo_dir}/extensions/uboot-binman-fix-pkg-resources.sh"
+main_config="${repo_dir}/lib/functions/configuration/main-config.sh"
 source_cache_root="${SOURCE_CACHE_ROOT:-${repo_dir}/cache/sources}"
 public_release="${PUBLIC_RELEASE:-no}"
 policy_only="${POLICY_ONLY:-no}"
@@ -82,9 +83,11 @@ for assignment in \
 	'BOOTBRANCH="commit:8aec7f20bcf5555d7d219c2bad295b4a627b6521"'; do
 	grep -Fq "${assignment}" "${family_config}" || fail "family 缺少固定來源：${assignment}"
 done
-[[ -f "${uboot_compat_patch}" ]] || fail "缺少受控 U-Boot Python 相容 patch"
-grep -Fq "importlib_resources.files" "${uboot_compat_patch}" ||
-	fail "U-Boot Python 相容 patch 內容不符"
+[[ -f "${uboot_compat_extension}" ]] || fail "缺少受控 U-Boot Python 相容擴充"
+grep -Fq "importlib_resources.files" "${uboot_compat_extension}" ||
+	fail "U-Boot Python 相容擴充內容不符"
+grep -Fq 'enable_extension "uboot-binman-fix-pkg-resources"' "${main_config}" ||
+	fail "U-Boot Python 相容擴充未啟用"
 grep -Fq 'tools/renesas/rz_boot_param' "${family_config}" || fail "family 未由來源建置 bptool"
 grep -Fq 'tools/fiptool' "${family_config}" || fail "family 未由來源建置 fiptool"
 if grep -Fq 'packages/blobs/bpi-renesas/tools' "${family_config}"; then
@@ -151,6 +154,8 @@ if [[ "${require_clean_source_trees}" == yes ]]; then
 			fail "${component} 來源索引含有未受控差異"
 		[[ -z "$(git -C "${tree}" status --porcelain --untracked-files=all)" ]] ||
 			fail "${component} 實際來源工作樹不乾淨"
+		[[ -z "$(git -C "${tree}" ls-files --others --ignored --exclude-standard)" ]] ||
+			fail "${component} 實際來源工作樹含忽略的建置殘留"
 	done
 fi
 

@@ -88,7 +88,7 @@ cd /media/pi/SMCI/armbian/bpi-v26.2.1-bananapi-optimize
 output/images/2026.08/bananapi-renesas-rzv2n-ai2n-trixie-legacy-cli
 ```
 
-建置入口會先在 AI2N 專屬 OverlayFS upper 內把 U-Boot 恢復為固定提交，移除舊建置殘留，再要求 Linux、U-Boot 與 TF-A 的實際來源工作樹完全乾淨。唯讀 lower cache 不會被修改；必要的 Python `binman` 相容改動由主倉受控 U-Boot patch 重放，不依賴快取內手工差異。
+建置入口會先在 AI2N 專屬 OverlayFS upper 內把 Linux、U-Boot 與 TF-A 恢復為固定提交，移除舊建置殘留，再要求三個實際來源工作樹完全乾淨。唯讀 lower cache 不會被修改；必要的 Python `binman` 相容改動由框架受控的 `uboot-binman-fix-pkg-resources` 擴充在建置階段重放，不依賴快取內手工差異或重複 patch。
 
 完整映像建置與唯讀驗證通過後才可標示為內部 L2。L2 只代表 IMG／XZ、來源、套件、啟動載荷、DTB、核心設定與唯讀檔案內容守門通過；因九個專有資產的再散布授權仍未釐清，仍不得公開發布，也不代表實體功能成立。若執行：
 
