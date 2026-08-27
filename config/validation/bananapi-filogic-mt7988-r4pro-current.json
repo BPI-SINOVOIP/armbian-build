@@ -130,6 +130,7 @@
     "bananapir4pro": {
       "family": "mt7988",
       "dtb": "mediatek/mt7988a-bananapi-bpi-r4-pro-8x-sd.dtb",
+      "dtb_sha256": "a35e5c81d74d0dcce2174058e87c58287744b273ae895fbb0b9d0eeccb9fac34",
       "dtb_components": [
         "mediatek/mt7988a-bananapi-bpi-r4-pro-8x.dtb",
         "mediatek/mt7988a-bananapi-bpi-r4-pro-sd.dtbo"
@@ -197,6 +198,11 @@
       "uboot_payloads": [
         "bl2.img@17408",
         "u-boot.fip@6815744"
+      ],
+      "uboot_payload_sha256": [
+        "bl2.img=1ebbdb9380e048e1e736dc9f5e735be906eb7ab13ecc5495226c6d417d60d1de",
+        "gpt=beb31c2284ec7b8e910faeea8d323f40532b26010e87d0bae851d823705efa1d",
+        "u-boot.fip=96267b3ad65315dabed7543783b5562bfe9911ba98a8d90fcb085682c12e6c51"
       ],
       "uboot_package_only_payloads": [
         "gpt"

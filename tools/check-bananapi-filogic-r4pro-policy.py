@@ -19,6 +19,14 @@ EXPECTED_BOARD_COMMITS = {
     "uboot_revision": "34820924edbc4ec7803eb89d9852f4b870fa760a",
     "atf_revision": "c34e37802efaea356991a0811c8fc50f8a810f5b",
 }
+EXPECTED_DTB_SHA256 = (
+    "a35e5c81d74d0dcce2174058e87c58287744b273ae895fbb0b9d0eeccb9fac34"
+)
+EXPECTED_UBOOT_PAYLOAD_SHA256 = {
+    "bl2.img=1ebbdb9380e048e1e736dc9f5e735be906eb7ab13ecc5495226c6d417d60d1de",
+    "gpt=beb31c2284ec7b8e910faeea8d323f40532b26010e87d0bae851d823705efa1d",
+    "u-boot.fip=96267b3ad65315dabed7543783b5562bfe9911ba98a8d90fcb085682c12e6c51",
+}
 EXPECTED_EXCLUDED_MEDIA = {"emmc", "spi-nand", "spi-nor", "nvme", "usb"}
 EXPECTED_ATF_OBJECTS = {
     "plat/mediatek/mt7988/drivers/dram/release/dram.o",
@@ -115,6 +123,10 @@ def main() -> None:
         "mediatek/mt7988a-bananapi-bpi-r4-pro-8x-sd.dtb"
     ):
         fail("DTB 必須是 R4 Pro 8X 與 SD overlay 的合併產物")
+    if board.get("dtb_sha256") != EXPECTED_DTB_SHA256:
+        fail("正式候選 DTB 雜湊不符")
+    if set(board.get("uboot_payload_sha256", [])) != EXPECTED_UBOOT_PAYLOAD_SHA256:
+        fail("正式候選 U-Boot payload 雜湊不符")
     required_options = set(board.get("uboot_required_config_options", []))
     if not EXPECTED_DISABLED_UBOOT_OPTIONS <= required_options:
         fail("U-Boot 未完整停用供應商環境、eMMC 或 NAND 路徑")

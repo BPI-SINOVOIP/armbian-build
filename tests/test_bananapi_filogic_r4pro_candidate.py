@@ -120,6 +120,10 @@ class BananaPiFilogicR4ProCandidateTests(unittest.TestCase):
 
     def test_gpt_payload_and_merged_dtb_contract(self) -> None:
         self.assertEqual(
+            self.policy["dtb_sha256"],
+            "a35e5c81d74d0dcce2174058e87c58287744b273ae895fbb0b9d0eeccb9fac34",
+        )
+        self.assertEqual(
             self.policy["required_partitions"],
             [
                 "1:bl2:34:8158",
@@ -132,6 +136,14 @@ class BananaPiFilogicR4ProCandidateTests(unittest.TestCase):
         self.assertEqual(
             self.policy["uboot_payloads"],
             ["bl2.img@17408", "u-boot.fip@6815744"],
+        )
+        self.assertEqual(
+            set(self.policy["uboot_payload_sha256"]),
+            {
+                "bl2.img=1ebbdb9380e048e1e736dc9f5e735be906eb7ab13ecc5495226c6d417d60d1de",
+                "gpt=beb31c2284ec7b8e910faeea8d323f40532b26010e87d0bae851d823705efa1d",
+                "u-boot.fip=96267b3ad65315dabed7543783b5562bfe9911ba98a8d90fcb085682c12e6c51",
+            },
         )
         self.assertEqual(
             self.policy["dtb_components"],
