@@ -1,11 +1,25 @@
-# Banana Pi BPI-SM10 / SpacemiT K3-CoM260 developer kit
+# Banana Pi BPI-SM10／SpacemiT K3-CoM260 開發套件
 BOARD_NAME="BananaPi BPI-SM10"
 BOARD_VENDOR="sinovoip"
 BOARDFAMILY="spacemit-k3-bpi"
 BOARD_MAINTAINER="BPI-SINOVOIP"
 INTRODUCED="2026"
 KERNEL_TARGET="current"
-BOOT_FDT_FILE="spacemit/k3_com260.dtb"
+KERNEL_TEST_TARGET="current"
+BOOT_FDT_FILE="spacemit/k3-bananapi-sm10.dtb"
 BOOTDELAY=1
 SRC_CMDLINE="earlycon=sbi console=ttyS0,115200 console=tty1 loglevel=7 rootwait"
-PACKAGE_LIST_BOARD="rfkill bluetooth bluez bluez-tools"
+PACKAGE_LIST_BOARD="rfkill bluetooth bluez bluez-tools gpiod i2c-tools python3-libgpiod python3-spidev can-utils pciutils nvme-cli usbutils alsa-utils iw ethtool v4l-utils mesa-utils"
+
+# 這些提交與原廠 k3-br-v1.0.y manifest 完全一致；候選建置不得由外部改寫。
+K3_SM10_MANIFEST_COMMIT="6d767b42fdbd759dc9511b8a13523c3de42aaa5a"
+K3_SM10_LINUX_COMMIT="27275ec8240cc49af3a525b8bc325d9b5029fb81"
+K3_SM10_UBOOT_COMMIT="1b10c8119e1a9b5451a4236f6b384f7c91eed1e2"
+K3_SM10_OPENSBI_COMMIT="3e2f9efc9660b8d5fcae4e0b6495f306d5c64078"
+K3_SM10_ESOS_COMMIT="92a8baf250e42853a094a7af6f7ee849adb3de4a"
+
+function post_family_config__bananapism10_lock_candidate_sources() {
+	declare -g BOOTBRANCH="commit:${K3_SM10_UBOOT_COMMIT}"
+	declare -g KERNELBRANCH="commit:${K3_SM10_LINUX_COMMIT}"
+	declare -g KERNELPATCHDIR="archive/spacemit-k3-bpi-6.18"
+}

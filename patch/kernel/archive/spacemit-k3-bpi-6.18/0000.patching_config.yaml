@@ -1,0 +1,12 @@
+config:
+  name: spacemit-k3-bpi-6.18
+  kind: kernel
+  type: vendor
+  branch: k3-br-v1.0.y
+  maintainers:
+    - { github: BPI-SINOVOIP, name: BPI-SINOVOIP }
+  dts-directories:
+    - { source: "dt", target: "arch/riscv/boot/dts/spacemit" }
+  patches-to-git:
+    do-not-commit-regexes:
+      - "^arch/riscv/boot/dts/spacemit/Makefile$"

@@ -1,0 +1,9 @@
+// SPDX-License-Identifier: (GPL-2.0 OR MIT)
+/* Copyright (c) 2026 BPI-SINOVOIP */
+
+#include "k3_com260.dts"
+
+/ {
+	model = "BananaPi BPI-SM10";
+	compatible = "bananapi,bpi-sm10", "spacemit,k3-com260";
+};

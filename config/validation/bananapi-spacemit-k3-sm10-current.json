@@ -1,0 +1,242 @@
+{
+  "schema_version": 1,
+  "candidate_branch": "current",
+  "candidate_level": "實驗性 L2 軟體候選",
+  "candidate_scope": "僅限內部驗證",
+  "public_release_allowed": false,
+  "public_distribution_approved": false,
+  "hardware_claims_allowed": false,
+  "secure_boot_claim_allowed": false,
+  "kernel_family": "spacemit-k3-bpi",
+  "kernel_version": "6.18",
+  "linux_source": "https://github.com/spacemit-com/linux-6.18.git",
+  "linux_ref": "commit:27275ec8240cc49af3a525b8bc325d9b5029fb81",
+  "linux_commit": "27275ec8240cc49af3a525b8bc325d9b5029fb81",
+  "sdk": {
+    "default_local_path": "/media/pi/SMCI/bpi/bpi-sm10/sdk/k3-buildroot-sdk-1.0",
+    "manifest_source": "git@github.com:spacemit-com/manifests.git",
+    "manifest_branch": "main",
+    "manifest_file": "k3-br-v1.0.y.xml",
+    "manifest_commit": "6d767b42fdbd759dc9511b8a13523c3de42aaa5a",
+    "resolved_manifest_sha256": "6aa7ec0fe51fae1359552efb46ba92007b432e1b8530cf8a8872f663fc2b2b39",
+    "work_branch": "k3-br-v1.0.y",
+    "project_count": 20
+  },
+  "source_commits": {
+    "bsp-src/linux-6.18": "27275ec8240cc49af3a525b8bc325d9b5029fb81",
+    "bsp-src/opensbi": "3e2f9efc9660b8d5fcae4e0b6495f306d5c64078",
+    "bsp-src/uboot-2022.10": "1b10c8119e1a9b5451a4236f6b384f7c91eed1e2",
+    "buildroot": "06a303b332a7216c6ca9360dd7c7f52a3fb8b1da",
+    "buildroot-ext": "67a5f68cf4f3720d9f31fff96860863ef1fe6d51",
+    "package-src/drm-test": "3b8a8ec50ed68150be63926723e84663f50ed813",
+    "package-src/esos": "92a8baf250e42853a094a7af6f7ee849adb3de4a",
+    "package-src/esos/components/esos-lite": "f450844c18781bfaf66b0304c0c1618c9646c162",
+    "package-src/factorytest": "208f7951e722f85c114cf56a02c885cbd90d067c",
+    "package-src/glmark2": "4fdd95768e3634f43c27aa5acad5c0b791960b0c",
+    "package-src/gpu-test": "512b41a49840cb4bad6a100988fb647603882402",
+    "package-src/img-gpu-powervr": "f934f308946f35f8eec25e746c04e4cf91b33853",
+    "package-src/k3x-cam": "0ff226d3baa229cd941f81a31c3a58dfea3916aa",
+    "package-src/k3x-vpu-firmware": "8ece3da96f8cbfbd29c64a0a2366fd27652e9353",
+    "package-src/k3x-vpu-test": "14efe1573905005fe9ee1817c91ff3d436b3a840",
+    "package-src/mesa": "e0f7500a6571846265f4442befdd4a012c5170af",
+    "package-src/mpp": "c0b44e1a31d028af3c82cc0d551b48884727b99f",
+    "package-src/rtk_hciattach": "d22de614ec58374cfe8222f8aa71502fea28cad9",
+    "package-src/v2d-test": "d9257c92cfd373f24e9e7646bfc9f40694b67412",
+    "scripts": "96418825a37a1cf07d3275c13d9d3329934224f0"
+  },
+  "component_sources": {
+    "linux": {
+      "source": "https://github.com/spacemit-com/linux-6.18.git",
+      "ref": "commit:27275ec8240cc49af3a525b8bc325d9b5029fb81",
+      "revision": "27275ec8240cc49af3a525b8bc325d9b5029fb81",
+      "license": "GPL-2.0-only"
+    },
+    "uboot": {
+      "source": "https://github.com/spacemit-com/uboot-2022.10.git",
+      "ref": "commit:1b10c8119e1a9b5451a4236f6b384f7c91eed1e2",
+      "revision": "1b10c8119e1a9b5451a4236f6b384f7c91eed1e2",
+      "license": "GPL-2.0-or-later"
+    },
+    "opensbi": {
+      "source": "https://github.com/spacemit-com/opensbi.git",
+      "ref": "commit:3e2f9efc9660b8d5fcae4e0b6495f306d5c64078",
+      "revision": "3e2f9efc9660b8d5fcae4e0b6495f306d5c64078",
+      "license": "BSD-2-Clause"
+    },
+    "esos": {
+      "source": "https://github.com/spacemit-com/esos.git",
+      "ref": "commit:92a8baf250e42853a094a7af6f7ee849adb3de4a",
+      "revision": "92a8baf250e42853a094a7af6f7ee849adb3de4a",
+      "license": "混合且尚未閉合"
+    }
+  },
+  "trusted_firmware_a": {
+    "applicable": false,
+    "replacement_stage": "OpenSBI M-mode 韌體",
+    "reason": "K3 是 RISC-V 平台，啟動鏈不使用 ARM TF-A"
+  },
+  "boot_chain": [
+    "Boot ROM",
+    "bootinfo_block.bin",
+    "FSBL.bin（U-Boot SPL 與 DDR 初始化）",
+    "esos.itb（遠端即時核心）",
+    "fw_dynamic.itb（OpenSBI）",
+    "u-boot.itb",
+    "env_k3.txt",
+    "Linux Image、initramfs 與 DTB"
+  ],
+  "bootloader_blobs": {
+    "packages/blobs/riscv64/spacemit-k3/bpi-sm10/env.bin": "e73d2c0c44c6b00019a4c6190e8e7d03a37be710a20fa76b887bdd098fa1ff51",
+    "packages/blobs/riscv64/spacemit-k3/bpi-sm10/bootinfo_block.bin": "8cde21b4e18f0b72f2c98b5ae686dfe8ef75d8dc641393e97b52cf318b294e4b",
+    "packages/blobs/riscv64/spacemit-k3/bpi-sm10/FSBL.bin": "d18ceb20ae2433e441e9a5d935b1db34a7d35b5cf074979d8104ffc35c4971f2",
+    "packages/blobs/riscv64/spacemit-k3/bpi-sm10/esos.itb": "11099edb92c9721ebb207de3a200905618dcfded32c19f5ef0525275c253bf28",
+    "packages/blobs/riscv64/spacemit-k3/bpi-sm10/fw_dynamic.itb": "6ba858dcbf79371cdf3cc4770e036ea448e7d81547bf880af5b2903e7296a044",
+    "packages/blobs/riscv64/spacemit-k3/bpi-sm10/u-boot.itb": "1f7752ad032e3b04e30ffce5e9e3a79b427c05efc7fc7ef4130fde23a7990982",
+    "packages/blobs/riscv64/spacemit-k3/bpi-sm10/u-boot-env-default.bin": "e73d2c0c44c6b00019a4c6190e8e7d03a37be710a20fa76b887bdd098fa1ff51",
+    "packages/blobs/riscv64/spacemit-k3/bpi-sm10/env_k3.txt": "d6f073e147aae8f2f4bca4d711b64301dd98165a19b11ca76be637f695f94366",
+    "packages/blobs/riscv64/spacemit-k3/bpi-sm10/README.txt": "495b82d7d4311c9091916f314ad15bb57ea27c1857fb7121069c7402ccec3878"
+  },
+  "private_signing_keys_in_sdk": [
+    "bsp-src/uboot-2022.10/board/spacemit/k3/configs/key/kernel_key_prv.key",
+    "bsp-src/uboot-2022.10/board/spacemit/k3/configs/key/root_key_prv.key",
+    "bsp-src/uboot-2022.10/board/spacemit/k3/configs/key/rootfs_key_prv.crt",
+    "bsp-src/uboot-2022.10/board/spacemit/k3/configs/key/spl_key_prv.key",
+    "bsp-src/uboot-2022.10/board/spacemit/k3/configs/key/uboot_key_prv.crt",
+    "bsp-src/uboot-2022.10/board/spacemit/k3/configs/key/uboot_key_prv.key"
+  ],
+  "license_status": {
+    "linux": "已識別",
+    "uboot": "已識別",
+    "opensbi": "已識別",
+    "esos": "混合且含未註明項目",
+    "powervr": "授權檔仍含樣板欄位",
+    "vpu_firmware": "逐檔沒有可確認授權"
+  },
+  "common_packages": [
+    "rfkill",
+    "bluetooth",
+    "bluez",
+    "bluez-tools",
+    "gpiod",
+    "i2c-tools",
+    "python3-libgpiod",
+    "python3-spidev",
+    "can-utils",
+    "pciutils",
+    "nvme-cli",
+    "usbutils",
+    "alsa-utils",
+    "iw",
+    "ethtool",
+    "v4l-utils",
+    "mesa-utils"
+  ],
+  "common_kernel_options": {
+    "CONFIG_SOC_SPACEMIT_K3": "y",
+    "CONFIG_GPIO_SPACEMIT_K1": "y",
+    "CONFIG_MMC_SDHCI_OF_K1": "y",
+    "CONFIG_USB_DWC3": "y",
+    "CONFIG_USB_GADGET": "y",
+    "CONFIG_USB_CONFIGFS_MASS_STORAGE": "y",
+    "CONFIG_PCI": "y",
+    "CONFIG_BLK_DEV_NVME": "y",
+    "CONFIG_DRM_SPACEMIT": "y",
+    "CONFIG_VIDEO_LINLON_K3": "y",
+    "CONFIG_DWMAC_SPACEMIT_ETHQOS": "y",
+    "CONFIG_SCSI_UFS_SPACEMIT_K3": "y",
+    "CONFIG_SPACEMIT_K3_REMOTEPROC": "y",
+    "CONFIG_SPACEMIT_V2D": "y"
+  },
+  "candidate_boot_media": [
+    "sd"
+  ],
+  "supported_boot_media": [],
+  "excluded_boot_media": [
+    "sd-尚未實機驗證",
+    "emmc",
+    "spi-nor",
+    "spi-nand",
+    "ufs",
+    "nvme",
+    "usb"
+  ],
+  "public_distribution_blockers": [
+    "ESOS 含多來源元件且授權尚未逐檔閉合",
+    "K3 VPU 韌體缺少可確認的逐檔再散布授權",
+    "PowerVR 套件授權中繼資料仍是未完成樣板",
+    "SDK 內含私鑰材料，未建立量產金鑰隔離與輪替程序",
+    "BPI-SM10 載板與 K3-CoM260 電氣拓撲等同性尚無獨立證據",
+    "尚未完成 BPI-SM10 實機啟動及周邊驗證"
+  ],
+  "boards": {
+    "bananapism10": {
+      "family": "spacemit-k3-bpi",
+      "dtb": "spacemit/k3-bananapi-sm10.dtb",
+      "model": "BananaPi BPI-SM10",
+      "compatible": [
+        "bananapi,bpi-sm10",
+        "spacemit,k3-com260"
+      ],
+      "topology_donor": "spacemit/k3_com260.dts",
+      "topology_equivalence_verified": false,
+      "uboot_tag": "v2022.10",
+      "uboot_version": "2022.10",
+      "uboot_git_source": "https://github.com/spacemit-com/uboot-2022.10.git",
+      "uboot_git_ref": "commit:1b10c8119e1a9b5451a4236f6b384f7c91eed1e2",
+      "uboot_revision": "1b10c8119e1a9b5451a4236f6b384f7c91eed1e2",
+      "uboot_defconfig": "k3_defconfig",
+      "uboot_control_dtb": "k3_com260.dtb",
+      "uboot_control_dtb_identity_is_bananapi_specific": false,
+      "uboot_required_config_options": [
+        "CONFIG_TARGET_SPACEMIT_K3=y",
+        "CONFIG_DEFAULT_DEVICE_TREE=\"k3_spl\"",
+        "CONFIG_SPL=y",
+        "CONFIG_OF_BOARD=y",
+        "CONFIG_ENV_IS_NOWHERE=y"
+      ],
+      "uboot_binary_for_string_checks": "u-boot.itb",
+      "uboot_required_binary_strings": [
+        "k3_com260.dtb",
+        "env_k3.txt",
+        "product_name"
+      ],
+      "uboot_payloads": [
+        "env.bin@655360",
+        "bootinfo_block.bin@1048576",
+        "FSBL.bin@1572864",
+        "esos.itb@4194304",
+        "fw_dynamic.itb@7340032",
+        "u-boot.itb@8388608"
+      ],
+      "uboot_package_only_payloads": [
+        "u-boot-env-default.bin",
+        "README.txt"
+      ],
+      "uboot_payload_minimum_sizes": [
+        "env.bin=16384",
+        "bootinfo_block.bin=80",
+        "FSBL.bin=400000",
+        "esos.itb=400000",
+        "fw_dynamic.itb=250000",
+        "u-boot.itb=2000000",
+        "u-boot-env-default.bin=16384",
+        "README.txt=1000"
+      ],
+      "partition_table": "gpt",
+      "boot_partition_number": 1,
+      "boot_partition_start_sector": 24576,
+      "root_partition_number": 2,
+      "partition_start_sector": 548864,
+      "logical_sector_size": 512,
+      "boot_configuration": "env_k3",
+      "boot_environment": {
+        "knl_name": "Image",
+        "ramdisk_name": "initramfs-generic.img",
+        "dtb_name": "dtb/spacemit/k3-bananapi-sm10.dtb"
+      },
+      "overlay_prefix": "k3",
+      "default_overlays": [],
+      "required_overlays": []
+    }
+  }
+}

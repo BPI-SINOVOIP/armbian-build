@@ -1,31 +1,36 @@
-BPI-SM10 / SpacemiT K3-CoM260 boot blobs
-========================================
+BPI-SM10／SpacemiT K3-CoM260 啟動載荷
+====================================
 
-These files were produced by the verified vendor Buildroot BSP build staged at:
+這些檔案來自 2026-05-26 完成的原廠 K3 Buildroot SDK 建置，原始產物位於：
 
   /media/pi/SMCI/bpi/bpi-sm10/release/20260526-k3-buildroot-v1.0-vendor-bsp
 
-Source manifest revisions from the official SpacemiT K3 Buildroot SDK sync:
+固定來源：
 
-  linux-6.18:   27275ec8240cc49af3a525b8bc325d9b5029fb81
-  uboot-2022.10: 1b10c8119e1a9b5451a4236f6b384f7c91eed1e2
-  opensbi:      3e2f9efc9660b8d5fcae4e0b6495f306d5c64078
-  esos:         92a8baf250e42853a094a7af6f7ee849adb3de4a
+  manifest：      6d767b42fdbd759dc9511b8a13523c3de42aaa5a
+  linux-6.18：    27275ec8240cc49af3a525b8bc325d9b5029fb81
+  uboot-2022.10： 1b10c8119e1a9b5451a4236f6b384f7c91eed1e2
+  opensbi：       3e2f9efc9660b8d5fcae4e0b6495f306d5c64078
+  esos：          92a8baf250e42853a094a7af6f7ee849adb3de4a
 
-The Armbian family config writes these files at the same raw offsets used by
-the vendor genimage layout:
+Armbian 依原廠 `partition_universal.json` 使用下列固定位移：
 
-  env.bin             640 KiB
-  bootinfo_block.bin 1024 KiB
-  FSBL.bin           1536 KiB
-  esos.itb           4096 KiB
-  fw_dynamic.itb     7168 KiB
-  u-boot.itb         8192 KiB
+  env.bin              640 KiB
+  bootinfo_block.bin  1024 KiB
+  FSBL.bin            1536 KiB
+  esos.itb            4096 KiB
+  fw_dynamic.itb      7168 KiB
+  u-boot.itb          8192 KiB
 
-The image partition layout is:
+開機分割區從 12 MiB 開始，大小為 256 MiB、格式為 FAT；根檔案系統從
+268 MiB 開始。`env_k3.txt` 只負責讓 U-Boot 載入 Armbian 的 Image、initramfs
+及 `k3-bananapi-sm10.dtb`。
 
-  bootfs  starts at 12 MiB, size 256 MiB, FAT
-  rootfs  starts at 268 MiB, ext4
+授權與發布限制：
 
-env_k3.txt is Armbian-specific and points U-Boot at the Armbian boot files on
-the FAT bootfs partition.
+- Linux 與 U-Boot 主要採 GPL-2.0 系列授權，OpenSBI 採 BSD-2-Clause。
+- ESOS 是 RT-Thread 與多家晶片廠元件的組合，原廠授權清單仍含未註明項目。
+- K3 VPU 韌體逐檔標記為沒有可確認的授權；PowerVR 套件授權檔仍是樣板內容。
+- SDK 內含測試或開發用途的私鑰材料，不能當作量產安全開機金鑰。
+- 在完成逐檔再散布授權、量產金鑰流程及實機驗證前，本目錄只能作內部候選
+  建置與比對，不代表核准公開發布或硬體支援聲明。
