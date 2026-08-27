@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+repo_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+verifier="${repo_dir}/tools/verify-bananapi-filogic-candidates.sh"
+
+export VALIDATION_CONFIG="${repo_dir}/config/validation/bananapi-filogic-mt7986-r3mini-current.json"
+export OUTPUT_DIR="${repo_dir}/output/images/2026.08/bananapi-filogic-mt7986-r3mini-emmc-trixie-current-cli"
+export BOARDS="bananapir3mini"
+export VERIFY_TMP_PREFIX="filogic-r3mini-verify"
+
+"${repo_dir}/tools/check-bananapi-filogic-r3mini-policy.sh"
+"${verifier}" "$@"
+"${repo_dir}/tools/finalize-bananapi-filogic-r3mini-verification.sh"

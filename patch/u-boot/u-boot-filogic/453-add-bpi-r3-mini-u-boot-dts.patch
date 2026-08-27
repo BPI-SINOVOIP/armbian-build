@@ -1,22 +1,21 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Banana Pi -BPI <lionwang@sinovoip.com.cn>
 Date: Fri, 22 May 2026 16:20:00 +0800
-Subject: [PATCH] arm: dts: add Banana Pi R3 Mini eMMC U-Boot DTS
+Subject: [PATCH] arm: dts: 新增 Banana Pi R3 Mini eMMC U-Boot DTS
 
-The upstream Linux MT7986A R3 Mini DTS requires newer clock bindings than
-U-Boot v2025.04 carries. Add a small U-Boot-local DTS for early boot with
-UART and eMMC enabled so the Armbian WIP bootloader can be built without
-falling back to the full-size R3 device tree.
+上游 Linux MT7986A R3 Mini DTS 需要比 U-Boot v2025.04 更新的時脈
+binding。新增僅供 U-Boot 早期啟動使用的最小 DTS，啟用 UART 與
+eMMC HS200，並明確停用未驗證的 HS400，避免退回完整 R3 DTS。
 
 Signed-off-by: Banana Pi -BPI <lionwang@sinovoip.com.cn>
 ---
  arch/arm/dts/Makefile                       |  1 +
- arch/arm/dts/mt7986a-bpi-r3-mini-emmc.dts   | 98 +++++++++++++++++++++
- 2 files changed, 99 insertions(+)
+ arch/arm/dts/mt7986a-bpi-r3-mini-emmc.dts   | 100 ++++++++++++++++++++
+ 2 files changed, 101 insertions(+)
  create mode 100644 arch/arm/dts/mt7986a-bpi-r3-mini-emmc.dts
 
 diff --git a/arch/arm/dts/Makefile b/arch/arm/dts/Makefile
-index 267b0179a5f2..111111111111 100644
+index 267b0179a5f27f560021714c2867952c01660cdd..6f5fb97ffef87e6c1543cb27888ebf256175e64f 100644
 --- a/arch/arm/dts/Makefile
 +++ b/arch/arm/dts/Makefile
 @@ -1139,6 +1139,7 @@ dtb-$(CONFIG_ARCH_MEDIATEK) += \
@@ -29,13 +28,13 @@ index 267b0179a5f2..111111111111 100644
  	mt7986a-sd-rfb.dtb \
 diff --git a/arch/arm/dts/mt7986a-bpi-r3-mini-emmc.dts b/arch/arm/dts/mt7986a-bpi-r3-mini-emmc.dts
 new file mode 100644
-index 000000000000..000000000002
+index 0000000000000000000000000000000000000000..aba567ac1338145a598c2a51c94cba303c3b5012
 --- /dev/null
 +++ b/arch/arm/dts/mt7986a-bpi-r3-mini-emmc.dts
-@@ -0,0 +1,98 @@
+@@ -0,0 +1,100 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/*
-+ * Minimal U-Boot DTS for Banana Pi BPI-R3 Mini eMMC boot.
++ * Banana Pi BPI-R3 Mini eMMC 的最小 U-Boot DTS。
 + */
 +
 +/dts-v1/;
@@ -126,6 +125,8 @@ index 000000000000..000000000002
 +	max-frequency = <200000000>;
 +	cap-mmc-highspeed;
 +	cap-mmc-hw-reset;
++	mmc-hs200-1_8v;
++	no-mmc-hs400;
 +	vmmc-supply = <&reg_3p3v>;
 +	vqmmc-supply = <&reg_1p8v>;
 +	non-removable;
