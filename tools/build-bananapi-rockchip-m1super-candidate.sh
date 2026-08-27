@@ -14,7 +14,7 @@ export BOARDS="bananapim1super"
 	exit 1
 }
 
-"${policy_checker}"
+"${policy_checker}" --phase source-contract
 mapfile -t build_policy < <(python3 - "${VALIDATION_CONFIG}" <<'PY'
 import json
 import sys

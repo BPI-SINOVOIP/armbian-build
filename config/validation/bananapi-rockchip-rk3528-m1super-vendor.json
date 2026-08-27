@@ -1,5 +1,6 @@
 {
   "schema_version": 1,
+  "contract_projection_sha256": "5c5d6570f8a9e72f6c150dab4314de9d2bca7afdb89e796f36d9e41247e22d3d",
   "source_date_epoch": 1787082913,
   "candidate_branch": "vendor",
   "candidate_level": "L2 內部軟體候選",
@@ -20,6 +21,7 @@
     "source_commit": "8c6533a10c3ec97e0565c46ef34ab857fca7d4d4",
     "source_tree": "efb01adef19c41fab45d44d8f3e01f943eb84feb",
     "verifier_commit": "8c6533a10c3ec97e0565c46ef34ab857fca7d4d4",
+    "contract_projection_sha256": "5c5d6570f8a9e72f6c150dab4314de9d2bca7afdb89e796f36d9e41247e22d3d",
     "build_validation_config_sha256": "2026b2786f523bcb158f6eb70674535d8e134df690b31a17e76b26d878412f1c",
     "verification_config_sha256": "2026b2786f523bcb158f6eb70674535d8e134df690b31a17e76b26d878412f1c",
     "candidate_matrix_sha256": "933ecbb6a32922b7688e3ef9ed2c59c15f0189c0da950803f70ae632e16c65c3",

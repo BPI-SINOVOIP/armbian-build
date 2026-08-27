@@ -76,7 +76,7 @@ export OUTPUT_DIR="${output_dir}"
 export BOARDS="bananapim1super"
 export PUBLIC_RELEASE=no
 export HARDWARE_CLAIMS=no
-"${policy_checker}"
+"${policy_checker}" --phase source-contract
 
 export VERIFY_ARCHIVES=yes
 export VERIFICATION_EVIDENCE_LEVEL="${verification_evidence_level}"

@@ -1,24 +1,45 @@
 import importlib.util
+import hashlib
 import json
+import lzma
+import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 
 ROOT = Path(__file__).resolve().parents[1]
 BOARD = ROOT / "config/boards/bananapim1super.wip"
 VALIDATION = ROOT / "config/validation/bananapi-rockchip-rk3528-m1super-vendor.json"
 LINUX_DTS = ROOT / "patch/kernel/rk35xx-vendor-6.1/dt/rk3528-bananapi-m1-super.dts"
-UBOOT_DTS = ROOT / "patch/u-boot/legacy/u-boot-radxa-rk35xx/dt/rk3528-bananapi-m1-super.dts"
-UBOOT_CONFIG = ROOT / "patch/u-boot/legacy/u-boot-radxa-rk35xx/defconfig/bananapi-m1-super-rk3528_defconfig"
-POLICY = ROOT / "docs/evidence/bananapi-family-optimization/E-rockchip-m1super-source-policy-20260827.md"
-COMPONENT_EVIDENCE = ROOT / "docs/evidence/bananapi-family-optimization/E-rockchip-m1super-component-build-20260827.md"
+UBOOT_DTS = (
+    ROOT / "patch/u-boot/legacy/u-boot-radxa-rk35xx/dt/rk3528-bananapi-m1-super.dts"
+)
+UBOOT_CONFIG = (
+    ROOT
+    / "patch/u-boot/legacy/u-boot-radxa-rk35xx/defconfig/bananapi-m1-super-rk3528_defconfig"
+)
+POLICY = (
+    ROOT
+    / "docs/evidence/bananapi-family-optimization/E-rockchip-m1super-source-policy-20260827.md"
+)
+COMPONENT_EVIDENCE = (
+    ROOT
+    / "docs/evidence/bananapi-family-optimization/E-rockchip-m1super-component-build-20260827.md"
+)
 COMPONENT_VERIFIER = ROOT / "tools/verify-bananapi-rockchip-m1super-components.sh"
 POLICY_CHECKER = ROOT / "tools/check-bananapi-rockchip-m1super-policy.py"
 BUILD_ENTRY = ROOT / "tools/build-bananapi-rockchip-m1super-candidate.sh"
 VERIFY_ENTRY = ROOT / "tools/verify-bananapi-rockchip-m1super-candidate.sh"
 ROCKCHIP_BUILD = ROOT / "tools/build-bananapi-rockchip-candidates.sh"
-PREFLIGHT_EVIDENCE = ROOT / "docs/evidence/bananapi-family-optimization/F-rockchip-m1super-L1-preflight-20260827.md"
-L2_EVIDENCE = ROOT / "docs/evidence/bananapi-family-optimization/F-rockchip-m1super-L2-build-20260827.md"
+PREFLIGHT_EVIDENCE = (
+    ROOT
+    / "docs/evidence/bananapi-family-optimization/F-rockchip-m1super-L1-preflight-20260827.md"
+)
+L2_EVIDENCE = (
+    ROOT
+    / "docs/evidence/bananapi-family-optimization/F-rockchip-m1super-L2-build-20260827.md"
+)
 
 
 class BananaPiM1SuperCandidateTests(unittest.TestCase):
@@ -32,7 +53,9 @@ class BananaPiM1SuperCandidateTests(unittest.TestCase):
         cls.uboot_config = UBOOT_CONFIG.read_text(encoding="utf-8")
         cls.validation = json.loads(VALIDATION.read_text(encoding="utf-8"))
         cls.board = cls.validation["boards"]["bananapim1super"]
-        spec = importlib.util.spec_from_file_location("m1super_policy_checker", POLICY_CHECKER)
+        spec = importlib.util.spec_from_file_location(
+            "m1super_policy_checker", POLICY_CHECKER
+        )
         cls.policy_checker = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(cls.policy_checker)
 
@@ -42,8 +65,12 @@ class BananaPiM1SuperCandidateTests(unittest.TestCase):
         self.assertFalse((BOARD.parent / "bananapim1super.csc").exists())
         self.assertNotIn("armsom-sige1.csc", self.board_text)
         self.assertNotIn("hinlink_rk3528_defconfig", self.board_text)
-        self.assertIn('BOOTCONFIG="bananapi-m1-super-rk3528_defconfig"', self.board_text)
-        self.assertIn('BOOT_FDT_FILE="rockchip/rk3528-bananapi-m1-super.dtb"', self.board_text)
+        self.assertIn(
+            'BOOTCONFIG="bananapi-m1-super-rk3528_defconfig"', self.board_text
+        )
+        self.assertIn(
+            'BOOT_FDT_FILE="rockchip/rk3528-bananapi-m1-super.dtb"', self.board_text
+        )
 
     def test_post_family_hook_pins_build_paths_and_disables_source_atf(self):
         for required in (
@@ -97,8 +124,8 @@ class BananaPiM1SuperCandidateTests(unittest.TestCase):
         )
 
     def test_current_state_is_honest_internal_l2_with_material_evidence(self):
+        self.policy_checker.validate_contract_projection(self.validation, True)
         self.policy_checker.validate_candidate_state(self.validation)
-        self.policy_checker.validate_l2_material_evidence(self.validation)
         evidence = self.validation["image_build_evidence"]
         self.assertEqual(evidence["evidence_level"], "L2")
         self.assertTrue(evidence["read_only_content_verified"])
@@ -113,6 +140,147 @@ class BananaPiM1SuperCandidateTests(unittest.TestCase):
             "68c0d6c27d2802abee0b7ab4b0569581048b14fc651d55c103392d81e00f2eb6",
         )
         self.assertEqual(self.board["dtb_sha256"], self.board["component_dtb_sha256"])
+
+    def test_source_contract_phase_does_not_require_existing_output(self):
+        rebuild_policy = json.loads(json.dumps(self.validation))
+        rebuild_policy.pop("image_build_evidence")
+        rebuild_policy["full_image_built"] = False
+        rebuild_policy["rootfs_image_built"] = False
+        self.policy_checker.validate_contract_projection(rebuild_policy, False)
+        self.policy_checker.validate_candidate_state(
+            rebuild_policy, require_material_binding=False
+        )
+        build_text = BUILD_ENTRY.read_text(encoding="utf-8")
+        verify_text = VERIFY_ENTRY.read_text(encoding="utf-8")
+        self.assertIn('"${policy_checker}" --phase source-contract', build_text)
+        self.assertIn('"${policy_checker}" --phase source-contract', verify_text)
+
+    def test_contract_projection_rejects_requirement_drift_and_old_evidence(self):
+        self.assertEqual(
+            self.policy_checker.contract_projection_sha256(self.validation),
+            self.validation["contract_projection_sha256"],
+        )
+
+        forgotten_hash = json.loads(json.dumps(self.validation))
+        forgotten_hash["common_packages"].append("新增診斷套件")
+        with self.assertRaises(SystemExit):
+            self.policy_checker.validate_contract_projection(forgotten_hash, False)
+
+        stale_evidence = json.loads(json.dumps(forgotten_hash))
+        stale_evidence["contract_projection_sha256"] = (
+            self.policy_checker.contract_projection_sha256(stale_evidence)
+        )
+        with self.assertRaises(SystemExit):
+            self.policy_checker.validate_contract_projection(stale_evidence, True)
+
+    def test_xz_stream_must_decode_to_the_same_image(self):
+        image_bytes = (b"BPI-M1-Super\x00" * 8192) + "完成".encode("utf-8")
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            image = root / "candidate.img"
+            archive = root / "candidate.img.xz"
+            image.write_bytes(image_bytes)
+            archive.write_bytes(lzma.compress(image_bytes))
+            evidence = {"image": {"sha256": hashlib.sha256(image_bytes).hexdigest()}}
+            self.policy_checker.validate_xz_stream_matches_image(
+                image, archive, evidence
+            )
+
+            archive.write_bytes(lzma.compress(image_bytes + "漂移".encode("utf-8")))
+            with self.assertRaises(SystemExit):
+                self.policy_checker.validate_xz_stream_matches_image(
+                    image, archive, evidence
+                )
+
+    def test_uboot_manifest_is_rechecked_against_contract_and_image_bytes(self):
+        payload = "固定載荷內容".encode("utf-8")
+        digest = hashlib.sha256(payload).hexdigest()
+        policy = {
+            "boards": {
+                "bananapim1super": {
+                    "uboot_payloads": ["u-boot.itb@4096"],
+                    "uboot_payload_sizes": [f"u-boot.itb={len(payload)}"],
+                    "uboot_payload_sha256": [f"u-boot.itb={digest}"],
+                }
+            }
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            image = root / "candidate.img"
+            manifest = root / "UBOOT_PAYLOAD_EVIDENCE.tsv"
+            image.write_bytes((b"\x00" * 4096) + payload)
+            manifest.write_text(
+                "board\tpayload\tplacement\toffset\tsize\tsha256\n"
+                f"bananapim1super\tu-boot.itb\timage\t4096\t{len(payload)}\t{digest}\n",
+                encoding="utf-8",
+            )
+            with mock.patch.object(
+                self.policy_checker, "UBOOT_PAYLOAD_EVIDENCE", manifest
+            ):
+                self.policy_checker.validate_uboot_payload_manifest(policy, image)
+
+                drifted_payload = "共同偽造內容".encode("utf-8")
+                drifted_digest = hashlib.sha256(drifted_payload).hexdigest()
+                image.write_bytes((b"\x00" * 4096) + drifted_payload)
+                manifest.write_text(
+                    "board\tpayload\tplacement\toffset\tsize\tsha256\n"
+                    f"bananapim1super\tu-boot.itb\timage\t4096\t{len(drifted_payload)}\t{drifted_digest}\n",
+                    encoding="utf-8",
+                )
+                with self.assertRaises(SystemExit):
+                    self.policy_checker.validate_uboot_payload_manifest(policy, image)
+
+    def test_rkbin_manifest_is_parsed_instead_of_only_hashing_the_file(self):
+        policy = {"rkbin_blobs": {"LICENSE.TXT": "a" * 64}}
+        with tempfile.TemporaryDirectory() as directory:
+            manifest = Path(directory) / "RKBIN_EVIDENCE.tsv"
+            manifest.write_text(
+                "path\tsha256\nLICENSE.TXT\t" + ("a" * 64) + "\n",
+                encoding="utf-8",
+            )
+            with mock.patch.object(self.policy_checker, "RKBIN_EVIDENCE", manifest):
+                self.policy_checker.validate_rkbin_manifest(policy)
+                manifest.write_text(
+                    "path\tsha256\nOTHER.bin\t" + ("b" * 64) + "\n",
+                    encoding="utf-8",
+                )
+                with self.assertRaises(SystemExit):
+                    self.policy_checker.validate_rkbin_manifest(policy)
+
+    def test_final_config_manifest_is_bound_to_expected_image_paths(self):
+        policy = json.loads(json.dumps(self.validation))
+        board = policy["boards"]["bananapim1super"]
+        with tempfile.TemporaryDirectory() as directory:
+            manifest = Path(directory) / "FINAL_CONFIG_EVIDENCE.tsv"
+            manifest.write_text(
+                "board\tcomponent\tpath\tsha256\n"
+                "bananapim1super\tkernel\tboot/config-6.1.115-vendor-rk35xx\t"
+                + board["final_kernel_config_sha256"]
+                + "\n"
+                "bananapim1super\tuboot\tusr/lib/linux-u-boot-vendor-bananapim1super/u-boot-config-target-1\t"
+                + board["final_uboot_config_sha256"]
+                + "\n",
+                encoding="utf-8",
+            )
+            with mock.patch.object(
+                self.policy_checker, "FINAL_CONFIG_EVIDENCE", manifest
+            ):
+                expected_files = self.policy_checker.validate_final_config_manifest(
+                    policy
+                )
+                self.assertEqual(
+                    expected_files["boot/config-6.1.115-vendor-rk35xx"],
+                    board["final_kernel_config_sha256"],
+                )
+                manifest.write_text(
+                    manifest.read_text(encoding="utf-8").replace(
+                        "boot/config-6.1.115-vendor-rk35xx",
+                        "boot/config-偽造版本",
+                    ),
+                    encoding="utf-8",
+                )
+                with self.assertRaises(SystemExit):
+                    self.policy_checker.validate_final_config_manifest(policy)
 
     def test_state_machine_rejects_mixed_or_unproven_states(self):
         mixed = json.loads(json.dumps(self.validation))
@@ -220,9 +388,7 @@ class BananaPiM1SuperCandidateTests(unittest.TestCase):
         self.assertNotIn("rk3528-hinlink-h28k", self.uboot_config)
 
     def test_validation_targets_dedicated_artifacts(self):
-        self.assertEqual(
-            self.board["dtb"], "rockchip/rk3528-bananapi-m1-super.dtb"
-        )
+        self.assertEqual(self.board["dtb"], "rockchip/rk3528-bananapi-m1-super.dtb")
         self.assertEqual(
             self.board["component_dtb_sha256"],
             "68c0d6c27d2802abee0b7ab4b0569581048b14fc651d55c103392d81e00f2eb6",
@@ -352,11 +518,18 @@ class BananaPiM1SuperCandidateTests(unittest.TestCase):
         self.assertIn('"L1 元件候選" | "L2 內部軟體候選"', build_text)
         self.assertIn('export SOURCE_DATE_EPOCH="${source_date_epoch}"', build_text)
         self.assertIn("SOURCE_DATE_EPOCH 與固定契約不符", build_text)
+        self.assertIn('"${policy_checker}" --phase source-contract', build_text)
         self.assertIn("write_entry_state failed", verify_text)
         self.assertIn("verify-bananapi-rockchip-candidates.sh", verify_text)
         self.assertIn("export VERIFY_ARCHIVES=yes", verify_text)
         self.assertIn('"L1 元件候選") verification_evidence_level=L1', verify_text)
-        self.assertIn('export VERIFICATION_EVIDENCE_LEVEL="${verification_evidence_level}"', verify_text)
+        self.assertIn(
+            'export VERIFICATION_EVIDENCE_LEVEL="${verification_evidence_level}"',
+            verify_text,
+        )
+        checker_text = POLICY_CHECKER.read_text(encoding="utf-8")
+        self.assertIn('choices=("source-contract", "material-evidence")', checker_text)
+        self.assertIn('"--read-only"', checker_text)
 
     def test_common_rockchip_builder_rejects_source_commit_races(self):
         text = ROCKCHIP_BUILD.read_text(encoding="utf-8")

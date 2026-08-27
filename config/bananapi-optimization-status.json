@@ -170,7 +170,7 @@
     },
     "bananapim1super": {
       "level": "L2",
-      "basis": "內部 Trixie vendor minimal CLI 已由隔離快取與固定 Linux、U-Boot、RKBin、ATF 及 firmware 來源完整建置，並通過 XZ 串流、GPT、ext4 root、M1 Super DTB、U-Boot 載荷、最終設定、套件與唯讀映像守門；無線 BOM、授權及實機功能仍待驗證"
+      "basis": "內部 Trixie vendor minimal CLI 已由隔離快取與固定 Linux、U-Boot、firmware、RKBin 來源完整建置；ATF／BL31 使用固定 RKBin 預建載荷，並非由 ATF 原始碼建置。映像已通過 XZ 串流、GPT、ext4 root、M1 Super DTB、U-Boot 載荷、最終設定、套件與唯讀映像守門；無線 BOM、授權及實機功能仍待驗證"
     },
     "bananapim2c": {
       "level": "L0",

@@ -45,6 +45,8 @@ Armbian 韌體來源與引用現在同時固定為 `https://github.com/armbian/f
 
 元件建置所得 Linux DTB 雜湊固定保存在 `component_build_evidence.linux_dtb.sha256` 與板級 `component_dtb_sha256`。第一次完整映像預檢把相同雜湊建立為拒絕式契約；正式映像再次驗證後，已設定 `image_build_evidence.linux_dtb.sha256` 與 `image_dtb_sha256`，並把範圍標為 `full-image-l2`。政策守門器會拒絕交叉組合，並直接核對 Git 建置提交、本機 IMG／XZ、候選矩陣及完成狀態，避免格式正確但不存在的假證據通過。
 
+守門分為兩個階段。`source-contract` 只驗證可重建所需的固定來源與現行契約，不讀取舊輸出，因此 L2 狀態下刪除 `output/` 仍可從固定來源重新建置；`material-evidence` 才要求完整 IMG、XZ、狀態與清單，並直接核對映像內容。validation 另保存不含候選狀態、證據本體及影像衍生欄位的規範投影 SHA-256；來源提交、現行契約與 L2 證據必須具有相同投影。這個設計避免 JSON 自我雜湊循環，也確保新增套件、核心選項或載荷要求時，舊 L2 證據不能繼續通過。
+
 ## 專屬實作邊界
 
 Linux 專屬 DTS 從經原理圖證明的 Sige1 設計繼承，覆寫 Banana Pi model 與 compatible，並只額外啟用官方 40-pin 表與原理圖都能確認的 `I2C0`、`I2C1` 與 `SPI0`。`SPI0` 提供兩個 `spidev` 端點，頻率上限保守設為 24 MHz。

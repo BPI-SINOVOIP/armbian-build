@@ -20,6 +20,7 @@ Banana Pi M1 Super 的 Debian Trixie minimal CLI 映像已由固定來源完整�
 | RKBin | `1d3c61008fa823936ae7a59615393f8294b64456` |
 | Armbian firmware | `f50a2a21bcdb77a562b3976930c5c6b521a1df08` |
 | 固定建置時間戳 | `1787082913` |
+| 規範投影 SHA-256 | `5c5d6570f8a9e72f6c150dab4314de9d2bca7afdb89e796f36d9e41247e22d3d` |
 
 建置使用 M1 Super 專用 OverlayFS 上層，共用快取只作唯讀下層。完成後已確認建置程序與掛載均結束，再精確清除專用上層；共用下層未修改。
 
@@ -46,6 +47,13 @@ Banana Pi M1 Super 的 Debian Trixie minimal CLI 映像已由固定來源完整�
 - 最終設定清單 SHA-256 為 `e40d737d10a0494a58eedfb5831bf28113ce13a1e618fe78d2c70329ee70e67c`。
 - RKBin 證據清單 SHA-256 為 `79a10a440ef02ceb9353ec8f5f8914d9981a47a83e0f291b700ac168be64e458`，映像亦包含規定的授權檔副本。
 - 映像內套件與核心設定涵蓋 GPIO、I2C、SPI、USB gadget、網路、無線、藍牙、DRM、VPU 及診斷工具；這只證明軟體內容存在，不代表裝置實際可用。
+
+## 審查補強
+
+- 正式建置入口先執行 `source-contract` 階段，只檢查固定來源、來源契約、狀態形狀與規範投影，不依賴既有 `output/`；因此 L2 狀態可在乾淨輸出目錄重新建置。
+- 提升與稽核使用 `material-evidence` 階段，除核對檔案雜湊外，也會解壓 XZ 並與 IMG 比對、解析三份 TSV 清單、核對 IMG 內的 U-Boot 偏移內容，並以唯讀 loop 與唯讀根檔案系統重查 DTB、設定、套件載荷、韌體及 RKBin 授權檔。
+- 規範投影排除候選層級、建置證據與影像衍生欄位，避免自我雜湊循環；來源提交的投影、現行 validation 投影與 L2 證據必須一致。新增套件、核心選項、載荷或其他受控要求後，舊 L2 證據會失效，必須重新建置與驗證。
+- ATF／BL31 的來源敘述已收斂為固定 RKBin 預建載荷；沒有宣稱 ATF 由原始碼建置。
 
 ## 未完成項目
 
