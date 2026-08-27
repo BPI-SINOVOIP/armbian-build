@@ -35,7 +35,7 @@
     }
   },
   "source_date_epoch": 1711071187,
-  "source_contract_projection_sha256": "c54393e9e5b70c2e17e6b789ab16fa15ba48301076b28bec3fb50aba63778a72",
+  "source_contract_projection_sha256": "94e6437e24bd43188ecbe9edcea46089c1d236577c037c808f44f4a2cfe2f653",
   "linux_source": "https://github.com/BPI-SINOVOIP/BPI-M4-bsp.git",
   "linux_ref": "commit:25f5b88ec4ba34029f964693dc34028b26e6c67c",
   "linux_commit": "25f5b88ec4ba34029f964693dc34028b26e6c67c",
@@ -365,7 +365,7 @@
       "dtb": "realtek/rtd139x/rtd-1395-bananapi-m4-2GB.dtb",
       "dtb_image_path": "/boot/bananapi/bpi-m4/linux/rtd-1395-bananapi-m4-2GB.dtb",
       "dtb_sha256": "8886772d273898612bd60dd4ae9ecba7ab73663ab3b27b8a996e6f9b9567a461",
-      "final_kernel_config_sha256": "8ffa22ffd51e6ce989dc7c36c176d383da478a712d3deab51a9098dab2da1fbe",
+      "final_kernel_config_sha256": "926ff6a7b7d22f32b85bdffd335e84b6c972c25626b8a493960622a056eb0a54",
       "model": "Banana Pi BPI-M4",
       "compatible": [
         "bananapi,bpi-m4",

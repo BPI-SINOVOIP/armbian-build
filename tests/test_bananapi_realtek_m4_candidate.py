@@ -219,6 +219,21 @@ grep -Fqx 'root=LABEL=BPI-ROOT rw rootfstype=ext4 rootwait' \
         ):
             self.assertEqual(options[option], expected)
 
+    def test_final_kernel_config_is_distinct_from_source_input(self) -> None:
+        source_config = self.config["component_build_evidence"]["artifacts"][
+            "linux.config"
+        ]["sha256"]
+        final_config = self.policy["final_kernel_config_sha256"]
+        self.assertEqual(
+            final_config,
+            "926ff6a7b7d22f32b85bdffd335e84b6c972c25626b8a493960622a056eb0a54",
+        )
+        self.assertEqual(
+            source_config,
+            "8ffa22ffd51e6ce989dc7c36c176d383da478a712d3deab51a9098dab2da1fbe",
+        )
+        self.assertNotEqual(final_config, source_config)
+
     def test_documentation_evidence_is_local_and_not_packaged(self) -> None:
         self.assertEqual(len(self.config["documentation_evidence"]), 5)
         for item in self.config["documentation_evidence"]:

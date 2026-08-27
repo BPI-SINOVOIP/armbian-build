@@ -16,6 +16,7 @@ import sys
 EXPECTED_BSP = "25f5b88ec4ba34029f964693dc34028b26e6c67c"
 EXPECTED_FIRMWARE = "f50a2a21bcdb77a562b3976930c5c6b521a1df08"
 EXPECTED_OUTPUT = "output/components/2026.08/bananapi-realtek-rtd1395-m4-legacy"
+EXPECTED_FINAL_KERNEL_CONFIG = "926ff6a7b7d22f32b85bdffd335e84b6c972c25626b8a493960622a056eb0a54"
 EXPECTED_CONDITIONAL_UNLINKED = {
     "u-boot-rtk/static_lib/libefuse.a.32",
     "u-boot-rtk/static_lib/libsha1_util.a.32",
@@ -177,6 +178,11 @@ def main() -> None:
     require(family["legacy_boards"]["bananapim4"]["soc"] == "RTD1395", "M4 SoC 盤點不符")
     require(family["legacy_boards"]["bananapiw2"]["soc"] == "RTD1296", "W2 SoC 盤點不符")
     require(family["separate_family_boards"]["xpressreal-t3"]["soc"] == "RTD1619B", "RTD1619B 盤點不符")
+    require(
+        config["boards"]["bananapim4"]["final_kernel_config_sha256"]
+        == EXPECTED_FINAL_KERNEL_CONFIG,
+        "M4 最終核心設定校準雜湊不符",
+    )
     require(config["source_date_epoch"] == 1711071187, "來源時間基準不符")
     for prefix in ("linux", "uboot"):
         require(config[f"{prefix}_commit"] == EXPECTED_BSP, f"{prefix} 提交不符")
