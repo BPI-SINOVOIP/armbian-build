@@ -153,8 +153,8 @@
       "basis": "Trixie current CLI 已由乾淨來源完整建置並通過映像、U-Boot、固定 RKBin 啟動依賴、RK3308 DTB、SD／eMMC／SDIO、overlay 與標準 I/O 工具唯讀守門；仍待實機驗證"
     },
     "bananapiaim7": {
-      "level": "L1",
-      "basis": "固定 Linux、U-Boot 與 RKBin 來源已核對；AIM7 專屬 Linux DTB、U-Boot SPL／DTB／FIT 與 idbloader 已以固定時間戳重建成可攜證據，連續建置雜湊一致並通過身分及授權檔守門；尚未通過完整映像或實機驗證"
+      "level": "L2",
+      "basis": "Trixie vendor minimal CLI 已由專用 OverlayFS 隔離快取與固定來源完整建置；IMG／XZ、GPT、U-Boot 載荷、RKBin、AIM7 DTB、最終核心與 U-Boot 設定、診斷套件及唯讀內容守門均通過，仍待載板差異、授權與實機驗證"
     },
     "bananapicm2": {
       "level": "L0",
@@ -283,7 +283,7 @@
     "bananapim2zero": "完成 SD、Wi-Fi、Bluetooth、USB OTG、HDMI、Lima、Cedrus 與 40-pin 實測",
     "bananapip2zero": "完成 SD／eMMC、Ethernet、USB、顯示、Lima、Cedrus 與 40-pin 實測",
     "bananapip2pro": "完成 SD／eMMC、SDIO、網路、音訊、USB 與 40-pin 實測",
-    "bananapiaim7": "選定 GPU 與使用者空間路徑，完成固定來源完整映像及 L2 內容守門",
+    "bananapiaim7": "完成 AIM7 與 AIM7 IO 載板差異、RKBin／韌體散布授權、冷啟動、儲存、網路、顯示、GPU、VPU、RGA、NPU、PCIe、USB 與排針實測",
     "bananapicm2": "取得 CM2 載板原理圖與連接器映射，建立專屬 DTS 後再建置候選",
     "bananapicm5pro": "完成載板等同性與 RTL8852BS 授權審查，再做冷啟動及全介面實測",
     "bananapiforge1": "完成冷啟動、雙網路、USB gadget、顯示、CAN、音訊與 40-pin 實測",

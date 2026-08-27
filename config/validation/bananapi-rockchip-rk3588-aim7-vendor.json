@@ -1,18 +1,18 @@
 {
   "schema_version": 1,
   "candidate_branch": "vendor",
-  "candidate_level": "L1 元件候選",
-  "candidate_scope": "internal-component-only",
-  "current_evidence_level": "L1",
+  "candidate_level": "L2 內部軟體候選",
+  "candidate_scope": "internal-l2",
+  "current_evidence_level": "L2",
   "target_evidence_level": "L2",
   "allowed_evidence_levels": [
     "L1",
     "L2"
   ],
   "component_build_completed": true,
-  "rootfs_image_built": false,
-  "full_image_built": false,
-  "full_rootfs_image_built": false,
+  "rootfs_image_built": true,
+  "full_image_built": true,
+  "full_rootfs_image_built": true,
   "hardware_claims_allowed": false,
   "public_release_allowed": false,
   "firmware_redistribution_audit_complete": false,
@@ -37,7 +37,6 @@
   "rkbin_platform_constraint": "僅可隨採用 Rockchip 積體電路的平台以二進位形式散布",
   "candidate_public_release_approved": false,
   "candidate_release_blockers": [
-    "尚未完成隔離快取完整映像建置與唯讀驗證",
     "尚未完成 AIM7 與 AIM7 IO 原理圖差異稽核",
     "尚未取得冷啟動、儲存、PCIe、顯示與加速器實機證據"
   ],
@@ -67,6 +66,38 @@
     "uboot_dtb_size": 10735,
     "uboot_itb_sha256": "892095d646d01f9f050750741e63a6351758845053dfa7c21b03648a587dd2b7",
     "uboot_itb_size": 1462784
+  },
+  "image_build_evidence": {
+    "status": "complete",
+    "evidence_level": "L2",
+    "source_commit": "052edc9c12fa4eff6213f66753774bc7e7b09d27",
+    "source_tree": "9fc00c243c0ae547952a13293ea61683039ec6e8",
+    "verifier_commit": "052edc9c12fa4eff6213f66753774bc7e7b09d27",
+    "build_validation_config_sha256": "489730becc1ac7ce9f350c3088c8b837eb5b1116d735b17757f7de8fb47a8139",
+    "verification_config_sha256": "489730becc1ac7ce9f350c3088c8b837eb5b1116d735b17757f7de8fb47a8139",
+    "candidate_matrix_sha256": "77143efaed9fc60f011fa2a6d995e48273efbaf3ba58d7cf2f729422a60e7a51",
+    "uboot_payload_manifest_sha256": "6a0dbddcb4c13b307a453e9f7e982d71a36bad3d2a1a891057cd9852acb1f901",
+    "final_config_manifest_sha256": "1fcb2690f2eb3f18ca7128faeee867be6664007fe782cec1fa0d8fd0d8f114e3",
+    "final_kernel_config_sha256": "24edbbaabf1bd7960e7c2647ec7e96c25e2e9bf4de5a440c30827eb15b162e9e",
+    "final_uboot_config_sha256": "83090180148e81624265b0c1e6258fea600940824b30fddf4a2a0e2ec1ac8edd",
+    "linux_dtb_sha256": "fdf3d029773c5374411a08edc6fcfe65532c5fa94d7845b05e28988f338e796f",
+    "rkbin_commit": "1d3c61008fa823936ae7a59615393f8294b64456",
+    "rkbin_manifest_sha256": "0d1c36b78dc1dc1919cba54e18b1f719bb260951ba059f80835b0ac6ab90ea91",
+    "read_only_content_verified": true,
+    "full_rootfs_image_built": true,
+    "hardware_tested": false,
+    "public_release_authorized": false,
+    "verified_utc": "2026-08-27T15:29:03Z",
+    "image": {
+      "path": "bananapiaim7/Armbian-unofficial_26.05.0-trunk_Bananapiaim7_trixie_vendor_6.1.115_minimal.img",
+      "size": 2747269120,
+      "sha256": "cda1ddd7729dcfa37909abc6cca14f017f83660d0ad9af86f848c560bc6719ba"
+    },
+    "archive": {
+      "path": "bananapiaim7/Armbian-unofficial_26.05.0-trunk_Bananapiaim7_trixie_vendor_6.1.115_minimal.img.xz",
+      "size": 528840324,
+      "sha256": "e8ac39bab434a3b23024c8884cc27d1dc4aa4ccbfe860e2440bc6910f173b2a8"
+    }
   },
   "common_packages": [
     "gpiod",
@@ -143,8 +174,15 @@
       "family": "rk35xx",
       "dtb": "rockchip/rk3588-bananapi-aim7.dtb",
       "component_dtb_sha256": "fdf3d029773c5374411a08edc6fcfe65532c5fa94d7845b05e28988f338e796f",
-      "image_dtb_sha256": null,
-      "dtb_sha256_evidence_scope": "component-only-l1",
+      "image_dtb_sha256": "fdf3d029773c5374411a08edc6fcfe65532c5fa94d7845b05e28988f338e796f",
+      "dtb_sha256": "fdf3d029773c5374411a08edc6fcfe65532c5fa94d7845b05e28988f338e796f",
+      "dtb_sha256_evidence_scope": "full-image-l2",
+      "final_kernel_config_sha256": "24edbbaabf1bd7960e7c2647ec7e96c25e2e9bf4de5a440c30827eb15b162e9e",
+      "final_uboot_config_sha256": "83090180148e81624265b0c1e6258fea600940824b30fddf4a2a0e2ec1ac8edd",
+      "uboot_payload_sha256": [
+        "idbloader.img=b168b40fe699e8b435a174eb98f4eff6327f3083dcf48ae86eed5d0d31274b19",
+        "u-boot.itb=9534348ad59993a69e9af9875dda80ba732c8c5f36363afb425d1732a81e3c0c"
+      ],
       "model": "Banana Pi AIM7",
       "compatible": [
         "bananapi,bpi-aim7",

@@ -10,7 +10,7 @@
 
 - 板卡總數：48。
 - 正式 `.conf`：12；社群 `.csc`：14；開發中 `.wip`：21；停止支援 `.eos`：1。
-- 證據分布：L0 3；L1 6；L2 39；L3 0；L4 0；L5 0。
+- 證據分布：L0 3；L1 5；L2 40；L3 0；L4 0；L5 0。
 - 未取得實機的板卡最高只能標示 L2；目前沒有板卡達到完整 L3／L4／L5 門檻。
 
 ## 板卡矩陣
@@ -19,7 +19,7 @@
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | `bananapi` | 正式 | Banana Pi | `sun7i` | `armhf` | `current,edge,legacy` | 是 | B | L2 軟體候選 | 完成 SD 冷啟動、GbE、SATA、USB 與 40-pin 外接迴路實測 |
 | `bananapi6204` | 開發中 | Banana Pi BPI-6204 | `sun8i` | `armhf` | `legacy` | 是 | C | L2 軟體候選 | 完成 eMMC、SATA、GMAC、CAN、雙 RTC、UART、USB、工控 I/O 與長時間實測 |
-| `bananapiaim7` | 開發中 | Banana Pi AIM7 | `rockchip-rk3588` | `arm64` | `vendor` | 是 | E | L1 元件可建置 | 選定 GPU 與使用者空間路徑，完成固定來源完整映像及 L2 內容守門 |
+| `bananapiaim7` | 開發中 | Banana Pi AIM7 | `rockchip-rk3588` | `arm64` | `vendor` | 是 | E | L2 軟體候選 | 完成 AIM7 與 AIM7 IO 載板差異、RKBin／韌體散布授權、冷啟動、儲存、網路、顯示、GPU、VPU、RGA、NPU、PCIe、USB 與排針實測 |
 | `bananapicm2` | 開發中 | Banana Pi CM2（R2 Pro 軟體參考） | `rockchip64` | `arm64` | `current` | 是 | E | L0 已盤點 | 取得 CM2 載板原理圖與連接器映射，建立專屬 DTS 後再建置候選 |
 | `bananapicm4io` | 正式 | Banana Pi CM4IO | `meson-g12b` | `arm64` | `current,edge` | 是 | A | L2 軟體候選 | 以 Hynix eMMC 完成多輪冷啟動、重新啟動、關機、網路與 USB 實測 |
 | `bananapicm5pro` | 開發中 | Banana Pi CM5 Pro | `rk35xx` | `arm64` | `vendor` | 是 | E | L2 軟體候選 | 完成載板等同性與 RTL8852BS 授權審查，再做冷啟動及全介面實測 |

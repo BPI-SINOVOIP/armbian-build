@@ -425,17 +425,18 @@ printf 'firmware_source=%s\nfirmware=%s\n' "$ARMBIAN_FIRMWARE_GIT_SOURCE" "$ARMB
             self.board_text,
         )
 
-    def test_component_evidence_is_machine_readable(self) -> None:
+    def test_component_and_image_evidence_are_machine_readable(self) -> None:
         evidence = self.config["component_build_evidence"]
-        self.assertEqual(self.config["candidate_level"], "L1 元件候選")
-        self.assertEqual(self.config["candidate_scope"], "internal-component-only")
-        self.assertEqual(self.config["current_evidence_level"], "L1")
+        image_evidence = self.config["image_build_evidence"]
+        self.assertEqual(self.config["candidate_level"], "L2 內部軟體候選")
+        self.assertEqual(self.config["candidate_scope"], "internal-l2")
+        self.assertEqual(self.config["current_evidence_level"], "L2")
         self.assertEqual(self.config["target_evidence_level"], "L2")
         self.assertEqual(self.config["allowed_evidence_levels"], ["L1", "L2"])
         self.assertTrue(self.config["component_build_completed"])
-        self.assertFalse(self.config["rootfs_image_built"])
-        self.assertFalse(self.config["full_image_built"])
-        self.assertFalse(self.config["full_rootfs_image_built"])
+        self.assertTrue(self.config["rootfs_image_built"])
+        self.assertTrue(self.config["full_image_built"])
+        self.assertTrue(self.config["full_rootfs_image_built"])
         self.assertFalse(self.config["hardware_claims_allowed"])
         self.assertFalse(self.config["public_release_allowed"])
         self.assertFalse(self.config["firmware_redistribution_audit_complete"])
@@ -446,11 +447,17 @@ printf 'firmware_source=%s\nfirmware=%s\n' "$ARMBIAN_FIRMWARE_GIT_SOURCE" "$ARMB
             "f50a2a21bcdb77a562b3976930c5c6b521a1df08",
         )
         self.assertTrue(self.config["verify_firmware_source_resolution"])
-        self.assertNotIn("image_build_evidence", self.config)
-        self.assertIsNone(self.policy["image_dtb_sha256"])
+        self.assertEqual(image_evidence["status"], "complete")
+        self.assertEqual(image_evidence["evidence_level"], "L2")
+        self.assertTrue(image_evidence["read_only_content_verified"])
+        self.assertFalse(image_evidence["hardware_tested"])
+        self.assertFalse(image_evidence["public_release_authorized"])
+        self.assertRegex(image_evidence["image"]["sha256"], r"^[0-9a-f]{64}$")
+        self.assertRegex(image_evidence["archive"]["sha256"], r"^[0-9a-f]{64}$")
+        self.assertRegex(self.policy["image_dtb_sha256"], r"^[0-9a-f]{64}$")
         self.assertEqual(
             self.policy["dtb_sha256_evidence_scope"],
-            "component-only-l1",
+            "full-image-l2",
         )
         self.assertEqual(evidence["source_date_epoch"], 1777288768)
         self.assertEqual(
@@ -673,13 +680,13 @@ printf '%s\n' "${{opts_y[@]}}"
         ):
             self.assertIn(required, verify_text)
 
-    def test_policy_accepts_current_l1_and_rejects_label_only_promotion(self) -> None:
+    def test_policy_accepts_current_l2_and_rejects_label_only_demotion(self) -> None:
         accepted = self.run_policy(self.config)
         self.assertEqual(accepted.returncode, 0, accepted.stderr.decode())
 
-        promoted = json.loads(json.dumps(self.config))
-        promoted["candidate_level"] = "L2 內部軟體候選"
-        rejected = self.run_policy(promoted)
+        demoted = json.loads(json.dumps(self.config))
+        demoted["candidate_level"] = "L1 元件候選"
+        rejected = self.run_policy(demoted)
         self.assertNotEqual(rejected.returncode, 0)
 
     def test_policy_rejects_fixed_source_or_timestamp_drift(self) -> None:
@@ -705,16 +712,19 @@ printf '%s\n' "${{opts_y[@]}}"
 
     def test_policy_rejects_image_evidence_on_l1(self) -> None:
         invalid = json.loads(json.dumps(self.config))
-        invalid["image_build_evidence"] = self.valid_l2_config()[
-            "image_build_evidence"
-        ]
+        invalid["candidate_level"] = "L1 元件候選"
+        invalid["candidate_scope"] = "internal-component-only"
+        invalid["current_evidence_level"] = "L1"
+        invalid["rootfs_image_built"] = False
+        invalid["full_image_built"] = False
+        invalid["full_rootfs_image_built"] = False
         rejected = self.run_policy(invalid)
         self.assertNotEqual(rejected.returncode, 0)
 
     def test_policy_rejects_well_formed_but_unbacked_internal_l2(self) -> None:
         rejected = self.run_policy(self.valid_l2_config())
         self.assertNotEqual(rejected.returncode, 0)
-        self.assertIn("真實", rejected.stderr.decode())
+        self.assertIn("雜湊不符", rejected.stderr.decode())
 
     def test_l2_policy_closes_real_files_and_rejects_evidence_drift(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
