@@ -6,7 +6,7 @@
 
 Banana Pi W3 原板檔直接繼承 ArmSoM W3，U-Boot 也使用 ArmSoM defconfig，因此板級來源、身分與驗證邊界不完整。本候選改為自足板檔，並以 Banana Pi 專屬 Linux／U-Boot DTS wrapper 及專用 defconfig 固定板級身分。
 
-目前只建立 L2 軟體候選；本次未建完整映像，也尚未建立實體板 L3 證據。沒有實機冷啟動與介面測試前，不得宣稱硬體介面已通過。
+目前已建立完整映像並完成正式 L2 軟體候選的建置前檢查；正式唯讀守門結果另由 L2 建置證據保存。尚未建立實體板 L3 證據，沒有實機冷啟動與介面測試前，不得宣稱硬體介面已通過。
 
 ## 固定來源
 
@@ -39,6 +39,8 @@ RKBin 的 DDR v1.11、BL31 v1.38、RockUSB loader 與 `LICENSE.TXT` 均由 SHA-2
 ## L2 軟體守門
 
 提交 `84d36840acc0177a145f99c12f264ecf70362c68` 已產生第一份完整預檢映像，但當時 Armbian firmware 仍透過可移動的 `master` 解析，而且 RK35xx 共用 U-Boot 修補檔使用假 blob index，修補摘要為兩個套用、一個 `needs_rebase`。該預檢只能證明建置鏈可走完，不得升級為正式 L2；正式候選必須固定 firmware 提交、使用正規 blob index 與完整 hunk，並從新的專用 OverlayFS 重建至零修補問題。
+
+提交 `3f2cd8493b00be096c004278f8a67269e1b93867` 已使用新的專用 OverlayFS 完成正式重建。建置紀錄確認 U-Boot 兩個修補與核心兩個修補皆全部套用且零問題，Armbian firmware 直接抓取固定提交 `f50a2a21bcdb77a562b3976930c5c6b521a1df08`。正式映像、DTB、U-Boot、RKBin 授權與唯讀檢查細節記錄於 `E-rockchip-w3-L2-build-20260827.md`。
 
 - 固定 Linux、U-Boot 與 RKBin 的來源、ref、實際提交及 blob 雜湊。
 - 比對 GPT、兩段 U-Boot payload、套件中繼資料、核心設定、DTB 身分與板級工具。

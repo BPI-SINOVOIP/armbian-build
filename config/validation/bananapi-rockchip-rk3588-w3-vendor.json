@@ -116,6 +116,7 @@
     "bananapiw3": {
       "family": "rk35xx",
       "dtb": "rockchip/rk3588-bananapi-w3.dtb",
+      "dtb_sha256": "61b32e043b4da6265cefc6dc6e457968aa525aee3d69ba17b96189efcc3140d2",
       "model": "Banana Pi W3",
       "compatible": [
         "bananapi,bpi-w3",

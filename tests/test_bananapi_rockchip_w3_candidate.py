@@ -274,7 +274,15 @@ printf 'firmware=%s\n' "$ARMBIAN_FIRMWARE_GIT_REF"
 
     def test_policy_keeps_hardware_claims_pending(self) -> None:
         text = POLICY.read_text()
-        self.assertIn("目前只建立 L2 軟體候選", text)
+        self.assertIn("目前已建立完整映像", text)
+        self.assertIn(
+            "3f2cd8493b00be096c004278f8a67269e1b93867",
+            text,
+        )
+        self.assertIn(
+            "f50a2a21bcdb77a562b3976930c5c6b521a1df08",
+            text,
+        )
         self.assertIn("尚未建立實體板 L3 證據", text)
         self.assertIn("不得宣稱硬體介面已通過", text)
         self.assertIn("不得獨立散布", text)
