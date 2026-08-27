@@ -96,6 +96,7 @@
   "verify_firmware_source_resolution": true,
   "firmware_redistribution_license_verified": false,
   "source_date_epoch": 1717001894,
+  "source_contract_projection_sha256": "223f4c9e7bb7ec9ae7bc35182694db17823c307590073027ee3136d23098e925",
   "source_commits": {
     "linux": {
       "source": "https://github.com/BPI-SINOVOIP/pi-linux.git",

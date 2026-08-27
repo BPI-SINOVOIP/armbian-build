@@ -109,6 +109,14 @@ U-Boot 樹含 GPL-2.0 授權文件，Linux 樹依 GPL-2.0 發布；這不會自�
 
 完整映像驗證除原有的 MBR 幾何、`ea/83` 類型、FAT/ext4 標籤、root UUID、`armbianEnv.txt`、`boot.scr`、最終設定與受控重疊 payload 外，還會把來源 tree、建置完成狀態雜湊、候選矩陣雜湊、固定時間戳及 XZ 串流同一性寫入完成狀態。L2 政策還會確認來源提交確實存在且為目前分支祖先，從該提交重算來源 tree 與建置時 validation 雜湊，不接受只有格式正確的假提交。任何專用前置檢查失敗都會先移除舊的 TSV 證據並原子寫入 `failed`；成功或失敗狀態都必須保存 `public_release_allowed=false`、`hardware_claims_allowed=false` 與 `opaque_payload_redistribution_verified=false`。
 
+### 2026-08-28 完整映像契約閉合
+
+正式執行前新增兩階段證據流程。第一階段以現有 L1 契約完整建置映像，共用驗證器只產生延後中的 `VERIFICATION_STATUS.json.partial`；M6 專用守門重新解析 IMG、XZ、雙分割區、映像 DTB、最終核心與 U-Boot 設定，以及 TZK 前段、完整 U-Boot 與 TZK 尾段，原子寫入 `M6_CALIBRATION.json` 後才升級 L1 成功狀態。第二階段由校準值建立並先推送 L2 重建契約，再從乾淨專用 OverlayFS 重建正式映像；`M6_MATERIAL_EVIDENCE.json` 與 `M6_MATERIAL_STATUS.json` 寫入且二次讀回成功後，才允許共用 `.partial` 狀態原子升級。
+
+穩定來源契約投影 SHA-256 固定為 `223f4c9e7bb7ec9ae7bc35182694db17823c307590073027ee3136d23098e925`。候選層級、建置完成旗標、映像雜湊與映像 DTB 等狀態欄位不納入投影；Linux、U-Boot、韌體、來源檔、分割區、payload、必要套件與功能需求仍納入，因此 L1 與 L2 可以共用來源需求身分，卻不能藉改狀態欄位掩蓋需求漂移。
+
+建置入口同時固定輸出目錄、唯讀 lowerdir、專用 upperdir／workdir 與掛載目標，並拒絕任一 `OUTPUT_DIR` 或 OverlayFS 身分覆寫。共用建置器依 validation 的 `current_evidence_level` 寫入中繼資料，不再把正式 L2 硬編碼成 L1。此節只記錄建置前契約已就緒；在後續 L1 校準與 L2 正式建置證據落地前，M6 仍維持 L1，且不增加任何硬體或公開發布聲明。
+
 ### 元件建置證據
 
 2026-08-27 已在獨立 OverlayFS 上層完成 U-Boot 2019.10、Linux 5.4.195 image、DTB、headers 與 libc-dev 元件封裝，完整 IMG 數量為 0。元件來源提交為 `b6339cf4a2135e3ad75992f7574889d5ff34a249`；清單 SHA-256 為 `1eb1cbbe973badcb18c35e46c3e8be147c0fed77a1af940483b41620e153ea7e`，元件驗證狀態 SHA-256 為 `aa1c2474fc1c3d12384ba0b1d6fb13735e360bfc0125d09b817582edcd3268e5`。
@@ -128,9 +136,9 @@ U-Boot 樹含 GPL-2.0 授權文件，Linux 樹依 GPL-2.0 發布；這不會自�
 - `tools/verify-bananapi-vs680-m6-sources.sh`：驗證固定提交、原始 DTS blob、修補可套用性、不透明載荷雜湊及可選遠端分支對照。
 - `tools/build-bananapi-vs680-m6-components.sh`：只建置 U-Boot 與 Linux 元件，不建立 rootfs。
 - `tools/verify-bananapi-vs680-m6-components.sh`：重新核對元件證據檔、套件大小與 SHA-256，且維持硬體與發布聲明為否。
-- `tools/build-bananapi-vs680-m6-candidate.sh`：未來建立單一 Trixie CLI 完整候選；本任務不執行。
+- `tools/build-bananapi-vs680-m6-candidate.sh`：以固定來源、固定時間戳及精確 OverlayFS 身分建立單一 Trixie CLI 完整候選。
 - `tools/run-bananapi-vs680-m6-components-isolated-cache.sh` 與 `tools/run-bananapi-vs680-m6-candidate-isolated-cache.sh`：以獨立 OverlayFS 保護共用下層快取。
-- `tools/verify-bananapi-vs680-m6-candidate.sh`：以唯讀 loop 與唯讀掛載檢查雙分割區、來源中繼資料、DTB 身分及兩段 boot payload。
+- `tools/verify-bananapi-vs680-m6-candidate.sh`：延後共用成功狀態，以唯讀 loop 與唯讀掛載檢查雙分割區、來源中繼資料、DTB 身分及受控重疊 boot payload，並分別閉合 L1 校準或 L2 正式物質證據。
 
 ## 未解除 blocker
 

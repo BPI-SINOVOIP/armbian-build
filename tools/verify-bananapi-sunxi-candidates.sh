@@ -1199,7 +1199,8 @@ while IFS=$'\t' read -r board release profile raw_size raw_sha256 xz_size \
 	fi
 	for item in "source_commit ${candidate_source_commit}" "source_tree ${candidate_source_tree}" \
 		"validation_config_sha256 ${build_validation_config_sha256}" "raw_sha256 ${raw_sha256}" \
-		"xz_sha256 ${xz_sha256}" "branch ${candidate_branch}"; do
+		"xz_sha256 ${xz_sha256}" "branch ${candidate_branch}" \
+		"evidence_level ${verification_evidence_level}"; do
 		read -r key expected <<<"${item}"
 		require_metadata_value "${metadata}" "${key}" "${expected}"
 	done

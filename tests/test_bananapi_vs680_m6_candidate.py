@@ -7,11 +7,13 @@ import copy
 import hashlib
 import importlib.util
 import json
+import lzma
 import os
 from pathlib import Path
 import subprocess
 import tempfile
 import unittest
+from unittest import mock
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -295,6 +297,9 @@ printf '%s\n' "$BOOTBRANCH" "$KERNELBRANCH" \
         self.assertIn("verify-bananapi-vs680-m6-sources.sh", candidate_build)
         self.assertIn('SOURCE_DATE_EPOCH="${expected_source_date_epoch}"', candidate_build)
         self.assertIn("REQUIRE_SOURCE_DATE_EPOCH_METADATA=yes", candidate_build)
+        self.assertIn("validate_fixed_overlay_mount", candidate_build)
+        self.assertIn("bananapi-vs680-m6-candidate-cache-overlay", candidate_build)
+        self.assertIn("只允許固定輸出目錄", candidate_build)
         self.assertIn('[[ "${REQUIRE_ISOLATED_CACHE:-yes}" == yes ]]', candidate_build)
         self.assertIn("BPI-M6 建置不得停用 OverlayFS", candidate_build)
         self.assertIn('MINIMUM_FREE_GIB="${MINIMUM_FREE_GIB:-40}"', candidate_build)
@@ -304,6 +309,12 @@ printf '%s\n' "$BOOTBRANCH" "$KERNELBRANCH" \
         self.assertIn("VERIFY_ARCHIVES=yes", verifier)
         self.assertIn("REQUIRE_SOURCE_DATE_EPOCH_METADATA=yes", verifier)
         self.assertIn("REQUIRE_BUILD_VERIFIER_IDENTITY=yes", verifier)
+        self.assertIn("VERIFICATION_DEFER_STATUS_PROMOTION=yes", verifier)
+        self.assertIn("--phase calibration", verifier)
+        self.assertIn("--finalize-calibration", verifier)
+        self.assertIn("--phase material-evidence", verifier)
+        self.assertIn("--finalize-material-status", verifier)
+        self.assertIn('"${status_file}.partial"', verifier)
         self.assertNotIn("VALIDATION_CONFIG:-", verifier)
         self.assertIn("候選層級、範圍與證據等級不成對", verifier)
         self.assertIn(
@@ -343,6 +354,9 @@ printf '%s\n' "$BOOTBRANCH" "$KERNELBRANCH" \
             with self.subTest(tool="builder", required=required):
                 self.assertIn(required, builder)
         self.assertNotIn('source_date_epoch=""', builder)
+        self.assertIn("build_evidence_level", builder)
+        self.assertIn("current_evidence_level", builder)
+        self.assertIn("evidence_level=%s", builder)
         for required in (
             "boot_partition_filesystem_type",
             "candidate_source_tree",
@@ -353,6 +367,7 @@ printf '%s\n' "$BOOTBRANCH" "$KERNELBRANCH" \
         ):
             with self.subTest(tool="verifier", required=required):
                 self.assertIn(required, verifier)
+        self.assertIn('"evidence_level ${verification_evidence_level}"', verifier)
 
     def run_policy(self, config: dict[str, object]) -> subprocess.CompletedProcess[str]:
         with tempfile.NamedTemporaryFile(
@@ -552,8 +567,10 @@ printf '%s\n' "$BOOTBRANCH" "$KERNELBRANCH" \
             "verification_config_sha256": build_validation,
             "candidate_matrix_sha256": "4" * 64,
             "completion_status_sha256": "5" * 64,
+            "verification_manifest_sha256": "a" * 64,
             "uboot_payload_manifest_sha256": "6" * 64,
             "final_config_manifest_sha256": "7" * 64,
+            "source_contract_projection_sha256": self.policy_checker.contract_projection_sha256(candidate),
             "xz_stream_verified": True,
             "image": {"path": "bananapim6/test.img", "size": 1, "sha256": "8" * 64},
             "archive": {"path": "bananapim6/test.img.xz", "size": 1, "sha256": "9" * 64},
@@ -582,7 +599,338 @@ printf '%s\n' "$BOOTBRANCH" "$KERNELBRANCH" \
                 with self.assertRaises(SystemExit):
                     self.policy_checker.validate_candidate_state(broken, status)
 
-    def test_m6_verifier_invalidates_stale_success(self) -> None:
+    def test_source_contract_allows_unbound_l2_calibration_contract(self) -> None:
+        candidate = copy.deepcopy(self.config)
+        candidate["candidate_level"] = "L2 內部軟體候選"
+        candidate["candidate_scope"] = "internal-l2"
+        candidate["current_evidence_level"] = "L2"
+        status = {"evidence": {"bananapim6": {"level": "L1"}}}
+        self.policy_checker.validate_candidate_state(
+            candidate, status, require_material_binding=False
+        )
+        with self.assertRaises(SystemExit):
+            self.policy_checker.validate_candidate_state(candidate, status)
+
+    def test_contract_projection_excludes_state_but_rejects_requirement_drift(self) -> None:
+        baseline = self.policy_checker.contract_projection_sha256(self.config)
+        self.assertEqual(
+            self.config["source_contract_projection_sha256"], baseline
+        )
+        changed_state = copy.deepcopy(self.config)
+        changed_state["candidate_level"] = "L2 內部軟體候選"
+        changed_state["candidate_scope"] = "internal-l2"
+        changed_state["current_evidence_level"] = "L2"
+        changed_state["full_image_built"] = True
+        changed_state["boards"]["bananapim6"]["image_dtb_sha256"] = "1" * 64
+        self.assertEqual(
+            self.policy_checker.contract_projection_sha256(changed_state), baseline
+        )
+        changed_requirement = copy.deepcopy(changed_state)
+        changed_requirement["common_packages"].append("新增診斷套件")
+        self.assertNotEqual(
+            self.policy_checker.contract_projection_sha256(changed_requirement),
+            baseline,
+        )
+
+    def test_policy_cli_requires_explicit_material_source_and_tracked_history(self) -> None:
+        environment = os.environ.copy()
+        environment["PUBLIC_RELEASE"] = "no"
+        environment["HARDWARE_CLAIMS"] = "no"
+        for arguments in (
+            ["--phase", "material-evidence"],
+            ["--phase", "calibration", "--evidence-source", "live"],
+            ["--phase", "source-contract", "--evidence-source", "live"],
+            ["--finalize-material-status"],
+        ):
+            result = subprocess.run(
+                ["python3", str(POLICY_CHECK), *arguments],
+                cwd=ROOT,
+                env=environment,
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                check=False,
+            )
+            with self.subTest(arguments=arguments):
+                self.assertNotEqual(result.returncode, 0)
+
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".json", encoding="utf-8"
+        ) as stream:
+            json.dump(self.config, stream, ensure_ascii=False)
+            stream.flush()
+            result = subprocess.run(
+                [
+                    "python3",
+                    str(POLICY_CHECK),
+                    stream.name,
+                    "--phase",
+                    "material-evidence",
+                    "--evidence-source",
+                    "historical",
+                ],
+                cwd=ROOT,
+                env=environment,
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                check=False,
+            )
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("版本控制內固定 M6 契約", result.stderr)
+
+    def test_xz_stream_must_decode_to_exact_image(self) -> None:
+        content = (b"BPI-M6-material\0" * 4096) + "完成".encode("utf-8")
+        with tempfile.TemporaryDirectory() as directory:
+            image = Path(directory) / "candidate.img"
+            archive = Path(directory) / "candidate.img.xz"
+            image.write_bytes(content)
+            archive.write_bytes(lzma.compress(content))
+            evidence = {"image": {"sha256": hashlib.sha256(content).hexdigest()}}
+            self.policy_checker.validate_xz_stream_matches_image(
+                image, archive, evidence
+            )
+            archive.write_bytes(lzma.compress(content + b"drift"))
+            with self.assertRaises(SystemExit):
+                self.policy_checker.validate_xz_stream_matches_image(
+                    image, archive, evidence
+                )
+
+    def test_dual_partition_contract_rejects_layout_drift(self) -> None:
+        table = {
+            "partitiontable": {
+                "label": "dos",
+                "unit": "sectors",
+                "sectorsize": 512,
+                "partitions": [
+                    {"start": 204800, "size": 524288, "type": "ea"},
+                    {"start": 729088, "size": 1000000, "type": "83"},
+                ],
+            }
+        }
+        with (
+            mock.patch.object(self.policy_checker.shutil, "which", return_value="/usr/bin/sfdisk"),
+            mock.patch.object(
+                self.policy_checker.subprocess,
+                "check_output",
+                side_effect=lambda *args, **kwargs: json.dumps(table),
+            ),
+        ):
+            summary = self.policy_checker.validate_dual_partition_contract(
+                self.config, Path("candidate.img")
+            )
+            self.assertEqual(len(summary["partitions"]), 2)
+            table["partitiontable"]["partitions"][1]["start"] += 1
+            with self.assertRaises(SystemExit):
+                self.policy_checker.validate_dual_partition_contract(
+                    self.config, Path("candidate.img")
+                )
+
+    def test_payload_overlap_rechecks_tzk_prefix_uboot_and_tzk_tail(self) -> None:
+        policy = copy.deepcopy(self.config)
+        board = policy["boards"]["bananapim6"]
+        tzk = b"0123456789ABCDEFGHIJ"
+        uboot = b"boot"
+        board["uboot_payloads"] = ["tzk.bin@4", "u-boot.bin@12"]
+        board["payload_write_order"] = ["tzk.bin", "u-boot.bin"]
+        board["payload_overlap_policy"] = {
+            "allowed": True,
+            "earlier_payload": "tzk.bin",
+            "later_payload": "u-boot.bin",
+            "overlap_starts_at_image_offset": 12,
+        }
+        board["uboot_payload_sizes"] = ["tzk.bin=20", "u-boot.bin=4"]
+        board["uboot_payload_sha256"] = [
+            f"tzk.bin={hashlib.sha256(tzk).hexdigest()}",
+            f"u-boot.bin={hashlib.sha256(uboot).hexdigest()}",
+        ]
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            tzk_path = root / "tzk.bin"
+            image = root / "candidate.img"
+            manifest = root / "UBOOT_PAYLOAD_EVIDENCE.tsv"
+            tzk_path.write_bytes(tzk)
+            image_data = bytearray(32)
+            image_data[4:24] = tzk
+            image_data[12:16] = uboot
+            image.write_bytes(image_data)
+            manifest.write_text(
+                "board\tpayload\tplacement\toffset\tsize\tsha256\n"
+                f"bananapim6\ttzk.bin\timage-controlled-overlap\t4\t20\t{hashlib.sha256(tzk).hexdigest()}\n"
+                f"bananapim6\tu-boot.bin\timage-controlled-overlap\t12\t4\t{hashlib.sha256(uboot).hexdigest()}\n",
+                encoding="utf-8",
+            )
+            with (
+                mock.patch.object(self.policy_checker, "TZK_SOURCE", tzk_path),
+                mock.patch.object(
+                    self.policy_checker, "UBOOT_PAYLOAD_EVIDENCE", manifest
+                ),
+            ):
+                summary = self.policy_checker.validate_payload_overlap_manifest(
+                    policy, image
+                )
+                self.assertEqual(summary["tail_size"], 8)
+                image_data[20] ^= 0x01
+                image.write_bytes(image_data)
+                with self.assertRaises(SystemExit):
+                    self.policy_checker.validate_payload_overlap_manifest(
+                        policy, image
+                    )
+
+    def test_live_material_loader_rebuilds_evidence_from_current_outputs(self) -> None:
+        (ROOT / ".tmp").mkdir(exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=ROOT / ".tmp") as directory:
+            output = Path(directory)
+            board_output = output / "bananapim6"
+            board_output.mkdir()
+            image = board_output / "candidate.img"
+            archive = board_output / "candidate.img.xz"
+            image.write_bytes(b"M6 image")
+            archive.write_bytes(lzma.compress(image.read_bytes()))
+            source_commit = "1" * 40
+            source_tree = "2" * 40
+            validation_hash = "3" * 64
+            matrix = output / "CANDIDATES.tsv"
+            matrix.write_text(
+                "board\trelease\tprofile\traw_size\traw_sha256\txz_size\txz_sha256\timg_path\txz_path\tsource_commit\tuboot_tag\n"
+                f"bananapim6\ttrixie\tcli\t{image.stat().st_size}\t{hashlib.sha256(image.read_bytes()).hexdigest()}\t"
+                f"{archive.stat().st_size}\t{hashlib.sha256(archive.read_bytes()).hexdigest()}\t"
+                f"bananapim6/{image.name}\tbananapim6/{archive.name}\t{source_commit}\tv2019.10\n",
+                encoding="utf-8",
+            )
+            completion = output / "COMPLETION_STATUS.json"
+            projection = self.policy_checker.contract_projection_sha256(self.config)
+            completion.write_text(
+                json.dumps(
+                    {
+                        "status": "complete",
+                        "source_tree": source_tree,
+                        "validation_config_sha256": validation_hash,
+                        "source_contract_projection_sha256": projection,
+                    }
+                ),
+                encoding="utf-8",
+            )
+            verification = output / "VERIFICATION_STATUS.json"
+            verification.write_text(
+                json.dumps(
+                    {
+                        "status": "complete",
+                        "evidence_level": "L2",
+                        "verifier_commit": source_commit,
+                        "verification_config_sha256": validation_hash,
+                        "source_contract_projection_sha256": projection,
+                        "xz_stream_verified": True,
+                        "verified_utc": "2026-08-28T00:00:00Z",
+                    }
+                ),
+                encoding="utf-8",
+            )
+            verification_manifest = output / "VERIFICATION.tsv"
+            verification_manifest.write_text(
+                "board\tidentity\tread_only_content\tevidence_level\n"
+                "bananapim6\tpass\tpass\tL2\n",
+                encoding="utf-8",
+            )
+            payload_manifest = output / "UBOOT_PAYLOAD_EVIDENCE.tsv"
+            payload_manifest.write_text("物質載荷\n", encoding="utf-8")
+            final_manifest = output / "FINAL_CONFIG_EVIDENCE.tsv"
+            final_manifest.write_text(
+                "board\tcomponent\tpath\tsha256\n"
+                f"bananapim6\tkernel\tboot/config-test\t{self.policy_checker.FINAL_KERNEL_CONFIG}\n"
+                f"bananapim6\tuboot\tusr/lib/u-boot-config-target-1\t{self.policy_checker.FINAL_UBOOT_CONFIG}\n",
+                encoding="utf-8",
+            )
+            inspection = {
+                "linux_dtb": {
+                    "path": self.policy["dtb"],
+                    "sha256": "4" * 64,
+                }
+            }
+            with mock.patch.multiple(
+                self.policy_checker,
+                OUTPUT_DIR=output,
+                MATRIX=matrix,
+                COMPLETION_STATUS=completion,
+                VERIFICATION_STATUS=verification,
+                VERIFICATION_MANIFEST=verification_manifest,
+                UBOOT_PAYLOAD_EVIDENCE=payload_manifest,
+                FINAL_CONFIG_EVIDENCE=final_manifest,
+                METADATA=board_output / "artifact.metadata.txt",
+            ), mock.patch.object(
+                self.policy_checker,
+                "inspect_read_only_image",
+                return_value=inspection,
+            ), mock.patch.object(
+                self.policy_checker, "validate_artifact_metadata"
+            ):
+                evidence = self.policy_checker.load_live_material_evidence(
+                    self.config
+                )
+            self.assertEqual(evidence["source_commit"], source_commit)
+            self.assertEqual(evidence["linux_dtb"], inspection["linux_dtb"])
+            self.assertEqual(
+                evidence["candidate_matrix_sha256"],
+                hashlib.sha256(matrix.read_bytes()).hexdigest(),
+            )
+
+    def test_material_completion_uses_atomic_files_and_second_readback(self) -> None:
+        record = {
+            "source_commit": "1" * 40,
+            "verifier_commit": "1" * 40,
+            "source_contract_projection_sha256": "2" * 64,
+            "source_date_epoch": 1717001894,
+            "common_verification_status_sha256": "3" * 64,
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory)
+            evidence = output / "M6_MATERIAL_EVIDENCE.json"
+            status = output / "M6_MATERIAL_STATUS.json"
+            with mock.patch.multiple(
+                self.policy_checker,
+                OUTPUT_DIR=output,
+                MATERIAL_EVIDENCE=evidence,
+                MATERIAL_STATUS=status,
+            ):
+                self.policy_checker.write_material_completion(record)
+                self.policy_checker.validate_material_completion(record)
+                self.assertFalse(Path(f"{evidence}.partial").exists())
+                self.assertFalse(Path(f"{status}.partial").exists())
+                stale = json.loads(status.read_text(encoding="utf-8"))
+                stale["common_verification_status_sha256"] = "4" * 64
+                status.write_text(
+                    json.dumps(stale, ensure_ascii=False) + "\n", encoding="utf-8"
+                )
+                with self.assertRaises(SystemExit):
+                    self.policy_checker.validate_material_completion(record)
+
+    def test_calibration_completion_is_atomic_and_reparsed(self) -> None:
+        record = {
+            "schema_version": 1,
+            "status": "calibration_complete",
+            "evidence_level": "L1",
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            evidence = Path(directory) / "M6_CALIBRATION.json"
+            with mock.patch.object(
+                self.policy_checker, "CALIBRATION_EVIDENCE", evidence
+            ):
+                self.policy_checker.write_calibration_completion(record)
+            self.assertEqual(
+                json.loads(evidence.read_text(encoding="utf-8")), record
+            )
+            self.assertFalse(Path(f"{evidence}.partial").exists())
+
+    def test_material_artifact_path_cannot_escape_fixed_output(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory)
+            with mock.patch.object(self.policy_checker, "OUTPUT_DIR", output):
+                with self.assertRaises(SystemExit):
+                    self.policy_checker.resolve_matrix_artifact(
+                        "bananapim6/../escape.img", ".img", "L2 IMG"
+                    )
+
+    def test_m6_verifier_rejects_external_output_without_altering_it(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             output = Path(directory)
             status = output / "VERIFICATION_STATUS.json"
@@ -610,13 +958,10 @@ printf '%s\n' "$BOOTBRANCH" "$KERNELBRANCH" \
             )
             self.assertNotEqual(result.returncode, 0)
             state = json.loads(status.read_text(encoding="utf-8"))
-            self.assertEqual(state["status"], "failed")
-            self.assertEqual(state["evidence_level"], "L1")
-            self.assertFalse(state["public_release_allowed"])
-            self.assertFalse(state["hardware_claims_allowed"])
-            self.assertFalse(state["opaque_payload_redistribution_verified"])
+            self.assertEqual(state["status"], "complete")
+            self.assertEqual(state["evidence_level"], "L2")
             for stale in stale_files:
-                self.assertFalse(stale.exists())
+                self.assertTrue(stale.exists())
 
     def test_m6_verifier_ignores_external_validation_override(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -642,9 +987,7 @@ printf '%s\n' "$BOOTBRANCH" "$KERNELBRANCH" \
                 check=False,
             )
             self.assertNotEqual(result.returncode, 0)
-            state = json.loads(status.read_text(encoding="utf-8"))
-            self.assertEqual(state["status"], "failed")
-            self.assertEqual(state["evidence_level"], "L1")
+            self.assertFalse(status.exists())
 
     def test_evidence_document_keeps_internal_l1_and_hardware_limits(self) -> None:
         text = EVIDENCE_DOCUMENT.read_text(encoding="utf-8")

@@ -109,7 +109,7 @@ if [[ -n "${validation_source_date_epoch}" ]]; then
 	[[ "${validation_source_date_epoch}" =~ ^[1-9][0-9]*$ ]] ||
 		fail "驗證契約的 SOURCE_DATE_EPOCH 無效"
 	if [[ -n "${SOURCE_DATE_EPOCH:-}" && "${SOURCE_DATE_EPOCH}" != "${validation_source_date_epoch}" ]]; then
-		fail "環境 SOURCE_DATE_EPOCH 與驗證契約不一致"
+		fail "環境 SOURCE_DATE_EPOCH 與驗證契約不一致；SOURCE_DATE_EPOCH 與驗證設定的固定契約不符"
 	fi
 	export SOURCE_DATE_EPOCH="${validation_source_date_epoch}"
 fi
@@ -130,7 +130,9 @@ import json
 import sys
 with open(sys.argv[1], encoding="utf-8") as stream:
     value = json.load(stream)["boards"][sys.argv[2]][sys.argv[3]]
-if isinstance(value, bool):
+if value is None:
+    print("")
+elif isinstance(value, bool):
     print("true" if value else "false")
 elif isinstance(value, list):
     print(" ".join(str(item) for item in value))
@@ -145,7 +147,9 @@ import json
 import sys
 with open(sys.argv[1], encoding="utf-8") as stream:
     value = json.load(stream)["boards"][sys.argv[2]].get(sys.argv[3], "")
-if isinstance(value, list):
+if value is None:
+    print("")
+elif isinstance(value, list):
     print(" ".join(str(item) for item in value))
 else:
     print(value)
@@ -158,7 +162,9 @@ import json
 import sys
 with open(sys.argv[1], encoding="utf-8") as stream:
     value = json.load(stream).get(sys.argv[2], "")
-if isinstance(value, bool):
+if value is None:
+    print("")
+elif isinstance(value, bool):
     print("true" if value else "false")
 else:
     print(value)
@@ -265,6 +271,12 @@ write_status() {
 }
 
 source_contract_projection_sha256="$(top_field_optional source_contract_projection_sha256)"
+build_evidence_level="$(top_field_optional current_evidence_level)"
+[[ -n "${build_evidence_level}" ]] || build_evidence_level=L1
+case "${build_evidence_level}" in
+	L1 | L2) ;;
+	*) fail "current_evidence_level 只接受 L1 或 L2" ;;
+esac
 firmware_runtime_sources_sha256="$(python3 - "${validation_config}" <<'PY'
 import hashlib
 import json
@@ -333,6 +345,7 @@ case "${verify_firmware_source_resolution}" in
 	*) fail "verify_firmware_source_resolution 只接受 true 或 false" ;;
 esac
 if [[ "${require_source_date_epoch_metadata}" == yes ]]; then
+	source_date_epoch="$(top_field_optional source_date_epoch)"
 	[[ "${source_date_epoch}" =~ ^[1-9][0-9]*$ ]] ||
 		fail "驗證設定缺少有效的 source_date_epoch 正整數"
 fi
@@ -482,7 +495,8 @@ for board in "${boards[@]}"; do
 			done
 			printf 'image_filename=%s\narchive_filename=%s\n' "$(basename "${image}")" "$(basename "${archive}")"
 			printf 'raw_size=%s\nraw_sha256=%s\nxz_size=%s\nxz_sha256=%s\n' "${raw_size}" "${raw_sha256}" "${xz_size}" "${xz_sha256}"
-			printf 'build_log=logs/%s.log\nevidence_level=L1\nbuilt_at_utc=%s\n' "${board}" "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+			printf 'build_log=logs/%s.log\nevidence_level=%s\nbuilt_at_utc=%s\n' \
+				"${board}" "${build_evidence_level}" "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 		} >"${metadata}.partial"
 		mv "${metadata}.partial" "${metadata}"
 	fi
@@ -540,6 +554,6 @@ actual_rows="$(awk 'NR > 1 { count++ } END { print count + 0 }' "${matrix_file}.
 	fail "建立完成證據期間 validation 已改變"
 mv "${matrix_file}.partial" "${matrix_file}"
 candidates_sha256="$(sha256sum "${matrix_file}" | cut -d' ' -f1)"
-write_status complete "指定板卡的 L1 候選已完整建置" "${candidates_sha256}"
+write_status complete "指定板卡的 ${build_evidence_level} 候選已完整建置" "${candidates_sha256}"
 trap - EXIT
 echo "${candidate_family_name} 候選映像建置完成：${output_dir}"
