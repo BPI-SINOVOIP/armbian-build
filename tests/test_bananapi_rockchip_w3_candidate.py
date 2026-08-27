@@ -21,6 +21,11 @@ UBOOT_DEFCONFIG = (
     ROOT
     / "patch/u-boot/legacy/u-boot-radxa-rk35xx/defconfig/bananapi-w3-rk3588_defconfig"
 )
+UBOOT_COMMON_PATCH = (
+    ROOT
+    / "patch/u-boot/legacy/u-boot-radxa-rk35xx"
+    / "rk3566-Add-rk3566-to-soc-name.patch"
+)
 ARMSOM_DEFCONFIG = (
     ROOT
     / "patch/u-boot/legacy/u-boot-radxa-rk35xx/defconfig/armsom-w3-rk3588_defconfig"
@@ -62,6 +67,7 @@ class BananaPiRockchipW3CandidateTests(unittest.TestCase):
             'BOOTBRANCH_BOARD="commit:39cd993e5d6296635438e84f4576b3a9bf76f86e"',
             'KERNELBRANCH_BOARD="commit:c6157104418d012823413c02f9222f3fe123dd25"',
             'RKBIN_GIT_REF="commit:1d3c61008fa823936ae7a59615393f8294b64456"',
+            'ARMBIAN_FIRMWARE_GIT_REF_BOARD="commit:f50a2a21bcdb77a562b3976930c5c6b521a1df08"',
             'DDR_BLOB="rk35/rk3588_ddr_lp4_2112MHz_lp5_2736MHz_v1.11.bin"',
             'BL31_BLOB="rk35/rk3588_bl31_v1.38.elf"',
         ):
@@ -70,6 +76,7 @@ class BananaPiRockchipW3CandidateTests(unittest.TestCase):
         self.assertNotIn('BOOTBRANCH_BOARD="branch:', self.board_text)
         self.assertNotIn('KERNELBRANCH_BOARD="branch:', self.board_text)
         self.assertNotIn('RKBIN_GIT_REF="branch:', self.board_text)
+        self.assertNotIn('ARMBIAN_FIRMWARE_GIT_REF_BOARD="branch:', self.board_text)
 
     def test_vendor_hook_overrides_movable_family_sources(self) -> None:
         harness = f'''
@@ -86,6 +93,7 @@ post_family_config_branch_vendor__bananapiw3_pin_sources
 printf 'uboot_source=%s\nuboot=%s\n' "$BOOTSOURCE" "$BOOTBRANCH"
 printf 'kernel_source=%s\nkernel=%s\n' "$KERNELSOURCE" "$KERNELBRANCH"
 printf 'rkbin_source=%s\nrkbin=%s\n' "$RKBIN_GIT_URL" "$RKBIN_GIT_REF"
+printf 'firmware=%s\n' "$ARMBIAN_FIRMWARE_GIT_REF"
 '''
         result = subprocess.run(
             ["bash", "-c", harness],
@@ -113,6 +121,21 @@ printf 'rkbin_source=%s\nrkbin=%s\n' "$RKBIN_GIT_URL" "$RKBIN_GIT_REF"
             "rkbin=commit:1d3c61008fa823936ae7a59615393f8294b64456",
             result.stdout,
         )
+        self.assertIn(
+            "firmware=commit:f50a2a21bcdb77a562b3976930c5c6b521a1df08",
+            result.stdout,
+        )
+
+    def test_shared_uboot_patch_has_canonical_metadata(self) -> None:
+        text = UBOOT_COMMON_PATCH.read_text()
+        self.assertIn(
+            "index 3aca2af44621481f8e7bf9ed93d6178e2ad0c653"
+            "..2baee74c8b008b9a33d0b68c06dd6f5890219ba0",
+            text,
+        )
+        self.assertIn("@@ -140,7 +140,8 @@", text)
+        self.assertNotIn("111111111111", text)
+        self.assertNotIn("222222222222", text)
 
     def test_linux_and_uboot_wrappers_identify_w3(self) -> None:
         linux_text = LINUX_DTS.read_text()
@@ -143,6 +166,10 @@ printf 'rkbin_source=%s\nrkbin=%s\n' "$RKBIN_GIT_URL" "$RKBIN_GIT_REF"
         self.assertEqual(
             self.config["rkbin_commit"],
             "1d3c61008fa823936ae7a59615393f8294b64456",
+        )
+        self.assertEqual(
+            self.config["firmware_ref"],
+            "commit:f50a2a21bcdb77a562b3976930c5c6b521a1df08",
         )
         self.assertEqual(
             self.policy["uboot_revision"],

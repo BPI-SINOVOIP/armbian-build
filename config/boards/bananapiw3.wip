@@ -19,6 +19,7 @@ BL31_BLOB="rk35/rk3588_bl31_v1.38.elf"
 BOOTBRANCH_BOARD="commit:39cd993e5d6296635438e84f4576b3a9bf76f86e"
 KERNELBRANCH_BOARD="commit:c6157104418d012823413c02f9222f3fe123dd25"
 RKBIN_GIT_REF="commit:1d3c61008fa823936ae7a59615393f8294b64456"
+ARMBIAN_FIRMWARE_GIT_REF_BOARD="commit:f50a2a21bcdb77a562b3976930c5c6b521a1df08"
 PACKAGE_LIST_BOARD="rfkill bluetooth bluez bluez-tools gpiod i2c-tools python3-libgpiod python3-spidev spi-tools v4l-utils pciutils nvme-cli usbutils usb-modeswitch evtest alsa-utils iw wireless-regdb ethtool iproute2 iperf3"
 
 function post_family_config_branch_vendor__bananapiw3_pin_sources() {
@@ -27,6 +28,7 @@ function post_family_config_branch_vendor__bananapiw3_pin_sources() {
 	declare -g KERNELSOURCE="https://github.com/armbian/linux-rockchip.git"
 	declare -g KERNELBRANCH="${KERNELBRANCH_BOARD}"
 	declare -g RKBIN_GIT_URL="https://github.com/armbian/rkbin"
+	declare -g ARMBIAN_FIRMWARE_GIT_REF="${ARMBIAN_FIRMWARE_GIT_REF_BOARD}"
 }
 
 function custom_kernel_config__bananapiw3_io_contract() {

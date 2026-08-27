@@ -8,17 +8,17 @@ Subject: Add SoC based image name (rk3566) to rk35xx u-boot
  1 file changed, 1 insertion(+)
 
 diff --git a/tools/rkcommon.c b/tools/rkcommon.c
-index 111111111111..222222222222 100644
+index 3aca2af44621481f8e7bf9ed93d6178e2ad0c653..2baee74c8b008b9a33d0b68c06dd6f5890219ba0 100644
 --- a/tools/rkcommon.c
 +++ b/tools/rkcommon.c
-@@ -140,6 +140,7 @@ static struct spl_info spl_infos[] = {
+@@ -140,7 +140,8 @@ static struct spl_info spl_infos[] = {
  	{ "rk1808", "RK18", 0x200000 - 0x2000, false, RK_HEADER_V1 },
  	{ "rk3528", "RK35", 0x10000 - 0x1000, false, RK_HEADER_V2 },
  	{ "rk3562", "RK35", 0x10000 - 0x1000, false, RK_HEADER_V2 },
 +	{ "rk3566", "RK35", 0x10000 - 0x1000, false, RK_HEADER_V2 },
  	{ "rk3568", "RK35", 0x10000 - 0x1000, false, RK_HEADER_V2 },
+ 	{ "rk3576", "RK35", 0x80000 - 0x1000, false, RK_HEADER_V2 },
  	{ "rk3588", "RK35", 0x100000 - 0x1000, false, RK_HEADER_V2 },
  };
 -- 
 Armbian
-

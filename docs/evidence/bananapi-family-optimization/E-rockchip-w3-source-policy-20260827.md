@@ -15,6 +15,7 @@ Banana Pi W3 原板檔直接繼承 ArmSoM W3，U-Boot 也使用 ArmSoM defconfig
 | Linux 6.1.115 | `https://github.com/armbian/linux-rockchip.git` | `c6157104418d012823413c02f9222f3fe123dd25` |
 | U-Boot 2017.09 | `https://github.com/radxa/u-boot.git` | `39cd993e5d6296635438e84f4576b3a9bf76f86e` |
 | RKBin | `https://github.com/armbian/rkbin` | `1d3c61008fa823936ae7a59615393f8294b64456` |
+| Armbian firmware | `https://github.com/armbian/firmware` | `f50a2a21bcdb77a562b3976930c5c6b521a1df08` |
 
 RKBin 的 DDR v1.11、BL31 v1.38、RockUSB loader 與 `LICENSE.TXT` 均由 SHA-256 固定。候選映像還必須安裝相同雜湊的 RKBin 授權檔，讓二進位來源與授權可由唯讀映像守門核對。
 
@@ -36,6 +37,8 @@ RKBin 的 DDR v1.11、BL31 v1.38、RockUSB loader 與 `LICENSE.TXT` 均由 SHA-2
 驗證器必須在 U-Boot payload 找到 `Banana Pi W3` 與 `bananapi,bpi-w3`，並拒絕仍帶有原始 ArmSoM model 的 payload。Linux DTB 同樣必須具有 Banana Pi model 與相容字串。
 
 ## L2 軟體守門
+
+提交 `84d36840acc0177a145f99c12f264ecf70362c68` 已產生第一份完整預檢映像，但當時 Armbian firmware 仍透過可移動的 `master` 解析，而且 RK35xx 共用 U-Boot 修補檔使用假 blob index，修補摘要為兩個套用、一個 `needs_rebase`。該預檢只能證明建置鏈可走完，不得升級為正式 L2；正式候選必須固定 firmware 提交、使用正規 blob index 與完整 hunk，並從新的專用 OverlayFS 重建至零修補問題。
 
 - 固定 Linux、U-Boot 與 RKBin 的來源、ref、實際提交及 blob 雜湊。
 - 比對 GPT、兩段 U-Boot payload、套件中繼資料、核心設定、DTB 身分與板級工具。
