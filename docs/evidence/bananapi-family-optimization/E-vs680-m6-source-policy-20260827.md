@@ -115,7 +115,7 @@ U-Boot 樹含 GPL-2.0 授權文件，Linux 樹依 GPL-2.0 發布；這不會自�
 
 穩定來源契約投影 SHA-256 固定為 `a30c565815b38169f3190253514c6034291d61a0c136ae1244d37eba0f72cb56`。候選層級、建置完成旗標、映像雜湊與映像 DTB 等狀態欄位不納入投影；Linux、U-Boot、韌體、來源檔、分割區、payload、必要套件與功能需求仍納入，因此 L1 與 L2 可以共用來源需求身分，卻不能藉改狀態欄位掩蓋需求漂移。
 
-建置入口同時固定輸出目錄、唯讀 lowerdir、專用 upperdir／workdir 與掛載目標，並拒絕任一 `OUTPUT_DIR` 或 OverlayFS 身分覆寫。共用建置器依 validation 的 `current_evidence_level` 寫入中繼資料，不再把正式 L2 硬編碼成 L1。此節只記錄建置前契約已就緒；在後續 L1 校準與 L2 正式建置證據落地前，M6 仍維持 L1，且不增加任何硬體或公開發布聲明。
+建置入口同時固定輸出目錄、唯讀 lowerdir、專用 upperdir／workdir 與掛載目標，並拒絕任一 `OUTPUT_DIR` 或 OverlayFS 身分覆寫。共用建置器依 validation 的 `current_evidence_level` 寫入中繼資料，不再把正式 L2 硬編碼成 L1。L1 校準現已閉合，validation 已依校準結果轉為待正式重建的 L2 契約；中央證據仍維持 L1，直到乾淨重建的正式映像通過即時物質驗證與二次讀回。此過渡狀態不增加任何硬體或公開發布聲明。
 
 ### L1 首次完整映像發現
 
@@ -124,6 +124,14 @@ U-Boot 樹含 GPL-2.0 授權文件，Linux 樹依 GPL-2.0 發布；這不會自�
 唯讀驗證確認映像具有預期的 MBR 雙分割區與 `BPI-BOOT`，但 FAT 分割區的 `armbianEnv.txt` 只有 `rootfstype=ext4`。根因是獨立 FAT boot 流程在根檔案系統階段尚未建立開機環境，待映像分割完成後又只補 `rootfstype`，因而遺漏 `rootdev=UUID=...` 與 `fdtfile`。驗證器依契約拒絕該映像，並把 `VERIFICATION_STATUS.json` 與 `M6_MATERIAL_STATUS.json` 原子改為失敗，未產生 `M6_CALIBRATION.json`。
 
 修正由 M6 板級 `image_specific_armbian_env_ready` 鉤子在根分割區 UUID 已確定後，刪除舊的重複鍵並各寫入唯一的 `rootdev` 與 `fdtfile`。受控 `boot-vs680.cmd` 也改為設定預設 `fdtfile` 並從匯入後的變數載入 DTB，使開機環境不再只是未使用的宣告。修正後 boot 命令 SHA-256 為 `9a82b02bd19e194eb82f7c0d8465ec987fcf270e326a3b156f6866e83c9c8ec1`。必須由包含此修正的乾淨提交重新建置 L1，舊映像不得就地修改或晉級。
+
+### L1 校準閉合與 L2 重建契約
+
+2026-08-28 由已推送提交 `9f592fcb5fab6cc3dcfce8ae3a55a8ec7a537956` 重新建置 L1 校準映像，主建置耗時 13 分 38 秒。原始 IMG 大小為 `1895825408` 位元組、SHA-256 為 `b2d12235fa42542d653f68945dc870ecae0ea692d7f246b590287a4549ad38a3`；XZ 大小為 `315192164` 位元組、SHA-256 為 `a7caae9bdb7626a1033b25bb167c050b64600c77a32812fafe6547fd03158192`。這些是校準輸入身分，不是即將重建的正式 L2 成品身分。
+
+唯讀驗證確認 MBR 分割區 1 從 sector `204800` 開始、大小 `524288` sectors、類型 `ea`，分割區 2 從 sector `729088` 開始、大小 `2973696` sectors、類型 `83`。FAT `BPI-BOOT` 與 ext4 `BPI-ROOT` 均以唯讀方式掛載；`armbianEnv.txt` 具有唯一根 UUID 與 `synaptics/vs680-a0-bananapi-m6.dtb`，映像 DTB SHA-256 為 `52c58e8a1413fd644b812480215350410659371083afa9930684df5752625413`。最終核心設定、U-Boot 設定及 TZK／U-Boot 載荷均與固定契約一致，XZ 解壓串流也與 IMG 相同。
+
+`M6_CALIBRATION.json`、`VERIFICATION_STATUS.json` 與 `M6_MATERIAL_STATUS.json` 已完成原子寫入及二次讀回。L2 重建契約只把候選狀態、完整映像旗標與映像 DTB 證據範圍更新為 L2；不預填尚不存在的 `image_build_evidence`，中央證據也暫時維持 L1。來源契約投影仍為 `a30c565815b38169f3190253514c6034291d61a0c136ae1244d37eba0f72cb56`。此契約推送後必須移除 L1 校準產物，以同一固定輸出位置乾淨重建，再由正式成品產生 L2 物質證據。
 
 ### 元件建置證據
 

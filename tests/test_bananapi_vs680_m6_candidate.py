@@ -69,16 +69,16 @@ class BananaPiVs680M6CandidateTests(unittest.TestCase):
     def test_board_stays_wip_and_policy_forbids_claims(self) -> None:
         self.assertTrue(BOARD.is_file())
         self.assertFalse((BOARD.parent / "bananapim6.conf").exists())
-        self.assertEqual(self.config["candidate_level"], "L1 元件候選")
-        self.assertEqual(self.config["candidate_scope"], "internal-component-only")
-        self.assertEqual(self.config["current_evidence_level"], "L1")
+        self.assertEqual(self.config["candidate_level"], "L2 內部軟體候選")
+        self.assertEqual(self.config["candidate_scope"], "internal-l2")
+        self.assertEqual(self.config["current_evidence_level"], "L2")
         self.assertEqual(self.config["target_evidence_level"], "L2")
         self.assertFalse(self.config["public_release_allowed"])
         self.assertFalse(self.config["hardware_claims_allowed"])
         self.assertTrue(self.config["component_build_completed"])
-        self.assertFalse(self.config["rootfs_image_built"])
-        self.assertFalse(self.config["full_image_built"])
-        self.assertFalse(self.config["full_rootfs_image_built"])
+        self.assertTrue(self.config["rootfs_image_built"])
+        self.assertTrue(self.config["full_image_built"])
+        self.assertTrue(self.config["full_rootfs_image_built"])
         self.assertFalse(self.config["hardware_validation_complete"])
         self.assertFalse(self.config["candidate_public_release_approved"])
         self.assertFalse(
@@ -312,8 +312,13 @@ cat "$SDCARD/boot/armbianEnv.txt"
         self.assertEqual(
             evidence["dtb_sha256"], self.policy["component_dtb_sha256"]
         )
-        self.assertIsNone(self.policy["image_dtb_sha256"])
-        self.assertNotIn("dtb_sha256", self.policy)
+        self.assertEqual(
+            self.policy["image_dtb_sha256"], evidence["dtb_sha256"]
+        )
+        self.assertEqual(self.policy["dtb_sha256"], evidence["dtb_sha256"])
+        self.assertEqual(
+            self.policy["dtb_sha256_evidence_scope"], "full-image-l2"
+        )
         self.assertEqual(
             evidence["uboot_sha256"],
             "4d8158b3ed44de9384fabb009a0639cbe2c83e964a32724b5c87ce9911f72bda",
@@ -433,7 +438,7 @@ cat "$SDCARD/boot/armbianEnv.txt"
                 check=False,
             )
 
-    def test_policy_accepts_current_l1_and_rejects_label_only_l2(self) -> None:
+    def test_policy_accepts_current_contract_and_rejects_label_only_change(self) -> None:
         accepted = subprocess.run(
             ["python3", str(POLICY_CHECK), str(CONFIG)],
             cwd=ROOT,
@@ -444,7 +449,7 @@ cat "$SDCARD/boot/armbianEnv.txt"
         )
         self.assertEqual(accepted.returncode, 0, accepted.stderr)
         mutated = json.loads(CONFIG.read_text(encoding="utf-8"))
-        mutated["candidate_level"] = "L2 內部軟體候選"
+        mutated["candidate_level"] = "L1 元件候選"
         rejected = self.run_policy(mutated)
         self.assertNotEqual(rejected.returncode, 0)
 
