@@ -385,6 +385,7 @@ validate_installed_uboot() {
 	validate_uboot_payload_file() {
 		local checked_payload_name=$1 checked_payload checked_payload_path
 		local checked_expected_md5 checked_actual_md5 checked_size checked_minimum=1
+		local checked_sha256_spec checked_expected_sha256="" checked_actual_sha256
 		checked_payload="${uboot_dir}/${checked_payload_name}"
 		checked_payload_path="usr/lib/linux-u-boot-${candidate_branch}-${board}/${checked_payload_name}"
 		[[ -s "${checked_payload}" ]] || fail "${board} 缺少 U-Boot payload：${checked_payload_name}"
@@ -394,6 +395,19 @@ validate_installed_uboot() {
 		checked_actual_md5="$(md5sum "${checked_payload}" | cut -d' ' -f1)"
 		[[ "${checked_actual_md5}" == "${checked_expected_md5}" ]] ||
 			fail "${board} 的 U-Boot payload 已被修改：${checked_payload_name}"
+		for checked_sha256_spec in $(board_field_optional "${board}" uboot_payload_sha256); do
+			[[ "${checked_sha256_spec}" =~ ^[^=]+=[0-9a-f]{64}$ ]] ||
+				fail "${board} 的 payload SHA-256 規格無效"
+			[[ "${checked_sha256_spec%%=*}" == "${checked_payload_name}" ]] || continue
+			[[ -z "${checked_expected_sha256}" ]] ||
+				fail "${board} 的 payload SHA-256 規格重複：${checked_payload_name}"
+			checked_expected_sha256="${checked_sha256_spec#*=}"
+		done
+		if [[ -n "${checked_expected_sha256}" ]]; then
+			checked_actual_sha256="$(sha256sum "${checked_payload}" | cut -d' ' -f1)"
+			[[ "${checked_actual_sha256}" == "${checked_expected_sha256}" ]] ||
+				fail "${board} 的 payload SHA-256 不符：${checked_payload_name}"
+		fi
 		for minimum_spec in $(board_field_optional "${board}" uboot_payload_minimum_sizes); do
 			[[ "${minimum_spec%=*}" == "${checked_payload_name}" ]] || continue
 			checked_minimum="${minimum_spec##*=}"
@@ -441,7 +455,7 @@ validate_mounted_image() (
 	local image=$1 board=$2
 	local dtb_relative dtb_basename dtb_path fdt_override model compatible expected node node_status option_line option value package
 	local loop_device partition mount_dir config_file overlay_prefix overlay overlay_directory default_overlays overlays_line sd_node sd_bus_width requirement required_node required_width kernel_family root_partition_number
-	local boot_configuration extlinux_fdt expected_start_sector actual_start_sector property_spec property_node property_name property_expected installed_spec installed_path installed_sha256
+	local boot_configuration extlinux_fdt expected_start_sector actual_start_sector property_spec property_node property_name property_expected installed_manifest installed_spec installed_path installed_sha256
 	local dtb_sha256 alias_spec alias_name alias_expected forbidden_fragment
 	dtb_relative="$(board_field "${board}" dtb)"
 	dtb_basename="$(basename "${dtb_relative}")"
@@ -589,14 +603,16 @@ validate_mounted_image() (
 	for package in $(common_values common_packages); do
 		package_installed "${mount_dir}" "${package}" || fail "${board} 缺少套件 ${package}"
 	done
-	while IFS= read -r installed_spec; do
-		[[ -n "${installed_spec}" ]] || continue
-		installed_path="${installed_spec%%=*}"
-		installed_sha256="${installed_spec#*=}"
-		[[ -f "${mount_dir}${installed_path}" ]] || fail "${board} 缺少韌體 ${installed_path}"
-		[[ "$(sha256sum "${mount_dir}${installed_path}" | cut -d' ' -f1)" == "${installed_sha256}" ]] ||
-			fail "${board} 的韌體雜湊不符：${installed_path}"
-	done < <(common_values installed_firmware_blobs 2>/dev/null || true)
+	for installed_manifest in installed_firmware_blobs installed_file_sha256; do
+		while IFS= read -r installed_spec; do
+			[[ -n "${installed_spec}" ]] || continue
+			installed_path="${installed_spec%%=*}"
+			installed_sha256="${installed_spec#*=}"
+			[[ -f "${mount_dir}${installed_path}" ]] || fail "${board} 缺少受控檔案 ${installed_path}"
+			[[ "$(sha256sum "${mount_dir}${installed_path}" | cut -d' ' -f1)" == "${installed_sha256}" ]] ||
+				fail "${board} 的受控檔案雜湊不符：${installed_path}"
+		done < <(common_values "${installed_manifest}" 2>/dev/null || true)
+	done
 	kernel_family="$(top_field_optional kernel_family)"
 	[[ -n "${kernel_family}" ]] || kernel_family="sunxi"
 	for package in "linux-image-${candidate_branch}-${kernel_family}" "linux-dtb-${candidate_branch}-${kernel_family}" \

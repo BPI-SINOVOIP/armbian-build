@@ -2,25 +2,36 @@
 #
 # Please edit /boot/armbianEnv.txt to set supported parameters
 #
-setenv rootdev "/dev/mmcblk1p1"
+setenv rootdev ""
 setenv rootfs "ext4"
 setenv verbosity "1"
 setenv devtype "mmc"
 setenv prefix "boot/"
+setenv fdtfile "mediatek/mt7623n-bananapi-bpi-r2.dtb"
 
 echo "Boot script loaded from device ${devnum}"
 
-if test -e ${devtype} ${devnum} ${prefix}armbianEnv.txt; then
-	load ${devtype} ${devnum} ${kernel_addr_r} ${prefix}armbianEnv.txt
-	env import -t ${kernel_addr_r} ${filesize}
+if part uuid ${devtype} ${devnum}:${mmcpart} rootuuid; then
+	setenv rootdev "PARTUUID=${rootuuid}"
 fi
 
+if test -e ${devtype} ${devnum}:${mmcpart} ${prefix}armbianEnv.txt; then
+	load ${devtype} ${devnum}:${mmcpart} ${kernel_addr_r} ${prefix}armbianEnv.txt
+	env import -t ${kernel_addr_r} ${filesize}
+else
+	echo "armbianEnv.txt-not-found; root=${rootdev}"
+fi
+
+if test -z "${rootdev}"; then
+	echo "root-partition-undetected"
+	exit
+fi
 
 setenv bootargs "console=ttyS2,115200n1 root=${rootdev} rw rootfstype=${rootfs} rootwait audit=0 loglevel=${verbosity}"
-ext4load ${devtype} ${devnum}:${mmcpart} ${fdtaddr} ${mmcfdtfile}
-ext4load ${devtype} ${devnum}:${mmcpart} ${rdaddr} ${mmcinitrdfile}
-ext4load ${devtype} ${devnum}:${mmcpart} ${kernel_addr_r} ${mmckernfile}
-echo "Booting ${mmckernfile} ${mmcinitrdfile} ${mmcfdtfile} from: ${devtype} ${devnum}:${mmcpart} using bootargs=${bootargs}"
-bootz ${kernel_addr_r} ${rdaddr} ${fdtaddr}
+ext4load ${devtype} ${devnum}:${mmcpart} ${fdt_addr_r} ${prefix}dtb/${fdtfile}
+ext4load ${devtype} ${devnum}:${mmcpart} ${ramdisk_addr_r} ${prefix}uInitrd
+ext4load ${devtype} ${devnum}:${mmcpart} ${kernel_addr_r} ${prefix}zImage
+echo "boot zImage uInitrd ${fdtfile}; ${devtype} ${devnum}:${mmcpart}; bootargs=${bootargs}"
+bootz ${kernel_addr_r} ${ramdisk_addr_r} ${fdt_addr_r}
 # Recompile with:
 # mkimage -C none -A arm -T script -d /boot/boot.cmd /boot/boot.scr
