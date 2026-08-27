@@ -1,22 +1,49 @@
-# Rockchip RK3568 BPI-CM2 module, initial R2 Pro-derived bring-up
-BOARD_NAME="Banana Pi CM2"
+# Rockchip RK3568 BPI-CM2 模組搭配 BPI-R2 Pro 載板的固定來源候選。
+BOARD_NAME="Banana Pi CM2 on BPI-R2 Pro carrier"
 BOARD_VENDOR="sinovoip"
 BOARDFAMILY="rockchip64"
 BOARD_MAINTAINER="BPI-SINOVOIP"
 INTRODUCED="2023"
-BOOTCONFIG="bpi-r2-pro-rk3568_defconfig"
-KERNEL_TARGET="current,edge"
+BOOTCONFIG="bpi-cm2-r2pro-carrier-rk3568_defconfig"
+KERNEL_TARGET="current"
 KERNEL_TEST_TARGET="current"
 FULL_DESKTOP="yes"
 BOOT_LOGO="desktop"
-BOOT_FDT_FILE="rockchip/rk3568-bpi-r2-pro.dtb"
-BOOTBRANCH_BOARD="tag:v2024.01"
+BOOT_FDT_FILE="rockchip/rk3568-bpi-cm2-r2pro-carrier.dtb"
 BOOTPATCHDIR="v2024.01"
 SRC_EXTLINUX="yes"
 SRC_CMDLINE="console=ttyS2,1500000 console=tty0"
 ASOUND_STATE="asound.state.station-p2"
 IMAGE_PARTITION_TABLE="gpt"
 
+# 此候選只證明 CM2 模組與 R2 Pro 載板組合，並固定全部建置來源。
+KERNELSOURCE_BOARD="https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git"
+KERNELBRANCH_BOARD="commit:1f99e9ab748fc5c32120de9c4eca31abfe54a4d5"
+BOOTSOURCE_BOARD="https://github.com/u-boot/u-boot"
+BOOTBRANCH_BOARD="commit:866ca972d6c3cabeaf6dbac431e8e08bb30b3c8e"
+RKBIN_GIT_URL="https://github.com/armbian/rkbin"
+RKBIN_GIT_REF="commit:46c4793ea2dcea7c8331fce9f07b5c80561a0395"
+DDR_BLOB="rk35/rk3568_ddr_1560MHz_v1.21.bin"
+BL31_BLOB="rk35/rk3568_bl31_v1.44.elf"
+ROCKUSB_BLOB="rk35/rk356x_spl_loader_v1.21.113.bin"
+ARMBIAN_FIRMWARE_GIT_REF_BOARD="commit:f50a2a21bcdb77a562b3976930c5c6b521a1df08"
+PACKAGE_LIST_BOARD="ethtool iproute2 bridge-utils vlan iperf3 smartmontools hdparm pciutils usbutils alsa-utils gpiod i2c-tools python3-libgpiod python3-spidev v4l-utils lm-sensors"
+
+function post_family_config_branch_current__bananapicm2_r2pro_pin_sources() {
+	declare -g KERNELSOURCE="${KERNELSOURCE_BOARD}"
+	declare -g KERNELBRANCH="${KERNELBRANCH_BOARD}"
+	declare -g BOOTSOURCE="${BOOTSOURCE_BOARD}"
+	declare -g BOOTBRANCH="${BOOTBRANCH_BOARD}"
+	declare -g ARMBIAN_FIRMWARE_GIT_REF="${ARMBIAN_FIRMWARE_GIT_REF_BOARD}"
+}
+
 function post_family_config___mainline_uboot() {
 	declare -g UBOOT_TARGET_MAP="ROCKCHIP_TPL=${RKBIN_DIR}/${DDR_BLOB} BL31=$RKBIN_DIR/$BL31_BLOB spl/u-boot-spl u-boot.bin flash.bin;;idbloader.img u-boot.itb"
+}
+
+function post_family_tweaks_bsp__bananapicm2_r2pro_rkbin_license() {
+	local license_source="${RKBIN_DIR}/LICENSE.TXT"
+	local license_target="${destination}/usr/share/doc/armbian-bsp-${BOARD}/rkbin.LICENSE.TXT"
+	[[ -f "${license_source}" ]] || exit_with_error "BPI-CM2 與 R2 Pro 載板候選缺少 RKBin 授權檔：${license_source}"
+	run_host_command_logged install -Dm0644 "${license_source}" "${license_target}"
 }
