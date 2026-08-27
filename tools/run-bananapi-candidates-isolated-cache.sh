@@ -4,7 +4,7 @@ set -euo pipefail
 repo_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 candidate_builder="${CANDIDATE_BUILDER:-${repo_dir}/tools/build-bananapi-meson-candidates.sh}"
 cache_lower="${CACHE_LOWER:-/media/pi/SMCI/armbian/bpi-v26.2.1/cache}"
-cache_target="${repo_dir}/cache"
+cache_target="${CACHE_TARGET:-${repo_dir}/cache}"
 overlay_root="${CACHE_OVERLAY_ROOT:-${repo_dir}/.tmp/bananapi-meson-cache-overlay}"
 upper_dir="${overlay_root}/upper"
 work_dir="${overlay_root}/work"
@@ -59,13 +59,20 @@ sudo mount -t overlay overlay \
 	"${cache_target}"
 
 cleanup_overlay() {
-	local exit_status=$?
+	local exit_status="${1}"
 	trap - EXIT INT TERM
 	if mountpoint -q "${cache_target}"; then
-		sudo umount "${cache_target}"
+		if ! sudo umount "${cache_target}"; then
+			echo "隔離快取卸載失敗：${cache_target}" >&2
+			if ((exit_status == 0)); then
+				exit_status=1
+			fi
+		fi
 	fi
 	exit "${exit_status}"
 }
-trap cleanup_overlay EXIT INT TERM
+trap 'cleanup_overlay "$?"' EXIT
+trap 'cleanup_overlay 130' INT
+trap 'cleanup_overlay 143' TERM
 
 "${candidate_builder}" "$@"

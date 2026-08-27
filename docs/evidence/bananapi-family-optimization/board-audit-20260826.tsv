@@ -24,7 +24,7 @@ bananapim2zero	csc	Banana Pi M2 Zero	sun8i	armhf	current,edge,legacy	current	yes
 bananapim3	csc	Banana Pi M3	sun8i	armhf	current,edge,legacy	current	yes	C	L2	Sinovoip_BPI_M3_defconfig	allwinner/sun8i-a83t-bananapi-m3.dtb		執行 UART、啟動與基本周邊實機驗證
 bananapim4	wip	Banana Pi M4	realtek-rtd139x-bpi	arm64	legacy	legacy	yes	F	L0	rtd1395_bananapi_defconfig	realtek/rtd139x/rtd-1395-bananapi-m4-2GB.dtb	BOARD_MAINTAINER	確認建置鏈並建立 Trixie CLI 候選
 bananapim4berry	conf	BananaPi M4 Berry	sun50iw9-bpi	arm64	current,edge	current	yes	R	L4	bananapi_m4_berry_defconfig	sun50i-h618-bananapi-m4-berry.dtb		補齊樣本數、冷啟動與發布門檻
-bananapim4super	wip	Banana Pi M4 Super	rk35xx	arm64	vendor	vendor	yes	E	L0	armsom-sige3-rk3568_defconfig	rockchip/rk3568-armsom-sige3.dtb	KERNEL_TEST_TARGET	確認建置鏈並建立 Trixie CLI 候選
+bananapim4super	wip	Banana Pi M4 Super（ArmSoM Sige3 donor-only）	rk35xx	arm64	vendor	vendor	yes	E	L0	armsom-sige3-rk3568_defconfig	rockchip/rk3568-armsom-sige3.dtb		確認建置鏈並建立 Trixie CLI 候選
 bananapim4zero	conf	BananaPi BPI-M4-Zero	sun50iw9-bpi	arm64	current,edge	current	yes	R	L3	bananapi_m4zero_defconfig	sun50i-h618-bananapi-m4-zero.dtb		補齊加速、I/O、多板與長時間測試
 bananapim5	conf	Banana Pi M5	meson-sm1	arm64	current,edge	current	yes	A	L2	bananapi-m5_defconfig	amlogic/meson-sm1-bananapi-m5.dtb		執行 UART、啟動與基本周邊實機驗證
 bananapim5pro	conf	Banana Pi M5 Pro	rk35xx	arm64	edge,vendor	edge	yes	B	L2	bananapi-m5-pro-rk3576_defconfig	rockchip/rk3576-bananapi-m5-pro.dtb	KERNEL_TEST_TARGET	執行 UART、啟動與基本周邊實機驗證

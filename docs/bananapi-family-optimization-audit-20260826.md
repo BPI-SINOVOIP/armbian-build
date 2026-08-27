@@ -40,7 +40,7 @@
 | `bananapim3` | 社群 | Banana Pi M3 | `sun8i` | `armhf` | `current,edge,legacy` | 是 | C | L2 軟體候選 | 執行 UART、啟動與基本周邊實機驗證 |
 | `bananapim4` | 開發中 | Banana Pi M4 | `realtek-rtd139x-bpi` | `arm64` | `legacy` | 是 | F | L0 已盤點 | 確認建置鏈並建立 Trixie CLI 候選 |
 | `bananapim4berry` | 正式 | BananaPi M4 Berry | `sun50iw9-bpi` | `arm64` | `current,edge` | 是 | R | L4 功能最佳化 | 補齊樣本數、冷啟動與發布門檻 |
-| `bananapim4super` | 開發中 | Banana Pi M4 Super | `rk35xx` | `arm64` | `vendor` | 是 | E | L0 已盤點 | 確認建置鏈並建立 Trixie CLI 候選 |
+| `bananapim4super` | 開發中 | Banana Pi M4 Super（ArmSoM Sige3 donor-only） | `rk35xx` | `arm64` | `vendor` | 是 | E | L0 已盤點 | 確認建置鏈並建立 Trixie CLI 候選 |
 | `bananapim4zero` | 正式 | BananaPi BPI-M4-Zero | `sun50iw9-bpi` | `arm64` | `current,edge` | 是 | R | L3 實機候選 | 補齊加速、I/O、多板與長時間測試 |
 | `bananapim5` | 正式 | Banana Pi M5 | `meson-sm1` | `arm64` | `current,edge` | 是 | A | L2 軟體候選 | 執行 UART、啟動與基本周邊實機驗證 |
 | `bananapim5pro` | 正式 | Banana Pi M5 Pro | `rk35xx` | `arm64` | `edge,vendor` | 是 | B | L2 軟體候選 | 執行 UART、啟動與基本周邊實機驗證 |
@@ -75,6 +75,7 @@
 - `bananapif2s`：xboot 與預建工具鏈缺少完整可重建來源或明確再散布授權，完整映像只能作內部驗證。
 - `bananapim1super`：Wi-Fi 量產 BOM 在 SYN43752、AP6275S 與 RTL8852BS 證據間不一致；RKBin 只可依授權隨 Rockchip 平台散布，Armbian 韌體逐檔授權與完整映像仍待驗證。
 - `bananapim2c`：仍採 secure PAC 與 Yocto 混合流程，尚非一般 Armbian SD 首階段啟動。
+- `bananapim4super`：官方 M4 Super 無線模組為 SYN43752，Sige3 donor DTS 為 AP6275S；同一官方頁面的 PCIe 規格也同時出現 x1 與 x2，必須取得原理圖及 PCB 資料後才能建立真正板級描述。
 - `bananapim6`：TZK 與 U-Boot sm.bin 缺少原始碼、重建鏈及逐檔再散布授權，C05 拓撲與實機啟動尚未驗證。
 - `bananapir2`：五個 MediaTek 啟動載荷尚未取得可保存的書面再散布授權。
 - `bananapir3mini`：ATF MT7986 預編譯 DRAM 物件再散布範圍未確認，eMMC boot0 安裝與 boot partition enable 尚未實機驗證。
@@ -94,7 +95,6 @@
 - `bananapim2magic`：缺少建議欄位 `BOARD_MAINTAINER`。
 - `bananapim2ultra`：缺少建議欄位 `BOARD_MAINTAINER`。
 - `bananapim4`：缺少建議欄位 `BOARD_MAINTAINER`。
-- `bananapim4super`：缺少建議欄位 `KERNEL_TEST_TARGET`。
 - `bananapim5pro`：缺少建議欄位 `KERNEL_TEST_TARGET`。
 - `bananapip2pro`：缺少建議欄位 `KERNEL_TEST_TARGET`。
 - `bananapip2zero`：缺少建議欄位 `BOARD_MAINTAINER`。

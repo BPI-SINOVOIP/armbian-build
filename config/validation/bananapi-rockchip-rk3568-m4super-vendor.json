@@ -1,0 +1,112 @@
+{
+  "schema_version": 2,
+  "evidence_level": "L0",
+  "allowed_evidence_levels": [
+    "L0"
+  ],
+  "contract_scope": "donor_only",
+  "candidate_branch": "vendor",
+  "candidate_identity_scope": "僅記錄 Banana Pi BPI-M4 Super 與 ArmSoM Sige3 donor 的待比對關係",
+  "donor_only": true,
+  "donor_hardware_equivalence_verified": false,
+  "component_build_completed": false,
+  "full_image_built": false,
+  "hardware_validated": false,
+  "public_release_allowed": false,
+  "prohibited_claims": [
+    "L1",
+    "L2",
+    "BPI-M4 Super 專屬 DTS 或 U-Boot defconfig 已完成",
+    "BPI-M4 Super 元件已建置",
+    "BPI-M4 Super 完整映像已建置",
+    "BPI-M4 Super 硬體相容或周邊已通過"
+  ],
+  "kernel_family": "rk35xx",
+  "fixed_source_references": {
+    "linux": {
+      "source": "https://github.com/armbian/linux-rockchip.git",
+      "ref": "commit:c6157104418d012823413c02f9222f3fe123dd25",
+      "commit": "c6157104418d012823413c02f9222f3fe123dd25"
+    },
+    "uboot": {
+      "source": "https://github.com/radxa/u-boot.git",
+      "ref": "commit:39cd993e5d6296635438e84f4576b3a9bf76f86e",
+      "commit": "39cd993e5d6296635438e84f4576b3a9bf76f86e"
+    },
+    "rkbin": {
+      "source": "https://github.com/armbian/rkbin",
+      "ref": "commit:1d3c61008fa823936ae7a59615393f8294b64456",
+      "commit": "1d3c61008fa823936ae7a59615393f8294b64456",
+      "reference_paths": [
+        "LICENSE.TXT",
+        "rk35/rk3568_bl31_v1.44.elf",
+        "rk35/rk3568_ddr_1560MHz_v1.21.bin",
+        "rk35/rk356x_spl_loader_v1.21.113.bin"
+      ]
+    },
+    "firmware": {
+      "source": "https://github.com/armbian/firmware",
+      "ref": "commit:f50a2a21bcdb77a562b3976930c5c6b521a1df08",
+      "commit": "f50a2a21bcdb77a562b3976930c5c6b521a1df08"
+    }
+  },
+  "distribution_boundaries": {
+    "rkbin_platform_distribution_authorized": true,
+    "rkbin_standalone_distribution_authorized": false,
+    "rkbin_license_must_accompany_distribution": true,
+    "rkbin_distribution_review_required": true,
+    "firmware_distribution_review_required": true,
+    "actual_firmware_files_in_image_known": false
+  },
+  "artifact_evidence": {
+    "component_outputs_recorded": false,
+    "full_image_outputs_recorded": false,
+    "artifact_hashes_recorded": false
+  },
+  "hardware_identity_conflicts": {
+    "wireless_module": {
+      "official_source": "https://docs.banana-pi.org/en/BPI-M4S/BananaPi_BPI-M4S",
+      "official_value": "SYN43752",
+      "donor_source": "rk3568-armsom-sige3.dts",
+      "donor_dts_value": "ap6275s",
+      "donor_normalized_value": "AP6275S",
+      "resolved": false
+    },
+    "pcie_lane_count": {
+      "official_source": "https://docs.banana-pi.org/en/BPI-M4S/BananaPi_BPI-M4S",
+      "official_page_values": [
+        "硬體規格表：PCIe 3.0 x1",
+        "同頁產品比較表：PCIe 3.0 x2"
+      ],
+      "donor_dts_values": [
+        "pcie2x1：num-lanes=1",
+        "pcie3x2：num-lanes=2"
+      ],
+      "resolved": false
+    }
+  },
+  "boards": {
+    "bananapim4super": {
+      "family": "rk35xx",
+      "declared_board_name": "Banana Pi M4 Super（ArmSoM Sige3 donor-only）",
+      "donor_board": "ArmSoM Sige3",
+      "donor_dtb": "rockchip/rk3568-armsom-sige3.dtb",
+      "donor_uboot_defconfig": "armsom-sige3-rk3568_defconfig",
+      "candidate_dtb": null,
+      "candidate_uboot_defconfig": null,
+      "candidate_overlays": [],
+      "unverified_interfaces": [
+        "PMIC 與供電",
+        "USB Type-C PD",
+        "SD 與 eMMC",
+        "PCIe",
+        "乙太網路",
+        "SYN43752 Wi-Fi 與 Bluetooth",
+        "HDMI 與 MIPI DSI",
+        "USB",
+        "UART",
+        "40-pin GPIO、I2C 與 SPI"
+      ]
+    }
+  }
+}

@@ -172,6 +172,10 @@
       "level": "L1",
       "basis": "固定 Linux、U-Boot、RKBin 與 firmware 來源已核對；M1 Super 專屬 Linux DTB、U-Boot SPL／DTB／FIT 與 idbloader 已重建成可攜證據並通過雜湊、身分及授權檔守門；尚未通過完整 Armbian 修補佇列、rootfs 映像或實機驗證"
     },
+    "bananapim4super": {
+      "level": "L0",
+      "basis": "只建立 ArmSoM Sige3 donor 的固定來源與禁止聲明契約；官方 SYN43752 無線模組及 PCIe lane 資料和 donor 描述尚未閉合，未建立 M4 Super 專屬 DTS、U-Boot、元件或映像"
+    },
     "bananapir2pro": {
       "level": "L2",
       "basis": "Trixie current CLI 已由乾淨來源完整建置並通過映像、固定 Linux／U-Boot／RKBin／firmware 來源、GPT、雙啟動載荷、RK3568 R2 Pro DTB、雙乙太網路、MT7531、SATA、雙 PCIe、USB host、顯示與媒體設定唯讀守門；仍待實機驗證"
@@ -261,6 +265,9 @@
       "Linux 與 U-Boot DTS 仍以 ArmSoM CM5 IO 為 donor；官方產品身分可支持來源關聯，但尚未完成 IO 載板逐網路等同性審查",
       "RTL8852BS 韌體缺少逐檔再散布授權，外部驅動也尚未完成上游與安全稽核",
       "完整映像已通過 L2 軟體守門；冷啟動、儲存、網路、40-pin、顯示、GPU、VPU、RGA 與 NPU 尚未實機驗證"
+    ],
+    "bananapim4super": [
+      "官方 M4 Super 無線模組為 SYN43752，Sige3 donor DTS 為 AP6275S；同一官方頁面的 PCIe 規格也同時出現 x1 與 x2，必須取得原理圖及 PCB 資料後才能建立真正板級描述"
     ],
     "bananapif2s": [
       "xboot 與預建工具鏈缺少完整可重建來源或明確再散布授權，完整映像只能作內部驗證"
