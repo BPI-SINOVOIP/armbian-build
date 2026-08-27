@@ -29,9 +29,8 @@ expected_manifest="$(jq -r '.component_build_evidence.manifest_sha256' "${valida
 [[ "$(sha256sum "${manifest}" | cut -d' ' -f1)" == "${expected_manifest}" ]] ||
 	fail "元件清單雜湊不符"
 jq -e --slurpfile manifest "${manifest}" '
-  .candidate_level == "L1 元件候選"
+  (.candidate_level == "L1 元件候選" or .candidate_level == "L2 內部軟體候選")
   and .component_build_completed == true
-  and .rootfs_image_built == false
   and .public_release_allowed == false
   and .hardware_claims_allowed == false
   and (.component_build_evidence.artifacts == $manifest[0].artifacts)

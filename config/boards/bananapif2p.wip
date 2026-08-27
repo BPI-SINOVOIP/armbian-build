@@ -21,7 +21,24 @@ SUNPLUS_BPI_BSP_BRANCH="commit:3eee97bd8fb7582c2d9942a533647c3d78222bb5"
 SUNPLUS_BPI_BSP_BOARD="bpi-f2p"
 SUNPLUS_BPI_VENDOR_BOARD="bpi-f2p"
 SUNPLUS_BPI_VENDOR_CHIP="SP7021"
+SUNPLUS_BPI_SD_XBOOT_ASSET="sp-pack/sp7021/common/bin/ISPBOOOT.BIN"
+SUNPLUS_BPI_SD_XBOOT_SHA256="e01081a92b55156868b9df7918e0d5f503d1dda3af94335ed24637786124964a"
 SUNPLUS_BPI_EMMC_XBOOT_ASSET=""
+SUNPLUS_BPI_EMMC_XBOOT_SHA256=""
 SUNPLUS_BPI_CANDIDATE_MEDIA="sd-only"
 SUNPLUS_BPI_PUBLIC_RELEASE_ALLOWED="no"
 SUNPLUS_BPI_HARDWARE_CLAIMS_ALLOWED="no"
+
+function post_family_config__bananapif2p_storage_contract() {
+	# F2P 沒有專用 eMMC xboot；候選只允許 MBR 格式的 microSD 映像。
+	[[ -z "${SUNPLUS_BPI_EMMC_XBOOT_ASSET}" ]] || exit_with_error \
+		"F2P SD-only 候選不得指定 eMMC xboot" "${SUNPLUS_BPI_EMMC_XBOOT_ASSET}"
+	declare -g IMAGE_PARTITION_TABLE="msdos"
+}
+
+function custom_kernel_config__bananapif2p_diagnostics() {
+	# 保留可由映像內容驗證的診斷介面；實際硬體可用性仍須實機驗證。
+	opts_y+=(THERMAL THERMAL_OF SUNPLUS_SP7021_THERMAL)
+	opts_y+=(WATCHDOG WATCHDOG_CORE SUNPLUS_WATCHDOG)
+	opts_y+=(USB_CONFIGFS USB_CONFIGFS_MASS_STORAGE)
+}

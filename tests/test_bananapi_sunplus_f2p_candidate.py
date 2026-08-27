@@ -6,6 +6,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 import subprocess
+import tempfile
 import unittest
 
 
@@ -35,6 +36,8 @@ IMAGE_ISOLATED = (
     ROOT / "tools/run-bananapi-sunplus-f2p-candidate-isolated-cache.sh"
 )
 IMAGE_VERIFY = ROOT / "tools/verify-bananapi-sunplus-f2p-candidate.sh"
+GENERIC_VERIFY = ROOT / "tools/verify-bananapi-sunxi-candidates.sh"
+SOURCE_POLICY = ROOT / "tools/check-bananapi-sunplus-f2p-source-policy.py"
 
 
 class BananaPiSunplusF2PCandidateTests(unittest.TestCase):
@@ -56,9 +59,12 @@ class BananaPiSunplusF2PCandidateTests(unittest.TestCase):
             'BOOTCONFIG="sp7021_bpi_f2p_defconfig"',
             'BOOT_FDT_FILE="sp7021-bpi-f2p.dtb"',
             'SUNPLUS_BPI_EMMC_XBOOT_ASSET=""',
+            'SUNPLUS_BPI_SD_XBOOT_ASSET="sp-pack/sp7021/common/bin/ISPBOOOT.BIN"',
             'SUNPLUS_BPI_CANDIDATE_MEDIA="sd-only"',
             'SUNPLUS_BPI_PUBLIC_RELEASE_ALLOWED="no"',
             'SUNPLUS_BPI_HARDWARE_CLAIMS_ALLOWED="no"',
+            'declare -g IMAGE_PARTITION_TABLE="msdos"',
+            "USB_CONFIGFS_MASS_STORAGE",
         ):
             with self.subTest(expected=expected):
                 self.assertIn(expected, self.board_text)
@@ -123,6 +129,7 @@ printf 'f2s=%s\n' "$UBOOT_TARGET_MAP"
         self.assertFalse(self.config["hardware_claims_allowed"])
         self.assertTrue(self.config["component_build_completed"])
         self.assertFalse(self.config["rootfs_image_built"])
+        self.assertFalse(self.config["full_image_built"])
         self.assertEqual(self.policy["candidate_boot_media"], ["microSD"])
         self.assertEqual(self.policy["supported_boot_media"], [])
         self.assertFalse(self.config["firmware_redistribution_license_verified"])
@@ -202,17 +209,68 @@ printf 'f2s=%s\n' "$UBOOT_TARGET_MAP"
         isolated_text = IMAGE_ISOLATED.read_text(encoding="utf-8")
         self.assertIn("ALLOW_INTERNAL_F2P_SD_CANDIDATE", build_text)
         self.assertIn("build-bananapi-sunxi-candidates.sh", build_text)
+        self.assertIn("check-bananapi-sunplus-f2p-source-policy.py", build_text)
+        self.assertIn('MINIMUM_FREE_GIB="${MINIMUM_FREE_GIB:-40}"', build_text)
+        self.assertIn('expected_source_date_epoch="1609074838"', build_text)
         self.assertNotIn("compile.sh", build_text)
         self.assertIn("run-bananapi-candidates-isolated-cache.sh", isolated_text)
         self.assertIn("bananapi-sunplus-f2p-cache-overlay", isolated_text)
 
     def test_image_verifier_is_read_only_and_rejects_foreign_asset(self) -> None:
-        text = IMAGE_VERIFY.read_text(encoding="utf-8")
-        self.assertIn("losetup --find --show --partscan --read-only", text)
-        self.assertIn('mount -o ro "${boot_partition}"', text)
-        self.assertIn('mount -o ro,noload "${root_partition}"', text)
-        self.assertIn("BPI-F2S-xboot-emmc-boot0-0k.img.gz", text)
-        self.assertIn("hardware_tested: false", text)
+        wrapper = IMAGE_VERIFY.read_text(encoding="utf-8")
+        generic = GENERIC_VERIFY.read_text(encoding="utf-8")
+        self.assertIn("verify-bananapi-sunxi-candidates.sh", wrapper)
+        self.assertIn("check-bananapi-sunplus-f2p-source-policy.py", wrapper)
+        self.assertIn("write_entry_state failed", wrapper)
+        self.assertIn("VERIFICATION_EVIDENCE_LEVEL=L2", wrapper)
+        self.assertIn("VERIFY_ARCHIVES=yes", wrapper)
+        self.assertIn("losetup --find --show --partscan --read-only", generic)
+        self.assertIn('mount -o ro,noload,nosuid,nodev,noexec', generic)
+        self.assertIn("forbidden_packaged_assets", generic)
+
+    def test_full_image_contract_is_exact_and_sd_only(self) -> None:
+        self.assertEqual(self.policy["partition_table"], "msdos")
+        self.assertEqual(
+            self.policy["required_partitions"],
+            ["1:*:8192:*", "2:*:*:*"],
+        )
+        self.assertEqual(self.policy["boot_partition_number"], 1)
+        self.assertEqual(self.policy["root_partition_number"], 2)
+        self.assertEqual(self.policy["boot_configuration"], "sunplus_uenv")
+        self.assertEqual(self.policy["uboot_payloads"], ["u-boot.img@17408"])
+        self.assertEqual(
+            self.policy["uboot_package_only_payloads"], ["ISPBOOOT.BIN"]
+        )
+        self.assertIn(
+            "BPI-F2S-xboot-emmc-boot0-0k.img.gz",
+            self.policy["forbidden_packaged_assets"],
+        )
+        self.assertEqual(self.policy["sd_bus_width"], 4)
+
+    def test_source_policy_accepts_current_l1_state(self) -> None:
+        result = subprocess.run(
+            ["python3", str(SOURCE_POLICY), str(CONFIG)],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_source_policy_rejects_label_only_l2(self) -> None:
+        mutated = json.loads(CONFIG.read_text(encoding="utf-8"))
+        mutated["candidate_level"] = "L2 內部軟體候選"
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".json", encoding="utf-8"
+        ) as stream:
+            json.dump(mutated, stream, ensure_ascii=False)
+            stream.flush()
+            result = subprocess.run(
+                ["python3", str(SOURCE_POLICY), stream.name],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+        self.assertNotEqual(result.returncode, 0)
 
     def test_policy_and_build_evidence_state_limits(self) -> None:
         policy_text = POLICY.read_text(encoding="utf-8")

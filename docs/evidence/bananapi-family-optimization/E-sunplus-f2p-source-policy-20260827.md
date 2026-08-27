@@ -2,13 +2,13 @@
 
 ## 結論
 
-本候選只建立 **內部使用、SD-only、可追溯的 L1 元件候選**。F2P 專用 Linux DTS、U-Boot DTS 與 defconfig 可由固定 BSP 提交編譯，但現有 BSP 沒有 F2P 專用 eMMC xboot，預建 `ISPBOOOT.BIN` 也沒有足以支持再散布的明確授權證據。因此：
+目前證據仍是 **內部使用、SD-only、可追溯的 L1 元件候選**。本階段已補齊完整映像的 L2 守門，下一步會由同一來源提交實際重建與唯讀驗證；在成功證據產生前不提前升級。F2P 專用 Linux DTS、U-Boot DTS 與 defconfig 可由固定 BSP 提交編譯，但現有 BSP 沒有 F2P 專用 eMMC xboot，預建 `ISPBOOOT.BIN` 也沒有足以支持再散布的明確授權證據。因此：
 
 - 板檔維持 `.wip`。
 - `public_release_allowed=false`。
 - `hardware_claims_allowed=false`。
 - 禁止使用 `BPI-F2S-xboot-emmc-boot0-0k.img.gz` 建立 F2P eMMC 候選。
-- 本階段不建立完整 rootfs 映像，也不宣稱可開機或介面可用。
+- 完整 rootfs 建置與 L2 唯讀驗證已列入本階段執行範圍；完成前不宣稱可開機或介面可用。
 
 ## 固定來源
 
@@ -28,7 +28,7 @@
 - 既有板檔：`config/boards/bananapif2p.wip`。
 - 既有族群整合：`config/sources/families/include/sunplus_sp7021_bpi_legacy_common.inc`。
 - 本地文件套件：`/media/pi/SMCI/bpi/doc/banana-pi-doc-benchmark-20260621/board-packages/BPI-DOC-0006_Banana-Pi-BPI-F2P/`。
-- 本地官方頁面快照 SHA-256：`04d08604f79ab7ce2f0ce682970a94aa1319faa9312e917076f624318adcf933`。
+- 本地官方頁面快照 SHA-256：`c499a0d1ec93c3199a9dd06643d92791fd339fdd61f0de6352a8ae184b397e0e`。
 - 官方頁面擷取資料指出 SoC 為 Sunplus SP7021，儲存介面含 microSD 與 8 GB eMMC；此資料只用來確認產品範圍，不取代原理圖或實機驗證。
 - BSP `README.md` 明確描述同一倉庫涵蓋 F2S/F2P，`configure` 也有 `bpi-f2p` 目標；但倉庫只提供 F2S 命名的 eMMC xboot。
 
@@ -43,6 +43,14 @@
 5. 根檔案系統預期位於第二分割區。
 
 這條鏈不包含 F2S eMMC xboot。`SUNPLUS_BPI_EMMC_XBOOT_ASSET` 在 F2P 板檔明確設為空值，共用整合只在板檔明確指定時才封裝 eMMC xboot。
+
+## 完整映像守門
+
+- `tools/check-bananapi-sunplus-f2p-source-policy.py` 驗證固定來源、授權邊界及 L1/L2 狀態機，拒絕只有標籤而沒有完整證據的假 L2。
+- `tools/build-bananapi-sunplus-f2p-candidate.sh` 固定 `SOURCE_DATE_EPOCH=1609074838`，要求至少 `40 GiB` 可用空間，且只接受專用 OverlayFS 入口。
+- `tools/verify-bananapi-sunplus-f2p-candidate.sh` 強制 XZ 串流同一性與 L2 共用驗證，失敗時覆寫舊成功狀態。
+- 驗證契約要求恰好兩個 MBR 分割區、第一分割區起於 sector 8192、`u-boot.img` 位於位元組偏移 17408、`ISPBOOOT.BIN` 為套件與 FAT 開機檔，並在 rootfs 與 FAT 分割區排除 F2S eMMC xboot。
+- 完整映像必須保留唯一核心與 U-Boot 最終設定證據、固定 Git revision、DTB 身分與雜湊、SD/eMMC 匯流排寬度，以及 UUID 根檔案系統路徑。
 
 ## 授權判定
 
