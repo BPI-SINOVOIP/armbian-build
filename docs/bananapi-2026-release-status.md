@@ -1,5 +1,7 @@
 # Banana Pi 2026 Release Status
 
+**歷史快照，非現行發布狀態。** 本文件保存 2026-05-23 當時的舊分支執行紀錄；現行板卡證據、限制與下一門檻以 `config/bananapi-optimization-status.json` 及 `docs/bananapi-family-optimization-audit-20260826.md` 為準。
+
 Branch: `bpi-v26.8.0-trunk`
 
 Last updated: 2026-05-23

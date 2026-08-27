@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 """Banana Pi 全板卡盤點與證據登錄回歸測試。"""
 
+import copy
 import importlib.util
 from pathlib import Path
+import subprocess
 import sys
 import unittest
 
@@ -32,8 +34,26 @@ class BananaPiBoardAuditTests(unittest.TestCase):
 
     def test_status_registry_covers_each_board_once(self) -> None:
         status = AUDIT.load_status()
+        self.assertEqual(status["schema_version"], 2)
         registered = AUDIT.batch_index(status)
         self.assertEqual(set(registered), set(self.by_id))
+        for section in ("evidence", "next_gates", "open_findings"):
+            with self.subTest(section=section):
+                self.assertEqual(set(status[section]), set(self.by_id))
+
+    def test_registry_rejects_missing_or_extra_per_board_records(self) -> None:
+        original = AUDIT.load_status()
+        for section in ("evidence", "next_gates", "open_findings"):
+            missing = copy.deepcopy(original)
+            missing[section].pop("bananapi")
+            self.assertTrue(
+                any(section in error and "缺少" in error for error in AUDIT.registry_errors(missing))
+            )
+            extra = copy.deepcopy(original)
+            extra[section]["bananapi-not-real"] = {} if section == "evidence" else []
+            self.assertTrue(
+                any(section in error and "未登錄" in error for error in AUDIT.registry_errors(extra))
+            )
 
     def test_inherited_w3_fields_are_resolved_without_sourcing_shell(self) -> None:
         board = self.by_id["bananapiw3"]
@@ -93,9 +113,9 @@ class BananaPiBoardAuditTests(unittest.TestCase):
             "bananapim2s",
         ):
             self.assertEqual(self.by_id[board_id].level, "L2")
-        self.assertEqual(self.by_id["bananapim4zero"].level, "L3")
-        self.assertEqual(self.by_id["bananapim4berry"].level, "L4")
-        self.assertFalse(any(board.level == "L5" for board in self.boards))
+        self.assertEqual(self.by_id["bananapim4zero"].level, "L2")
+        self.assertEqual(self.by_id["bananapim4berry"].level, "L2")
+        self.assertFalse(any(board.level in {"L3", "L4", "L5"} for board in self.boards))
 
     def test_ai2n_supported_fields_are_complete(self) -> None:
         self.assertEqual(AUDIT.field_gaps(self.by_id["bpi-ai2n"]), [])
@@ -107,6 +127,39 @@ class BananaPiBoardAuditTests(unittest.TestCase):
         for board_id in self.by_id:
             self.assertIn(f"`{board_id}`", report)
             self.assertIn(f"\n{board_id}\t", "\n" + tsv)
+
+    def test_each_board_uses_its_registered_next_gate(self) -> None:
+        status = AUDIT.load_status()
+        for board in self.boards:
+            with self.subTest(board_id=board.board_id):
+                self.assertEqual(board.next_gate, status["next_gates"][board.board_id])
+
+    def test_check_mode_is_read_only_and_compares_both_reports(self) -> None:
+        paths = (AUDIT.MARKDOWN_REPORT, AUDIT.TSV_REPORT)
+        before = {path: (path.read_bytes(), path.stat().st_mtime_ns) for path in paths}
+        result = subprocess.run(
+            [sys.executable, str(SCRIPT), "--check"],
+            cwd=REPO_DIR,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=False,
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("狀態與兩份報告一致", result.stderr)
+        self.assertEqual(before, {path: (path.read_bytes(), path.stat().st_mtime_ns) for path in paths})
+
+    def test_check_mode_rejects_write_options(self) -> None:
+        result = subprocess.run(
+            [sys.executable, str(SCRIPT), "--check", "--markdown", "/tmp/不應寫入.md"],
+            cwd=REPO_DIR,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=False,
+        )
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("不得與", result.stderr)
 
 
 if __name__ == "__main__":

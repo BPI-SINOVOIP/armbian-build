@@ -17,7 +17,62 @@ from pathlib import Path
 REPO_DIR = Path(__file__).resolve().parents[1]
 BOARD_DIR = REPO_DIR / "config" / "boards"
 STATUS_FILE = REPO_DIR / "config" / "bananapi-optimization-status.json"
+MARKDOWN_REPORT = REPO_DIR / "docs" / "bananapi-family-optimization-audit-20260826.md"
+TSV_REPORT = REPO_DIR / "docs" / "evidence" / "bananapi-family-optimization" / "board-audit-20260826.tsv"
 BOARD_SUFFIXES = ("conf", "csc", "wip", "eos")
+EXPECTED_BATCHES = frozenset(("A", "B", "C", "D", "E", "F", "G", "R"))
+EXPECTED_BOARD_IDS = frozenset(
+    (
+        "bananapi",
+        "bananapi6204",
+        "bananapiaim7",
+        "bananapicm2",
+        "bananapicm4io",
+        "bananapicm5pro",
+        "bananapicm6",
+        "bananapif2p",
+        "bananapif2s",
+        "bananapif3",
+        "bananapiforge1",
+        "bananapim1plus",
+        "bananapim1super",
+        "bananapim2",
+        "bananapim2berry",
+        "bananapim2c",
+        "bananapim2magic",
+        "bananapim2plus",
+        "bananapim2pro",
+        "bananapim2s",
+        "bananapim2ultra",
+        "bananapim2zero",
+        "bananapim3",
+        "bananapim4",
+        "bananapim4berry",
+        "bananapim4super",
+        "bananapim4zero",
+        "bananapim5",
+        "bananapim5pro",
+        "bananapim6",
+        "bananapim64",
+        "bananapim7",
+        "bananapip2pro",
+        "bananapip2zero",
+        "bananapipro",
+        "bananapir1",
+        "bananapir2",
+        "bananapir2pro",
+        "bananapir3",
+        "bananapir3mini",
+        "bananapir4",
+        "bananapir4lite",
+        "bananapir4pro",
+        "bananapir64",
+        "bananapism10",
+        "bananapiw2",
+        "bananapiw3",
+        "bpi-ai2n",
+    )
+)
 STATUS_NAMES = {
     "conf": "正式",
     "csc": "社群",
@@ -69,6 +124,7 @@ class Board:
     batch: str
     level: str
     basis: str
+    next_gate: str
     findings: tuple[str, ...]
 
     @property
@@ -98,25 +154,6 @@ class Board:
     @property
     def has_video(self) -> bool:
         return self.fields.get("HAS_VIDEO_OUTPUT", "yes") != "no"
-
-    @property
-    def next_gate(self) -> str:
-        if self.status == "eos":
-            return "保留最後可用基線，不列入新發布"
-        if self.level == "L0":
-            if self.status == "wip":
-                return "確認建置鏈並建立 Trixie CLI 候選"
-            return "建立 Trixie CLI 並完成離線守門"
-        if self.level == "L1":
-            return "完成映像內容與來源同一性守門"
-        if self.level == "L2":
-            return "執行 UART、啟動與基本周邊實機驗證"
-        if self.level == "L3":
-            return "補齊加速、I/O、多板與長時間測試"
-        if self.level == "L4":
-            return "補齊樣本數、冷啟動與發布門檻"
-        return "維持回歸並追蹤已知限制"
-
 
 def strip_value(raw: str) -> str:
     """移除最外層引號與未引用的行尾註解。"""
@@ -168,6 +205,62 @@ def load_status() -> dict[str, object]:
     return json.loads(STATUS_FILE.read_text(encoding="utf-8"))
 
 
+def key_set_errors(name: str, value: object, expected: frozenset[str]) -> list[str]:
+    """要求物件鍵集合逐項吻合，禁止缺項、額外項與默認補值。"""
+    if not isinstance(value, dict):
+        return [f"{name} 必須是物件"]
+    actual = set(value)
+    errors: list[str] = []
+    if expected - actual:
+        errors.append(f"{name} 缺少：{', '.join(sorted(expected - actual))}")
+    if actual - expected:
+        errors.append(f"{name} 含未登錄項目：{', '.join(sorted(actual - expected))}")
+    return errors
+
+
+def registry_errors(status: dict[str, object]) -> list[str]:
+    """驗證 schema v2 與四個逐板狀態區段。"""
+    errors: list[str] = []
+    if status.get("schema_version") != 2:
+        errors.append("狀態登錄 schema_version 必須是 2")
+    if not isinstance(status.get("updated"), str) or not status["updated"]:
+        errors.append("狀態登錄 updated 必須是非空字串")
+
+    batches = status.get("batches")
+    errors.extend(key_set_errors("batches 批次", batches, EXPECTED_BATCHES))
+    if isinstance(batches, dict):
+        for batch, board_ids in batches.items():
+            if not isinstance(board_ids, list) or not all(isinstance(item, str) for item in board_ids):
+                errors.append(f"批次 {batch} 必須是板卡字串陣列")
+
+    for section in ("evidence", "next_gates", "open_findings"):
+        errors.extend(key_set_errors(section, status.get(section), EXPECTED_BOARD_IDS))
+
+    evidence = status.get("evidence")
+    if isinstance(evidence, dict):
+        for board_id, item in evidence.items():
+            if not isinstance(item, dict):
+                errors.append(f"{board_id} evidence 必須是物件")
+                continue
+            if item.get("level") not in LEVEL_NAMES:
+                errors.append(f"{board_id} 證據等級無效：{item.get('level')}")
+            if not isinstance(item.get("basis"), str) or not item["basis"]:
+                errors.append(f"{board_id} 證據依據必須是非空字串")
+
+    next_gates = status.get("next_gates")
+    if isinstance(next_gates, dict):
+        for board_id, value in next_gates.items():
+            if not isinstance(value, str) or not value:
+                errors.append(f"{board_id} 下一門檻必須是非空字串")
+
+    findings = status.get("open_findings")
+    if isinstance(findings, dict):
+        for board_id, values in findings.items():
+            if not isinstance(values, list) or not all(isinstance(item, str) and item for item in values):
+                errors.append(f"{board_id} 開放問題必須是非空字串陣列或空陣列")
+    return errors
+
+
 def batch_index(status: dict[str, object]) -> dict[str, str]:
     """將批次清單轉為板卡到批次的唯一索引。"""
     index: dict[str, str] = {}
@@ -179,23 +272,35 @@ def batch_index(status: dict[str, object]) -> dict[str, str]:
             index[board_id] = batch
     if duplicates:
         raise ValueError(f"狀態登錄有重複板卡：{', '.join(sorted(set(duplicates)))}")
+    actual = set(index)
+    if actual != EXPECTED_BOARD_IDS:
+        missing = ", ".join(sorted(EXPECTED_BOARD_IDS - actual))
+        extra = ", ".join(sorted(actual - EXPECTED_BOARD_IDS))
+        raise ValueError(f"批次板卡集合不符；缺少：{missing or '無'}；多餘：{extra or '無'}")
     return index
 
 
 def collect_boards() -> tuple[list[Board], list[str]]:
     """合併實際板卡設定與人工證據狀態，並回傳一致性錯誤。"""
     status_data = load_status()
-    batches = batch_index(status_data)
-    evidence = status_data.get("evidence", {})
-    open_findings = status_data.get("open_findings", {})
+    errors = registry_errors(status_data)
+    try:
+        batches = batch_index(status_data)
+    except (KeyError, AttributeError, TypeError, ValueError) as error:
+        batches = {}
+        errors.append(str(error))
+    evidence = status_data.get("evidence") if isinstance(status_data.get("evidence"), dict) else {}
+    next_gates = status_data.get("next_gates") if isinstance(status_data.get("next_gates"), dict) else {}
+    open_findings = status_data.get("open_findings") if isinstance(status_data.get("open_findings"), dict) else {}
     paths = board_paths()
     actual_ids = {path.stem for path in paths}
-    registered_ids = set(batches)
-    errors: list[str] = []
-    if actual_ids - registered_ids:
-        errors.append("狀態登錄缺少：" + ", ".join(sorted(actual_ids - registered_ids)))
-    if registered_ids - actual_ids:
-        errors.append("狀態登錄含不存在板卡：" + ", ".join(sorted(registered_ids - actual_ids)))
+    if actual_ids != EXPECTED_BOARD_IDS:
+        errors.append(
+            "板卡設定集合不符；缺少："
+            + (", ".join(sorted(EXPECTED_BOARD_IDS - actual_ids)) or "無")
+            + "；多餘："
+            + (", ".join(sorted(actual_ids - EXPECTED_BOARD_IDS)) or "無")
+        )
 
     boards: list[Board] = []
     for path in paths:
@@ -204,11 +309,11 @@ def collect_boards() -> tuple[list[Board], list[str]]:
         missing = [field for field in REQUIRED_FIELDS if not fields.get(field)]
         if missing:
             errors.append(f"{board_id} 缺少必要欄位：{', '.join(missing)}")
-        item = evidence.get(board_id, {})
-        level = item.get("level", "L0")
-        if level not in LEVEL_NAMES:
-            errors.append(f"{board_id} 證據等級無效：{level}")
-        basis = item.get("basis", "僅完成本分支靜態盤點，尚未以本次來源重建")
+        item = evidence.get(board_id)
+        level = item.get("level", "") if isinstance(item, dict) else ""
+        basis = item.get("basis", "") if isinstance(item, dict) else ""
+        next_gate = next_gates.get(board_id, "")
+        findings = open_findings.get(board_id, [])
         boards.append(
             Board(
                 board_id=board_id,
@@ -218,7 +323,8 @@ def collect_boards() -> tuple[list[Board], list[str]]:
                 batch=batches.get(board_id, "?"),
                 level=level,
                 basis=basis,
-                findings=tuple(open_findings.get(board_id, [])),
+                next_gate=next_gate if isinstance(next_gate, str) else "",
+                findings=tuple(findings) if isinstance(findings, list) else (),
             )
         )
     return boards, errors
@@ -282,6 +388,8 @@ def markdown_text(boards: list[Board], updated: str) -> str:
         "",
         f"更新日期：{updated}",
         "",
+        "**歷史快照，非現行發布狀態。** 本報告只呈現指定日期已納入 Git 的證據，不得取代最新候選狀態、實機驗證或對外發布核准。",
+        "",
         "本報告由 `tools/bananapi-board-audit.py` 從板卡設定與受版本控制的證據登錄檔產生。建置成功、裝置節點存在及歷史映像均不會自動提升證據等級。",
         "",
         "## 摘要",
@@ -289,7 +397,7 @@ def markdown_text(boards: list[Board], updated: str) -> str:
         f"- 板卡總數：{len(boards)}。",
         f"- 正式 `.conf`：{status_counts['conf']}；社群 `.csc`：{status_counts['csc']}；開發中 `.wip`：{status_counts['wip']}；停止支援 `.eos`：{status_counts['eos']}。",
         "- 證據分布：" + "；".join(f"{level} {level_counts[level]}" for level in LEVEL_NAMES) + "。",
-        "- 未取得實機的板卡最高只能標示 L2；目前 L3／L4 只沿用已納入 Git 的 M4 Zero／M4 Berry 證據。",
+        "- 未取得實機的板卡最高只能標示 L2；目前沒有板卡達到完整 L3／L4／L5 門檻。",
         "",
         "## 板卡矩陣",
         "",
@@ -342,12 +450,30 @@ def write_output(path: Path, content: str) -> None:
     path.write_text(content, encoding="utf-8")
 
 
+def generated_output_errors(boards: list[Board], updated: str) -> list[str]:
+    """比較兩份受版本控制報告，不執行任何寫入。"""
+    expected = {
+        MARKDOWN_REPORT: markdown_text(boards, updated),
+        TSV_REPORT: tsv_text(boards),
+    }
+    errors: list[str] = []
+    for path, content in expected.items():
+        if not path.is_file():
+            errors.append(f"缺少產生報告：{path.relative_to(REPO_DIR)}")
+        elif path.read_text(encoding="utf-8") != content:
+            errors.append(f"產生報告已過期：{path.relative_to(REPO_DIR)}")
+    return errors
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--markdown", type=Path, help="寫入 Markdown 報告")
     parser.add_argument("--tsv", type=Path, help="寫入 TSV 資料")
     parser.add_argument("--check", action="store_true", help="只執行一致性檢查")
     args = parser.parse_args()
+
+    if args.check and (args.markdown or args.tsv):
+        parser.error("--check 不得與 --markdown 或 --tsv 混用")
 
     boards, errors = collect_boards()
     if errors:
@@ -359,6 +485,14 @@ def main() -> int:
         return 1
 
     status_data = load_status()
+    if args.check:
+        output_errors = generated_output_errors(boards, status_data["updated"])
+        if output_errors:
+            for error in output_errors:
+                print(f"錯誤：{error}", file=sys.stderr)
+            return 1
+        print(f"盤點通過：{len(boards)} 個板卡，狀態與兩份報告一致", file=sys.stderr)
+        return 0
     if args.markdown:
         write_output(args.markdown, markdown_text(boards, status_data["updated"]))
     if args.tsv:
