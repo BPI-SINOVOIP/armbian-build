@@ -11,7 +11,7 @@ verify_tmp_prefix="${VERIFY_TMP_PREFIX:-bananapi-verify}"
 
 read -r -a boards <<<"${boards_text}"
 
-for command in awk basename cmp cut date fdtget find git grep lsblk losetup \
+for command in awk basename blkid cmp cut date fdtget find git grep lsblk losetup \
 	md5sum mktemp mount mountpoint od python3 sha256sum stat sudo udevadm \
 	sfdisk sgdisk umount xz; do
 	command -v "${command}" >/dev/null || {
@@ -454,14 +454,16 @@ validate_installed_uboot() {
 validate_mounted_image() (
 	local image=$1 board=$2
 	local dtb_relative dtb_basename dtb_path fdt_override model compatible expected node node_status option_line option value package
-	local loop_device partition mount_dir config_file overlay_prefix overlay overlay_directory default_overlays overlays_line sd_node sd_bus_width requirement required_node required_width kernel_family root_partition_number
+	local loop_device partition boot_partition mount_dir config_file overlay_prefix overlay overlay_directory default_overlays overlays_line sd_node sd_bus_width requirement required_node required_width kernel_family root_partition_number boot_partition_number
 	local boot_configuration extlinux_fdt expected_start_sector actual_start_sector property_spec property_node property_name property_expected installed_manifest installed_spec installed_path installed_sha256
+	local vendor_boot_directory root_uuid
 	local dtb_sha256 alias_spec alias_name alias_expected forbidden_fragment
 	dtb_relative="$(board_field "${board}" dtb)"
 	dtb_basename="$(basename "${dtb_relative}")"
 	mount_dir="$(mktemp -d "${repo_dir}/.tmp/${verify_tmp_prefix}.XXXXXX")"
 	loop_device="$(sudo losetup --find --show --partscan --read-only "${image}")"
 	cleanup_image() {
+		if mountpoint -q "${mount_dir}/boot"; then sudo umount "${mount_dir}/boot"; fi
 		if mountpoint -q "${mount_dir}"; then sudo umount "${mount_dir}"; fi
 		sudo losetup -d "${loop_device}" 2>/dev/null || true
 		rmdir "${mount_dir}" 2>/dev/null || true
@@ -473,15 +475,27 @@ validate_mounted_image() (
 	[[ "${root_partition_number}" =~ ^[1-9][0-9]*$ ]] || fail "${board} 的根分割區編號無效"
 	partition="$(lsblk -nrpo NAME,TYPE "${loop_device}" | awk -v wanted="${root_partition_number}" '$2 == "part" { count++ } count == wanted { print $1; exit }')"
 	[[ -n "${partition}" ]] || fail "${board} 沒有可掛載分割區"
-	expected_start_sector="$(board_field_optional "${board}" partition_start_sector)"
+	boot_partition_number="$(board_field_optional "${board}" boot_partition_number)"
+	expected_start_sector="$(board_field_optional "${board}" root_partition_start_sector)"
+	if [[ -z "${expected_start_sector}" && -z "${boot_partition_number}" ]]; then
+		expected_start_sector="$(board_field_optional "${board}" partition_start_sector)"
+	fi
 	if [[ -n "${expected_start_sector}" ]]; then
 		actual_start_sector="$(read_partition_start_sector "${partition}")"
 		[[ "${actual_start_sector}" == "${expected_start_sector}" ]] ||
 			fail "${board} 的第一分割區起點不是 ${expected_start_sector} sector"
 	fi
 	sudo mount -o ro,noload "${partition}" "${mount_dir}"
+	if [[ -n "${boot_partition_number}" ]]; then
+		[[ "${boot_partition_number}" =~ ^[1-9][0-9]*$ ]] || fail "${board} 的 boot 分割區編號無效"
+		boot_partition="$(lsblk -nrpo NAME,TYPE "${loop_device}" | awk -v wanted="${boot_partition_number}" '$2 == "part" { count++ } count == wanted { print $1; exit }')"
+		[[ -n "${boot_partition}" ]] || fail "${board} 缺少 boot 分割區"
+		[[ -d "${mount_dir}/boot" ]] || fail "${board} 根檔案系統缺少 /boot 掛載點"
+		sudo mount -o ro "${boot_partition}" "${mount_dir}/boot"
+	fi
 
-	[[ -s "${mount_dir}/boot/zImage" || -s "${mount_dir}/boot/Image" ]] || fail "${board} 缺少核心映像"
+	[[ -s "${mount_dir}/boot/zImage" || -s "${mount_dir}/boot/Image" || \
+		-s "${mount_dir}/boot/uImage" ]] || fail "${board} 缺少核心映像"
 	[[ -s "${mount_dir}/boot/uInitrd" ]] || fail "${board} 缺少 initrd"
 	boot_configuration="$(board_field_optional "${board}" boot_configuration)"
 	[[ -n "${boot_configuration}" ]] || boot_configuration="armbian_env"
@@ -505,6 +519,21 @@ validate_mounted_image() (
 			grep -Fqx "  fdt ${extlinux_fdt}" "${mount_dir}/boot/extlinux/extlinux.conf" ||
 				fail "${board} 的 extlinux FDT 不符"
 			;;
+		sunplus_uenv)
+			[[ -s "${mount_dir}/boot/uEnv.txt" ]] || fail "${board} 缺少 Sunplus uEnv.txt"
+			vendor_boot_directory="$(board_field "${board}" vendor_boot_directory)"
+			for expected in uImage uInitrd "${dtb_basename}"; do
+				[[ -s "${mount_dir}/boot/${vendor_boot_directory}/${expected}" ]] ||
+					fail "${board} 缺少 vendor boot 檔案：${vendor_boot_directory}/${expected}"
+			done
+			root_uuid="$(sudo blkid -s UUID -o value "${partition}")"
+			[[ -n "${root_uuid}" ]] || fail "${board} 無法讀取根檔案系統 UUID"
+			grep -Fqx "root=UUID=${root_uuid}" "${mount_dir}/boot/uEnv.txt" ||
+				fail "${board} 的 uEnv.txt 未固定本映像根檔案系統 UUID"
+			if grep -Eq '(^|[[:space:]])root=/dev/mmcblk' "${mount_dir}/boot/uEnv.txt"; then
+				fail "${board} 的 uEnv.txt 仍使用不穩定的 mmcblk 根裝置"
+			fi
+			;;
 		*) fail "${board} 的開機設定類型不支援：${boot_configuration}" ;;
 	esac
 	default_overlays="$(board_field "${board}" default_overlays)"
@@ -518,7 +547,12 @@ validate_mounted_image() (
 		[[ -s "${mount_dir}/boot/dtb/${overlay_directory}/${overlay_prefix}-${overlay}.dtbo" ]] ||
 			fail "${board} 缺少 overlay：${overlay_prefix}-${overlay}.dtbo"
 	done
-	dtb_path="${mount_dir}/boot/dtb/${dtb_relative}"
+	dtb_path="$(board_field_optional "${board}" dtb_image_path)"
+	if [[ -n "${dtb_path}" ]]; then
+		dtb_path="${mount_dir}${dtb_path}"
+	else
+		dtb_path="${mount_dir}/boot/dtb/${dtb_relative}"
+	fi
 	if [[ ! -s "${dtb_path}" ]]; then
 		dtb_path="${mount_dir}/boot/dtb/${dtb_basename}"
 	fi

@@ -1,0 +1,14 @@
+diff --git a/linux-sp/arch/arm/boot/dts/sp7021-bpi-f2s.dts b/linux-sp/arch/arm/boot/dts/sp7021-bpi-f2s.dts
+index a8f5c6838..2c421bdf0 100644
+--- a/linux-sp/arch/arm/boot/dts/sp7021-bpi-f2s.dts
++++ b/linux-sp/arch/arm/boot/dts/sp7021-bpi-f2s.dts
+@@ -3,7 +3,8 @@
+ #include "sp7021-ChipC.dtsi"
+ 
+ / {
+-	model = "SP7021/CA7/BPI-F2S";
++	model = "Banana Pi BPI-F2S";
++	compatible = "sinovoip,bpi-f2s", "sunplus,sp7021-achip";
+ 
+ 	chosen {
+ 		bootargs = "console=ttyS0,115200 root=/dev/ram rw loglevel=8 user_debug=255 earlyprintk";

@@ -1,7 +1,7 @@
 #
 # SPDX-License-Identifier: GPL-2.0
 #
-# Banana Pi legacy Sunplus SP7021 BSP integration.
+# Banana Pi legacy Sunplus SP7021 BSP 整合。
 #
 
 ARCH=armhf
@@ -15,11 +15,16 @@ UBOOT_VERSION_OVERRIDE="2019.04"
 KERNEL_IMAGE_TYPE="uImage"
 KERNEL_INSTALL_TYPE="uinstall"
 NAME_KERNEL="uImage"
-UBOOT_TARGET_MAP=";;u-boot-sp/u-boot.img:u-boot.img sp-pack/sp7021/common/bin/ISPBOOOT.BIN:ISPBOOOT.BIN sp-pack/sp7021/common/bin/BPI-F2S-xboot-emmc-boot0-0k.img.gz:BPI-F2S-xboot-emmc-boot0-0k.img.gz"
 
 : "${SUNPLUS_BPI_BSP_REPO:?SUNPLUS_BPI_BSP_REPO is not set}"
 : "${SUNPLUS_BPI_BSP_BRANCH:?SUNPLUS_BPI_BSP_BRANCH is not set}"
 : "${SUNPLUS_BPI_BSP_BOARD:?SUNPLUS_BPI_BSP_BOARD is not set}"
+SUNPLUS_BPI_SD_XBOOT_ASSET="${SUNPLUS_BPI_SD_XBOOT_ASSET:-sp-pack/sp7021/common/bin/ISPBOOOT.BIN}"
+SUNPLUS_BPI_SD_XBOOT_SHA256="${SUNPLUS_BPI_SD_XBOOT_SHA256:-e01081a92b55156868b9df7918e0d5f503d1dda3af94335ed24637786124964a}"
+SUNPLUS_BPI_EMMC_XBOOT_ASSET="${SUNPLUS_BPI_EMMC_XBOOT_ASSET:-sp-pack/sp7021/common/bin/BPI-F2S-xboot-emmc-boot0-0k.img.gz}"
+SUNPLUS_BPI_EMMC_XBOOT_SHA256="${SUNPLUS_BPI_EMMC_XBOOT_SHA256:-67e507efb5bef1d67f97f22da3e87dcc32a285a8a8d003ff3149416fc7dbc81d}"
+
+UBOOT_TARGET_MAP=";;u-boot-sp/u-boot.img:u-boot.img ${SUNPLUS_BPI_SD_XBOOT_ASSET}:ISPBOOOT.BIN ${SUNPLUS_BPI_EMMC_XBOOT_ASSET}:BPI-F2S-xboot-emmc-boot0-0k.img.gz"
 
 BOOTSOURCE="${SUNPLUS_BPI_BSP_REPO}"
 BOOTBRANCH="${SUNPLUS_BPI_BSP_BRANCH}"
@@ -68,6 +73,11 @@ function build_custom_uboot__sunplus_sp7021_bpi_legacy_bsp() {
 		return 0
 	fi
 
+	sunplus_sp7021_bpi_verify_prebuilt_boot_asset \
+		"${SUNPLUS_BPI_SD_XBOOT_ASSET}" "${SUNPLUS_BPI_SD_XBOOT_SHA256}"
+	sunplus_sp7021_bpi_verify_prebuilt_boot_asset \
+		"${SUNPLUS_BPI_EMMC_XBOOT_ASSET}" "${SUNPLUS_BPI_EMMC_XBOOT_SHA256}"
+
 	run_host_command_logged ./configure "${SUNPLUS_BPI_BSP_BOARD}"
 
 	local uboot_cross_compile="${PWD}/toolchains/gcc-linaro-7.3.1-2018.05-x86_64_arm-linux-gnueabihf/bin/arm-linux-gnueabihf-"
@@ -76,6 +86,15 @@ function build_custom_uboot__sunplus_sp7021_bpi_legacy_bsp() {
 
 	loop_over_uboot_targets_and_do deploy_built_uboot_bins_for_one_target_to_packaging_area
 	declare -g EXTENSION_BUILT_UBOOT="yes"
+}
+
+function sunplus_sp7021_bpi_verify_prebuilt_boot_asset() {
+	local relative_path=$1 expected_sha256=$2 actual_sha256
+	[[ -f "${relative_path}" ]] || exit_with_error \
+		"Sunplus 預建啟動資產不存在" "${relative_path}"
+	actual_sha256="$(sha256sum "${relative_path}" | cut -d' ' -f1)"
+	[[ "${actual_sha256}" == "${expected_sha256}" ]] || exit_with_error \
+		"Sunplus 預建啟動資產雜湊不符" "${relative_path}"
 }
 
 function sunplus_sp7021_bpi_flatten_kernel_tree() {
@@ -153,6 +172,8 @@ function pre_umount_final_image__sunplus_sp7021_bpi_vendor_boot_layout() {
 	local vendor_linux_dir="${boot_dir}/bananapi/${vendor_board}/linux"
 
 	[[ -d "${boot_dir}" ]] || exit_with_error "Sunplus BSP boot directory is missing" "${boot_dir}"
+	[[ "${ROOT_PART_UUID:-}" =~ ^[0-9a-fA-F-]+$ ]] || exit_with_error \
+		"Sunplus BSP 缺少根檔案系統 UUID" "${ROOT_PART_UUID:-未設定}"
 
 	display_alert "${BOARD}" "installing Sunplus BPI FAT boot layout" "${vendor_linux_dir}" "info"
 	run_host_command_logged mkdir -p "${vendor_linux_dir}"
@@ -178,10 +199,10 @@ function pre_umount_final_image__sunplus_sp7021_bpi_vendor_boot_layout() {
 		kernel=uImage
 		dtb=${BOOT_FDT_FILE}
 		initrd=uInitrd
+		root=UUID=${ROOT_PART_UUID}
 		rootopt=rw rootfstype=${ROOTFS_TYPE:-ext4} rootwait
 		console=earlyprintk console=tty1 fbcon=map:0 console=${SERIALCON:-ttyS0},115200
 		bootopts=loglevel=8 initcall_debug=0 user_debug=255 fsck.mode=force fsck.repair=yes
-		setroot=if test -z "\${root}"; then setenv root /dev/mmcblk1p2; fi
 		setbootdev=if test -z "\${device}"; then setenv device mmc; fi; if test -z "\${partition}"; then setenv partition 0:1; fi
 		abootargs=setenv bootargs board=\${board} console=\${console} root=\${root} \${rootopt} service=\${service} sdmmc_on=\${sdmmc_on} \${bootopts}
 		ahello=echo Banana Pi \${board} chip: \${chip} Service: \${service}
@@ -189,7 +210,7 @@ function pre_umount_final_image__sunplus_sp7021_bpi_vendor_boot_layout() {
 		aload_kernel=fatload \${device} \${partition} \${kernel_addr_r} \${bpi}/\${board}/\${service}/\${kernel}
 		aload_initrd=fatload \${device} \${partition} \${ramdisk_addr_r} \${bpi}/\${board}/\${service}/\${initrd}
 		aboot=bootm \${kernel_addr_r} \${ramdisk_addr_r} \${fdt_addr_r}
-		uenvcmd=run ahello setroot setbootdev abootargs aload_dtb aload_kernel aload_initrd aboot
-		usercmd=run ahello setroot setbootdev abootargs
+		uenvcmd=run ahello setbootdev abootargs aload_dtb aload_kernel aload_initrd aboot
+		usercmd=run ahello setbootdev abootargs
 	EOF
 }
