@@ -6,9 +6,9 @@
 
 `bananapim4` 是 Realtek RTD1395 板卡，不是 Allwinner H618 的 M4 Berry 或 M4 Zero。本候選已把 vendor BSP、韌體與建置時間固定到精確提交，補上 1 GiB／2 GiB DTB 身分、穩定根檔案系統標籤、MBR 儲存契約及板級介面驗證邊界。
 
-板卡仍保留 `.wip`。本階段沒有建立目前分支的完整 rootfs 或整碟映像，也沒有實機，因此不得標示 `L2`、宣稱可開機、宣稱介面可用或宣稱硬體通過。既有 2026 年 5 月映像是舊分支結果，只作歷史線索，不作本候選證據。
+板卡仍保留 `.wip`。目前中央登錄的有效證據仍是 `L1`；機器契約已進入 L2 正式重建過渡狀態，但在來自已推送乾淨提交的完整 IMG、XZ 與唯讀驗證閉合前，不得將中央狀態提升為 `L2`，也不得宣稱可開機、介面可用或硬體通過。既有 2026 年 5 月映像只用來校準分割布局，不作本候選證據。
 
-本候選只修改 M4 板級設定、M4 專用修補、機器契約、文件、工具及測試；不修改共用 Realtek 家族邏輯，也不更新全系列狀態登錄。主工作樹與 `/media/pi/SMCI/armbian/bpi-v26.2.1/cache` 只作唯讀研究來源。
+本候選修改 M4 板級設定、M4 專用修補、機器契約、文件、工具及測試；共用家族建置邏輯不變。共用唯讀映像守門器只新增 `realtek_bpi_uenv` 模式，用來核對 FAT vendor boot 目錄、雙 DTB、根標籤與不封裝 defconfig 的舊 U-Boot 契約。共用 `/media/pi/SMCI/armbian/bpi-v26.2.1/cache` 只作 OverlayFS 的唯讀 lower，不直接修改。
 
 ## Realtek 家族邊界
 
@@ -55,7 +55,7 @@ BSP 內含 `gcc-linaro-7.3.1-2018.05` 工具鏈。建置入口會核對 GCC 大�
 - 分割表固定為 MBR／`msdos`，避免 GPT 項目區與 40 KiB 載荷重疊。
 - FAT boot 分割區為第 1 區，根檔案系統為第 2 區；`uEnv.txt` 改用 `root=LABEL=BPI-ROOT`，避免綁定 `/dev/mmcblk0p2` 的核心枚舉順序。
 - boot 目錄固定為 `/boot/bananapi/bpi-m4/linux`，需包含 `uEnv.txt`、`bluecore.audio`、`uImage`、`uInitrd` 與 1 GiB／2 GiB DTB。
-- DT 靜態契約涵蓋 SD、eMMC 與 PCIe，但不代表媒體啟動、熱插拔、吞吐或資料完整性已通過實機測試。
+- DT 靜態契約涵蓋 SD、eMMC 與 PCIe；PCIe 節點已從錯誤的 `/pcie@9804E000` 更正為 DTB 實際的 `/pcie@98060000`。節點存在不代表媒體啟動、熱插拔、吞吐或資料完整性已通過實機測試。
 
 ## 板級介面與最佳化邊界
 
@@ -88,6 +88,15 @@ python3 -m unittest tests.test_bananapi_realtek_m4_candidate
 ./tools/build-bananapi-realtek-m4-components.sh
 ./tools/verify-bananapi-realtek-m4-components.sh
 ```
+
+L2 內部候選建置與唯讀驗證：
+
+```bash
+./tools/run-bananapi-realtek-m4-candidate-isolated-cache.sh
+./tools/verify-bananapi-realtek-m4-candidate.sh
+```
+
+L2 入口只接受 `trixie`、`legacy`、minimal CLI 與固定 `SOURCE_DATE_EPOCH=1711071187`，輸出目錄固定為 `output/images/2026.08/bananapi-realtek-rtd1395-m4-trixie-legacy-cli`。建置期間必須使用專用 OverlayFS upper，並禁止公開發布及硬體通過聲明。
 
 建置入口只在可用空間至少 50 GiB 時執行，最多使用 8 個工作。它以 `git clone --shared --no-checkout` 從固定 BSP 物件庫建立專用工作樹，只讀取共用 cache；不清理、不覆寫 cache，也不建立 rootfs 或整碟映像。完整隔離來源與建置樹位於 `.tmp/bananapi-realtek-m4-component`，不屬可攜證據。
 

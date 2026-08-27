@@ -178,7 +178,7 @@
     },
     "bananapim4": {
       "level": "L1",
-      "basis": "固定 Realtek RTD1395 BSP、firmware 與工具鏈來源已核對；U-Boot 兩次重建雜湊一致，Linux Image、1／2 GiB DTB、517 個模組與來源證據已保存並通過唯讀守門；尚無完整 rootfs／IMG、授權閉合或實機證據"
+      "basis": "固定 Realtek RTD1395 BSP、firmware 與工具鏈來源已核對；U-Boot 兩次重建雜湊一致，Linux Image、1／2 GiB DTB、517 個模組與來源證據已保存並通過唯讀守門；L2 內部候選的固定快取、FAT 雙 DTB、MBR 與 40 KiB 載荷守門已建立，但正式 IMG 尚未建置，故仍維持 L1"
     },
     "bananapim4super": {
       "level": "L0",

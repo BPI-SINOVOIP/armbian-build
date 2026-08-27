@@ -457,7 +457,7 @@ validate_installed_uboot() {
 	local payload_specs package_only_payloads payload_spec payload_name offset uboot_dir payload
 	local metadata_file md5sums_file payload_size payload_sha256 minimum_spec
 	local rkbin_source rkbin_ref rkbin_revision partition_table partition_start_sector sector_size payload_end first_partition_byte
-	local uboot_target_index uboot_config_file uboot_target_metadata uboot_defconfig option_line target_fragment forbidden_fragment required_fragment
+	local uboot_target_index uboot_config_file uboot_target_metadata uboot_defconfig uboot_package_defconfig_required option_line target_fragment forbidden_fragment required_fragment
 	local final_uboot_config_sha256 actual_uboot_config_sha256 exact_size_spec
 	local overlap_allowed earlier_payload later_payload overlap_start write_order
 	local earlier_offset later_offset earlier_size later_size earlier_end later_end prefix_size tail_skip tail_size
@@ -600,7 +600,13 @@ validate_installed_uboot() {
 			fail "${board} 的 U-Boot 缺少必要開機路徑：${required_fragment}"
 	done < <(board_values "${board}" uboot_required_binary_strings)
 	uboot_defconfig="$(board_field_optional "${board}" uboot_defconfig)"
-	if [[ -n "${uboot_defconfig}" ]]; then
+	uboot_package_defconfig_required="$(board_field_optional "${board}" uboot_package_defconfig_required)"
+	[[ -n "${uboot_package_defconfig_required}" ]] || uboot_package_defconfig_required=true
+	case "${uboot_package_defconfig_required}" in
+		true | false) ;;
+		*) fail "${board} 的 U-Boot defconfig 封裝要求只接受 true 或 false" ;;
+	esac
+	if [[ -n "${uboot_defconfig}" && "${uboot_package_defconfig_required}" == true ]]; then
 		[[ -s "${mount_dir}/usr/lib/u-boot/${uboot_defconfig}" ]] ||
 			fail "${board} 缺少 U-Boot defconfig：${uboot_defconfig}"
 	fi
@@ -756,7 +762,7 @@ validate_mounted_image() (
 	local dtb_relative dtb_basename dtb_path fdt_override model compatible expected node node_status option_line option value package
 	local loop_device partition boot_partition mount_dir config_file overlay_prefix overlay overlay_directory default_overlays required_overlays overlays_line sd_node sd_bus_width requirement required_node required_width kernel_family root_partition_number boot_partition_number
 	local boot_configuration extlinux_fdt expected_start_sector actual_start_sector property_spec property_node property_name property_expected installed_manifest installed_spec installed_path installed_sha256
-	local vendor_boot_directory root_uuid final_kernel_config_sha256 actual_kernel_config_sha256 forbidden_asset
+	local vendor_boot_directory vendor_boot_dtbs vendor_dtb root_uuid final_kernel_config_sha256 actual_kernel_config_sha256 forbidden_asset
 	local boot_partition_label boot_partition_filesystem_type root_partition_label root_partition_filesystem_type boot_script_source boot_script_source_sha256 boot_script_source_path boot_script_payload
 	local dtb_sha256 alias_spec alias_name alias_expected forbidden_fragment
 	local required_module_path
@@ -914,6 +920,38 @@ PY
 				fail "${board} 的 uEnv.txt 仍使用不穩定的 mmcblk 根裝置"
 			fi
 			;;
+		realtek_bpi_uenv)
+			[[ -n "${boot_partition_number}" ]] || fail "${board} 的 Realtek FAT 開機模式缺少 boot 分割區"
+			[[ -s "${mount_dir}/boot/uEnv.txt" ]] || fail "${board} 缺少 Realtek uEnv.txt"
+			vendor_boot_directory="$(board_field "${board}" vendor_boot_directory)"
+			[[ "${vendor_boot_directory}" =~ ^[A-Za-z0-9._/-]+$ &&
+				"${vendor_boot_directory}" != /* && "${vendor_boot_directory}" != *..* ]] ||
+				fail "${board} 的 Realtek vendor boot 目錄不合法"
+			for expected in uEnv.txt bluecore.audio uImage uInitrd; do
+				[[ -s "${mount_dir}/boot/${vendor_boot_directory}/${expected}" ]] ||
+					fail "${board} 缺少 Realtek vendor boot 檔案：${vendor_boot_directory}/${expected}"
+			done
+			cmp --silent "${mount_dir}/boot/uEnv.txt" \
+				"${mount_dir}/boot/${vendor_boot_directory}/uEnv.txt" ||
+				fail "${board} 的兩份 Realtek uEnv.txt 內容不同"
+			vendor_boot_dtbs="$(board_field "${board}" vendor_boot_dtbs)"
+			[[ -n "${vendor_boot_dtbs}" ]] || fail "${board} 缺少 Realtek vendor DTB 契約"
+			for vendor_dtb in ${vendor_boot_dtbs}; do
+				[[ "${vendor_dtb}" =~ ^[A-Za-z0-9._+-]+\.dtb$ ]] ||
+					fail "${board} 的 Realtek vendor DTB 名稱不合法"
+				[[ -s "${mount_dir}/boot/${vendor_boot_directory}/${vendor_dtb}" ]] ||
+					fail "${board} 缺少 Realtek vendor DTB：${vendor_dtb}"
+			done
+			grep -Fqx "root=LABEL=$(board_field "${board}" root_partition_label) rw rootfstype=ext4 rootwait" \
+				"${mount_dir}/boot/uEnv.txt" || fail "${board} 的 Realtek uEnv.txt 未使用穩定根標籤"
+			if grep -Eq '(^|[[:space:]])root=/dev/mmcblk' "${mount_dir}/boot/uEnv.txt"; then
+				fail "${board} 的 Realtek uEnv.txt 仍使用不穩定的 mmcblk 根裝置"
+			fi
+			grep -Fq "if test \$dram_size = 1GB; then setenv dtb rtd-1395-bananapi-m4-1GB.dtb; fi" \
+				"${mount_dir}/boot/uEnv.txt" || fail "${board} 的 Realtek uEnv.txt 缺少 1 GiB DTB 選擇"
+			grep -Fq "if test \$dram_size = 2GB; then setenv dtb rtd-1395-bananapi-m4-2GB.dtb; fi" \
+				"${mount_dir}/boot/uEnv.txt" || fail "${board} 的 Realtek uEnv.txt 缺少 2 GiB DTB 選擇"
+			;;
 		*) fail "${board} 的開機設定類型不支援：${boot_configuration}" ;;
 	esac
 	if [[ "${boot_configuration}" == separate_fat_armbian_env ]]; then
@@ -1006,10 +1044,14 @@ PY
 		[[ "$(fdtget -t s "${dtb_path}" /aliases "${alias_name}")" == "${alias_expected}" ]] ||
 			fail "${board} 的 DT alias 不符：${alias_name}"
 	done
-	sd_node="$(board_field "${board}" sd_node)"
-	sd_bus_width="$(board_field "${board}" sd_bus_width)"
-	[[ "$(fdtget -t u "${dtb_path}" "${sd_node}" bus-width)" == "${sd_bus_width}" ]] ||
-		fail "${board} 的 SD 匯流排寬度不是 ${sd_bus_width}-bit"
+	sd_node="$(board_field_optional "${board}" sd_node)"
+	sd_bus_width="$(board_field_optional "${board}" sd_bus_width)"
+	if [[ -n "${sd_node}${sd_bus_width}" ]]; then
+		[[ -n "${sd_node}" && "${sd_bus_width}" =~ ^[1-9][0-9]*$ ]] ||
+			fail "${board} 的 SD 匯流排寬度契約不完整"
+		[[ "$(fdtget -t u "${dtb_path}" "${sd_node}" bus-width)" == "${sd_bus_width}" ]] ||
+			fail "${board} 的 SD 匯流排寬度不是 ${sd_bus_width}-bit"
+	fi
 	for requirement in $(board_field_optional "${board}" additional_bus_widths); do
 		required_node="${requirement%=*}"
 		required_width="${requirement##*=}"

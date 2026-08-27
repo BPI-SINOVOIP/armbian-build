@@ -1,9 +1,16 @@
 {
   "schema_version": 1,
-  "candidate_level": "L1 元件候選",
-  "candidate_scope": "internal-component-only",
+  "candidate_level": "L2 內部軟體候選",
+  "candidate_scope": "internal-l2",
   "candidate_branch": "legacy",
   "kernel_family": "realtek-rtd139x-bpi",
+  "current_evidence_level": "L2",
+  "target_evidence_level": "L2",
+  "candidate_public_release_approved": false,
+  "hardware_validation_complete": false,
+  "firmware_redistribution_license_verified": false,
+  "rootfs_image_built": false,
+  "full_rootfs_image_built": false,
   "realtek_family_inventory": {
     "shared_legacy_include": "config/sources/families/include/realtek_bpi_legacy_common.inc",
     "shared_legacy_include_modified": false,
@@ -28,6 +35,7 @@
     }
   },
   "source_date_epoch": 1711071187,
+  "source_contract_projection_sha256": "3cc4a311f7f05219b8773322165d40509552527d2302ee444294eaf71488fa63",
   "linux_source": "https://github.com/BPI-SINOVOIP/BPI-M4-bsp.git",
   "linux_ref": "commit:25f5b88ec4ba34029f964693dc34028b26e6c67c",
   "linux_commit": "25f5b88ec4ba34029f964693dc34028b26e6c67c",
@@ -37,8 +45,14 @@
   "firmware_source": "https://github.com/armbian/firmware",
   "firmware_ref": "commit:f50a2a21bcdb77a562b3976930c5c6b521a1df08",
   "firmware_commit": "f50a2a21bcdb77a562b3976930c5c6b521a1df08",
+  "verify_firmware_source_resolution": true,
   "atf_applicable": false,
   "atf_reason": "此 vendor 啟動路徑不另行建置 TF-A；安全功能與啟動鏈仍含缺少可審計來源的二進位資產",
+  "license_policy": {
+    "opaque_payload_redistribution_verified": false,
+    "toolchain_redistribution_verified": false,
+    "decision": "只允許建立內部軟體候選，不允許公開發布組合映像"
+  },
   "linux_license_path": "linux-rtk/COPYING",
   "linux_license_sha256": "af8067302947c01fd9eee72befa54c7e3ef8a48fecde7fd71277f2290b2bf0f7",
   "uboot_license_path": "u-boot-rtk/Licenses/README",
@@ -339,9 +353,19 @@
     "CONFIG_VFAT_FS": "y",
     "CONFIG_WATCHDOG": "y"
   },
+  "required_kernel_module_paths": [
+    "kernel/drivers/net/wireless/realtek/rtl8821cu/8821cu.ko"
+  ],
+  "installed_file_sha256": [
+    "/boot/bananapi/bpi-m4/linux/bluecore.audio=774832da0a18c1ba837ff41926502fb8444e83397562c7170c71435416aff4df"
+  ],
   "boards": {
     "bananapim4": {
       "family": "realtek-rtd139x-bpi",
+      "dtb": "realtek/rtd139x/rtd-1395-bananapi-m4-2GB.dtb",
+      "dtb_image_path": "/boot/bananapi/bpi-m4/linux/rtd-1395-bananapi-m4-2GB.dtb",
+      "dtb_sha256": "8886772d273898612bd60dd4ae9ecba7ab73663ab3b27b8a996e6f9b9567a461",
+      "final_kernel_config_sha256": "8ffa22ffd51e6ce989dc7c36c176d383da478a712d3deab51a9098dab2da1fbe",
       "model": "Banana Pi BPI-M4",
       "compatible": [
         "bananapi,bpi-m4",
@@ -353,14 +377,85 @@
         "rtd-1395-bananapi-m4-2GB.dtb"
       ],
       "uboot_version": "2015.07",
+      "uboot_tag": "v2015.07",
+      "uboot_git_source": "https://github.com/BPI-SINOVOIP/BPI-M4-bsp.git",
+      "uboot_git_ref": "commit:25f5b88ec4ba34029f964693dc34028b26e6c67c",
+      "uboot_revision": "25f5b88ec4ba34029f964693dc34028b26e6c67c",
       "uboot_defconfig": "rtd1395_bananapi_defconfig",
+      "uboot_package_defconfig_required": false,
+      "uboot_binary_for_string_checks": "u-boot.bin",
+      "uboot_required_binary_strings": [
+        "U-Boot 2015.07",
+        "Mar 22 2024"
+      ],
+      "uboot_payload": "u-boot.bin",
+      "uboot_offset": 40960,
+      "uboot_payload_minimum_sizes": [
+        "u-boot.bin=500000"
+      ],
+      "uboot_payload_sizes": [
+        "u-boot.bin=521968"
+      ],
+      "uboot_payload_sha256": [
+        "u-boot.bin=5e91ddf0140820c1f091ac40d8af0daa180bf1e45b851231269e4df7be3e7003"
+      ],
       "uboot_write_offset_bytes": 40960,
       "partition_table": "msdos",
+      "partition_start_sector": 8192,
+      "root_partition_start_sector": 532480,
+      "required_partitions": [
+        "1:*:8192:524288",
+        "2:*:532480:*"
+      ],
+      "required_partition_types": [
+        "1:ea",
+        "2:83"
+      ],
+      "logical_sector_size": 512,
       "boot_partition_number": 1,
       "root_partition_number": 2,
+      "boot_partition_label": "BPI-BOOT",
+      "root_partition_label": "BPI-ROOT",
+      "boot_partition_filesystem_type": "vfat",
+      "root_partition_filesystem_type": "ext4",
       "root_filesystem_label": "BPI-ROOT",
       "boot_filesystem": "fat",
+      "boot_configuration": "realtek_bpi_uenv",
       "vendor_boot_directory": "bananapi/bpi-m4/linux",
+      "vendor_boot_dtbs": [
+        "rtd-1395-bananapi-m4-1GB.dtb",
+        "rtd-1395-bananapi-m4-2GB.dtb"
+      ],
+      "overlay_prefix": "",
+      "default_overlays": [],
+      "required_overlays": [],
+      "required_status_nodes": [
+        "/sdmmc@98010400",
+        "/emmc@98012000",
+        "/gmac@98016000",
+        "/hdmitx@9800D000",
+        "/gpu@981d0000",
+        "/pcie@98060000",
+        "/rtk_dwc3_drd@98013200",
+        "/rtk_dwc3_u2host@98013E00",
+        "/pwm@980070D0",
+        "/thermal-sensor@9801D150",
+        "/watchdog@0x98007680"
+      ],
+      "required_present_nodes": [
+        "/i2c@0x98007D00",
+        "/i2c@0x98007C00",
+        "/serial1@9801B200"
+      ],
+      "required_disabled_nodes": [
+        "/sdio@98010A00",
+        "/spi@9801BD00",
+        "/serial2@9801B400"
+      ],
+      "forbidden_packaged_assets": [
+        "bluecore.audio.enc.A01",
+        "u-boot-bpi-m4.bin"
+      ],
       "boot_assets": [
         "uEnv.txt",
         "bluecore.audio",
@@ -372,7 +467,7 @@
       "storage_contract": {
         "sd_node": "/sdmmc@98010400",
         "emmc_node": "/emmc@98012000",
-        "pcie_node": "/pcie@9804E000",
+        "pcie_node": "/pcie@98060000",
         "media_hardware_validated": false
       },
       "network_contract": {

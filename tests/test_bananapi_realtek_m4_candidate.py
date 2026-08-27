@@ -27,6 +27,10 @@ KERNEL_PATCHES = (
 CHECKER = ROOT / "tools/check-bananapi-realtek-m4-source-policy.py"
 BUILDER = ROOT / "tools/build-bananapi-realtek-m4-components.sh"
 VERIFIER = ROOT / "tools/verify-bananapi-realtek-m4-components.sh"
+IMAGE_BUILDER = ROOT / "tools/build-bananapi-realtek-m4-candidate.sh"
+IMAGE_RUNNER = ROOT / "tools/run-bananapi-realtek-m4-candidate-isolated-cache.sh"
+IMAGE_VERIFIER = ROOT / "tools/verify-bananapi-realtek-m4-candidate.sh"
+COMMON_IMAGE_VERIFIER = ROOT / "tools/verify-bananapi-sunxi-candidates.sh"
 
 
 class BananaPiRealtekM4CandidateTests(unittest.TestCase):
@@ -47,7 +51,9 @@ class BananaPiRealtekM4CandidateTests(unittest.TestCase):
             'KERNEL_TARGET="legacy"',
             'BOOTCONFIG="rtd1395_bananapi_defconfig"',
             'BOOTFS_TYPE="fat"',
+            'BOOT_FS_LABEL="BPI-BOOT"',
             'ROOT_FS_LABEL="BPI-ROOT"',
+            'REALTEK_BPI_ROOT_LABEL="BPI-ROOT"',
             f'REALTEK_BPI_BSP_BRANCH="commit:{revision}"',
             f'ARMBIAN_FIRMWARE_GIT_REF_BOARD="commit:{firmware}"',
             'declare -g IMAGE_PARTITION_TABLE="msdos"',
@@ -152,6 +158,9 @@ class BananaPiRealtekM4CandidateTests(unittest.TestCase):
         self.assertFalse(self.policy["display_contract"]["video_decode_verified"])
         self.assertFalse(self.policy["io_contract"]["pin_mapping_hardware_validated"])
         self.assertFalse(self.policy["wireless_contract"]["hardware_validated"])
+        self.assertEqual(
+            self.policy["storage_contract"]["pcie_node"], "/pcie@98060000"
+        )
 
     def test_kernel_contract_includes_diagnostics_and_io(self) -> None:
         options = self.config["common_kernel_options"]
@@ -175,12 +184,17 @@ class BananaPiRealtekM4CandidateTests(unittest.TestCase):
             self.assertFalse(item["included_in_candidate"])
             self.assertFalse(item["redistribution_license_verified"])
 
-    def test_component_level_requires_saved_artifacts(self) -> None:
+    def test_l2_transition_retains_component_artifacts(self) -> None:
         self.assertFalse(self.config["full_image_built"])
+        self.assertFalse(self.config["rootfs_image_built"])
+        self.assertFalse(self.config["full_rootfs_image_built"])
         self.assertFalse(self.config["hardware_validated"])
         self.assertFalse(self.config["hardware_claims_allowed"])
+        self.assertEqual(self.config["candidate_level"], "L2 內部軟體候選")
+        self.assertEqual(self.config["candidate_scope"], "internal-l2")
+        self.assertEqual(self.config["current_evidence_level"], "L2")
+        self.assertNotIn("image_build_evidence", self.config)
         if self.config["component_build_completed"]:
-            self.assertEqual(self.config["candidate_level"], "L1 元件候選")
             evidence = self.config["component_build_evidence"]
             self.assertEqual(
                 evidence["local_evidence_root"],
@@ -190,8 +204,7 @@ class BananaPiRealtekM4CandidateTests(unittest.TestCase):
             self.assertTrue(evidence["uboot_rebuild_hash_match"])
             self.assertEqual(len(evidence["artifacts"]), 9)
         else:
-            self.assertEqual(self.config["candidate_level"], "L0 來源契約")
-            self.assertNotIn("component_build_evidence", self.config)
+            self.fail("L2 過渡契約必須保留已建置的元件證據")
 
     def test_tools_are_m4_scoped_and_avoid_destructive_cleanup(self) -> None:
         builder = BUILDER.read_text(encoding="utf-8")
@@ -206,9 +219,50 @@ class BananaPiRealtekM4CandidateTests(unittest.TestCase):
         self.assertNotIn("bananapi-optimization-status.json", builder)
         self.assertIn("不得包含原始碼或建置樹", verifier)
 
+    def test_full_image_tools_require_fixed_overlay_and_internal_scope(self) -> None:
+        builder = IMAGE_BUILDER.read_text(encoding="utf-8")
+        runner = IMAGE_RUNNER.read_text(encoding="utf-8")
+        verifier = IMAGE_VERIFIER.read_text(encoding="utf-8")
+        common = COMMON_IMAGE_VERIFIER.read_text(encoding="utf-8")
+        self.assertIn("bananapi-realtek-rtd1395-m4-trixie-legacy-cli", builder)
+        self.assertIn("bananapi-realtek-m4-candidate-cache-overlay", builder)
+        self.assertIn("ALLOW_INTERNAL_M4_CANDIDATE", builder)
+        self.assertIn("PUBLIC_RELEASE=no", builder)
+        self.assertIn("HARDWARE_CLAIMS=no", builder)
+        self.assertIn("CACHE_LOWER", runner)
+        self.assertIn("REQUIRE_BUILD_VERIFIER_IDENTITY=yes", verifier)
+        self.assertIn('realtek_bpi_uenv)', common)
+        self.assertNotIn("git reset --hard", builder + runner + verifier)
+        self.assertNotIn("rm -rf", builder + runner + verifier)
+
+    def test_full_image_contract_is_strict_and_non_public(self) -> None:
+        self.assertEqual(self.policy["partition_start_sector"], 8192)
+        self.assertEqual(self.policy["root_partition_start_sector"], 532480)
+        self.assertEqual(self.policy["boot_partition_label"], "BPI-BOOT")
+        self.assertEqual(self.policy["root_partition_label"], "BPI-ROOT")
+        self.assertEqual(self.policy["boot_configuration"], "realtek_bpi_uenv")
+        self.assertEqual(self.policy["uboot_offset"], 40960)
+        self.assertEqual(self.policy["vendor_boot_dtbs"], self.policy["dtbs"])
+        self.assertFalse(self.config["public_release_allowed"])
+        self.assertFalse(
+            self.config["license_policy"]["opaque_payload_redistribution_verified"]
+        )
+        self.assertFalse(
+            self.config["license_policy"]["toolchain_redistribution_verified"]
+        )
+
     def test_policy_document_and_entrypoints_exist(self) -> None:
         self.assertTrue(POLICY.is_file())
-        for path in (*UBOOT_PATCHES, *KERNEL_PATCHES, CHECKER, BUILDER, VERIFIER):
+        for path in (
+            *UBOOT_PATCHES,
+            *KERNEL_PATCHES,
+            CHECKER,
+            BUILDER,
+            VERIFIER,
+            IMAGE_BUILDER,
+            IMAGE_RUNNER,
+            IMAGE_VERIFIER,
+        ):
             with self.subTest(path=path):
                 self.assertTrue(path.is_file())
 

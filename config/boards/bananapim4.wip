@@ -12,6 +12,7 @@ BOOT_FDT_FILE="realtek/rtd139x/rtd-1395-bananapi-m4-2GB.dtb"
 SRC_EXTLINUX="no"
 BOOTFS_TYPE="fat"
 BOOTSIZE="256"
+BOOT_FS_LABEL="BPI-BOOT"
 ROOT_FS_LABEL="BPI-ROOT"
 SERIALCON="ttyS0"
 HAS_VIDEO_OUTPUT="yes"
@@ -24,6 +25,7 @@ REALTEK_BPI_UBOOT_CROSS_COMPILE="toolchains/gcc-linaro-7.3.1-2018.05-x86_64_aarc
 REALTEK_BPI_VENDOR_BOARD="bpi-m4"
 REALTEK_BPI_VENDOR_CHIP="RTD1395"
 REALTEK_BPI_BOOT_DTB_FILES="realtek/rtd139x/rtd-1395-bananapi-m4-1GB.dtb realtek/rtd139x/rtd-1395-bananapi-m4-2GB.dtb"
+REALTEK_BPI_ROOT_LABEL="BPI-ROOT"
 ARMBIAN_FIRMWARE_GIT_REF_BOARD="commit:f50a2a21bcdb77a562b3976930c5c6b521a1df08"
 
 function post_family_config_branch_legacy__bananapim4_pin_sources() {
