@@ -612,6 +612,37 @@ Provides: unavailable-virtual
         self.assertIn("required_kernel_module_paths", verify_text)
         self.assertIn("module_matches", verify_text)
 
+    def test_top_level_json_booleans_are_normalized_for_shell_policy(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            config_path = Path(temporary) / "config.json"
+            config_path.write_text(
+                json.dumps({"enabled": True, "disabled": False}),
+                encoding="utf-8",
+            )
+            for script in (BUILD_SCRIPT, VERIFY_SCRIPT):
+                text = script.read_text()
+                start = text.index("top_field_optional() {")
+                end = text.index("\n}\n\n", start) + 3
+                helper = text[start:end]
+                for key, expected in (("enabled", "true"), ("disabled", "false")):
+                    with self.subTest(script=script.name, key=key):
+                        result = subprocess.run(
+                            [
+                                "bash",
+                                "-c",
+                                'validation_config="$1"\n' + helper
+                                + '\ntop_field_optional "$2"',
+                                "boolean-test",
+                                str(config_path),
+                                key,
+                            ],
+                            capture_output=True,
+                            text=True,
+                            check=False,
+                        )
+                        self.assertEqual(result.returncode, 0, result.stderr)
+                        self.assertEqual(result.stdout.strip(), expected)
+
     def test_64_bit_sunxi_firmware_chain_is_traceable(self) -> None:
         build_text = BUILD_SCRIPT.read_text()
         verify_text = VERIFY_SCRIPT.read_text()

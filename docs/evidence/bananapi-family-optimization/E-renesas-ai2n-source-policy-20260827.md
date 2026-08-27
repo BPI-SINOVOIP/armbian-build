@@ -119,3 +119,5 @@ PUBLIC_RELEASE=yes ./tools/run-bananapi-renesas-ai2n-candidate-isolated-cache.sh
 第三次建置完成 IMG 與 XZ，但最終核心設定移除了來源樹不存在的舊供應商 Mali 選項，映像內也沒有可用的 Panfrost 模組，因此保存於 `bananapi-renesas-rzv2n-ai2n-trixie-legacy-cli-rejected-missing-panfrost-073ab0484`，不得升級 L2。
 
 第四次建置改用 `CONFIG_DRM_PANFROST=m`，完成 Linux 6.1.107、實際 `panfrost.ko`、IMG、XZ 與解壓資料雜湊檢查；但日誌顯示 Armbian 韌體由 `refs/heads/master` 解析。該次雖碰巧解析到 `f50a2a21bcdb77a562b3976930c5c6b521a1df08`，設定本身仍是可移動分支，因此保存於 `bananapi-renesas-rzv2n-ai2n-trixie-legacy-cli-rejected-moving-firmware-073ab0484`，不得升級 L2。只有從固定韌體提交的新來源提交重新建置，並通過實際模組與唯讀內容守門，才能登錄為內部 L2。
+
+第五次啟動在進入編譯前由新固定韌體守門拒絕。原因是共用 JSON 頂層欄位讀取函式把布林值輸出成 `True`，而 Shell 政策只接受小寫 `true/false`；此問題不涉及 AI2N 原始碼或產物。拒絕狀態保存在 `bananapi-renesas-rzv2n-ai2n-trixie-legacy-cli-rejected-firmware-bool-gate-2fc4f8800`，修正讀值介面並新增實際執行測試後才可再次建置。

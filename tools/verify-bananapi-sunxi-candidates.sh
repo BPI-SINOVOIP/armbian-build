@@ -156,7 +156,10 @@ import json
 import sys
 with open(sys.argv[1], encoding="utf-8") as stream:
     value = json.load(stream).get(sys.argv[2], "")
-print(value)
+if isinstance(value, bool):
+    print("true" if value else "false")
+else:
+    print(value)
 PY
 }
 
