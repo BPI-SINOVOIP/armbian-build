@@ -4,7 +4,7 @@
 
 ## 結論
 
-`bananapiw3` 已使用專用 OverlayFS 隔離快取，由固定來源完整建置 Debian Trixie vendor minimal CLI。正式映像的初步唯讀檢查已確認 GPT 開機配置、Banana Pi 專屬 DTB 與 U-Boot 身分、RKBin 授權副本、核心設定及診斷工具契約；最終 L2 狀態仍以共用唯讀驗證器產生的 `VERIFICATION_STATUS.json` 為準。
+`bananapiw3` 已使用專用 OverlayFS 隔離快取，由固定來源完整建置 Debian Trixie vendor minimal CLI。正式映像已通過共用唯讀驗證器；GPT 開機配置、Banana Pi 專屬 DTB 與 U-Boot 身分、RKBin 授權副本、核心設定及診斷工具契約均符合 L2 守門。
 
 本結果不代表實體板已開機。核心是 Rockchip 6.1 vendor 基線，DDR、BL31 與 RockUSB loader 使用固定 RKBin 二進位；尚未有冷啟動、儲存、網路、無線、顯示或硬體加速實測，因此板檔維持 `.wip`，最高只可標示為 L2 軟體證據。
 
@@ -37,6 +37,19 @@
 | 輸出目錄 | `output/images/2026.08/bananapi-rockchip-rk3588-w3-trixie-vendor-cli/` |
 
 U-Boot、核心、DTB、套件、根檔案系統、IMG 與 XZ 均在正式建置重新產生。建置紀錄明確顯示 firmware 以 `commit:f50a2a21bcdb77a562b3976930c5c6b521a1df08` 解析與封裝。
+
+## 正式驗證結果
+
+| 項目 | 值 |
+| --- | --- |
+| 驗證器提交 | `87206fe7ad9545850325b521aee3da60d5dc481c` |
+| 建置時驗證契約 SHA-256 | `f4a0876e719b086d738c80fbee62cc6ace3196f228dae7f8365f0a24f8e08e06` |
+| 正式驗證契約 SHA-256 | `d4fbb20fb135b1aa12e60f8dd4716038488662bbe05bb2bfcdb96ddea0a97690` |
+| U-Boot 載荷清單 SHA-256 | `354b3d8047b9e561774687289371b1aa4b51c06c1e5c7e403a36f6f5350ba038` |
+| RKBin 證據清單 SHA-256 | `c8b5c7d2c9ab264e11da23216ec888b4c04af15b1ea7e7d922aceee8548be101` |
+| 驗證層級 | L2 |
+
+驗證器已完成 XZ 串流檢查與解壓後 IMG 同一性、GPT、分割區起點、映像內 U-Boot 位元組配置、套件中繼資料、固定來源提交、DTB 結構、核心設定、必要套件、RKBin 授權副本及唯讀掛載檢查。機器可讀結果位於正式輸出目錄的 `VERIFICATION_STATUS.json`、`VERIFICATION.tsv` 與 `UBOOT_PAYLOAD_EVIDENCE.tsv`。
 
 ## 映像產物
 
