@@ -3,6 +3,11 @@
   "candidate_branch": "legacy",
   "candidate_scope": "internal-l0",
   "evidence_level": "L0",
+  "target_evidence_level": "L2",
+  "allowed_evidence_levels": [
+    "L0",
+    "L2"
+  ],
   "kernel_family": "renesas",
   "linux_source": "https://github.com/BPI-SINOVOIP/pi-linux.git",
   "linux_ref": "commit:48c742429129c095045823c204209bb2a92fb5b4",

@@ -4,10 +4,12 @@ set -euo pipefail
 repo_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 validation_config="${VALIDATION_CONFIG:-${repo_dir}/config/validation/bananapi-renesas-rzv2n-ai2n-legacy.json}"
 family_config="${repo_dir}/config/sources/families/renesas-rzv2n-bpi.conf"
+uboot_compat_patch="${repo_dir}/patch/u-boot/legacy/u-boot-rzv2n-v2021.10/0001-tools-binman-use-importlib-resources.patch"
 source_cache_root="${SOURCE_CACHE_ROOT:-${repo_dir}/cache/sources}"
 public_release="${PUBLIC_RELEASE:-no}"
 policy_only="${POLICY_ONLY:-no}"
 evidence_dir="${EVIDENCE_DIR:-}"
+require_clean_source_trees="${REQUIRE_CLEAN_SOURCE_TREES:-no}"
 
 for command in cut find git grep mv python3 sha256sum sort; do
 	command -v "${command}" >/dev/null || {
@@ -31,6 +33,10 @@ case "${policy_only}" in
 	yes | no) ;;
 	*) fail "POLICY_ONLY 只接受 yes 或 no" ;;
 esac
+case "${require_clean_source_trees}" in
+	yes | no) ;;
+	*) fail "REQUIRE_CLEAN_SOURCE_TREES 只接受 yes 或 no" ;;
+esac
 
 readarray -t policy_values < <(python3 - "${validation_config}" <<'PY'
 import json
@@ -47,14 +53,20 @@ print("true" if hardware["present"] else "false")
 print("true" if hardware["node_presence_is_functional_evidence"] else "false")
 print(config["candidate_scope"])
 print(config["evidence_level"])
+print(config["target_evidence_level"])
+print(" ".join(config["allowed_evidence_levels"]))
 PY
 )
 [[ "${policy_values[2]}" == false || "${policy_values[2]}" == true ]] || fail "發布政策格式無效"
 [[ "${policy_values[2]}" == true ]] || fail "發布阻擋未啟用機器守門"
 [[ "${policy_values[3]}" == false ]] || fail "不得宣稱已有實體板證據"
 [[ "${policy_values[4]}" == false ]] || fail "不得把 DT 節點存在視為功能通過"
-[[ "${policy_values[5]}" == internal-l0 ]] || fail "目前候選範圍只能是 internal-l0"
-[[ "${policy_values[6]}" == L0 ]] || fail "目前證據層級只能是 L0"
+case "${policy_values[5]}:${policy_values[6]}" in
+	internal-l0:L0 | internal-l2:L2) ;;
+	*) fail "候選範圍與證據層級不一致" ;;
+esac
+[[ "${policy_values[7]}" == L2 ]] || fail "目標證據層級必須是 L2"
+[[ "${policy_values[8]}" == "L0 L2" ]] || fail "允許的證據層級不符"
 if [[ "${public_release}" == yes &&
 	( "${policy_values[0]}" != true || "${policy_values[1]}" != true ) ]]; then
 	fail "目前授權與實體證據不足，禁止建立公開發布候選"
@@ -70,6 +82,9 @@ for assignment in \
 	'BOOTBRANCH="commit:8aec7f20bcf5555d7d219c2bad295b4a627b6521"'; do
 	grep -Fq "${assignment}" "${family_config}" || fail "family 缺少固定來源：${assignment}"
 done
+[[ -f "${uboot_compat_patch}" ]] || fail "缺少受控 U-Boot Python 相容 patch"
+grep -Fq "importlib_resources.files" "${uboot_compat_patch}" ||
+	fail "U-Boot Python 相容 patch 內容不符"
 grep -Fq 'tools/renesas/rz_boot_param' "${family_config}" || fail "family 未由來源建置 bptool"
 grep -Fq 'tools/fiptool' "${family_config}" || fail "family 未由來源建置 fiptool"
 if grep -Fq 'packages/blobs/bpi-renesas/tools' "${family_config}"; then
@@ -128,6 +143,16 @@ declare -A source_trees=(
 	[linux]="${linux_tree}"
 	[uboot]="${uboot_tree}"
 )
+
+if [[ "${require_clean_source_trees}" == yes ]]; then
+	for component in "${!source_trees[@]}"; do
+		tree="${source_trees[${component}]}"
+		git -C "${tree}" diff --cached --quiet ||
+			fail "${component} 來源索引含有未受控差異"
+		[[ -z "$(git -C "${tree}" status --porcelain --untracked-files=all)" ]] ||
+			fail "${component} 實際來源工作樹不乾淨"
+	done
+fi
 
 while IFS=$'\t' read -r component revision license_path license_sha256; do
 	tree="${source_trees[${component}]}"

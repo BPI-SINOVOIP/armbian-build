@@ -23,6 +23,12 @@ SOURCE_VERIFIER = ROOT / "tools/verify-bananapi-renesas-ai2n-sources.sh"
 BUILDER = ROOT / "tools/build-bananapi-renesas-ai2n-candidate.sh"
 VERIFIER = ROOT / "tools/verify-bananapi-renesas-ai2n-candidate.sh"
 RUNNER = ROOT / "tools/run-bananapi-renesas-ai2n-candidate-isolated-cache.sh"
+SOURCE_PREPARER = ROOT / "tools/prepare-bananapi-renesas-ai2n-overlay-sources.sh"
+UBOOT_COMPAT_PATCH = (
+    ROOT
+    / "patch/u-boot/legacy/u-boot-rzv2n-v2021.10"
+    / "0001-tools-binman-use-importlib-resources.patch"
+)
 POLICY = (
     ROOT
     / "docs/evidence/bananapi-family-optimization/E-renesas-ai2n-source-policy-20260827.md"
@@ -104,6 +110,15 @@ class BananaPiRenesasAi2nCandidateTests(unittest.TestCase):
         self.assertIn('mktemp "${PWD}/${pack_out}/.bp.XXXXXX.bin"', self.family_text)
         self.assertIn('unlink "${bp_file}"', self.family_text)
 
+    def test_uboot_python_compatibility_is_a_controlled_patch(self) -> None:
+        text = UBOOT_COMPAT_PATCH.read_text(encoding="utf-8")
+        self.assertIn("importlib_resources.files", text)
+        self.assertIn("pkg_resources.resource_string", text)
+        self.assertIn(
+            'BOOTPATCHDIR="legacy/u-boot-rzv2n-v2021.10"',
+            self.family_text,
+        )
+
     def test_proprietary_assets_are_hash_locked(self) -> None:
         assets = self.config["proprietary_assets"]
         self.assertEqual(len(assets), 9)
@@ -129,6 +144,8 @@ class BananaPiRenesasAi2nCandidateTests(unittest.TestCase):
         self.assertEqual(hardware["validated_features"], [])
         self.assertEqual(self.config["candidate_scope"], "internal-l0")
         self.assertEqual(self.config["evidence_level"], "L0")
+        self.assertEqual(self.config["target_evidence_level"], "L2")
+        self.assertEqual(self.config["allowed_evidence_levels"], ["L0", "L2"])
 
     def test_policy_only_gate_refuses_public_release(self) -> None:
         environment = os.environ.copy()
@@ -262,13 +279,15 @@ class BananaPiRenesasAi2nCandidateTests(unittest.TestCase):
         self.assertIn("bananapi-renesas-ai2n-cache-overlay", RUNNER.read_text())
         self.assertIn('BOARDS="bpi-ai2n"', BUILDER.read_text())
         self.assertIn('BOARDS="bpi-ai2n"', VERIFIER.read_text())
-        self.assertIn('VERIFICATION_EVIDENCE_LEVEL="L1"', VERIFIER.read_text())
+        self.assertIn('VERIFICATION_EVIDENCE_LEVEL="L2"', VERIFIER.read_text())
+        self.assertIn(str(SOURCE_PREPARER.relative_to(ROOT)), BUILDER.read_text())
+        self.assertTrue(SOURCE_PREPARER.stat().st_mode & 0o111)
 
     def test_policy_records_component_and_hardware_boundaries(self) -> None:
         text = POLICY.read_text(encoding="utf-8")
         for expected in (
             "目前只能登錄為內部 L0 來源／元件契約",
-            "證據層級最高只能標示為內部 L1",
+            "通過後才可標示為內部 L2",
             "禁止建立公開發布候選",
             "不能以節點存在或核心選項開啟取代",
             "OpenSSL 3.0",
@@ -277,13 +296,39 @@ class BananaPiRenesasAi2nCandidateTests(unittest.TestCase):
             with self.subTest(expected=expected):
                 self.assertIn(expected, text)
 
-    def test_ai2n_files_do_not_claim_l2_evidence(self) -> None:
-        for path in (VALIDATION, SOURCE_VERIFIER, BUILDER, VERIFIER, RUNNER, POLICY):
+    def test_l2_requires_complete_read_only_verifier(self) -> None:
+        verifier = VERIFIER.read_text(encoding="utf-8")
+        self.assertLess(
+            verifier.index('"${generic_verifier}"'),
+            verifier.index('status["evidence_level"] = "L2"'),
+        )
+        self.assertIn('status["public_release_allowed"] = False', verifier)
+        self.assertIn('status["hardware_evidence_present"] = False', verifier)
+        for path in (
+            VALIDATION,
+            SOURCE_VERIFIER,
+            SOURCE_PREPARER,
+            BUILDER,
+            VERIFIER,
+            RUNNER,
+            POLICY,
+        ):
             with self.subTest(path=path.name):
                 text = path.read_text(encoding="utf-8")
-                for forbidden in ("internal-l2", "內部 L2", "L2 完整映像"):
-                    self.assertNotIn(forbidden, text)
                 self.assertNotIn("rm -rf", text)
+
+    def test_overlay_source_preparer_cannot_touch_lower_cache(self) -> None:
+        text = SOURCE_PREPARER.read_text(encoding="utf-8")
+        for required in (
+            "mountpoint -q",
+            '== overlay',
+            "checkout-index --force --",
+            "ls-files --others --exclude-standard -z",
+            "status --porcelain --untracked-files=all",
+        ):
+            with self.subTest(required=required):
+                self.assertIn(required, text)
+        self.assertNotIn("/media/pi/SMCI/armbian/bpi-v26.2.1/cache", text)
 
 
 if __name__ == "__main__":
