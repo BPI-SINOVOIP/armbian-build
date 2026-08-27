@@ -33,6 +33,7 @@ python3 "${repo_dir}/tools/check-bananapi-vs680-m6-policy.py" "${validation_conf
 	exit 2
 }
 export REQUIRE_ISOLATED_CACHE=yes
+export REQUIRE_SOURCE_DATE_EPOCH_METADATA=yes
 
 if [[ "${SOURCE_DATE_EPOCH:-${expected_source_date_epoch}}" != "${expected_source_date_epoch}" ]]; then
 	echo "BPI-M6 建置拒絕：SOURCE_DATE_EPOCH 必須是 ${expected_source_date_epoch}。" >&2

@@ -294,6 +294,7 @@ printf '%s\n' "$BOOTBRANCH" "$KERNELBRANCH" \
         self.assertIn("check-bananapi-vs680-m6-policy.py", candidate_build)
         self.assertIn("verify-bananapi-vs680-m6-sources.sh", candidate_build)
         self.assertIn('SOURCE_DATE_EPOCH="${expected_source_date_epoch}"', candidate_build)
+        self.assertIn("REQUIRE_SOURCE_DATE_EPOCH_METADATA=yes", candidate_build)
         self.assertIn('[[ "${REQUIRE_ISOLATED_CACHE:-yes}" == yes ]]', candidate_build)
         self.assertIn("BPI-M6 建置不得停用 OverlayFS", candidate_build)
         self.assertIn('MINIMUM_FREE_GIB="${MINIMUM_FREE_GIB:-40}"', candidate_build)
@@ -301,6 +302,8 @@ printf '%s\n' "$BOOTBRANCH" "$KERNELBRANCH" \
         self.assertIn("check-bananapi-vs680-m6-policy.py", verifier)
         self.assertIn("verify-bananapi-vs680-m6-sources.sh", verifier)
         self.assertIn("VERIFY_ARCHIVES=yes", verifier)
+        self.assertIn("REQUIRE_SOURCE_DATE_EPOCH_METADATA=yes", verifier)
+        self.assertIn("REQUIRE_BUILD_VERIFIER_IDENTITY=yes", verifier)
         self.assertNotIn("VALIDATION_CONFIG:-", verifier)
         self.assertIn("候選層級、範圍與證據等級不成對", verifier)
         self.assertIn(
@@ -339,6 +342,7 @@ printf '%s\n' "$BOOTBRANCH" "$KERNELBRANCH" \
         ):
             with self.subTest(tool="builder", required=required):
                 self.assertIn(required, builder)
+        self.assertNotIn('source_date_epoch=""', builder)
         for required in (
             "boot_partition_filesystem_type",
             "candidate_source_tree",

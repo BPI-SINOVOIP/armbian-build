@@ -117,7 +117,7 @@ source_date_epoch="${SOURCE_DATE_EPOCH:-}"
 
 assert_source_identity() {
 	[[ "$(git -C "${repo_dir}" rev-parse HEAD)" == "${source_commit}" ]] ||
-		fail "建置期間來源提交已改變"
+		fail "建置期間來源 HEAD 已改變；建置期間來源提交已改變"
 	[[ "$(git -C "${repo_dir}" rev-parse 'HEAD^{tree}')" == "${source_tree}" ]] ||
 		fail "建置期間來源 tree 已改變"
 	[[ -z "$(git -C "${repo_dir}" status --porcelain --untracked-files=all)" ]] ||
@@ -332,15 +332,9 @@ case "${verify_firmware_source_resolution}" in
 		;;
 	*) fail "verify_firmware_source_resolution 只接受 true 或 false" ;;
 esac
-source_date_epoch=""
 if [[ "${require_source_date_epoch_metadata}" == yes ]]; then
-	source_date_epoch="$(top_field_optional source_date_epoch)"
 	[[ "${source_date_epoch}" =~ ^[1-9][0-9]*$ ]] ||
 		fail "驗證設定缺少有效的 source_date_epoch 正整數"
-	if [[ -n "${SOURCE_DATE_EPOCH:-}" && "${SOURCE_DATE_EPOCH}" != "${source_date_epoch}" ]]; then
-		fail "SOURCE_DATE_EPOCH 與驗證設定的固定契約不符"
-	fi
-	export SOURCE_DATE_EPOCH="${source_date_epoch}"
 fi
 
 for board in "${boards[@]}"; do

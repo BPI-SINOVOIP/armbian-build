@@ -123,6 +123,8 @@ export VERIFY_TMP_PREFIX="bananapi-vs680-m6-verify"
 export VERIFY_ARCHIVES=yes
 export VERIFICATION_EVIDENCE_LEVEL="${verification_evidence_level}"
 export VERIFICATION_EXTRA_STATUS_JSON="${extra_status_file}"
+export REQUIRE_SOURCE_DATE_EPOCH_METADATA=yes
+export REQUIRE_BUILD_VERIFIER_IDENTITY=yes
 
 "${verifier}" "$@"
 unlink "${extra_status_file}"
