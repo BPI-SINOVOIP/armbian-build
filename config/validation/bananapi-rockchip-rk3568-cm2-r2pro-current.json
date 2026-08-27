@@ -1,8 +1,12 @@
 {
   "schema_version": 1,
   "candidate_branch": "current",
-  "candidate_identity_scope": "BPI-CM2 module on BPI-R2 Pro carrier board",
+  "candidate_scope": "internal-l0",
+  "evidence_level": "L0",
+  "candidate_identity_scope": "BPI-CM2 初始移植，目前僅採用 BPI-R2 Pro 軟體參考板，載板尚未確認",
   "generic_cm2_supported": false,
+  "r2_pro_is_cm2_carrier_verified": false,
+  "donor_only_contract": true,
   "kernel_family": "rockchip64",
   "linux_source": "https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git",
   "linux_ref": "commit:1f99e9ab748fc5c32120de9c4eca31abfe54a4d5",
@@ -14,6 +18,27 @@
   "rkbin_commit": "46c4793ea2dcea7c8331fce9f07b5c80561a0395",
   "rkbin_standalone_redistribution_authorized": false,
   "rkbin_distribution_review_required": true,
+  "release_policy": {
+    "public_release_allowed": false,
+    "public_redistribution_authorized": false,
+    "machine_enforced": true,
+    "block_reasons": [
+      "尚未取得 BPI-CM2 實際載板原理圖、接線與供電拓撲的核對證據",
+      "目前裝置樹與 U-Boot 僅沿用 BPI-R2 Pro 參考板，不能代表 BPI-CM2 硬體",
+      "RKBin 預建二進位仍需完成對外發布與再散布審查",
+      "尚無完整映像、唯讀內容驗證與實體板證據"
+    ]
+  },
+  "component_evidence": {
+    "accepted": false,
+    "full_image_present": false,
+    "validated_artifacts": []
+  },
+  "hardware_evidence": {
+    "present": false,
+    "donor_node_presence_is_cm2_functional_evidence": false,
+    "validated_features": []
+  },
   "rkbin_blobs": {
     "LICENSE.TXT": "0b37e1522c36cf4579c45dfb138798c3cb5665fcf6302b95377179fbed38e35c",
     "rk35/rk3568_bl31_v1.44.elf": "65110f822fdbdd0163ce2dabc60591e7a8a0ffbc9471780e29eef0062f9ed7b6",
@@ -80,12 +105,14 @@
     "bananapicm2": {
       "family": "rockchip64",
       "module": "Banana Pi BPI-CM2",
-      "carrier": "Banana Pi BPI-R2 Pro carrier board",
+      "carrier": "尚未確認",
+      "donor_board": "Banana Pi BPI-R2 Pro",
+      "donor_only_contract": true,
+      "carrier_verified": false,
       "generic_module_image": false,
-      "dtb": "rockchip/rk3568-bpi-cm2-r2pro-carrier.dtb",
-      "model": "Banana Pi CM2 module on BPI-R2 Pro carrier board",
+      "dtb": "rockchip/rk3568-bpi-r2-pro.dtb",
+      "model": "Bananapi-R2 Pro (RK3568) DDR4 Board",
       "compatible": [
-        "sinovoip,rk3568-bpi-cm2-r2pro-carrier",
         "sinovoip,rk3568-bpi-r2pro",
         "rockchip,rk3568"
       ],
@@ -94,14 +121,14 @@
       "uboot_git_source": "https://github.com/u-boot/u-boot",
       "uboot_git_ref": "commit:866ca972d6c3cabeaf6dbac431e8e08bb30b3c8e",
       "uboot_revision": "866ca972d6c3cabeaf6dbac431e8e08bb30b3c8e",
-      "uboot_defconfig": "bpi-cm2-r2pro-carrier-rk3568_defconfig",
+      "uboot_defconfig": "bpi-r2-pro-rk3568_defconfig",
       "uboot_target_index": 1,
       "uboot_required_config_options": [
         "CONFIG_AHCI=y",
         "CONFIG_ARCH_ROCKCHIP=y",
         "CONFIG_CMD_GPT=y",
-        "CONFIG_DEFAULT_DEVICE_TREE=\"rk3568-bpi-cm2-r2pro-carrier\"",
-        "CONFIG_DEFAULT_FDT_FILE=\"rockchip/rk3568-bpi-cm2-r2pro-carrier.dtb\"",
+        "CONFIG_DEFAULT_DEVICE_TREE=\"rk3568-bpi-r2-pro\"",
+        "CONFIG_DEFAULT_FDT_FILE=\"rockchip/rk3568-bpi-r2-pro.dtb\"",
         "CONFIG_DWC_AHCI=y",
         "CONFIG_DWC_ETH_QOS_ROCKCHIP=y",
         "CONFIG_MMC_SDHCI_ROCKCHIP=y",
@@ -116,8 +143,8 @@
       ],
       "uboot_binary_for_string_checks": "u-boot.itb",
       "uboot_required_binary_strings": [
-        "Banana Pi CM2 module on BPI-R2 Pro carrier board",
-        "sinovoip,rk3568-bpi-cm2-r2pro-carrier"
+        "Bananapi-R2 Pro (RK3568) DDR4 Board",
+        "sinovoip,rk3568-bpi-r2pro"
       ],
       "uboot_payloads": [
         "idbloader.img@32768",
@@ -132,7 +159,7 @@
       "partition_start_sector": 32768,
       "logical_sector_size": 512,
       "boot_configuration": "extlinux",
-      "extlinux_fdt": "/boot/dtb/rockchip/rk3568-bpi-cm2-r2pro-carrier.dtb",
+      "extlinux_fdt": "/boot/dtb/rockchip/rk3568-bpi-r2-pro.dtb",
       "overlay_prefix": "rockchip",
       "overlay_directory": "rockchip/overlay",
       "sd_node": "/mmc@fe2b0000",

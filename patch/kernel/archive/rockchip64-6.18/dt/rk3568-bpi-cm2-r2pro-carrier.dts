@@ -1,9 +1,0 @@
-// SPDX-License-Identifier: (GPL-2.0+ OR MIT)
-
-#include "rk3568-bpi-r2-pro.dts"
-
-/ {
-	model = "Banana Pi CM2 module on BPI-R2 Pro carrier board";
-	compatible = "sinovoip,rk3568-bpi-cm2-r2pro-carrier",
-		     "sinovoip,rk3568-bpi-r2pro", "rockchip,rk3568";
-};

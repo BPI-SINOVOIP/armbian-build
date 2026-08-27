@@ -5,6 +5,6 @@ repo_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 runner="${repo_dir}/tools/run-bananapi-candidates-isolated-cache.sh"
 
 export CANDIDATE_BUILDER="${repo_dir}/tools/build-bananapi-rockchip-cm2-r2pro-candidate.sh"
-export CACHE_OVERLAY_ROOT="${repo_dir}/.tmp/bananapi-rockchip-cm2-r2pro-cache-overlay"
+export CACHE_OVERLAY_ROOT="${repo_dir}/.tmp/bananapi-rockchip-cm2-r2pro-donor-cache-overlay"
 
 "${runner}" "$@"

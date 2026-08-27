@@ -4,8 +4,10 @@
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 import subprocess
+import tempfile
 import unittest
 
 
@@ -15,12 +17,12 @@ CONFIG_PATH = (
     ROOT
     / "config/validation/bananapi-rockchip-rk3568-cm2-r2pro-current.json"
 )
-KERNEL_DTS = (
+REJECTED_KERNEL_DTS = (
     ROOT
     / "patch/kernel/archive/rockchip64-6.18/dt"
     / "rk3568-bpi-cm2-r2pro-carrier.dts"
 )
-UBOOT_PATCH = (
+REJECTED_UBOOT_PATCH = (
     ROOT
     / "patch/u-boot/v2024.01/board_bananapicm2"
     / "add-cm2-r2pro-carrier-identity.patch"
@@ -46,34 +48,35 @@ class BananaPiRockchipCM2CandidateTests(unittest.TestCase):
         cls.config = json.loads(CONFIG_PATH.read_text())
         cls.policy = cls.config["boards"]["bananapicm2"]
 
-    def test_identity_is_cm2_module_on_r2_pro_carrier_only(self) -> None:
+    def test_identity_is_cm2_with_unverified_r2_pro_donor(self) -> None:
         self.assertIn(
-            'BOARD_NAME="Banana Pi CM2 on BPI-R2 Pro carrier"',
+            'BOARD_NAME="Banana Pi CM2（R2 Pro 軟體參考）"',
             self.board_text,
         )
         self.assertEqual(
             self.config["candidate_identity_scope"],
-            "BPI-CM2 module on BPI-R2 Pro carrier board",
+            "BPI-CM2 初始移植，目前僅採用 BPI-R2 Pro 軟體參考板，載板尚未確認",
         )
         self.assertFalse(self.config["generic_cm2_supported"])
+        self.assertFalse(self.config["r2_pro_is_cm2_carrier_verified"])
+        self.assertTrue(self.config["donor_only_contract"])
         self.assertEqual(self.policy["module"], "Banana Pi BPI-CM2")
-        self.assertEqual(
-            self.policy["carrier"],
-            "Banana Pi BPI-R2 Pro carrier board",
-        )
+        self.assertEqual(self.policy["carrier"], "尚未確認")
+        self.assertEqual(self.policy["donor_board"], "Banana Pi BPI-R2 Pro")
+        self.assertTrue(self.policy["donor_only_contract"])
+        self.assertFalse(self.policy["carrier_verified"])
         self.assertFalse(self.policy["generic_module_image"])
 
-    def test_board_uses_dedicated_dtb_and_defconfig(self) -> None:
+    def test_board_explicitly_uses_r2_pro_donor(self) -> None:
         for expected in (
             'KERNEL_TARGET="current"',
-            'BOOTCONFIG="bpi-cm2-r2pro-carrier-rk3568_defconfig"',
-            'BOOT_FDT_FILE="rockchip/rk3568-bpi-cm2-r2pro-carrier.dtb"',
+            'BOOTCONFIG="bpi-r2-pro-rk3568_defconfig"',
+            'BOOT_FDT_FILE="rockchip/rk3568-bpi-r2-pro.dtb"',
             'SRC_CMDLINE="console=ttyS2,1500000 console=tty0"',
         ):
             with self.subTest(expected=expected):
                 self.assertIn(expected, self.board_text)
-        self.assertNotIn('BOOTCONFIG="bpi-r2-pro-rk3568_defconfig"', self.board_text)
-        self.assertNotIn('BOOT_FDT_FILE="rockchip/rk3568-bpi-r2-pro.dtb"', self.board_text)
+        self.assertNotIn("cm2-r2pro-carrier", self.board_text)
 
     def test_all_movable_sources_are_fixed(self) -> None:
         expected = (
@@ -145,44 +148,46 @@ printf 'kernel_source=%s\\nkernel=%s\\nuboot_source=%s\\nuboot=%s\\nfirmware=%s\
             "post_family_tweaks_bsp__bananapicm2_r2pro_rkbin_license",
             self.board_text,
         )
+        release = self.config["release_policy"]
+        self.assertFalse(release["public_release_allowed"])
+        self.assertFalse(release["public_redistribution_authorized"])
+        self.assertTrue(release["machine_enforced"])
 
-    def test_linux_dts_expresses_module_and_carrier(self) -> None:
-        text = KERNEL_DTS.read_text()
-        self.assertIn('#include "rk3568-bpi-r2-pro.dts"', text)
-        self.assertIn(
-            'model = "Banana Pi CM2 module on BPI-R2 Pro carrier board";',
-            text,
-        )
-        self.assertIn('"sinovoip,rk3568-bpi-cm2-r2pro-carrier"', text)
+    def test_false_cm2_carrier_identity_is_removed(self) -> None:
+        self.assertFalse(REJECTED_KERNEL_DTS.exists())
+        self.assertFalse(REJECTED_UBOOT_PATCH.exists())
+        self.assertEqual(self.policy["dtb"], "rockchip/rk3568-bpi-r2-pro.dtb")
         self.assertEqual(
-            self.policy["dtb"],
-            "rockchip/rk3568-bpi-cm2-r2pro-carrier.dtb",
+            self.policy["model"],
+            "Bananapi-R2 Pro (RK3568) DDR4 Board",
+        )
+        self.assertEqual(
+            self.policy["compatible"],
+            ["sinovoip,rk3568-bpi-r2pro", "rockchip,rk3568"],
         )
         self.assertNotIn("dtb_sha256", self.policy)
 
-    def test_uboot_patch_has_dedicated_identity_and_full_indices(self) -> None:
-        text = UBOOT_PATCH.read_text()
+    def test_uboot_contract_keeps_donor_identity(self) -> None:
         for expected in (
-            "rk3568-bpi-cm2-r2pro-carrier.dts",
-            "bpi-cm2-r2pro-carrier-rk3568_defconfig",
-            'CONFIG_DEFAULT_DEVICE_TREE="rk3568-bpi-cm2-r2pro-carrier"',
-            'CONFIG_DEFAULT_FDT_FILE="rockchip/rk3568-bpi-cm2-r2pro-carrier.dtb"',
-            'CONFIG_SYS_PROMPT="BPI-CM2-R2PRO> "',
-            "index 9d28a485bec6d4e8dbe8967c4d3d9fed271117cf..aadc62c2687252b1468e3b454a927915cd72ae7f",
+            'CONFIG_DEFAULT_DEVICE_TREE="rk3568-bpi-r2-pro"',
+            'CONFIG_DEFAULT_FDT_FILE="rockchip/rk3568-bpi-r2-pro.dtb"',
         ):
             with self.subTest(expected=expected):
-                self.assertIn(expected, text)
-        self.assertNotIn("index 111111111111..222222222222", text)
+                self.assertIn(expected, self.policy["uboot_required_config_options"])
         self.assertEqual(
             self.policy["uboot_defconfig"],
-            "bpi-cm2-r2pro-carrier-rk3568_defconfig",
+            "bpi-r2-pro-rk3568_defconfig",
         )
         self.assertEqual(
             self.policy["uboot_binary_for_string_checks"],
             "u-boot.itb",
         )
+        self.assertIn(
+            "Bananapi-R2 Pro (RK3568) DDR4 Board",
+            self.policy["uboot_required_binary_strings"],
+        )
 
-    def test_carrier_io_contract_matches_declared_scope(self) -> None:
+    def test_donor_io_contract_cannot_be_hardware_evidence(self) -> None:
         self.assertEqual(self.policy["sd_node"], "/mmc@fe2b0000")
         self.assertIn("/mmc@fe310000=8", self.policy["additional_bus_widths"])
         self.assertIn(
@@ -197,6 +202,10 @@ printf 'kernel_source=%s\\nkernel=%s\\nuboot_source=%s\\nuboot=%s\\nfirmware=%s\
             "/usb@fcc00000:dr_mode=otg",
             self.policy["required_string_properties"],
         )
+        hardware = self.config["hardware_evidence"]
+        self.assertFalse(hardware["present"])
+        self.assertFalse(hardware["donor_node_presence_is_cm2_functional_evidence"])
+        self.assertEqual(hardware["validated_features"], [])
 
     def test_packages_cover_declared_validation_tools(self) -> None:
         package_line = next(
@@ -221,22 +230,102 @@ printf 'kernel_source=%s\\nkernel=%s\\nuboot_source=%s\\nuboot=%s\\nfirmware=%s\
                 path.read_text(),
             )
         self.assertIn(
-            "bananapi-rockchip-cm2-r2pro-cache-overlay",
+            "bananapi-rockchip-cm2-r2pro-donor-cache-overlay",
             ENTRYPOINTS[2].read_text(),
         )
+        self.assertIn("cm2-r2pro-donor-trixie", ENTRYPOINTS[0].read_text())
+        self.assertIn("cm2-r2pro-donor-trixie", ENTRYPOINTS[1].read_text())
+        self.assertIn('VERIFICATION_EVIDENCE_LEVEL="L1"', ENTRYPOINTS[1].read_text())
 
-    def test_policy_blocks_generic_and_premature_l2_claims(self) -> None:
+    def test_current_evidence_is_l0_and_future_donor_is_capped_at_l1(self) -> None:
+        self.assertEqual(self.config["candidate_scope"], "internal-l0")
+        self.assertEqual(self.config["evidence_level"], "L0")
+        self.assertFalse(self.config["component_evidence"]["accepted"])
+        self.assertFalse(self.config["component_evidence"]["full_image_present"])
         text = POLICY_PATH.read_text()
-        self.assertIn("不是通用 BPI-CM2 映像", text)
-        self.assertIn("目前是 L2 待建候選", text)
-        self.assertIn("沒有執行完整映像建置", text)
+        self.assertIn("目前稽核層級為內部 L0", text)
+        self.assertIn("最多只能標示為內部 L1", text)
+        self.assertIn("目前沒有證據證明 BPI-R2 Pro 是可安裝 BPI-CM2 的載板", text)
         self.assertIn("禁止獨立散布", text)
-        self.assertIn(
-            "463735988e09f1a7dc4a919c8b04043fda4b6980cf45a86b4a28b4b0536d0027",
-            text,
-        )
-        self.assertIn("本候選沒有設定 OP-TEE", text)
-        self.assertIn("任何其他 CM2 載板都必須建立自己的 DTS", text)
+        self.assertIn("禁止建立公開發布候選", text)
+        self.assertIn("不得只改參考板的 model 或 compatible", text)
+
+    def test_public_release_is_machine_blocked(self) -> None:
+        environment = os.environ.copy()
+        environment["PUBLIC_RELEASE"] = "yes"
+        for path in ENTRYPOINTS[:2]:
+            with self.subTest(path=path.name):
+                result = subprocess.run(
+                    [str(path)],
+                    cwd=ROOT,
+                    env=environment,
+                    text=True,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    check=False,
+                )
+                self.assertNotEqual(result.returncode, 0)
+                self.assertIn("禁止建立公開發布候選", result.stderr)
+
+    def test_full_donor_image_evidence_is_capped_at_l1(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            temporary = Path(directory)
+            output = temporary / "output"
+            fake_verifier = temporary / "fake-verifier.sh"
+            fake_verifier.write_text(
+                """#!/usr/bin/env bash
+set -euo pipefail
+mkdir -p "${OUTPUT_DIR}"
+printf 'board\tidentity\tread_only_content\tevidence_level\nbananapicm2\tpass\tpass\tL2\n' >"${OUTPUT_DIR}/VERIFICATION.tsv"
+printf '{"status":"complete","evidence_level":"L2"}\n' >"${OUTPUT_DIR}/VERIFICATION_STATUS.json"
+""",
+                encoding="utf-8",
+            )
+            fake_verifier.chmod(0o755)
+            environment = os.environ.copy()
+            environment.update(
+                {
+                    "OUTPUT_DIR": str(output),
+                    "PUBLIC_RELEASE": "no",
+                    "ROCKCHIP_CANDIDATE_VERIFIER": str(fake_verifier),
+                }
+            )
+            result = subprocess.run(
+                [str(ENTRYPOINTS[1])],
+                cwd=ROOT,
+                env=environment,
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                check=False,
+            )
+            self.assertEqual(result.returncode, 0, result.stderr)
+            verification = (output / "VERIFICATION.tsv").read_text()
+            status = json.loads(
+                (output / "VERIFICATION_STATUS.json").read_text()
+            )
+        self.assertIn("bananapicm2\tpass\tpass\tL1", verification)
+        self.assertNotIn("\tL2", verification)
+        self.assertEqual(status["evidence_level"], "L1")
+        self.assertEqual(status["candidate_scope"], "internal-l1-donor-only")
+        self.assertTrue(status["donor_only_contract"])
+        self.assertFalse(status["carrier_verified"])
+        self.assertFalse(status["generic_cm2_supported"])
+        self.assertFalse(status["public_release_allowed"])
+        self.assertFalse(status["public_redistribution_authorized"])
+        self.assertFalse(status["hardware_evidence_present"])
+
+    def test_cm2_scripts_do_not_use_recursive_deletion(self) -> None:
+        for path in ENTRYPOINTS:
+            with self.subTest(path=path.name):
+                text = path.read_text()
+                self.assertNotIn("rm -rf", text)
+                self.assertNotIn("find ", text)
+        shared_runner = (
+            ROOT / "tools/run-bananapi-candidates-isolated-cache.sh"
+        ).read_text()
+        self.assertNotIn("rm -rf", shared_runner)
+        self.assertNotIn(" -delete", shared_runner)
 
 
 if __name__ == "__main__":

@@ -1,22 +1,22 @@
-# Rockchip RK3568 BPI-CM2 模組搭配 BPI-R2 Pro 載板的固定來源候選。
-BOARD_NAME="Banana Pi CM2 on BPI-R2 Pro carrier"
+# Rockchip RK3568 BPI-CM2 初始移植；目前僅以 BPI-R2 Pro 作為軟體參考板。
+BOARD_NAME="Banana Pi CM2（R2 Pro 軟體參考）"
 BOARD_VENDOR="sinovoip"
 BOARDFAMILY="rockchip64"
 BOARD_MAINTAINER="BPI-SINOVOIP"
 INTRODUCED="2023"
-BOOTCONFIG="bpi-cm2-r2pro-carrier-rk3568_defconfig"
+BOOTCONFIG="bpi-r2-pro-rk3568_defconfig"
 KERNEL_TARGET="current"
 KERNEL_TEST_TARGET="current"
 FULL_DESKTOP="yes"
 BOOT_LOGO="desktop"
-BOOT_FDT_FILE="rockchip/rk3568-bpi-cm2-r2pro-carrier.dtb"
+BOOT_FDT_FILE="rockchip/rk3568-bpi-r2-pro.dtb"
 BOOTPATCHDIR="v2024.01"
 SRC_EXTLINUX="yes"
 SRC_CMDLINE="console=ttyS2,1500000 console=tty0"
 ASOUND_STATE="asound.state.station-p2"
 IMAGE_PARTITION_TABLE="gpt"
 
-# 此候選只證明 CM2 模組與 R2 Pro 載板組合，並固定全部建置來源。
+# 此板檔只建立固定來源的參考軟體基線，不代表已掌握 CM2 載板拓撲。
 KERNELSOURCE_BOARD="https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git"
 KERNELBRANCH_BOARD="commit:1f99e9ab748fc5c32120de9c4eca31abfe54a4d5"
 BOOTSOURCE_BOARD="https://github.com/u-boot/u-boot"
@@ -44,6 +44,6 @@ function post_family_config___mainline_uboot() {
 function post_family_tweaks_bsp__bananapicm2_r2pro_rkbin_license() {
 	local license_source="${RKBIN_DIR}/LICENSE.TXT"
 	local license_target="${destination}/usr/share/doc/armbian-bsp-${BOARD}/rkbin.LICENSE.TXT"
-	[[ -f "${license_source}" ]] || exit_with_error "BPI-CM2 與 R2 Pro 載板候選缺少 RKBin 授權檔：${license_source}"
+	[[ -f "${license_source}" ]] || exit_with_error "BPI-CM2 參考板候選缺少 RKBin 授權檔：${license_source}"
 	run_host_command_logged install -Dm0644 "${license_source}" "${license_target}"
 }
