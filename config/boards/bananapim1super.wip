@@ -1,12 +1,60 @@
-# Rockchip RK3528 BPI-M1 Super, initial ArmSoM Sige1-derived bring-up
-source "${SRC}/config/boards/armsom-sige1.csc"
+# Rockchip RK3528 Banana Pi M1 Super 固定來源內部候選。
 BOARD_NAME="Banana Pi M1 Super"
 BOARD_VENDOR="sinovoip"
+BOARDFAMILY="rk35xx"
 BOARD_MAINTAINER="BPI-SINOVOIP"
 INTRODUCED="2024"
-BOOTCONFIG="hinlink_rk3528_defconfig"
-BOOT_FDT_FILE="rockchip/rk3528-armsom-sige1.dtb"
-# These are included in armsom-sige1.csc, but this file is parsed directly
-# by the JSON matrix generator and thus those need to be in here.
+BOOTCONFIG="bananapi-m1-super-rk3528_defconfig"
+BOOT_SOC="rk3528"
 KERNEL_TARGET="vendor"
-BOARDFAMILY="rk35xx"
+KERNEL_TEST_TARGET="vendor"
+FULL_DESKTOP="yes"
+BOOT_LOGO="desktop"
+BOOT_FDT_FILE="rockchip/rk3528-bananapi-m1-super.dtb"
+BOOT_SCENARIO="spl-blobs"
+IMAGE_PARTITION_TABLE="gpt"
+
+# 固定可移動來源；完整映像仍須經專用 OverlayFS 入口建置。
+BOOTBRANCH_BOARD="commit:39cd993e5d6296635438e84f4576b3a9bf76f86e"
+KERNELBRANCH_BOARD="commit:c6157104418d012823413c02f9222f3fe123dd25"
+RKBIN_GIT_REF="commit:1d3c61008fa823936ae7a59615393f8294b64456"
+ARMBIAN_FIRMWARE_GIT_REF_BOARD="commit:f50a2a21bcdb77a562b3976930c5c6b521a1df08"
+DDR_BLOB="rk35/rk3528_ddr_1056MHz_v1.09.bin"
+BL31_BLOB="rk35/rk3528_bl31_v1.17.elf"
+ROCKUSB_BLOB="rk35/rk3528_spl_loader_v1.07.104.bin"
+
+PACKAGE_LIST_BOARD="gpiod i2c-tools python3-libgpiod python3-spidev spi-tools mmc-utils ethtool iproute2 iperf3 pciutils usbutils usb-modeswitch rfkill iw wireless-regdb bluetooth bluez bluez-tools v4l-utils ffmpeg mesa-utils kmscube vainfo libdrm-tests alsa-utils evtest lm-sensors"
+
+function post_family_config_branch_vendor__bananapim1super_pin_sources() {
+	declare -g BOOTSOURCE="https://github.com/radxa/u-boot.git"
+	declare -g BOOTBRANCH="${BOOTBRANCH_BOARD}"
+	declare -g BOOTDIR="u-boot-rockchip64"
+	declare -g BOOTPATCHDIR="legacy/u-boot-radxa-rk35xx"
+	declare -g KERNELSOURCE="https://github.com/armbian/linux-rockchip.git"
+	declare -g KERNELBRANCH="${KERNELBRANCH_BOARD}"
+	declare -g KERNELPATCHDIR="rk35xx-vendor-6.1"
+	declare -g KERNEL_MAJOR_MINOR="6.1"
+	declare -g LINUXCONFIG="linux-rk35xx-vendor"
+	declare -g RKBIN_GIT_URL="https://github.com/armbian/rkbin"
+	declare -g RKBIN_GIT_REF="commit:1d3c61008fa823936ae7a59615393f8294b64456"
+	declare -g ARMBIAN_FIRMWARE_GIT_REF="${ARMBIAN_FIRMWARE_GIT_REF_BOARD}"
+	declare -g ATF_COMPILE="no"
+	declare -g ATFSOURCE=""
+	declare -g ATFBRANCH=""
+}
+
+function custom_kernel_config__bananapim1super_io_contract() {
+	opts_m+=(BRCMFMAC BT_HCIUART DRM_LIMA R8169)
+	opts_y+=(BT_HCIUART_BCM DWMAC_ROCKCHIP GPIO_CDEV I2C_CHARDEV I2C_RK3X)
+	opts_y+=(MMC MMC_BLOCK MMC_DW MMC_DW_ROCKCHIP MMC_SDHCI MMC_SDHCI_OF_DWCMSHC)
+	opts_y+=(ROCKCHIP_MPP_RKVDEC ROCKCHIP_MPP_RKVENC ROCKCHIP_MPP_SERVICE)
+	opts_y+=(SPI SPI_ROCKCHIP SPI_SPIDEV USB USB_CONFIGFS USB_CONFIGFS_MASS_STORAGE)
+	opts_y+=(USB_DWC3 USB_GADGET USB_STORAGE)
+}
+
+function post_family_tweaks_bsp__bananapim1super_rkbin_license() {
+	local license_source="${RKBIN_DIR}/LICENSE.TXT"
+	local license_target="${destination}/usr/share/doc/armbian-bsp-${BOARD}/rkbin.LICENSE.TXT"
+	[[ -f "${license_source}" ]] || exit_with_error "BPI-M1 Super 缺少 RKBin 授權檔：${license_source}"
+	run_host_command_logged install -Dm0644 "${license_source}" "${license_target}"
+}

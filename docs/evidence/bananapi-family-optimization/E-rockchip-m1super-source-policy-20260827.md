@@ -1,0 +1,73 @@
+# Banana Pi M1 Super 固定來源與發布政策
+
+## 結論
+
+本候選把 `bananapim1super.wip` 從 ArmSoM Sige1 板檔繼承與 Hinlink H28K U-Boot 身分，改成 Banana Pi M1 Super 專屬板檔、Linux DTS、U-Boot DTS 與 defconfig。候選來源固定，可執行元件與完整映像建置，但目前只具備 L2 軟體候選資格，不是公開發布版，也不代表任何實體板功能已通過。
+
+保留 `.wip` 的原因不是建置鏈不完整，而是量產料號、實體儲存裝置、網路、顯示、影音與 40-pin 尚未完成跨板次驗證。所有映像必須維持內部測試用途，直到發布守門條件逐項解除。
+
+## 身分證據
+
+| 證據 | 固定內容 | 判讀 |
+| --- | --- | --- |
+| Banana Pi 官方產品頁 | `https://docs.banana-pi.org/en/BPI-M1S/BananaPi_BPI-M1S` | 指定 RK3528、SD、eMMC、雙乙太網路、HDMI、USB 與 40-pin，並把核心來源指向 `armbian/linux-rockchip`、U-Boot 指向 `rockchip-linux/u-boot`。 |
+| 官方原理圖資料夾 | `https://drive.google.com/drive/folders/1Wxk7qSWOyx7U-4i5ZitM6eRJGs0bsHhk` | 由官方產品頁連出。 |
+| V1.2 原理圖 | `BPI-M1S_ArmSoM-Sige1_V1.2_SCH_20240727.pdf` | SHA-256 為 `71d9122b2d6d30916928cc123ce2cece314c922893623a4e6e7d8d2810b279dd`；圖面專案名稱為 `ArmSoM-SIGE1`，可證明兩者具有共同硬體設計來源。 |
+| 固定 Linux DTS | `rk3528-armsom-sige1.dts` | 提供現有板級電源、SD、eMMC、乙太網路、HDMI、USB、GPU 與 VPU 描述，但原始 model 與 compatible 不是 Banana Pi 身分。 |
+| 既有 Armbian 板檔 | `bananapim1super.wip` | 原先直接載入 `armsom-sige1.csc`，且 U-Boot 使用 `hinlink_rk3528_defconfig`，無法獨立追溯成品身分。 |
+
+共同原理圖來源只足以作為移植基礎，不能推導每一個量產批次、焊接選項與替代料都完全一致。因此 Linux DTS 保留 `armsom,sige1` 作為次要相容字串，但新增第一順位 `bananapi,bpi-m1-super`；U-Boot 則使用相同的專屬 model 與 compatible，不再攜帶 `Hinlink H28K` 身分。
+
+## 固定來源
+
+| 元件 | 來源 | 固定提交 |
+| --- | --- | --- |
+| Linux | `https://github.com/armbian/linux-rockchip.git` | `c6157104418d012823413c02f9222f3fe123dd25` |
+| U-Boot | `https://github.com/radxa/u-boot.git` | `39cd993e5d6296635438e84f4576b3a9bf76f86e` |
+| RKBin | `https://github.com/armbian/rkbin` | `1d3c61008fa823936ae7a59615393f8294b64456` |
+| Armbian 韌體 | `https://github.com/armbian/firmware` | `f50a2a21bcdb77a562b3976930c5c6b521a1df08` |
+| TF-A 參考來源 | `https://github.com/ARM-software/arm-trusted-firmware.git` | `c17351450c8a513ca3f30f936e26a71db693a145`，即 `v2.13.0` |
+
+上游 TF-A 固定版本沒有 RK3528 平台實作，因此本候選不偽造「ATF 已由來源建置」的證據。實際 BL31 為 RKBin 的 `rk3528_bl31_v1.17.elf`；validation 明確標記 `atf_source_build_available=false`，並對載荷本體執行 SHA-256 守門。
+
+## 專屬實作邊界
+
+Linux 專屬 DTS 從經原理圖證明的 Sige1 設計繼承，覆寫 Banana Pi model 與 compatible，並只額外啟用官方 40-pin 表與原理圖都能確認的 `I2C0`、`I2C1` 與 `SPI0`。`SPI0` 提供兩個 `spidev` 端點，頻率上限保守設為 24 MHz。
+
+U-Boot 專屬 DTS 只保留 RK3528 SoC 與共同 U-Boot 描述，不帶入 H28K 的 ADC 音量鍵。專屬 defconfig 固定 DTS 身分並保留 SD、eMMC、USB、顯示與 Rockchip FIT 啟動鏈選項。
+
+## Wi-Fi 與藍牙矛盾
+
+目前三份資料無法完全一致：
+
+- 官方產品頁列出 `SYN43752`。
+- V1.2 原理圖的模組頁列出 `AP6275S`／`BW3752-50B1` 類 SDIO Wi-Fi 6 與 UART 藍牙設計。
+- 原先 Sige1 DTS 的 `wifi_chip_type` 是 `rtl8852bs`。
+
+本候選依 V1.2 原理圖把軟體識別改為 `ap6275s`，但 `wifi_bom_conflict_resolved=false`。這只是供實機辨識的候選設定，不是所有板次的 Wi-Fi 通過聲明。正式發布前必須取得量產 BOM，並在每一種實際模組上驗證韌體檔名、SDIO 枚舉、藍牙 UART、休眠喚醒與射頻穩定性。
+
+## 授權與散布
+
+RKBin 的 `LICENSE.TXT` 允許在採用 Rockchip 積體電路的平台上，以未修改二進位形式複製與散布相關載荷，但不允許獨立散布、逆向或修改，且授權文件必須隨二進位提供。本候選會把該授權檔安裝至板級 BSP 文件目錄，並驗證授權檔與三個 RK3528 載荷的固定雜湊。
+
+Armbian 韌體倉包含多個不同上游與授權範圍；目前沒有完成 M1 Super 映像實際攜帶檔案的逐檔散布稽核。因此 `firmware_redistribution_audit_complete=false`，即使映像通過軟體驗證，也不得直接對外散布。
+
+## L2 驗證範圍
+
+L2 軟體候選允許證明以下事項：
+
+- 所有 Git 來源與二進位載荷固定且可追溯。
+- 專屬 Linux DTB 與 U-Boot 元件能由固定來源建置。
+- DTB 的 model、compatible、SD、eMMC、I2C、SPI、網路、USB、GPU、VPU 與 HDMI 靜態契約一致。
+- U-Boot 不含 H28K model，載荷偏移不跨越根分割區。
+- 完整映像可由專用 OverlayFS 入口建置並接受唯讀掛載驗證。
+
+L2 不得證明開機成功、記憶體穩定、儲存壽命、網路吞吐、GPU/VPU 硬體加速、HDMI 相容性、USB OTG、40-pin 電氣安全或量產可用性。
+
+## 解除發布阻擋
+
+1. 取得實際量產版號、BOM 與可公開原理圖版本，消除 Wi-Fi 料號矛盾。
+2. 至少驗證 1 GB、2 GB、4 GB 記憶體選項與實際 eMMC 容量組合；每種組合執行冷啟動、重啟與長時間壓力測試。
+3. 驗證 SD 與 eMMC 開機、雙乙太網路、Wi-Fi、藍牙、HDMI、聲音、USB host／OTG、RTC、風扇與 40-pin。
+4. 對映像內所有韌體與使用者空間 GPU／VPU 元件完成逐檔授權稽核。
+5. 把實機記錄、映像雜湊、序號去識別樣本與失敗案例納入證據，再由發布負責人核准升級。

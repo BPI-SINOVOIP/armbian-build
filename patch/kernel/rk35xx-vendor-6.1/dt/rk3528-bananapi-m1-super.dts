@@ -1,0 +1,40 @@
+// SPDX-License-Identifier: (GPL-2.0+ OR MIT)
+
+/dts-v1/;
+
+#include "rk3528-armsom-sige1.dts"
+
+/ {
+	model = "Banana Pi M1 Super";
+	compatible = "bananapi,bpi-m1-super", "armsom,sige1", "rockchip,rk3528";
+};
+
+/* 這些匯流排腳位同時出現在官方原理圖與 40-pin 定義。 */
+&i2c0 {
+	status = "okay";
+};
+
+&i2c1 {
+	status = "okay";
+};
+
+&spi0 {
+	status = "okay";
+
+	spidev@0 {
+		compatible = "rockchip,spidev";
+		reg = <0>;
+		spi-max-frequency = <24000000>;
+	};
+
+	spidev@1 {
+		compatible = "rockchip,spidev";
+		reg = <1>;
+		spi-max-frequency = <24000000>;
+	};
+};
+
+/* V1.2 原理圖採 AP6275S 類 SDIO 模組；實際量產料號仍須實機核對。 */
+&wireless_wlan {
+	wifi_chip_type = "ap6275s";
+};
