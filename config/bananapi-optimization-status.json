@@ -208,6 +208,10 @@
       "level": "L2",
       "basis": "Trixie vendor minimal CLI 已由隔離快取與固定來源完整建置，並通過 GPT、U-Boot、W3 DTB、RKBin 授權副本、核心設定、套件與唯讀映像守門；實機冷啟動、介面與硬體加速仍待驗證"
     },
+    "bpi-ai2n": {
+      "level": "L0",
+      "basis": "固定 Linux、U-Boot 與 TF-A 來源、九個 runtime 資產雜湊、SD BL2／FIP 佈局、DTB 與未來映像唯讀守門已建立；尚無完整核心與代表性 Armbian 映像，故維持來源／元件契約層級"
+    },
     "bananapipro": {
       "level": "L2",
       "basis": "Trixie current CLI 已由乾淨來源完整建置並通過映像、U-Boot、A20 DTB、核心功能與標準 I/O 工具唯讀守門；仍待實機驗證"
@@ -245,6 +249,9 @@
     ],
     "bananapiw3": [
       "尚未完成實機冷啟動、儲存、網路、無線、顯示與硬體加速驗證"
+    ],
+    "bpi-ai2n": [
+      "九個 DRP、Codec、相機與 RTL8821CU runtime 資產缺少可核對再散布授權或 ABI 契約，且尚無完整映像與實機證據"
     ],
     "bananapim2c": [
       "仍採 secure PAC 與 Yocto 混合流程，尚非一般 Armbian SD 首階段啟動"
