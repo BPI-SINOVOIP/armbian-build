@@ -6,7 +6,7 @@
   "current_evidence_level": "L2",
   "target_evidence_level": "L2",
   "source_date_epoch": 1787793187,
-  "source_contract_projection_sha256": "f75aa52bd8963edde9aa12f532283a6dfb090801101a6488cc4a0b571f53f468",
+  "source_contract_projection_sha256": "e8f9f506599c5d7e0099265871208b13c4eed5ac5f4c7d6fd05f5413d2979dc7",
   "l2_contract_calibration_required": false,
   "allowed_evidence_levels": [
     "L1",
@@ -183,7 +183,7 @@
       "dtb_sha256": "5457155de554539c902a22507cbd69ad249fd70a24cf6e24a5753c2b5e8b66ab",
       "dtb_sha256_evidence_scope": "full-image-l2",
       "final_kernel_config_sha256": "2c6ea26327285e71fa778ccb360269796da043faa69d0fee4e467f1a0c36367e",
-      "final_uboot_config_sha256": "003fc226041c534893f3aa44b1158fc22fdcab7870db9351a03045c7324025b8",
+      "final_uboot_config_sha256": "c4a0328fdaa6b345c6c15096bf99caf7a5a05c68aad38f2ad9e3e241322d937a",
       "model": "Bananapi BPI-R3 Mini",
       "compatible": [
         "bananapi,bpi-r3mini",

@@ -442,7 +442,7 @@ class BananaPiFilogicR3MiniCandidateTests(unittest.TestCase):
         )
         self.assertEqual(
             self.policy["final_uboot_config_sha256"],
-            "003fc226041c534893f3aa44b1158fc22fdcab7870db9351a03045c7324025b8",
+            "c4a0328fdaa6b345c6c15096bf99caf7a5a05c68aad38f2ad9e3e241322d937a",
         )
 
     def test_boot_media_requires_emmc_boot0(self) -> None:
