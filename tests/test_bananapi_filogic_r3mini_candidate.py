@@ -139,10 +139,10 @@ class BananaPiFilogicR3MiniCandidateTests(unittest.TestCase):
         payload = output / "UBOOT_PAYLOAD_EVIDENCE.tsv"
         payload.write_text(
             "board\tpayload\tplacement\toffset\tsize\tsha256\n"
-            "bananapir3mini\tbl2.img\timage\t17408\t200793\t"
-            "44d4d6b1bdbfdc1f4d2b302047448788f0256b4d68568e9c9dd809005bccedfd\n"
-            "bananapir3mini\tu-boot.fip\timage\t6815744\t507953\t"
-            "8f56c689f10b3aa2367f4290f940451e8d5b766cd3c0120e6aa2cc398db3ff67\n"
+            "bananapir3mini\tbl2.img\timage\t17408\t204889\t"
+            "6a7a83f1406d51227b169af1a30b4d84da42867785021deaf901595531421c8b\n"
+            "bananapir3mini\tu-boot.fip\timage\t6815744\t510681\t"
+            "4f25bdd6d6085226a8807615bfc5d13e98b27289a389a9fab90ad417950f949e\n"
             "bananapir3mini\tgpt\tpackage-only\t-\t17408\t"
             "beb31c2284ec7b8e910faeea8d323f40532b26010e87d0bae851d823705efa1d\n"
         )
@@ -279,19 +279,19 @@ class BananaPiFilogicR3MiniCandidateTests(unittest.TestCase):
                 self.assertNotEqual(rejected.returncode, 0)
 
     def test_release_gate_remains_blocked(self) -> None:
-        self.assertEqual(self.config["candidate_level"], "L1 元件候選")
-        self.assertEqual(self.config["candidate_scope"], "internal-component-only")
+        self.assertEqual(self.config["candidate_level"], "L2 內部軟體候選")
+        self.assertEqual(self.config["candidate_scope"], "internal-l2")
         self.assertEqual(self.config["allowed_evidence_levels"], ["L1", "L2"])
         self.assertTrue(self.config["component_build_completed"])
-        self.assertFalse(self.config["full_rootfs_image_built"])
+        self.assertTrue(self.config["full_rootfs_image_built"])
         self.assertFalse(self.config["public_release_authorized"])
         self.assertFalse(self.config["hardware_claims_allowed"])
         self.assertFalse(self.config["hardware_validation_completed"])
         self.assertEqual(self.config["release_gate"]["status"], "blocked")
         self.assertFalse(self.config["release_gate"]["public_release_authorized"])
         self.assertFalse(self.config["release_gate"]["hardware_claims_allowed"])
-        self.assertFalse(self.config["release_gate"]["full_image_built"])
-        self.assertTrue(self.config["release_gate"]["component_validation_only"])
+        self.assertTrue(self.config["release_gate"]["full_image_built"])
+        self.assertFalse(self.config["release_gate"]["component_validation_only"])
         self.assertNotIn("image_build_evidence", self.config)
         self.assertEqual(
             set(self.config["release_gate"]["required_blockers"]),
@@ -305,7 +305,12 @@ class BananaPiFilogicR3MiniCandidateTests(unittest.TestCase):
             obj["sha256"],
             "45acf44f2fe576991d7c0b13862cb41d1ffd37b37e1607e27ca4ddb31820fa79",
         )
-        subprocess.run([str(POLICY_CHECK)], cwd=ROOT, check=True, capture_output=True)
+        subprocess.run(
+            [str(POLICY_CHECK), "--source-contract-only"],
+            cwd=ROOT,
+            check=True,
+            capture_output=True,
+        )
 
     def test_policy_state_machine_rejects_label_only_promotion(self) -> None:
         promoted = json.loads(json.dumps(self.config))
@@ -325,9 +330,12 @@ class BananaPiFilogicR3MiniCandidateTests(unittest.TestCase):
         )
         self.assertEqual(accepted.returncode, 0, accepted.stderr.decode())
 
-        rejected = self.run_policy(self.valid_l2_config())
-        self.assertNotEqual(rejected.returncode, 0)
-        self.assertIn("CANDIDATES.tsv", rejected.stderr.decode())
+        with tempfile.TemporaryDirectory() as directory:
+            rejected = self.run_policy(
+                self.valid_l2_config(), output=Path(directory)
+            )
+            self.assertNotEqual(rejected.returncode, 0)
+            self.assertIn("CANDIDATES.tsv", rejected.stderr.decode())
 
     def test_policy_state_machine_rejects_incomplete_l2_contract(self) -> None:
         mutations = {
@@ -416,17 +424,26 @@ class BananaPiFilogicR3MiniCandidateTests(unittest.TestCase):
         self.assertNotEqual(rejected.returncode, 0)
         self.assertIn("規範投影", rejected.stderr.decode())
 
-    def test_l1_marks_unresolved_full_image_calibration(self) -> None:
-        self.assertEqual(self.config["current_evidence_level"], "L1")
+    def test_l2_locks_calibrated_full_image_contract(self) -> None:
+        self.assertEqual(self.config["current_evidence_level"], "L2")
         self.assertEqual(self.config["target_evidence_level"], "L2")
         self.assertEqual(self.config["source_date_epoch"], 1787793187)
-        self.assertTrue(self.config["l2_contract_calibration_required"])
-        self.assertIsNone(self.policy["image_dtb_sha256"])
+        self.assertFalse(self.config["l2_contract_calibration_required"])
         self.assertEqual(
-            self.policy["dtb_sha256_evidence_scope"], "component-only-l1"
+            self.policy["image_dtb_sha256"],
+            "5457155de554539c902a22507cbd69ad249fd70a24cf6e24a5753c2b5e8b66ab",
         )
-        self.assertNotIn("final_kernel_config_sha256", self.policy)
-        self.assertNotIn("final_uboot_config_sha256", self.policy)
+        self.assertEqual(
+            self.policy["dtb_sha256_evidence_scope"], "full-image-l2"
+        )
+        self.assertEqual(
+            self.policy["final_kernel_config_sha256"],
+            "2c6ea26327285e71fa778ccb360269796da043faa69d0fee4e467f1a0c36367e",
+        )
+        self.assertEqual(
+            self.policy["final_uboot_config_sha256"],
+            "003fc226041c534893f3aa44b1158fc22fdcab7870db9351a03045c7324025b8",
+        )
 
     def test_boot_media_requires_emmc_boot0(self) -> None:
         self.assertEqual(self.policy["candidate_boot_media"], ["emmc"])
@@ -477,7 +494,7 @@ class BananaPiFilogicR3MiniCandidateTests(unittest.TestCase):
                 "2:ubootenv:8192:1024",
                 "3:factory:9216:4096",
                 "4:fip:13312:8192",
-                "5:*:32768:*",
+                "5::32768:2750464",
             ],
         )
         env = self.policy["uboot_environment_contract"]
@@ -491,7 +508,7 @@ class BananaPiFilogicR3MiniCandidateTests(unittest.TestCase):
         )
         self.assertEqual(
             self.policy["uboot_payload_sizes"],
-            ["bl2.img=200793", "gpt=17408", "u-boot.fip=507953"],
+            ["bl2.img=204889", "gpt=17408", "u-boot.fip=510681"],
         )
         self.assertEqual(self.policy["root_partition_start_sector"], 32768)
         self.assertEqual(self.policy["root_partition_label"], "armbi_root")
@@ -504,9 +521,9 @@ class BananaPiFilogicR3MiniCandidateTests(unittest.TestCase):
         self.assertEqual(
             self.policy["uboot_payload_sha256"],
             [
-                "bl2.img=44d4d6b1bdbfdc1f4d2b302047448788f0256b4d68568e9c9dd809005bccedfd",
+                "bl2.img=6a7a83f1406d51227b169af1a30b4d84da42867785021deaf901595531421c8b",
                 "gpt=beb31c2284ec7b8e910faeea8d323f40532b26010e87d0bae851d823705efa1d",
-                "u-boot.fip=8f56c689f10b3aa2367f4290f940451e8d5b766cd3c0120e6aa2cc398db3ff67",
+                "u-boot.fip=4f25bdd6d6085226a8807615bfc5d13e98b27289a389a9fab90ad417950f949e",
             ],
         )
 
@@ -752,16 +769,16 @@ class BananaPiFilogicR3MiniCandidateTests(unittest.TestCase):
             evidence = output / "UBOOT_PAYLOAD_EVIDENCE.tsv"
             evidence.write_text(
                 "board\tpayload\tplacement\toffset\tsize\tsha256\n"
-                "bananapir3mini\tbl2.img\timage\t17408\t200793\t"
-                + "44d4d6b1bdbfdc1f4d2b302047448788f0256b4d68568e9c9dd809005bccedfd"
-                + "\nbananapir3mini\tu-boot.fip\timage\t6815744\t507953\t"
-                + "8f56c689f10b3aa2367f4290f940451e8d5b766cd3c0120e6aa2cc398db3ff67"
+                "bananapir3mini\tbl2.img\timage\t17408\t204889\t"
+                + "6a7a83f1406d51227b169af1a30b4d84da42867785021deaf901595531421c8b"
+                + "\nbananapir3mini\tu-boot.fip\timage\t6815744\t510681\t"
+                + "4f25bdd6d6085226a8807615bfc5d13e98b27289a389a9fab90ad417950f949e"
                 + "\nbananapir3mini\tgpt\tpackage-only\t-\t17408\t"
                 + "beb31c2284ec7b8e910faeea8d323f40532b26010e87d0bae851d823705efa1d"
                 + "\n"
             )
             status = output / "VERIFICATION_STATUS.json.partial"
-            status.write_text(json.dumps({"status": "complete", "evidence_level": "L1"}))
+            status.write_text(json.dumps({"status": "complete", "evidence_level": "L2"}))
             environment = os.environ.copy()
             environment["OUTPUT_DIR"] = str(output)
             subprocess.run(
@@ -775,8 +792,8 @@ class BananaPiFilogicR3MiniCandidateTests(unittest.TestCase):
             self.assertFalse(result["public_release_authorized"])
             self.assertFalse(result["hardware_claims_allowed"])
             self.assertFalse(result["hardware_validation_completed"])
-            self.assertEqual(result["candidate_scope"], "internal-component-only")
-            self.assertFalse(result["full_rootfs_image_built"])
+            self.assertEqual(result["candidate_scope"], "internal-l2")
+            self.assertTrue(result["full_rootfs_image_built"])
             self.assertTrue(result["internal_candidate_only"])
             self.assertEqual(result["release_gate"]["status"], "blocked")
             self.assertFalse(
@@ -800,7 +817,7 @@ class BananaPiFilogicR3MiniCandidateTests(unittest.TestCase):
             )
             self.assertEqual(len(result["verified_payload_boundaries"]), 3)
 
-            evidence.write_text(evidence.read_text().replace("\t507953\t", "\t4194305\t"))
+            evidence.write_text(evidence.read_text().replace("\t510681\t", "\t4194305\t"))
             rejected = subprocess.run(
                 [str(FINALIZER), str(status)],
                 cwd=ROOT,
@@ -812,10 +829,10 @@ class BananaPiFilogicR3MiniCandidateTests(unittest.TestCase):
 
             evidence.write_text(
                 evidence.read_text()
-                .replace("\t4194305\t", "\t507953\t")
+                .replace("\t4194305\t", "\t510681\t")
                 .replace(
-                    "8f56c689f10b3aa2367f4290f940451e8d5b766cd3c0120e6aa2cc398db3ff67",
-                    "0f56c689f10b3aa2367f4290f940451e8d5b766cd3c0120e6aa2cc398db3ff67",
+                    "4f25bdd6d6085226a8807615bfc5d13e98b27289a389a9fab90ad417950f949e",
+                    "0f25bdd6d6085226a8807615bfc5d13e98b27289a389a9fab90ad417950f949e",
                 )
             )
             rejected = subprocess.run(
@@ -832,17 +849,28 @@ class BananaPiFilogicR3MiniCandidateTests(unittest.TestCase):
             output = Path(directory)
             (output / "UBOOT_PAYLOAD_EVIDENCE.tsv").write_text(
                 "board\tpayload\tplacement\toffset\tsize\tsha256\n"
-                "bananapir3mini\tbl2.img\timage\t17408\t200793\t"
-                "44d4d6b1bdbfdc1f4d2b302047448788f0256b4d68568e9c9dd809005bccedfd\n"
-                "bananapir3mini\tu-boot.fip\timage\t6815744\t507953\t"
-                "8f56c689f10b3aa2367f4290f940451e8d5b766cd3c0120e6aa2cc398db3ff67\n"
+                "bananapir3mini\tbl2.img\timage\t17408\t204889\t"
+                "6a7a83f1406d51227b169af1a30b4d84da42867785021deaf901595531421c8b\n"
+                "bananapir3mini\tu-boot.fip\timage\t6815744\t510681\t"
+                "4f25bdd6d6085226a8807615bfc5d13e98b27289a389a9fab90ad417950f949e\n"
                 "bananapir3mini\tgpt\tpackage-only\t-\t17408\t"
                 "beb31c2284ec7b8e910faeea8d323f40532b26010e87d0bae851d823705efa1d\n"
             )
             status = output / "VERIFICATION_STATUS.json.partial"
             status.write_text(json.dumps({"status": "complete", "evidence_level": "L2"}))
+            l1_policy = json.loads(json.dumps(self.config))
+            l1_policy["candidate_level"] = "L1 元件候選"
+            l1_policy["candidate_scope"] = "internal-component-only"
+            l1_policy["current_evidence_level"] = "L1"
+            l1_policy["full_rootfs_image_built"] = False
+            l1_policy["l2_contract_calibration_required"] = True
+            l1_policy["release_gate"]["full_image_built"] = False
+            l1_policy["release_gate"]["component_validation_only"] = True
+            policy_path = output / "l1-policy.json"
+            policy_path.write_text(json.dumps(l1_policy, ensure_ascii=False))
             environment = os.environ.copy()
             environment["OUTPUT_DIR"] = str(output)
+            environment["VALIDATION_CONFIG"] = str(policy_path)
             rejected = subprocess.run(
                 [str(FINALIZER), str(status)],
                 cwd=ROOT,

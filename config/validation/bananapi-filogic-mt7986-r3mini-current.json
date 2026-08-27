@@ -1,19 +1,19 @@
 {
   "schema_version": 1,
   "candidate_branch": "current",
-  "candidate_level": "L1 元件候選",
-  "candidate_scope": "internal-component-only",
-  "current_evidence_level": "L1",
+  "candidate_level": "L2 內部軟體候選",
+  "candidate_scope": "internal-l2",
+  "current_evidence_level": "L2",
   "target_evidence_level": "L2",
   "source_date_epoch": 1787793187,
-  "source_contract_projection_sha256": "263f2c657a935339d6638692974e369a9c0a5e7cec67b0359eaef7a49ce6da29",
-  "l2_contract_calibration_required": true,
+  "source_contract_projection_sha256": "f75aa52bd8963edde9aa12f532283a6dfb090801101a6488cc4a0b571f53f468",
+  "l2_contract_calibration_required": false,
   "allowed_evidence_levels": [
     "L1",
     "L2"
   ],
   "component_build_completed": true,
-  "full_rootfs_image_built": false,
+  "full_rootfs_image_built": true,
   "component_build_evidence": {
     "implementation_commit": "717cdc7e91231a16d80b189f43dc6819a80fd739",
     "completed_utc": "2026-08-27T01:13:07Z",
@@ -92,8 +92,8 @@
     "status": "blocked",
     "public_release_authorized": false,
     "hardware_claims_allowed": false,
-    "full_image_built": false,
-    "component_validation_only": true,
+    "full_image_built": true,
+    "component_validation_only": false,
     "required_blockers": [
       "atf_mt7986_dram_object_redistribution_scope_unverified",
       "emmc_boot0_installation_not_hardware_validated"
@@ -179,9 +179,11 @@
       "family": "mt7986",
       "dtb": "mediatek/mt7986a-bananapi-bpi-r3-mini.dtb",
       "component_dtb_sha256": "5457155de554539c902a22507cbd69ad249fd70a24cf6e24a5753c2b5e8b66ab",
-      "image_dtb_sha256": null,
+      "image_dtb_sha256": "5457155de554539c902a22507cbd69ad249fd70a24cf6e24a5753c2b5e8b66ab",
       "dtb_sha256": "5457155de554539c902a22507cbd69ad249fd70a24cf6e24a5753c2b5e8b66ab",
-      "dtb_sha256_evidence_scope": "component-only-l1",
+      "dtb_sha256_evidence_scope": "full-image-l2",
+      "final_kernel_config_sha256": "2c6ea26327285e71fa778ccb360269796da043faa69d0fee4e467f1a0c36367e",
+      "final_uboot_config_sha256": "003fc226041c534893f3aa44b1158fc22fdcab7870db9351a03045c7324025b8",
       "model": "Bananapi BPI-R3 Mini",
       "compatible": [
         "bananapi,bpi-r3mini",
@@ -247,7 +249,7 @@
         "CONFIG_TARGET_MT7986=y",
         "CONFIG_USE_ENV_MMC_PARTITION=y",
         "# CONFIG_AUTOBOOT_KEYED is not set",
-        "# CONFIG_AUTOBOOT_MENU_SHOW is not set",
+        "# CONFIG_CMD_BOOTMENU is not set",
         "# CONFIG_USE_DEFAULT_ENV_FILE is not set"
       ],
       "uboot_forbidden_binary_strings": [
@@ -281,9 +283,9 @@
         "gpt"
       ],
       "uboot_payload_sha256": [
-        "bl2.img=44d4d6b1bdbfdc1f4d2b302047448788f0256b4d68568e9c9dd809005bccedfd",
+        "bl2.img=6a7a83f1406d51227b169af1a30b4d84da42867785021deaf901595531421c8b",
         "gpt=beb31c2284ec7b8e910faeea8d323f40532b26010e87d0bae851d823705efa1d",
-        "u-boot.fip=8f56c689f10b3aa2367f4290f940451e8d5b766cd3c0120e6aa2cc398db3ff67"
+        "u-boot.fip=4f25bdd6d6085226a8807615bfc5d13e98b27289a389a9fab90ad417950f949e"
       ],
       "uboot_payload_minimum_sizes": [
         "bl2.img=180000",
@@ -296,9 +298,9 @@
         "u-boot.fip=4194304"
       ],
       "uboot_payload_sizes": [
-        "bl2.img=200793",
+        "bl2.img=204889",
         "gpt=17408",
-        "u-boot.fip=507953"
+        "u-boot.fip=510681"
       ],
       "partition_table": "gpt",
       "gpt_template_sha256": "beb31c2284ec7b8e910faeea8d323f40532b26010e87d0bae851d823705efa1d",
@@ -314,7 +316,7 @@
         "2:ubootenv:8192:1024",
         "3:factory:9216:4096",
         "4:fip:13312:8192",
-        "5:*:32768:*"
+        "5::32768:2750464"
       ],
       "required_partition_types": [
         "1:0fc63daf-8483-4772-8e79-3d69d8477de4",

@@ -31,11 +31,11 @@ MT76_COMMIT = "c5a3bd91aa735b669618610d5f0ebfa5786845a6"
 LINUX_FIRMWARE_COMMIT = "01205307636157a12c29e6a774bf83b218732050"
 COMPONENT_DTB_SHA256 = "5457155de554539c902a22507cbd69ad249fd70a24cf6e24a5753c2b5e8b66ab"
 PAYLOAD_HASHES = {
-    "bl2.img": "44d4d6b1bdbfdc1f4d2b302047448788f0256b4d68568e9c9dd809005bccedfd",
+    "bl2.img": "6a7a83f1406d51227b169af1a30b4d84da42867785021deaf901595531421c8b",
     "gpt": "beb31c2284ec7b8e910faeea8d323f40532b26010e87d0bae851d823705efa1d",
-    "u-boot.fip": "8f56c689f10b3aa2367f4290f940451e8d5b766cd3c0120e6aa2cc398db3ff67",
+    "u-boot.fip": "4f25bdd6d6085226a8807615bfc5d13e98b27289a389a9fab90ad417950f949e",
 }
-PAYLOAD_SIZES = {"bl2.img": 200793, "gpt": 17408, "u-boot.fip": 507953}
+PAYLOAD_SIZES = {"bl2.img": 204889, "gpt": 17408, "u-boot.fip": 510681}
 PARTITION_TYPES = [
     "1:0fc63daf-8483-4772-8e79-3d69d8477de4",
     "2:0fc63daf-8483-4772-8e79-3d69d8477de4",
@@ -430,7 +430,13 @@ def main() -> None:
     validate_board_source_text()
     if config_path == DEFAULT_CONFIG.resolve():
         status = read_json(STATUS_FILE, "全域盤點狀態")
-        require(status.get("evidence", {}).get(BOARD_NAME, {}).get("level") == evidence, "全域證據等級不一致")
+        global_evidence = status.get("evidence", {}).get(BOARD_NAME, {}).get("level")
+        if evidence == "L2" and (
+            arguments.source_contract_only or arguments.material_evidence_only
+        ):
+            require(global_evidence in ("L1", "L2"), "全域證據等級不是可接受的升級階段")
+        else:
+            require(global_evidence == evidence, "全域證據等級不一致")
     if arguments.material_evidence_only:
         require(evidence == "L2", "只有 L2 可閉合正式物質證據")
         status_path = arguments.status or arguments.output / "VERIFICATION_STATUS.json.partial"

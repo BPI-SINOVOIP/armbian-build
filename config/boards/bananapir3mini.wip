@@ -46,6 +46,7 @@ function post_config_uboot_target__bananapir3mini_standard_boot() {
 	display_alert "U-Boot ${BOARD}" "啟用 eMMC extlinux 自動開機並保護環境分割區" "info"
 	run_host_command_logged scripts/config --enable CONFIG_AUTOBOOT
 	run_host_command_logged scripts/config --disable CONFIG_AUTOBOOT_KEYED
+	run_host_command_logged scripts/config --disable CONFIG_CMD_BOOTMENU
 	run_host_command_logged scripts/config --disable CONFIG_AUTOBOOT_MENU_SHOW
 	run_host_command_logged scripts/config --set-val CONFIG_BOOTDELAY 1
 	run_host_command_logged scripts/config --disable CONFIG_USE_DEFAULT_ENV_FILE
