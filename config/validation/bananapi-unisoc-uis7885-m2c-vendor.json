@@ -1,0 +1,178 @@
+{
+  "schema_version": 1,
+  "candidate_id": "bananapi-unisoc-uis7885-m2c-vendor",
+  "board": "bananapim2c",
+  "board_name": "Banana Pi M2C",
+  "board_file": "config/boards/bananapim2c.wip",
+  "board_family": "unisoc-uis7885-bpi",
+  "architecture": "arm64",
+  "machine": "uis7885-2h10",
+  "build_target": "uis7885_2h10+wayland+wayland+sec+uboot22 userdebug",
+  "candidate_scope": "local-source-snapshot-audit",
+  "current_evidence_level": "L0",
+  "candidate_status": "只允許辨識目前本機來源快照；尚未形成可重放來源、元件或完整映像證據",
+  "public_release_allowed": false,
+  "hardware_claims_allowed": false,
+  "complete_rootfs_image_allowed": false,
+  "component_build_allowed": false,
+  "source": {
+    "default_root": "/media/pi/SMCI/bpi/unisoc/sync-20260524/source_sync_rls_25c",
+    "baseline": "UNC_LINUX_RLS_25C_W26.07.2",
+    "manifest_repository": "https://git.unisoc.com/gerrit/platform/cus-manifest",
+    "manifest_commit": "7ac2b5ae548b9dd9c4d2f0b32476abd5c6fa7058",
+    "resolved_manifest": "../source_sync_rls_25c_manifest_20260524_110912.xml",
+    "resolved_manifest_sha256": "bc74dbe539efeb34d9ae6fbf11efc5110e6148a25e6cfc745098f117524d2a52",
+    "project_count": 95,
+    "expected_local_diffs": {
+      "layers/meta-unisoc": "5a48d1f12d1c99742477aa050b04b2aac97542b94e6018e3beab515f11eb00f9",
+      "prebuilts/pac_config": "f72db8476f5cefff0fae0453133626777304ab14dc9fd214ba5acf4f4a3e4b58",
+      "prebuilts/scripts": "43573316e6c7c96aaf43a19fabb73411d1ec6509e773bb8aaff74a320e3b74d3",
+      "source/bsp/chipram": "7f9f4b2438b813f9f4d901617f28f4e9a4f9c7c7ef7250deb7fbdeab72df2ac2",
+      "source/bsp/sensorhub/public": "69ec1fa4d03c643b91fc460055da6f4642d46af678890c639772a8a7e6801c10",
+      "source/bsp/u-boot22": "66d237e473774b79e83bafedd7ef300973170ac637ea3ea28ba3c0ce55fc287d",
+      "source/devtools/costmem": "83e75ba2b5a564f58a0958f7792b18939e82bc060baa034402991099496a8b7d",
+      "source/kernel/kernel5.4": "884cba9609f11ad2e2766826465dec4426c59b7e0e4f65e6b2c9a78def05cfd0",
+      "source/unisoc/ai/npu": "7de55ce9c07e8345c3f6149bf1c01490fa01a4f4b0f5a2011ab21a3eb9a4b642",
+      "source/unisoc/app/demo": "1c1dc9062d46d0cd546f1ecd9e0a21e05a7ff57c3439c504b22074563dea91d0",
+      "source/unisoc/connectivity/modem/modem-utils": "4babe8b8cdb90c7b57016df71f05153e6b401762159858aaaa0910e8ca3104c7",
+      "source/unisoc/connectivity/modem/slogmodem": "5a8c14328bd100fa2eb70952b8035091765332abaf5205f0539ec12a880c724d",
+      "source/unisoc/connectivity/ntp_daemon": "848b1120b0907f1becd0d7417f4d00fdeafd3cf6d751f53cdf85acea971ab9fd",
+      "source/unisoc/connectivity/telephony/atrouter": "8ec230e24b430e0cb86c6573443238f73b76291a819aee599d28fae9283a4b96",
+      "source/unisoc/connectivity/telephony/libapi": "c6ab033e99270a22b06a638ccc6c3770e1298090b8a7844c54ab19667813b2f6",
+      "source/unisoc/connectivity/telephony/ofono": "d2b1ba678fea76ab4b4e169b8e02b88d8e1af7536f69909292da571e5c6d1b06",
+      "source/unisoc/connectivity/wcn": "69fd8a22586ec45be12c0808f8302099bbd8bf96f07e32da6fc1d04f768687e4",
+      "source/unisoc/gpu": "cdb5483180639b92045cfc416233b8c790a23e422367294f2995dc8172b2856f",
+      "source/unisoc/graphic": "5ee64943e2a395481828b87ba436d03ab031197551d5086eeab31a6c8584b39e",
+      "source/unisoc/modules/agingmonitor": "f535880c5a69b0064a9359d197c326613c0c5b9a0c7b9bd64fbe9abed0b102d6",
+      "source/unisoc/modules/charge": "48ac16c2e5f860f1fe7d207377601c784a5d6eff57f5d3d98c6fa920e08bd3a0",
+      "source/unisoc/modules/components": "94e204180f17b1e9ff403248b75ad84d2fc596db7144134d15442bfdb993749f",
+      "source/unisoc/modules/engmodeapp": "3e9ab243e5f112855e3ca0b7ed80c42674cf1fc1bfd948d43ca7ada21de06529",
+      "source/unisoc/modules/engpc": "2b2122ef81a1b60d892e5682fa28a343fb1c37e314773e3cf4f6e07b62aa059f",
+      "source/unisoc/modules/fs_tools": "326aeeb82e6bfd01dc0c0cb1f2fedc2a2562db7a133d652f28996f9b74856abf",
+      "source/unisoc/modules/gnss-adapter": "334bb0ea8575e219c890770dbd5d3981e6a0f88f871f8b34ec1d928c4b3e9533",
+      "source/unisoc/modules/nativemmi": "a2f57e3a96df6dc0255e790a3dfcbb5fd650ad5f916446e021d50505650aa342",
+      "source/unisoc/modules/npi_lib": "b672f38cdae26440adbb9f5692c9788f6f2f9c398d41505db238aa404b103437",
+      "source/unisoc/modules/powertools": "1c116183e682d072c7535dab9bf50c400e74b58f2b8d1845eb53485ad42a6766",
+      "source/unisoc/modules/rootfs-antirollback": "716bd0c1223a20b23e1c0dd253c1618c9e715c09ef1f6e59d98820b29095c0fd",
+      "source/unisoc/modules/sgps": "d70f3b0841b10c8bdf5ac06d065c4dff6f185a1a0b7cb445eea9d0c3aec97ece",
+      "source/unisoc/modules/slt": "d8761c5a587b0f1725060006f481b9d7de2cdf8b959148e3fe1bc94e68ddf7e9",
+      "source/unisoc/modules/touchscreen": "4758c62c7e42f68a9abe9e6ceaffb4c1ebb9bb34148e446b5fa048ed65ec8953",
+      "source/unisoc/modules/unirlog": "8e88d490656b1d79811f2b58d017227630f332136b9e59b5b3a4569cca173980",
+      "source/unisoc/modules/verity": "151e7ad3dd6c1720586907abefa56166fde3d48d03623f77bbd3e23f9f2b6f17",
+      "source/unisoc/multimedia/audio/audiocmp": "4a73316fe6dbbbc1bbee99a0f414af9bf5d45d39349b04428ec02ee947a3fd24",
+      "source/unisoc/multimedia/camera/libcamera": "e17cd21779eea5180ed74fa85af7a7a701686890552870edb484ae264a5ca0f1",
+      "source/unisoc/power/libpm": "69bf6140156c341aaad207392b5f5b464d1e9300fdc4ce244fc9af134894833a",
+      "source/unisoc/power/powerfw": "6d69664fbddd5424baab1b42dc6da722fcdd13579be979beabf05bee740d2dc7",
+      "source/unisoc/sensormanager": "87578cb857ac5a871c4c1692c61c74bf536ea68fc016fe01300014dd3bcd64cb",
+      "source/unisoc/update/ota": "dcf0e070f832e3c60f8865427bff9d84f953ca468d1736298260266c3a8c5fa5"
+    },
+    "untracked_inputs": {
+      "policy": "deny-unless-allowlisted",
+      "allowlist": [],
+      "allowlist_required_fields": [
+        "path",
+        "sha256",
+        "purpose",
+        "license_status"
+      ],
+      "known_unclassified": {
+        "observed_at": "2026-08-27",
+        "project_count": 55,
+        "file_count": 6751,
+        "blocking": true,
+        "meaning": "目前沒有合理且完成授權稽核的必要輸入允許清單；來源驗證必須列舉並拒絕全部未分類未追蹤檔"
+      }
+    },
+    "remote_access": {
+      "policy": "authenticated-private",
+      "anonymous_check": "2026-08-27 未登入時 manifest 回覆 Unauthorized，核心遠端要求帳號密碼",
+      "portable_fetch_proven": false
+    }
+  },
+  "required_files": [
+    {
+      "path": "docs/UNISOC_YOCTO_BSP_ARCHITECTURE.md",
+      "sha256": "8bdffa081e10342c286d8c7cc18074acb663092114be5e8968b212ed5198d201"
+    },
+    {
+      "path": "docs/BPI_M2C_MANUAL_BUILD_SDBOOT_PINMAP.md",
+      "sha256": "e26b3c66f63763adfe22401d564399af8d7c84b9497e451abc19f822aba6ce35"
+    },
+    {
+      "path": "docs/BPI_M2C_SDBOOT_PINMAP_20260610_PLAN.md",
+      "sha256": "6c8db115b38dacbbc217dd6ff87c14da7208a9fc17bc18da61a11825a6b2cf08"
+    },
+    {
+      "path": "layers/meta-unisoc/conf/machine/uis7885-2h10.conf",
+      "sha256": "6b51f91ad68b75ffbf7dd227361a01368289b6ccafe32b65d83cfdc01f307c4f"
+    },
+    {
+      "path": "layers/meta-unisoc/recipes-kernel/linux/linux-unisoc-5.4/uis7885/uis7885-2h10-overlay.dts",
+      "sha256": "eb0245aa5ab207bba4defe820d91b761eeac0b056f1ec5a5d569cf7dc7e9d737"
+    },
+    {
+      "path": "source/bsp/u-boot22/arch/arm/dts/uis7885_2h10.dts",
+      "sha256": "299202ebc751d9cc63f3f69710f549db4d7934c91e92fbc4b091a7da61280c76"
+    },
+    {
+      "path": "source/bsp/u-boot22/board/sprd/uis7885_2h10/pinmap-ums9620.c",
+      "sha256": "f5300f3fe967dc8de02be6d4a3d866082cd2e521d7bb63b8ba5495fec63ea41f"
+    },
+    {
+      "path": "source/bsp/chipram/nand_spl/sd_boot.c",
+      "sha256": "6c8b33c096266cbf4143d099661662a250e6ccf56c3328e2a54e4a4cef82ec12"
+    },
+    {
+      "path": "prebuilts/pac_config/uis7885-2h10-uboot22.ini",
+      "sha256": "e73ae76959a6bd4b1b0b97ada5fbcce596b62f89e9e1c017858f215dc91a891b"
+    }
+  ],
+  "external_patch_evidence": [
+    {
+      "path": "../../work/20260604/Release/pinmap-ums9620_0604.c",
+      "sha256": "f5300f3fe967dc8de02be6d4a3d866082cd2e521d7bb63b8ba5495fec63ea41f"
+    },
+    {
+      "path": "../../work/20260605/Release/layers-meta-unisoc_diff",
+      "sha256": "854ae207d462965d4ce03e3b87cd58f072cb78b0eb7e13def2407b8f56ed0ef4"
+    },
+    {
+      "path": "../../work/20260605/Release/prebuilts-pac_config_diff",
+      "sha256": "f72db8476f5cefff0fae0453133626777304ab14dc9fd214ba5acf4f4a3e4b58"
+    },
+    {
+      "path": "../../work/20260605/Release/source-bsp-chipram_diff",
+      "sha256": "5998deb04808e96d6ad5642e21fc3851d4a5d3d1c45601fec55b7da67120cbc2"
+    },
+    {
+      "path": "../../work/20260605/Release/source-bsp-u-boot22_diff",
+      "sha256": "7c5ab726cc99ac481972bd2c1d09f470df7098798e73c232be525343bd9c3d39"
+    }
+  ],
+  "historical_evidence": {
+    "required_for_candidate_gate": false,
+    "build_log": "../logs-build/bpi_m2c_sdboot_pinmap_build_20260610_124058.log",
+    "build_log_sha256": "c1fbf1de3a71e4823fbb8efba94111c2a623cf1ef53c25a44f685dbea9c4d59d",
+    "pac_sha256": "8c0e86e39dc7050701833e3821ae01aa36a00d2a36ebc2e30e6efd7fc83bf1e9",
+    "pac_size": 1390235800,
+    "meaning": "只證明 2026-06-10 的既有本機髒來源樹曾完成原廠安全開機 PAC 編譯與打包，不證明目前來源可重放、可公開發布、已從 SD 開機或具備一般 Armbian 支援"
+  },
+  "blockers": [
+    "95 專案來源雖已解析到精確提交，但 41 專案另有未隨本倉散布的追蹤差異",
+    "55 個專案共有 6751 個未分類未追蹤檔；允許清單為空，來源守門必須失敗",
+    "Unisoc manifest 與專案遠端需要授權，尚未證明另一台機器可取得全部固定提交",
+    "chipram、簽署工具、PAC 工具、modem、Trusty、GPU、NPU、VPU、GNSS 與其他預建內容缺少完整逐項再散布授權證據",
+    "安全開機簽署材料、金鑰管理與可在其他機器重現的受控流程尚未封閉",
+    "Armbian rootfs 與原廠 signed DTBO、PAC 分割表的混合流程尚未完成唯讀映像守門",
+    "尚無 BPI-M2C 實機 UART、冷啟動、SD、eMMC、網路、無線、顯示、音訊、USB、GPIO 或長時間壓力證據"
+  ],
+  "promotion_prerequisites": [
+    "把必要本機差異整理成具來源、授權與內容的可重放修補集",
+    "將必要未追蹤輸入逐檔分類，記錄 SHA-256、用途與授權狀態，並拒絕所有清單外內容",
+    "建立不含憑證的遠端授權操作說明或受控來源鏡像，證明全新機器可取得全部固定提交",
+    "取得所有必要預建元件與簽署／PAC 工具的再散布及使用授權",
+    "由固定來源建立完整候選映像並保存 SHA-256、建置記錄與來源提交",
+    "以唯讀方式驗證壓縮串流、分割表、signed boot chain、核心、DTB、rootfs、模組與韌體同一性",
+    "完成上述項目後必須另行審查證據等級；實機功能聲明仍須另行取得硬體證據"
+  ]
+}

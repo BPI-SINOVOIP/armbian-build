@@ -1,6 +1,12 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=tools/bananapi-m2c-l0-guard.sh
+source "${SCRIPT_DIR}/bananapi-m2c-l0-guard.sh"
+# shellcheck source=tools/bananapi-safe-removal.sh
+source "${SCRIPT_DIR}/bananapi-safe-removal.sh"
+
 SOURCE_ROOT="${SOURCE_ROOT:-/media/pi/SMCI/bpi/unisoc}"
 TARGET_ROOT="${TARGET_ROOT:-${SOURCE_ROOT}/sdrootfs/bpi-m2c}"
 ARMBIAN_ROOTFS_CACHE="${ARMBIAN_ROOTFS_CACHE:-/media/pi/SMCI/armbian/bpi-v26.2.1/cache/rootfs}"
@@ -146,7 +152,10 @@ extract_rootfs_tar() {
 	local tarball="$1"
 	local root_dir="$2"
 
-	sudo rm -rf "${root_dir}"
+	if [[ -e "${root_dir}" || -L "${root_dir}" ]]; then
+		printf '拒絕覆蓋既有 rootfs 暫存目錄：%s\n' "${root_dir}" >&2
+		exit 1
+	fi
 	mkdir -p "${root_dir}"
 
 	case "${tarball}" in
@@ -353,6 +362,8 @@ main() {
 	local tree source_product work_dir root_dir vendor_mount label_safe baseline_safe rootfs_source rootfs_size image uuid
 
 	tree="$(tree_for_baseline "${BASELINE}")"
+	bananapi_m2c_require_supported_baseline "${BASELINE}"
+	bananapi_m2c_require_local_source_snapshot "${tree}"
 	source_product="${tree}/out/target/product/${MACHINE}"
 	if [[ ! -d "${source_product}" ]]; then
 		printf 'missing vendor product output: %s\n' "${source_product}" >&2
@@ -385,7 +396,8 @@ main() {
 			printf 'output already exists: %s (use --force)\n' "${work_dir}" >&2
 			exit 1
 		fi
-		sudo rm -rf "${work_dir}"
+		bananapi_require_safe_removal_target "${work_dir}" "${TARGET_ROOT}" 2
+		sudo rm -rf --one-file-system -- "${work_dir}"
 	fi
 
 	mkdir -p "${work_dir}"
@@ -418,7 +430,8 @@ main() {
 	)
 
 	if [[ "${KEEP_ROOTDIR}" != "yes" && -d "${root_dir}" ]]; then
-		sudo rm -rf "${root_dir}"
+		bananapi_require_safe_removal_target "${root_dir}" "${work_dir}" 1
+		sudo rm -rf --one-file-system -- "${root_dir}"
 	fi
 
 	printf 'work_dir: %s\n' "${work_dir}"

@@ -1,6 +1,12 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=tools/bananapi-m2c-l0-guard.sh
+source "${SCRIPT_DIR}/bananapi-m2c-l0-guard.sh"
+# shellcheck source=tools/bananapi-safe-removal.sh
+source "${SCRIPT_DIR}/bananapi-safe-removal.sh"
+
 SOURCE_ROOT="${SOURCE_ROOT:-/media/pi/SMCI/bpi/unisoc}"
 MATRIX_TAG="${MATRIX_TAG:-$(date +%Y%m%d)-matrix}"
 MATRIX_DIR="${MATRIX_DIR:-${SOURCE_ROOT}/hybrid/bpi-m2c/${MATRIX_TAG}}"
@@ -84,12 +90,17 @@ main() {
 	local release flavor status work_dir pac_path pac_name dst meta_dir bytes sha entries failed
 	local meta meta_rel
 
+	bananapi_m2c_require_public_release
+
 	if [[ ! -f "${summary}" ]]; then
 		printf 'missing matrix summary: %s\n' "${summary}" >&2
 		exit 1
 	fi
 
-	rm -rf "${TARGET_DIR}"
+	if [[ -e "${TARGET_DIR}" || -L "${TARGET_DIR}" ]]; then
+		bananapi_require_safe_removal_target "${TARGET_DIR}" "${TARGET_ROOT}" 1
+		rm -rf --one-file-system -- "${TARGET_DIR}"
+	fi
 	mkdir -p "${TARGET_DIR}/pac" "${TARGET_DIR}/metadata"
 	printf 'release\tflavor\tstatus\tbytes\tsha256\tstaged_path\tsource_path\n' > "${manifest}"
 	printf 'release\tflavor\treason\tpath\n' > "${missing}"

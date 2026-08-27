@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=tools/bananapi-m2c-l0-guard.sh
+source "${SCRIPT_DIR}/bananapi-m2c-l0-guard.sh"
+
 SOURCE_ROOT="${SOURCE_ROOT:-/media/pi/SMCI/bpi/unisoc}"
 DATE_TAG="${DATE_TAG:-$(date +%Y%m%d)}"
 LINK_MODE="${LINK_MODE:-hardlink}"
@@ -120,7 +124,16 @@ mode_for_baseline() {
 	esac
 }
 
-repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+repo_root="$(cd "${SCRIPT_DIR}/.." && pwd)"
+if [[ "${STAGE_RELEASE}" == "yes" ]]; then
+	bananapi_m2c_require_public_release
+fi
+
+for baseline in "${requested_baselines[@]}"; do
+	source_tree="$(bananapi_m2c_source_tree_for_baseline "${SOURCE_ROOT}" "${baseline}")"
+	bananapi_m2c_require_local_source_snapshot "${source_tree}"
+done
+
 mkdir -p "${SOURCE_ROOT}/logs"
 
 for baseline in "${requested_baselines[@]}"; do

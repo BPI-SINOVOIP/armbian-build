@@ -1,6 +1,12 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=tools/bananapi-m2c-l0-guard.sh
+source "${SCRIPT_DIR}/bananapi-m2c-l0-guard.sh"
+# shellcheck source=tools/bananapi-safe-removal.sh
+source "${SCRIPT_DIR}/bananapi-safe-removal.sh"
+
 SOURCE_ROOT="${SOURCE_ROOT:-/media/pi/SMCI/bpi/unisoc}"
 TARGET_ROOT="${TARGET_ROOT:-${SOURCE_ROOT}/sdrootfs-pac/bpi-m2c}"
 SDROOT_ROOT="${SDROOT_ROOT:-${SOURCE_ROOT}/sdrootfs/bpi-m2c}"
@@ -234,6 +240,8 @@ main() {
 	local mkpac_status
 
 	tree="$(tree_for_baseline "${BASELINE}")"
+	bananapi_m2c_require_supported_baseline "${BASELINE}"
+	bananapi_m2c_require_local_source_snapshot "${tree}"
 	sdroot_workdir="${SDROOT_WORKDIR:-$(find_latest_sdroot_workdir)}"
 	if [[ -z "${sdroot_workdir}" || ! -f "${sdroot_workdir}/build-info.txt" ]]; then
 		printf 'missing SD-rootfs build-info.txt: %s\n' "${sdroot_workdir:-<empty>}" >&2
@@ -266,7 +274,8 @@ main() {
 			printf 'output already exists: %s (use --force)\n' "${work_dir}" >&2
 			exit 1
 		fi
-		rm -rf "${work_dir}"
+		bananapi_require_safe_removal_target "${work_dir}" "${TARGET_ROOT}" 2
+		rm -rf --one-file-system -- "${work_dir}"
 	fi
 
 	mkdir -p "${work_dir}"

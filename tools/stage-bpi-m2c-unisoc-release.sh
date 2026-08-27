@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=tools/bananapi-m2c-l0-guard.sh
+source "${SCRIPT_DIR}/bananapi-m2c-l0-guard.sh"
+
 SOURCE_ROOT="${SOURCE_ROOT:-/media/pi/SMCI/bpi/unisoc}"
 TARGET_ROOT="${TARGET_ROOT:-/media/pi/SMCI/bpi/unisoc/release/bpi-m2c}"
 DATE_TAG="${DATE_TAG:-$(date +%Y%m%d)}"
@@ -233,6 +237,8 @@ stage_baseline() {
 
 main() {
 	local baseline failed=0
+
+	bananapi_m2c_require_public_release
 
 	mkdir -p "${TARGET_DIR}"
 	printf 'board\tbaseline\tartifact\tbytes\tstaged_path\n' > "${TARGET_DIR}/manifest.tsv"

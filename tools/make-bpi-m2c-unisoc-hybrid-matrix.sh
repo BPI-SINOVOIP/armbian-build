@@ -2,6 +2,10 @@
 set -Eeuo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=tools/bananapi-m2c-l0-guard.sh
+source "${SCRIPT_DIR}/bananapi-m2c-l0-guard.sh"
+# shellcheck source=tools/bananapi-safe-removal.sh
+source "${SCRIPT_DIR}/bananapi-safe-removal.sh"
 
 SOURCE_ROOT="${SOURCE_ROOT:-/media/pi/SMCI/bpi/unisoc}"
 TARGET_ROOT="${TARGET_ROOT:-${SOURCE_ROOT}/hybrid/bpi-m2c}"
@@ -88,6 +92,7 @@ has_rootfs_cache() {
 
 main() {
 	local helper="${SCRIPT_DIR}/make-bpi-m2c-unisoc-hybrid-pac.sh"
+	local source_tree
 	local matrix_root="${TARGET_ROOT}/${DATE_TAG}"
 	local summary="${matrix_root}/matrix-summary.tsv"
 	local baseline_safe force_arg failures release flavor label label_safe work_dir pac_path status
@@ -97,6 +102,8 @@ main() {
 		printf 'missing helper: %s\n' "${helper}" >&2
 		exit 1
 	fi
+	source_tree="$(bananapi_m2c_source_tree_for_baseline "${SOURCE_ROOT}" "${BASELINE}")"
+	bananapi_m2c_require_local_source_snapshot "${source_tree}"
 
 	read -r -a releases <<< "${RELEASES}"
 	read -r -a flavors <<< "${FLAVORS}"
@@ -108,6 +115,14 @@ main() {
 		force_arg=(--force)
 	fi
 
+	if [[ -e "${matrix_root}" || -L "${matrix_root}" ]]; then
+		if [[ "${FORCE}" != "yes" ]]; then
+			printf '矩陣輸出已存在，拒絕覆蓋：%s\n' "${matrix_root}" >&2
+			return 1
+		fi
+		bananapi_require_safe_removal_target "${matrix_root}" "${TARGET_ROOT}" 1
+		rm -rf --one-file-system -- "${matrix_root}"
+	fi
 	mkdir -p "${matrix_root}"
 	printf 'release\tflavor\tstatus\twork_dir\tpac\n' > "${summary}"
 
