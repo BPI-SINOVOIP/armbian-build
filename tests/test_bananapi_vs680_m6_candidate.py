@@ -3,7 +3,9 @@
 
 from __future__ import annotations
 
+import copy
 import hashlib
+import importlib.util
 import json
 import os
 from pathlib import Path
@@ -40,6 +42,7 @@ CANDIDATE_RUNNER = (
 )
 CANDIDATE_VERIFY = ROOT / "tools/verify-bananapi-vs680-m6-candidate.sh"
 GENERIC_VERIFY = ROOT / "tools/verify-bananapi-sunxi-candidates.sh"
+GENERIC_BUILD = ROOT / "tools/build-bananapi-sunxi-candidates.sh"
 POLICY_CHECK = ROOT / "tools/check-bananapi-vs680-m6-policy.py"
 EVIDENCE_DOCUMENT = (
     ROOT
@@ -57,6 +60,9 @@ class BananaPiVs680M6CandidateTests(unittest.TestCase):
         cls.family = FAMILY.read_text(encoding="utf-8")
         cls.config = json.loads(CONFIG.read_text(encoding="utf-8"))
         cls.policy = cls.config["boards"]["bananapim6"]
+        spec = importlib.util.spec_from_file_location("m6_policy_checker", POLICY_CHECK)
+        cls.policy_checker = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(cls.policy_checker)
 
     def test_board_stays_wip_and_policy_forbids_claims(self) -> None:
         self.assertTrue(BOARD.is_file())
@@ -278,23 +284,38 @@ printf '%s\n' "$BOOTBRANCH" "$KERNELBRANCH" \
         self.assertIn("build-bananapi-vs680-m6-components.sh", component_runner)
         self.assertIn("build-bananapi-vs680-m6-candidate.sh", candidate_runner)
         self.assertIn("ALLOW_INTERNAL_M6_CANDIDATE=yes", candidate_runner)
+        self.assertIn("REQUIRE_ISOLATED_CACHE=yes", candidate_runner)
+        self.assertIn('CACHE_TARGET="${repo_dir}/cache"', candidate_runner)
+        self.assertIn(
+            'CACHE_LOWER="/media/pi/SMCI/armbian/bpi-v26.2.1/cache"',
+            candidate_runner,
+        )
         self.assertIn("bananapim6", candidate_build)
         self.assertIn("check-bananapi-vs680-m6-policy.py", candidate_build)
         self.assertIn("verify-bananapi-vs680-m6-sources.sh", candidate_build)
         self.assertIn('SOURCE_DATE_EPOCH="${expected_source_date_epoch}"', candidate_build)
+        self.assertIn('[[ "${REQUIRE_ISOLATED_CACHE:-yes}" == yes ]]', candidate_build)
+        self.assertIn("BPI-M6 建置不得停用 OverlayFS", candidate_build)
         self.assertIn('MINIMUM_FREE_GIB="${MINIMUM_FREE_GIB:-40}"', candidate_build)
         self.assertIn("verify-bananapi-sunxi-candidates.sh", verifier)
         self.assertIn("check-bananapi-vs680-m6-policy.py", verifier)
         self.assertIn("verify-bananapi-vs680-m6-sources.sh", verifier)
         self.assertIn("VERIFY_ARCHIVES=yes", verifier)
-        self.assertIn('validation_config="${VALIDATION_CONFIG:-', verifier)
-        self.assertIn('evidence_level not in {"L1", "L2"}', verifier)
+        self.assertNotIn("VALIDATION_CONFIG:-", verifier)
+        self.assertIn("候選層級、範圍與證據等級不成對", verifier)
         self.assertIn(
             'export VERIFICATION_EVIDENCE_LEVEL="${verification_evidence_level}"',
             verifier,
         )
         self.assertNotIn('"evidence_level": "L2"', verifier)
         self.assertIn("禁止沿用舊成功狀態", verifier)
+        for required in (
+            '"public_release_allowed": False',
+            '"hardware_claims_allowed": False',
+            '"opaque_payload_redistribution_verified": False',
+            "VERIFICATION_EXTRA_STATUS_JSON",
+        ):
+            self.assertIn(required, verifier)
         for required in (
             "losetup --find --show --partscan --read-only",
             "mount -o ro,noload,nosuid,nodev,noexec",
@@ -305,6 +326,29 @@ printf '%s\n' "$BOOTBRANCH" "$KERNELBRANCH" \
         ):
             with self.subTest(required=required):
                 self.assertIn(required, generic)
+
+    def test_common_evidence_chain_locks_time_tree_completion_and_xz(self) -> None:
+        builder = GENERIC_BUILD.read_text(encoding="utf-8")
+        verifier = GENERIC_VERIFY.read_text(encoding="utf-8")
+        for required in (
+            "source_date_epoch",
+            "建置期間來源提交已改變",
+            "建置期間來源 tree 已改變",
+            "建置期間 validation 已改變",
+            "建立完成證據期間來源提交或 tree 已改變",
+        ):
+            with self.subTest(tool="builder", required=required):
+                self.assertIn(required, builder)
+        for required in (
+            "boot_partition_filesystem_type",
+            "candidate_source_tree",
+            "completion_status_sha256",
+            "source_date_epoch",
+            "xz_stream_verified",
+            "L2 建置與驗證使用的 validation 雜湊不一致",
+        ):
+            with self.subTest(tool="verifier", required=required):
+                self.assertIn(required, verifier)
 
     def run_policy(self, config: dict[str, object]) -> subprocess.CompletedProcess[str]:
         with tempfile.NamedTemporaryFile(
@@ -341,6 +385,9 @@ printf '%s\n' "$BOOTBRANCH" "$KERNELBRANCH" \
             (("linux_ref",), "commit:" + "0" * 40),
             (("source_commits", "uboot", "revision"), "1" * 40),
             (("firmware_commit",), "2" * 40),
+            (("firmware_ref",), "commit:" + "3" * 40),
+            (("source_commits", "firmware", "revision"), "4" * 40),
+            (("verify_firmware_source_resolution",), False),
         ):
             mutated = json.loads(CONFIG.read_text(encoding="utf-8"))
             target = mutated
@@ -349,6 +396,51 @@ printf '%s\n' "$BOOTBRANCH" "$KERNELBRANCH" \
             target[path[-1]] = value
             with self.subTest(path=path):
                 self.assertNotEqual(self.run_policy(mutated).returncode, 0)
+
+    def test_policy_rejects_any_release_hardware_or_opaque_claim(self) -> None:
+        for path in (
+            ("candidate_public_release_approved",),
+            ("public_release_allowed",),
+            ("hardware_validation_complete",),
+            ("hardware_claims_allowed",),
+            ("firmware_redistribution_license_verified",),
+            ("license_policy", "opaque_payload_redistribution_verified"),
+        ):
+            mutated = copy.deepcopy(self.config)
+            target = mutated
+            for key in path[:-1]:
+                target = target[key]
+            target[path[-1]] = True
+            with self.subTest(path=path):
+                self.assertNotEqual(self.run_policy(mutated).returncode, 0)
+
+    def test_build_entry_rejects_isolation_and_epoch_bypass_without_building(self) -> None:
+        for overrides in (
+            {"REQUIRE_ISOLATED_CACHE": "no"},
+            {"SOURCE_DATE_EPOCH": "1717001895"},
+            {"PUBLIC_RELEASE": "yes"},
+            {"HARDWARE_CLAIMS": "yes"},
+        ):
+            environment = os.environ.copy()
+            environment.update(
+                {
+                    "ALLOW_INTERNAL_M6_CANDIDATE": "yes",
+                    "REQUIRE_ISOLATED_CACHE": "yes",
+                }
+            )
+            environment.update(overrides)
+            result = subprocess.run(
+                [str(CANDIDATE_BUILD)],
+                cwd=ROOT,
+                env=environment,
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                check=False,
+            )
+            with self.subTest(overrides=overrides):
+                self.assertNotEqual(result.returncode, 0)
+                self.assertNotIn("完整建置", result.stdout + result.stderr)
 
     def test_policy_rejects_missing_or_wrong_filesystem_contract(self) -> None:
         for field, value in (
@@ -365,6 +457,127 @@ printf '%s\n' "$BOOTBRANCH" "$KERNELBRANCH" \
             with self.subTest(field=field, value=value):
                 self.assertNotEqual(self.run_policy(mutated).returncode, 0)
 
+    def test_policy_rejects_boot_chain_and_payload_contract_drift(self) -> None:
+        mutations = (
+            ("source_date_epoch", 1717001895),
+            ("final_kernel_config_sha256", "0" * 64),
+            ("final_uboot_config_sha256", "1" * 64),
+            ("required_partitions", ["1:*:204800:1", "2:*:204801:*"]),
+            ("required_partition_types", ["1:83", "2:ea"]),
+            ("boot_partition_label", "錯誤"),
+            ("root_partition_label", "錯誤"),
+            ("boot_configuration", "armbian_env"),
+            ("boot_script_source_sha256", "2" * 64),
+            ("payload_write_order", ["u-boot.bin", "bpi-m6-tzk-4MB.bin"]),
+            ("uboot_payload_sizes", ["bpi-m6-tzk-4MB.bin=1", "u-boot.bin=2"]),
+            ("uboot_payload_sha256", ["bpi-m6-tzk-4MB.bin=" + "3" * 64, "u-boot.bin=" + "4" * 64]),
+        )
+        for field, value in mutations:
+            mutated = copy.deepcopy(self.config)
+            if field == "source_date_epoch":
+                mutated[field] = value
+            else:
+                mutated["boards"]["bananapim6"][field] = value
+            with self.subTest(field=field):
+                self.assertNotEqual(self.run_policy(mutated).returncode, 0)
+
+        for field, value in (
+            ("overlap_starts_at_image_offset", 2097153),
+            ("earlier_payload", "u-boot.bin"),
+            ("later_payload", "bpi-m6-tzk-4MB.bin"),
+            ("allowed", False),
+        ):
+            mutated = copy.deepcopy(self.config)
+            mutated["boards"]["bananapim6"]["payload_overlap_policy"][field] = value
+            with self.subTest(overlap_field=field):
+                self.assertNotEqual(self.run_policy(mutated).returncode, 0)
+
+    def test_policy_rejects_release_and_hardware_environments(self) -> None:
+        for variable in ("PUBLIC_RELEASE", "HARDWARE_CLAIMS"):
+            environment = os.environ.copy()
+            environment[variable] = "yes"
+            result = subprocess.run(
+                ["python3", str(POLICY_CHECK), str(CONFIG)],
+                cwd=ROOT,
+                env=environment,
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                check=False,
+            )
+            with self.subTest(variable=variable):
+                self.assertNotEqual(result.returncode, 0)
+
+    def test_l2_shape_requires_bound_tree_completion_and_xz_evidence(self) -> None:
+        candidate = copy.deepcopy(self.config)
+        candidate["candidate_level"] = "L2 內部軟體候選"
+        candidate["candidate_scope"] = "internal-l2"
+        candidate["current_evidence_level"] = "L2"
+        candidate["rootfs_image_built"] = True
+        candidate["full_image_built"] = True
+        candidate["full_rootfs_image_built"] = True
+        image_dtb = "a" * 64
+        source_commit = subprocess.check_output(
+            ["git", "-C", str(ROOT), "rev-parse", "HEAD"], text=True
+        ).strip()
+        source_tree = subprocess.check_output(
+            ["git", "-C", str(ROOT), "rev-parse", f"{source_commit}^{{tree}}"],
+            text=True,
+        ).strip()
+        build_validation = hashlib.sha256(
+            subprocess.check_output(
+                [
+                    "git",
+                    "-C",
+                    str(ROOT),
+                    "show",
+                    f"{source_commit}:config/validation/bananapi-vs680-m6-legacy.json",
+                ]
+            )
+        ).hexdigest()
+        candidate["image_build_evidence"] = {
+            "status": "complete",
+            "evidence_level": "L2",
+            "read_only_content_verified": True,
+            "hardware_tested": False,
+            "source_commit": source_commit,
+            "source_tree": source_tree,
+            "verifier_commit": source_commit,
+            "source_date_epoch": 1717001894,
+            "build_validation_config_sha256": build_validation,
+            "verification_config_sha256": build_validation,
+            "candidate_matrix_sha256": "4" * 64,
+            "completion_status_sha256": "5" * 64,
+            "uboot_payload_manifest_sha256": "6" * 64,
+            "final_config_manifest_sha256": "7" * 64,
+            "xz_stream_verified": True,
+            "image": {"path": "bananapim6/test.img", "size": 1, "sha256": "8" * 64},
+            "archive": {"path": "bananapim6/test.img.xz", "size": 1, "sha256": "9" * 64},
+            "linux_dtb": {"sha256": image_dtb},
+        }
+        board = candidate["boards"]["bananapim6"]
+        board["image_dtb_sha256"] = image_dtb
+        board["dtb_sha256"] = image_dtb
+        board["dtb_sha256_evidence_scope"] = "full-image-l2"
+        status = {"evidence": {"bananapim6": {"level": "L2"}}}
+        self.policy_checker.validate_candidate_state(candidate, status)
+
+        for field, value in (
+            ("source_tree", None),
+            ("source_commit", "f" * 40),
+            ("completion_status_sha256", None),
+            ("source_date_epoch", 1),
+            ("xz_stream_verified", False),
+        ):
+            broken = copy.deepcopy(candidate)
+            if value is None:
+                del broken["image_build_evidence"][field]
+            else:
+                broken["image_build_evidence"][field] = value
+            with self.subTest(field=field):
+                with self.assertRaises(SystemExit):
+                    self.policy_checker.validate_candidate_state(broken, status)
+
     def test_m6_verifier_invalidates_stale_success(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             output = Path(directory)
@@ -373,6 +586,13 @@ printf '%s\n' "$BOOTBRANCH" "$KERNELBRANCH" \
                 json.dumps({"status": "complete", "evidence_level": "L2"}),
                 encoding="utf-8",
             )
+            stale_files = (
+                output / "VERIFICATION.tsv",
+                output / "UBOOT_PAYLOAD_EVIDENCE.tsv",
+                output / "FINAL_CONFIG_EVIDENCE.tsv",
+            )
+            for stale in stale_files:
+                stale.write_text("舊證據\n", encoding="utf-8")
             environment = os.environ.copy()
             environment["OUTPUT_DIR"] = str(output)
             result = subprocess.run(
@@ -388,16 +608,19 @@ printf '%s\n' "$BOOTBRANCH" "$KERNELBRANCH" \
             state = json.loads(status.read_text(encoding="utf-8"))
             self.assertEqual(state["status"], "failed")
             self.assertEqual(state["evidence_level"], "L1")
+            self.assertFalse(state["public_release_allowed"])
+            self.assertFalse(state["hardware_claims_allowed"])
+            self.assertFalse(state["opaque_payload_redistribution_verified"])
+            for stale in stale_files:
+                self.assertFalse(stale.exists())
 
-    def test_m6_verifier_uses_l2_for_l2_validation_state(self) -> None:
+    def test_m6_verifier_ignores_external_validation_override(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             output = Path(directory)
             status = output / "VERIFICATION_STATUS.json"
             validation = output / "m6-l2-validation.json"
             mutated = json.loads(CONFIG.read_text(encoding="utf-8"))
-            mutated["candidate_level"] = "L2 內部軟體候選"
-            mutated["candidate_scope"] = "internal-l2"
-            mutated["current_evidence_level"] = "L2"
+            mutated["candidate_level"] = "損壞的外部狀態"
             validation.write_text(
                 json.dumps(mutated, ensure_ascii=False),
                 encoding="utf-8",
@@ -417,7 +640,7 @@ printf '%s\n' "$BOOTBRANCH" "$KERNELBRANCH" \
             self.assertNotEqual(result.returncode, 0)
             state = json.loads(status.read_text(encoding="utf-8"))
             self.assertEqual(state["status"], "failed")
-            self.assertEqual(state["evidence_level"], "L2")
+            self.assertEqual(state["evidence_level"], "L1")
 
     def test_evidence_document_keeps_internal_l1_and_hardware_limits(self) -> None:
         text = EVIDENCE_DOCUMENT.read_text(encoding="utf-8")
@@ -449,6 +672,14 @@ printf '%s\n' "$BOOTBRANCH" "$KERNELBRANCH" \
         for required in ("TZK", "ATF", "DTS", "原理圖", "實機"):
             self.assertIn(required, joined)
         self.assertTrue(SOURCE_VERIFY.is_file())
+
+    def test_source_patch_checks_use_fixed_commit_temporary_index(self) -> None:
+        verifier = SOURCE_VERIFY.read_text(encoding="utf-8")
+        self.assertIn("verify_patch_against_commit", verifier)
+        self.assertIn('GIT_INDEX_FILE="${temporary_index}"', verifier)
+        self.assertIn('read-tree "${revision}"', verifier)
+        self.assertIn("apply --cached --check", verifier)
+        self.assertNotIn('git -C "${linux_tree}" apply --check', verifier)
 
 
 if __name__ == "__main__":

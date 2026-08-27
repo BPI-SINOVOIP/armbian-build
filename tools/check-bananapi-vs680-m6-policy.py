@@ -5,8 +5,10 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 from pathlib import Path
 import re
+import subprocess
 import sys
 
 
@@ -24,6 +26,7 @@ FINAL_UBOOT_CONFIG = "f31af0f1449901eb3834fd17e9c8c69034bd50b126a29108168683ba6b
 COMPONENT_DTB = "52c58e8a1413fd644b812480215350410659371083afa9930684df5752625413"
 TZK_SHA256 = "175e9b9313dffb70a97852ae21d855d3472916cc2af28f678ebcddc44828e411"
 UBOOT_SHA256 = "4d8158b3ed44de9384fabb009a0639cbe2c83e964a32724b5c87ce9911f72bda"
+VALIDATION_RELATIVE = "config/validation/bananapi-vs680-m6-legacy.json"
 
 
 def fail(message: str) -> None:
@@ -41,6 +44,50 @@ def valid_sha256(value: object) -> bool:
 
 def valid_commit(value: object) -> bool:
     return isinstance(value, str) and re.fullmatch(r"[0-9a-f]{40}", value) is not None
+
+
+def valid_relative_artifact_path(value: object, suffix: str) -> bool:
+    return (
+        isinstance(value, str)
+        and value.endswith(suffix)
+        and not value.startswith("/")
+        and ".." not in Path(value).parts
+    )
+
+
+def git_output(*arguments: str) -> bytes:
+    result = subprocess.run(
+        ["git", "-C", str(ROOT), *arguments],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+    require(result.returncode == 0, f"Git 證據不存在：{' '.join(arguments)}")
+    return result.stdout
+
+
+def validate_l2_git_evidence(evidence: dict[str, object]) -> None:
+    source_commit = evidence["source_commit"]
+    git_output("cat-file", "-e", f"{source_commit}^{{commit}}")
+    ancestry = subprocess.run(
+        ["git", "-C", str(ROOT), "merge-base", "--is-ancestor", source_commit, "HEAD"],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        check=False,
+    )
+    require(ancestry.returncode == 0, "L2 來源提交不是目前分支的祖先")
+    actual_tree = git_output("rev-parse", f"{source_commit}^{{tree}}").decode().strip()
+    require(evidence.get("source_tree") == actual_tree, "L2 來源 tree 與提交不一致")
+    validation_blob = git_output("show", f"{source_commit}:{VALIDATION_RELATIVE}")
+    expected_validation = hashlib.sha256(validation_blob).hexdigest()
+    require(
+        evidence.get("build_validation_config_sha256") == expected_validation,
+        "L2 建置 validation 雜湊與來源提交不一致",
+    )
+    require(
+        evidence.get("verification_config_sha256") == expected_validation,
+        "L2 驗證 validation 雜湊與來源提交不一致",
+    )
 
 
 def file_sha256(path: Path) -> str:
@@ -115,10 +162,14 @@ def validate_candidate_state(data: dict[str, object], status: dict[str, object])
         evidence["source_commit"] == evidence["verifier_commit"],
         "L2 來源與驗證器提交不一致",
     )
+    require(valid_commit(evidence.get("source_tree")), "L2 來源 tree 格式不符")
+    require(evidence.get("source_date_epoch") == 1717001894, "L2 來源時間戳不符")
+    require(evidence.get("xz_stream_verified") is True, "L2 缺少 XZ 串流同一性驗證")
     for key in (
         "build_validation_config_sha256",
         "verification_config_sha256",
         "candidate_matrix_sha256",
+        "completion_status_sha256",
         "uboot_payload_manifest_sha256",
         "final_config_manifest_sha256",
     ):
@@ -128,10 +179,14 @@ def validate_candidate_state(data: dict[str, object], status: dict[str, object])
         == evidence["verification_config_sha256"],
         "L2 建置與驗證契約雜湊不一致",
     )
+    validate_l2_git_evidence(evidence)
     for name in ("image", "archive"):
         artifact = evidence.get(name, {})
+        require(isinstance(artifact, dict), f"L2 {name} 證據格式不符")
         require(isinstance(artifact.get("size"), int) and artifact["size"] > 0, f"L2 {name} 大小無效")
         require(valid_sha256(artifact.get("sha256")), f"L2 {name} 雜湊格式不符")
+    require(valid_relative_artifact_path(evidence["image"].get("path"), ".img"), "L2 IMG 路徑不合法")
+    require(valid_relative_artifact_path(evidence["archive"].get("path"), ".img.xz"), "L2 XZ 路徑不合法")
     image_dtb = evidence.get("linux_dtb", {}).get("sha256")
     require(valid_sha256(image_dtb), "L2 缺少映像 DTB 雜湊")
     require(board.get("image_dtb_sha256") == image_dtb, "映像 DTB 欄位與證據不一致")
@@ -146,6 +201,15 @@ def main() -> None:
     family_text = FAMILY.read_text(encoding="utf-8")
     status = json.loads(STATUS.read_text(encoding="utf-8"))
     board = data["boards"]["bananapim6"]
+
+    require(
+        os.environ.get("PUBLIC_RELEASE", "no").lower() not in {"1", "true", "yes"},
+        "此候選禁止公開發布",
+    )
+    require(
+        os.environ.get("HARDWARE_CLAIMS", "no").lower() not in {"1", "true", "yes"},
+        "此候選禁止硬體通過聲明",
+    )
 
     require(data.get("schema_version") == 1, "驗證契約版本不符")
     require(data.get("candidate_branch") == "legacy", "候選分支不是 legacy")

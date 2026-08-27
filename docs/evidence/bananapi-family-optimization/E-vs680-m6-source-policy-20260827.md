@@ -101,6 +101,14 @@ U-Boot 樹含 GPL-2.0 授權文件，Linux 樹依 GPL-2.0 發布；這不會自�
 
 2026-08-27 預檢就緒稽核確認，共用唯讀下層快取尚未包含固定的 Armbian firmware 提交 `f50a2a21bcdb77a562b3976930c5c6b521a1df08`。因此第一次完整映像預檢必須能連線至已記錄的 firmware 來源，將精確提交取入專用 OverlayFS 上層；建置日誌必須保存來源網址、完整提交解析結果與實際取用紀錄。完成一次受控抓取前，不得宣稱 M6 候選可離線重建，也不得以其他快取版本替代固定提交。
 
+### 最後守門稽核
+
+2026-08-27 在不重新建置完整映像的限制下，從既有 M6 元件建置所保留的 `linux-image` 與 `linux-u-boot` 套件唯讀解包並重新計算：最終核心設定 SHA-256 為 `b67480db7854ea797a1813102b2ef1c7a1312c9291797912612368821b058786`，最終 U-Boot 設定 SHA-256 為 `f31af0f1449901eb3834fd17e9c8c69034bd50b126a29108168683ba6b38c1f6`；TZK 為 `4193792` 位元組、SHA-256 `175e9b9313dffb70a97852ae21d855d3472916cc2af28f678ebcddc44828e411`，`u-boot.bin` 為 `616575` 位元組、SHA-256 `4d8158b3ed44de9384fabb009a0639cbe2c83e964a32724b5c87ce9911f72bda`。這只重新確認既有元件證據，沒有產生新的完整映像。
+
+共用完整映像建置器現會把來源提交、來源 tree、validation 雜湊與 `SOURCE_DATE_EPOCH=1717001894` 同時寫入中繼資料及完成狀態，並在 `compile.sh` 返回後及發布候選矩陣前再次拒絕 HEAD、tree、工作樹或 validation 競態。M6 專用入口不可停用 OverlayFS 守門，且固定使用既有唯讀下層快取與本工作樹專用上層。
+
+完整映像驗證除原有的 MBR 幾何、`ea/83` 類型、FAT/ext4 標籤、root UUID、`armbianEnv.txt`、`boot.scr`、最終設定與受控重疊 payload 外，還會把來源 tree、建置完成狀態雜湊、候選矩陣雜湊、固定時間戳及 XZ 串流同一性寫入完成狀態。L2 政策還會確認來源提交確實存在且為目前分支祖先，從該提交重算來源 tree 與建置時 validation 雜湊，不接受只有格式正確的假提交。任何專用前置檢查失敗都會先移除舊的 TSV 證據並原子寫入 `failed`；成功或失敗狀態都必須保存 `public_release_allowed=false`、`hardware_claims_allowed=false` 與 `opaque_payload_redistribution_verified=false`。
+
 ### 元件建置證據
 
 2026-08-27 已在獨立 OverlayFS 上層完成 U-Boot 2019.10、Linux 5.4.195 image、DTB、headers 與 libc-dev 元件封裝，完整 IMG 數量為 0。元件來源提交為 `b6339cf4a2135e3ad75992f7574889d5ff34a249`；清單 SHA-256 為 `1eb1cbbe973badcb18c35e46c3e8be147c0fed77a1af940483b41620e153ea7e`，元件驗證狀態 SHA-256 為 `aa1c2474fc1c3d12384ba0b1d6fb13735e360bfc0125d09b817582edcd3268e5`。

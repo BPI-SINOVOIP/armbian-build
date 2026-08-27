@@ -757,7 +757,7 @@ validate_mounted_image() (
 	local loop_device partition boot_partition mount_dir config_file overlay_prefix overlay overlay_directory default_overlays required_overlays overlays_line sd_node sd_bus_width requirement required_node required_width kernel_family root_partition_number boot_partition_number
 	local boot_configuration extlinux_fdt expected_start_sector actual_start_sector property_spec property_node property_name property_expected installed_manifest installed_spec installed_path installed_sha256
 	local vendor_boot_directory root_uuid final_kernel_config_sha256 actual_kernel_config_sha256 forbidden_asset
-	local boot_partition_label root_partition_label root_partition_filesystem_type boot_script_source boot_script_source_sha256 boot_script_source_path boot_script_payload
+	local boot_partition_label boot_partition_filesystem_type root_partition_label root_partition_filesystem_type boot_script_source boot_script_source_sha256 boot_script_source_path boot_script_payload
 	local dtb_sha256 alias_spec alias_name alias_expected forbidden_fragment
 	local required_module_path
 	local -a module_matches=() config_files=() config_hashes=()
@@ -812,6 +812,11 @@ validate_mounted_image() (
 		if [[ -n "${boot_partition_label}" ]]; then
 			[[ "$(sudo blkid -s LABEL -o value "${boot_partition}")" == "${boot_partition_label}" ]] ||
 				fail "${board} 的 boot 分割區標籤不是 ${boot_partition_label}"
+		fi
+		boot_partition_filesystem_type="$(board_field_optional "${board}" boot_partition_filesystem_type)"
+		if [[ -n "${boot_partition_filesystem_type}" ]]; then
+			[[ "$(sudo blkid -s TYPE -o value "${boot_partition}")" == "${boot_partition_filesystem_type}" ]] ||
+				fail "${board} 的 boot 分割區檔案系統不是 ${boot_partition_filesystem_type}"
 		fi
 		[[ -d "${mount_dir}/boot" ]] || fail "${board} 根檔案系統缺少 /boot 掛載點"
 		sudo mount -o ro,nosuid,nodev,noexec "${boot_partition}" "${mount_dir}/boot"
@@ -1118,16 +1123,21 @@ for digest_name in source_contract_projection_sha256 firmware_runtime_sources_sh
 	[[ -z "${digest_value}" || "${digest_value}" =~ ^[0-9a-f]{64}$ ]] ||
 		fail "${digest_name} 格式不符"
 done
+completion_status_sha256="$(sha256sum "${output_dir}/COMPLETION_STATUS.json" | cut -d' ' -f1)"
+source_date_epoch="$(top_field_optional source_date_epoch)"
+if [[ -n "${source_date_epoch}" ]]; then
+	[[ "${source_date_epoch}" =~ ^[1-9][0-9]*$ ]] || fail "驗證契約的 SOURCE_DATE_EPOCH 無效"
+fi
 if [[ "${verification_evidence_level}" == L2 || "${require_build_verifier_identity}" == yes ]]; then
 	[[ "${candidate_source_commit}" == "${verifier_commit}" ]] ||
 		fail "候選來源提交與驗證器提交不一致"
 	[[ "${build_validation_config_sha256}" == "${verification_config_sha256}" ]] ||
-		fail "建置與驗證使用的 validation 雜湊不一致"
+		fail "L2 建置與驗證使用的 validation 雜湊不一致"
 fi
 python3 - "${output_dir}/COMPLETION_STATUS.json" "${candidate_source_commit}" \
 	"${candidate_source_tree}" "${build_validation_config_sha256}" \
 	"${candidate_matrix_sha256}" "${source_contract_projection_sha256}" \
-	"${firmware_runtime_sources_sha256}" <<'PY' || fail "建置完成狀態未綁定候選來源與矩陣"
+	"${firmware_runtime_sources_sha256}" "${source_date_epoch}" <<'PY' || fail "建置完成狀態未綁定候選來源、時間戳與矩陣"
 import json
 import sys
 with open(sys.argv[1], encoding="utf-8") as stream:
@@ -1143,6 +1153,8 @@ if sys.argv[6]:
     expected["source_contract_projection_sha256"] = sys.argv[6]
 if sys.argv[7]:
     expected["firmware_runtime_sources_sha256"] = sys.argv[7]
+if sys.argv[8]:
+    expected["source_date_epoch"] = int(sys.argv[8])
 raise SystemExit(0 if all(status.get(key) == value for key, value in expected.items()) else 1)
 PY
 verify_firmware_source_resolution="$(top_field_optional verify_firmware_source_resolution)"
@@ -1198,11 +1210,11 @@ while IFS=$'\t' read -r board release profile raw_size raw_sha256 xz_size \
 		[[ -z "${expected}" ]] || require_metadata_value "${metadata}" "${key}" "${expected}"
 	done
 	if [[ "${require_source_date_epoch_metadata}" == yes ]]; then
-		source_date_epoch="$(top_field_optional source_date_epoch)"
 		[[ "${source_date_epoch}" =~ ^[1-9][0-9]*$ ]] ||
 			fail "驗證設定缺少有效的 source_date_epoch 正整數"
-		require_metadata_value "${metadata}" source_date_epoch "${source_date_epoch}"
 	fi
+	[[ -z "${source_date_epoch}" ]] ||
+		require_metadata_value "${metadata}" source_date_epoch "${source_date_epoch}"
 	for key in uboot_git_source uboot_git_ref uboot_revision uboot_version \
 		atf_git_source atf_git_ref atf_revision \
 		crust_git_source crust_git_ref crust_revision; do
@@ -1280,6 +1292,11 @@ final_config_manifest_sha256="$(sha256sum \
 	[[ -z "${firmware_runtime_sources_sha256}" ]] || printf \
 		'  "firmware_runtime_sources_sha256": "%s",\n' "${firmware_runtime_sources_sha256}"
 	printf '  "candidate_matrix_sha256": "%s",\n' "${candidate_matrix_sha256}"
+	printf '  "completion_status_sha256": "%s",\n' "${completion_status_sha256}"
+	if [[ -n "${source_date_epoch}" ]]; then
+		printf '  "source_date_epoch": %s,\n' "${source_date_epoch}"
+	fi
+	printf '  "xz_stream_verified": %s,\n' "$([[ "${verify_archives}" == yes ]] && printf true || printf false)"
 	printf '  "uboot_payload_manifest_sha256": "%s",\n' "${uboot_payload_manifest_sha256}"
 	printf '  "final_config_manifest_sha256": "%s",\n' "${final_config_manifest_sha256}"
 	printf '  "verified_utc": "%s"\n}\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
@@ -1308,7 +1325,8 @@ with open(extra_path, encoding="utf-8") as stream:
 protected = {
     "status", "evidence_level", "source_commit", "source_tree", "verifier_commit",
     "build_validation_config_sha256", "verification_config_sha256",
-    "candidate_matrix_sha256", "uboot_payload_manifest_sha256",
+    "candidate_matrix_sha256", "completion_status_sha256", "source_date_epoch",
+    "xz_stream_verified", "uboot_payload_manifest_sha256",
     "final_config_manifest_sha256", "verified_utc",
     "source_contract_projection_sha256", "firmware_runtime_sources_sha256",
 }
@@ -1325,9 +1343,10 @@ fi
 python3 - "${status_file}.partial" "${verification_evidence_level}" \
 	"${candidate_source_commit}" "${candidate_source_tree}" "${verifier_commit}" \
 	"${build_validation_config_sha256}" "${verification_config_sha256}" \
-	"${candidate_matrix_sha256}" "${uboot_payload_manifest_sha256}" \
-	"${final_config_manifest_sha256}" "${source_contract_projection_sha256}" \
-	"${firmware_runtime_sources_sha256}" <<'PY' || fail "驗證完成狀態的受保護欄位遭到修改"
+	"${candidate_matrix_sha256}" "${completion_status_sha256}" "${source_date_epoch}" \
+	"$([[ "${verify_archives}" == yes ]] && printf true || printf false)" \
+	"${uboot_payload_manifest_sha256}" "${final_config_manifest_sha256}" \
+	"${source_contract_projection_sha256}" "${firmware_runtime_sources_sha256}" <<'PY' || fail "驗證完成狀態的受保護欄位遭到修改"
 import json
 import sys
 
@@ -1342,13 +1361,17 @@ expected = {
     "build_validation_config_sha256": sys.argv[6],
     "verification_config_sha256": sys.argv[7],
     "candidate_matrix_sha256": sys.argv[8],
-    "uboot_payload_manifest_sha256": sys.argv[9],
-    "final_config_manifest_sha256": sys.argv[10],
+    "completion_status_sha256": sys.argv[9],
+    "xz_stream_verified": sys.argv[11] == "true",
+    "uboot_payload_manifest_sha256": sys.argv[12],
+    "final_config_manifest_sha256": sys.argv[13],
 }
-if sys.argv[11]:
-    expected["source_contract_projection_sha256"] = sys.argv[11]
-if sys.argv[12]:
-    expected["firmware_runtime_sources_sha256"] = sys.argv[12]
+if sys.argv[10]:
+    expected["source_date_epoch"] = int(sys.argv[10])
+if sys.argv[14]:
+    expected["source_contract_projection_sha256"] = sys.argv[14]
+if sys.argv[15]:
+    expected["firmware_runtime_sources_sha256"] = sys.argv[15]
 raise SystemExit(0 if all(status.get(key) == value for key, value in expected.items()) else 1)
 PY
 assert_verifier_identity

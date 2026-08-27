@@ -6,7 +6,7 @@ validation_config="${VALIDATION_CONFIG:-${repo_dir}/config/validation/bananapi-v
 cache_lower="${CACHE_LOWER:-/media/pi/SMCI/armbian/bpi-v26.2.1/cache}"
 verify_remote_refs="${VERIFY_REMOTE_REFS:-no}"
 
-for command in cut find git grep python3 sha256sum stat wc; do
+for command in cut find git grep mktemp python3 rmdir sha256sum stat unlink wc; do
 	command -v "${command}" >/dev/null || {
 		echo "缺少必要命令：${command}" >&2
 		exit 1
@@ -16,6 +16,27 @@ done
 fail() {
 	echo "來源驗證失敗：$*" >&2
 	exit 1
+}
+
+verify_patch_against_commit() {
+	local source_tree=$1 revision=$2 patch=$3 label=$4
+	local temporary_dir temporary_index
+	temporary_dir="$(mktemp -d "${TMPDIR:-/tmp}/bananapi-m6-source-index.XXXXXX")"
+	temporary_index="${temporary_dir}/index"
+	cleanup_temporary_index() {
+		[[ ! -e "${temporary_index}.lock" ]] || unlink "${temporary_index}.lock"
+		[[ ! -e "${temporary_index}" ]] || unlink "${temporary_index}"
+		rmdir "${temporary_dir}"
+	}
+	if ! GIT_INDEX_FILE="${temporary_index}" git -C "${source_tree}" read-tree "${revision}"; then
+		cleanup_temporary_index
+		fail "${label} 無法建立固定提交的臨時 index"
+	fi
+	if ! GIT_INDEX_FILE="${temporary_index}" git -C "${source_tree}" apply --cached --check "${patch}"; then
+		cleanup_temporary_index
+		fail "${label} 無法套用固定提交"
+	fi
+	cleanup_temporary_index
 }
 
 json_value() {
@@ -77,12 +98,12 @@ actual_uboot_dts_blob="$(git -C "${uboot_tree}" rev-parse "${uboot_revision}:arc
 [[ "${actual_uboot_dts_blob}" == "${expected_uboot_dts_blob}" ]] ||
 	fail "U-Boot M6 DTS 基底 blob 不符"
 
-git -C "${linux_tree}" apply --check \
-	"${repo_dir}/patch/kernel/archive/bananapim6-legacy/001-identify-bananapi-m6-and-retain-vs680-compatibility.patch" ||
-	fail "Linux M6 身分修補無法套用固定提交"
-git -C "${uboot_tree}" apply --check \
-	"${repo_dir}/patch/u-boot/legacy/u-boot-vs680-bananapim6/001-identify-bananapi-m6.patch" ||
-	fail "U-Boot M6 身分修補無法套用固定提交"
+verify_patch_against_commit "${linux_tree}" "${linux_revision}" \
+	"${repo_dir}/patch/kernel/archive/bananapim6-legacy/001-identify-bananapi-m6-and-retain-vs680-compatibility.patch" \
+	"Linux M6 身分修補"
+verify_patch_against_commit "${uboot_tree}" "${uboot_revision}" \
+	"${repo_dir}/patch/u-boot/legacy/u-boot-vs680-bananapim6/001-identify-bananapi-m6.patch" \
+	"U-Boot M6 身分修補"
 
 tzk_path="${repo_dir}/packages/blobs/vs680/bpi-m6-tzk-4MB.bin"
 [[ -f "${tzk_path}" ]] || fail "找不到受控 TZK 載荷：${tzk_path}"

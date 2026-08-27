@@ -97,10 +97,27 @@ fi
 source_commit="$(git -C "${repo_dir}" rev-parse HEAD)"
 source_tree="$(git -C "${repo_dir}" rev-parse 'HEAD^{tree}')"
 validation_config_sha256="$(sha256sum "${validation_config}" | cut -d' ' -f1)"
+validation_source_date_epoch="$(python3 - "${validation_config}" <<'PY'
+import json
+import sys
+
+with open(sys.argv[1], encoding="utf-8") as stream:
+    print(json.load(stream).get("source_date_epoch", ""))
+PY
+)"
+if [[ -n "${validation_source_date_epoch}" ]]; then
+	[[ "${validation_source_date_epoch}" =~ ^[1-9][0-9]*$ ]] ||
+		fail "驗證契約的 SOURCE_DATE_EPOCH 無效"
+	if [[ -n "${SOURCE_DATE_EPOCH:-}" && "${SOURCE_DATE_EPOCH}" != "${validation_source_date_epoch}" ]]; then
+		fail "環境 SOURCE_DATE_EPOCH 與驗證契約不一致"
+	fi
+	export SOURCE_DATE_EPOCH="${validation_source_date_epoch}"
+fi
+source_date_epoch="${SOURCE_DATE_EPOCH:-}"
 
 assert_source_identity() {
 	[[ "$(git -C "${repo_dir}" rev-parse HEAD)" == "${source_commit}" ]] ||
-		fail "建置期間來源 HEAD 已改變"
+		fail "建置期間來源提交已改變"
 	[[ "$(git -C "${repo_dir}" rev-parse 'HEAD^{tree}')" == "${source_tree}" ]] ||
 		fail "建置期間來源 tree 已改變"
 	[[ -z "$(git -C "${repo_dir}" status --porcelain --untracked-files=all)" ]] ||
@@ -234,6 +251,9 @@ write_status() {
 		if [[ -n "${firmware_runtime_sources_sha256}" ]]; then
 			printf '  "firmware_runtime_sources_sha256": "%s",\n' \
 				"${firmware_runtime_sources_sha256}"
+		fi
+		if [[ -n "${source_date_epoch}" ]]; then
+			printf '  "source_date_epoch": %s,\n' "${source_date_epoch}"
 		fi
 		if [[ -n "${candidates_sha256}" ]]; then
 			printf '  "candidates_sha256": "%s",\n' "${candidates_sha256}"
@@ -373,6 +393,8 @@ for board in "${boards[@]}"; do
 			read -r key expected <<<"${item}"
 			require_metadata_value "${metadata}" "${key}" "${expected}"
 		done
+		[[ -z "${source_date_epoch}" ]] ||
+			require_metadata_value "${metadata}" source_date_epoch "${source_date_epoch}"
 		for item in "uboot_git_source ${uboot_git_source}" \
 			"uboot_git_ref ${uboot_git_ref}" "uboot_revision ${uboot_revision}" \
 			"uboot_version ${uboot_version}" \
@@ -414,6 +436,8 @@ for board in "${boards[@]}"; do
 		echo "完整建置 ${board} ${release} ${branch} CLI。"
 		(cd "${repo_dir}" && ./compile.sh "${build_args[@]}") |& tee "${log_file}"
 		assert_source_identity
+		[[ "$(sha256sum "${validation_config}" | cut -d' ' -f1)" == "${validation_config_sha256}" ]] ||
+			fail "${board} 建置期間 validation 已改變"
 
 		mapfile -t candidates < <(find "${repo_dir}/output/images" -maxdepth 1 \
 			-type f -iname "${output_image_glob}" \
@@ -513,6 +537,13 @@ assert_source_identity
 
 actual_rows="$(awk 'NR > 1 { count++ } END { print count + 0 }' "${matrix_file}.partial")"
 [[ "${actual_rows}" -eq "${#boards[@]}" ]] || fail "候選矩陣筆數不符"
+[[ "$(git -C "${repo_dir}" rev-parse HEAD)" == "${source_commit}" &&
+	"$(git -C "${repo_dir}" rev-parse 'HEAD^{tree}')" == "${source_tree}" ]] ||
+	fail "建立完成證據期間來源提交或 tree 已改變"
+[[ -z "$(git -C "${repo_dir}" status --porcelain --untracked-files=all)" ]] ||
+	fail "建立完成證據期間來源工作樹已改變"
+[[ "$(sha256sum "${validation_config}" | cut -d' ' -f1)" == "${validation_config_sha256}" ]] ||
+	fail "建立完成證據期間 validation 已改變"
 mv "${matrix_file}.partial" "${matrix_file}"
 candidates_sha256="$(sha256sum "${matrix_file}" | cut -d' ' -f1)"
 write_status complete "指定板卡的 L1 候選已完整建置" "${candidates_sha256}"
