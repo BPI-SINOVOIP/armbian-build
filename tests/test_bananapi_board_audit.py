@@ -43,6 +43,19 @@ class BananaPiBoardAuditTests(unittest.TestCase):
 
     def test_spacemit_k3_is_riscv64(self) -> None:
         self.assertEqual(self.by_id["bananapism10"].architecture, "riscv64")
+        self.assertEqual(self.by_id["bananapism10"].level, "L1")
+
+    def test_recent_candidates_are_backed_by_the_status_registry(self) -> None:
+        expected = {
+            "bananapif2s": "L1",
+            "bananapim6": "L1",
+            "bananapir2": "L2",
+            "bananapir4pro": "L2",
+            "bananapiw3": "L2",
+        }
+        for board_id, level in expected.items():
+            with self.subTest(board_id=board_id):
+                self.assertEqual(self.by_id[board_id].level, level)
 
     def test_forge1_uses_rockchip_armhf_family(self) -> None:
         self.assertEqual(self.by_id["bananapiforge1"].architecture, "armhf")
