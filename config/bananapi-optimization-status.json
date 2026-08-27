@@ -184,6 +184,10 @@
       "level": "L1",
       "basis": "固定 BPI-F2S BSP 提交、Linux 5.4.35、U-Boot 2019.04 與 GCC 7.3.1 已核對；U-Boot、uImage、DTB 與 modules 元件已重建並通過雜湊與授權邊界守門；尚未建立完整 rootfs 映像或實機驗證"
     },
+    "bananapif2p": {
+      "level": "L1",
+      "basis": "固定 BPI-F2S BSP 容器提交、F2P Linux 5.4.35、U-Boot 2019.04 與 GCC 7.3.1 已核對；U-Boot、uImage、雙 DTB 與 11 個 modules 已重建成可攜證據並通過內容守門；尚未建立完整 rootfs 映像或實機驗證"
+    },
     "bananapim6": {
       "level": "L1",
       "basis": "固定 Linux、U-Boot 與 firmware 來源已核對；U-Boot、Linux image、DTB、headers 與 libc-dev 套件已重建並通過獨立內容驗證；尚未建立完整 rootfs 映像或實機驗證"
@@ -220,6 +224,9 @@
   "open_findings": {
     "bananapif2s": [
       "xboot 與預建工具鏈缺少完整可重建來源或明確再散布授權，完整映像只能作內部驗證"
+    ],
+    "bananapif2p": [
+      "ISPBOOOT.BIN 與預建工具鏈再散布授權未閉合，且缺少 F2P 專用 eMMC xboot；目前只能保留內部 SD 候選"
     ],
     "bananapim6": [
       "TZK 與 U-Boot sm.bin 缺少原始碼、重建鏈及逐檔再散布授權，C05 拓撲與實機啟動尚未驗證"

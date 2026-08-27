@@ -47,6 +47,7 @@ class BananaPiBoardAuditTests(unittest.TestCase):
 
     def test_recent_candidates_are_backed_by_the_status_registry(self) -> None:
         expected = {
+            "bananapif2p": "L1",
             "bananapif2s": "L1",
             "bananapim6": "L1",
             "bananapir2": "L2",
