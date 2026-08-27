@@ -50,6 +50,7 @@ Banana Pi R2 的 Linux 與 U-Boot 均已固定至可重建的公開原始碼提�
 - 唯讀掛載確認 `armbianEnv.txt`、`boot.cmd` 與成品 U-Boot 都只使用扁平 DTB 路徑；DTB model 是 `Bananapi BPI-R2`，compatible 是 `bananapi,bpi-r2`、`mediatek,mt7623`，SHA-256 為 `55151de1694bb279e759498eb5f86253e0e90700408044c546b4310a2a81c796`。
 - 成品 U-Boot 大小為 462560 bytes，SHA-256 為 `bc3dffced856d68219ae997e2faa0ee246e8ef64fb2930d65ce1795b34f90cf2`；四個原廠載荷的成品套件雜湊與固定來源完全一致。
 - 建置包裝器在映像與候選中繼資料完成後，第一次卸載專用 OverlayFS 時因短暫忙碌回傳狀態 32；確認沒有殘留建置程序或子掛載後重新執行一般卸載即成功。這項收尾事件不改變映像內容，但已保留於操作紀錄，不能用來省略後續正式驗證。
+- 驗證器提交 `cca7e35c6e7c7911bfa656248e1ae561e0e5940a` 已完成 IMG／XZ 同一性、分割表、五個啟動載荷、來源中繼資料、DTB、核心設定、套件及唯讀根檔案系統守門，結果為 L2。驗證器同時修正 root-only 受控檔案與 U-Boot 載荷的唯讀雜湊權限處理，沒有放寬成品檔案權限。
 - 本次沒有 R2 實體板、SD、eMMC、SATA、PCIe、HDMI、USB、網路交換器、GPIO、I2C 或 SPI 測試，因此不得宣稱上述硬體功能已通過。
 
 ## 發布守門
