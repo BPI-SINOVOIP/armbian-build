@@ -110,8 +110,8 @@ class BananaPiM1SuperCandidateTests(unittest.TestCase):
         )
 
     def test_public_release_and_hardware_claims_are_blocked(self):
-        self.assertEqual(self.validation["candidate_level"], "L1 元件候選")
-        self.assertEqual(self.validation["candidate_scope"], "internal-component-only")
+        self.assertEqual(self.validation["candidate_level"], "L2 內部軟體候選")
+        self.assertEqual(self.validation["candidate_scope"], "internal-l2")
         self.assertTrue(self.validation["component_build_completed"])
         self.assertFalse(self.validation["full_image_built"])
         self.assertFalse(self.validation["rootfs_image_built"])
@@ -125,13 +125,18 @@ class BananaPiM1SuperCandidateTests(unittest.TestCase):
             self.validation["identity_evidence"]["wifi_bom_conflict_resolved"]
         )
 
-    def test_current_state_is_honest_l1_without_material_evidence(self):
+    def test_current_state_is_l2_rebuild_contract_without_material_evidence(self):
         self.policy_checker.validate_contract_projection(self.validation, False)
-        self.policy_checker.validate_candidate_state(self.validation)
+        self.policy_checker.validate_candidate_state(
+            self.validation, require_material_binding=False
+        )
         self.assertNotIn("image_build_evidence", self.validation)
-        self.assertIsNone(self.board["image_dtb_sha256"])
         self.assertEqual(
-            self.board["dtb_sha256_evidence_scope"], "preflight-contract-l1"
+            self.board["image_dtb_sha256"],
+            "68c0d6c27d2802abee0b7ab4b0569581048b14fc651d55c103392d81e00f2eb6",
+        )
+        self.assertEqual(
+            self.board["dtb_sha256_evidence_scope"], "full-image-l2"
         )
         self.assertEqual(
             self.board["component_dtb_sha256"],
@@ -142,13 +147,8 @@ class BananaPiM1SuperCandidateTests(unittest.TestCase):
     def test_source_contract_phase_does_not_require_existing_output(self):
         rebuild_policy = json.loads(json.dumps(self.validation))
         self.policy_checker.validate_contract_projection(rebuild_policy, False)
-        self.policy_checker.validate_candidate_state(rebuild_policy)
-
-        promoted_policy = json.loads(json.dumps(rebuild_policy))
-        promoted_policy["candidate_level"] = "L2 內部軟體候選"
-        promoted_policy["candidate_scope"] = "internal-l2"
         self.policy_checker.validate_candidate_state(
-            promoted_policy, require_material_binding=False
+            rebuild_policy, require_material_binding=False
         )
         build_text = BUILD_ENTRY.read_text(encoding="utf-8")
         verify_text = VERIFY_ENTRY.read_text(encoding="utf-8")
@@ -457,13 +457,13 @@ class BananaPiM1SuperCandidateTests(unittest.TestCase):
 
     def test_state_machine_rejects_mixed_or_unproven_states(self):
         mixed = json.loads(json.dumps(self.validation))
-        mixed["candidate_scope"] = "internal-l2"
+        mixed["candidate_scope"] = "internal-component-only"
         with self.assertRaises(SystemExit):
-            self.policy_checker.validate_candidate_state(mixed)
+            self.policy_checker.validate_candidate_state(
+                mixed, require_material_binding=False
+            )
 
         unproven_l2 = json.loads(json.dumps(self.validation))
-        unproven_l2["candidate_level"] = "L2 內部軟體候選"
-        unproven_l2["candidate_scope"] = "internal-l2"
         unproven_l2["full_image_built"] = True
         unproven_l2["rootfs_image_built"] = True
         with self.assertRaises(SystemExit):
@@ -472,7 +472,9 @@ class BananaPiM1SuperCandidateTests(unittest.TestCase):
         false_claim = json.loads(json.dumps(self.validation))
         false_claim["hardware_claims_allowed"] = True
         with self.assertRaises(SystemExit):
-            self.policy_checker.validate_candidate_state(false_claim)
+            self.policy_checker.validate_candidate_state(
+                false_claim, require_material_binding=False
+            )
 
     def test_rkbin_license_and_hashes_are_machine_readable(self):
         self.assertTrue(self.validation["rkbin_copy_and_distribution_grant_present"])
@@ -569,10 +571,12 @@ class BananaPiM1SuperCandidateTests(unittest.TestCase):
             self.board["component_dtb_sha256"],
             "68c0d6c27d2802abee0b7ab4b0569581048b14fc651d55c103392d81e00f2eb6",
         )
-        self.assertIsNone(self.board["image_dtb_sha256"])
+        self.assertEqual(
+            self.board["image_dtb_sha256"], self.board["component_dtb_sha256"]
+        )
         self.assertEqual(self.board["dtb_sha256"], self.board["component_dtb_sha256"])
         self.assertEqual(
-            self.board["dtb_sha256_evidence_scope"], "preflight-contract-l1"
+            self.board["dtb_sha256_evidence_scope"], "full-image-l2"
         )
         self.assertEqual(
             self.board["uboot_defconfig"],

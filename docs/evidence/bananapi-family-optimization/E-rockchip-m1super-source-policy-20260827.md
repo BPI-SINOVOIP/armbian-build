@@ -2,7 +2,7 @@
 
 ## 結論
 
-本候選把 `bananapim1super.wip` 從 ArmSoM Sige1 板檔繼承與 Hinlink H28K U-Boot 身分，改成 Banana Pi M1 Super 專屬板檔、Linux DTS、U-Boot DTS 與 defconfig。提交 `8c6533a10` 的歷史完整映像曾通過 L1 與 L2 唯讀內容守門；整合到現行全板最佳化分支後，為避免舊產物冒充新提交證據，中央狀態暫時回到 `L1 元件候選`，等待重新校準與正式重建。這不是公開發布版，也不代表任何實體板功能已通過。
+本候選把 `bananapim1super.wip` 從 ArmSoM Sige1 板檔繼承與 Hinlink H28K U-Boot 身分，改成 Banana Pi M1 Super 專屬板檔、Linux DTS、U-Boot DTS 與 defconfig。提交 `8c6533a10` 的歷史完整映像曾通過 L1 與 L2 唯讀內容守門；現行全板最佳化分支已完成 L1 校準，validation 進入 L2 正式重建契約，但中央狀態仍維持 `L1 元件候選`，直到新提交乾淨重建與即時物質驗證完成。這不是公開發布版，也不代表任何實體板功能已通過。
 
 保留 `.wip` 的原因包含量產料號、韌體與預建載荷授權，以及實體儲存裝置、網路、顯示、影音與 40-pin 尚未完成跨板次驗證。現有映像必須維持內部測試用途，直到發布守門條件逐項解除。
 
