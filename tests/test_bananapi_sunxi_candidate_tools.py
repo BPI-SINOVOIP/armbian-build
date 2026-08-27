@@ -590,9 +590,73 @@ Provides: unavailable-virtual
             "decompressed_sha256",
             "ARTIFACT_IGNORE_CACHE",
             "CLEAN_LEVEL=make-kernel,make-uboot,make-atf,make-crust",
+            "hard_minimum_free_gib=40",
+            "candidates_sha256",
         ):
             with self.subTest(required=required):
                 self.assertIn(required, text)
+
+    def test_l2_verifier_closes_commit_archive_and_status_boundaries(self) -> None:
+        text = VERIFY_SCRIPT.read_text(encoding="utf-8")
+        for required in (
+            "L2 驗證不得停用 XZ 串流同一性檢查",
+            'candidate_source_commit}" == "${verifier_commit',
+            'build_validation_config_sha256}" == "${verification_config_sha256',
+            "candidates_sha256",
+            "candidate_matrix_sha256",
+            "write_verification_state in_progress",
+            "write_verification_state failed",
+            "禁止沿用舊成功狀態",
+            "VERIFICATION_PRE_COMPLETE_HOOK",
+            "VERIFICATION_EXTRA_STATUS_JSON",
+        ):
+            with self.subTest(required=required):
+                self.assertIn(required, text)
+
+    def test_verifier_replaces_stale_success_when_required_input_is_missing(self) -> None:
+        with tempfile.TemporaryDirectory(dir=ROOT / ".tmp") as directory:
+            output = Path(directory)
+            status = output / "VERIFICATION_STATUS.json"
+            status.write_text(
+                json.dumps({"status": "complete", "evidence_level": "L2"}),
+                encoding="utf-8",
+            )
+            environment = os.environ.copy()
+            environment["OUTPUT_DIR"] = str(output)
+            result = subprocess.run(
+                [str(VERIFY_SCRIPT)],
+                cwd=ROOT,
+                env=environment,
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                check=False,
+            )
+            self.assertNotEqual(result.returncode, 0)
+            self.assertEqual(json.loads(status.read_text(encoding="utf-8"))["status"], "failed")
+
+    def test_l2_runtime_gate_rejects_disabled_archive_verification(self) -> None:
+        with tempfile.TemporaryDirectory(dir=ROOT / ".tmp") as directory:
+            output = Path(directory)
+            (output / "CANDIDATES.tsv").write_text("不完整候選\n", encoding="utf-8")
+            (output / "COMPLETION_STATUS.json").write_text(
+                json.dumps({"status": "complete"}), encoding="utf-8"
+            )
+            environment = os.environ.copy()
+            environment.update({"OUTPUT_DIR": str(output), "VERIFY_ARCHIVES": "no"})
+            result = subprocess.run(
+                [str(VERIFY_SCRIPT)],
+                cwd=ROOT,
+                env=environment,
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                check=False,
+            )
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("不得停用 XZ", result.stderr)
+            status = json.loads((output / "VERIFICATION_STATUS.json").read_text(encoding="utf-8"))
+            self.assertEqual(status["status"], "failed")
 
     def test_optional_firmware_and_kernel_module_gates_are_machine_checked(self) -> None:
         build_text = BUILD_SCRIPT.read_text()
@@ -693,6 +757,13 @@ Provides: unavailable-virtual
             "verification_config_sha256",
             "kernel_family",
             "xz -dc",
+            "分割區數量不符",
+            "final_kernel_config_sha256",
+            "final_uboot_config_sha256",
+            "FINAL_CONFIG_EVIDENCE.tsv",
+            "uboot_target_make_forbidden",
+            "forbidden_packaged_assets",
+            "恰好包含一份核心設定檔",
         ):
             with self.subTest(required=required):
                 self.assertIn(required, text if required != "u-boot-sunxi-with-spl.bin" else CONFIG.read_text())

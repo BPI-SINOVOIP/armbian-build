@@ -253,7 +253,7 @@ class BananaPiSunplusF2SCandidateTests(unittest.TestCase):
             "boot_partition_number",
             "root_partition_start_sector",
             "sunplus_uenv",
-            'sudo mount -o ro "${boot_partition}"',
+            'sudo mount -o ro,nosuid,nodev,noexec "${boot_partition}"',
             "root=/dev/mmcblk",
         ):
             with self.subTest(required=required):

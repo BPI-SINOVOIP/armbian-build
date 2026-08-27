@@ -224,6 +224,10 @@ class BananaPiFilogicR3MiniCandidateTests(unittest.TestCase):
         self.assertIn("check-bananapi-filogic-r3mini-policy.sh", BUILD.read_text())
         self.assertIn("check-bananapi-filogic-r3mini-policy.sh", VERIFIER.read_text())
         self.assertIn("finalize-bananapi-filogic-r3mini-verification.sh", VERIFIER.read_text())
+        self.assertIn("VERIFICATION_PRE_COMPLETE_HOOK", VERIFIER.read_text())
+        self.assertIn("VERIFY_ARCHIVES=yes", VERIFIER.read_text())
+        self.assertIn("write_entry_state in_progress", VERIFIER.read_text())
+        self.assertIn("write_entry_state failed", VERIFIER.read_text())
 
     def test_finalizer_enforces_payload_bounds_and_release_block(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -239,12 +243,12 @@ class BananaPiFilogicR3MiniCandidateTests(unittest.TestCase):
                 + "3" * 64
                 + "\n"
             )
-            status = output / "VERIFICATION_STATUS.json"
+            status = output / "VERIFICATION_STATUS.json.partial"
             status.write_text(json.dumps({"status": "complete", "evidence_level": "L2"}))
             environment = os.environ.copy()
             environment["OUTPUT_DIR"] = str(output)
             subprocess.run(
-                [str(FINALIZER)],
+                [str(FINALIZER), str(status)],
                 cwd=ROOT,
                 env=environment,
                 check=True,
@@ -262,7 +266,7 @@ class BananaPiFilogicR3MiniCandidateTests(unittest.TestCase):
 
             evidence.write_text(evidence.read_text().replace("\t507953\t", "\t4194305\t"))
             rejected = subprocess.run(
-                [str(FINALIZER)],
+                [str(FINALIZER), str(status)],
                 cwd=ROOT,
                 env=environment,
                 check=False,

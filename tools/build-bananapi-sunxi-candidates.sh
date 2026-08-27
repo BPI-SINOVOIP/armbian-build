@@ -9,6 +9,7 @@ release="${RELEASE:-trixie}"
 branch="${BRANCH:-}"
 artifact_ignore_cache="${ARTIFACT_IGNORE_CACHE:-yes}"
 minimum_free_gib="${MINIMUM_FREE_GIB:-80}"
+hard_minimum_free_gib=40
 require_isolated_cache="${REQUIRE_ISOLATED_CACHE:-yes}"
 candidate_family_name="${CANDIDATE_FAMILY_NAME:-Sunxi}"
 candidate_lock_file="${CANDIDATE_LOCK_FILE:-.bananapi-sunxi-build.lock}"
@@ -77,6 +78,8 @@ esac
 	echo "MINIMUM_FREE_GIB 必須是整數。" >&2
 	exit 2
 }
+(( minimum_free_gib >= hard_minimum_free_gib )) ||
+	fail "MINIMUM_FREE_GIB 不得低於硬下限 ${hard_minimum_free_gib} GiB"
 
 [[ -z "$(git -C "${repo_dir}" status --porcelain --untracked-files=all)" ]] ||
 	fail "來源工作樹有已追蹤或未追蹤變更"
@@ -169,12 +172,17 @@ require_metadata_value() {
 }
 
 write_status() {
-	local temporary="${status_file}.partial"
+	local temporary="${status_file}.partial" candidates_sha256="${3:-}"
 	{
 		printf '{\n'
 		printf '  "status": "%s",\n' "$1"
 		printf '  "detail": "%s",\n' "$2"
 		printf '  "source_commit": "%s",\n' "${source_commit}"
+		printf '  "source_tree": "%s",\n' "${source_tree}"
+		printf '  "validation_config_sha256": "%s",\n' "${validation_config_sha256}"
+		if [[ -n "${candidates_sha256}" ]]; then
+			printf '  "candidates_sha256": "%s",\n' "${candidates_sha256}"
+		fi
 		printf '  "updated_utc": "%s"\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 		printf '}\n'
 	} >"${temporary}"
@@ -397,6 +405,7 @@ done
 actual_rows="$(awk 'NR > 1 { count++ } END { print count + 0 }' "${matrix_file}.partial")"
 [[ "${actual_rows}" -eq "${#boards[@]}" ]] || fail "候選矩陣筆數不符"
 mv "${matrix_file}.partial" "${matrix_file}"
-write_status complete "指定板卡的 L1 候選已完整建置"
+candidates_sha256="$(sha256sum "${matrix_file}" | cut -d' ' -f1)"
+write_status complete "指定板卡的 L1 候選已完整建置" "${candidates_sha256}"
 trap - EXIT
 echo "${candidate_family_name} 候選映像建置完成：${output_dir}"

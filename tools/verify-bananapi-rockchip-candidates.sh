@@ -7,9 +7,9 @@ output_dir="${OUTPUT_DIR:-${repo_dir}/output/images/2026.08/bananapi-rockchip-rk
 boards_text="${BOARDS:-bananapip2pro}"
 generic_verifier="${GENERIC_CANDIDATE_VERIFIER:-${repo_dir}/tools/verify-bananapi-sunxi-candidates.sh}"
 
-for command in awk cmp cut git grep mktemp mv python3 sha256sum; do
+for command in mv python3; do
 	command -v "${command}" >/dev/null || {
-		echo "缺少必要命令：${command}" >&2
+		echo "缺少建立失敗狀態所需命令：${command}" >&2
 		exit 1
 	}
 done
@@ -18,6 +18,55 @@ fail() {
 	echo "Rockchip 驗證失敗：$*" >&2
 	exit 1
 }
+
+[[ -d "${output_dir}" ]] || fail "找不到 Rockchip 候選輸出目錄：${output_dir}"
+verification_status="${output_dir}/VERIFICATION_STATUS.json"
+write_entry_state() {
+	python3 - "${verification_status}" "$1" "$2" <<'PY'
+import json
+import os
+import sys
+from datetime import datetime, timezone
+
+path, state, detail = sys.argv[1:]
+temporary = path + ".entry.partial"
+with open(temporary, "w", encoding="utf-8") as stream:
+    json.dump(
+        {
+            "status": state,
+            "detail": detail,
+            "evidence_level": "L2",
+            "updated_utc": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        },
+        stream,
+        ensure_ascii=False,
+        indent=2,
+    )
+    stream.write("\n")
+os.replace(temporary, path)
+PY
+}
+write_entry_state in_progress "Rockchip 前置來源證據檢查執行中"
+entry_state_active=yes
+expected_manifest=""
+expected_wifi_manifest=""
+extra_status=""
+finish_entry_state() {
+	local exit_status=$?
+	trap - EXIT
+	[[ -z "${expected_manifest}" ]] || rm -f "${expected_manifest}"
+	[[ -z "${expected_wifi_manifest}" ]] || rm -f "${expected_wifi_manifest}"
+	[[ -z "${extra_status}" ]] || rm -f "${extra_status}"
+	if [[ ${exit_status} -ne 0 && "${entry_state_active}" == yes ]]; then
+		write_entry_state failed "Rockchip 前置或完整驗證失敗"
+	fi
+	exit "${exit_status}"
+}
+trap finish_entry_state EXIT
+
+for command in awk cmp cut git grep mktemp mv python3 sha256sum; do
+	command -v "${command}" >/dev/null || fail "缺少必要命令：${command}"
+done
 
 [[ -x "${generic_verifier}" ]] || fail "找不到共用候選驗證器：${generic_verifier}"
 manifest="${output_dir}/RKBIN_EVIDENCE.tsv"
@@ -56,12 +105,7 @@ for key, value in expected.items():
 PY
 
 expected_manifest="$(mktemp "${repo_dir}/.tmp/rkbin-evidence.XXXXXX")"
-expected_wifi_manifest=""
-cleanup_expected_manifests() {
-	rm -f "${expected_manifest}"
-	[[ -z "${expected_wifi_manifest}" ]] || rm -f "${expected_wifi_manifest}"
-}
-trap cleanup_expected_manifests EXIT
+extra_status="$(mktemp "${repo_dir}/.tmp/rockchip-verification-extra.XXXXXX.json")"
 {
 	printf 'path\tsha256\n'
 	python3 - "${validation_config}" <<'PY'
@@ -138,45 +182,29 @@ if status.get("manifest_sha256") != sys.argv[2]:
 PY
 fi
 
+python3 - "${extra_status}" "${expected_commit}" "${manifest_sha256}" \
+	"${wifi_expected_commit}" "${wifi_manifest_sha256}" <<'PY'
+import json
+import sys
+
+path, rkbin_commit, rkbin_manifest, wifi_commit, wifi_manifest = sys.argv[1:]
+data = {
+    "rkbin_commit": rkbin_commit,
+    "rkbin_manifest_sha256": rkbin_manifest,
+}
+if wifi_commit:
+    data["wifi_driver_commit"] = wifi_commit
+    data["wifi_driver_manifest_sha256"] = wifi_manifest
+with open(path, "w", encoding="utf-8") as stream:
+    json.dump(data, stream, ensure_ascii=False, indent=2)
+    stream.write("\n")
+PY
+
 VALIDATION_CONFIG="${validation_config}" OUTPUT_DIR="${output_dir}" \
 	BOARDS="${boards_text}" CANDIDATE_FAMILY_NAME="Rockchip" \
 	VERIFY_TMP_PREFIX="rockchip-verify" \
+	VERIFICATION_EXTRA_STATUS_JSON="${extra_status}" \
 	"${generic_verifier}" "$@"
-
-verification_status="${output_dir}/VERIFICATION_STATUS.json"
-python3 - "${verification_status}" "${expected_commit}" "${manifest_sha256}" <<'PY'
-import json
-import os
-import sys
-path = sys.argv[1]
-with open(path, encoding="utf-8") as stream:
-    status = json.load(stream)
-status["rkbin_commit"] = sys.argv[2]
-status["rkbin_manifest_sha256"] = sys.argv[3]
-temporary = path + ".partial"
-with open(temporary, "w", encoding="utf-8") as stream:
-    json.dump(status, stream, ensure_ascii=False, indent=2)
-    stream.write("\n")
-os.replace(temporary, path)
-PY
-
-if [[ -n "${wifi_expected_commit}" ]]; then
-	python3 - "${verification_status}" "${wifi_expected_commit}" \
-		"${wifi_manifest_sha256}" <<'PY'
-import json
-import os
-import sys
-path = sys.argv[1]
-with open(path, encoding="utf-8") as stream:
-    status = json.load(stream)
-status["wifi_driver_commit"] = sys.argv[2]
-status["wifi_driver_manifest_sha256"] = sys.argv[3]
-temporary = path + ".partial"
-with open(temporary, "w", encoding="utf-8") as stream:
-    json.dump(status, stream, ensure_ascii=False, indent=2)
-    stream.write("\n")
-os.replace(temporary, path)
-PY
-fi
+entry_state_active=no
 
 echo "Rockchip 固定來源與映像 L2 守門全部通過。"

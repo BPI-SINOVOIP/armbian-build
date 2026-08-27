@@ -4,7 +4,10 @@
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
+import subprocess
+import tempfile
 import unittest
 
 
@@ -267,6 +270,34 @@ class BananaPiRockchipCandidateToolTests(unittest.TestCase):
         self.assertIn("linux-image-${candidate_branch}-${kernel_family}", verify_text)
         self.assertIn("linux-u-boot-${candidate_branch}-${board}", verify_text)
         self.assertIn('"branch ${candidate_branch}"', verify_text)
+
+    def test_rockchip_status_is_augmented_before_common_complete(self) -> None:
+        text = (ROOT / "tools/verify-bananapi-rockchip-candidates.sh").read_text()
+        self.assertIn("VERIFICATION_EXTRA_STATUS_JSON", text)
+        self.assertIn("rockchip-verification-extra", text)
+        self.assertIn("write_entry_state in_progress", text)
+        self.assertIn("write_entry_state failed", text)
+        self.assertNotIn('status["rkbin_commit"]', text)
+
+    def test_rockchip_precheck_failure_invalidates_stale_success(self) -> None:
+        verifier = ROOT / "tools/verify-bananapi-rockchip-candidates.sh"
+        with tempfile.TemporaryDirectory(dir=ROOT / ".tmp") as directory:
+            output = Path(directory)
+            status = output / "VERIFICATION_STATUS.json"
+            status.write_text(json.dumps({"status": "complete"}), encoding="utf-8")
+            environment = os.environ.copy()
+            environment["OUTPUT_DIR"] = str(output)
+            result = subprocess.run(
+                [str(verifier)],
+                cwd=ROOT,
+                env=environment,
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                check=False,
+            )
+            self.assertNotEqual(result.returncode, 0)
+            self.assertEqual(json.loads(status.read_text(encoding="utf-8"))["status"], "failed")
 
     def test_existing_configs_default_to_current_branch(self) -> None:
         self.assertEqual(self.config.get("candidate_branch", "current"), "current")

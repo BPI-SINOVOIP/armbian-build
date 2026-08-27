@@ -9,21 +9,36 @@ verify_archives="${VERIFY_ARCHIVES:-yes}"
 candidate_family_name="${CANDIDATE_FAMILY_NAME:-Sunxi}"
 verify_tmp_prefix="${VERIFY_TMP_PREFIX:-bananapi-verify}"
 verification_evidence_level="${VERIFICATION_EVIDENCE_LEVEL:-L2}"
+verification_extra_status_json="${VERIFICATION_EXTRA_STATUS_JSON:-}"
+verification_pre_complete_hook="${VERIFICATION_PRE_COMPLETE_HOOK:-}"
 
 read -r -a boards <<<"${boards_text}"
-
-for command in awk basename blkid cmp cut date fdtget find git grep lsblk losetup \
-	md5sum mktemp mount mountpoint od python3 sha256sum stat sudo udevadm \
-	sfdisk sgdisk umount xz; do
-	command -v "${command}" >/dev/null || {
-		echo "缺少必要命令：${command}" >&2
-		exit 1
-	}
-done
 
 fail() {
 	echo "驗證失敗：$*" >&2
 	exit 1
+}
+
+write_verification_state() {
+	local state=$1 detail=$2 temporary="${status_file}.partial"
+	python3 - "${temporary}" "${state}" "${detail}" "${verification_evidence_level}" <<'PY'
+import json
+import os
+import sys
+from datetime import datetime, timezone
+
+path, state, detail, level = sys.argv[1:]
+data = {
+    "status": state,
+    "detail": detail,
+    "evidence_level": level,
+    "updated_utc": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+}
+with open(path, "w", encoding="utf-8") as stream:
+    json.dump(data, stream, ensure_ascii=False, indent=2)
+    stream.write("\n")
+os.replace(path, path.removesuffix(".partial"))
+PY
 }
 
 normalize_partition_table() {
@@ -61,11 +76,49 @@ validate_default_userpatches() {
 		\( -type f -o -type l \) -print0)
 }
 
+[[ -d "${output_dir}" ]] || fail "找不到候選輸出目錄：${output_dir}"
+for command in mv python3; do
+	command -v "${command}" >/dev/null || {
+		echo "缺少建立失敗狀態所需命令：${command}" >&2
+		exit 1
+	}
+done
+status_file="${output_dir}/VERIFICATION_STATUS.json"
+write_verification_state in_progress "驗證執行中"
+for stale_evidence in VERIFICATION.tsv UBOOT_PAYLOAD_EVIDENCE.tsv FINAL_CONFIG_EVIDENCE.tsv; do
+	[[ ! -e "${output_dir}/${stale_evidence}" ]] || unlink "${output_dir}/${stale_evidence}"
+done
+verification_state_active=yes
+finish_verification_state() {
+	local exit_status=$?
+	trap - EXIT
+	if [[ ${exit_status} -ne 0 && "${verification_state_active}" == yes ]]; then
+		for partial in VERIFICATION.tsv.partial UBOOT_PAYLOAD_EVIDENCE.tsv.partial \
+			FINAL_CONFIG_EVIDENCE.tsv.partial; do
+			[[ ! -e "${output_dir}/${partial}" ]] || unlink "${output_dir}/${partial}"
+		done
+		write_verification_state failed "驗證失敗，禁止沿用舊成功狀態"
+	fi
+	exit "${exit_status}"
+}
+trap finish_verification_state EXIT
+
+for command in awk basename blkid cmp cut date fdtget find git grep lsblk losetup \
+	md5sum mktemp mount mountpoint mv od python3 readlink sha256sum stat sudo udevadm unlink \
+	sfdisk sgdisk umount xz; do
+	command -v "${command}" >/dev/null || fail "缺少必要命令：${command}"
+done
+
 [[ -f "${validation_config}" ]] || fail "找不到驗證設定：${validation_config}"
 [[ -f "${output_dir}/CANDIDATES.tsv" ]] || fail "找不到 CANDIDATES.tsv"
 [[ -f "${output_dir}/COMPLETION_STATUS.json" ]] || fail "找不到建置狀態"
-grep -q '"status": "complete"' "${output_dir}/COMPLETION_STATUS.json" ||
-	fail "建置狀態不是 complete"
+python3 - "${output_dir}/COMPLETION_STATUS.json" <<'PY' || fail "建置狀態不是唯一 complete"
+import json
+import sys
+with open(sys.argv[1], encoding="utf-8") as stream:
+    status = json.load(stream)
+raise SystemExit(0 if status.get("status") == "complete" else 1)
+PY
 candidate_branch="$(python3 - "${validation_config}" <<'PY'
 import json
 import sys
@@ -85,6 +138,9 @@ case "${verification_evidence_level}" in
 	L1 | L2) ;;
 	*) fail "VERIFICATION_EVIDENCE_LEVEL 只接受 L1 或 L2" ;;
 esac
+if [[ "${verification_evidence_level}" == L2 && "${verify_archives}" != yes ]]; then
+	fail "L2 驗證不得停用 XZ 串流同一性檢查"
+fi
 [[ -z "$(git -C "${repo_dir}" status --porcelain --untracked-files=all)" ]] ||
 	fail "來源工作樹有已追蹤或未追蹤變更"
 validate_default_userpatches
@@ -245,8 +301,10 @@ import sys
 specifications = sys.argv[1].split()
 table = json.loads(sys.argv[2])["partitiontable"]
 partitions = table.get("partitions", [])
-if len(partitions) < len(specifications):
-    raise SystemExit("GPT 分割區數量不足")
+if len(partitions) != len(specifications):
+    raise SystemExit(
+        f"分割區數量不符：預期 {len(specifications)}，實際 {len(partitions)}"
+    )
 for index, specification in enumerate(specifications):
     number, name, start, size = specification.split(":", 3)
     if int(number) != index + 1:
@@ -302,6 +360,7 @@ validate_installed_uboot() {
 	local metadata_file md5sums_file payload_size payload_sha256 minimum_spec
 	local rkbin_source rkbin_ref rkbin_revision partition_table partition_start_sector sector_size payload_end first_partition_byte
 	local uboot_target_index uboot_config_file uboot_target_metadata uboot_defconfig option_line target_fragment forbidden_fragment required_fragment
+	local final_uboot_config_sha256 actual_uboot_config_sha256
 	local uboot_binary_name uboot_binary uboot_version_fallback=no
 	uboot_tag="$(board_field "${board}" uboot_tag)"
 	uboot_version="$(board_field_optional "${board}" uboot_version)"
@@ -397,6 +456,23 @@ validate_installed_uboot() {
 			grep -Fq -- "${target_fragment}" "${uboot_target_metadata}" ||
 				fail "${board} 的 U-Boot target 缺少：${target_fragment}"
 		done < <(board_values "${board}" uboot_target_make_contains)
+		while IFS= read -r forbidden_fragment; do
+			[[ -n "${forbidden_fragment}" ]] || continue
+			if grep -Fq -- "${forbidden_fragment}" "${uboot_target_metadata}"; then
+				fail "${board} 的 U-Boot target 含禁止片段：${forbidden_fragment}"
+			fi
+		done < <(board_values "${board}" uboot_target_make_forbidden)
+		actual_uboot_config_sha256="$(sha256sum "${uboot_config_file}" | cut -d' ' -f1)"
+		final_uboot_config_sha256="$(board_field_optional "${board}" final_uboot_config_sha256)"
+		if [[ -n "${final_uboot_config_sha256}" ]]; then
+			[[ "${final_uboot_config_sha256}" =~ ^[0-9a-f]{64}$ ]] ||
+				fail "${board} 的最終 U-Boot 設定雜湊格式不符"
+			[[ "${actual_uboot_config_sha256}" == "${final_uboot_config_sha256}" ]] ||
+				fail "${board} 的最終 U-Boot 設定雜湊不符"
+		fi
+		printf '%s\tuboot\t%s\t%s\n' "${board}" \
+			"usr/lib/linux-u-boot-${candidate_branch}-${board}/$(basename "${uboot_config_file}")" \
+			"${actual_uboot_config_sha256}" >>"${output_dir}/FINAL_CONFIG_EVIDENCE.tsv.partial"
 	fi
 	uboot_binary_name="$(board_field_optional "${board}" uboot_binary_for_string_checks)"
 	[[ -n "${uboot_binary_name}" ]] || uboot_binary_name="u-boot.bin"
@@ -504,10 +580,10 @@ validate_mounted_image() (
 	local dtb_relative dtb_basename dtb_path fdt_override model compatible expected node node_status option_line option value package
 	local loop_device partition boot_partition mount_dir config_file overlay_prefix overlay overlay_directory default_overlays overlays_line sd_node sd_bus_width requirement required_node required_width kernel_family root_partition_number boot_partition_number
 	local boot_configuration extlinux_fdt expected_start_sector actual_start_sector property_spec property_node property_name property_expected installed_manifest installed_spec installed_path installed_sha256
-	local vendor_boot_directory root_uuid
+	local vendor_boot_directory root_uuid final_kernel_config_sha256 actual_kernel_config_sha256 forbidden_asset
 	local dtb_sha256 alias_spec alias_name alias_expected forbidden_fragment
 	local required_module_path
-	local -a module_matches=()
+	local -a module_matches=() config_files=()
 	dtb_relative="$(board_field "${board}" dtb)"
 	dtb_basename="$(basename "${dtb_relative}")"
 	mount_dir="$(mktemp -d "${repo_dir}/.tmp/${verify_tmp_prefix}.XXXXXX")"
@@ -535,13 +611,13 @@ validate_mounted_image() (
 		[[ "${actual_start_sector}" == "${expected_start_sector}" ]] ||
 			fail "${board} 的第一分割區起點不是 ${expected_start_sector} sector"
 	fi
-	sudo mount -o ro,noload "${partition}" "${mount_dir}"
+	sudo mount -o ro,noload,nosuid,nodev,noexec "${partition}" "${mount_dir}"
 	if [[ -n "${boot_partition_number}" ]]; then
 		[[ "${boot_partition_number}" =~ ^[1-9][0-9]*$ ]] || fail "${board} 的 boot 分割區編號無效"
 		boot_partition="$(lsblk -nrpo NAME,TYPE "${loop_device}" | awk -v wanted="${boot_partition_number}" '$2 == "part" { count++ } count == wanted { print $1; exit }')"
 		[[ -n "${boot_partition}" ]] || fail "${board} 缺少 boot 分割區"
 		[[ -d "${mount_dir}/boot" ]] || fail "${board} 根檔案系統缺少 /boot 掛載點"
-		sudo mount -o ro "${boot_partition}" "${mount_dir}/boot"
+		sudo mount -o ro,nosuid,nodev,noexec "${boot_partition}" "${mount_dir}/boot"
 	fi
 
 	[[ -s "${mount_dir}/boot/zImage" || -s "${mount_dir}/boot/Image" || \
@@ -678,12 +754,33 @@ validate_mounted_image() (
 			fail "${board} 的 ${required_node} 匯流排寬度不是 ${required_width}-bit"
 	done
 
-	config_file="$(find "${mount_dir}/boot" -maxdepth 1 -type f -name 'config-*' -print -quit)"
-	[[ -n "${config_file}" ]] || fail "${board} 缺少核心設定檔"
+	mapfile -t config_files < <(find "${mount_dir}/boot" -maxdepth 1 -type f -name 'config-*' -print)
+	[[ ${#config_files[@]} -eq 1 ]] || fail "${board} 必須恰好包含一份核心設定檔，實際 ${#config_files[@]} 份"
+	config_file="${config_files[0]}"
 	while IFS= read -r option_line; do
 		option="${option_line%%=*}"; value="${option_line#*=}"
 		grep -qx "${option}=${value}" "${config_file}" || fail "${board} 核心設定不符：${option}=${value}"
 	done < <(common_values common_kernel_options)
+	actual_kernel_config_sha256="$(sha256sum "${config_file}" | cut -d' ' -f1)"
+	final_kernel_config_sha256="$(board_field_optional "${board}" final_kernel_config_sha256)"
+	if [[ -n "${final_kernel_config_sha256}" ]]; then
+		[[ "${final_kernel_config_sha256}" =~ ^[0-9a-f]{64}$ ]] ||
+			fail "${board} 的最終核心設定雜湊格式不符"
+		[[ "${actual_kernel_config_sha256}" == "${final_kernel_config_sha256}" ]] ||
+			fail "${board} 的最終核心設定雜湊不符"
+	fi
+	printf '%s\tkernel\tboot/%s\t%s\n' "${board}" "$(basename "${config_file}")" \
+		"${actual_kernel_config_sha256}" >>"${output_dir}/FINAL_CONFIG_EVIDENCE.tsv.partial"
+	while IFS= read -r forbidden_asset; do
+		[[ -n "${forbidden_asset}" ]] || continue
+		[[ "${forbidden_asset}" =~ ^[A-Za-z0-9._+-]+$ ]] ||
+			fail "${board} 的禁止封裝資產名稱不合法：${forbidden_asset}"
+		if [[ -n "$(sudo find "${mount_dir}" -xdev -name "${forbidden_asset}" -print -quit)" ]] ||
+			{ mountpoint -q "${mount_dir}/boot" &&
+				[[ -n "$(sudo find "${mount_dir}/boot" -xdev -name "${forbidden_asset}" -print -quit)" ]]; }; then
+			fail "${board} 映像含禁止封裝資產：${forbidden_asset}"
+		fi
+	done < <(board_values "${board}" forbidden_packaged_assets)
 	while IFS= read -r required_module_path; do
 		[[ -n "${required_module_path}" ]] || continue
 		[[ "${required_module_path}" =~ ^kernel/[A-Za-z0-9_./+-]+\.ko([.](xz|zst))?$ &&
@@ -735,6 +832,29 @@ git -C "${repo_dir}" cat-file -e "${candidate_source_commit}:${validation_config
 	fail "候選來源提交缺少建置時驗證設定"
 build_validation_config_sha256="$(git -C "${repo_dir}" show \
 	"${candidate_source_commit}:${validation_config_relative}" | sha256sum | cut -d' ' -f1)"
+candidate_matrix_sha256="$(sha256sum "${output_dir}/CANDIDATES.tsv" | cut -d' ' -f1)"
+if [[ "${verification_evidence_level}" == L2 ]]; then
+	[[ "${candidate_source_commit}" == "${verifier_commit}" ]] ||
+		fail "L2 候選來源提交與驗證器提交不一致"
+	[[ "${build_validation_config_sha256}" == "${verification_config_sha256}" ]] ||
+		fail "L2 建置與驗證使用的 validation 雜湊不一致"
+fi
+python3 - "${output_dir}/COMPLETION_STATUS.json" "${candidate_source_commit}" \
+	"${candidate_source_tree}" "${build_validation_config_sha256}" \
+	"${candidate_matrix_sha256}" <<'PY' || fail "建置完成狀態未綁定候選來源與矩陣"
+import json
+import sys
+with open(sys.argv[1], encoding="utf-8") as stream:
+    status = json.load(stream)
+expected = {
+    "status": "complete",
+    "source_commit": sys.argv[2],
+    "source_tree": sys.argv[3],
+    "validation_config_sha256": sys.argv[4],
+    "candidates_sha256": sys.argv[5],
+}
+raise SystemExit(0 if all(status.get(key) == value for key, value in expected.items()) else 1)
+PY
 verify_firmware_source_resolution="$(top_field_optional verify_firmware_source_resolution)"
 firmware_git_source=""
 firmware_git_ref=""
@@ -757,6 +877,8 @@ verification_file="${output_dir}/VERIFICATION.tsv"
 printf 'board\tidentity\tread_only_content\tevidence_level\n' >"${verification_file}.partial"
 printf 'board\tpayload\tplacement\toffset\tsize\tsha256\n' \
 	>"${output_dir}/UBOOT_PAYLOAD_EVIDENCE.tsv.partial"
+printf 'board\tcomponent\tpath\tsha256\n' \
+	>"${output_dir}/FINAL_CONFIG_EVIDENCE.tsv.partial"
 while IFS=$'\t' read -r board release profile raw_size raw_sha256 xz_size \
 	xz_sha256 img_path xz_path candidate_commit uboot_tag; do
 	[[ "${release}" == trixie && "${profile}" == cli ]] || fail "${board} 發行版或設定不符"
@@ -830,17 +952,84 @@ done < <(tail -n +2 "${output_dir}/CANDIDATES.tsv")
 mv "${verification_file}.partial" "${verification_file}"
 mv "${output_dir}/UBOOT_PAYLOAD_EVIDENCE.tsv.partial" \
 	"${output_dir}/UBOOT_PAYLOAD_EVIDENCE.tsv"
+mv "${output_dir}/FINAL_CONFIG_EVIDENCE.tsv.partial" \
+	"${output_dir}/FINAL_CONFIG_EVIDENCE.tsv"
 uboot_payload_manifest_sha256="$(sha256sum \
 	"${output_dir}/UBOOT_PAYLOAD_EVIDENCE.tsv" | cut -d' ' -f1)"
-status_file="${output_dir}/VERIFICATION_STATUS.json"
+final_config_manifest_sha256="$(sha256sum \
+	"${output_dir}/FINAL_CONFIG_EVIDENCE.tsv" | cut -d' ' -f1)"
 {
 	printf '{\n  "status": "complete",\n  "evidence_level": "%s",\n' "${verification_evidence_level}"
 	printf '  "source_commit": "%s",\n' "${candidate_source_commit}"
 	printf '  "verifier_commit": "%s",\n' "${verifier_commit}"
 	printf '  "build_validation_config_sha256": "%s",\n' "${build_validation_config_sha256}"
 	printf '  "verification_config_sha256": "%s",\n' "${verification_config_sha256}"
+	printf '  "candidate_matrix_sha256": "%s",\n' "${candidate_matrix_sha256}"
 	printf '  "uboot_payload_manifest_sha256": "%s",\n' "${uboot_payload_manifest_sha256}"
+	printf '  "final_config_manifest_sha256": "%s",\n' "${final_config_manifest_sha256}"
 	printf '  "verified_utc": "%s"\n}\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 } >"${status_file}.partial"
+
+if [[ -n "${verification_pre_complete_hook}" ]]; then
+	resolved_hook="$(readlink -f "${verification_pre_complete_hook}")"
+	[[ "${resolved_hook}" == "${repo_dir}/tools/"* && -x "${resolved_hook}" ]] ||
+		fail "驗證完成前 hook 必須是倉庫 tools 內的可執行檔"
+	"${resolved_hook}" "${status_file}.partial"
+fi
+if [[ -n "${verification_extra_status_json}" ]]; then
+	resolved_extra="$(readlink -f "${verification_extra_status_json}")"
+	[[ "${resolved_extra}" == "${repo_dir}/.tmp/"* && -f "${resolved_extra}" ]] ||
+		fail "驗證附加狀態必須是倉庫 .tmp 內的 JSON"
+	python3 - "${status_file}.partial" "${resolved_extra}" <<'PY'
+import json
+import os
+import sys
+
+status_path, extra_path = sys.argv[1:]
+with open(status_path, encoding="utf-8") as stream:
+    status = json.load(stream)
+with open(extra_path, encoding="utf-8") as stream:
+    extra = json.load(stream)
+protected = {
+    "status", "evidence_level", "source_commit", "verifier_commit",
+    "build_validation_config_sha256", "verification_config_sha256",
+    "candidate_matrix_sha256", "uboot_payload_manifest_sha256",
+    "final_config_manifest_sha256", "verified_utc",
+}
+if not isinstance(extra, dict) or protected.intersection(extra):
+    raise SystemExit("附加驗證狀態格式不合法或覆寫受保護欄位")
+status.update(extra)
+temporary = status_path + ".merge"
+with open(temporary, "w", encoding="utf-8") as stream:
+    json.dump(status, stream, ensure_ascii=False, indent=2)
+    stream.write("\n")
+os.replace(temporary, status_path)
+PY
+fi
+python3 - "${status_file}.partial" "${verification_evidence_level}" \
+	"${candidate_source_commit}" "${verifier_commit}" \
+	"${build_validation_config_sha256}" "${verification_config_sha256}" \
+	"${candidate_matrix_sha256}" "${uboot_payload_manifest_sha256}" \
+	"${final_config_manifest_sha256}" <<'PY' || fail "驗證完成狀態的受保護欄位遭到修改"
+import json
+import sys
+
+with open(sys.argv[1], encoding="utf-8") as stream:
+    status = json.load(stream)
+expected = {
+    "status": "complete",
+    "evidence_level": sys.argv[2],
+    "source_commit": sys.argv[3],
+    "verifier_commit": sys.argv[4],
+    "build_validation_config_sha256": sys.argv[5],
+    "verification_config_sha256": sys.argv[6],
+    "candidate_matrix_sha256": sys.argv[7],
+    "uboot_payload_manifest_sha256": sys.argv[8],
+    "final_config_manifest_sha256": sys.argv[9],
+}
+raise SystemExit(0 if all(status.get(key) == value for key, value in expected.items()) else 1)
+PY
 mv "${status_file}.partial" "${status_file}"
+verification_state_active=no
+trap - EXIT
 echo "${candidate_family_name} 候選映像全部通過 ${verification_evidence_level} 唯讀守門。"

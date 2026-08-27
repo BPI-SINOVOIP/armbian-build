@@ -5,11 +5,15 @@ repo_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 policy="${VALIDATION_CONFIG:-${repo_dir}/config/validation/bananapi-filogic-mt7986-r3mini-current.json}"
 output_dir="${OUTPUT_DIR:-${repo_dir}/output/images/2026.08/bananapi-filogic-mt7986-r3mini-emmc-trixie-current-cli}"
 evidence="${output_dir}/UBOOT_PAYLOAD_EVIDENCE.tsv"
-status_file="${output_dir}/VERIFICATION_STATUS.json"
+status_file="${1:-}"
 temporary=""
 
 trap '[[ -z "${temporary}" ]] || rm -f "${temporary}"' EXIT
 
+[[ "${status_file}" == "${output_dir}/VERIFICATION_STATUS.json.partial" ]] || {
+	echo "R3 Mini 收尾器只接受共用驗證器的暫存狀態" >&2
+	exit 1
+}
 [[ -s "${evidence}" && -s "${status_file}" ]] || {
 	echo "R3 Mini 缺少 U-Boot 載荷或驗證狀態證據" >&2
 	exit 1
