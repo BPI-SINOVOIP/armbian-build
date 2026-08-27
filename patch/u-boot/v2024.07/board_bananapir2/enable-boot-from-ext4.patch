@@ -11,7 +11,7 @@ Signed-off-by: Igor Pecovnik <igor.pecovnik@****l.com>
  2 files changed, 43 insertions(+), 4 deletions(-)
 
 diff --git a/configs/mt7623n_bpir2_defconfig b/configs/mt7623n_bpir2_defconfig
-index 111111111111..222222222222 100644
+index 4c3d90a1b7b05d128b572c608c666f0405d226fb..455d085c569ab500d10494fb1a59b15b02ce36d7 100644
 --- a/configs/mt7623n_bpir2_defconfig
 +++ b/configs/mt7623n_bpir2_defconfig
 @@ -23,6 +23,8 @@ CONFIG_SYS_CONSOLE_IS_IN_ENV=y
@@ -23,8 +23,7 @@ index 111111111111..222222222222 100644
  CONFIG_CMD_BOOTMENU=y
  # CONFIG_CMD_ELF is not set
  # CONFIG_CMD_XIMG is not set
-@@ -31,8 +33,9 @@ CONFIG_CMD_GPT=y
- CONFIG_CMD_MMC=y
+@@ -32,7 +34,8 @@ CONFIG_CMD_MMC=y
  CONFIG_CMD_READ=y
  # CONFIG_CMD_SETEXPR is not set
  CONFIG_ENV_OVERWRITE=y
@@ -45,12 +44,10 @@ index 111111111111..222222222222 100644
 +CONFIG_CMD_EXT4=y
 +CONFIG_CMD_EXT4_WRITE=y
 diff --git a/include/configs/mt7623.h b/include/configs/mt7623.h
-index 111111111111..222222222222 100644
+index fca234a1dc71a85f4982a49db4f1ab53e30b9ed7..92094d87072852c5c3e7a1370a7fb57492031c75 100644
 --- a/include/configs/mt7623.h
 +++ b/include/configs/mt7623.h
-@@ -18,11 +18,29 @@
- #define CFG_SYS_SDRAM_BASE		0x80000000
- 
+@@ -20,9 +20,27 @@
  /* This is needed for kernel booting */
  #define FDT_HIGH			"0xac000000"
 +
@@ -79,7 +76,7 @@ index 111111111111..222222222222 100644
  	"fdt_addr_r=" FDT_HIGH "\0"			\
  	"fdtfile=" CONFIG_DEFAULT_FDT_FILE "\0"
  
-@@ -35,9 +53,23 @@
+@@ -35,8 +53,22 @@
  
  /* Extra environment variables */
  #define CFG_EXTRA_ENV_SETTINGS	\

@@ -7,6 +7,33 @@
   "linux_commit": "dc6160265ffc795a1832bc1424f58291d152c7bb",
   "firmware_source": "https://github.com/armbian/firmware",
   "firmware_commit": "f50a2a21bcdb77a562b3976930c5c6b521a1df08",
+  "boot_blob_source_repository": "https://github.com/BPI-SINOVOIP/BPI-files.git",
+  "boot_blob_redistribution_authorized": false,
+  "boot_blob_sources": {
+    "BPI-R2-HEAD440-0k.img": {
+      "source_path": "SD/100MB/BPI-R2-HEAD440-0k.img.gz",
+      "fixed_commit": "e4c2b542f199346853febb240500c8071cdf3006",
+      "earliest_path_commit": "59fd3f6fe73a54944f0a504a310707bdd992cc7d",
+      "decompressed_sha256": "62490bba0931680b65146792b795748a30777b101a8437885dd195c28b868a6b"
+    },
+    "BPI-R2-HEAD1-512b.img": {
+      "source_path": "SD/100MB/BPI-R2-HEAD1-512b.img.gz",
+      "fixed_commit": "e4c2b542f199346853febb240500c8071cdf3006",
+      "earliest_path_commit": "59fd3f6fe73a54944f0a504a310707bdd992cc7d",
+      "decompressed_sha256": "2cf55689fdaecc72a7ca24929b6b79e419e7d9798cfb8e6d36e8c5ea3b96e049"
+    },
+    "BPI-R2-preloader-2k.img": {
+      "source_path": "SD/100MB/BPI-R2-preloader-DDR1600-20191024-2k.img.gz",
+      "fixed_commit": "1b7b6039b9d92c48193f38ac29dd2f71e303e280",
+      "decompressed_sha256": "b6a2cbead0b34fc243b9d8d9bde69496a0dbcf77dcdf0246adf0664fe4e07252"
+    },
+    "BPI-R2-EMMC-boot0-0K-0905.img": {
+      "source_path": "SD/100MB/BPI-R2-EMMC-boot0-DDR1600-0k-0905.img.gz",
+      "fixed_commit": "e28da06a8dd7d77d30b60942008c1255b5fda997",
+      "content_origin_commit": "233dcc2bc117a36b832411feccb55ac2e19a5c30",
+      "decompressed_sha256": "cc0dfb488bed14e23bce8302553714d29e6cba9fe8406cf8c3c0e97e9ae2b417"
+    }
+  },
   "installed_file_sha256": {
     "/etc/systemd/network/10-br0.netdev": "1c01a0018c7ed024280a2466e6297246877dd94f61956ba2c33312e397fa63ef",
     "/etc/systemd/network/10-br0.network": "fa457234799949d9c04e58df13efae2775a0e1559204c3fa78ceb03ba4f80550",

@@ -16,6 +16,11 @@ BOARD_PATH = ROOT / "config/boards/bananapir2.csc"
 BOOT_SCRIPT = ROOT / "config/bootscripts/boot-mt7623.cmd"
 UBOOT_PATCH = ROOT / "patch/u-boot/v2024.07/board_bananapir2/enable-boot-from-ext4.patch"
 GENERIC_VERIFIER = ROOT / "tools/verify-bananapi-sunxi-candidates.sh"
+SOURCE_POLICY = (
+    ROOT
+    / "docs/evidence/bananapi-family-optimization"
+    / "D-mt7623-r2-source-policy-20260827.md"
+)
 
 
 class BananaPiMT7623R2CandidateTests(unittest.TestCase):
@@ -58,6 +63,26 @@ class BananaPiMT7623R2CandidateTests(unittest.TestCase):
                 payload = ROOT / "packages/blobs/mt7623n" / name
                 self.assertEqual(hashlib.sha256(payload.read_bytes()).hexdigest(), digest)
 
+    def test_boot_blob_provenance_blocks_external_release(self) -> None:
+        self.assertFalse(self.config["boot_blob_redistribution_authorized"])
+        self.assertEqual(
+            self.config["boot_blob_source_repository"],
+            "https://github.com/BPI-SINOVOIP/BPI-files.git",
+        )
+        expected = dict(
+            item.split("=", 1) for item in self.policy["uboot_payload_sha256"]
+        )
+        sources = self.config["boot_blob_sources"]
+        self.assertEqual(set(sources), set(expected))
+        for name, metadata in sources.items():
+            with self.subTest(name=name):
+                self.assertTrue(metadata["source_path"].endswith(".img.gz"))
+                self.assertRegex(metadata["fixed_commit"], r"^[0-9a-f]{40}$")
+                self.assertEqual(metadata["decompressed_sha256"], expected[name])
+        policy = SOURCE_POLICY.read_text()
+        self.assertIn("不得把包含這些載荷的映像標示為可對外發布版本", policy)
+        self.assertIn("boot_blob_redistribution_authorized", policy)
+
     def test_boot_script_uses_partition_uuid_and_correct_dtb(self) -> None:
         text = BOOT_SCRIPT.read_text()
         self.assertIn("part uuid ${devtype} ${devnum}:${mmcpart} rootuuid", text)
@@ -79,6 +104,19 @@ class BananaPiMT7623R2CandidateTests(unittest.TestCase):
         ):
             self.assertIn(required, text)
         self.assertNotIn("#define CONFIG_BOOTCOMMAND", text)
+        self.assertNotIn("index 111111111111..222222222222", text)
+        self.assertIn(
+            "index 4c3d90a1b7b05d128b572c608c666f0405d226fb"
+            "..455d085c569ab500d10494fb1a59b15b02ce36d7",
+            text,
+        )
+        self.assertIn(
+            "index fca234a1dc71a85f4982a49db4f1ab53e30b9ed7"
+            "..92094d87072852c5c3e7a1370a7fb57492031c75",
+            text,
+        )
+        for header in ("@@ -32,7 +34,8 @@", "@@ -20,9 +20,27 @@", "@@ -35,8 +53,22 @@"):
+            self.assertIn(header, text)
 
     def test_board_enables_otg_gpio_and_fixed_firmware(self) -> None:
         text = BOARD_PATH.read_text()
