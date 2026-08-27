@@ -15,4 +15,20 @@ export BOARDS="bananapim1super"
 }
 
 "${policy_checker}"
+candidate_level="$(python3 - "${VALIDATION_CONFIG}" <<'PY'
+import json
+import sys
+
+with open(sys.argv[1], encoding="utf-8") as stream:
+    print(json.load(stream)["candidate_level"])
+PY
+)"
+case "${candidate_level}" in
+	"L1 元件候選" | "L2 內部軟體候選") ;;
+	*)
+		echo "BPI-M1 Super 候選層級不在允許的狀態機內：${candidate_level}" >&2
+		exit 1
+		;;
+esac
+echo "開始建置 BPI-M1 Super ${candidate_level} 的內部完整映像。"
 exec "${builder}" "$@"

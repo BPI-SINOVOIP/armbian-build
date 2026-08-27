@@ -30,6 +30,21 @@
 
 上游 TF-A 固定版本沒有 RK3528 平台實作，因此本候選不偽造「ATF 已由來源建置」的證據。實際 BL31 為 RKBin 的 `rk3528_bl31_v1.17.elf`；validation 明確標記 `atf_source_build_available=false`，並對載荷本體執行 SHA-256 守門。
 
+Armbian 韌體來源與引用現在同時固定為 `https://github.com/armbian/firmware` 及 `commit:f50a2a21bcdb77a562b3976930c5c6b521a1df08`，並設定 `verify_firmware_source_resolution=true`。完整映像建置與驗證會要求日誌同時出現來源網址、精確提交取用及完整提交解析結果；不能只靠 Validation 內的靜態字串宣稱來源已固定。
+
+## 候選狀態機
+
+政策守門器只接受以下兩組完整狀態，不接受交叉組合或其他名稱：
+
+| 層級 | 範圍 | 完整映像證據 | 可公開發布 | 可作硬體聲明 |
+| --- | --- | --- | --- | --- |
+| `L1 元件候選` | `internal-component-only` | 必須不存在 | 否 | 否 |
+| `L2 內部軟體候選` | `internal-l2` | 必須為完成，且含完整映像 DTB 雜湊 | 否 | 否 |
+
+目前沒有新建置的完整映像，因此仍維持 `L1 元件候選`、`rootfs_image_built=false`。未來即使升為內部 L2，也只代表固定來源完整映像通過唯讀軟體守門，不代表實機、量產或對外發布通過。L2 驗證入口會強制檢查 XZ 串流同一性；L1 狀態不能呼叫該入口產生 L2 結果。
+
+元件建置所得 Linux DTB 雜湊固定保存在 `component_build_evidence.linux_dtb.sha256` 與板級 `component_dtb_sha256`。L1 明確不設定共用完整映像欄位 `dtb_sha256`，並標記 `dtb_sha256_evidence_scope=component-only-l1`，避免元件雜湊在第一次完整映像建置前被誤用。只有取得正式完整映像證據後，才能把映像中的 DTB 雜湊分別寫入 `image_build_evidence.linux_dtb.sha256`、`image_dtb_sha256` 與 `dtb_sha256`，並把範圍改成 `full-image-l2`。政策守門器會拒絕交叉組合，因此元件雜湊不會被無標記地冒充完整 Armbian 修補佇列結果。
+
 ## 專屬實作邊界
 
 Linux 專屬 DTS 從經原理圖證明的 Sige1 設計繼承，覆寫 Banana Pi model 與 compatible，並只額外啟用官方 40-pin 表與原理圖都能確認的 `I2C0`、`I2C1` 與 `SPI0`。`SPI0` 提供兩個 `spidev` 端點，頻率上限保守設為 24 MHz。
@@ -45,6 +60,16 @@ U-Boot 專屬 DTS 只保留 RK3528 SoC 與共同 U-Boot 描述，不帶入 H28K 
 - 原先 Sige1 DTS 的 `wifi_chip_type` 是 `rtl8852bs`。
 
 本候選依 V1.2 原理圖把軟體識別改為 `ap6275s`，但 `wifi_bom_conflict_resolved=false`。這只是供實機辨識的候選設定，不是所有板次的 Wi-Fi 通過聲明。正式發布前必須取得量產 BOM，並在每一種實際模組上驗證韌體檔名、SDIO 枚舉、藍牙 UART、休眠喚醒與射頻穩定性。
+
+在 BOM 未決期間，機器契約使用 `provisional-ap6275s`，固定 `brcmfmac`／SDIO 與 `hci_uart`／UART 軟體路徑，並要求映像含有下列固定提交中的 Wi-Fi 檔案：
+
+| 映像路徑 | SHA-256 |
+| --- | --- |
+| `/lib/firmware/brcm/brcmfmac43752-sdio.bin` | `46f62076768e50938d0e29b306b24d4663de20b07b474c4759d5801fcbf0bdde` |
+| `/lib/firmware/brcm/brcmfmac43752-sdio.clm_blob` | `5143146e1923f87f7aab8df043abcf89a657fa9fdc3b22a38806399730d9a97a` |
+| `/lib/firmware/brcm/brcmfmac43752-sdio.txt` | `2d2723101fe9c66c853ddb1e2d715851ba100a4390f8ac72fc84dd35736cc66f` |
+
+完整映像還必須含 `brcmfmac.ko` 與 `hci_uart.ko`。這些要求只證明軟體資產存在且來自固定提交；Validation 仍明確記錄 `bom_identity_confirmed=false`、`bluetooth_firmware_identity_confirmed=false` 與 `runtime_hardware_validated=false`，所以不得據此宣稱 Wi-Fi 或藍牙可用。
 
 ## 授權與散布
 

@@ -16,6 +16,7 @@
   "firmware_source": "https://github.com/armbian/firmware",
   "firmware_ref": "commit:f50a2a21bcdb77a562b3976930c5c6b521a1df08",
   "firmware_commit": "f50a2a21bcdb77a562b3976930c5c6b521a1df08",
+  "verify_firmware_source_resolution": true,
   "firmware_redistribution_audit_complete": false,
   "atf_source": "https://github.com/ARM-software/arm-trusted-firmware.git",
   "atf_ref": "commit:c17351450c8a513ca3f30f936e26a71db693a145",
@@ -72,7 +73,30 @@
     }
   },
   "installed_firmware_blobs": {
+    "/lib/firmware/brcm/brcmfmac43752-sdio.bin": "46f62076768e50938d0e29b306b24d4663de20b07b474c4759d5801fcbf0bdde",
+    "/lib/firmware/brcm/brcmfmac43752-sdio.clm_blob": "5143146e1923f87f7aab8df043abcf89a657fa9fdc3b22a38806399730d9a97a",
+    "/lib/firmware/brcm/brcmfmac43752-sdio.txt": "2d2723101fe9c66c853ddb1e2d715851ba100a4390f8ac72fc84dd35736cc66f",
     "/usr/share/doc/armbian-bsp-bananapim1super/rkbin.LICENSE.TXT": "0b37e1522c36cf4579c45dfb138798c3cb5665fcf6302b95377179fbed38e35c"
+  },
+  "required_kernel_module_paths": [
+    "kernel/drivers/bluetooth/hci_uart.ko",
+    "kernel/drivers/net/wireless/broadcom/brcm80211/brcmfmac/brcmfmac.ko"
+  ],
+  "provisional_wireless_contract": {
+    "contract_id": "provisional-ap6275s",
+    "evidence_basis": "V1.2 原理圖的 AP6275S 類 SDIO 與 UART 設計",
+    "bom_identity_confirmed": false,
+    "wifi_driver": "brcmfmac",
+    "wifi_bus": "SDIO",
+    "bluetooth_driver": "hci_uart",
+    "bluetooth_bus": "UART",
+    "bluetooth_firmware_identity_confirmed": false,
+    "runtime_hardware_validated": false,
+    "required_wifi_firmware_blobs": {
+      "/lib/firmware/brcm/brcmfmac43752-sdio.bin": "46f62076768e50938d0e29b306b24d4663de20b07b474c4759d5801fcbf0bdde",
+      "/lib/firmware/brcm/brcmfmac43752-sdio.clm_blob": "5143146e1923f87f7aab8df043abcf89a657fa9fdc3b22a38806399730d9a97a",
+      "/lib/firmware/brcm/brcmfmac43752-sdio.txt": "2d2723101fe9c66c853ddb1e2d715851ba100a4390f8ac72fc84dd35736cc66f"
+    }
   },
   "identity_evidence": {
     "official_page": "https://docs.banana-pi.org/en/BPI-M1S/BananaPi_BPI-M1S",
@@ -112,6 +136,7 @@
   "common_kernel_options": {
     "CONFIG_ARCH_ROCKCHIP": "y",
     "CONFIG_BRCMFMAC": "m",
+    "CONFIG_BRCMFMAC_SDIO": "y",
     "CONFIG_BT_HCIUART": "m",
     "CONFIG_BT_HCIUART_BCM": "y",
     "CONFIG_DRM": "y",
@@ -143,9 +168,11 @@
   },
   "boards": {
     "bananapim1super": {
-      "family": "rk35xx",
-      "dtb": "rockchip/rk3528-bananapi-m1-super.dtb",
-      "dtb_sha256": "68c0d6c27d2802abee0b7ab4b0569581048b14fc651d55c103392d81e00f2eb6",
+        "family": "rk35xx",
+        "dtb": "rockchip/rk3528-bananapi-m1-super.dtb",
+        "component_dtb_sha256": "68c0d6c27d2802abee0b7ab4b0569581048b14fc651d55c103392d81e00f2eb6",
+        "image_dtb_sha256": null,
+        "dtb_sha256_evidence_scope": "component-only-l1",
       "model": "Banana Pi M1 Super",
       "compatible": [
         "bananapi,bpi-m1-super",

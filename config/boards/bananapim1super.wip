@@ -18,6 +18,7 @@ IMAGE_PARTITION_TABLE="gpt"
 BOOTBRANCH_BOARD="commit:39cd993e5d6296635438e84f4576b3a9bf76f86e"
 KERNELBRANCH_BOARD="commit:c6157104418d012823413c02f9222f3fe123dd25"
 RKBIN_GIT_REF="commit:1d3c61008fa823936ae7a59615393f8294b64456"
+ARMBIAN_FIRMWARE_GIT_SOURCE_BOARD="https://github.com/armbian/firmware"
 ARMBIAN_FIRMWARE_GIT_REF_BOARD="commit:f50a2a21bcdb77a562b3976930c5c6b521a1df08"
 DDR_BLOB="rk35/rk3528_ddr_1056MHz_v1.09.bin"
 BL31_BLOB="rk35/rk3528_bl31_v1.17.elf"
@@ -37,6 +38,7 @@ function post_family_config_branch_vendor__bananapim1super_pin_sources() {
 	declare -g LINUXCONFIG="linux-rk35xx-vendor"
 	declare -g RKBIN_GIT_URL="https://github.com/armbian/rkbin"
 	declare -g RKBIN_GIT_REF="commit:1d3c61008fa823936ae7a59615393f8294b64456"
+	declare -g ARMBIAN_FIRMWARE_GIT_SOURCE="${ARMBIAN_FIRMWARE_GIT_SOURCE_BOARD}"
 	declare -g ARMBIAN_FIRMWARE_GIT_REF="${ARMBIAN_FIRMWARE_GIT_REF_BOARD}"
 	declare -g ATF_COMPILE="no"
 	declare -g ATFSOURCE=""
@@ -45,7 +47,7 @@ function post_family_config_branch_vendor__bananapim1super_pin_sources() {
 
 function custom_kernel_config__bananapim1super_io_contract() {
 	opts_m+=(BRCMFMAC BT_HCIUART DRM_LIMA R8169)
-	opts_y+=(BT_HCIUART_BCM DWMAC_ROCKCHIP GPIO_CDEV I2C_CHARDEV I2C_RK3X)
+	opts_y+=(BRCMFMAC_SDIO BT_HCIUART_BCM DWMAC_ROCKCHIP GPIO_CDEV I2C_CHARDEV I2C_RK3X)
 	opts_y+=(MMC MMC_BLOCK MMC_DW MMC_DW_ROCKCHIP MMC_SDHCI MMC_SDHCI_OF_DWCMSHC)
 	opts_y+=(ROCKCHIP_MPP_RKVDEC ROCKCHIP_MPP_RKVENC ROCKCHIP_MPP_SERVICE)
 	opts_y+=(SPI SPI_ROCKCHIP SPI_SPIDEV USB USB_CONFIGFS USB_CONFIGFS_MASS_STORAGE)

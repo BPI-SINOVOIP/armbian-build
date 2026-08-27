@@ -1,3 +1,5 @@
+import copy
+import importlib.util
 import json
 import unittest
 from pathlib import Path
@@ -12,6 +14,9 @@ UBOOT_CONFIG = ROOT / "patch/u-boot/legacy/u-boot-radxa-rk35xx/defconfig/bananap
 POLICY = ROOT / "docs/evidence/bananapi-family-optimization/E-rockchip-m1super-source-policy-20260827.md"
 COMPONENT_EVIDENCE = ROOT / "docs/evidence/bananapi-family-optimization/E-rockchip-m1super-component-build-20260827.md"
 COMPONENT_VERIFIER = ROOT / "tools/verify-bananapi-rockchip-m1super-components.sh"
+POLICY_CHECKER = ROOT / "tools/check-bananapi-rockchip-m1super-policy.py"
+BUILD_ENTRY = ROOT / "tools/build-bananapi-rockchip-m1super-candidate.sh"
+VERIFY_ENTRY = ROOT / "tools/verify-bananapi-rockchip-m1super-candidate.sh"
 
 
 class BananaPiM1SuperCandidateTests(unittest.TestCase):
@@ -25,6 +30,9 @@ class BananaPiM1SuperCandidateTests(unittest.TestCase):
         cls.uboot_config = UBOOT_CONFIG.read_text(encoding="utf-8")
         cls.validation = json.loads(VALIDATION.read_text(encoding="utf-8"))
         cls.board = cls.validation["boards"]["bananapim1super"]
+        spec = importlib.util.spec_from_file_location("m1super_policy_checker", POLICY_CHECKER)
+        cls.policy_checker = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(cls.policy_checker)
 
     def test_board_keeps_wip_and_drops_foreign_board_file_inheritance(self):
         self.assertTrue(BOARD.is_file())
@@ -43,6 +51,15 @@ class BananaPiM1SuperCandidateTests(unittest.TestCase):
             'declare -g ATF_COMPILE="no"',
             'declare -g ATFSOURCE=""',
             'declare -g ATFBRANCH=""',
+        ):
+            self.assertIn(required, self.board_text)
+
+    def test_firmware_source_and_ref_are_fixed_in_board_file(self):
+        for required in (
+            'ARMBIAN_FIRMWARE_GIT_SOURCE_BOARD="https://github.com/armbian/firmware"',
+            'ARMBIAN_FIRMWARE_GIT_REF_BOARD="commit:f50a2a21bcdb77a562b3976930c5c6b521a1df08"',
+            'declare -g ARMBIAN_FIRMWARE_GIT_SOURCE="${ARMBIAN_FIRMWARE_GIT_SOURCE_BOARD}"',
+            'declare -g ARMBIAN_FIRMWARE_GIT_REF="${ARMBIAN_FIRMWARE_GIT_REF_BOARD}"',
         ):
             self.assertIn(required, self.board_text)
 
@@ -75,6 +92,66 @@ class BananaPiM1SuperCandidateTests(unittest.TestCase):
         self.assertFalse(
             self.validation["identity_evidence"]["wifi_bom_conflict_resolved"]
         )
+
+    def test_current_state_is_honest_l1_without_image_evidence(self):
+        self.policy_checker.validate_candidate_state(self.validation)
+        self.assertNotIn("image_build_evidence", self.validation)
+        self.assertIsNone(self.board["image_dtb_sha256"])
+        self.assertEqual(self.board["dtb_sha256_evidence_scope"], "component-only-l1")
+        self.assertEqual(
+            self.board["component_dtb_sha256"],
+            "68c0d6c27d2802abee0b7ab4b0569581048b14fc651d55c103392d81e00f2eb6",
+        )
+        self.assertNotIn("dtb_sha256", self.board)
+
+    def test_state_machine_accepts_a_complete_internal_l2_shape(self):
+        candidate = copy.deepcopy(self.validation)
+        image_dtb_sha256 = "a" * 64
+        candidate["candidate_level"] = "L2 內部軟體候選"
+        candidate["candidate_scope"] = "internal-l2"
+        candidate["rootfs_image_built"] = True
+        candidate["image_build_evidence"] = {
+            "status": "complete",
+            "evidence_level": "L2",
+            "full_rootfs_image_built": True,
+            "hardware_tested": False,
+            "read_only_content_verified": True,
+            "source_commit": "1" * 40,
+            "verifier_commit": "1" * 40,
+            "build_validation_config_sha256": "2" * 64,
+            "verification_config_sha256": "2" * 64,
+            "candidate_matrix_sha256": "3" * 64,
+            "uboot_payload_manifest_sha256": "4" * 64,
+            "final_config_manifest_sha256": "5" * 64,
+            "image": {"size": 1, "sha256": "6" * 64},
+            "archive": {"size": 1, "sha256": "7" * 64},
+            "linux_dtb": {
+                "path": "rockchip/rk3528-bananapi-m1-super.dtb",
+                "sha256": image_dtb_sha256,
+            },
+        }
+        candidate["boards"]["bananapim1super"]["image_dtb_sha256"] = image_dtb_sha256
+        candidate["boards"]["bananapim1super"]["dtb_sha256"] = image_dtb_sha256
+        candidate["boards"]["bananapim1super"]["dtb_sha256_evidence_scope"] = "full-image-l2"
+        self.policy_checker.validate_candidate_state(candidate)
+
+    def test_state_machine_rejects_mixed_or_unproven_states(self):
+        mixed = copy.deepcopy(self.validation)
+        mixed["candidate_scope"] = "internal-l2"
+        with self.assertRaises(SystemExit):
+            self.policy_checker.validate_candidate_state(mixed)
+
+        unproven_l2 = copy.deepcopy(self.validation)
+        unproven_l2["candidate_level"] = "L2 內部軟體候選"
+        unproven_l2["candidate_scope"] = "internal-l2"
+        unproven_l2["rootfs_image_built"] = True
+        with self.assertRaises(SystemExit):
+            self.policy_checker.validate_candidate_state(unproven_l2)
+
+        false_claim = copy.deepcopy(self.validation)
+        false_claim["hardware_claims_allowed"] = True
+        with self.assertRaises(SystemExit):
+            self.policy_checker.validate_candidate_state(false_claim)
 
     def test_rkbin_license_and_hashes_are_machine_readable(self):
         self.assertTrue(self.validation["rkbin_copy_and_distribution_grant_present"])
@@ -110,6 +187,37 @@ class BananaPiM1SuperCandidateTests(unittest.TestCase):
         for artifact, digest in expected.items():
             self.assertEqual(evidence[artifact]["sha256"], digest)
 
+    def test_provisional_ap6275s_contract_is_source_bounded(self):
+        self.assertTrue(self.validation["verify_firmware_source_resolution"])
+        self.assertEqual(
+            self.validation["firmware_source"], "https://github.com/armbian/firmware"
+        )
+        contract = self.validation["provisional_wireless_contract"]
+        self.assertEqual(contract["contract_id"], "provisional-ap6275s")
+        self.assertFalse(contract["bom_identity_confirmed"])
+        self.assertFalse(contract["bluetooth_firmware_identity_confirmed"])
+        self.assertFalse(contract["runtime_hardware_validated"])
+        self.assertEqual(contract["wifi_driver"], "brcmfmac")
+        self.assertEqual(contract["bluetooth_driver"], "hci_uart")
+        expected_blobs = {
+            "/lib/firmware/brcm/brcmfmac43752-sdio.bin": "46f62076768e50938d0e29b306b24d4663de20b07b474c4759d5801fcbf0bdde",
+            "/lib/firmware/brcm/brcmfmac43752-sdio.clm_blob": "5143146e1923f87f7aab8df043abcf89a657fa9fdc3b22a38806399730d9a97a",
+            "/lib/firmware/brcm/brcmfmac43752-sdio.txt": "2d2723101fe9c66c853ddb1e2d715851ba100a4390f8ac72fc84dd35736cc66f",
+        }
+        self.assertEqual(contract["required_wifi_firmware_blobs"], expected_blobs)
+        for path, digest in expected_blobs.items():
+            self.assertEqual(self.validation["installed_firmware_blobs"][path], digest)
+        self.assertEqual(
+            set(self.validation["required_kernel_module_paths"]),
+            {
+                "kernel/drivers/bluetooth/hci_uart.ko",
+                "kernel/drivers/net/wireless/broadcom/brcm80211/brcmfmac/brcmfmac.ko",
+            },
+        )
+        self.assertEqual(
+            self.validation["common_kernel_options"]["CONFIG_BRCMFMAC_SDIO"], "y"
+        )
+
     def test_linux_dts_has_dedicated_identity_and_evidence_bounded_io(self):
         self.assertIn('#include "rk3528-armsom-sige1.dts"', self.linux_dts)
         self.assertIn('model = "Banana Pi M1 Super";', self.linux_dts)
@@ -139,9 +247,12 @@ class BananaPiM1SuperCandidateTests(unittest.TestCase):
             self.board["dtb"], "rockchip/rk3528-bananapi-m1-super.dtb"
         )
         self.assertEqual(
-            self.board["dtb_sha256"],
+            self.board["component_dtb_sha256"],
             "68c0d6c27d2802abee0b7ab4b0569581048b14fc651d55c103392d81e00f2eb6",
         )
+        self.assertIsNone(self.board["image_dtb_sha256"])
+        self.assertNotIn("dtb_sha256", self.board)
+        self.assertEqual(self.board["dtb_sha256_evidence_scope"], "component-only-l1")
         self.assertEqual(
             self.board["uboot_defconfig"],
             "bananapi-m1-super-rk3528_defconfig",
@@ -193,8 +304,13 @@ class BananaPiM1SuperCandidateTests(unittest.TestCase):
     def test_policy_document_records_limits_and_evidence(self):
         for required in (
             "L1 元件候選",
+            "L2 內部軟體候選",
+            "候選狀態機",
             "不得直接對外散布",
             "wifi_bom_conflict_resolved=false",
+            "provisional-ap6275s",
+            "component_dtb_sha256",
+            "verify_firmware_source_resolution",
             "BPI-M1S_ArmSoM-Sige1_V1.2_SCH_20240727.pdf",
             "71d9122b2d6d30916928cc123ce2cece314c922893623a4e6e7d8d2810b279dd",
         ):
@@ -219,6 +335,15 @@ class BananaPiM1SuperCandidateTests(unittest.TestCase):
             "tools/verify-bananapi-rockchip-m1super-components.sh",
         ):
             self.assertTrue((ROOT / relative).is_file(), relative)
+
+    def test_entrypoints_enforce_state_and_l2_archive_checks(self):
+        build_text = BUILD_ENTRY.read_text(encoding="utf-8")
+        verify_text = VERIFY_ENTRY.read_text(encoding="utf-8")
+        self.assertIn('"L1 元件候選" | "L2 內部軟體候選"', build_text)
+        self.assertIn("write_entry_state failed", verify_text)
+        self.assertIn("verify-bananapi-rockchip-candidates.sh", verify_text)
+        self.assertIn("export VERIFY_ARCHIVES=yes", verify_text)
+        self.assertIn("export VERIFICATION_EVIDENCE_LEVEL=L2", verify_text)
 
     def test_component_verifier_is_evidence_bounded(self):
         text = COMPONENT_VERIFIER.read_text(encoding="utf-8")
