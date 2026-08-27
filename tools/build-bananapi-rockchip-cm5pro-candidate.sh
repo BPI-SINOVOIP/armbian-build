@@ -9,6 +9,6 @@ export OUTPUT_DIR="${repo_dir}/output/images/2026.08/bananapi-rockchip-rk3576-cm
 export BOARDS="bananapicm5pro"
 export CANDIDATE_FAMILY_NAME="Rockchip RK3576 CM5 Pro"
 export CANDIDATE_LOCK_FILE=".bananapi-rockchip-cm5pro-build.lock"
-export MINIMUM_FREE_GIB="${MINIMUM_FREE_GIB:-35}"
+export MINIMUM_FREE_GIB="${MINIMUM_FREE_GIB:-40}"
 
 "${builder}" "$@"

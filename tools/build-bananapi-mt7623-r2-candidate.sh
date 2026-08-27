@@ -9,6 +9,6 @@ export OUTPUT_DIR="${repo_dir}/output/images/2026.08/bananapi-mt7623-r2-trixie-c
 export BOARDS="bananapir2"
 export CANDIDATE_FAMILY_NAME="MT7623"
 export CANDIDATE_LOCK_FILE=".bananapi-mt7623-build.lock"
-export MINIMUM_FREE_GIB="${MINIMUM_FREE_GIB:-35}"
+export MINIMUM_FREE_GIB="${MINIMUM_FREE_GIB:-40}"
 
 "${builder}" "$@"

@@ -34,6 +34,6 @@ PY
 export VALIDATION_CONFIG="${validation_config}"
 export OUTPUT_DIR="${repo_dir}/output/images/2026.08/bananapi-rockchip-rk3568-cm2-r2pro-donor-trixie-current-cli"
 export BOARDS="bananapicm2"
-export MINIMUM_FREE_GIB="${MINIMUM_FREE_GIB:-35}"
+export MINIMUM_FREE_GIB="${MINIMUM_FREE_GIB:-40}"
 
 "${builder}" "$@"

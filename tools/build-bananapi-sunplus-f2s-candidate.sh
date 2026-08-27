@@ -20,6 +20,6 @@ export OUTPUT_DIR="${repo_dir}/output/images/2026.08/bananapi-sunplus-sp7021-f2s
 export BOARDS="bananapif2s"
 export CANDIDATE_FAMILY_NAME="Sunplus SP7021"
 export CANDIDATE_LOCK_FILE=".bananapi-sunplus-f2s-build.lock"
-export MINIMUM_FREE_GIB="${MINIMUM_FREE_GIB:-20}"
+export MINIMUM_FREE_GIB="${MINIMUM_FREE_GIB:-40}"
 
 "${builder}" "$@"

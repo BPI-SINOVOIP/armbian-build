@@ -18,7 +18,7 @@ PUBLIC_RELEASE="${PUBLIC_RELEASE:-no}" REQUIRE_CLEAN_SOURCE_TREES=yes \
 VALIDATION_CONFIG="${validation_config}" OUTPUT_DIR="${output_dir}" \
 	BOARDS="bpi-ai2n" CANDIDATE_FAMILY_NAME="Renesas RZ/V2N" \
 	CANDIDATE_LOCK_FILE=".bananapi-renesas-ai2n-build.lock" \
-	MINIMUM_FREE_GIB="${MINIMUM_FREE_GIB:-35}" \
+	MINIMUM_FREE_GIB="${MINIMUM_FREE_GIB:-40}" \
 	"${generic_builder}" "$@"
 
 PUBLIC_RELEASE="${PUBLIC_RELEASE:-no}" EVIDENCE_DIR="${output_dir}" \
