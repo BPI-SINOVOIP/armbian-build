@@ -208,7 +208,7 @@
       "root_partition_number": 1,
       "root_partition_start_sector": 32768,
       "required_partitions": [
-        "1:*:32768:4691968"
+        "1:*:32768:5330944"
       ],
       "required_partition_types": [
         "1:b921b045-1df0-41c3-af44-4c6f280d3fae"

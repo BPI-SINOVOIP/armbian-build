@@ -47,7 +47,7 @@ AIM7 採用 RK3588，符合平台範圍；映像建置仍必須保留未修改�
 - `idbloader.img` 映像偏移：32768 bytes
 - `u-boot.itb` 映像偏移：8388608 bytes
 - GPT 第一分割區起點：32768 sectors
-- GPT 第一分割區大小：4691968 sectors
+- GPT 第一分割區大小：`5330944` 個磁區；此數值來自來源提交 `808ff4e8e` 的首次完整預檢映像，原先前置估值已由唯讀守門拒絕。
 - GPT 第一分割區類型：`b921b045-1df0-41c3-af44-4c6f280d3fae`
 - 根檔案系統：標籤 `armbi_root`、類型 `ext4`
 - DDR：`rk3588_ddr_lp4_2112MHz_lp5_2400MHz_v1.20_20250926.bin`

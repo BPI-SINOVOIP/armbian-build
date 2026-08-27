@@ -387,7 +387,7 @@ printf 'firmware_source=%s\nfirmware=%s\n' "$ARMBIAN_FIRMWARE_GIT_SOURCE" "$ARMB
         self.assertEqual(self.policy["root_partition_start_sector"], 32768)
         self.assertEqual(
             self.policy["required_partitions"],
-            ["1:*:32768:4691968"],
+            ["1:*:32768:5330944"],
         )
         self.assertEqual(
             self.policy["required_partition_types"],
