@@ -6,6 +6,8 @@
 
 `bananapir3mini` 已完成固定來源、eMMC 啟動鏈、GPT、BL2／FIP、U-Boot、核心 DTB、網路韌體與板卡專用驗證契約。Linux DTB、U-Boot、ATF BL2／BL31 與 FIP 均已執行套用或元件建置驗證，但依任務限制未建置完整 Armbian 映像，也未進行實體板測試；目前證據等級是 `L1 元件候選`，不得宣稱可開機、硬體通過或可公開發布。
 
+候選政策採用受控 L1/L2 狀態機。現行狀態固定為 `candidate_scope=internal-component-only`、`full_rootfs_image_built=false`；僅改寫層級名稱會被政策檢查器拒絕。未來只有在 validation 同時改為 `L2 內部軟體候選`、`candidate_scope=internal-l2`、完整映像狀態為真，並由該提交重新完整建置及通過同一提交的 IMG／XZ 驗證後，才可產生 L2 狀態。兩個層級都固定禁止公開發布與硬體通過聲明。
+
 ## 固定來源
 
 | 元件 | 來源 | 固定提交 |
@@ -75,7 +77,9 @@ ATF 建置會連結 `plat/mediatek/mt7986/drivers/dram/release/dram.o`，其 SHA
 
 三個入口只選取 `bananapir3mini`、固定驗證 JSON 與獨立 OverlayFS 上層。本次依任務限制只驗證入口與元件，沒有執行上述完整映像建置。
 
-驗證入口成功後會由板卡專用收尾器檢查 BL2 不超過 `4176896` bytes、FIP 不超過 `4194304` bytes，且 GPT 必須恰為 `17408` bytes。收尾器同時把 `public_release_authorized=false` 與 `release_gate.status=blocked` 寫入最終 `VERIFICATION_STATUS.json`，避免 L2 內容驗證被誤解為已取得對外發布資格。
+驗證入口固定啟用 XZ 完整性與解壓串流同一性，不接受環境變數降級。板卡專用收尾器會把載荷證據視為不可信輸入，要求 BL2、FIP、GPT 各自恰好一筆，逐項核對板卡、位置、偏移、大小上下限及 SHA-256；BL2 不得超過 `4176896` bytes、FIP 不得超過 `4194304` bytes，GPT 必須恰為 `17408` bytes。
+
+最終 `VERIFICATION_STATUS.json` 另保存 `emmc_image_contract`：user area 目標 `/dev/mmcblk0`、GPT 範本雜湊、user area 映像不是完整冷開機安裝物，以及 boot0 目標 `/dev/mmcblk0boot0`、固定 BL2 雜湊、零偏移、必須分離寫入、必須處理 `force_ro`、必須執行 boot partition enable，且 boot0 尚未實機驗證。狀態同時固定 `internal_candidate_only=true`、`public_release_authorized=false`、`hardware_claims_allowed=false` 與 `release_gate.status=blocked`，避免軟體內容驗證被誤解為 eMMC 安裝、硬體或對外發布核准。
 
 ## 升級門檻
 
