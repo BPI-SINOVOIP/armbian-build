@@ -9,8 +9,43 @@
   "candidate_public_release_approved": false,
   "hardware_validation_complete": false,
   "firmware_redistribution_license_verified": false,
-  "rootfs_image_built": false,
-  "full_rootfs_image_built": false,
+  "rootfs_image_built": true,
+  "full_rootfs_image_built": true,
+  "image_build_evidence": {
+    "status": "complete",
+    "evidence_level": "L2",
+    "full_rootfs_image_built": true,
+    "read_only_content_verified": true,
+    "hardware_tested": false,
+    "source_commit": "19b21c370b5ac0f9253b58da5b2c989b9235c9c9",
+    "source_tree": "a7e902738aec5bca17a6ec5ed9298cac81e2c7e8",
+    "verifier_commit": "19b21c370b5ac0f9253b58da5b2c989b9235c9c9",
+    "source_contract_projection_sha256": "94e6437e24bd43188ecbe9edcea46089c1d236577c037c808f44f4a2cfe2f653",
+    "source_date_epoch": 1711071187,
+    "build_validation_config_sha256": "7175324c84f3d1f86818e70cd7a1dbcf958697dcb893dfb13822c35aeefd86e3",
+    "verification_config_sha256": "7175324c84f3d1f86818e70cd7a1dbcf958697dcb893dfb13822c35aeefd86e3",
+    "candidate_matrix_sha256": "675397dc38c9249e85caef431133a9f42ce77dde2c65f59fc6ffd6f88206f23d",
+    "completion_status_sha256": "edd2036e7760b378e5a2bfc10392f0e2089593bfc80742cac3665e30bee443a1",
+    "verification_manifest_sha256": "8dc6b8a3a37d459deb3133fed2a0bd87e271a2fa36c7569212869c437d0785a6",
+    "uboot_payload_manifest_sha256": "6cb68ed44dc0bfc21d5f48563d76ade16ba523f5b2cef7bf730995ca33eaab86",
+    "final_config_manifest_sha256": "de6cbd78a98ccd936bb2c3fe216f7f17d4aad036919a3e1a90ddfd3c9d596eaf",
+    "xz_stream_verified": true,
+    "verified_utc": "2026-08-28T00:02:52Z",
+    "image": {
+      "path": "output/images/2026.08/bananapi-realtek-rtd1395-m4-trixie-legacy-cli/bananapim4/Armbian-unofficial_26.05.0-trunk_Bananapim4_trixie_legacy_4.9.119_minimal.img",
+      "size": 2126512128,
+      "sha256": "263a3efaba697a4b5035712b4773447a8efc5e1d1fa17907cbde296741b6b323"
+    },
+    "archive": {
+      "path": "output/images/2026.08/bananapi-realtek-rtd1395-m4-trixie-legacy-cli/bananapim4/Armbian-unofficial_26.05.0-trunk_Bananapim4_trixie_legacy_4.9.119_minimal.img.xz",
+      "size": 402258144,
+      "sha256": "76772c14f6e4c57820263312a78ac6d53b24ebc076fa45ea8b06806bda25dafb"
+    },
+    "linux_dtb": {
+      "path": "realtek/rtd139x/rtd-1395-bananapi-m4-2GB.dtb",
+      "sha256": "8886772d273898612bd60dd4ae9ecba7ab73663ab3b27b8a996e6f9b9567a461"
+    }
+  },
   "realtek_family_inventory": {
     "shared_legacy_include": "config/sources/families/include/realtek_bpi_legacy_common.inc",
     "shared_legacy_include_modified": true,
@@ -290,7 +325,7 @@
       }
     }
   },
-  "full_image_built": false,
+  "full_image_built": true,
   "component_build_completed": true,
   "hardware_validated": false,
   "public_release_allowed": false,

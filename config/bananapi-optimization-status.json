@@ -177,8 +177,8 @@
       "basis": "已辨識 UNC_LINUX_RLS_25C_W26.07.2 的 95 個 repo 專案提交、41 組本機追蹤差異、6,751 個未分類未追蹤檔與歷史 secure PAC；來源尚不可重放，授權、簽署鏈、完整映像與實機證據均未封閉"
     },
     "bananapim4": {
-      "level": "L1",
-      "basis": "固定 Realtek RTD1395 BSP、firmware 與工具鏈來源已核對；U-Boot 兩次重建雜湊一致，Linux Image、1／2 GiB DTB、517 個模組與來源證據已保存並通過唯讀守門；L2 內部候選的固定快取、FAT 雙 DTB、MBR 與 40 KiB 載荷守門已建立，但正式 IMG 尚未建置，故仍維持 L1"
+      "level": "L2",
+      "basis": "Trixie legacy 精簡 CLI 已由已推送提交 19b21c370 與專用隔離快取乾淨重建；IMG、XZ、MBR 雙分割區、唯讀 FAT／ext4、雙記憶體 DTB、固定時間 U-Boot 載荷、最終核心設定、固定 BSP／firmware 來源、必要套件與 RTL8821CU 模組均通過物質守門及歷史重驗；不透明載荷授權與實機功能仍待驗證"
     },
     "bananapim4super": {
       "level": "L0",
@@ -289,7 +289,7 @@
     "bananapiforge1": "完成冷啟動、雙網路、USB gadget、顯示、CAN、音訊與 40-pin 實測",
     "bananapim1super": "釐清量產無線 BOM 與韌體授權，再完成 SD／eMMC、網路、無線、顯示、GPU、VPU、USB 與 40-pin 實測",
     "bananapim2c": "整理 41 組差異與 6,751 個未分類檔，閉合簽署鏈後建立可重放映像",
-    "bananapim4": "建立固定來源的完整 rootfs／IMG，閉合啟動資產、工具鏈與音訊授權邊界",
+    "bananapim4": "閉合不透明啟動與音訊載荷、工具鏈再散布授權，再完成 SD／eMMC、網路、USB、HDMI、GPU、VPU、無線與 40-pin 實測",
     "bananapim4super": "取得原理圖、量產 BOM 與 PCIe lane 資料，完成專屬 DTS 後再建置候選",
     "bananapir2pro": "完成 SD／eMMC、雙網路、SATA、PCIe、USB、顯示、媒體與 40-pin 實測",
     "bananapir3": "完成 SD／NOR、雙網路、SFP、SATA、PCIe、USB、無線與長時間流量實測",
@@ -403,7 +403,7 @@
     "bananapim4": [
       "bluecore.audio、六個未以固定 MIPS 工具鏈重建的啟動影像及內含工具鏈缺少完整逐項再散布授權",
       "Linux 4.9.119 與 U-Boot 2015.07 已停止受維護，核心建置仍有 230 個 vendor 警告",
-      "尚無完整 Armbian 映像，以及 SD、eMMC、網路、USB、HDMI、GPU、VPU、無線與 40-pin 實機證據"
+      "已有完整 Armbian 內部 L2 映像，但尚無 SD、eMMC、網路、USB、HDMI、GPU、VPU、無線與 40-pin 實機證據"
     ]
   }
 }

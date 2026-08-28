@@ -1,12 +1,12 @@
 # Banana Pi BPI-M4 legacy 候選來源與最佳化政策
 
-更新日期：2026-08-27
+更新日期：2026-08-28
 
 ## 階段結論
 
 `bananapim4` 是 Realtek RTD1395 板卡，不是 Allwinner H618 的 M4 Berry 或 M4 Zero。本候選已把 vendor BSP、韌體與建置時間固定到精確提交，補上 1 GiB／2 GiB DTB 身分、穩定根檔案系統標籤、MBR 儲存契約及板級介面驗證邊界。
 
-板卡仍保留 `.wip`。目前中央登錄的有效證據仍是 `L1`；機器契約已進入 L2 正式重建過渡狀態，但在來自已推送乾淨提交的完整 IMG、XZ 與唯讀驗證閉合前，不得將中央狀態提升為 `L2`，也不得宣稱可開機、介面可用或硬體通過。既有 2026 年 5 月映像只用來校準分割布局，不作本候選證據。
+板卡仍保留 `.wip`。目前中央登錄已由元件證據提升為 `L2` 內部軟體候選；正式 IMG 與 XZ 來自已推送乾淨提交，並已完成唯讀內容守門及歷史重驗。L2 只證明軟體映像內容與來源契約閉合，不得宣稱可開機、介面可用、硬體通過或允許公開發布。既有 2026 年 5 月映像只用來校準分割布局，不作本候選證據。
 
 本候選修改 M4 板級設定、M4 專用修補、機器契約、文件、工具及測試。共用 Realtek legacy include 只修正根標籤 `sed` 參數交給記錄執行器時的 shell 引號，不改變 M4 與 W2 預期的根標籤內容。共用唯讀映像守門器新增 `realtek_bpi_uenv` 模式，用來核對 FAT vendor boot 目錄、雙 DTB、根標籤與不封裝 defconfig 的舊 U-Boot 契約。共用 `/media/pi/SMCI/armbian/bpi-v26.2.1/cache` 只作 OverlayFS 的唯讀 lower，不直接修改。
 
@@ -94,6 +94,9 @@ L2 內部候選建置與唯讀驗證：
 ```bash
 ./tools/run-bananapi-realtek-m4-candidate-isolated-cache.sh
 ./tools/verify-bananapi-realtek-m4-candidate.sh
+python3 tools/check-bananapi-realtek-m4-source-policy.py \
+  config/validation/bananapi-realtek-rtd1395-m4-legacy.json \
+  --verify-historical-image
 ```
 
 L2 入口只接受 `trixie`、`legacy`、minimal CLI 與固定 `SOURCE_DATE_EPOCH=1711071187`，輸出目錄固定為 `output/images/2026.08/bananapi-realtek-rtd1395-m4-trixie-legacy-cli`。建置期間必須使用專用 OverlayFS upper，並禁止公開發布及硬體通過聲明。
@@ -104,16 +107,17 @@ L2 入口只接受 `trixie`、`legacy`、minimal CLI 與固定 `SOURCE_DATE_EPOC
 
 U-Boot 在相同固定來源、時間、使用者與主機資訊下連續建置兩次，SHA-256 都是 `5e91ddf0140820c1f091ac40d8af0daa180bf1e45b851231269e4df7be3e7003`。U-Boot 建置記錄沒有警告；Linux 4.9 建置記錄有 230 個警告，包含舊 vendor 程式碼的型別、未使用變數、控制流程及 section mismatch 類別。Linux、DTB 與 modules 本次各只建置一次，其雜湊是產物身分證據，不是雙重建置一致性證明。因此 L1 只代表元件已保存且靜態守門通過，不代表核心可重現性或這些技術債已消除。
 
-本次沒有建立 rootfs、initramfs、整碟 IMG 或 XZ 映像，也沒有執行完整映像唯讀掛載檢查，所以不得提升為 `L2`。`bluecore.audio` 與未閉合的輔助處理器重建鏈使這份證據只限內部稽核，不能直接公開發布。
+正式 L2 已從提交 `19b21c370b5ac0f9253b58da5b2c989b9235c9c9` 建立 rootfs、initramfs、整碟 IMG 與 XZ，並完成雙分割區唯讀掛載、開機資產、最終設定、套件、模組與 U-Boot 載荷檢查。版本控制內證據另可重新核對來源提交、當時的 validation、實檔雜湊、XZ 解壓串流及 IMG 內載荷。完整數值記錄於 `K-realtek-rtd1395-m4-L2-build-20260828.md`。
+
+`bluecore.audio` 與未閉合的輔助處理器重建鏈仍使這份完整映像只限內部稽核，不能直接公開發布。
 
 ## 升級與發布門檻
 
-要升級為完整軟體候選，至少仍須：
+要從內部 L2 升級為可實機採用或對外發布的候選，至少仍須：
 
 1. 釐清四個條件式 U-Boot 預建庫、六個已嵌入啟動影像、`bluecore.audio`、內含工具鏈及外部文件的來源與再散布授權，並固定可重建六個啟動影像的 MIPS 工具鏈。
-2. 在不修改共用 cache 的隔離環境建立目前分支完整映像，驗證 MBR、40 KiB 載荷、FAT boot、根標籤、IMG／XZ 同一性、SHA-256 與唯讀 rootfs 內容，通過後才可評估 `L2`。
-3. 以實體 M4 及 UART 完成多次冷啟動、1 GiB／2 GiB、SD、eMMC、PCIe、網路、USB host／gadget、HDMI、音訊、Wi-Fi、Bluetooth、GPIO、I2C、SPI、PWM、熱感測、watchdog、重新啟動、關機及長時間壓力測試。
-4. 補齊 Mali-470 核心與使用者空間堆疊、視訊解碼 API 及授權證據，再用實際渲染器與解碼統計驗證；在此以前不得宣稱 GPU 或 VPU 硬體加速。
-5. 評估 Linux 4.9.119 與 U-Boot 2015.07 的安全維護風險，建立可持續更新或移植到受維護版本的方案。
+2. 以實體 M4 及 UART 完成多次冷啟動、1 GiB／2 GiB、SD、eMMC、PCIe、網路、USB host／gadget、HDMI、音訊、Wi-Fi、Bluetooth、GPIO、I2C、SPI、PWM、熱感測、watchdog、重新啟動、關機及長時間壓力測試。
+3. 補齊 Mali-470 核心與使用者空間堆疊、視訊解碼 API 及授權證據，再用實際渲染器與解碼統計驗證；在此以前不得宣稱 GPU 或 VPU 硬體加速。
+4. 評估 Linux 4.9.119 與 U-Boot 2015.07 的安全維護風險，建立可持續更新或移植到受維護版本的方案。
 
 上述阻擋關閉前，`public_release_allowed`、`hardware_validated` 與 `hardware_claims_allowed` 必須維持 `false`。

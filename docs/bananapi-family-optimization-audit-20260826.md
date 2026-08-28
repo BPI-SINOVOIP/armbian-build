@@ -10,7 +10,7 @@
 
 - 板卡總數：48。
 - 正式 `.conf`：12；社群 `.csc`：14；開發中 `.wip`：21；停止支援 `.eos`：1。
-- 證據分布：L0 3；L1 3；L2 42；L3 0；L4 0；L5 0。
+- 證據分布：L0 3；L1 2；L2 43；L3 0；L4 0；L5 0。
 - 未取得實機的板卡最高只能標示 L2；目前沒有板卡達到完整 L3／L4／L5 門檻。
 
 ## 板卡矩陣
@@ -40,7 +40,7 @@
 | `bananapim2ultra` | 社群 | Banana Pi M2 Ultra | `sun8i` | `armhf` | `current,edge,legacy` | 是 | C | L2 軟體候選 | 完成 SD／eMMC、SATA、GbE、無線網路、USB、顯示與 40-pin 實測 |
 | `bananapim2zero` | 社群 | Banana Pi M2 Zero | `sun8i` | `armhf` | `current,edge,legacy` | 是 | C | L2 軟體候選 | 完成 SD、Wi-Fi、Bluetooth、USB OTG、HDMI、Lima、Cedrus 與 40-pin 實測 |
 | `bananapim3` | 社群 | Banana Pi M3 | `sun8i` | `armhf` | `current,edge,legacy` | 是 | C | L2 軟體候選 | 完成 SD／eMMC、GbE、Wi-Fi、Bluetooth、USB OTG、HDMI 與音訊實測 |
-| `bananapim4` | 開發中 | Banana Pi M4 | `realtek-rtd139x-bpi` | `arm64` | `legacy` | 是 | F | L1 元件可建置 | 建立固定來源的完整 rootfs／IMG，閉合啟動資產、工具鏈與音訊授權邊界 |
+| `bananapim4` | 開發中 | Banana Pi M4 | `realtek-rtd139x-bpi` | `arm64` | `legacy` | 是 | F | L2 軟體候選 | 閉合不透明啟動與音訊載荷、工具鏈再散布授權，再完成 SD／eMMC、網路、USB、HDMI、GPU、VPU、無線與 40-pin 實測 |
 | `bananapim4berry` | 正式 | BananaPi M4 Berry | `sun50iw9-bpi` | `arm64` | `current,edge` | 是 | R | L2 軟體候選 | 以 2／4 GiB 多板完成冷啟動、Wi-Fi、Bluetooth、GPU、VPU、USB、40-pin 與長時間壓力實測 |
 | `bananapim4super` | 開發中 | Banana Pi M4 Super（ArmSoM Sige3 donor-only） | `rk35xx` | `arm64` | `vendor` | 是 | E | L0 已盤點 | 取得原理圖、量產 BOM 與 PCIe lane 資料，完成專屬 DTS 後再建置候選 |
 | `bananapim4zero` | 正式 | BananaPi BPI-M4-Zero | `sun50iw9-bpi` | `arm64` | `current,edge` | 是 | R | L2 軟體候選 | 以 2／4 GiB 多批次板完成冷啟動、DDR 壓力、儲存、網路、顯示、媒體與 40-pin 實測 |
@@ -82,7 +82,7 @@
 - `bananapim2c`：chipram、簽署與 PAC 工具、modem、Trusty、GPU、NPU、VPU、GNSS 及其他預建內容缺少完整逐項再散布授權。
 - `bananapim4`：bluecore.audio、六個未以固定 MIPS 工具鏈重建的啟動影像及內含工具鏈缺少完整逐項再散布授權。
 - `bananapim4`：Linux 4.9.119 與 U-Boot 2015.07 已停止受維護，核心建置仍有 230 個 vendor 警告。
-- `bananapim4`：尚無完整 Armbian 映像，以及 SD、eMMC、網路、USB、HDMI、GPU、VPU、無線與 40-pin 實機證據。
+- `bananapim4`：已有完整 Armbian 內部 L2 映像，但尚無 SD、eMMC、網路、USB、HDMI、GPU、VPU、無線與 40-pin 實機證據。
 - `bananapim4super`：官方 M4 Super 無線模組為 SYN43752，Sige3 donor DTS 為 AP6275S；同一官方頁面的 PCIe 規格也同時出現 x1 與 x2，必須取得原理圖及 PCB 資料後才能建立真正板級描述。
 - `bananapim6`：TZK 與 U-Boot sm.bin 缺少原始碼、重建鏈及逐檔再散布授權，C05 拓撲與實機啟動尚未驗證。
 - `bananapir1`：板卡維持 EOS；歷史映像沒有目前來源重建、實機開機、安全更新、授權審查或公開發布證據。

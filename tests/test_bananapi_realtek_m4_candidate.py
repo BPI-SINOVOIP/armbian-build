@@ -272,16 +272,32 @@ grep -Fqx 'root=LABEL=BPI-ROOT rw rootfstype=ext4 rootwait' \
             self.assertFalse(item["included_in_candidate"])
             self.assertFalse(item["redistribution_license_verified"])
 
-    def test_l2_transition_retains_component_artifacts(self) -> None:
-        self.assertFalse(self.config["full_image_built"])
-        self.assertFalse(self.config["rootfs_image_built"])
-        self.assertFalse(self.config["full_rootfs_image_built"])
+    def test_l2_closure_retains_component_and_image_artifacts(self) -> None:
+        self.assertTrue(self.config["full_image_built"])
+        self.assertTrue(self.config["rootfs_image_built"])
+        self.assertTrue(self.config["full_rootfs_image_built"])
         self.assertFalse(self.config["hardware_validated"])
         self.assertFalse(self.config["hardware_claims_allowed"])
         self.assertEqual(self.config["candidate_level"], "L2 內部軟體候選")
         self.assertEqual(self.config["candidate_scope"], "internal-l2")
         self.assertEqual(self.config["current_evidence_level"], "L2")
-        self.assertNotIn("image_build_evidence", self.config)
+        image = self.config["image_build_evidence"]
+        self.assertEqual(image["status"], "complete")
+        self.assertTrue(image["read_only_content_verified"])
+        self.assertTrue(image["xz_stream_verified"])
+        self.assertFalse(image["hardware_tested"])
+        self.assertEqual(
+            image["source_commit"],
+            "19b21c370b5ac0f9253b58da5b2c989b9235c9c9",
+        )
+        self.assertEqual(
+            image["image"]["sha256"],
+            "263a3efaba697a4b5035712b4773447a8efc5e1d1fa17907cbde296741b6b323",
+        )
+        self.assertEqual(
+            image["archive"]["sha256"],
+            "76772c14f6e4c57820263312a78ac6d53b24ebc076fa45ea8b06806bda25dafb",
+        )
         if self.config["component_build_completed"]:
             evidence = self.config["component_build_evidence"]
             self.assertEqual(
@@ -319,6 +335,7 @@ grep -Fqx 'root=LABEL=BPI-ROOT rw rootfstype=ext4 rootwait' \
         self.assertIn("HARDWARE_CLAIMS=no", builder)
         self.assertIn("CACHE_LOWER", runner)
         self.assertIn("REQUIRE_BUILD_VERIFIER_IDENTITY=yes", verifier)
+        self.assertIn("--verify-historical-image", CHECKER.read_text(encoding="utf-8"))
         self.assertIn('realtek_bpi_uenv)', common)
         self.assertNotIn("git reset --hard", builder + runner + verifier)
         self.assertNotIn("rm -rf", builder + runner + verifier)

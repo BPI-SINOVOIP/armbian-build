@@ -22,7 +22,7 @@ bananapim2s	conf	Banana Pi M2S	meson-g12b	arm64	current,edge	current	yes	A	L2	ba
 bananapim2ultra	csc	Banana Pi M2 Ultra	sun8i	armhf	current,edge,legacy	current	yes	C	L2	Bananapi_M2_Ultra_defconfig		BOARD_MAINTAINER	完成 SD／eMMC、SATA、GbE、無線網路、USB、顯示與 40-pin 實測
 bananapim2zero	csc	Banana Pi M2 Zero	sun8i	armhf	current,edge,legacy	current	yes	C	L2	bananapi_m2_zero_defconfig			完成 SD、Wi-Fi、Bluetooth、USB OTG、HDMI、Lima、Cedrus 與 40-pin 實測
 bananapim3	csc	Banana Pi M3	sun8i	armhf	current,edge,legacy	current	yes	C	L2	Sinovoip_BPI_M3_defconfig	allwinner/sun8i-a83t-bananapi-m3.dtb		完成 SD／eMMC、GbE、Wi-Fi、Bluetooth、USB OTG、HDMI 與音訊實測
-bananapim4	wip	Banana Pi M4	realtek-rtd139x-bpi	arm64	legacy	legacy	yes	F	L1	rtd1395_bananapi_defconfig	realtek/rtd139x/rtd-1395-bananapi-m4-2GB.dtb		建立固定來源的完整 rootfs／IMG，閉合啟動資產、工具鏈與音訊授權邊界
+bananapim4	wip	Banana Pi M4	realtek-rtd139x-bpi	arm64	legacy	legacy	yes	F	L2	rtd1395_bananapi_defconfig	realtek/rtd139x/rtd-1395-bananapi-m4-2GB.dtb		閉合不透明啟動與音訊載荷、工具鏈再散布授權，再完成 SD／eMMC、網路、USB、HDMI、GPU、VPU、無線與 40-pin 實測
 bananapim4berry	conf	BananaPi M4 Berry	sun50iw9-bpi	arm64	current,edge	current	yes	R	L2	bananapi_m4_berry_defconfig	sun50i-h618-bananapi-m4-berry.dtb		以 2／4 GiB 多板完成冷啟動、Wi-Fi、Bluetooth、GPU、VPU、USB、40-pin 與長時間壓力實測
 bananapim4super	wip	Banana Pi M4 Super（ArmSoM Sige3 donor-only）	rk35xx	arm64	vendor	vendor	yes	E	L0	armsom-sige3-rk3568_defconfig	rockchip/rk3568-armsom-sige3.dtb		取得原理圖、量產 BOM 與 PCIe lane 資料，完成專屬 DTS 後再建置候選
 bananapim4zero	conf	BananaPi BPI-M4-Zero	sun50iw9-bpi	arm64	current,edge	current	yes	R	L2	bananapi_m4zero_defconfig	sun50i-h618-bananapi-m4-zero.dtb		以 2／4 GiB 多批次板完成冷啟動、DDR 壓力、儲存、網路、顯示、媒體與 40-pin 實測
