@@ -46,3 +46,20 @@
 ## 實機後續
 
 L2 閉合後仍需使用 BPI-W2、UART、SD、eMMC、SATA、PCIe、乙太網路、HDMI TX、DisplayPort TX、USB host／gadget 與 40-pin 測試治具完成多次冷啟動、資料完整性、吞吐、角色切換、媒體、重啟、關機及長時間壓力測試。四個連結靜態庫、`bluecore.audio` 與工具鏈的再散布授權未閉合前，不得對外發布組合映像。
+
+## 執行紀錄
+
+### 2026-08-28 校準建置
+
+- 來源提交：`5e0776efe5413a5bf2d9b4b1126a4192d4d4d7a7`。
+- 建置結果：Debian Trixie legacy minimal CLI 完整映像建立成功，建置器返回碼為 0。
+- 校準 IMG：2,088,763,392 bytes，SHA-256 為 `e14404d28ae80da761bf355b022f538de338fc403227fe6585832e63ab23fd95`。
+- 校準 XZ：394,040,000 bytes，SHA-256 為 `d91ab06671deb7bdda10b4a5cf385aff43748198a55714374b3ef3b4bd80f615`；串流與解壓後 IMG 同一性通過。
+- 最終核心設定：`0bcd9fdd4e4dcbb1dbe5bd2702ad08171e425c8abf1f9e30e05f6fe4301ec6a3`。
+- U-Boot：位於映像位移 40,960 bytes，大小 432,240 bytes，SHA-256 為 `d4d425862ded2334d354b421ff2df8cdb965041b3b3b2c903fbeddd29ab23890`。
+- MBR：FAT 分割區自 LBA 8192 起、長度 524,288 sectors；ext4 根分割區自 LBA 532480 起。
+- 唯讀驗證：來源身分、二進位資產、IMG、XZ、FAT、ext4、DTB、`uEnv.txt`、U-Boot 載荷與核心設定全部通過 L1 校準守門。
+- 證據邊界：此產物只供校準；在精確契約提交並推送後，必須刪除校準產物與 W2 專用 upper，再從新提交正式重建，才可閉合 L2 軟體證據。
+- 編譯限制：校準日誌含 229 行既有 vendor 警告，其中包含回傳型別、可能未初始化及 section mismatch 類別；不阻擋內部 L2 軟體候選，但必須保留為實機穩定性風險。
+- 重現限制：U-Boot 時間已固定，initramfs 與 APT 套件來源仍會隨實際建置時間與套件倉狀態改變；本階段不宣稱整體映像可逐位元重現。
+- 守門補強：W2 來源守門器已加入正式 L2 證據形狀、原始提交與 tree、IMG／XZ、MBR、清單、U-Boot 載荷、核心設定及 `--verify-historical-image` 驗證；過渡契約不得執行歷史映像重驗。

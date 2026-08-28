@@ -4,8 +4,10 @@
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 import subprocess
+import tempfile
 import unittest
 
 
@@ -83,7 +85,7 @@ class BananaPiRealtekW2CandidateTests(unittest.TestCase):
         self.assertEqual(self.config["linux_ref"], f"commit:{revision}")
         self.assertEqual(self.config["uboot_ref"], f"commit:{revision}")
         self.assertFalse(self.config["atf_applicable"])
-        self.assertEqual(self.config["current_evidence_level"], "L1")
+        self.assertEqual(self.config["current_evidence_level"], "L2")
         self.assertEqual(self.config["target_evidence_level"], "L2")
         self.assertTrue(self.config["verify_firmware_source_resolution"])
 
@@ -206,10 +208,13 @@ class BananaPiRealtekW2CandidateTests(unittest.TestCase):
                 self.assertFalse(item["included_in_candidate"])
                 self.assertFalse(item["redistribution_license_verified"])
 
-    def test_component_state_does_not_imply_hardware_or_rootfs(self) -> None:
-        self.assertEqual(self.config["candidate_level"], "L1 元件候選")
-        self.assertEqual(self.config["candidate_scope"], "internal-component-only")
+    def test_transitional_l2_state_does_not_imply_hardware_or_rootfs(self) -> None:
+        self.assertEqual(self.config["candidate_level"], "L2 內部軟體候選")
+        self.assertEqual(self.config["candidate_scope"], "internal-l2")
         self.assertFalse(self.config["full_image_built"])
+        self.assertFalse(self.config["rootfs_image_built"])
+        self.assertFalse(self.config["full_rootfs_image_built"])
+        self.assertNotIn("image_build_evidence", self.config)
         self.assertFalse(self.config["hardware_validated"])
         self.assertFalse(self.config["hardware_claims_allowed"])
         if self.config["component_build_completed"]:
@@ -231,7 +236,18 @@ class BananaPiRealtekW2CandidateTests(unittest.TestCase):
                 evidence["artifacts"][Path(self.policy["dtb"]).name]["sha256"],
             )
 
-    def test_global_registry_records_only_component_level(self) -> None:
+    def test_calibrated_final_kernel_config_is_fixed(self) -> None:
+        self.assertEqual(
+            self.policy["final_kernel_config_sha256"],
+            "0bcd9fdd4e4dcbb1dbe5bd2702ad08171e425c8abf1f9e30e05f6fe4301ec6a3",
+        )
+        self.assertIsNone(self.policy["image_dtb_sha256"])
+        self.assertEqual(
+            self.policy["dtb_sha256_evidence_scope"],
+            "component-only-l1",
+        )
+
+    def test_global_registry_stays_l1_until_formal_rebuild(self) -> None:
         evidence = self.status["evidence"]["bananapiw2"]
         self.assertEqual(evidence["level"], "L1")
         self.assertIn("未建立 rootfs 或整碟映像", evidence["basis"])
@@ -312,6 +328,102 @@ class BananaPiRealtekW2CandidateTests(unittest.TestCase):
             text=True,
         )
         self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_source_contract_projection_is_stable(self) -> None:
+        result = subprocess.run(
+            [
+                "python3",
+                str(CHECKER),
+                "--print-source-contract-projection-sha256",
+                str(CONFIG),
+            ],
+            cwd=ROOT,
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(
+            result.stdout.strip(),
+            "13dcf92c40e1d19161da68adf834f45bbe56926e35782de20585bd2bbbf5335d",
+        )
+
+    def test_transitional_contract_rejects_historical_verification(self) -> None:
+        result = subprocess.run(
+            [
+                "python3",
+                str(CHECKER),
+                "--verify-historical-image",
+                str(CONFIG),
+            ],
+            cwd=ROOT,
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("過渡契約不能執行歷史映像重驗", result.stderr)
+
+    def test_transitional_contract_rejects_premature_image_state(self) -> None:
+        cases = {
+            "rootfs 旗標提前成立": lambda data: data.__setitem__(
+                "rootfs_image_built", True
+            ),
+            "完整 rootfs 旗標提前成立": lambda data: data.__setitem__(
+                "full_rootfs_image_built", True
+            ),
+            "提前夾帶映像證據": lambda data: data.__setitem__(
+                "image_build_evidence", {}
+            ),
+            "映像 DTB 提前成立": lambda data: data["boards"][
+                "bananapiw2"
+            ].__setitem__("image_dtb_sha256", self.policy["dtb_sha256"]),
+        }
+        for name, mutate in cases.items():
+            with self.subTest(name=name):
+                candidate = json.loads(CONFIG.read_text(encoding="utf-8"))
+                mutate(candidate)
+                with tempfile.NamedTemporaryFile(
+                    mode="w", suffix=".json", encoding="utf-8"
+                ) as stream:
+                    json.dump(candidate, stream, ensure_ascii=False)
+                    stream.flush()
+                    result = subprocess.run(
+                        ["python3", str(CHECKER), stream.name],
+                        cwd=ROOT,
+                        check=False,
+                        capture_output=True,
+                        text=True,
+                    )
+                self.assertNotEqual(result.returncode, 0)
+
+    def test_public_release_environment_is_rejected(self) -> None:
+        environment = os.environ.copy()
+        environment["PUBLIC_RELEASE"] = "yes"
+        result = subprocess.run(
+            ["python3", str(CHECKER), str(CONFIG)],
+            cwd=ROOT,
+            check=False,
+            capture_output=True,
+            text=True,
+            env=environment,
+        )
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("禁止公開發布", result.stderr)
+
+    def test_checker_contains_full_l2_material_binding(self) -> None:
+        text = CHECKER.read_text(encoding="utf-8")
+        for expected in (
+            "validate_image_evidence",
+            "validate_historical_image",
+            "candidate_matrix_sha256",
+            "verification_manifest_sha256",
+            "uboot_payload_manifest_sha256",
+            "final_config_manifest_sha256",
+            "--verify-historical-image",
+        ):
+            with self.subTest(expected=expected):
+                self.assertIn(expected, text)
 
 
 if __name__ == "__main__":
