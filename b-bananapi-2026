@@ -11,6 +11,7 @@ KERNEL_CONFIGURE="${KERNEL_CONFIGURE:-no}"
 EXTRA_COMPILE_ARGS="${EXTRA_COMPILE_ARGS:-}"
 COMPRESS="${COMPRESS:-yes}"
 KEEP_RAW="${KEEP_RAW:-yes}"
+XZ_THREADS="${XZ_THREADS:-0}"
 STOP_ON_FAIL="${STOP_ON_FAIL:-no}"
 INCLUDE_LAMOBO="${INCLUDE_LAMOBO:-yes}"
 INCLUDE_WIP="${INCLUDE_WIP:-no}"
@@ -50,7 +51,7 @@ usage() {
 	Environment overrides:
 	  BOARDS, RELEASES, IMAGE_TYPES, BRANCHES, ALL_BRANCHES
 	  DESKTOP_ENVIRONMENT, DESKTOP_TIER, KERNEL_CONFIGURE
-	  EXTRA_COMPILE_ARGS, COMPRESS, STOP_ON_FAIL, INCLUDE_LAMOBO
+	  EXTRA_COMPILE_ARGS, COMPRESS, XZ_THREADS, STOP_ON_FAIL, INCLUDE_LAMOBO
 	  INCLUDE_WIP, KEEP_RAW, EXPERT, DOWNLOAD_MIRROR
 	  CUSTOM_UBUNTU_MIRROR_PORTS, SKIP_EXISTING, ALLOW_HEADLESS_DESKTOP
 
@@ -368,13 +369,17 @@ compress_image() {
 
 	[[ "${COMPRESS}" == "yes" ]] || return 0
 	[[ -f "${img}" ]] || return 0
+	[[ "${XZ_THREADS}" =~ ^[0-9]+$ ]] || {
+		printf 'error: XZ_THREADS must be a non-negative integer: %s\n' "${XZ_THREADS}" >&2
+		return 2
+	}
 
 	if [[ -f "${xzfile}" && "${xzfile}" -nt "${img}" ]]; then
 		printf 'compression: keeping current %s\n' "${xzfile}"
 	else
 		printf 'compression: creating %s\n' "${xzfile}"
 		rm -f "${tmp}"
-		xz -T0 -c "${img}" > "${tmp}"
+		xz -T"${XZ_THREADS}" -c "${img}" > "${tmp}"
 		xz -t "${tmp}"
 		mv -f "${tmp}" "${xzfile}"
 	fi

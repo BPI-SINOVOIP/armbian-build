@@ -200,6 +200,32 @@ SKIP_EXISTING=no
         self.assertEqual(result.returncode, 1)
         self.assertIn("no matching image found", result.stderr)
 
+    def test_xz_thread_limit_rejects_invalid_value(self) -> None:
+        """平行矩陣使用的 XZ 執行緒上限必須是非負整數。"""
+        function_text = subprocess.run(
+            ["awk", "/^compress_image\\(\\)/,/^}/", str(SCRIPT)],
+            check=True,
+            capture_output=True,
+            text=True,
+        ).stdout
+        shell = """
+COMPRESS=yes
+KEEP_RAW=no
+XZ_THREADS=invalid
+touch image.img
+""" + function_text + "\ncompress_image image.img"
+
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            result = subprocess.run(
+                ["bash", "-c", shell],
+                cwd=temporary_directory,
+                capture_output=True,
+                text=True,
+            )
+
+        self.assertEqual(result.returncode, 2)
+        self.assertIn("XZ_THREADS must be a non-negative integer", result.stderr)
+
 
 if __name__ == "__main__":
     unittest.main()
