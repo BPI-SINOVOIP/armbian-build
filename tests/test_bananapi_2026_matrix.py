@@ -13,6 +13,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = ROOT / "b-bananapi-2026"
 QEMU_SCRIPT = ROOT / "lib/functions/rootfs/qemu-static.sh"
+ROOTFS_SCRIPT = ROOT / "lib/functions/rootfs/rootfs-create.sh"
 
 
 class BananaPi2026MatrixTests(unittest.TestCase):
@@ -297,6 +298,47 @@ if binfmt_registration_needs_update riscv64; then exit 12; fi
             )
 
         self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_cross_arch_mmdebstrap_skips_only_duplicate_qemu_check(self) -> None:
+        """交叉建置略過重複檢查，原生架構仍採用 mmdebstrap 預設檢查。"""
+        conditional = subprocess.run(
+            [
+                "awk",
+                r'/^\tif ! dpkg-architecture -e "\$\{ARCH\}"; then$/,/^\tfi$/',
+                str(ROOTFS_SCRIPT),
+            ],
+            check=True,
+            capture_output=True,
+            text=True,
+        ).stdout
+        self.assertIn("--skip=check/qemu", conditional)
+
+        shell = r'''
+dpkg-architecture() { [[ "${TARGET_NATIVE}" == yes ]]; }
+ARCH=riscv64
+debootstrap_arguments=()
+''' + conditional + r'''
+if ((${#debootstrap_arguments[@]})); then
+    printf '%s\n' "${debootstrap_arguments[@]}"
+fi
+'''
+        native = subprocess.run(
+            ["bash", "-c", shell],
+            env={**os.environ, "TARGET_NATIVE": "yes"},
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        cross = subprocess.run(
+            ["bash", "-c", shell],
+            env={**os.environ, "TARGET_NATIVE": "no"},
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+
+        self.assertEqual(native.stdout, "")
+        self.assertEqual(cross.stdout.strip(), "'--skip=check/qemu'")
 
 
 if __name__ == "__main__":

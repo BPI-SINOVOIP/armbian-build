@@ -290,6 +290,11 @@ function create_new_rootfs_cache_via_debootstrap() {
 		"'--components=${AGGREGATED_DEBOOTSTRAP_COMPONENTS_COMMA}'" # from aggregation.py
 		"'--skip=check/empty'"                                      # skips check if the rootfs dir is empty at start
 	)
+	if ! dpkg-architecture -e "${ARCH}"; then
+		# Armbian 已在主機準備階段以 arch-test 驗證目標架構；略過 mmdebstrap
+		# 在容器內依賴 update-binfmts 資料庫的重複檢查，實際模擬仍會照常執行。
+		debootstrap_arguments+=("'--skip=check/qemu'")
+	fi
 
 	# Show mmdebstrap's per-package download/install progress when
 	# DEBUG=yes. Default (no flag) keeps the terse log; DEBUG builds
