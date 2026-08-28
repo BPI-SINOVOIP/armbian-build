@@ -1,5 +1,7 @@
 # Banana Pi Board Support Priority
 
+> **歷史文件，已由現行全板計畫取代。** 本文件只保留 2026-06-01 當時的板卡與核心優先序；目前 48 板集合、證據分布與下一道 Gate 以 `bananapi-family-full-optimization-plan-20260826.md`、`bananapi-family-optimization-audit-20260826.md` 及三個 L0 外部協助計畫為準。
+
 Date: 2026-06-01
 
 Branch: `bpi-v26.8.0-trunk`

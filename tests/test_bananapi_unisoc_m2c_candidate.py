@@ -229,6 +229,24 @@ class BananaPiUnisocM2CCandidateTests(unittest.TestCase):
         self.assertFalse(contract["source"]["remote_access"]["portable_fetch_proven"])
         self.assertGreaterEqual(len(contract["blockers"]), 7)
         self.assertGreaterEqual(len(contract["promotion_prerequisites"]), 7)
+        assistance = contract["external_assistance"]
+        self.assertEqual(assistance["status"], "required")
+        self.assertTrue(assistance["blocks_promotion"])
+        self.assertFalse(assistance["private_keys_accepted"])
+        self.assertGreaterEqual(assistance["minimum_hardware_samples"], 2)
+        self.assertEqual(
+            set(assistance["required_input_groups"]),
+            {
+                "portable_source",
+                "patch_set",
+                "untracked_inputs",
+                "build_environment",
+                "licensing",
+                "signing",
+                "pac_and_hardware",
+            },
+        )
+        self.assertTrue((REPO_ROOT / assistance["authoritative_plan"]).is_file())
 
     def test_new_candidate_has_no_l2_description(self) -> None:
         paths = (

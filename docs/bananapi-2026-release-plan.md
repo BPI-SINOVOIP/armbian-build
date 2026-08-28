@@ -1,5 +1,7 @@
 # Banana Pi 2026 Release Plan
 
+> **歷史文件，已由證據分級流程取代。** 本文件保留早期發布規劃，不得用來宣稱目前板卡、映像、實機或公開發布狀態；現行依據為 `bananapi-family-full-optimization-plan-20260826.md`、最新全板盤點及各板 `config/validation` 契約。
+
 Branch: `bpi-v26.8.0-trunk`
 
 Repository: `git@github.com:BPI-SINOVOIP/armbian-build.git`

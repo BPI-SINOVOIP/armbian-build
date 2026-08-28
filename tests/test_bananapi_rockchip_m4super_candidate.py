@@ -166,6 +166,18 @@ printf 'kernel=%s\nuboot=%s\nrkbin=%s\nfirmware=%s\n' \
         )
         self.assertFalse(pcie["resolved"])
 
+    def test_external_assistance_contract_is_complete(self) -> None:
+        assistance = self.config["external_assistance"]
+        self.assertEqual(assistance["status"], "required")
+        self.assertTrue(assistance["blocks_promotion"])
+        self.assertFalse(assistance["private_keys_accepted"])
+        self.assertGreaterEqual(assistance["minimum_hardware_samples"], 2)
+        self.assertEqual(
+            set(assistance["required_input_groups"]),
+            {"identity", "wireless", "pcie", "platform", "licensing"},
+        )
+        self.assertTrue((ROOT / assistance["authoritative_plan"]).is_file())
+
     def test_unverified_board_files_and_build_entrypoints_are_absent(self) -> None:
         for path in REMOVED_PATHS:
             with self.subTest(path=path):

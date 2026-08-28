@@ -1,5 +1,7 @@
 # Banana Pi F／G 批 vendor BSP 與封存板來源審查
 
+> **歷史快照，非目前升級依據。** 本文件保留 2026-08-26 的初始判定；M2C 的現行 L0 來源邊界、可攜資料需求、簽署限制與接受順序以 `T-three-L0-external-assistance-plan-20260828.md`、`config/validation/bananapi-unisoc-uis7885-m2c-vendor.json` 與最新全板盤點為準。
+
 日期：2026-08-26
 
 ## 結論

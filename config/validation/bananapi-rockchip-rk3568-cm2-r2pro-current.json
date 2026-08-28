@@ -39,6 +39,34 @@
     "donor_node_presence_is_cm2_functional_evidence": false,
     "validated_features": []
   },
+  "external_assistance": {
+    "authoritative_plan": "docs/evidence/bananapi-family-optimization/T-three-L0-external-assistance-plan-20260828.md",
+    "status": "required",
+    "blocks_promotion": true,
+    "private_keys_accepted": false,
+    "minimum_hardware_samples": 2,
+    "required_input_groups": {
+      "identity": [
+        "CM2 模組正式 SKU、PCB 版次、記憶體與 eMMC 料號矩陣",
+        "實際載板型號、PCB 版次與組裝 BOM"
+      ],
+      "electrical": [
+        "模組與載板原理圖、連接器逐腳映射及供電時序",
+        "時鐘、reset、I/O 電壓、PHY、pinmux 與生產 BOM"
+      ],
+      "source": [
+        "CM2 專屬 DTS、U-Boot、BSP 或原廠映像及來源版本",
+        "所有交付檔的 SHA-256、來源與授權狀態"
+      ],
+      "runtime_evidence": [
+        "UART 完整冷啟動紀錄與執行中裝置樹",
+        "dmesg、lsblk、lspci、lsusb、gpioinfo 與介面實測紀錄"
+      ],
+      "licensing": [
+        "RKBin 與原廠二進位的再散布範圍或書面審查結果"
+      ]
+    }
+  },
   "rkbin_blobs": {
     "LICENSE.TXT": "0b37e1522c36cf4579c45dfb138798c3cb5665fcf6302b95377179fbed38e35c",
     "rk35/rk3568_bl31_v1.44.elf": "65110f822fdbdd0163ce2dabc60591e7a8a0ffbc9471780e29eef0062f9ed7b6",

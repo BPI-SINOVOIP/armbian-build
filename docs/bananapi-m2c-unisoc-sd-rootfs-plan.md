@@ -1,5 +1,7 @@
 # Banana Pi BPI-M2C UNISOC SD Boot and SD Rootfs Plan
 
+> **歷史實驗紀錄，非目前支援聲明。** 本文件只保存舊 SD rootfs 與 secure PAC 驗證思路；目前沒有一般 SD 首階段啟動、可重放來源或實機通過證據。現行接受條件以 M2C L0 機器契約及 `T-three-L0-external-assistance-plan-20260828.md` 為準。
+
 Date: 2026-05-24, updated 2026-05-25
 
 Active vendor tree:

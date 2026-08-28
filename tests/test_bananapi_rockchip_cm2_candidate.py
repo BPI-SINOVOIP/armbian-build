@@ -207,6 +207,18 @@ printf 'kernel_source=%s\\nkernel=%s\\nuboot_source=%s\\nuboot=%s\\nfirmware=%s\
         self.assertFalse(hardware["donor_node_presence_is_cm2_functional_evidence"])
         self.assertEqual(hardware["validated_features"], [])
 
+    def test_external_assistance_contract_is_complete(self) -> None:
+        assistance = self.config["external_assistance"]
+        self.assertEqual(assistance["status"], "required")
+        self.assertTrue(assistance["blocks_promotion"])
+        self.assertFalse(assistance["private_keys_accepted"])
+        self.assertGreaterEqual(assistance["minimum_hardware_samples"], 2)
+        self.assertEqual(
+            set(assistance["required_input_groups"]),
+            {"identity", "electrical", "source", "runtime_evidence", "licensing"},
+        )
+        self.assertTrue((ROOT / assistance["authoritative_plan"]).is_file())
+
     def test_packages_cover_declared_validation_tools(self) -> None:
         package_line = next(
             line

@@ -1,5 +1,7 @@
 # Banana Pi E 批 Rockchip 與模組板來源審查
 
+> **歷史快照，非目前升級依據。** 本文件保留 2026-08-26 的來源審查過程；CM2 與 M4 Super 的現行 L0 邊界、外部資料需求及接受順序以 `T-three-L0-external-assistance-plan-20260828.md`、對應 `config/validation` 契約與最新全板盤點為準。
+
 日期：2026-08-26
 
 ## 結論

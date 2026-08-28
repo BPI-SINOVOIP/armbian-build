@@ -15,6 +15,41 @@
   "hardware_claims_allowed": false,
   "complete_rootfs_image_allowed": false,
   "component_build_allowed": false,
+  "external_assistance": {
+    "authoritative_plan": "docs/evidence/bananapi-family-optimization/T-three-L0-external-assistance-plan-20260828.md",
+    "status": "required",
+    "blocks_promotion": true,
+    "private_keys_accepted": false,
+    "minimum_hardware_samples": 2,
+    "required_input_groups": {
+      "portable_source": [
+        "95 個專案固定提交的 Git bundle 或受控鏡像",
+        "可在全新機器解析的固定 manifest 與存取程序"
+      ],
+      "patch_set": [
+        "41 組本機追蹤差異的有序修補集、來源、用途與授權"
+      ],
+      "untracked_inputs": [
+        "6,751 個未追蹤檔逐檔分類、SHA-256、用途、來源與授權",
+        "只允許必要輸入的封閉允許清單"
+      ],
+      "build_environment": [
+        "固定 Yocto tarballs、工具鏈、容器映像與設定",
+        "乾淨主機可重放的命令及輸出清單"
+      ],
+      "licensing": [
+        "chipram、PAC 與簽署工具、modem、Trusty、GPU、NPU、VPU、GNSS 的使用與再散布權"
+      ],
+      "signing": [
+        "受控簽署服務介面、公開憑證鏈、key ID 與稽核收據",
+        "不得交付或寫入任何私鑰"
+      ],
+      "pac_and_hardware": [
+        "PAC 分割配置、已知良好 PAC 雜湊、板卡 fuse 與安全狀態",
+        "UART、SD、eMMC、網路、USB、顯示與 I/O 測試治具及完整紀錄"
+      ]
+    }
+  },
   "source": {
     "default_root": "/media/pi/SMCI/bpi/unisoc/sync-20260524/source_sync_rls_25c",
     "baseline": "UNC_LINUX_RLS_25C_W26.07.2",

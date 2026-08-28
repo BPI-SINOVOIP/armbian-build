@@ -1,5 +1,7 @@
 # Banana Pi BPI-M2C UNISOC Sync-20260524 Integration Plan
 
+> **歷史執行紀錄，非目前可重放計畫。** 本文件保留 2026-05 的同步與混合 PAC 過程；不得據此推定來源可在新機器取得、一般 SD boot 已通過或可公開發布。現行依據為 M2C L0 機器契約與三個 L0 外部協助計畫。
+
 Date: 2026-05-24, updated 2026-05-25
 
 Branch: `bpi-v26.8.0-trunk`

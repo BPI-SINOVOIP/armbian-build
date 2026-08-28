@@ -1,5 +1,7 @@
 # Banana Pi BPI-M2C UNISOC Porting Plan
 
+> **歷史執行紀錄，非目前可重放計畫。** 本文件保留早期 M2C 移植與 PAC 實驗；目前來源含 41 組不可攜差異與 6,751 個未分類檔，現行 L0 邊界與外部協助需求以 `config/validation/bananapi-unisoc-uis7885-m2c-vendor.json` 及 `T-three-L0-external-assistance-plan-20260828.md` 為準。
+
 Branch: `bpi-v26.8.0-trunk`
 
 Date: 2026-05-23, updated 2026-05-25
