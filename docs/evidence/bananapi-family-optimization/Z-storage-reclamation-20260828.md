@@ -4,7 +4,7 @@
 
 ## 結論
 
-截至 2026-08-28，本計畫可確認已回收約 `107.4 GiB`，範圍只包含可重建快取、候選專用 OverlayFS、失敗輸出及已被正式候選取代且完成 Git 證據閉合的舊候選。M6 正式閉合清理後可用空間為 `133,746,642,944` bytes，約 `124.561 GiB`。建置期間會同時新增快取與映像，因此各時點的可用空間差額不能直接取代逐項刪除量。
+截至 2026-08-28，本計畫可確認已回收約 `121.4 GiB`，範圍只包含可重建快取、候選專用 OverlayFS、失敗輸出及已被正式候選取代且完成 Git 證據閉合的舊候選。M4 正式閉合清理後可用空間為 `130,906,120,192` bytes，約 `121.916 GiB`。建置期間會同時新增快取與映像，因此各時點的可用空間差額不能直接取代逐項刪除量。
 
 ## 已回收項目
 
@@ -41,6 +41,10 @@ Unisoc `Bin/ImageFiles` 位於 `work/Release` 之下的工具輸出層，只移�
 | M6 首次 L1 失敗校準 | `8.582 GiB` | 移除缺少 FAT 根 UUID／DTB 的拒絕映像與其專用 OverlayFS 上層 |
 | M6 修正後 L1 校準 | `8.579 GiB` | L2 重建契約 `ce43f2a3f` 推送後，移除校準 IMG／XZ 與專用 OverlayFS 上層 |
 | M6 正式閉合 | `6.521 GiB` | L2 證據提交 `1001eb2ca` 推送並通過歷史重驗後，只移除正式建置專用 OverlayFS 上層 |
+| M4 首次命令解析失敗 | `0.013 GiB` | U-Boot 前即停止，只移除專用 OverlayFS 與未完成輸出 |
+| M4 首次完整拒絕 | `5.446 GiB` | 最終核心設定雜湊不符，移除拒絕 IMG／XZ 與專用 OverlayFS |
+| M4 第二次完整拒絕 | `5.444 GiB` | U-Boot 固定時間不符，移除拒絕 IMG／XZ 與專用 OverlayFS |
+| M4 正式閉合 | `3.089 GiB` | L2 證據提交 `a5e8b1ee8` 推送並通過歷史重驗後，只移除正式建置專用 OverlayFS 上層 |
 
 M1 Super 正式閉合的精確增加量為 `20,371,968,000` bytes。刪除前後均重算正式 IMG 與 XZ：IMG SHA-256 為 `192269a97910729304d635e80921b3fef647a2036d4013958c4cd81cbd4752f8`，XZ SHA-256 為 `b3b640fc04116f0193832354bda899aadcb8f894a22e8b6fed4b1d463fa06b63`，兩者保持一致。
 
@@ -66,15 +70,29 @@ M6 三次清理的實際可用空間增加量合計為 `25,430,618,112` bytes，
 
 上列固定輸出路徑只在兩次 L1 校準清理時刪除，隨後由下一階段乾淨重建。正式 L2 完成後沒有刪除該輸出；目前保留量為 `2,211,689,026` bytes，內含 IMG、XZ、雜湊、建置日誌、候選矩陣、唯讀驗證與 M6 物質證據。
 
+## M4 精確回收與保留
+
+M4 四次清理的實際可用空間增加量合計為 `15,023,812,608` bytes，約 `13.992 GiB`：首次命令解析失敗為 `13,963,264` bytes，首次完整拒絕為 `5,847,781,376` bytes，第二次完整拒絕為 `5,845,716,992` bytes，正式 L2 閉合為 `3,316,350,976` bytes。正式閉合前專用上層的逐檔邏輯大小為 `3,119,790,991` bytes；檔案系統可用空間差額另包含配置與中繼資料回收，因此以實際前後差額登錄。
+
+每次清理只處理下列固定專用路徑及該次拒絕輸出：
+
+```text
+/media/pi/SMCI/armbian/bpi-v26.2.1-bananapi-optimize/.tmp/bananapi-realtek-m4-candidate-cache-overlay
+/media/pi/SMCI/armbian/bpi-v26.2.1-bananapi-optimize/output/images/2026.08/bananapi-realtek-rtd1395-m4-trixie-legacy-cli
+```
+
+固定輸出只在三次失敗或拒絕後移除，隨後皆由更新後的已推送提交乾淨重建。正式 L2 證據提交 `a5e8b1ee8` 推送且歷史重驗通過後，只刪除專用 OverlayFS；正式輸出保留 `2,528,835,764` bytes，包含 IMG、XZ、SHA-256、建置日誌、候選矩陣與唯讀驗證狀態。清理前已確認沒有掛載、建置程序、開啟檔案或 Docker bind mount；清理後共用 lower 仍為 device `66306`、inode `96224797`。
+
 ## 強制保留
 
 - 共用 `/media/pi/SMCI/armbian/bpi-v26.2.1/cache` 唯讀下層。
 - 正式 IMG、XZ、SHA-256、建置設定、驗證狀態與實機證據。
 - M1 Super 正式固定輸出 `output/images/2026.08/bananapi-rockchip-rk3528-m1super-trixie-vendor-cli`。
 - M6 正式固定輸出 `output/images/2026.08/bananapi-vs680-m6-trixie-legacy-cli`。
+- M4 正式固定輸出 `output/images/2026.08/bananapi-realtek-rtd1395-m4-trixie-legacy-cli`。
 - M4 Zero／M4 Berry 的 DDR 調校、客戶回報與 UART 原始證據。
 - Unisoc 來源、`.repo`、PAC、原廠文件與目前採用的同步基線。
-- 尚未閉合的 M4 工作樹與 `stash@{0}`。
+- BPI-Forge1 尚未完成的 `stash@{0}`。
 
 ## 後續可回收但尚未刪除
 
