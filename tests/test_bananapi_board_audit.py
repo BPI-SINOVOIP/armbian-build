@@ -63,7 +63,7 @@ class BananaPiBoardAuditTests(unittest.TestCase):
 
     def test_spacemit_k3_is_riscv64(self) -> None:
         self.assertEqual(self.by_id["bananapism10"].architecture, "riscv64")
-        self.assertEqual(self.by_id["bananapism10"].level, "L1")
+        self.assertEqual(self.by_id["bananapism10"].level, "L2")
 
     def test_recent_candidates_are_backed_by_the_status_registry(self) -> None:
         expected = {

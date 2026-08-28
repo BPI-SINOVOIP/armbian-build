@@ -10,7 +10,7 @@
 
 - 板卡總數：48。
 - 正式 `.conf`：12；社群 `.csc`：14；開發中 `.wip`：21；停止支援 `.eos`：1。
-- 證據分布：L0 3；L1 1；L2 44；L3 0；L4 0；L5 0。
+- 證據分布：L0 3；L1 0；L2 45；L3 0；L4 0；L5 0。
 - 未取得實機的板卡最高只能標示 L2；目前沒有板卡達到完整 L3／L4／L5 門檻。
 
 ## 板卡矩陣
@@ -61,7 +61,7 @@
 | `bananapir4lite` | 開發中 | Banana Pi R4 Lite | `filogic` | `arm64` | `current` | 否 | D | L2 軟體候選 | 先驗證候選核心穩定性，再完成 2.5GbE、SFP、PCIe、USB 與長時間流量實測 |
 | `bananapir4pro` | 開發中 | Banana Pi R4 Pro 8X | `filogic` | `arm64` | `current` | 否 | D | L2 軟體候選 | 完成候選核心與預編譯 ATF 邊界審查，再做網路、SFP、PCIe、USB 與無線實測 |
 | `bananapir64` | 社群 | Banana Pi R64 | `filogic` | `arm64` | `current` | 否 | D | L2 軟體候選 | 完成 SD、GbE、DSA、SATA、PCIe、USB、Wi-Fi、Bluetooth 與 GPIO90 實測 |
-| `bananapism10` | 開發中 | BananaPi BPI-SM10 | `spacemit-k3-bpi` | `riscv64` | `current` | 是 | F | L1 元件可建置 | 執行 L1 完整映像校準，固定精確 GPT 與最終核心設定後進行 L2 正式重建 |
+| `bananapism10` | 開發中 | BananaPi BPI-SM10 | `spacemit-k3-bpi` | `riscv64` | `current` | 是 | F | L2 軟體候選 | 閉合 ESOS、PowerVR、VPU 韌體及三個執行期預建資產的再散布授權，再完成 SD 冷啟動、儲存、網路、USB、顯示、GPU、VPU、NPU 與排針實測 |
 | `bananapiw2` | 開發中 | Banana Pi W2 | `realtek-rtd129x-bpi` | `arm64` | `legacy` | 是 | F | L2 軟體候選 | 閉合四個靜態庫、bluecore.audio 與工具鏈再散布授權，再完成 SD／eMMC、SATA、PCIe、網路、USB、顯示、音訊及 40-pin 實測 |
 | `bananapiw3` | 開發中 | Banana Pi W3 | `rockchip-rk3588` | `arm64` | `vendor` | 是 | E | L2 軟體候選 | 完成冷啟動、儲存、網路、無線、顯示、GPU、VPU、RGA 與 NPU 實測 |
 | `bpi-ai2n` | 正式 | Banana Pi AI2N | `renesas-rzv2n-bpi` | `arm64` | `legacy` | 是 | B | L2 軟體候選 | 完成 SD 冷啟動、雙網路、USB、PCIe、顯示、相機、Panfrost、DRP-AI 與 40-pin 實測 |
@@ -89,7 +89,6 @@
 - `bananapir2`：五個 MediaTek 啟動載荷尚未取得可保存的書面再散布授權。
 - `bananapir3mini`：ATF MT7986 預編譯 DRAM 物件再散布範圍未確認，eMMC boot0 安裝與 boot partition enable 尚未實機驗證。
 - `bananapir4pro`：Linux 6.19.0-rc1 與 ATF MT7988 預編譯 DRAM／eFuse 物件不得視為公開發布核准。
-- `bananapism10`：ESOS、PowerVR 與 VPU 韌體授權尚未閉合，載板拓撲與所有啟動媒體仍待實機驗證。
 - `bananapiw2`：四個 U-Boot 靜態庫、bluecore.audio、內含工具鏈與外部文件的再散布授權尚未確認。
 - `bananapiw2`：完整映像已通過 L2 軟體守門；實體開機、儲存、網路、USB、顯示、音訊及 40-pin I/O 尚未驗證。
 - `bananapiw2`：Linux 4.9.119、U-Boot 2015.07 與正式建置的 229 筆 vendor 警告仍有維護及安全風險；initramfs 與 APT 輸入也未達逐位元重現。

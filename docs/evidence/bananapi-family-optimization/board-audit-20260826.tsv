@@ -43,7 +43,7 @@ bananapir4	csc	Banana Pi R4	filogic	arm64	current	current	no	D	L2	mt7988a_banana
 bananapir4lite	wip	Banana Pi R4 Lite	filogic	arm64	current	current	no	D	L2	mt7987a_bananapi_bpi-r4-lite-sdmmc_defconfig	mediatek/mt7987a-bananapi-bpi-r4-lite-sd.dtb		先驗證候選核心穩定性，再完成 2.5GbE、SFP、PCIe、USB 與長時間流量實測
 bananapir4pro	wip	Banana Pi R4 Pro 8X	filogic	arm64	current	current	no	D	L2	mt7988a_bananapi_bpi-r4-pro-8x-sdmmc_defconfig	mediatek/mt7988a-bananapi-bpi-r4-pro-8x-sd.dtb		完成候選核心與預編譯 ATF 邊界審查，再做網路、SFP、PCIe、USB 與無線實測
 bananapir64	csc	Banana Pi R64	filogic	arm64	current	current	no	D	L2	mt7622_bananapi_bpi-r64-sdmmc_defconfig	mediatek/mt7622-bananapi-bpi-r64.dtb	BOARD_MAINTAINER	完成 SD、GbE、DSA、SATA、PCIe、USB、Wi-Fi、Bluetooth 與 GPIO90 實測
-bananapism10	wip	BananaPi BPI-SM10	spacemit-k3-bpi	riscv64	current	current	yes	F	L1		spacemit/k3-bananapi-sm10.dtb		執行 L1 完整映像校準，固定精確 GPT 與最終核心設定後進行 L2 正式重建
+bananapism10	wip	BananaPi BPI-SM10	spacemit-k3-bpi	riscv64	current	current	yes	F	L2		spacemit/k3-bananapi-sm10.dtb		閉合 ESOS、PowerVR、VPU 韌體及三個執行期預建資產的再散布授權，再完成 SD 冷啟動、儲存、網路、USB、顯示、GPU、VPU、NPU 與排針實測
 bananapiw2	wip	Banana Pi W2	realtek-rtd129x-bpi	arm64	legacy	legacy	yes	F	L2	rtd1296_sd_bananapi_defconfig	realtek/rtd129x/rtd-1296-bananapi-w2-2GB.dtb		閉合四個靜態庫、bluecore.audio 與工具鏈再散布授權，再完成 SD／eMMC、SATA、PCIe、網路、USB、顯示、音訊及 40-pin 實測
 bananapiw3	wip	Banana Pi W3	rockchip-rk3588	arm64	vendor	vendor	yes	E	L2	bananapi-w3-rk3588_defconfig	rockchip/rk3588-bananapi-w3.dtb		完成冷啟動、儲存、網路、無線、顯示、GPU、VPU、RGA 與 NPU 實測
 bpi-ai2n	conf	Banana Pi AI2N	renesas-rzv2n-bpi	arm64	legacy	legacy	yes	B	L2	bananapi_ai2n_defconfig	renesas/bananapi-ai2n.dtb		完成 SD 冷啟動、雙網路、USB、PCIe、顯示、相機、Panfrost、DRP-AI 與 40-pin 實測
