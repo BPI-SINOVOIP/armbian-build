@@ -1,7 +1,11 @@
 BPI-SM10／SpacemiT K3-CoM260 啟動載荷
 ====================================
 
-這些檔案來自 2026-05-26 完成的原廠 K3 Buildroot SDK 建置，原始產物位於：
+來源建置的 `FSBL.bin`、`bootinfo_block.bin`、`u-boot-env-default.bin`、
+`fw_dynamic.itb`、`u-boot.itb` 與 `uboot.config` 由下列固定來源於原廠
+K3 建置容器內重建兩次，兩次 SHA-256 完全一致。`env.bin` 是相同
+`u-boot-env-default.bin` 位元組的原始位置副本。其餘必要預建載荷沿用
+2026-05-26 原廠 K3 Buildroot SDK 產物；原始證據位於：
 
   /media/pi/SMCI/bpi/bpi-sm10/release/20260526-k3-buildroot-v1.0-vendor-bsp
 
@@ -12,6 +16,14 @@ BPI-SM10／SpacemiT K3-CoM260 啟動載荷
   uboot-2022.10： 1b10c8119e1a9b5451a4236f6b384f7c91eed1e2
   opensbi：       3e2f9efc9660b8d5fcae4e0b6495f306d5c64078
   esos：          92a8baf250e42853a094a7af6f7ee849adb3de4a
+
+可重現建置時間基準：
+
+  SOURCE_DATE_EPOCH：1777390324
+
+受控預建資產：
+
+  env_k3.txt、esos.itb 與 bianbu.bmp
 
 Armbian 依原廠 `partition_universal.json` 使用下列固定位移：
 

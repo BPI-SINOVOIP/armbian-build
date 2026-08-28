@@ -61,7 +61,7 @@
 | `bananapir4lite` | 開發中 | Banana Pi R4 Lite | `filogic` | `arm64` | `current` | 否 | D | L2 軟體候選 | 先驗證候選核心穩定性，再完成 2.5GbE、SFP、PCIe、USB 與長時間流量實測 |
 | `bananapir4pro` | 開發中 | Banana Pi R4 Pro 8X | `filogic` | `arm64` | `current` | 否 | D | L2 軟體候選 | 完成候選核心與預編譯 ATF 邊界審查，再做網路、SFP、PCIe、USB 與無線實測 |
 | `bananapir64` | 社群 | Banana Pi R64 | `filogic` | `arm64` | `current` | 否 | D | L2 軟體候選 | 完成 SD、GbE、DSA、SATA、PCIe、USB、Wi-Fi、Bluetooth 與 GPIO90 實測 |
-| `bananapism10` | 開發中 | BananaPi BPI-SM10 | `spacemit-k3-bpi` | `riscv64` | `current` | 是 | F | L1 元件可建置 | 機器化預建載荷身分，固定最終核心設定並完成來源一致的完整映像守門 |
+| `bananapism10` | 開發中 | BananaPi BPI-SM10 | `spacemit-k3-bpi` | `riscv64` | `current` | 是 | F | L1 元件可建置 | 執行 L1 完整映像校準，固定精確 GPT 與最終核心設定後進行 L2 正式重建 |
 | `bananapiw2` | 開發中 | Banana Pi W2 | `realtek-rtd129x-bpi` | `arm64` | `legacy` | 是 | F | L2 軟體候選 | 閉合四個靜態庫、bluecore.audio 與工具鏈再散布授權，再完成 SD／eMMC、SATA、PCIe、網路、USB、顯示、音訊及 40-pin 實測 |
 | `bananapiw3` | 開發中 | Banana Pi W3 | `rockchip-rk3588` | `arm64` | `vendor` | 是 | E | L2 軟體候選 | 完成冷啟動、儲存、網路、無線、顯示、GPU、VPU、RGA 與 NPU 實測 |
 | `bpi-ai2n` | 正式 | Banana Pi AI2N | `renesas-rzv2n-bpi` | `arm64` | `legacy` | 是 | B | L2 軟體候選 | 完成 SD 冷啟動、雙網路、USB、PCIe、顯示、相機、Panfrost、DRP-AI 與 40-pin 實測 |

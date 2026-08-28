@@ -25,13 +25,23 @@
 
 L1 元件輸出已保存 Linux `Image`、SM10 DTB、核心設定、`FSBL.bin`、`bootinfo_block.bin`、`u-boot.itb`、U-Boot 設定、`fw_dynamic.itb` 與 `fw_dynamic.elf`。其中三個可由固定來源重建的載荷與目前 Git 封裝內容不同：
 
-| 載荷 | L1 固定來源重建 SHA-256 | 目前封裝 SHA-256 |
+| 載荷 | L1 固定來源重建 SHA-256 | 取代前封裝 SHA-256 |
 | --- | --- | --- |
 | `FSBL.bin` | `9a40d9d27ec8de79a38ece8ad00de96d29d45b507c43f46f3bf45589c50034d7` | `d18ceb20ae2433e441e9a5d935b1db34a7d35b5cf074979d8104ffc35c4971f2` |
 | `fw_dynamic.itb` | `37dcca0ad696c88900c316a5bab289f1e3e55f09836cb22a4f09c1faa93be86d` | `6ba858dcbf79371cdf3cc4770e036ea448e7d81547bf880af5b2903e7296a044` |
 | `u-boot.itb` | `f7560b4afd523b484b7f950f038485dea7c28cbf5f9c225290d940ca4461ae13` | `1f7752ad032e3b04e30ffce5e9e3a79b427c05efc7fc7ef4130fde23a7990982` |
 
 原廠預建版本的 FIT 建立時間為 2026-05-26；固定來源重建版本採 U-Boot 提交時間 2026-04-28。`bootinfo_block.bin` 與環境載荷已相同。`esos.itb` 尚無受控重建產物，仍只能以 SHA-256 `11099edb92c9721ebb207de3a200905618dcfded32c19f5ef0525275c253bf28` 的預建載荷納入內部候選，並持續阻擋公開發布。
+
+## 2026-08-28 執行進度
+
+- 固定來源元件已完成第二次獨立重建；`FSBL.bin`、`bootinfo_block.bin`、`u-boot-env-default.bin`、`fw_dynamic.itb`、`u-boot.itb` 與 `uboot.config` 的兩次 SHA-256 全部一致，`env.bin` 由相同的 U-Boot 預設環境位元組建立。
+- 第二次重建的 Linux `Image` 與未封裝的 `fw_dynamic.elf` 並非位元級一致；這兩項不得列入可重現位元組聲明。正式映像的 Linux 仍須由 Armbian 固定來源重建並以最終設定及來源中繼資料守門。
+- 七項來源建置或可追溯衍生的啟動產物已納入封裝契約；只有 `esos.itb`、`env_k3.txt` 與 `bianbu.bmp` 保留為未確認再散布授權的受控預建資產。
+- L1 校準契約已加入來源契約投影、固定 Armbian firmware、80 GiB 空間下限、固定 lower 身分、固定輸出及專用 OverlayFS 上層。
+- 共用唯讀驗證器已加入 K3 `env_k3` 模式，核對 GPT 名稱、類型、起點、不同的 bootfs／rootfs `PARTUUID`、受控環境檔、boot 檔案、來源載荷及最終組態。
+- L1 只會產生 `SM10_CALIBRATION.json`；只有使用精確 GPT 與最終組態的已推送 L2 過渡契約，才能產生 `SM10_MATERIAL_EVIDENCE.json` 並提升驗證狀態。
+- SM10 專屬 16 項與 SpacemiT 相關 31 項回歸、ShellCheck、Python 語法與 48 板盤點已通過。兩次全倉 483 項執行皆有 482 項通過，唯一失敗是中央狀態更新後兩份衍生盤點報告過期；以正確輸出參數重建報告後，14 項盤點測試已全部通過。這是組合守門證據，不冒充一次不中斷的 483 項全綠。尚未執行 L1 完整映像建置，因此中央證據維持 L1。
 
 ## 執行階段
 

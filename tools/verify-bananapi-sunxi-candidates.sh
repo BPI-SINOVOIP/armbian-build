@@ -764,6 +764,7 @@ validate_mounted_image() (
 	local boot_configuration extlinux_fdt expected_start_sector actual_start_sector property_spec property_node property_name property_expected installed_manifest installed_spec installed_path installed_sha256
 	local vendor_boot_directory vendor_boot_dtbs vendor_dtb root_uuid final_kernel_config_sha256 actual_kernel_config_sha256 forbidden_asset
 	local boot_partition_label boot_partition_filesystem_type root_partition_label root_partition_filesystem_type boot_script_source boot_script_source_sha256 boot_script_source_path boot_script_payload
+	local env_k3_source env_k3_source_sha256 env_k3_source_path root_partuuid boot_partuuid
 	local dtb_sha256 alias_spec alias_name alias_expected forbidden_fragment
 	local required_module_path
 	local -a module_matches=() config_files=() config_hashes=()
@@ -958,6 +959,55 @@ PY
 				grep -Fq "if test \$dram_size = 2GB; then setenv dtb rtd-1395-bananapi-m4-2GB.dtb; fi" \
 					"${mount_dir}/boot/uEnv.txt" || fail "${board} 的 Realtek uEnv.txt 缺少 2 GiB DTB 選擇"
 			fi
+			;;
+		env_k3)
+			[[ -n "${boot_partition_number}" ]] || fail "${board} 的 env_k3 模式缺少 boot 分割區"
+			[[ -s "${mount_dir}/boot/env_k3.txt" ]] || fail "${board} 缺少 env_k3.txt"
+			for expected in Image initramfs-generic.img "dtb/${dtb_relative}"; do
+				[[ -s "${mount_dir}/boot/${expected}" ]] ||
+					fail "${board} 缺少 K3 開機檔案：${expected}"
+			done
+			env_k3_source="$(board_field "${board}" env_k3_source)"
+			env_k3_source_sha256="$(board_field "${board}" env_k3_source_sha256)"
+			[[ "${env_k3_source}" =~ ^[A-Za-z0-9._/-]+$ &&
+				"${env_k3_source}" != /* && "${env_k3_source}" != *..* ]] ||
+				fail "${board} 的 env_k3 來源路徑不合法"
+			env_k3_source_path="$(readlink -f "${repo_dir}/${env_k3_source}")"
+			[[ "${env_k3_source_path}" == "${repo_dir}/"* && -f "${env_k3_source_path}" ]] ||
+				fail "${board} 的 env_k3 來源不在倉庫內"
+			[[ "${env_k3_source_sha256}" =~ ^[0-9a-f]{64}$ &&
+				"$(sha256sum "${env_k3_source_path}" | cut -d' ' -f1)" == "${env_k3_source_sha256}" ]] ||
+				fail "${board} 的 env_k3 受控來源雜湊不符"
+			cmp --silent "${env_k3_source_path}" "${mount_dir}/boot/env_k3.txt" ||
+				fail "${board} 的映像 env_k3.txt 與受控來源不同"
+			python3 - "${validation_config}" "${mount_dir}/boot/env_k3.txt" "${board}" <<'PY' ||
+import json
+import sys
+
+with open(sys.argv[1], encoding="utf-8") as stream:
+    expected = json.load(stream)["boards"][sys.argv[3]]["boot_environment"]
+actual = {}
+with open(sys.argv[2], encoding="utf-8") as stream:
+    for line_number, line in enumerate(stream, 1):
+        line = line.rstrip("\n")
+        if not line:
+            continue
+        if "=" not in line:
+            raise SystemExit(f"env_k3 第 {line_number} 行格式不符")
+        key, value = line.split("=", 1)
+        if not key or key in actual:
+            raise SystemExit(f"env_k3 第 {line_number} 行鍵值空白或重複")
+        actual[key] = value
+if actual != expected:
+    raise SystemExit(f"env_k3 契約不符：{actual}")
+PY
+				fail "${board} 的 env_k3 鍵值契約不符"
+			root_partuuid="$(sudo blkid -s PARTUUID -o value "${partition}")"
+			boot_partuuid="$(sudo blkid -s PARTUUID -o value "${boot_partition}")"
+			[[ "${root_partuuid}" =~ ^[0-9A-Fa-f-]{36}$ &&
+				"${boot_partuuid}" =~ ^[0-9A-Fa-f-]{36}$ &&
+				"${root_partuuid,,}" != "${boot_partuuid,,}" ]] ||
+				fail "${board} 的 bootfs／rootfs PARTUUID 無效或重複"
 			;;
 		*) fail "${board} 的開機設定類型不支援：${boot_configuration}" ;;
 	esac
