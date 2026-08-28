@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import os
 import subprocess
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -136,6 +137,68 @@ class BananaPi2026MatrixTests(unittest.TestCase):
 
         self.assertIn("BUILD_DESKTOP=yes", result.stdout)
         self.assertIn("ALLOW_HEADLESS_DESKTOP=yes", result.stdout)
+
+    def test_ai2n_release_prefix_is_discovered(self) -> None:
+        """AI2N 的特殊檔名前綴仍須被矩陣工具找到。"""
+        function_text = subprocess.run(
+            [
+                "awk",
+                "/^find_latest_image\\(\\)/,/^}/",
+                str(SCRIPT),
+            ],
+            check=True,
+            capture_output=True,
+            text=True,
+        ).stdout
+
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            image_directory = Path(temporary_directory) / "output/images"
+            image_directory.mkdir(parents=True)
+            image = image_directory / (
+                "Bananapi-Armbian_26.05.0-trunk_"
+                "Bpi-ai2n_trixie_legacy_6.1.107.img"
+            )
+            image.touch()
+            result = subprocess.run(
+                [
+                    "bash",
+                    "-c",
+                    function_text
+                    + "\nfind_latest_image bpi-ai2n trixie legacy server",
+                ],
+                cwd=temporary_directory,
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+
+        self.assertEqual(result.stdout.strip(), f"output/images/{image.name}")
+
+    def test_missing_image_turns_successful_compile_into_failure(self) -> None:
+        """編譯器退出成功但沒有映像時，不得在摘要中誤記成功。"""
+        function_text = subprocess.run(
+            ["awk", "/^run_one\\(\\)/,/^}/", str(SCRIPT)],
+            check=True,
+            capture_output=True,
+            text=True,
+        ).stdout
+        shell = """
+make_command() { printf 'true\\n'; }
+find_latest_image() { return 0; }
+compress_image() { return 0; }
+SKIP_EXISTING=no
+""" + function_text + "\nrun_one board current trixie server build.log"
+
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            result = subprocess.run(
+                ["bash", "-c", shell],
+                cwd=temporary_directory,
+                capture_output=True,
+                text=True,
+            )
+
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("no matching image found", result.stderr)
 
 
 if __name__ == "__main__":

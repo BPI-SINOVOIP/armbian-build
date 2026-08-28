@@ -299,7 +299,10 @@ find_latest_image() {
 	local board_image_name="${board^}"
 	local path
 
-	find output/images -maxdepth 2 -type f -name "Armbian-*_${board_image_name}_${release}_${branch}_*.img" -print0 2>/dev/null |
+	find output/images -maxdepth 2 -type f \
+		\( -name "Armbian-*_${board_image_name}_${release}_${branch}_*.img" -o \
+		-name "Bananapi-Armbian_*_${board_image_name}_${release}_${branch}_*.img" \) \
+		-print0 2>/dev/null |
 		while IFS= read -r -d '' path; do
 			case "${image_type}" in
 				server | standard)
@@ -326,7 +329,9 @@ find_latest_image_artifact() {
 
 	find output/images -maxdepth 2 -type f \
 		\( -name "Armbian-*_${board_image_name}_${release}_${branch}_*.img" -o \
-		-name "Armbian-*_${board_image_name}_${release}_${branch}_*.img.xz" \) \
+		-name "Armbian-*_${board_image_name}_${release}_${branch}_*.img.xz" -o \
+		-name "Bananapi-Armbian_*_${board_image_name}_${release}_${branch}_*.img" -o \
+		-name "Bananapi-Armbian_*_${board_image_name}_${release}_${branch}_*.img.xz" \) \
 		-print0 2>/dev/null |
 		while IFS= read -r -d '' path; do
 			image_path="${path%.xz}"
@@ -413,7 +418,8 @@ run_one() {
 			[[ -f "${img}" ]] && printf 'image: %s\n' "${img}"
 			[[ -f "${img}.xz" ]] && printf 'xz: %s\n' "${img}.xz"
 		else
-			printf 'warning: build passed but no matching image found\n' >&2
+			printf 'error: build passed but no matching image found\n' >&2
+			return 1
 		fi
 	fi
 
