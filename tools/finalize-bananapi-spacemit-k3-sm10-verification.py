@@ -46,7 +46,7 @@ def load_tsv(path: Path) -> list[dict[str, str]]:
 
 
 def atomic_json(path: Path, value: dict) -> None:
-    temporary = path.with_name(path.name + ".partial")
+    temporary = path.with_name(path.name + ".writing")
     temporary.write_text(
         json.dumps(value, ensure_ascii=False, indent=2) + "\n",
         encoding="utf-8",

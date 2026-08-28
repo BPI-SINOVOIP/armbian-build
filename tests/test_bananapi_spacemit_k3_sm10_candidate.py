@@ -6,6 +6,7 @@ from __future__ import annotations
 import hashlib
 import json
 from pathlib import Path
+import runpy
 import subprocess
 import tempfile
 import unittest
@@ -465,6 +466,24 @@ class BananaPiSpacemitK3Sm10CandidateTests(unittest.TestCase):
         self.assertGreaterEqual(generic_verify_text.count("if value is None:"), 3)
         self.assertIn("SM10_CALIBRATION.json", finalizer_text)
         self.assertIn("SM10_MATERIAL_EVIDENCE.json", finalizer_text)
+
+    def test_finalizer_atomic_write_preserves_pending_status(self) -> None:
+        atomic_json = runpy.run_path(str(IMAGE_FINALIZER))["atomic_json"]
+        with tempfile.TemporaryDirectory(prefix="sm10-finalizer-atomic-") as directory:
+            root = Path(directory)
+            common = root / "VERIFICATION_STATUS.json"
+            pending = root / "VERIFICATION_STATUS.json.partial"
+            pending.write_text('{"status":"pending"}\n', encoding="utf-8")
+            atomic_json(common, {"status": "complete"})
+            self.assertEqual(
+                json.loads(common.read_text(encoding="utf-8")),
+                {"status": "complete"},
+            )
+            self.assertEqual(
+                json.loads(pending.read_text(encoding="utf-8")),
+                {"status": "pending"},
+            )
+            self.assertFalse(common.with_name(common.name + ".writing").exists())
 
     def test_component_evidence_locks_actual_outputs(self) -> None:
         evidence = self.config["component_build_evidence"]
