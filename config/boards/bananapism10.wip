@@ -10,6 +10,7 @@ BOOT_FDT_FILE="spacemit/k3-bananapi-sm10.dtb"
 BOOTDELAY=1
 SRC_CMDLINE="earlycon=sbi console=ttyS0,115200 console=tty1 loglevel=7 rootwait"
 PACKAGE_LIST_BOARD="rfkill bluetooth bluez bluez-tools gpiod i2c-tools python3-libgpiod python3-spidev can-utils pciutils nvme-cli usbutils alsa-utils iw ethtool v4l-utils mesa-utils"
+ARMBIAN_FIRMWARE_GIT_SOURCE_BOARD="https://github.com/armbian/firmware"
 ARMBIAN_FIRMWARE_GIT_REF_BOARD="commit:f50a2a21bcdb77a562b3976930c5c6b521a1df08"
 
 # 這些提交與原廠 k3-br-v1.0.y manifest 完全一致；候選建置不得由外部改寫。
@@ -23,4 +24,6 @@ function post_family_config__bananapism10_lock_candidate_sources() {
 	declare -g BOOTBRANCH="commit:${K3_SM10_UBOOT_COMMIT}"
 	declare -g KERNELBRANCH="commit:${K3_SM10_LINUX_COMMIT}"
 	declare -g KERNELPATCHDIR="archive/spacemit-k3-bpi-6.18"
+	declare -g ARMBIAN_FIRMWARE_GIT_SOURCE="${ARMBIAN_FIRMWARE_GIT_SOURCE_BOARD}"
+	declare -g ARMBIAN_FIRMWARE_GIT_REF="${ARMBIAN_FIRMWARE_GIT_REF_BOARD}"
 }

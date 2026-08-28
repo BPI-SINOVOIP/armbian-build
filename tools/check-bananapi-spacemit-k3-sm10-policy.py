@@ -425,6 +425,13 @@ def main() -> None:
     for revision in revisions.values():
         require(revision in board_text, f"板檔缺少固定提交：{revision}")
     require(FIRMWARE_REVISION in board_text, "板檔缺少固定 Armbian 韌體提交")
+    for expected in (
+        'ARMBIAN_FIRMWARE_GIT_SOURCE_BOARD="https://github.com/armbian/firmware"',
+        f'ARMBIAN_FIRMWARE_GIT_REF_BOARD="commit:{FIRMWARE_REVISION}"',
+        'declare -g ARMBIAN_FIRMWARE_GIT_SOURCE="${ARMBIAN_FIRMWARE_GIT_SOURCE_BOARD}"',
+        'declare -g ARMBIAN_FIRMWARE_GIT_REF="${ARMBIAN_FIRMWARE_GIT_REF_BOARD}"',
+    ):
+        require(expected in board_text, f"板檔缺少 Armbian 韌體實際固定設定：{expected}")
     require(revisions["linux"] in family_text and revisions["uboot"] in family_text, "family 未固定核心來源")
     for expected in (
         "[FSBL.bin]=\"9a40d9d27ec8de79a38ece8ad00de96d29d45b507c43f46f3bf45589c50034d7\"",

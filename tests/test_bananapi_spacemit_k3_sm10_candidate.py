@@ -78,6 +78,25 @@ class BananaPiSpacemitK3Sm10CandidateTests(unittest.TestCase):
                 self.assertEqual(source["ref"], f"commit:{revision}")
                 self.assertIn(revision, self.board_text)
 
+    def test_armbian_firmware_is_applied_as_an_exact_commit(self) -> None:
+        revision = "f50a2a21bcdb77a562b3976930c5c6b521a1df08"
+        self.assertIn(
+            'ARMBIAN_FIRMWARE_GIT_SOURCE_BOARD="https://github.com/armbian/firmware"',
+            self.board_text,
+        )
+        self.assertIn(
+            f'ARMBIAN_FIRMWARE_GIT_REF_BOARD="commit:{revision}"',
+            self.board_text,
+        )
+        self.assertIn(
+            'declare -g ARMBIAN_FIRMWARE_GIT_SOURCE="${ARMBIAN_FIRMWARE_GIT_SOURCE_BOARD}"',
+            self.board_text,
+        )
+        self.assertIn(
+            'declare -g ARMBIAN_FIRMWARE_GIT_REF="${ARMBIAN_FIRMWARE_GIT_REF_BOARD}"',
+            self.board_text,
+        )
+
     def test_candidate_remains_wip_and_blocks_unsupported_claims(self) -> None:
         self.assertTrue(BOARD.name.endswith(".wip"))
         self.assertEqual(
