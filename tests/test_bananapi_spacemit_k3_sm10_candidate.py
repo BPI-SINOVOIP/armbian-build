@@ -335,6 +335,7 @@ class BananaPiSpacemitK3Sm10CandidateTests(unittest.TestCase):
         self.assertIn("mount -o ro", generic_verify_text)
         self.assertIn("env_k3)", generic_verify_text)
         self.assertIn("root_partuuid", generic_verify_text)
+        self.assertGreaterEqual(generic_verify_text.count("if value is None:"), 3)
         self.assertIn("SM10_CALIBRATION.json", finalizer_text)
         self.assertIn("SM10_MATERIAL_EVIDENCE.json", finalizer_text)
 

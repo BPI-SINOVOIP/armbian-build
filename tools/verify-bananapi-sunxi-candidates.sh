@@ -197,7 +197,9 @@ import json
 import sys
 with open(sys.argv[1], encoding="utf-8") as stream:
     value = json.load(stream)["boards"][sys.argv[2]].get(sys.argv[3], "")
-if isinstance(value, bool):
+if value is None:
+    print("")
+elif isinstance(value, bool):
     print("true" if value else "false")
 elif isinstance(value, list):
     print(" ".join(str(item) for item in value))
@@ -212,7 +214,9 @@ import json
 import sys
 with open(sys.argv[1], encoding="utf-8") as stream:
     value = json.load(stream)["boards"][sys.argv[2]].get(sys.argv[3], {}).get(sys.argv[4], "")
-if isinstance(value, bool):
+if value is None:
+    print("")
+elif isinstance(value, bool):
     print("true" if value else "false")
 elif isinstance(value, list):
     print(" ".join(str(item) for item in value))
@@ -256,7 +260,9 @@ import json
 import sys
 with open(sys.argv[1], encoding="utf-8") as stream:
     value = json.load(stream).get(sys.argv[2], "")
-if isinstance(value, bool):
+if value is None:
+    print("")
+elif isinstance(value, bool):
     print("true" if value else "false")
 else:
     print(value)
