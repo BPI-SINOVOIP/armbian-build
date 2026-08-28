@@ -43,6 +43,13 @@ L1 元件輸出已保存 Linux `Image`、SM10 DTB、核心設定、`FSBL.bin`、
 - L1 只會產生 `SM10_CALIBRATION.json`；只有使用精確 GPT 與最終組態的已推送 L2 過渡契約，才能產生 `SM10_MATERIAL_EVIDENCE.json` 並提升驗證狀態。
 - SM10 專屬 16 項與 SpacemiT 相關 31 項回歸、ShellCheck、Python 語法與 48 板盤點已通過。兩次全倉 483 項執行皆有 482 項通過，唯一失敗是中央狀態更新後兩份衍生盤點報告過期；以正確輸出參數重建報告後，14 項盤點測試已全部通過。這是組合守門證據，不冒充一次不中斷的 483 項全綠。尚未執行 L1 完整映像建置，因此中央證據維持 L1。
 
+### 第二次元件重建暫存回收
+
+- 回收前先確認工作樹與遠端提交 `1ce91266e0b3b295ef0ed3b70a1ea61b74ecc991` 一致，目標沒有掛載點、執行程序、開啟檔案或 Docker 掛載引用。
+- 只刪除 `.tmp/bananapi-sm10-components-rebuild-20260828`，邏輯大小為 9,261,621,248 bytes；執行環境拒絕 `rm -rf`，因此使用限定精確目錄及單一檔案系統的 `find -xdev -depth -delete`。
+- `/media/pi/SMCI` 可用空間由 118,947,454,976 bytes 增加至 128,205,795,328 bytes，實際回收 9,258,340,352 bytes。
+- `output/components/2026.08/bananapi-spacemit-k3-sm10-current` 的 31,461,376 bytes L1 元件證據仍保留；正式映像目錄尚未建立。唯讀 lower 身分仍為 device `66306`、inode `96224797`。
+
 ## 執行階段
 
 1. **來源一致性**：以已保存且通過 L1 守門的固定來源重建產物取代三個可重建封裝載荷，加入 U-Boot 最終設定證據，更新逐檔雜湊、來源說明、板級封裝與負向測試。ESOS 必須明確保留為未重建預建資產。
