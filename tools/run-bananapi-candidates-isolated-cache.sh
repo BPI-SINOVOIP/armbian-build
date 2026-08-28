@@ -6,6 +6,7 @@ candidate_builder="${CANDIDATE_BUILDER:-${repo_dir}/tools/build-bananapi-meson-c
 cache_lower="${CACHE_LOWER:-/media/pi/SMCI/armbian/bpi-v26.2.1/cache}"
 cache_target="${CACHE_TARGET:-${repo_dir}/cache}"
 overlay_root="${CACHE_OVERLAY_ROOT:-${repo_dir}/.tmp/bananapi-meson-cache-overlay}"
+allow_parallel_isolated_builds="${ALLOW_PARALLEL_ISOLATED_BUILDS:-no}"
 upper_dir="${overlay_root}/upper"
 work_dir="${overlay_root}/work"
 
@@ -32,10 +33,17 @@ sudo -n true || {
 	echo "OverlayFS 建置需要免互動 sudo。" >&2
 	exit 1
 }
-if pgrep -af '[c]ompile.sh.*build' >/dev/null; then
-	echo "偵測到其他 Armbian build，拒絕在快取下層可能變動時啟動。" >&2
-	pgrep -af '[c]ompile.sh.*build' >&2 || true
+[[ "${allow_parallel_isolated_builds}" == "yes" || "${allow_parallel_isolated_builds}" == "no" ]] || {
+	echo "ALLOW_PARALLEL_ISOLATED_BUILDS 只接受 yes 或 no。" >&2
 	exit 1
+}
+if pgrep -af '[c]ompile.sh.*build' >/dev/null; then
+	if [[ "${allow_parallel_isolated_builds}" != "yes" ]]; then
+		echo "偵測到其他 Armbian build，拒絕在快取下層可能變動時啟動。" >&2
+		pgrep -af '[c]ompile.sh.*build' >&2 || true
+		exit 1
+	fi
+	echo "已明確允許平行隔離建置；呼叫端必須確保所有建置只讀取 CACHE_LOWER。" >&2
 fi
 
 mkdir -p "${cache_target}" "${upper_dir}" "${work_dir}" "${repo_dir}/.tmp"

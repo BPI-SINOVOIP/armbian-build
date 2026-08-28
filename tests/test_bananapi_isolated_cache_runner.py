@@ -23,7 +23,13 @@ class BananaPiIsolatedCacheRunnerTests(unittest.TestCase):
         path.write_text(textwrap.dedent(body).lstrip(), encoding="utf-8")
         path.chmod(0o755)
 
-    def run_with_signal(self, signal_name: str) -> subprocess.CompletedProcess[str]:
+    def run_with_signal(
+        self,
+        signal_name: str,
+        *,
+        active_build: bool = False,
+        allow_parallel: str = "no",
+    ) -> subprocess.CompletedProcess[str]:
         with tempfile.TemporaryDirectory() as temporary_dir:
             root = Path(temporary_dir)
             fake_bin = root / "bin"
@@ -54,6 +60,10 @@ class BananaPiIsolatedCacheRunnerTests(unittest.TestCase):
                 fake_bin / "pgrep",
                 """
                 #!/usr/bin/env bash
+                if [[ "${FAKE_ACTIVE_BUILD:-no}" == "yes" ]]; then
+                    printf '123 compile.sh build\\n'
+                    exit 0
+                fi
                 exit 1
                 """,
             )
@@ -103,6 +113,8 @@ class BananaPiIsolatedCacheRunnerTests(unittest.TestCase):
                     "CACHE_TARGET": str(cache_target),
                     "CACHE_OVERLAY_ROOT": str(overlay_root),
                     "FAKE_MOUNT_STATE": str(mount_state),
+                    "FAKE_ACTIVE_BUILD": "yes" if active_build else "no",
+                    "ALLOW_PARALLEL_ISOLATED_BUILDS": allow_parallel,
                     "TEST_SIGNAL": signal_name,
                 }
             )
@@ -124,6 +136,20 @@ class BananaPiIsolatedCacheRunnerTests(unittest.TestCase):
     def test_int_returns_130_after_cleanup(self) -> None:
         result = self.run_with_signal("INT")
         self.assertEqual(result.returncode, 130, result.stderr)
+
+    def test_active_build_is_rejected_by_default(self) -> None:
+        result = self.run_with_signal("TERM", active_build=True)
+        self.assertEqual(result.returncode, 1, result.stderr)
+        self.assertIn("拒絕", result.stderr)
+
+    def test_active_build_requires_explicit_isolated_opt_in(self) -> None:
+        result = self.run_with_signal(
+            "TERM",
+            active_build=True,
+            allow_parallel="yes",
+        )
+        self.assertEqual(result.returncode, 143, result.stderr)
+        self.assertIn("明確允許平行隔離建置", result.stderr)
 
 
 if __name__ == "__main__":
