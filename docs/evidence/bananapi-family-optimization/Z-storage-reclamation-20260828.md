@@ -4,7 +4,7 @@
 
 ## 結論
 
-截至 2026-08-28，本計畫可確認已回收約 `129.0 GiB`，範圍只包含可重建快取、候選專用 OverlayFS、失敗輸出及已被正式候選取代且完成 Git 證據閉合的舊候選。W2 正式閉合清理後可用空間為 `128,209,489,920` bytes，約 `119.404 GiB`。建置期間會同時新增快取與映像，因此各時點的可用空間差額不能直接取代逐項刪除量。
+截至 2026-08-28，本計畫可確認已回收約 `179.0 GiB`，範圍只包含可重建快取、候選專用 OverlayFS、失敗輸出及已被正式候選取代且完成 Git 證據閉合的舊候選。SM10 正式閉合清理後可用空間為 `125,196,247,040` bytes，約 `116.598 GiB`。建置期間會同時新增快取與映像，因此各時點的可用空間差額不能直接取代逐項刪除量。
 
 ## 已回收項目
 
@@ -47,6 +47,9 @@ Unisoc `Bin/ImageFiles` 位於 `work/Release` 之下的工具輸出層，只移�
 | M4 正式閉合 | `3.089 GiB` | L2 證據提交 `a5e8b1ee8` 推送並通過歷史重驗後，只移除正式建置專用 OverlayFS 上層 |
 | W2 L1 校準 | `4.946 GiB` | 固定 L2 契約後移除校準 IMG／XZ 與 W2 專用 OverlayFS 上層 |
 | W2 正式閉合 | `2.801 GiB` | L2 證據提交 `a4f40542f` 推送並通過歷史重驗後，只移除正式建置專用 OverlayFS 上層 |
+| SM10 L1 校準 | `17.400 GiB` | 固定 GPT、核心設定與 DTB 的 L2 過渡契約後，移除校準 IMG／XZ 與專用 OverlayFS |
+| SM10 最終器拒絕候選 | `17.403 GiB` | 原子寫入暫存檔碰撞修正並推送後，移除被拒絕 IMG／XZ 與專用 OverlayFS |
+| SM10 正式閉合 | `15.169 GiB` | L2 證據提交 `6c079e39b` 推送並通過歷史重驗後，只移除正式建置專用 OverlayFS 上層 |
 
 M1 Super 正式閉合的精確增加量為 `20,371,968,000` bytes。刪除前後均重算正式 IMG 與 XZ：IMG SHA-256 為 `192269a97910729304d635e80921b3fef647a2036d4013958c4cd81cbd4752f8`，XZ SHA-256 為 `b3b640fc04116f0193832354bda899aadcb8f894a22e8b6fed4b1d463fa06b63`，兩者保持一致。
 
@@ -97,6 +100,19 @@ W2 校準階段刪除校準輸出 `2,483,817,644` bytes 與專用 OverlayFS `2,8
 /media/pi/SMCI/armbian/bpi-v26.2.1-bananapi-optimize/.tmp/bananapi-realtek-w2-candidate-cache-overlay
 ```
 
+## SM10 精確回收與保留
+
+SM10 三次清理的實際可用空間增加量合計為 `53,657,645,056` bytes，約 `49.973 GiB`：L1 校準為 `18,683,588,608` bytes，最終器碰撞拒絕候選為 `18,686,218,240` bytes，正式 L2 閉合為 `16,287,838,208` bytes。正式閉合前專用上層的逐檔邏輯大小為 `16,223,755,056` bytes；檔案系統可用空間差額另包含配置與中繼資料回收，因此以實際前後差額登錄。
+
+每次清理只處理下列固定專用路徑及該次校準或拒絕輸出：
+
+```text
+/media/pi/SMCI/armbian/bpi-v26.2.1-bananapi-optimize/.tmp/bananapi-spacemit-k3-sm10-cache-overlay
+/media/pi/SMCI/armbian/bpi-v26.2.1-bananapi-optimize/output/images/2026.08/bananapi-spacemit-k3-sm10-trixie-current-cli
+```
+
+固定輸出只在 L1 校準及被拒絕候選後移除，隨後皆由更新後的已推送提交乾淨重建。正式 L2 證據提交 `6c079e39b` 推送且歷史重驗通過後，只刪除專用 OverlayFS；正式輸出保留 `2,397,726,759` bytes，內含 IMG、XZ、SHA-256、建置日誌、候選矩陣、唯讀驗證與 SM10 物質證據。清理後 IMG 與 XZ 雜湊保持一致，共用 lower 仍為 device `66306`、inode `96224797`。
+
 ## 強制保留
 
 - 共用 `/media/pi/SMCI/armbian/bpi-v26.2.1/cache` 唯讀下層。
@@ -105,6 +121,7 @@ W2 校準階段刪除校準輸出 `2,483,817,644` bytes 與專用 OverlayFS `2,8
 - M6 正式固定輸出 `output/images/2026.08/bananapi-vs680-m6-trixie-legacy-cli`。
 - M4 正式固定輸出 `output/images/2026.08/bananapi-realtek-rtd1395-m4-trixie-legacy-cli`。
 - W2 正式固定輸出 `output/images/2026.08/bananapi-realtek-rtd1296-w2-trixie-legacy-cli`。
+- SM10 正式固定輸出 `output/images/2026.08/bananapi-spacemit-k3-sm10-trixie-current-cli`。
 - M4 Zero／M4 Berry 的 DDR 調校、客戶回報與 UART 原始證據。
 - Unisoc 來源、`.repo`、PAC、原廠文件與目前採用的同步基線。
 - BPI-Forge1 尚未完成的 `stash@{0}`。

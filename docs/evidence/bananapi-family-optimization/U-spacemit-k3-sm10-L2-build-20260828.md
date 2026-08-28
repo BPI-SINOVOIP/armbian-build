@@ -62,4 +62,6 @@ python3 -m unittest tests.test_bananapi_spacemit_k3_sm10_candidate
 python3 tools/bananapi-board-audit.py --check
 ```
 
-正式 IMG 與 XZ 應持續保留。完成歷史重驗後，只能移除 SM10 專用 OverlayFS；共用 `/media/pi/SMCI/armbian/bpi-v26.2.1/cache` 必須維持唯讀 lower，且不得刪除或改寫。
+本文件與機器契約已由提交 `6c079e39b` 推送；從該提交執行的固定正式 IMG、XZ、清單與原始提交歷史重驗通過。清理前確認專用 OverlayFS 沒有掛載、程序、開啟檔案或 Docker 容器引用，再移除逐檔邏輯大小為 `16,223,755,056` bytes 的 `.tmp/bananapi-spacemit-k3-sm10-cache-overlay`。檔案系統可用空間由 `108,908,408,832` 增至 `125,196,247,040` bytes，實際增加 `16,287,838,208` bytes。
+
+正式輸出保留 `2,397,726,759` bytes；清理後重算的 IMG 與 XZ SHA-256 仍分別為 `0de1f1bab7f5b01e56768b6a70cdf55381157430ccaf48dc78b4861ddf8f533e` 與 `26b6322d46230688701d1ab08747dd15da1ee1a0fef95dca8d10e12055e3b595`。共用 `/media/pi/SMCI/armbian/bpi-v26.2.1/cache` 仍為 device `66306`、inode `96224797`，且始終只作唯讀 lower。
