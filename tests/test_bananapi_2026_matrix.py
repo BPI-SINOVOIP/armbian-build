@@ -340,6 +340,68 @@ fi
         self.assertEqual(native.stdout, "")
         self.assertEqual(cross.stdout.strip(), "'--skip=check/qemu'")
 
+    def test_unsupported_qemu_cpu_model_refreshes_only_target_binfmt(self) -> None:
+        """既有模擬器不支援指定模型時，只重新註冊目標架構。"""
+        function_text = subprocess.run(
+            [
+                "awk",
+                "/^function ensure_qemu_cpu_model_is_supported\\(\\)/,/^}/",
+                str(QEMU_SCRIPT),
+            ],
+            check=True,
+            capture_output=True,
+            text=True,
+        ).stdout
+
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            temporary = Path(temporary_directory)
+            fake_bin = temporary / "bin"
+            proc_root = temporary / "proc"
+            config_root = temporary / "config"
+            fake_bin.mkdir()
+            proc_root.mkdir()
+            config_root.mkdir()
+            (proc_root / "qemu-riscv64").touch()
+            (proc_root / "register").touch()
+            marker = "riscv64-new-registration"
+            (config_root / "qemu-riscv64.conf").write_text(
+                marker, encoding="utf-8"
+            )
+            arch_test = fake_bin / "arch-test"
+            arch_test.write_text(
+                "#!/usr/bin/env bash\n"
+                f'grep -qx {marker!r} {str(proc_root / "register")!r}\n',
+                encoding="utf-8",
+            )
+            arch_test.chmod(0o755)
+            shell = f'''
+display_alert() {{ :; }}
+exit_with_error() {{ return 91; }}
+run_host_command_logged() {{ "$@"; }}
+ARCH=riscv64
+QEMU_BINARY=qemu-riscv64-static
+QEMU_CPU=max
+BINFMT_PROC_ROOT={proc_root!s}
+BINFMT_CONFIG_ROOT={config_root!s}
+{function_text}
+ensure_qemu_cpu_model_is_supported
+'''
+            result = subprocess.run(
+                ["bash", "-c", shell],
+                env={**os.environ, "PATH": f"{fake_bin}:{os.environ['PATH']}"},
+                capture_output=True,
+                text=True,
+            )
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertEqual(
+                (proc_root / "register").read_text(encoding="utf-8"), marker
+            )
+            self.assertEqual(
+                (proc_root / "qemu-riscv64").read_text(encoding="utf-8"),
+                "-1",
+            )
+
 
 if __name__ == "__main__":
     unittest.main()

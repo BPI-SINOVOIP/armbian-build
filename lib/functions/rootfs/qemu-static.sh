@@ -116,7 +116,12 @@ function prepare_host_binfmt_qemu() {
 	if dpkg-architecture -e "${ARCH}"; then
 		display_alert "Native arch build" "target ${ARCH} on host $(dpkg --print-architecture)" "cachehit"
 	else
+		if [[ "${RELEASE:-}" == "resolute" && "${ARCH}" == "riscv64" ]]; then
+			export QEMU_CPU="${QEMU_CPU:-max}"
+			display_alert "使用 qemu CPU 模型" "Ubuntu resolute riscv64：${QEMU_CPU}" "info"
+		fi
 		prepare_host_binfmt_qemu_cross
+		ensure_qemu_cpu_model_is_supported
 	fi
 
 	if [[ "${SHOW_DEBUG}" == "yes" ]]; then
@@ -130,6 +135,28 @@ function prepare_host_binfmt_qemu() {
 
 	# Everything should be either setup or previously correct if we get here.
 	return 0
+}
+
+function ensure_qemu_cpu_model_is_supported() {
+	[[ -n "${QEMU_CPU:-}" ]] || return 0
+
+	display_alert "檢查 qemu CPU 模型" "${ARCH}：${QEMU_CPU}" "info"
+	if env "QEMU_CPU=${QEMU_CPU}" arch-test "${ARCH}" >/dev/null 2>&1; then
+		return 0
+	fi
+
+	declare binfmt_name="${QEMU_BINARY%-static}"
+	declare proc_root="${BINFMT_PROC_ROOT:-/proc/sys/fs/binfmt_misc}"
+	declare config_root="${BINFMT_CONFIG_ROOT:-/usr/lib/binfmt.d}"
+	declare binfmt_config="${config_root}/${binfmt_name}.conf"
+
+	[[ -r "${binfmt_config}" ]] || exit_with_error "缺少 binfmt 設定" "${binfmt_config}"
+	display_alert "更新 qemu binfmt" "${binfmt_name}，CPU 模型 ${QEMU_CPU}" "wrn"
+	if [[ -e "${proc_root}/${binfmt_name}" ]]; then
+		printf '%s' -1 > "${proc_root}/${binfmt_name}"
+	fi
+	cat "${binfmt_config}" > "${proc_root}/register"
+	run_host_command_logged env "QEMU_CPU=${QEMU_CPU}" arch-test "${ARCH}"
 }
 
 function binfmt_registration_needs_update() {
