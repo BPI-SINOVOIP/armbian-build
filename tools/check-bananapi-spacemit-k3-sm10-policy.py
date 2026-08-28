@@ -438,6 +438,9 @@ def main() -> None:
         "[fw_dynamic.itb]=\"37dcca0ad696c88900c316a5bab289f1e3e55f09836cb22a4f09c1faa93be86d\"",
         "[u-boot.itb]=\"f7560b4afd523b484b7f950f038485dea7c28cbf5f9c225290d940ca4461ae13\"",
         "cp -fv uboot.config .config",
+        "deploy_spacemit_k3_uboot_target_with_evidence",
+        "u-boot-config-target-${uboot_target_counter}",
+        "u-boot-metadata-target-${uboot_target_counter}.sh",
         "expected_bmp_sha256=\"a3567f599894c570d1b62c461d52e227b29eca9ab745ac619553890ecf9c2e8b\"",
     ):
         require(expected in family_text, f"family 缺少受控建置內容：{expected}")
