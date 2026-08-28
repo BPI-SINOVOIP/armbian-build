@@ -4,7 +4,7 @@
 
 ## 結論
 
-截至 2026-08-28，本計畫可確認已回收約 `121.4 GiB`，範圍只包含可重建快取、候選專用 OverlayFS、失敗輸出及已被正式候選取代且完成 Git 證據閉合的舊候選。M4 正式閉合清理後可用空間為 `130,906,120,192` bytes，約 `121.916 GiB`。建置期間會同時新增快取與映像，因此各時點的可用空間差額不能直接取代逐項刪除量。
+截至 2026-08-28，本計畫可確認已回收約 `129.0 GiB`，範圍只包含可重建快取、候選專用 OverlayFS、失敗輸出及已被正式候選取代且完成 Git 證據閉合的舊候選。W2 正式閉合清理後可用空間為 `128,209,489,920` bytes，約 `119.404 GiB`。建置期間會同時新增快取與映像，因此各時點的可用空間差額不能直接取代逐項刪除量。
 
 ## 已回收項目
 
@@ -45,6 +45,8 @@ Unisoc `Bin/ImageFiles` 位於 `work/Release` 之下的工具輸出層，只移�
 | M4 首次完整拒絕 | `5.446 GiB` | 最終核心設定雜湊不符，移除拒絕 IMG／XZ 與專用 OverlayFS |
 | M4 第二次完整拒絕 | `5.444 GiB` | U-Boot 固定時間不符，移除拒絕 IMG／XZ 與專用 OverlayFS |
 | M4 正式閉合 | `3.089 GiB` | L2 證據提交 `a5e8b1ee8` 推送並通過歷史重驗後，只移除正式建置專用 OverlayFS 上層 |
+| W2 L1 校準 | `4.946 GiB` | 固定 L2 契約後移除校準 IMG／XZ 與 W2 專用 OverlayFS 上層 |
+| W2 正式閉合 | `2.801 GiB` | L2 證據提交 `a4f40542f` 推送並通過歷史重驗後，只移除正式建置專用 OverlayFS 上層 |
 
 M1 Super 正式閉合的精確增加量為 `20,371,968,000` bytes。刪除前後均重算正式 IMG 與 XZ：IMG SHA-256 為 `192269a97910729304d635e80921b3fef647a2036d4013958c4cd81cbd4752f8`，XZ SHA-256 為 `b3b640fc04116f0193832354bda899aadcb8f894a22e8b6fed4b1d463fa06b63`，兩者保持一致。
 
@@ -83,6 +85,18 @@ M4 四次清理的實際可用空間增加量合計為 `15,023,812,608` bytes，
 
 固定輸出只在三次失敗或拒絕後移除，隨後皆由更新後的已推送提交乾淨重建。正式 L2 證據提交 `a5e8b1ee8` 推送且歷史重驗通過後，只刪除專用 OverlayFS；正式輸出保留 `2,528,835,764` bytes，包含 IMG、XZ、SHA-256、建置日誌、候選矩陣與唯讀驗證狀態。清理前已確認沒有掛載、建置程序、開啟檔案或 Docker bind mount；清理後共用 lower 仍為 device `66306`、inode `96224797`。
 
+## W2 精確回收與保留
+
+W2 校準階段刪除校準輸出 `2,483,817,644` bytes 與專用 OverlayFS `2,827,299,863` bytes，合計 `5,311,117,507` bytes。正式 L2 證據提交 `a4f40542f` 推送且歷史重驗通過後，只刪除逐檔邏輯大小為 `2,827,303,958` bytes 的正式專用 OverlayFS；清理前後檔案系統可用空間由 `125,202,128,896` 增至 `128,209,489,920` bytes，實際增加 `3,007,361,024` bytes。
+
+兩階段合計移除 `8,138,421,465` bytes，約 `7.579 GiB`。每次均先確認精確路徑不是符號連結，且沒有掛載、建置程序、開啟檔案或 Docker bind mount，再以 `find -xdev -depth -delete` 移除。正式固定輸出保留 `2,482,460,927` bytes，包含 IMG、XZ、SHA-256、建置日誌、候選矩陣與唯讀驗證狀態；清理後的歷史映像重驗通過，共用 lower 仍為 device `66306`、inode `96224797`。
+
+已刪除的 W2 專用路徑為：
+
+```text
+/media/pi/SMCI/armbian/bpi-v26.2.1-bananapi-optimize/.tmp/bananapi-realtek-w2-candidate-cache-overlay
+```
+
 ## 強制保留
 
 - 共用 `/media/pi/SMCI/armbian/bpi-v26.2.1/cache` 唯讀下層。
@@ -90,6 +104,7 @@ M4 四次清理的實際可用空間增加量合計為 `15,023,812,608` bytes，
 - M1 Super 正式固定輸出 `output/images/2026.08/bananapi-rockchip-rk3528-m1super-trixie-vendor-cli`。
 - M6 正式固定輸出 `output/images/2026.08/bananapi-vs680-m6-trixie-legacy-cli`。
 - M4 正式固定輸出 `output/images/2026.08/bananapi-realtek-rtd1395-m4-trixie-legacy-cli`。
+- W2 正式固定輸出 `output/images/2026.08/bananapi-realtek-rtd1296-w2-trixie-legacy-cli`。
 - M4 Zero／M4 Berry 的 DDR 調校、客戶回報與 UART 原始證據。
 - Unisoc 來源、`.repo`、PAC、原廠文件與目前採用的同步基線。
 - BPI-Forge1 尚未完成的 `stash@{0}`。

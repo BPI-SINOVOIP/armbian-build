@@ -241,7 +241,7 @@ R3 Mini 尚未取得空白 eMMC 的 `boot0` 分離寫入、boot partition enable
 
 `bananapim1super` 已由已推送提交 `d2cc85596` 完成 Debian Trixie vendor 精簡 CLI 的乾淨正式重建，IMG、XZ、GPT、唯讀 ext4、專屬 DTB、U-Boot 載荷、最終設定、固定來源、必要套件與核心模組均通過 L2 即時物質守門及二次回讀。量產無線 BOM、韌體逐檔授權與所有實機功能仍未閉合，因此維持 `.wip`，不得宣稱 L3、硬體通過或公開發布。
 
-M6 與 M4 的完整映像契約均已依序閉合；每板都在正式映像、證據提交、歷史重驗與遠端同步完成後，才回收該板專用 OverlayFS 上層。
+M6、M4 與 W2 的完整映像契約均已依序閉合；每板都在正式映像、證據提交、歷史重驗與遠端同步完成後，才回收該板專用 OverlayFS 上層。
 
 M6 已於 2026-08-28 完成 L2 正式映像閉合。先以 L1 發現並修正 FAT `armbianEnv.txt` 缺少根 UUID 與 DTB，再從已推送重建契約 `ce43f2a3f` 乾淨建立 Trixie legacy minimal CLI。正式 IMG、XZ、雙分割區、唯讀 FAT／ext4、根 UUID、映像 DTB、最終核心與 U-Boot 設定、固定來源、TZK／U-Boot 受控重疊區段及二次讀回全部通過；中央證據已提升為 L2，但 `.wip`、授權限制、硬體聲明禁止與公開發布禁止均維持。完成歷史重驗與專用 OverlayFS 空間回收後，執行序轉入 M4。
 

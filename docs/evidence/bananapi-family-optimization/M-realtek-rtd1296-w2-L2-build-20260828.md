@@ -58,4 +58,4 @@ python3 -m unittest tests.test_bananapi_realtek_w2_candidate
 python3 tools/bananapi-board-audit.py --check
 ```
 
-專用 OverlayFS 只可在本文件、機器契約及中央狀態提交並推送，且歷史重驗通過後移除；共用 `/media/pi/SMCI/armbian/bpi-v26.2.1/cache` 始終只作唯讀 lower。
+本文件、機器契約及中央狀態已由提交 `a4f40542f` 推送，歷史重驗通過後才移除專用 OverlayFS；實際可用空間增加 3,007,361,024 bytes。清理後歷史重驗再次通過，共用 `/media/pi/SMCI/armbian/bpi-v26.2.1/cache` 仍為 device `66306`、inode `96224797`，並始終只作唯讀 lower。
