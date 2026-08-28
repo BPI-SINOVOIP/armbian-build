@@ -4,7 +4,15 @@
   "candidate_level": "L1 元件候選",
   "candidate_scope": "internal-component-only",
   "kernel_family": "realtek-rtd129x-bpi",
+  "current_evidence_level": "L1",
+  "target_evidence_level": "L2",
+  "candidate_public_release_approved": false,
+  "hardware_validation_complete": false,
+  "firmware_redistribution_license_verified": false,
+  "rootfs_image_built": false,
+  "full_rootfs_image_built": false,
   "source_date_epoch": 1571768256,
+  "source_contract_projection_sha256": "13dcf92c40e1d19161da68adf834f45bbe56926e35782de20585bd2bbbf5335d",
   "linux_source": "https://github.com/BPI-SINOVOIP/BPI-W2-bsp.git",
   "linux_ref": "commit:6e6aefc35dc50b1b8231cdb03a995d088f29eb21",
   "linux_commit": "6e6aefc35dc50b1b8231cdb03a995d088f29eb21",
@@ -14,6 +22,7 @@
   "firmware_source": "https://github.com/armbian/firmware",
   "firmware_ref": "commit:f50a2a21bcdb77a562b3976930c5c6b521a1df08",
   "firmware_commit": "f50a2a21bcdb77a562b3976930c5c6b521a1df08",
+  "verify_firmware_source_resolution": true,
   "atf_applicable": false,
   "atf_reason": "此 vendor SD 啟動路徑不建置 TF-A；Realtek 安全與金鑰功能由 U-Boot 連結的無來源靜態庫提供",
   "linux_license_path": "linux-rtk/COPYING",
@@ -114,6 +123,11 @@
       "redistribution_license_verified": false
     }
   },
+  "license_policy": {
+    "opaque_payload_redistribution_verified": false,
+    "toolchain_redistribution_verified": false,
+    "decision": "只允許建立內部軟體候選，不允許公開發布組合映像"
+  },
   "full_image_built": false,
   "component_build_completed": true,
   "component_build_evidence": {
@@ -159,6 +173,9 @@
   "hardware_validated": false,
   "public_release_allowed": false,
   "hardware_claims_allowed": false,
+  "installed_file_sha256": [
+    "/boot/bananapi/bpi-w2/linux/bluecore.audio=59252270f05cc55cba0ddeb246bc7c6b20dab9554fa18be4e9595ea549fd9b1c"
+  ],
   "common_packages": [
     "alsa-utils",
     "ethtool",
@@ -224,23 +241,99 @@
         "bananapi,bpi-w2",
         "realtek,rtd1296"
       ],
-      "dtb": "rtd-1296-bananapi-w2-2GB.dtb",
+      "dtb": "realtek/rtd129x/rtd-1296-bananapi-w2-2GB.dtb",
       "dtb_sha256": "e2f0d51977310ecd06a8b72088a3ee3fbcec439b850ceacd9887c9b557d1c420",
       "dtb_image_path": "/boot/bananapi/bpi-w2/linux/rtd-1296-bananapi-w2-2GB.dtb",
       "uboot_version": "2015.07",
+      "uboot_tag": "v2015.07",
+      "uboot_git_source": "https://github.com/BPI-SINOVOIP/BPI-W2-bsp.git",
+      "uboot_git_ref": "commit:6e6aefc35dc50b1b8231cdb03a995d088f29eb21",
+      "uboot_revision": "6e6aefc35dc50b1b8231cdb03a995d088f29eb21",
       "uboot_defconfig": "rtd1296_sd_bananapi_defconfig",
+      "uboot_package_defconfig_required": false,
+      "uboot_binary_for_string_checks": "u-boot.bin",
       "uboot_write_offset_bytes": 40960,
       "uboot_required_binary_strings": [
         "Board: Banana Pi BPI-W2 (RTD1296)",
         "BPI-W2>",
-        "U-Boot 2015.07"
+        "U-Boot 2015.07",
+        "Oct 22 2019"
+      ],
+      "uboot_payload": "u-boot.bin",
+      "uboot_offset": 40960,
+      "uboot_payload_minimum_sizes": [
+        "u-boot.bin=400000"
+      ],
+      "uboot_payload_sizes": [
+        "u-boot.bin=432240"
+      ],
+      "uboot_payload_sha256": [
+        "u-boot.bin=d4d425862ded2334d354b421ff2df8cdb965041b3b3b2c903fbeddd29ab23890"
       ],
       "partition_table": "msdos",
+      "partition_start_sector": 8192,
+      "root_partition_start_sector": 532480,
+      "required_partitions": [
+        "1:*:8192:524288",
+        "2:*:532480:*"
+      ],
+      "required_partition_types": [
+        "1:ea",
+        "2:83"
+      ],
+      "logical_sector_size": 512,
       "boot_partition_number": 1,
       "root_partition_number": 2,
+      "boot_partition_label": "BPI-BOOT",
+      "root_partition_label": "BPI-ROOT",
+      "boot_partition_filesystem_type": "vfat",
+      "root_partition_filesystem_type": "ext4",
       "root_filesystem_label": "BPI-ROOT",
       "boot_filesystem": "fat",
+      "boot_configuration": "realtek_bpi_uenv",
       "vendor_boot_directory": "bananapi/bpi-w2/linux",
+      "vendor_boot_dtbs": [
+        "rtd-1296-bananapi-w2-2GB.dtb"
+      ],
+      "required_uenv_fragments": [
+        "sd_boot_dtb=bananapi/bpi-w2/linux/rtd-1296-bananapi-w2-2GB.dtb"
+      ],
+      "overlay_prefix": "",
+      "default_overlays": [],
+      "required_overlays": [],
+      "required_status_nodes": [
+        "/sdmmc@98010400",
+        "/emmc@98012000",
+        "/sata@9803F000",
+        "/pcie@9804E000",
+        "/pcie2@9803B000",
+        "/gmac@98016000",
+        "/rtk_dwc3_drd@98013200",
+        "/rtk_dwc3_u2host@98013E00",
+        "/rtk_dwc3_u3host@98013E00",
+        "/hdmitx@9800D000",
+        "/dptx@9803D000",
+        "/spi@9801BD00",
+        "/pwm@980070D0",
+        "/thermal-sensor@9801D150",
+        "/watchdog@0x98007680"
+      ],
+      "required_present_nodes": [
+        "/i2c@0x98007D00",
+        "/i2c@0x98007C00",
+        "/i2c@0x9801B700",
+        "/i2c@0x9801B900",
+        "/i2c@0x9801BA00",
+        "/i2c@0x9801BB00",
+        "/rtk_misc_gpio@9801b100",
+        "/rtk_iso_gpio@98007100"
+      ],
+      "required_disabled_nodes": [
+        "/hdmirx@98034000"
+      ],
+      "forbidden_packaged_assets": [
+        "spirom-bpi-w2.bin"
+      ],
       "boot_assets": [
         "uEnv.txt",
         "bluecore.audio",

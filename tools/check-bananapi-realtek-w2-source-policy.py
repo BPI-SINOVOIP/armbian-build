@@ -3,6 +3,8 @@
 
 from __future__ import annotations
 
+from copy import deepcopy
+import hashlib
 import json
 from pathlib import Path
 import re
@@ -29,6 +31,23 @@ KERNEL_IDENTITY_PATCH = (
     / "patch/kernel/archive/realtek-rtd129x-bpi-4.9"
     / "0002-dts-identify-bananapi-w2.patch"
 )
+CONTRACT_PROJECTION_EXCLUDED_TOP_LEVEL = {
+    "candidate_level",
+    "candidate_scope",
+    "component_build_completed",
+    "component_build_evidence",
+    "current_evidence_level",
+    "full_image_built",
+    "full_rootfs_image_built",
+    "image_build_evidence",
+    "rootfs_image_built",
+    "source_contract_projection_sha256",
+}
+CONTRACT_PROJECTION_EXCLUDED_BOARD_FIELDS = {
+    "dtb_sha256_evidence_scope",
+    "final_kernel_config_sha256",
+    "image_dtb_sha256",
+}
 
 
 def fail(message: str) -> None:
@@ -42,6 +61,22 @@ def require(condition: bool, message: str) -> None:
 
 def valid_sha256(value: object) -> bool:
     return isinstance(value, str) and re.fullmatch(r"[0-9a-f]{64}", value) is not None
+
+
+def contract_projection_sha256(config: dict[str, object]) -> str:
+    projection = deepcopy(config)
+    for key in CONTRACT_PROJECTION_EXCLUDED_TOP_LEVEL:
+        projection.pop(key, None)
+    for board in projection.get("boards", {}).values():
+        for key in CONTRACT_PROJECTION_EXCLUDED_BOARD_FIELDS:
+            board.pop(key, None)
+    encoded = json.dumps(
+        projection,
+        ensure_ascii=False,
+        sort_keys=True,
+        separators=(",", ":"),
+    ).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
 
 
 def main() -> None:
@@ -60,7 +95,14 @@ def main() -> None:
     require(data["candidate_level"] == "L1 元件候選", "候選層級不是 L1 元件候選")
     require(data["candidate_scope"] == "internal-component-only", "候選範圍不是內部元件")
     require(data["kernel_family"] == "realtek-rtd129x-bpi", "核心家族不符")
+    require(data["current_evidence_level"] == "L1", "目前證據層級不是 L1")
+    require(data["target_evidence_level"] == "L2", "目標證據層級不是 L2")
     require(data["source_date_epoch"] == 1571768256, "來源時間戳不符")
+    require(
+        data["source_contract_projection_sha256"]
+        == contract_projection_sha256(data),
+        "來源契約投影雜湊不符",
+    )
     for key in ("linux_commit", "uboot_commit"):
         require(data[key] == revision, f"{key} 未固定至已審查提交")
     for key in ("linux_ref", "uboot_ref"):
@@ -70,16 +112,31 @@ def main() -> None:
         data["firmware_ref"] == f"commit:{firmware_revision}",
         "韌體 ref 不是精確提交",
     )
+    require(data["verify_firmware_source_resolution"] is True, "完整映像必須核對韌體提交")
     require(data["atf_applicable"] is False, "不得宣稱此路徑建置 TF-A")
     require(status["evidence"]["bananapiw2"]["level"] == "L1", "全域 W2 等級不是 L1")
     require("bananapiw2" in status["open_findings"], "全域 W2 未結項目缺失")
     for key in (
         "full_image_built",
+        "rootfs_image_built",
+        "full_rootfs_image_built",
         "hardware_validated",
         "public_release_allowed",
         "hardware_claims_allowed",
+        "candidate_public_release_approved",
+        "hardware_validation_complete",
+        "firmware_redistribution_license_verified",
     ):
         require(data[key] is False, f"{key} 必須維持 false")
+    require("image_build_evidence" not in data, "L1 不得夾帶完整映像證據")
+    require(
+        data["license_policy"]["opaque_payload_redistribution_verified"] is False,
+        "不透明載荷不得誤標已確認授權",
+    )
+    require(
+        data["license_policy"]["toolchain_redistribution_verified"] is False,
+        "工具鏈不得誤標已確認授權",
+    )
 
     for key in ("linux_license_sha256", "uboot_license_sha256"):
         require(valid_sha256(data[key]), f"{key} 格式不符")
@@ -168,8 +225,17 @@ def main() -> None:
 
     board = data["boards"]["bananapiw2"]
     require(board["partition_table"] == "msdos", "分割表契約不符")
+    require(board["partition_start_sector"] == 8192, "FAT 分割區起點不符")
+    require(board["root_partition_start_sector"] == 532480, "根分割區起點不符")
     require(board["uboot_write_offset_bytes"] == 40960, "U-Boot 寫入偏移不符")
+    require(board["uboot_offset"] == 40960, "U-Boot 映像偏移不符")
+    require(board["uboot_payload"] == "u-boot.bin", "U-Boot 載荷名稱不符")
+    require(board["uboot_package_defconfig_required"] is False, "vendor U-Boot 不封裝 defconfig")
     require(board["root_filesystem_label"] == "BPI-ROOT", "根標籤契約不符")
+    require(board["root_partition_label"] == "BPI-ROOT", "根分割區標籤不符")
+    require(board["boot_partition_label"] == "BPI-BOOT", "開機分割區標籤不符")
+    require(board["boot_configuration"] == "realtek_bpi_uenv", "Realtek 開機模式不符")
+    require(board["vendor_boot_dtbs"] == ["rtd-1296-bananapi-w2-2GB.dtb"], "vendor DTB 契約不符")
     require(board["usb_contract"]["hardware_role_validated"] is False, "USB 角色不得宣稱實測")
     require(board["display_contract"]["hdmi_tx_status"] == "okay", "HDMI TX 狀態不符")
     require(board["display_contract"]["hdmi_rx_status"] == "disabled", "HDMI RX 狀態不符")
@@ -204,7 +270,7 @@ def main() -> None:
         )
         require(
             board["dtb_sha256"]
-            == evidence["artifacts"][board["dtb"]]["sha256"],
+            == evidence["artifacts"][Path(board["dtb"]).name]["sha256"],
             "DTB 板級雜湊與元件證據不符",
         )
 

@@ -759,7 +759,7 @@ validate_installed_uboot() {
 
 validate_mounted_image() (
 	local image=$1 board=$2
-	local dtb_relative dtb_basename dtb_path fdt_override model compatible expected node node_status option_line option value package
+	local dtb_relative dtb_basename dtb_path fdt_override model compatible expected node node_status option_line option value package required_uenv_fragment
 	local loop_device partition boot_partition mount_dir config_file overlay_prefix overlay overlay_directory default_overlays required_overlays overlays_line sd_node sd_bus_width requirement required_node required_width kernel_family root_partition_number boot_partition_number
 	local boot_configuration extlinux_fdt expected_start_sector actual_start_sector property_spec property_node property_name property_expected installed_manifest installed_spec installed_path installed_sha256
 	local vendor_boot_directory vendor_boot_dtbs vendor_dtb root_uuid final_kernel_config_sha256 actual_kernel_config_sha256 forbidden_asset
@@ -947,10 +947,17 @@ PY
 			if grep -Eq '(^|[[:space:]])root=/dev/mmcblk' "${mount_dir}/boot/uEnv.txt"; then
 				fail "${board} 的 Realtek uEnv.txt 仍使用不穩定的 mmcblk 根裝置"
 			fi
-			grep -Fq "if test \$dram_size = 1GB; then setenv dtb rtd-1395-bananapi-m4-1GB.dtb; fi" \
-				"${mount_dir}/boot/uEnv.txt" || fail "${board} 的 Realtek uEnv.txt 缺少 1 GiB DTB 選擇"
-			grep -Fq "if test \$dram_size = 2GB; then setenv dtb rtd-1395-bananapi-m4-2GB.dtb; fi" \
-				"${mount_dir}/boot/uEnv.txt" || fail "${board} 的 Realtek uEnv.txt 缺少 2 GiB DTB 選擇"
+			while IFS= read -r required_uenv_fragment; do
+				[[ -n "${required_uenv_fragment}" ]] || continue
+				grep -Fq -- "${required_uenv_fragment}" "${mount_dir}/boot/uEnv.txt" ||
+					fail "${board} 的 Realtek uEnv.txt 缺少必要片段：${required_uenv_fragment}"
+			done < <(board_values "${board}" required_uenv_fragments)
+			if [[ "${board}" == bananapim4 ]]; then
+				grep -Fq "if test \$dram_size = 1GB; then setenv dtb rtd-1395-bananapi-m4-1GB.dtb; fi" \
+					"${mount_dir}/boot/uEnv.txt" || fail "${board} 的 Realtek uEnv.txt 缺少 1 GiB DTB 選擇"
+				grep -Fq "if test \$dram_size = 2GB; then setenv dtb rtd-1395-bananapi-m4-2GB.dtb; fi" \
+					"${mount_dir}/boot/uEnv.txt" || fail "${board} 的 Realtek uEnv.txt 缺少 2 GiB DTB 選擇"
+			fi
 			;;
 		*) fail "${board} 的開機設定類型不支援：${boot_configuration}" ;;
 	esac

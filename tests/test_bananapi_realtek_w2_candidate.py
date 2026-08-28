@@ -41,6 +41,10 @@ KERNEL_PATCHES = (
 CHECKER = ROOT / "tools/check-bananapi-realtek-w2-source-policy.py"
 BUILDER = ROOT / "tools/build-bananapi-realtek-w2-components.sh"
 VERIFIER = ROOT / "tools/verify-bananapi-realtek-w2-components.sh"
+IMAGE_BUILDER = ROOT / "tools/build-bananapi-realtek-w2-candidate.sh"
+IMAGE_RUNNER = ROOT / "tools/run-bananapi-realtek-w2-candidate-isolated-cache.sh"
+IMAGE_VERIFIER = ROOT / "tools/verify-bananapi-realtek-w2-candidate.sh"
+COMMON_IMAGE_VERIFIER = ROOT / "tools/verify-bananapi-sunxi-candidates.sh"
 
 
 class BananaPiRealtekW2CandidateTests(unittest.TestCase):
@@ -62,6 +66,7 @@ class BananaPiRealtekW2CandidateTests(unittest.TestCase):
             'KERNEL_TARGET="legacy"',
             'BOOTCONFIG="rtd1296_sd_bananapi_defconfig"',
             'BOOTFS_TYPE="fat"',
+            'BOOT_FS_LABEL="BPI-BOOT"',
             'ROOT_FS_LABEL="BPI-ROOT"',
             f'REALTEK_BPI_BSP_BRANCH="commit:{revision}"',
             f'ARMBIAN_FIRMWARE_GIT_REF_BOARD="commit:{firmware}"',
@@ -78,6 +83,9 @@ class BananaPiRealtekW2CandidateTests(unittest.TestCase):
         self.assertEqual(self.config["linux_ref"], f"commit:{revision}")
         self.assertEqual(self.config["uboot_ref"], f"commit:{revision}")
         self.assertFalse(self.config["atf_applicable"])
+        self.assertEqual(self.config["current_evidence_level"], "L1")
+        self.assertEqual(self.config["target_evidence_level"], "L2")
+        self.assertTrue(self.config["verify_firmware_source_resolution"])
 
     def test_linked_prebuilt_assets_block_public_release(self) -> None:
         assets = self.config["linked_prebuilt_assets"]
@@ -220,7 +228,7 @@ class BananaPiRealtekW2CandidateTests(unittest.TestCase):
             )
             self.assertEqual(
                 self.policy["dtb_sha256"],
-                evidence["artifacts"][self.policy["dtb"]]["sha256"],
+                evidence["artifacts"][Path(self.policy["dtb"]).name]["sha256"],
             )
 
     def test_global_registry_records_only_component_level(self) -> None:
@@ -246,9 +254,52 @@ class BananaPiRealtekW2CandidateTests(unittest.TestCase):
         self.assertNotIn("git reset --hard", builder)
         self.assertIn("不得包含原始碼或建置樹", verifier)
 
+    def test_full_image_tools_are_w2_scoped_and_internal(self) -> None:
+        builder = IMAGE_BUILDER.read_text(encoding="utf-8")
+        runner = IMAGE_RUNNER.read_text(encoding="utf-8")
+        verifier = IMAGE_VERIFIER.read_text(encoding="utf-8")
+        common = COMMON_IMAGE_VERIFIER.read_text(encoding="utf-8")
+        self.assertIn("bananapi-realtek-rtd1296-w2-trixie-legacy-cli", builder)
+        self.assertIn("bananapi-realtek-w2-candidate-cache-overlay", builder)
+        self.assertIn("ALLOW_INTERNAL_W2_CANDIDATE", builder)
+        self.assertIn("PUBLIC_RELEASE=no", builder)
+        self.assertIn("HARDWARE_CLAIMS=no", builder)
+        self.assertIn("CACHE_LOWER", runner)
+        self.assertIn("REQUIRE_BUILD_VERIFIER_IDENTITY=yes", verifier)
+        self.assertIn("required_uenv_fragments", common)
+        self.assertNotIn("rm -rf", builder + runner + verifier)
+
+    def test_full_image_contract_is_strict_and_non_public(self) -> None:
+        self.assertEqual(self.policy["partition_start_sector"], 8192)
+        self.assertEqual(self.policy["root_partition_start_sector"], 532480)
+        self.assertEqual(self.policy["boot_partition_label"], "BPI-BOOT")
+        self.assertEqual(self.policy["root_partition_label"], "BPI-ROOT")
+        self.assertEqual(self.policy["boot_configuration"], "realtek_bpi_uenv")
+        self.assertEqual(self.policy["uboot_offset"], 40960)
+        self.assertEqual(
+            self.policy["vendor_boot_dtbs"],
+            ["rtd-1296-bananapi-w2-2GB.dtb"],
+        )
+        self.assertFalse(self.config["public_release_allowed"])
+        self.assertFalse(
+            self.config["license_policy"]["opaque_payload_redistribution_verified"]
+        )
+        self.assertFalse(
+            self.config["license_policy"]["toolchain_redistribution_verified"]
+        )
+
     def test_policy_document_and_patches_exist(self) -> None:
         self.assertTrue(POLICY.is_file())
-        for path in (*UBOOT_PATCHES, *KERNEL_PATCHES, CHECKER, BUILDER, VERIFIER):
+        for path in (
+            *UBOOT_PATCHES,
+            *KERNEL_PATCHES,
+            CHECKER,
+            BUILDER,
+            VERIFIER,
+            IMAGE_BUILDER,
+            IMAGE_RUNNER,
+            IMAGE_VERIFIER,
+        ):
             with self.subTest(path=path):
                 self.assertTrue(path.is_file())
 
