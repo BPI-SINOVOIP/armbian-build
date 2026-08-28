@@ -132,6 +132,16 @@ function prepare_host_binfmt_qemu() {
 	return 0
 }
 
+function binfmt_registration_needs_update() {
+	declare wanted_arch="${1}"
+	declare proc_root="${BINFMT_PROC_ROOT:-/proc/sys/fs/binfmt_misc}"
+	declare share_root="${BINFMT_SHARE_ROOT:-/usr/share/binfmts}"
+
+	[[ -e "${proc_root}/qemu-${wanted_arch}" && -e "${share_root}/qemu-${wanted_arch}" ]] || return 0
+	update-binfmts --display "qemu-${wanted_arch}" >/dev/null 2>&1 || return 0
+	return 1
+}
+
 # The actual binfmt manipulations when cross-build is confirmed above.
 function prepare_host_binfmt_qemu_cross() {
 	local failed_binfmt_modprobe=0
@@ -179,7 +189,7 @@ function prepare_host_binfmt_qemu_cross() {
 			continue
 		fi
 
-		if [[ ! -e "/proc/sys/fs/binfmt_misc/qemu-${wanted_arch}" || ! -e "/usr/share/binfmts/qemu-${wanted_arch}" ]]; then
+		if binfmt_registration_needs_update "${wanted_arch}"; then
 			display_alert "Updating binfmts" "update-binfmts --enable qemu-${wanted_arch}" "debug"
 
 			# special case: some arm64 machines cant' really run armhf binaries natively (Apple Silicon); check if that is the case and forcibly import and enable qemu-arm for them.

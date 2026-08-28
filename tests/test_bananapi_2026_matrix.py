@@ -12,6 +12,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = ROOT / "b-bananapi-2026"
+QEMU_SCRIPT = ROOT / "lib/functions/rootfs/qemu-static.sh"
 
 
 class BananaPi2026MatrixTests(unittest.TestCase):
@@ -257,6 +258,45 @@ BINFMT_RETRY_DELAY=0
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn("暫時性 QEMU/binfmt 失敗", log)
         self.assertIn("image: image.img", result.stdout)
+
+    def test_missing_binfmt_database_entry_requires_update(self) -> None:
+        """核心與樣板存在時仍須確認 update-binfmts 狀態資料庫。"""
+        function_text = subprocess.run(
+            [
+                "awk",
+                "/^function binfmt_registration_needs_update\\(\\)/,/^}/",
+                str(QEMU_SCRIPT),
+            ],
+            check=True,
+            capture_output=True,
+            text=True,
+        ).stdout
+
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            temporary = Path(temporary_directory)
+            proc_root = temporary / "proc"
+            share_root = temporary / "share"
+            proc_root.mkdir()
+            share_root.mkdir()
+            (proc_root / "qemu-riscv64").touch()
+            (share_root / "qemu-riscv64").touch()
+            shell = f"""
+BINFMT_PROC_ROOT={proc_root!s}
+BINFMT_SHARE_ROOT={share_root!s}
+DISPLAY_OK=no
+update-binfmts() {{ [[ "${{DISPLAY_OK}}" == yes ]]; }}
+{function_text}
+binfmt_registration_needs_update riscv64 || exit 11
+DISPLAY_OK=yes
+if binfmt_registration_needs_update riscv64; then exit 12; fi
+"""
+            result = subprocess.run(
+                ["bash", "-c", shell],
+                capture_output=True,
+                text=True,
+            )
+
+        self.assertEqual(result.returncode, 0, result.stderr)
 
 
 if __name__ == "__main__":
