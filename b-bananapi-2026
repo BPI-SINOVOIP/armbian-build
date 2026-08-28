@@ -20,6 +20,8 @@ EXPERT="${EXPERT:-yes}"
 DOWNLOAD_MIRROR="${DOWNLOAD_MIRROR:-bfsu}"
 SKIP_EXISTING="${SKIP_EXISTING:-no}"
 ALLOW_HEADLESS_DESKTOP="${ALLOW_HEADLESS_DESKTOP:-no}"
+BINFMT_RETRIES="${BINFMT_RETRIES:-2}"
+BINFMT_RETRY_DELAY="${BINFMT_RETRY_DELAY:-10}"
 
 usage() {
 	cat <<-EOF
@@ -54,6 +56,7 @@ usage() {
 	  EXTRA_COMPILE_ARGS, COMPRESS, XZ_THREADS, STOP_ON_FAIL, INCLUDE_LAMOBO
 	  INCLUDE_WIP, KEEP_RAW, EXPERT, DOWNLOAD_MIRROR
 	  CUSTOM_UBUNTU_MIRROR_PORTS, SKIP_EXISTING, ALLOW_HEADLESS_DESKTOP
+	  BINFMT_RETRIES, BINFMT_RETRY_DELAY
 
 	Examples:
 	  $0 list
@@ -400,7 +403,9 @@ run_one() {
 	local release="$3"
 	local image_type="$4"
 	local log="$5"
-	local cmd status img
+	local cmd status img attempt=0
+	local binfmt_retries="${BINFMT_RETRIES:-2}"
+	local binfmt_retry_delay="${BINFMT_RETRY_DELAY:-10}"
 
 	if [[ "${SKIP_EXISTING}" == "yes" ]] && matching_image_exists "${board}" "${release}" "${branch}" "${image_type}"; then
 		printf 'skip-existing: %s %s %s %s\n' "${board}" "${branch}" "${release}" "${image_type}"
@@ -411,10 +416,29 @@ run_one() {
 	printf '\n==> %s %s %s %s\n' "${board}" "${branch}" "${release}" "${image_type}"
 	printf '+ %s\n' "${cmd}"
 
-	set +e
-	bash -lc "${cmd}" 2>&1 | tee "${log}"
-	status=${PIPESTATUS[0]}
-	set -e
+	[[ "${binfmt_retries}" =~ ^[0-9]+$ && "${binfmt_retry_delay}" =~ ^[0-9]+$ ]] || {
+		printf 'error: BINFMT_RETRIES 與 BINFMT_RETRY_DELAY 必須是非負整數。\n' >&2
+		return 2
+	}
+	: > "${log}"
+	while :; do
+		set +e
+		bash -lc "${cmd}" 2>&1 | tee -a "${log}"
+		status=${PIPESTATUS[0]}
+		set -e
+		if ((status == 0 || attempt >= binfmt_retries)); then
+			break
+		fi
+		if ! grep -Eq \
+			'can neither be executed natively nor via qemu|not a supported binfmt name|qemu-[^ ]+ not in database' \
+			"${log}"; then
+			break
+		fi
+		((attempt += 1))
+		printf '暫時性 QEMU/binfmt 失敗，%s 秒後重試（%s/%s）。\n' \
+			"${binfmt_retry_delay}" "${attempt}" "${binfmt_retries}" | tee -a "${log}"
+		sleep "${binfmt_retry_delay}"
+	done
 
 	if ((status == 0)); then
 		img="$(find_latest_image "${board}" "${release}" "${branch}" "${image_type}")"

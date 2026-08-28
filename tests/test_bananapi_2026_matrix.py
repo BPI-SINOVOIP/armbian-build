@@ -226,6 +226,38 @@ touch image.img
         self.assertEqual(result.returncode, 2)
         self.assertIn("XZ_THREADS must be a non-negative integer", result.stderr)
 
+    def test_transient_binfmt_failure_is_retried(self) -> None:
+        """暫時性 QEMU binfmt 競爭失敗應在同一矩陣鍵內重試。"""
+        function_text = subprocess.run(
+            ["awk", "/^run_one\\(\\)/,/^}/", str(SCRIPT)],
+            check=True,
+            capture_output=True,
+            text=True,
+        ).stdout
+        shell = r"""
+make_command() {
+    printf '%s\n' 'if [[ ! -f retry.flag ]]; then touch retry.flag; echo "E: riscv64 can neither be executed natively nor via qemu user emulation with binfmt_misc" >&2; exit 43; fi; touch image.img'
+}
+find_latest_image() { printf 'image.img\n'; }
+compress_image() { return 0; }
+SKIP_EXISTING=no
+BINFMT_RETRIES=2
+BINFMT_RETRY_DELAY=0
+""" + function_text + "\nrun_one board current resolute server build.log"
+
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            result = subprocess.run(
+                ["bash", "-c", shell],
+                cwd=temporary_directory,
+                capture_output=True,
+                text=True,
+            )
+            log = (Path(temporary_directory) / "build.log").read_text()
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("暫時性 QEMU/binfmt 失敗", log)
+        self.assertIn("image: image.img", result.stdout)
+
 
 if __name__ == "__main__":
     unittest.main()
