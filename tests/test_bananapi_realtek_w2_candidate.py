@@ -208,15 +208,37 @@ class BananaPiRealtekW2CandidateTests(unittest.TestCase):
                 self.assertFalse(item["included_in_candidate"])
                 self.assertFalse(item["redistribution_license_verified"])
 
-    def test_transitional_l2_state_does_not_imply_hardware_or_rootfs(self) -> None:
+    def test_formal_l2_state_preserves_release_and_hardware_boundaries(self) -> None:
         self.assertEqual(self.config["candidate_level"], "L2 內部軟體候選")
         self.assertEqual(self.config["candidate_scope"], "internal-l2")
-        self.assertFalse(self.config["full_image_built"])
-        self.assertFalse(self.config["rootfs_image_built"])
-        self.assertFalse(self.config["full_rootfs_image_built"])
-        self.assertNotIn("image_build_evidence", self.config)
+        self.assertTrue(self.config["full_image_built"])
+        self.assertTrue(self.config["rootfs_image_built"])
+        self.assertTrue(self.config["full_rootfs_image_built"])
+        image_evidence = self.config["image_build_evidence"]
+        self.assertEqual(image_evidence["status"], "complete")
+        self.assertEqual(image_evidence["evidence_level"], "L2")
+        self.assertTrue(image_evidence["read_only_content_verified"])
+        self.assertFalse(image_evidence["hardware_tested"])
+        self.assertEqual(
+            image_evidence["source_commit"],
+            "7882ba85da55ad5a8096321811a8c2ff531b4c01",
+        )
+        self.assertEqual(
+            image_evidence["source_tree"],
+            "10ccab5ed21a148cb33d3693490d80fdbfc48b38",
+        )
+        self.assertEqual(
+            image_evidence["image"]["sha256"],
+            "37d28132a24e0944112097caf66ce714ee589e6b8317351e861a6ff0c85a34fe",
+        )
+        self.assertEqual(
+            image_evidence["archive"]["sha256"],
+            "ae74b820d3b3e540d79bf8a60d2d92210f1e41090e7c3ef14b28d0504072b116",
+        )
+        self.assertTrue(image_evidence["xz_stream_verified"])
         self.assertFalse(self.config["hardware_validated"])
         self.assertFalse(self.config["hardware_claims_allowed"])
+        self.assertFalse(self.config["public_release_allowed"])
         if self.config["component_build_completed"]:
             evidence = self.config["component_build_evidence"]
             self.assertEqual(
@@ -241,16 +263,20 @@ class BananaPiRealtekW2CandidateTests(unittest.TestCase):
             self.policy["final_kernel_config_sha256"],
             "0bcd9fdd4e4dcbb1dbe5bd2702ad08171e425c8abf1f9e30e05f6fe4301ec6a3",
         )
-        self.assertIsNone(self.policy["image_dtb_sha256"])
+        self.assertEqual(
+            self.policy["image_dtb_sha256"],
+            "e2f0d51977310ecd06a8b72088a3ee3fbcec439b850ceacd9887c9b557d1c420",
+        )
         self.assertEqual(
             self.policy["dtb_sha256_evidence_scope"],
-            "component-only-l1",
+            "full-image-l2",
         )
 
-    def test_global_registry_stays_l1_until_formal_rebuild(self) -> None:
+    def test_global_registry_records_formal_l2_without_hardware_claim(self) -> None:
         evidence = self.status["evidence"]["bananapiw2"]
-        self.assertEqual(evidence["level"], "L1")
-        self.assertIn("未建立 rootfs 或整碟映像", evidence["basis"])
+        self.assertEqual(evidence["level"], "L2")
+        self.assertIn("歷史重驗", evidence["basis"])
+        self.assertIn("實機功能仍待驗證", evidence["basis"])
         self.assertGreaterEqual(
             len(self.status["open_findings"]["bananapiw2"]),
             3,
@@ -348,7 +374,7 @@ class BananaPiRealtekW2CandidateTests(unittest.TestCase):
             "13dcf92c40e1d19161da68adf834f45bbe56926e35782de20585bd2bbbf5335d",
         )
 
-    def test_transitional_contract_rejects_historical_verification(self) -> None:
+    def test_formal_contract_accepts_historical_verification(self) -> None:
         result = subprocess.run(
             [
                 "python3",
@@ -361,23 +387,26 @@ class BananaPiRealtekW2CandidateTests(unittest.TestCase):
             capture_output=True,
             text=True,
         )
-        self.assertNotEqual(result.returncode, 0)
-        self.assertIn("過渡契約不能執行歷史映像重驗", result.stderr)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("歷史重驗通過", result.stdout)
 
-    def test_transitional_contract_rejects_premature_image_state(self) -> None:
+    def test_formal_contract_rejects_incomplete_or_tampered_image_state(self) -> None:
         cases = {
-            "rootfs 旗標提前成立": lambda data: data.__setitem__(
-                "rootfs_image_built", True
+            "rootfs 旗標倒退": lambda data: data.__setitem__(
+                "rootfs_image_built", False
             ),
-            "完整 rootfs 旗標提前成立": lambda data: data.__setitem__(
-                "full_rootfs_image_built", True
+            "完整 rootfs 旗標倒退": lambda data: data.__setitem__(
+                "full_rootfs_image_built", False
             ),
-            "提前夾帶映像證據": lambda data: data.__setitem__(
-                "image_build_evidence", {}
+            "移除映像證據": lambda data: data.pop(
+                "image_build_evidence"
             ),
-            "映像 DTB 提前成立": lambda data: data["boards"][
+            "移除映像 DTB": lambda data: data["boards"][
                 "bananapiw2"
-            ].__setitem__("image_dtb_sha256", self.policy["dtb_sha256"]),
+            ].__setitem__("image_dtb_sha256", None),
+            "破壞映像雜湊格式": lambda data: data["image_build_evidence"][
+                "image"
+            ].__setitem__("sha256", "0" * 63),
         }
         for name, mutate in cases.items():
             with self.subTest(name=name):

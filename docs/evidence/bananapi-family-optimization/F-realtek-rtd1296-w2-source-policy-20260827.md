@@ -4,7 +4,7 @@
 
 ## 階段結論
 
-`bananapiw2` 已完成固定來源、預建二進位資產盤點、板級介面契約、隔離元件建置及唯讀元件檢查。板卡仍保留 `.wip`，且本工作禁止完整根檔案系統與映像建置；目前證據只達 `L1 元件候選`，不得宣稱可開機、介面可用、硬體通過或允許公開發布。
+`bananapiw2` 先完成固定來源、預建二進位資產盤點、板級介面契約、隔離元件建置及 L1 唯讀元件檢查；2026-08-28 再由已推送提交完整重建 rootfs、IMG 與 XZ，並通過 L2 唯讀內容及歷史重驗。板卡仍保留 `.wip`，不得宣稱可開機、介面可用、硬體通過或允許公開發布。
 
 本候選只修改 W2 板級設定、W2 專用修補、驗證契約及工具，不修改共用 Realtek 家族建置邏輯。主工作樹與既有 Armbian 快取只作唯讀研究來源。
 
@@ -99,11 +99,12 @@ U-Boot 兩次建置未出現警告；Linux 建置日誌計得 246 筆 `warning:`
 
 ## 升級與發布門檻
 
-完成隔離元件建置與唯讀驗證後，最多只能證明固定來源的元件可在目前主機產生，不能升格為完整映像或硬體證據。公開發布至少仍須：
+2026-08-28 已由提交 `7882ba85da55ad5a8096321811a8c2ff531b4c01` 完成正式 L2 重建。IMG SHA-256 為 `37d28132a24e0944112097caf66ce714ee589e6b8317351e861a6ff0c85a34fe`，XZ SHA-256 為 `ae74b820d3b3e540d79bf8a60d2d92210f1e41090e7c3ef14b28d0504072b116`；MBR、FAT、ext4、根標籤、vendor boot、W2 DTB、U-Boot 載荷、最終核心設定、清單與 XZ 串流均通過唯讀守門及歷史重驗。完整證據記於 `M-realtek-rtd1296-w2-L2-build-20260828.md`。
+
+L2 只證明固定來源完整映像符合本機軟體契約，不能升格為硬體或發布證據。公開發布至少仍須：
 
 1. 釐清四個 U-Boot 靜態庫、`bluecore.audio`、內含工具鏈及外部文件的來源與再散布授權。
-2. 完成不修改共用快取的隔離完整映像建置，驗證 MBR、40 KiB 寫入、FAT boot、根標籤、IMG／XZ 同一性及唯讀映像內容。
-3. 以實體板及 UART 完成多次冷啟動、SD、eMMC、SATA、PCIe、網路、USB host／gadget、HDMI TX／RX、DisplayPort、音訊、GPIO、I2C、SPI、PWM、熱感測、watchdog、重新啟動、關機與長時間壓力測試。
-4. 評估 Linux 4.9.119 與 U-Boot 2015.07 的安全維護風險，建立可持續更新或移植到受維護版本的方案。
+2. 以實體板及 UART 完成多次冷啟動、SD、eMMC、SATA、PCIe、網路、USB host／gadget、HDMI TX／RX、DisplayPort、音訊、GPIO、I2C、SPI、PWM、熱感測、watchdog、重新啟動、關機與長時間壓力測試。
+3. 評估 Linux 4.9.119、U-Boot 2015.07、229 筆正式建置 vendor 警告與非逐位元重現輸入的風險，建立可持續更新或移植到受維護版本的方案。
 
 在上述阻擋關閉以前，`public_release_allowed`、`hardware_validated` 與 `hardware_claims_allowed` 必須維持 `false`。

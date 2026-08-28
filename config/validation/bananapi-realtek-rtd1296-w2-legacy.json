@@ -9,8 +9,8 @@
   "candidate_public_release_approved": false,
   "hardware_validation_complete": false,
   "firmware_redistribution_license_verified": false,
-  "rootfs_image_built": false,
-  "full_rootfs_image_built": false,
+  "rootfs_image_built": true,
+  "full_rootfs_image_built": true,
   "source_date_epoch": 1571768256,
   "source_contract_projection_sha256": "13dcf92c40e1d19161da68adf834f45bbe56926e35782de20585bd2bbbf5335d",
   "linux_source": "https://github.com/BPI-SINOVOIP/BPI-W2-bsp.git",
@@ -128,7 +128,42 @@
     "toolchain_redistribution_verified": false,
     "decision": "只允許建立內部軟體候選，不允許公開發布組合映像"
   },
-  "full_image_built": false,
+  "full_image_built": true,
+  "image_build_evidence": {
+    "status": "complete",
+    "evidence_level": "L2",
+    "full_rootfs_image_built": true,
+    "read_only_content_verified": true,
+    "hardware_tested": false,
+    "source_commit": "7882ba85da55ad5a8096321811a8c2ff531b4c01",
+    "source_tree": "10ccab5ed21a148cb33d3693490d80fdbfc48b38",
+    "verifier_commit": "7882ba85da55ad5a8096321811a8c2ff531b4c01",
+    "source_contract_projection_sha256": "13dcf92c40e1d19161da68adf834f45bbe56926e35782de20585bd2bbbf5335d",
+    "source_date_epoch": 1571768256,
+    "build_validation_config_sha256": "77c712d668959ac7aa96f537fae7a31dedfe3e63a1c6fbb667b5923775c0a4b0",
+    "verification_config_sha256": "77c712d668959ac7aa96f537fae7a31dedfe3e63a1c6fbb667b5923775c0a4b0",
+    "candidate_matrix_sha256": "4861b6760662b18bda8ca9693d0dffd6f4cb0f64614abb7fc0c27c3d6c78bb51",
+    "completion_status_sha256": "a66116e77a51958f00eb3a58f5ceb8d5b30db8130fd973253648068e0a8c70b9",
+    "verification_manifest_sha256": "88fa23c8427ce2a318a3134bbe47f3e2527417b4650db7a28628bac908361166",
+    "uboot_payload_manifest_sha256": "cb469ce42fd98db011a8d7995576b9d3bdb3903fd14b45a692b9231e7e6fef70",
+    "final_config_manifest_sha256": "8ef4c0e05faaf5feeb2e8019a29fbdc23a405a95fcfdb89a34411deb15ee9a98",
+    "xz_stream_verified": true,
+    "verified_utc": "2026-08-28T01:26:39Z",
+    "image": {
+      "path": "output/images/2026.08/bananapi-realtek-rtd1296-w2-trixie-legacy-cli/bananapiw2/Armbian-unofficial_26.05.0-trunk_Bananapiw2_trixie_legacy_4.9.119_minimal.img",
+      "size": 2088763392,
+      "sha256": "37d28132a24e0944112097caf66ce714ee589e6b8317351e861a6ff0c85a34fe"
+    },
+    "archive": {
+      "path": "output/images/2026.08/bananapi-realtek-rtd1296-w2-trixie-legacy-cli/bananapiw2/Armbian-unofficial_26.05.0-trunk_Bananapiw2_trixie_legacy_4.9.119_minimal.img.xz",
+      "size": 393632040,
+      "sha256": "ae74b820d3b3e540d79bf8a60d2d92210f1e41090e7c3ef14b28d0504072b116"
+    },
+    "linux_dtb": {
+      "path": "realtek/rtd129x/rtd-1296-bananapi-w2-2GB.dtb",
+      "sha256": "e2f0d51977310ecd06a8b72088a3ee3fbcec439b850ceacd9887c9b557d1c420"
+    }
+  },
   "component_build_completed": true,
   "component_build_evidence": {
     "local_evidence_root": "output/components/2026.08/bananapi-realtek-rtd1296-w2-legacy",
@@ -243,8 +278,8 @@
       ],
       "dtb": "realtek/rtd129x/rtd-1296-bananapi-w2-2GB.dtb",
       "dtb_sha256": "e2f0d51977310ecd06a8b72088a3ee3fbcec439b850ceacd9887c9b557d1c420",
-      "image_dtb_sha256": null,
-      "dtb_sha256_evidence_scope": "component-only-l1",
+      "image_dtb_sha256": "e2f0d51977310ecd06a8b72088a3ee3fbcec439b850ceacd9887c9b557d1c420",
+      "dtb_sha256_evidence_scope": "full-image-l2",
       "final_kernel_config_sha256": "0bcd9fdd4e4dcbb1dbe5bd2702ad08171e425c8abf1f9e30e05f6fe4301ec6a3",
       "dtb_image_path": "/boot/bananapi/bpi-w2/linux/rtd-1296-bananapi-w2-2GB.dtb",
       "uboot_version": "2015.07",

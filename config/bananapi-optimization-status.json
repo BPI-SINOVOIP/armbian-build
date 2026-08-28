@@ -129,8 +129,8 @@
       "basis": "Trixie legacy minimal CLI 已由隔離快取完整建置並通過映像、固定 Linux／U-Boot／OpenSBI 來源、六項 SpacemiT 啟動載荷、MBR、CM6 專用 DTB、核心功能、韌體授權與標準 I/O 工具唯讀守門；SD、eMMC 與實體功能仍待實機驗證"
     },
     "bananapiw2": {
-      "level": "L1",
-      "basis": "固定 BSP 提交的 U-Boot 2015.07、Linux 4.9.119、W2 DTB、核心設定與 modules 已完成隔離元件建置及唯讀守門；未建立 rootfs 或整碟映像，預建資產授權與全部實體功能仍待驗證"
+      "level": "L2",
+      "basis": "Trixie legacy 精簡 CLI 已由已推送提交 7882ba85d 與專用隔離快取乾淨重建；IMG、XZ、MBR 雙分割區、唯讀 FAT／ext4、W2 DTB、固定時間 U-Boot 載荷、最終核心設定、固定 BSP／firmware 來源及必要套件均通過物質守門與歷史重驗；不透明載荷授權與實機功能仍待驗證"
     },
     "bananapim5pro": {
       "level": "L2",
@@ -277,7 +277,7 @@
     "bananapim64": "完成 SD／eMMC、GbE、Wi-Fi、Bluetooth、USB OTG、HDMI、Lima 與 Cedrus 實測",
     "bananapif3": "完成 SD／eMMC、GbE、PCIe、USB、GPU、VPU、NPU 與 40-pin 實測",
     "bananapicm6": "完成 SD／eMMC 冷啟動、網路、USB、顯示與加速器實測",
-    "bananapiw2": "建立固定來源的完整 rootfs／IMG，閉合靜態庫、音訊資產與工具鏈授權邊界",
+    "bananapiw2": "閉合四個靜態庫、bluecore.audio 與工具鏈再散布授權，再完成 SD／eMMC、SATA、PCIe、網路、USB、顯示、音訊及 40-pin 實測",
     "bananapim5pro": "完成儲存、網路、無線、顯示、GPU、VPU、RGA、NPU 與 40-pin 實測",
     "bananapim7": "完成儲存、網路、顯示、媒體、NPU、USB 與 40-pin 實測",
     "bananapim2zero": "完成 SD、Wi-Fi、Bluetooth、USB OTG、HDMI、Lima、Cedrus 與 40-pin 實測",
@@ -344,8 +344,8 @@
     "bananapir64": [],
     "bananapiw2": [
       "四個 U-Boot 靜態庫、bluecore.audio、內含工具鏈與外部文件的再散布授權尚未確認",
-      "完整映像、實體開機、儲存、網路、USB、顯示、音訊及 40-pin I/O 尚未驗證",
-      "Linux 4.9.119、U-Boot 2015.07 與 246 筆 vendor／DT 編譯警告仍有維護及安全風險"
+      "完整映像已通過 L2 軟體守門；實體開機、儲存、網路、USB、顯示、音訊及 40-pin I/O 尚未驗證",
+      "Linux 4.9.119、U-Boot 2015.07 與正式建置的 229 筆 vendor 警告仍有維護及安全風險；initramfs 與 APT 輸入也未達逐位元重現"
     ],
     "bananapiaim7": [
       "AIM7 與 ArmSoM AIM7 IO 的原理圖差異尚未閉合，既有 DTS 只啟用單 lane PCIe 且 SPI／DSI 停用；GPU、VPU、RGA、NPU 使用者空間與韌體授權仍待完整映像稽核"
