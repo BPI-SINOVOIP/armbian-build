@@ -99,11 +99,10 @@ class BananaPiSpacemitK3Sm10CandidateTests(unittest.TestCase):
 
     def test_candidate_remains_wip_and_blocks_unsupported_claims(self) -> None:
         self.assertTrue(BOARD.name.endswith(".wip"))
-        self.assertEqual(
-            self.config["candidate_level"], "L1 完整映像校準候選"
-        )
-        self.assertEqual(self.config["candidate_scope"], "internal-l1-calibration")
-        self.assertEqual(self.config["current_evidence_level"], "L1")
+        self.assertEqual(self.config["candidate_level"], "L2 內部軟體候選")
+        self.assertEqual(self.config["candidate_scope"], "internal-l2")
+        self.assertEqual(self.config["candidate_state"], "l2-transition")
+        self.assertEqual(self.config["current_evidence_level"], "L2")
         self.assertEqual(self.config["target_evidence_level"], "L2")
         self.assertTrue(self.config["component_build_completed"])
         self.assertFalse(self.config["full_image_built"])
@@ -142,7 +141,27 @@ class BananaPiSpacemitK3Sm10CandidateTests(unittest.TestCase):
         self.assertEqual(self.board["root_partition_start_sector"], 548864)
         self.assertEqual(
             self.board["required_partitions"],
-            ["1:bootfs:24576:*", "2:rootfs:548864:*"],
+            ["1:bootfs:24576:524288", "2:rootfs:548864:3192832"],
+        )
+        self.assertEqual(
+            self.board["final_kernel_config_sha256"],
+            "2ea6c3b62bd8118b685a10d6c4c22a1718df7a9e533c3e929282fcee90c82445",
+        )
+        self.assertEqual(
+            self.board["image_dtb_sha256"],
+            "a74520d979cc62fcdb12dfddd97c7968900109df6a33ae34c1489d87a34695ba",
+        )
+        self.assertEqual(
+            self.board["dtb_sha256_evidence_scope"], "l1-calibration-image"
+        )
+        calibration = self.config["l1_calibration_evidence"]
+        self.assertEqual(
+            calibration["source_commit"],
+            "0959d5305a3bf22e0c0a80af31aba0f2074c12fa",
+        )
+        self.assertEqual(
+            calibration["calibration_file_sha256"],
+            "39461c9fe44dd3d0700ae2e60984441bf0b4ddc1642fca75424eb66e7b9a72c6",
         )
         self.assertEqual(self.board["boot_configuration"], "env_k3")
         self.assertEqual(
@@ -277,9 +296,10 @@ class BananaPiSpacemitK3Sm10CandidateTests(unittest.TestCase):
 
     def test_l2_transition_rejects_wildcard_gpt_contract(self) -> None:
         mutated = json.loads(json.dumps(self.config))
-        mutated["candidate_level"] = "L2 內部軟體候選"
-        mutated["candidate_scope"] = "internal-l2"
-        mutated["current_evidence_level"] = "L2"
+        mutated["boards"]["bananapism10"]["required_partitions"] = [
+            "1:bootfs:24576:*",
+            "2:rootfs:548864:*",
+        ]
         with tempfile.TemporaryDirectory(prefix="sm10-l2-transition-") as directory:
             path = Path(directory) / "candidate.json"
             path.write_text(
@@ -292,9 +312,113 @@ class BananaPiSpacemitK3Sm10CandidateTests(unittest.TestCase):
                 check=False,
             )
         self.assertNotEqual(rejected.returncode, 0)
-        self.assertIn("L2 GPT 契約不得含萬用值", rejected.stderr)
+        self.assertIn("L2 GPT 契約與 L1 校準證據不符", rejected.stderr)
 
-    def test_l1_contract_rejects_historical_image_promotion(self) -> None:
+    def test_l2_transition_rejects_premature_full_image_dtb_scope(self) -> None:
+        mutated = json.loads(json.dumps(self.config))
+        mutated["boards"]["bananapism10"]["dtb_sha256_evidence_scope"] = (
+            "full-image-l2"
+        )
+        with tempfile.TemporaryDirectory(prefix="sm10-l2-dtb-scope-") as directory:
+            path = Path(directory) / "candidate.json"
+            path.write_text(
+                json.dumps(mutated, ensure_ascii=False), encoding="utf-8"
+            )
+            rejected = subprocess.run(
+                [str(POLICY), str(path)],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+        self.assertNotEqual(rejected.returncode, 0)
+        self.assertIn("L2 DTB 證據範圍不符", rejected.stderr)
+
+    def test_l2_transition_rejects_uncalibrated_kernel_hash(self) -> None:
+        mutated = json.loads(json.dumps(self.config))
+        mutated["boards"]["bananapism10"]["final_kernel_config_sha256"] = "0" * 64
+        with tempfile.TemporaryDirectory(prefix="sm10-l2-kernel-hash-") as directory:
+            path = Path(directory) / "candidate.json"
+            path.write_text(
+                json.dumps(mutated, ensure_ascii=False), encoding="utf-8"
+            )
+            rejected = subprocess.run(
+                [str(POLICY), str(path)],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+        self.assertNotEqual(rejected.returncode, 0)
+        self.assertIn("L2 最終核心設定與 L1 校準證據不符", rejected.stderr)
+
+    def test_l2_transition_rejects_uncalibrated_image_dtb_hash(self) -> None:
+        mutated = json.loads(json.dumps(self.config))
+        mutated["boards"]["bananapism10"]["image_dtb_sha256"] = "0" * 64
+        with tempfile.TemporaryDirectory(prefix="sm10-l2-dtb-hash-") as directory:
+            path = Path(directory) / "candidate.json"
+            path.write_text(
+                json.dumps(mutated, ensure_ascii=False), encoding="utf-8"
+            )
+            rejected = subprocess.run(
+                [str(POLICY), str(path)],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+        self.assertNotEqual(rejected.returncode, 0)
+        self.assertIn("L2 映像 DTB 與 L1 校準證據不符", rejected.stderr)
+
+    def test_l2_transition_rejects_non_boolean_image_state(self) -> None:
+        mutated = json.loads(json.dumps(self.config))
+        mutated["full_image_built"] = None
+        with tempfile.TemporaryDirectory(prefix="sm10-l2-state-type-") as directory:
+            path = Path(directory) / "candidate.json"
+            path.write_text(
+                json.dumps(mutated, ensure_ascii=False), encoding="utf-8"
+            )
+            rejected = subprocess.run(
+                [str(POLICY), str(path)],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+        self.assertNotEqual(rejected.returncode, 0)
+        self.assertIn("full_image_built 必須是布林值", rejected.stderr)
+
+    def test_l2_transition_rejects_tampered_calibration_evidence(self) -> None:
+        mutated = json.loads(json.dumps(self.config))
+        mutated["l1_calibration_evidence"]["image"]["sha256"] = "0" * 64
+        with tempfile.TemporaryDirectory(prefix="sm10-l1-evidence-") as directory:
+            path = Path(directory) / "candidate.json"
+            path.write_text(
+                json.dumps(mutated, ensure_ascii=False), encoding="utf-8"
+            )
+            rejected = subprocess.run(
+                [str(POLICY), str(path)],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+        self.assertNotEqual(rejected.returncode, 0)
+        self.assertIn("L1 校準機器證據雜湊不符", rejected.stderr)
+
+    def test_l2_transition_rejects_stale_image_evidence(self) -> None:
+        mutated = json.loads(json.dumps(self.config))
+        mutated["image_build_evidence"] = {"status": "complete"}
+        with tempfile.TemporaryDirectory(prefix="sm10-l2-stale-image-") as directory:
+            path = Path(directory) / "candidate.json"
+            path.write_text(
+                json.dumps(mutated, ensure_ascii=False), encoding="utf-8"
+            )
+            rejected = subprocess.run(
+                [str(POLICY), str(path)],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+        self.assertNotEqual(rejected.returncode, 0)
+        self.assertIn("L2 過渡契約不得夾帶舊映像證據", rejected.stderr)
+
+    def test_l2_transition_contract_rejects_historical_image_promotion(self) -> None:
         rejected = subprocess.run(
             [str(POLICY), str(CONFIG), "--verify-historical-image"],
             text=True,
@@ -302,7 +426,7 @@ class BananaPiSpacemitK3Sm10CandidateTests(unittest.TestCase):
             check=False,
         )
         self.assertNotEqual(rejected.returncode, 0)
-        self.assertIn("L1 校準契約不能執行歷史映像重驗", rejected.stderr)
+        self.assertIn("L2 過渡契約不能執行歷史映像重驗", rejected.stderr)
 
     def test_dedicated_tools_keep_component_and_full_image_paths_separate(self) -> None:
         source_text = SOURCE_VERIFY.read_text(encoding="utf-8")

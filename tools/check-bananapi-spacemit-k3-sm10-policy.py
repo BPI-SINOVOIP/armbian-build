@@ -32,14 +32,29 @@ LINUX_DTS = (
 BOOT_ENV = ROOT / "packages/blobs/riscv64/spacemit-k3/bpi-sm10/env_k3.txt"
 SOURCE_DATE_EPOCH = 1777390324
 FIRMWARE_REVISION = "f50a2a21bcdb77a562b3976930c5c6b521a1df08"
+L1_CALIBRATED_PARTITIONS = [
+    "1:bootfs:24576:524288",
+    "2:rootfs:548864:3192832",
+]
+L1_CALIBRATED_KERNEL_CONFIG_SHA256 = (
+    "2ea6c3b62bd8118b685a10d6c4c22a1718df7a9e533c3e929282fcee90c82445"
+)
+L1_CALIBRATED_IMAGE_DTB_SHA256 = (
+    "a74520d979cc62fcdb12dfddd97c7968900109df6a33ae34c1489d87a34695ba"
+)
+L1_CALIBRATION_EVIDENCE_SHA256 = (
+    "c9fadb5272c4052c30189967e3f417ac0195b0869beb9cf52e22ce6d375a4380"
+)
 CONTRACT_PROJECTION_EXCLUDED_TOP_LEVEL = {
     "candidate_level",
     "candidate_scope",
+    "candidate_state",
     "component_build_evidence",
     "current_evidence_level",
     "full_image_built",
     "full_rootfs_image_built",
     "image_build_evidence",
+    "l1_calibration_evidence",
     "rootfs_image_built",
     "source_contract_projection_sha256",
 }
@@ -70,6 +85,16 @@ def digest(path: Path) -> str:
 
 def valid_sha256(value: object) -> bool:
     return isinstance(value, str) and re.fullmatch(r"[0-9a-f]{64}", value) is not None
+
+
+def structured_sha256(value: object) -> str:
+    encoded = json.dumps(
+        value,
+        ensure_ascii=False,
+        sort_keys=True,
+        separators=(",", ":"),
+    ).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
 
 
 def load_json(path: Path, description: str) -> dict[str, object]:
@@ -195,7 +220,10 @@ def validate_image_evidence(config: dict[str, object], evidence: dict[str, objec
     linux_dtb = evidence.get("linux_dtb")
     require(isinstance(linux_dtb, dict), "L2 缺少映像 DTB 證據")
     require(linux_dtb.get("path") == board["dtb"], "L2 映像 DTB 路徑不符")
-    require(linux_dtb.get("sha256") == board["dtb_sha256"], "L2 映像 DTB 雜湊不符")
+    require(
+        linux_dtb.get("sha256") == board["image_dtb_sha256"],
+        "L2 映像 DTB 雜湊不符",
+    )
     for name, suffix in (("image", ".img"), ("archive", ".img.xz")):
         artifact = evidence.get(name)
         require(isinstance(artifact, dict), f"L2 {name} 證據格式不符")
@@ -392,13 +420,34 @@ def main() -> None:
     require(config["candidate_boot_media"] == ["sd"] and config["supported_boot_media"] == [], "不得把 SD 設計目標誤標為實機支援")
     require(len(config["public_distribution_blockers"]) >= 6, "公開散布阻擋記錄不足")
     require(len(config["private_signing_keys_in_sdk"]) >= 6, "SDK 私鑰風險記錄不足")
+    for field in (
+        "component_build_completed",
+        "full_image_built",
+        "rootfs_image_built",
+        "full_rootfs_image_built",
+    ):
+        require(type(config.get(field)) is bool, f"{field} 必須是布林值")
 
     current_level = config["current_evidence_level"]
     require(config["target_evidence_level"] == "L2", "目標證據層級不是 L2")
-    if config["full_image_built"]:
+    if current_level == "L2":
+        calibration_evidence = config.get("l1_calibration_evidence")
+        require(isinstance(calibration_evidence, dict), "L2 缺少 L1 校準機器證據")
+        require(
+            structured_sha256(calibration_evidence)
+            == L1_CALIBRATION_EVIDENCE_SHA256,
+            "L1 校準機器證據雜湊不符",
+        )
+        require(
+            calibration_evidence["source_contract_projection_sha256"]
+            == config["source_contract_projection_sha256"],
+            "L1 校準與目前來源契約投影不同",
+        )
+    if config["full_image_built"] is True:
         require(current_level == "L2", "完整映像狀態必須是 L2")
         require(config["candidate_level"] == "L2 內部軟體候選", "L2 候選名稱不符")
         require(config["candidate_scope"] == "internal-l2", "L2 候選範圍不符")
+        require(config["candidate_state"] == "l2-closed", "L2 完成狀態不符")
         require(config["rootfs_image_built"] is True and config["full_rootfs_image_built"] is True, "L2 缺少完整 rootfs 狀態")
         require(isinstance(config.get("image_build_evidence"), dict), "L2 缺少映像機器證據")
         require(status["evidence"]["bananapism10"]["level"] == "L2", "全域 SM10 等級不是 L2")
@@ -406,6 +455,7 @@ def main() -> None:
     elif current_level == "L2":
         require(config["candidate_level"] == "L2 內部軟體候選", "L2 過渡候選名稱不符")
         require(config["candidate_scope"] == "internal-l2", "L2 過渡候選範圍不符")
+        require(config["candidate_state"] == "l2-transition", "L2 過渡狀態不符")
         require(config["rootfs_image_built"] is False and config["full_rootfs_image_built"] is False, "L2 過渡契約不得預填 rootfs 完成")
         require("image_build_evidence" not in config, "L2 過渡契約不得夾帶舊映像證據")
         require(status["evidence"]["bananapism10"]["level"] == "L1", "L2 過渡期間全域 SM10 必須維持 L1")
@@ -415,6 +465,8 @@ def main() -> None:
         require(current_level == "L1", "校準契約必須是 L1")
         require(config["candidate_level"] == "L1 完整映像校準候選", "L1 校準候選名稱不符")
         require(config["candidate_scope"] == "internal-l1-calibration", "L1 校準範圍不符")
+        require(config["candidate_state"] == "l1-calibration", "L1 校準狀態不符")
+        require("l1_calibration_evidence" not in config, "L1 不得預填校準完成證據")
         require(config["rootfs_image_built"] is False and config["full_rootfs_image_built"] is False, "校準契約不得誤標 rootfs 完成")
         require("image_build_evidence" not in config, "校準契約不得夾帶舊映像證據")
         require(status["evidence"]["bananapism10"]["level"] == "L1", "全域 SM10 等級不是 L1")
@@ -481,10 +533,30 @@ def main() -> None:
     require(board["root_partition_start_sector"] == 548864, "rootfs 起點不符")
     require(board["required_partition_types"] == ["1:BC13C2FF-59E6-4262-A352-B275FD6F7172", "2:72EC70A6-CF74-40E6-BD49-4BDA08E8F224"], "GPT 類型契約不符")
     if current_level == "L2":
-        require(all("*" not in item for item in board["required_partitions"]), "L2 GPT 契約不得含萬用值")
-        require(valid_sha256(board["final_kernel_config_sha256"]), "L2 最終核心設定雜湊無效")
-        require(board["image_dtb_sha256"] == board["dtb_sha256"], "L2 映像 DTB 雜湊不符")
-        require(board["dtb_sha256_evidence_scope"] == "full-image-l2", "L2 DTB 證據範圍不符")
+        require(
+            board["required_partitions"] == L1_CALIBRATED_PARTITIONS,
+            "L2 GPT 契約與 L1 校準證據不符",
+        )
+        require(
+            board["final_kernel_config_sha256"]
+            == L1_CALIBRATED_KERNEL_CONFIG_SHA256,
+            "L2 最終核心設定與 L1 校準證據不符",
+        )
+        require(
+            board["image_dtb_sha256"]
+            == board["dtb_sha256"]
+            == L1_CALIBRATED_IMAGE_DTB_SHA256,
+            "L2 映像 DTB 與 L1 校準證據不符",
+        )
+        expected_scope = (
+            "full-image-l2"
+            if config["full_image_built"] is True
+            else "l1-calibration-image"
+        )
+        require(
+            board["dtb_sha256_evidence_scope"] == expected_scope,
+            "L2 DTB 證據範圍不符",
+        )
     else:
         require(board["required_partitions"] == ["1:bootfs:24576:*", "2:rootfs:548864:*"], "L1 GPT 校準契約不符")
         require(board["final_kernel_config_sha256"] is None, "L1 不得預填最終核心設定")
