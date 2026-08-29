@@ -1,0 +1,8 @@
+# 僅允許本機一般使用者群組存取 Banana Pi H618 的低階 I/O 裝置。
+SUBSYSTEM=="gpio", KERNEL=="gpiochip*", GROUP="users", MODE="0660"
+SUBSYSTEM=="i2c-dev", KERNEL=="i2c-[0-9]*", GROUP="users", MODE="0660"
+SUBSYSTEM=="spidev", KERNEL=="spidev*", GROUP="users", MODE="0660"
+
+# PWM 使用 sysfs；控制器與匯出通道必須個別調整屬組和權限。
+SUBSYSTEM=="pwm", KERNEL=="pwmchip*", RUN+="/bin/sh -c 'chgrp users /sys%p/export /sys%p/unexport; chmod g+rw /sys%p/export /sys%p/unexport'"
+SUBSYSTEM=="pwm", KERNEL=="pwm[0-9]*", RUN+="/bin/sh -c 'chgrp -R users /sys%p; chmod -R g+rwX /sys%p'"
