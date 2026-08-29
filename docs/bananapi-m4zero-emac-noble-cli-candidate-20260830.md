@@ -87,8 +87,23 @@ ffdd5159c9ed0c298f0cddb7ac584680208cb00e8944ae4c5b51fb3b3e10d992
   `bluez`、`bluez-tools` 與 `rfkill` 均已安裝。
 - `bpi-h618-hw-info` 與 `bpi-h618-io-compat-install` 已安裝。
 
-BPI 回歸測試共 26 項通過，另已通過 Python 語法、Bash 語法、ShellCheck 與
+BPI 回歸測試共 31 項通過，另已通過 Python 語法、Bash 語法、ShellCheck 與
 `git diff --check`。
+
+映像內 offset 8 KiB 起的 869,881 位元組與 U-Boot 套件內
+`u-boot-sunxi-with-spl.bin` 具有相同 SHA-256：
+
+```text
+57153608a7c7e80b34f1c66dfc51be46434f854817843a5100a0576797e997c7
+```
+
+可重複執行完整離線驗證：
+
+```bash
+./tools/verify-bpi-m4zero-emac-image.sh \
+  output/images/Armbian-unofficial_26.11.0-trunk_Bananapim4zeroemac_noble_current_6.18.48_minimal.img \
+  output/debs/linux-u-boot-bananapim4zeroemac-current_26.11.0-trunk_arm64__2026.01-S127a-P0d3f-H8076-Vc787-B5da4-R448a.deb
+```
 
 ## 5. 燒錄前驗證
 
