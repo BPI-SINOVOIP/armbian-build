@@ -1,7 +1,8 @@
 # Banana Pi 主線同步與 BPI-M4 Zero EMAC 完整最佳化計劃
 
 日期：2026-08-29  
-狀態：已確認，待依階段執行  
+狀態：執行中，首套 Noble CLI 已完成離線驗證，待實板 Gate
+
 整合分支：`bpi-integration-20260829`
 
 ## 1. 目的
@@ -281,3 +282,25 @@ DHCP 位址判定成功。
 6. 所有守門結果和實板限制均如實記錄。
 7. 可通用修改已整理成可供官方審查的獨立主題提交。
 
+## 17. 執行進度
+
+截至 2026-08-30 已完成：
+
+- BPI `main` 快轉至官方 `main` 的 `eb6801d30cf7da1e93fac84e6e33d600981392b1`。
+- 建立並推送 `bpi-integration-20260829`。
+- 移植 M4 Zero A1 DDR、RTL8821CU、H618 GPU／媒體／40-pin 基線。
+- 建立 `bananapim4zeroemac`、獨立 DTB 及 Wi-Fi／Bluetooth overlay。
+- 實際完成 U-Boot、DTB、Linux 6.18.48 與 Noble CLI 完整映像建置。
+- 以唯讀掛載檢查 DTB、overlay、CMA、套件與板型工具。
+- 驗證原始映像、XZ 串流及解壓後內容 SHA-256 一致。
+
+尚未完成：
+
+- 2 GiB／4 GiB 多片實板冷啟動與全容量 DDR 壓力。
+- SD／eMMC、AC300 EMAC、GPU、Cedrus、無線、USB 與 40-pin 實體驗證。
+- 首套實板 Gate 通過後的十映像矩陣。
+- 依實證整理可送官方的獨立主題分支。
+
+首套候選的完整紀錄位於
+`docs/bananapi-m4zero-emac-noble-cli-candidate-20260830.md`。依第 10、11 與
+15 節規則，首套實板 Gate 未完成前不展開十映像矩陣，也不宣稱正式發布。
