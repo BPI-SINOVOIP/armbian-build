@@ -1,0 +1,38 @@
+/dts-v1/;
+/plugin/;
+
+#include <dt-bindings/gpio/gpio.h>
+
+/ {
+	compatible = "sinovoip,bpi-m4-zero-emac", "sinovoip,bpi-m4-zero",
+		     "allwinner,sun50i-h616", "allwinner,sun50i-h618";
+
+	/* 啟用板載 SDIO Wi-Fi。 */
+	fragment@0 {
+		target = <&mmc1>;
+		__overlay__ {
+			status = "okay";
+		};
+	};
+
+	/* 啟用板載 UART Bluetooth。 */
+	fragment@1 {
+		target = <&uart1>;
+		__overlay__ {
+			status = "okay";
+			pinctrl-0 = <&uart1_pins>, <&uart1_rts_cts_pins>;
+			pinctrl-names = "default";
+			uart-has-rtscts;
+
+			bluetooth {
+				compatible = "brcm,bcm43540-bt";
+				host-wakeup-gpios = <&pio 6 16 GPIO_ACTIVE_HIGH>;
+				device-wakeup-gpios = <&pio 6 17 GPIO_ACTIVE_HIGH>;
+				shutdown-gpios = <&pio 6 19 GPIO_ACTIVE_HIGH>;
+				max-speed = <1500000>;
+				vbat-supply = <&reg_vcc3v3>;
+				vddio-supply = <&reg_vcc1v8>;
+			};
+		};
+	};
+};
