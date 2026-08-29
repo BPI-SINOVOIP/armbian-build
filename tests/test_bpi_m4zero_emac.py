@@ -59,6 +59,22 @@ class M4ZeroEmacTests(unittest.TestCase):
             with self.subTest(package=package):
                 self.assertIn(package, common)
 
+    def test_board_installs_derivative_broadcom_firmware_aliases(self) -> None:
+        board = BOARD_CONFIG.read_text(encoding="utf-8")
+        aliases = (
+            "brcmfmac43455-sdio.sinovoip,bpi-m4-zero-emac.bin",
+            "brcmfmac43455-sdio.sinovoip,bpi-m4-zero-emac.txt",
+            "brcmfmac43455-sdio.sinovoip,bpi-m4-zero-emac.clm_blob",
+            "BCM4345C0.sinovoip,bpi-m4-zero-emac.hcd",
+        )
+        for alias in aliases:
+            with self.subTest(alias=alias):
+                self.assertIn(alias, board)
+        self.assertIn("cyfmac43455-sdio.bin", board)
+        self.assertIn("cyfmac43455-sdio.1LC.txt", board)
+        self.assertIn("cyfmac43455-sdio.1LC.clm_blob", board)
+        self.assertIn("BCM4345C0_003.001.025.0187.0366.1MW.hcd", board)
+
     def test_derivative_dts_enables_gpu_and_internal_emac(self) -> None:
         dts = BOARD_DTS.read_text(encoding="utf-8")
         self.assertIn('#include "sun50i-h618-bananapi-m4-zero.dts"', dts)
