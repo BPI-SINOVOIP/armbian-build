@@ -222,6 +222,19 @@ DHCP 位址判定成功。
 每套只交付 `.img.xz`、對應 SHA-256、繁體中文發行說明與驗證手冊。未壓縮
 `.img` 僅在建置與檢查期間保留，矩陣完成並核對壓縮串流後才依空間政策清理。
 
+矩陣採下列本機確定性工具執行，支援已完成項目續跑，不依賴 GitHub Actions：
+
+```bash
+./tools/build-bpi-m4zero-emac-matrix.sh
+./tools/verify-bpi-m4zero-emac-matrix.sh
+```
+
+未壓縮映像與矩陣狀態暫存於 `.tmp/bpi-m4zero-emac-a1-h618-optimized-792-matrix/`；
+建置日誌寫入 `output/debug/bpi-m4zero-emac-a1-h618-optimized-792-matrix/`；可直接
+交付的壓縮映像與雜湊寫入
+`output/images/2026.08/bpi-m4zero-emac-a1-h618-optimized-792-matrix/`。十套完成
+唯讀檢查後才清理暫存的未壓縮映像。
+
 ## 12. 磁碟空間與資料清理
 
 目前 `/media/pi/SMCI` 可用空間約 268 GiB。十映像前必須估算最壞用量並保留
