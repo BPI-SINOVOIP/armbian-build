@@ -22,7 +22,7 @@ fail() {
 [[ -f "${uboot_deb}" ]] || fail "找不到 U-Boot 套件：${uboot_deb}"
 
 for command in awk cut dd dpkg-deb fdtget find grep lsblk losetup mktemp \
-	modinfo mount mountpoint sha256sum stat sudo tar udevadm umount xz; do
+	modinfo mount mountpoint readlink sha256sum stat sudo tar udevadm umount xz; do
 	command -v "${command}" >/dev/null || fail "缺少必要命令：${command}"
 done
 sudo -n true || fail "唯讀掛載需要免互動 sudo"
@@ -64,13 +64,23 @@ echo "U-Boot 位元同一性通過：${uboot_sha256}"
 
 image_sha256="$(sha256sum "${image}" | cut -d' ' -f1)"
 archive="${image}.xz"
-if [[ -f "${archive}" ]]; then
-	xz -t "${archive}"
-	decompressed_sha256="$(xz -dc -- "${archive}" | sha256sum | cut -d' ' -f1)"
-	[[ "${decompressed_sha256}" == "${image_sha256}" ]] ||
-		fail "XZ 解壓資料與原始映像不一致"
-	echo "XZ 串流同一性通過：${image_sha256}"
-fi
+image_sum="${image}.sha"
+archive_sum="${archive}.sha"
+[[ -f "${archive}" ]] || fail "缺少 XZ 壓縮映像：${archive}"
+[[ -f "${image_sum}" ]] || fail "缺少原始映像 SHA-256 檔：${image_sum}"
+[[ -f "${archive_sum}" ]] || fail "缺少 XZ SHA-256 檔：${archive_sum}"
+recorded_image_sha256="$(awk 'NF { print $1; exit }' "${image_sum}")"
+recorded_archive_sha256="$(awk 'NF { print $1; exit }' "${archive_sum}")"
+archive_sha256="$(sha256sum "${archive}" | cut -d' ' -f1)"
+[[ "${recorded_image_sha256}" == "${image_sha256}" ]] ||
+	fail "原始映像 SHA-256 記錄不符"
+[[ "${recorded_archive_sha256}" == "${archive_sha256}" ]] ||
+	fail "XZ SHA-256 記錄不符"
+xz -t "${archive}"
+decompressed_sha256="$(xz -dc -- "${archive}" | sha256sum | cut -d' ' -f1)"
+[[ "${decompressed_sha256}" == "${image_sha256}" ]] ||
+	fail "XZ 解壓資料與原始映像不一致"
+echo "XZ 與 SHA-256 同一性通過：${image_sha256}"
 
 loop_device="$(sudo -n losetup --find --show --partscan --read-only "${image}")"
 udevadm settle
@@ -157,6 +167,9 @@ config_file="$(find "${mount_dir}/boot" -maxdepth 1 -type f -name 'config-*' -pr
 for setting in \
 	CONFIG_DWMAC_SUN8I=m \
 	CONFIG_AC300_PHY=y \
+	CONFIG_BRCMFMAC=m \
+	CONFIG_BT_HCIUART=m \
+	CONFIG_BT_HCIUART_BCM=y \
 	CONFIG_RTW88_8821CU=m \
 	CONFIG_DRM_PANFROST=m \
 	CONFIG_VIDEO_SUNXI_CEDRUS=y \
@@ -176,6 +189,8 @@ require_module() {
 }
 
 require_module 'dwmac-sun8i.ko*' >/dev/null
+require_module 'brcmfmac.ko*' >/dev/null
+require_module 'hci_uart.ko*' >/dev/null
 require_module 'panfrost.ko*' >/dev/null
 require_module 'sun8i-ce.ko*' >/dev/null
 rtw_module="$(require_module 'rtw88_8821cu.ko*')"
@@ -191,6 +206,40 @@ if [[ ${#modprobe_dirs[@]} -gt 0 ]] &&
 		"${modprobe_dirs[@]}"; then
 	fail "映像將 rtw88_8821cu 加入黑名單"
 fi
+
+require_firmware_alias() {
+	local alias_name=$1
+	local target_name=$2
+	local firmware_dir="${mount_dir}/lib/firmware/updates/brcm"
+	local alias_path="${firmware_dir}/${alias_name}"
+	local image_target="${firmware_dir}/${target_name}"
+	local source_target="${repo_dir}/packages/bsp/bananapi/brcm/${target_name}"
+	local image_sha256
+	local source_sha256
+
+	[[ -L "${alias_path}" ]] || fail "Broadcom 韌體別名不是符號連結：${alias_name}"
+	[[ "$(readlink "${alias_path}")" == "${target_name}" ]] ||
+		fail "Broadcom 韌體別名目標不符：${alias_name}"
+	[[ -s "${image_target}" ]] || fail "映像缺少 Broadcom 韌體目標：${target_name}"
+	[[ -s "${source_target}" ]] || fail "倉庫缺少 Broadcom 韌體來源：${target_name}"
+	image_sha256="$(sha256sum "${image_target}" | cut -d' ' -f1)"
+	source_sha256="$(sha256sum "${source_target}" | cut -d' ' -f1)"
+	[[ "${image_sha256}" == "${source_sha256}" ]] ||
+		fail "Broadcom 韌體與倉庫來源不一致：${target_name}"
+}
+
+require_firmware_alias \
+	'brcmfmac43455-sdio.sinovoip,bpi-m4-zero-emac.bin' \
+	'cyfmac43455-sdio.bin'
+require_firmware_alias \
+	'brcmfmac43455-sdio.sinovoip,bpi-m4-zero-emac.txt' \
+	'cyfmac43455-sdio.1LC.txt'
+require_firmware_alias \
+	'brcmfmac43455-sdio.sinovoip,bpi-m4-zero-emac.clm_blob' \
+	'cyfmac43455-sdio.1LC.clm_blob'
+require_firmware_alias \
+	'BCM4345C0.sinovoip,bpi-m4-zero-emac.hcd' \
+	'BCM4345C0_003.001.025.0187.0366.1MW.hcd'
 
 package_installed() {
 	local package=$1

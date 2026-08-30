@@ -25,6 +25,11 @@ class M4ZeroEmacImageVerifierTests(unittest.TestCase):
         self.assertIn("uboot_sha256", self.script)
 
     def test_checks_archive_stream_identity(self) -> None:
+        self.assertIn('[[ -f "${archive}" ]]', self.script)
+        self.assertIn('[[ -f "${image_sum}" ]]', self.script)
+        self.assertIn('[[ -f "${archive_sum}" ]]', self.script)
+        self.assertIn("recorded_image_sha256", self.script)
+        self.assertIn("recorded_archive_sha256", self.script)
         self.assertIn('xz -t "${archive}"', self.script)
         self.assertIn('xz -dc -- "${archive}"', self.script)
         self.assertIn("decompressed_sha256", self.script)
@@ -34,12 +39,31 @@ class M4ZeroEmacImageVerifierTests(unittest.TestCase):
             "allwinner,sun50i-h618-ac300-ephy",
             "CONFIG_DWMAC_SUN8I=m",
             "CONFIG_AC300_PHY=y",
+            "CONFIG_BRCMFMAC=m",
+            "CONFIG_BT_HCIUART=m",
+            "CONFIG_BT_HCIUART_BCM=y",
             "CONFIG_DRM_PANFROST=m",
             "CONFIG_VIDEO_SUNXI_CEDRUS=y",
             "CONFIG_CRYPTO_DEV_SUN8I_CE=m",
             "CONFIG_RTW88_8821CU=m",
             "rtw88_8821cu.ko",
             "blacklist[[:space:]]+rtw88_8821cu",
+        )
+        for value in required:
+            with self.subTest(value=value):
+                self.assertIn(value, self.script)
+
+    def test_checks_broadcom_firmware_aliases_and_source_identity(self) -> None:
+        required = (
+            "brcmfmac.ko",
+            "hci_uart.ko",
+            "require_firmware_alias",
+            "brcmfmac43455-sdio.sinovoip,bpi-m4-zero-emac.bin",
+            "brcmfmac43455-sdio.sinovoip,bpi-m4-zero-emac.txt",
+            "brcmfmac43455-sdio.sinovoip,bpi-m4-zero-emac.clm_blob",
+            "BCM4345C0.sinovoip,bpi-m4-zero-emac.hcd",
+            "packages/bsp/bananapi/brcm",
+            "Broadcom 韌體與倉庫來源不一致",
         )
         for value in required:
             with self.subTest(value=value):
