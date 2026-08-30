@@ -14,7 +14,7 @@ ROOT = Path(__file__).resolve().parents[1]
 CONFIG_PATH = ROOT / "config/validation/bananapi-mt7623-r2-current.json"
 BOARD_PATH = ROOT / "config/boards/bananapir2.csc"
 BOOT_SCRIPT = ROOT / "config/bootscripts/boot-mt7623.cmd"
-UBOOT_PATCH = ROOT / "patch/u-boot/v2024.07/board_bananapir2/enable-boot-from-ext4.patch"
+UBOOT_PATCH = ROOT / "patch/u-boot/v2026.07/board_bananapir2/enable-boot-from-ext4.patch"
 GENERIC_VERIFIER = ROOT / "tools/verify-bananapi-sunxi-candidates.sh"
 SOURCE_POLICY = (
     ROOT
@@ -40,7 +40,7 @@ class BananaPiMT7623R2CandidateTests(unittest.TestCase):
         )
         self.assertEqual(
             self.policy["uboot_revision"],
-            "3f772959501c99fbe5aa0b22a36efe3478d1ae1c",
+            "ece349ade2973e220f524ce59e59711cc919263f",
         )
         self.assertEqual(self.policy["partition_table"], "msdos")
         self.assertEqual(self.policy["partition_start_sector"], 8192)
@@ -112,16 +112,16 @@ class BananaPiMT7623R2CandidateTests(unittest.TestCase):
         self.assertNotIn("#define CONFIG_BOOTCOMMAND", text)
         self.assertNotIn("index 111111111111..222222222222", text)
         self.assertIn(
-            "index 4c3d90a1b7b05d128b572c608c666f0405d226fb"
-            "..455d085c569ab500d10494fb1a59b15b02ce36d7",
+            "index aeef3bebe96254b1ffb3f23a8e7a0f529bdac507"
+            "..8c13942f00b707bbcad3a3402bdbc19b939eceaa",
             text,
         )
         self.assertIn(
-            "index fca234a1dc71a85f4982a49db4f1ab53e30b9ed7"
-            "..8a1b013d211678373861dc6b2599dae8a3bdbf35",
+            "index 6f42cd32d80fbfc4e8923826d448da40e7f49b5c"
+            "..b9dda4d9b9c1213f70315601bf6ee0988b7e574d",
             text,
         )
-        for header in ("@@ -32,7 +34,8 @@", "@@ -20,9 +20,27 @@", "@@ -35,8 +53,22 @@"):
+        for header in ("@@ -33,7 +35,8 @@", "@@ -17,9 +17,27 @@", "@@ -32,8 +50,22 @@"):
             self.assertIn(header, text)
 
     def test_board_enables_otg_gpio_and_fixed_firmware(self) -> None:
@@ -136,7 +136,8 @@ class BananaPiMT7623R2CandidateTests(unittest.TestCase):
         ):
             self.assertIn(symbol, text)
         self.assertIn(self.config["firmware_commit"], text)
-        self.assertIn('BOOT_FDT_FILE="mt7623n-bananapi-bpi-r2.dtb"', text)
+        self.assertIn('BOOT_FDT_FILE="mediatek/mt7623n-bananapi-bpi-r2"', text)
+        self.assertIn(f'BOOTBRANCH_BOARD="commit:{self.policy["uboot_revision"]}"', text)
         self.assertEqual(self.policy["dtb"], "mt7623n-bananapi-bpi-r2.dtb")
         package_line = next(
             line for line in text.splitlines()
@@ -145,14 +146,21 @@ class BananaPiMT7623R2CandidateTests(unittest.TestCase):
         packages = set(package_line.split('"', 2)[1].split())
         self.assertTrue(set(self.config["common_packages"]) <= packages)
 
-    def test_network_default_separates_wan_from_lan_bridge(self) -> None:
-        wan = (ROOT / "packages/bsp/mt7623/10-wan.network").read_text()
-        conduit = (ROOT / "packages/bsp/mt7623/10-eth0.network").read_text()
-        self.assertIn("Name=wan\n", wan)
-        self.assertIn("DHCP=yes", wan)
-        self.assertNotIn("Bridge=br0", wan)
-        self.assertIn("LinkLocalAddressing=no", conduit)
-        self.assertNotIn("DHCP=yes", conduit)
+    def test_network_default_uses_the_mainline_netplan_contract(self) -> None:
+        path = ROOT / "extensions/network/config-networkd/netplan/10-dhcp-all-interfaces.yaml"
+        text = path.read_text()
+        self.assertIn('name: "e*"', text)
+        self.assertIn('name: "lan*"', text)
+        self.assertIn('name: "wan*"', text)
+        self.assertNotIn("Bridge=br0", text)
+        self.assertEqual(
+            self.config["installed_file_sha256"],
+            {
+                "/etc/netplan/10-dhcp-all-interfaces.yaml": hashlib.sha256(
+                    path.read_bytes()
+                ).hexdigest()
+            },
+        )
 
     def test_generic_verifier_checks_exact_payload_and_installed_file_hashes(self) -> None:
         text = GENERIC_VERIFIER.read_text()

@@ -41,7 +41,7 @@ class BpiH618IoTests(unittest.TestCase):
     def test_mainline_rtl8821cu_driver_is_not_replaced(self) -> None:
         board = BOARD_CONFIG.read_text(encoding="utf-8")
         self.assertNotIn("wifi-rtl8821cu/etc/modprobe.d/8821cu.conf", board)
-        self.assertNotIn("bananapi_module_conf", board)
+        self.assertNotRegex(board, r"MODULES_BLACKLIST=.*rtw88_(?:8821c|8821cu)")
 
     def test_header_pwm_overlay_is_built_once(self) -> None:
         makefile = (OVERLAY_DIR / "Makefile").read_text(encoding="utf-8")

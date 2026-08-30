@@ -32,7 +32,14 @@ class BananaPiMesonSourcePolicyTests(unittest.TestCase):
 
     @staticmethod
     def board_text(board: str) -> str:
-        return (ROOT / "config" / "boards" / f"{board}.conf").read_text()
+        paths = [
+            path
+            for suffix in ("conf", "csc", "wip", "eos")
+            if (path := ROOT / "config" / "boards" / f"{board}.{suffix}").is_file()
+        ]
+        if len(paths) != 1:
+            raise AssertionError(f"{board} 應恰有一份板卡設定，實際為 {len(paths)} 份")
+        return paths[0].read_text()
 
     def test_all_boards_include_standard_io_and_radio_packages(self) -> None:
         for board in BOARDS:

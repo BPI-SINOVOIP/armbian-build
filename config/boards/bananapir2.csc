@@ -12,11 +12,13 @@ HAS_VIDEO_OUTPUT="yes"
 IMAGE_PARTITION_TABLE="msdos"
 PACKAGE_LIST_BOARD="alsa-utils bridge-utils ethtool gpiod hdparm i2c-tools iperf3 iproute2 iw lm-sensors nftables pciutils python3-libgpiod python3-spidev rfkill smartmontools tcpdump usbutils v4l-utils vlan wireless-regdb"
 ARMBIAN_FIRMWARE_GIT_REF_BOARD="commit:f50a2a21bcdb77a562b3976930c5c6b521a1df08"
+BOOTBRANCH_BOARD="commit:ece349ade2973e220f524ce59e59711cc919263f"
 
 function post_family_config_branch_current__bananapir2_pin_sources() {
 	declare -g KERNELSOURCE="https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git"
 	declare -g KERNELBRANCH="commit:dc6160265ffc795a1832bc1424f58291d152c7bb"
 	declare -g KERNEL_MAJOR_MINOR="6.6"
+	declare -g BOOTBRANCH="${BOOTBRANCH_BOARD}"
 	declare -g ARMBIAN_FIRMWARE_GIT_REF="${ARMBIAN_FIRMWARE_GIT_REF_BOARD}"
 }
 

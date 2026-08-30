@@ -11,10 +11,10 @@ Signed-off-by: Igor Pecovnik <igor.pecovnik@****l.com>
  2 files changed, 43 insertions(+), 4 deletions(-)
 
 diff --git a/configs/mt7623n_bpir2_defconfig b/configs/mt7623n_bpir2_defconfig
-index 4c3d90a1b7b05d128b572c608c666f0405d226fb..455d085c569ab500d10494fb1a59b15b02ce36d7 100644
+index aeef3bebe96254b1ffb3f23a8e7a0f529bdac507..8c13942f00b707bbcad3a3402bdbc19b939eceaa 100644
 --- a/configs/mt7623n_bpir2_defconfig
 +++ b/configs/mt7623n_bpir2_defconfig
-@@ -23,6 +23,8 @@ CONFIG_SYS_CONSOLE_IS_IN_ENV=y
+@@ -24,6 +24,8 @@ CONFIG_SYS_CONSOLE_IS_IN_ENV=y
  # CONFIG_DISPLAY_BOARDINFO is not set
  CONFIG_SYS_PROMPT="U-Boot> "
  CONFIG_SYS_MAXARGS=8
@@ -23,18 +23,17 @@ index 4c3d90a1b7b05d128b572c608c666f0405d226fb..455d085c569ab500d10494fb1a59b15b
  CONFIG_CMD_BOOTMENU=y
  # CONFIG_CMD_ELF is not set
  # CONFIG_CMD_XIMG is not set
-@@ -32,7 +34,8 @@ CONFIG_CMD_MMC=y
+@@ -33,7 +35,8 @@ CONFIG_CMD_MMC=y
  CONFIG_CMD_READ=y
  # CONFIG_CMD_SETEXPR is not set
  CONFIG_ENV_OVERWRITE=y
 -CONFIG_ENV_IS_IN_MMC=y
 +# CONFIG_ENV_IS_IN_MMC is not set
 +CONFIG_ENV_IS_NOWHERE=y
- CONFIG_SYS_RELOC_GD_ENV_ADDR=y
- CONFIG_NET_RANDOM_ETHADDR=y
+ CONFIG_ENV_RELOC_GD_ENV_ADDR=y
  CONFIG_USE_IPADDR=y
-@@ -59,4 +62,8 @@ CONFIG_SYSRESET_WATCHDOG=y
- CONFIG_TIMER=y
+ CONFIG_IPADDR="192.168.1.1"
+@@ -60,3 +63,7 @@ CONFIG_TIMER=y
  CONFIG_MTK_TIMER=y
  CONFIG_WDT_MTK=y
  CONFIG_LZMA=y
@@ -43,10 +42,10 @@ index 4c3d90a1b7b05d128b572c608c666f0405d226fb..455d085c569ab500d10494fb1a59b15b
 +CONFIG_CMD_EXT4=y
 +CONFIG_CMD_EXT4_WRITE=y
 diff --git a/include/configs/mt7623.h b/include/configs/mt7623.h
-index fca234a1dc71a85f4982a49db4f1ab53e30b9ed7..8a1b013d211678373861dc6b2599dae8a3bdbf35 100644
+index 6f42cd32d80fbfc4e8923826d448da40e7f49b5c..b9dda4d9b9c1213f70315601bf6ee0988b7e574d 100644
 --- a/include/configs/mt7623.h
 +++ b/include/configs/mt7623.h
-@@ -20,9 +20,27 @@
+@@ -17,9 +17,27 @@
  /* This is needed for kernel booting */
  #define FDT_HIGH			"0xac000000"
 +
@@ -66,7 +65,7 @@ index fca234a1dc71a85f4982a49db4f1ab53e30b9ed7..8a1b013d211678373861dc6b2599dae8
 +		"setenv mmcfile ${mmcscriptfile};" \
 +		"run fileload\0" \
 +	"scriptboot=echo Running ${mmcscriptfile} from: mmc ${devnum}:${mmcpart} using ${mmcscriptfile};" \
-+		"source ${scriptaddr}\0" \
++		"source ${scriptaddr}\0"
  
  #define ENV_MEM_LAYOUT_SETTINGS				\
  	"fdt_high=" FDT_HIGH "\0"			\
@@ -75,7 +74,7 @@ index fca234a1dc71a85f4982a49db4f1ab53e30b9ed7..8a1b013d211678373861dc6b2599dae8
  	"fdt_addr_r=" FDT_HIGH "\0"			\
  	"fdtfile=" CONFIG_DEFAULT_FDT_FILE "\0"
  
-@@ -35,8 +53,22 @@
+@@ -32,8 +50,22 @@
  
  /* Extra environment variables */
  #define CFG_EXTRA_ENV_SETTINGS	\

@@ -1,6 +1,6 @@
 # Banana Pi 全系列最佳化盤點
 
-更新日期：2026-08-28
+更新日期：2026-08-31
 
 **歷史快照，非現行發布狀態。** 本報告只呈現指定日期已納入 Git 的證據，不得取代最新候選狀態、實機驗證或對外發布核准。
 
@@ -9,7 +9,8 @@
 ## 摘要
 
 - 板卡總數：48。
-- 正式 `.conf`：12；社群 `.csc`：14；開發中 `.wip`：21；停止支援 `.eos`：1。
+- 獨立功能變體：1。
+- 正式 `.conf`：10；社群 `.csc`：16；開發中 `.wip`：21；停止支援 `.eos`：1。
 - 證據分布：L0 3；L1 0；L2 45；L3 0；L4 0；L5 0。
 - 未取得實機的板卡最高只能標示 L2；目前沒有板卡達到完整 L3／L4／L5 門檻。
 
@@ -34,8 +35,8 @@
 | `bananapim2berry` | 社群 | Banana Pi M2 Berry | `sun8i` | `armhf` | `current,edge,legacy` | 是 | C | L2 軟體候選 | 完成 SD／eMMC、SATA、GbE、無線網路、USB、顯示與 40-pin 實測 |
 | `bananapim2c` | 開發中 | Banana Pi M2C | `unisoc-uis7885-bpi` | `arm64` | `vendor` | 是 | F | L0 已盤點 | 依三個 L0 外部協助計畫取得 95 專案可攜來源、41 組有序修補、6,751 檔分類、固定 Yocto 環境、授權與受控簽署收據 |
 | `bananapim2magic` | 社群 | Banana Pi M2 Magic | `sun8i` | `armhf` | `current,edge,legacy` | 是 | C | L2 軟體候選 | 完成 SD／eMMC、Wi-Fi、Bluetooth、OTG、音訊與 Lima／Cedrus 實測 |
-| `bananapim2plus` | 正式 | Banana Pi M2+ | `sun8i` | `armhf` | `current,edge,legacy` | 是 | B | L2 軟體候選 | 完成無線網路、Bluetooth、HDMI、USB、GPIO 與長時間負載實測 |
-| `bananapim2pro` | 正式 | Banana Pi M2Pro | `meson-sm1` | `arm64` | `current,edge` | 是 | A | L2 軟體候選 | 完成 SD／eMMC、GbE、HDMI、USB 與 40-pin 的實機回歸矩陣 |
+| `bananapim2plus` | 社群 | Banana Pi M2+ | `sun8i` | `armhf` | `current,edge,legacy` | 是 | B | L2 軟體候選 | 完成無線網路、Bluetooth、HDMI、USB、GPIO 與長時間負載實測 |
+| `bananapim2pro` | 社群 | Banana Pi M2Pro | `meson-sm1` | `arm64` | `current,edge` | 是 | A | L2 軟體候選 | 完成 SD／eMMC、GbE、HDMI、USB 與 40-pin 的實機回歸矩陣 |
 | `bananapim2s` | 正式 | Banana Pi M2S | `meson-g12b` | `arm64` | `current,edge` | 是 | A | L2 軟體候選 | 完成 SD／eMMC、網路、USB、顯示與重新啟動實機回歸 |
 | `bananapim2ultra` | 社群 | Banana Pi M2 Ultra | `sun8i` | `armhf` | `current,edge,legacy` | 是 | C | L2 軟體候選 | 完成 SD／eMMC、SATA、GbE、無線網路、USB、顯示與 40-pin 實測 |
 | `bananapim2zero` | 社群 | Banana Pi M2 Zero | `sun8i` | `armhf` | `current,edge,legacy` | 是 | C | L2 軟體候選 | 完成 SD、Wi-Fi、Bluetooth、USB OTG、HDMI、Lima、Cedrus 與 40-pin 實測 |
@@ -53,7 +54,7 @@
 | `bananapip2zero` | 社群 | Banana Pi P2 Zero | `sun8i` | `armhf` | `current,edge,legacy` | 是 | C | L2 軟體候選 | 完成 SD／eMMC、Ethernet、USB、顯示、Lima、Cedrus 與 40-pin 實測 |
 | `bananapipro` | 社群 | Banana Pi Pro | `sun7i` | `armhf` | `current,edge,legacy` | 是 | C | L2 軟體候選 | 完成 SD 冷啟動、GbE、SATA、USB 與 40-pin 外接迴路實測 |
 | `bananapir1` | 停止支援 | Banana Pi R1 | `sun7i` | `armhf` | `current,edge` | 是 | G | L2 軟體候選 | 保留最後可用封存基線與安全限制，不列入新發布 |
-| `bananapir2` | 社群 | Banana Pi R2 | `mt7623` | `armhf` | `current` | 是 | D | L2 軟體候選 | 取得五個啟動載荷的再散布核准，再完成 eMMC、網路、SATA、USB 與交換器實測 |
+| `bananapir2` | 社群 | Banana Pi R2 | `mt7623` | `armhf` | `current,edge` | 是 | D | L2 軟體候選 | 取得五個啟動載荷的再散布核准，再完成 eMMC、網路、SATA、USB 與交換器實測 |
 | `bananapir2pro` | 社群 | Banana Pi R2 Pro | `rockchip64` | `arm64` | `current,edge` | 是 | D | L2 軟體候選 | 完成 SD／eMMC、雙網路、SATA、PCIe、USB、顯示、媒體與 40-pin 實測 |
 | `bananapir3` | 開發中 | Banana Pi R3 | `filogic` | `arm64` | `current` | 否 | D | L2 軟體候選 | 完成 SD／NOR、雙網路、SFP、SATA、PCIe、USB、無線與長時間流量實測 |
 | `bananapir3mini` | 開發中 | Banana Pi R3 Mini | `filogic` | `arm64` | `current` | 否 | D | L2 軟體候選 | 釐清 ATF MT7986 DRAM 物件再散布範圍，再做空白 eMMC 的 boot0 分離寫入、boot partition enable、冷啟動及網路功能實測 |
@@ -65,6 +66,16 @@
 | `bananapiw2` | 開發中 | Banana Pi W2 | `realtek-rtd129x-bpi` | `arm64` | `legacy` | 是 | F | L2 軟體候選 | 閉合四個靜態庫、bluecore.audio 與工具鏈再散布授權，再完成 SD／eMMC、SATA、PCIe、網路、USB、顯示、音訊及 40-pin 實測 |
 | `bananapiw3` | 開發中 | Banana Pi W3 | `rockchip-rk3588` | `arm64` | `vendor` | 是 | E | L2 軟體候選 | 完成冷啟動、儲存、網路、無線、顯示、GPU、VPU、RGA 與 NPU 實測 |
 | `bpi-ai2n` | 正式 | Banana Pi AI2N | `renesas-rzv2n-bpi` | `arm64` | `legacy` | 是 | B | L2 軟體候選 | 完成 SD 冷啟動、雙網路、USB、PCIe、顯示、相機、Panfrost、DRP-AI 與 40-pin 實測 |
+
+## 功能變體
+
+功能變體沿用基礎產品板卡，不計入產品板卡總數。
+
+| 變體 | 基礎板卡 | 證據 | 依據 | 下一門檻 |
+| --- | --- | --- | --- | --- |
+| `bananapim4zeroemac` | `bananapim4zero` | L2 軟體候選 | 沿用 M4 Zero A1 DDR、GPU、媒體、40-pin 與無線整合，另加入 H618 EMAC 板級設定；十映像與唯讀軟體守門已通過 | 取得具備 AC300 EPHY 的實體板，驗證冷啟動、連線協商、吞吐量、封包壓力、暫停恢復及重新啟動 |
+
+- `bananapim4zeroemac`：尚未取得具備 AC300 EPHY 的實體板，EMAC 腳位、時脈、重置、延遲與長時間穩定性仍待實機驗證。
 
 ## 目前開放問題
 

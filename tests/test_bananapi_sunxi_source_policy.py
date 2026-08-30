@@ -17,7 +17,7 @@ class BananaPiSunxiSourcePolicyTests(unittest.TestCase):
         self.assertNotIn('OVERLAY_PREFIX="sun8i-h3"', board)
 
     def test_r40_i2c_overlays_target_r40(self) -> None:
-        for version in ("6.18", "7.0"):
+        for version in ("6.18", "7.1"):
             overlay_dir = ROOT / f"patch/kernel/archive/sunxi-{version}/overlay_32"
             for overlay in (
                 "i2c2",
@@ -41,14 +41,11 @@ class BananaPiSunxiSourcePolicyTests(unittest.TestCase):
                         text,
                     )
 
-    def test_m3_keeps_the_a83t_mmc_calibration_patch_directory(self) -> None:
+    def test_m3_rejects_the_a83t_mmc_calibration_patch(self) -> None:
         board = (ROOT / "config/boards/bananapim3.csc").read_text()
-        self.assertIn('BOOTPATCHDIR="u-boot-sunxi/board_${BOARD}"', board)
+        self.assertNotIn("BOOTPATCHDIR", board)
         patch_dir = ROOT / "patch/u-boot/u-boot-sunxi/board_bananapim3"
-        self.assertEqual(
-            {path.name for path in patch_dir.glob("*.patch")},
-            {"Add-MACH_SUN8I_A83T-to-can-calibrate.patch"},
-        )
+        self.assertEqual(list(patch_dir.glob("*.patch")), [])
 
     def test_m64_pins_the_complete_current_boot_chain(self) -> None:
         board = (ROOT / "config/boards/bananapim64.csc").read_text()

@@ -738,15 +738,15 @@ printf '%s\n' "${{opts_y[@]}}"
                     candidate["boards"]["bananapiaim7"],
                 )
 
-                image = output / "bananapiaim7/aim7.img"
-                original_image = image.read_bytes()
-                image.write_bytes(original_image + b"drift")
+                archive = output / "bananapiaim7/aim7.img.xz"
+                original_archive = archive.read_bytes()
+                archive.write_bytes(original_archive + b"drift")
                 with self.assertRaises(SystemExit):
                     self.policy_checker.validate_l2_evidence(
                         candidate,
                         candidate["boards"]["bananapiaim7"],
                     )
-                image.write_bytes(original_image)
+                archive.write_bytes(original_archive)
 
                 verification_path = output / "VERIFICATION_STATUS.json"
                 verification = json.loads(verification_path.read_text())

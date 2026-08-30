@@ -75,11 +75,11 @@
         "sinovoip,bpi-m3",
         "allwinner,sun8i-a83t"
       ],
-      "uboot_tag": "v2024.01",
-      "uboot_version": "2024.01",
+      "uboot_tag": "v2026.07",
+      "uboot_version": "2026.07",
       "uboot_git_source": "https://github.com/u-boot/u-boot",
-      "uboot_git_ref": "commit:866ca972d6c3cabeaf6dbac431e8e08bb30b3c8e",
-      "uboot_revision": "866ca972d6c3cabeaf6dbac431e8e08bb30b3c8e",
+      "uboot_git_ref": "commit:ece349ade2973e220f524ce59e59711cc919263f",
+      "uboot_revision": "ece349ade2973e220f524ce59e59711cc919263f",
       "uboot_payload": "u-boot-sunxi-with-spl.bin",
       "uboot_offset": 8192,
       "uboot_payload_minimum_sizes": [

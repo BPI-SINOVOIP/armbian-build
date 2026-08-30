@@ -12,9 +12,10 @@ from unittest import mock
 
 
 MODULE_PATH = Path(__file__).resolve().parents[1] / "tools" / "bpi-m4zero-ddr-lab.py"
+BUILD_SCRIPT = Path(__file__).resolve().parents[1] / "tools" / "build-bpi-m4zero-ddr-lab.sh"
 PATCH_PATH = (
     Path(__file__).resolve().parents[1]
-    / "patch/u-boot/v2026.01/board_bananapim4zero/015-sunxi-h616-add-standalone-ddr-lab.patch"
+    / "patch/lab/u-boot/bananapim4zero/015-sunxi-h616-add-standalone-ddr-lab.patch"
 )
 SPEC = importlib.util.spec_from_file_location("bpi_m4zero_ddr_lab", MODULE_PATH)
 assert SPEC is not None and SPEC.loader is not None
@@ -94,6 +95,12 @@ def ranking_record(
 
 
 class ProfileTests(unittest.TestCase):
+    def test_lab_patch_is_injected_only_by_the_lab_builder(self) -> None:
+        script = BUILD_SCRIPT.read_text(encoding="utf-8")
+        self.assertIn("patch/lab/u-boot/bananapim4zero", script)
+        self.assertIn("userpatches/u-boot/v2026.01/board_bananapim4zero", script)
+        self.assertIn("trap cleanup_user_patch EXIT", script)
+
     def test_cli_help_is_traditional_chinese(self) -> None:
         help_text = lab.build_parser().format_help()
         self.assertIn("用法：", help_text)

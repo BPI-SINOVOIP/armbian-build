@@ -112,14 +112,14 @@ Provides: unavailable-virtual
         self.assertEqual(policy["sd_node"], "/soc/mmc@1c0f000")
         self.assertEqual(policy["default_overlays"], ["analog-codec"])
         self.assertTrue({"i2c0", "pwm", "spi-spidev", "uart2"} <= set(policy["required_overlays"]))
-        board_text = (ROOT / "config/boards/bananapim2plus.conf").read_text()
+        board_text = (ROOT / "config/boards/bananapim2plus.csc").read_text()
         package_line = next(
             line for line in board_text.splitlines()
             if line.startswith('PACKAGE_LIST_BOARD="')
         )
         self.assertTrue(set(config["common_packages"]) <= set(package_line.split('"', 2)[1].split()))
 
-        for version in ("6.18", "7.0"):
+        for version in ("6.18", "7.1"):
             overlay_dir = ROOT / f"patch/kernel/archive/sunxi-{version}/overlay_32"
             makefile = (overlay_dir / "Makefile").read_text()
             for overlay in policy["required_overlays"]:
@@ -202,7 +202,7 @@ Provides: unavailable-virtual
         )
         self.assertNotIn("CONFIG_DRAM_CLK", board_text)
 
-        for version in ("6.18", "7.0"):
+        for version in ("6.18", "7.1"):
             overlay_dir = ROOT / f"patch/kernel/archive/sunxi-{version}/overlay_32"
             makefile = (overlay_dir / "Makefile").read_text()
             for overlay in policy["required_overlays"]:
@@ -285,7 +285,7 @@ Provides: unavailable-virtual
         self.assertNotIn("/soc/mmc@1c11000=8", berry["additional_bus_widths"])
         self.assertIn("/soc/mmc@1c11000=8", ultra["additional_bus_widths"])
 
-        for version in ("6.18", "7.0"):
+        for version in ("6.18", "7.1"):
             overlay_dir = ROOT / f"patch/kernel/archive/sunxi-{version}/overlay_32"
             makefile = (overlay_dir / "Makefile").read_text()
             for overlay in required_overlays:
@@ -519,8 +519,14 @@ Provides: unavailable-virtual
             set(config["common_packages"])
             <= set(package_line.split('"', 2)[1].split())
         )
+        self.assertNotIn("BOOTPATCHDIR", board_text)
+        self.assertEqual(policy["uboot_tag"], "v2026.07")
+        self.assertEqual(
+            policy["uboot_revision"],
+            "ece349ade2973e220f524ce59e59711cc919263f",
+        )
         self.assertIn(
-            'BOOTPATCHDIR="u-boot-sunxi/board_${BOARD}"',
+            'BOOTBRANCH_BOARD="commit:ece349ade2973e220f524ce59e59711cc919263f"',
             board_text,
         )
         self.assertIn(

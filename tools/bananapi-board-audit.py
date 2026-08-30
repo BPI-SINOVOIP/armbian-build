@@ -73,6 +73,7 @@ EXPECTED_BOARD_IDS = frozenset(
         "bpi-ai2n",
     )
 )
+EXPECTED_VARIANT_IDS = frozenset(("bananapim4zeroemac",))
 STATUS_NAMES = {
     "conf": "正式",
     "csc": "社群",
@@ -189,8 +190,8 @@ def effective_fields(path: Path, visited: set[Path] | None = None) -> dict[str, 
     return fields
 
 
-def board_paths() -> list[Path]:
-    """列出 Banana Pi 命名板卡及命名例外 AI2N。"""
+def all_board_paths() -> list[Path]:
+    """列出 Banana Pi 命名板卡、功能變體及命名例外 AI2N。"""
     paths: set[Path] = set()
     for suffix in BOARD_SUFFIXES:
         paths.update(BOARD_DIR.glob(f"bananapi*.{suffix}"))
@@ -198,6 +199,16 @@ def board_paths() -> list[Path]:
         if ai2n.is_file():
             paths.add(ai2n)
     return sorted(paths, key=lambda path: path.stem)
+
+
+def board_paths() -> list[Path]:
+    """列出產品板卡，功能變體不併入產品數量。"""
+    return [path for path in all_board_paths() if path.stem not in EXPECTED_VARIANT_IDS]
+
+
+def variant_paths() -> dict[str, Path]:
+    """列出獨立追蹤的功能變體設定。"""
+    return {path.stem: path for path in all_board_paths() if path.stem in EXPECTED_VARIANT_IDS}
 
 
 def load_status() -> dict[str, object]:
@@ -219,10 +230,10 @@ def key_set_errors(name: str, value: object, expected: frozenset[str]) -> list[s
 
 
 def registry_errors(status: dict[str, object]) -> list[str]:
-    """驗證 schema v2 與四個逐板狀態區段。"""
+    """驗證 schema v3、產品板卡狀態及獨立功能變體。"""
     errors: list[str] = []
-    if status.get("schema_version") != 2:
-        errors.append("狀態登錄 schema_version 必須是 2")
+    if status.get("schema_version") != 3:
+        errors.append("狀態登錄 schema_version 必須是 3")
     if not isinstance(status.get("updated"), str) or not status["updated"]:
         errors.append("狀態登錄 updated 必須是非空字串")
 
@@ -235,6 +246,27 @@ def registry_errors(status: dict[str, object]) -> list[str]:
 
     for section in ("evidence", "next_gates", "open_findings"):
         errors.extend(key_set_errors(section, status.get(section), EXPECTED_BOARD_IDS))
+
+    variants = status.get("variants")
+    errors.extend(key_set_errors("variants 功能變體", variants, EXPECTED_VARIANT_IDS))
+    if isinstance(variants, dict):
+        for variant_id, item in variants.items():
+            if not isinstance(item, dict):
+                errors.append(f"{variant_id} 功能變體必須是物件")
+                continue
+            base_board = item.get("base_board")
+            if base_board not in EXPECTED_BOARD_IDS:
+                errors.append(f"{variant_id} 基礎板卡無效：{base_board}")
+            if item.get("level") not in LEVEL_NAMES:
+                errors.append(f"{variant_id} 證據等級無效：{item.get('level')}")
+            for field, label in (("basis", "證據依據"), ("next_gate", "下一門檻")):
+                if not isinstance(item.get(field), str) or not item[field]:
+                    errors.append(f"{variant_id} {label}必須是非空字串")
+            findings = item.get("open_findings")
+            if not isinstance(findings, list) or not all(
+                isinstance(finding, str) and finding for finding in findings
+            ):
+                errors.append(f"{variant_id} 開放問題必須是非空字串陣列或空陣列")
 
     evidence = status.get("evidence")
     if isinstance(evidence, dict):
@@ -292,7 +324,15 @@ def collect_boards() -> tuple[list[Board], list[str]]:
     evidence = status_data.get("evidence") if isinstance(status_data.get("evidence"), dict) else {}
     next_gates = status_data.get("next_gates") if isinstance(status_data.get("next_gates"), dict) else {}
     open_findings = status_data.get("open_findings") if isinstance(status_data.get("open_findings"), dict) else {}
-    paths = board_paths()
+    all_paths = all_board_paths()
+    duplicate_ids = sorted(
+        board_id
+        for board_id, count in Counter(path.stem for path in all_paths).items()
+        if count > 1
+    )
+    if duplicate_ids:
+        errors.append(f"板卡同時具有多種維護層級：{', '.join(duplicate_ids)}")
+    paths = [path for path in all_paths if path.stem not in EXPECTED_VARIANT_IDS]
     actual_ids = {path.stem for path in paths}
     if actual_ids != EXPECTED_BOARD_IDS:
         errors.append(
@@ -301,6 +341,31 @@ def collect_boards() -> tuple[list[Board], list[str]]:
             + "；多餘："
             + (", ".join(sorted(actual_ids - EXPECTED_BOARD_IDS)) or "無")
         )
+
+    variants = {
+        path.stem: path for path in all_paths if path.stem in EXPECTED_VARIANT_IDS
+    }
+    actual_variant_ids = set(variants)
+    if actual_variant_ids != EXPECTED_VARIANT_IDS:
+        errors.append(
+            "功能變體設定集合不符；缺少："
+            + (", ".join(sorted(EXPECTED_VARIANT_IDS - actual_variant_ids)) or "無")
+            + "；多餘："
+            + (", ".join(sorted(actual_variant_ids - EXPECTED_VARIANT_IDS)) or "無")
+        )
+    registered_variants = status_data.get("variants")
+    if isinstance(registered_variants, dict):
+        for variant_id, item in registered_variants.items():
+            path = variants.get(variant_id)
+            if path is None or not isinstance(item, dict):
+                continue
+            base_board = item.get("base_board")
+            if base_board not in actual_ids:
+                errors.append(f"{variant_id} 的基礎板卡設定不存在：{base_board}")
+            fields = effective_fields(path)
+            missing = [field for field in REQUIRED_FIELDS if not fields.get(field)]
+            if missing:
+                errors.append(f"{variant_id} 缺少必要欄位：{', '.join(missing)}")
 
     boards: list[Board] = []
     for path in paths:
@@ -379,7 +444,7 @@ def tsv_text(boards: list[Board]) -> str:
     return stream.getvalue()
 
 
-def markdown_text(boards: list[Board], updated: str) -> str:
+def markdown_text(boards: list[Board], updated: str, variants: object | None = None) -> str:
     """產生以證據等級為核心的繁體中文盤點報告。"""
     status_counts = Counter(board.status for board in boards)
     level_counts = Counter(board.level for board in boards)
@@ -395,6 +460,7 @@ def markdown_text(boards: list[Board], updated: str) -> str:
         "## 摘要",
         "",
         f"- 板卡總數：{len(boards)}。",
+        f"- 獨立功能變體：{len(variants) if isinstance(variants, dict) else 0}。",
         f"- 正式 `.conf`：{status_counts['conf']}；社群 `.csc`：{status_counts['csc']}；開發中 `.wip`：{status_counts['wip']}；停止支援 `.eos`：{status_counts['eos']}。",
         "- 證據分布：" + "；".join(f"{level} {level_counts[level]}" for level in LEVEL_NAMES) + "。",
         "- 未取得實機的板卡最高只能標示 L2；目前沒有板卡達到完整 L3／L4／L5 門檻。",
@@ -412,6 +478,30 @@ def markdown_text(boards: list[Board], updated: str) -> str:
             f"`{board.architecture}` | `{targets}` | {'是' if board.has_video else '否'} | "
             f"{board.batch} | {board.level} {LEVEL_NAMES.get(board.level, '未知')} | {board.next_gate} |"
         )
+
+    lines.extend(["", "## 功能變體", ""])
+    if isinstance(variants, dict) and variants:
+        lines.extend(
+            [
+                "功能變體沿用基礎產品板卡，不計入產品板卡總數。",
+                "",
+                "| 變體 | 基礎板卡 | 證據 | 依據 | 下一門檻 |",
+                "| --- | --- | --- | --- | --- |",
+            ]
+        )
+        for variant_id, item in sorted(variants.items()):
+            if not isinstance(item, dict):
+                continue
+            level = item.get("level", "")
+            lines.append(
+                f"| `{variant_id}` | `{item.get('base_board', '')}` | "
+                f"{level} {LEVEL_NAMES.get(level, '未知')} | {item.get('basis', '')} | "
+                f"{item.get('next_gate', '')} |"
+            )
+            for finding in item.get("open_findings", []):
+                lines.append(f"\n- `{variant_id}`：{finding}。")
+    else:
+        lines.append("- 無已登錄的功能變體。")
 
     lines.extend(["", "## 目前開放問題", ""])
     findings = [(board, finding) for board in boards for finding in board.findings]
@@ -450,10 +540,12 @@ def write_output(path: Path, content: str) -> None:
     path.write_text(content, encoding="utf-8")
 
 
-def generated_output_errors(boards: list[Board], updated: str) -> list[str]:
+def generated_output_errors(
+    boards: list[Board], updated: str, variants: object | None = None
+) -> list[str]:
     """比較兩份受版本控制報告，不執行任何寫入。"""
     expected = {
-        MARKDOWN_REPORT: markdown_text(boards, updated),
+        MARKDOWN_REPORT: markdown_text(boards, updated, variants),
         TSV_REPORT: tsv_text(boards),
     }
     errors: list[str] = []
@@ -486,7 +578,9 @@ def main() -> int:
 
     status_data = load_status()
     if args.check:
-        output_errors = generated_output_errors(boards, status_data["updated"])
+        output_errors = generated_output_errors(
+            boards, status_data["updated"], status_data.get("variants")
+        )
         if output_errors:
             for error in output_errors:
                 print(f"錯誤：{error}", file=sys.stderr)
@@ -494,7 +588,10 @@ def main() -> int:
         print(f"盤點通過：{len(boards)} 個板卡，狀態與兩份報告一致", file=sys.stderr)
         return 0
     if args.markdown:
-        write_output(args.markdown, markdown_text(boards, status_data["updated"]))
+        write_output(
+            args.markdown,
+            markdown_text(boards, status_data["updated"], status_data.get("variants")),
+        )
     if args.tsv:
         write_output(args.tsv, tsv_text(boards))
     if not args.markdown and not args.tsv and not args.check:

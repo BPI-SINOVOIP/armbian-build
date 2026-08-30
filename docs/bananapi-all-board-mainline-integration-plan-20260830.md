@@ -10,6 +10,8 @@
 
 H618 現行整合提交：`609228ce815f600fafcdf7c9b2a158f0a1d0b28b`
 
+執行狀態：已完成階段 0 至階段 5；結果與限制記錄於 `docs/bananapi-all-board-mainline-integration-result-20260831.md`。
+
 ## 一、目的
 
 建立唯一的 Banana Pi 全系列 Armbian 整合分支。此分支必須同時具備：

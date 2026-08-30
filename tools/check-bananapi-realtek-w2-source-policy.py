@@ -300,40 +300,23 @@ def validate_historical_image(
         image.parent == expected_parent and archive.parent == expected_parent,
         "W2 產物路徑逸出固定目錄",
     )
-    for name, path, artifact, size_field, digest_field in (
-        ("IMG", image, evidence["image"], "raw_size", "raw_sha256"),
-        ("XZ", archive, evidence["archive"], "xz_size", "xz_sha256"),
-    ):
-        require(
-            (ROOT / artifact["path"]).resolve() == path,
-            f"W2 {name} 證據路徑不符",
-        )
-        require(path.is_file(), f"缺少 W2 {name} 產物")
-        require(
-            path.stat().st_size == artifact["size"] == int(row[size_field]),
-            f"W2 {name} 大小不符",
-        )
-        require(
-            digest(path) == artifact["sha256"] == row[digest_field],
-            f"W2 {name} 雜湊不符",
-        )
-
-    with image.open("rb") as stream:
-        mbr = stream.read(512)
+    image_artifact = evidence["image"]
+    archive_artifact = evidence["archive"]
+    require((ROOT / image_artifact["path"]).resolve() == image, "W2 IMG 證據路徑不符")
+    require((ROOT / archive_artifact["path"]).resolve() == archive, "W2 XZ 證據路徑不符")
     require(
-        len(mbr) == 512 and mbr[510:512] == b"\x55\xaa",
-        "W2 IMG 缺少有效 MBR 簽章",
+        image_artifact["size"] == int(row["raw_size"])
+        and image_artifact["sha256"] == row["raw_sha256"],
+        "W2 IMG 證據與候選矩陣不符",
     )
-    partitions: list[tuple[int, int, int]] = []
-    for index in range(2):
-        entry = mbr[446 + index * 16 : 462 + index * 16]
-        partitions.append((entry[4], *struct.unpack_from("<II", entry, 8)))
-    require(image.stat().st_size % 512 == 0, "W2 IMG 大小未對齊邏輯磁區")
-    expected_root_sectors = image.stat().st_size // 512 - 532480
+    require(archive.is_file(), "缺少 W2 XZ 產物")
     require(
-        partitions
-        == [(0xEA, 8192, 524288), (0x83, 532480, expected_root_sectors)],
-        "W2 IMG 的 MBR 雙分割區布局不符",
+        archive.stat().st_size == archive_artifact["size"] == int(row["xz_size"]),
+        "W2 XZ 大小不符",
+    )
+    require(
+        digest(archive) == archive_artifact["sha256"] == row["xz_sha256"],
+        "W2 XZ 雜湊不符",
     )
 
     xz_test = subprocess.run(
@@ -350,10 +333,17 @@ def validate_historical_image(
     )
     decompressed_digest = hashlib.sha256()
     decompressed_size = 0
+    board = config["boards"]["bananapiw2"]
+    expected_size = board["uboot_payload_sizes"][0].split("=", 1)[1]
+    expected_sha256 = board["uboot_payload_sha256"][0].split("=", 1)[1]
+    prefix_limit = max(512, board["uboot_offset"] + int(expected_size))
+    prefix = bytearray()
     assert decompressed.stdout is not None
     for block in iter(lambda: decompressed.stdout.read(1024 * 1024), b""):
         decompressed_digest.update(block)
         decompressed_size += len(block)
+        if len(prefix) < prefix_limit:
+            prefix.extend(block[: prefix_limit - len(prefix)])
     decompressed.stdout.close()
     require(decompressed.wait() == 0, "W2 XZ 無法完整解壓")
     require(
@@ -363,6 +353,22 @@ def validate_historical_image(
     require(
         decompressed_digest.hexdigest() == evidence["image"]["sha256"],
         "W2 XZ 解壓內容與 IMG 不同",
+    )
+    mbr = bytes(prefix[:512])
+    require(
+        len(mbr) == 512 and mbr[510:512] == b"\x55\xaa",
+        "W2 XZ 內映像缺少有效 MBR 簽章",
+    )
+    partitions: list[tuple[int, int, int]] = []
+    for index in range(2):
+        entry = mbr[446 + index * 16 : 462 + index * 16]
+        partitions.append((entry[4], *struct.unpack_from("<II", entry, 8)))
+    require(decompressed_size % 512 == 0, "W2 解壓映像大小未對齊邏輯磁區")
+    expected_root_sectors = decompressed_size // 512 - 532480
+    require(
+        partitions
+        == [(0xEA, 8192, 524288), (0x83, 532480, expected_root_sectors)],
+        "W2 解壓映像的 MBR 雙分割區布局不符",
     )
 
     completion = load_json(completion_path, "W2 建置完成狀態")
@@ -446,14 +452,11 @@ def validate_historical_image(
         "W2 共用驗證清單雜湊不符",
     )
 
-    board = config["boards"]["bananapiw2"]
     uboot_row = load_single_tsv(
         uboot_manifest_path,
         ["board", "payload", "placement", "offset", "size", "sha256"],
         "W2 U-Boot 載荷清單",
     )
-    expected_size = board["uboot_payload_sizes"][0].split("=", 1)[1]
-    expected_sha256 = board["uboot_payload_sha256"][0].split("=", 1)[1]
     require(
         uboot_row
         == {
@@ -470,9 +473,11 @@ def validate_historical_image(
         digest(uboot_manifest_path) == evidence["uboot_payload_manifest_sha256"],
         "W2 U-Boot 載荷清單雜湊不符",
     )
-    with image.open("rb") as stream:
-        stream.seek(board["uboot_offset"])
-        payload = stream.read(int(expected_size))
+    payload = bytes(
+        prefix[
+            board["uboot_offset"] : board["uboot_offset"] + int(expected_size)
+        ]
+    )
     require(
         hashlib.sha256(payload).hexdigest() == expected_sha256,
         "W2 IMG 內 U-Boot 載荷不符",

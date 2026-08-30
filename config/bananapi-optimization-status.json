@@ -1,6 +1,6 @@
 {
-  "schema_version": 2,
-  "updated": "2026-08-28",
+  "schema_version": 3,
+  "updated": "2026-08-31",
   "batches": {
     "A": [
       "bananapim5",
@@ -66,6 +66,17 @@
       "bananapim4zero",
       "bananapim4berry"
     ]
+  },
+  "variants": {
+    "bananapim4zeroemac": {
+      "base_board": "bananapim4zero",
+      "level": "L2",
+      "basis": "沿用 M4 Zero A1 DDR、GPU、媒體、40-pin 與無線整合，另加入 H618 EMAC 板級設定；十映像與唯讀軟體守門已通過",
+      "next_gate": "取得具備 AC300 EPHY 的實體板，驗證冷啟動、連線協商、吞吐量、封包壓力、暫停恢復及重新啟動",
+      "open_findings": [
+        "尚未取得具備 AC300 EPHY 的實體板，EMAC 腳位、時脈、重置、延遲與長時間穩定性仍待實機驗證"
+      ]
+    }
   },
   "evidence": {
     "bananapim5": {

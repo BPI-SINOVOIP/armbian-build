@@ -8,7 +8,10 @@ build_stamp="${BUILD_STAMP:-$(date +%Y%m%d-%H%M%S)}"
 source_date_epoch="${SOURCE_DATE_EPOCH:-1786579200}"
 output_dir="${OUTPUT_DIR:-$repo_dir/output/evidence/bpi-m4zero-ddr-lab/build-${build_stamp}-${git_short}}"
 source_dir="$repo_dir/cache/sources/u-boot-worktree/u-boot/v2026.01"
-patch_path="$repo_dir/patch/u-boot/v2026.01/board_bananapim4zero/015-sunxi-h616-add-standalone-ddr-lab.patch"
+patch_path="$repo_dir/patch/lab/u-boot/bananapim4zero/015-sunxi-h616-add-standalone-ddr-lab.patch"
+user_patch_dir="$repo_dir/userpatches/u-boot/v2026.01/board_bananapim4zero"
+user_patch_path="$user_patch_dir/$(basename "$patch_path")"
+lock_path="$repo_dir/.tmp/bpi-m4zero-ddr-lab.lock"
 
 required_commands=(
 	aarch64-linux-gnu-nm
@@ -18,10 +21,13 @@ required_commands=(
 	dd
 	dpkg-deb
 	find
+	flock
 	git
 	install
+	ln
 	readelf
 	rg
+	rm
 	sha256sum
 	stat
 	strings
@@ -39,6 +45,23 @@ done
 	echo "找不到 DDR 實驗器補丁：$patch_path" >&2
 	exit 1
 }
+
+mkdir -p "$(dirname "$lock_path")"
+exec 9>"$lock_path"
+flock -n 9 || {
+	echo "另一個 DDR 實驗器建置正在執行。" >&2
+	exit 1
+}
+[[ ! -e "$user_patch_path" ]] || {
+	echo "DDR 實驗器 userpatch 已存在，拒絕覆寫：$user_patch_path" >&2
+	exit 1
+}
+mkdir -p "$user_patch_dir"
+ln -s "$patch_path" "$user_patch_path"
+cleanup_user_patch() {
+	rm -f "$user_patch_path"
+}
+trap cleanup_user_patch EXIT
 
 mkdir -p "$output_dir" "$output_dir/extracted-deb"
 

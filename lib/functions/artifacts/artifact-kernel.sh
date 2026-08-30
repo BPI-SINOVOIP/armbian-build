@@ -20,7 +20,7 @@ function artifact_kernel_config_dump() {
 	artifact_input_variables[ARCH]="${ARCH}"
 	artifact_input_variables[EXTRAWIFI]="${EXTRAWIFI:-"yes"}"
 	artifact_input_variables[RTL8852BS_GIT_SOURCE]="${RTL8852BS_GIT_SOURCE:-"${GITHUB_SOURCE}/armbian/wifi-rtl8852bs"}"
-	artifact_input_variables[RTL8852BS_GIT_REF]="${RTL8852BS_GIT_REF:-"commit:35d3e2660fd912c36777cc50dd43b3fbc805d56a"}"
+	artifact_input_variables[RTL8852BS_GIT_REF]="${RTL8852BS_GIT_REF:-"commit:58840d11af91d0b72bc830980b4aff740a37b5e3"}"
 }
 
 # This is run in a logging section.

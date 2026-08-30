@@ -13,6 +13,7 @@ import os
 from pathlib import Path
 import re
 import subprocess
+import tempfile
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -265,47 +266,82 @@ def validate_historical_image(config: dict[str, object], evidence: dict[str, obj
     archive = (IMAGE_OUTPUT / row["xz_path"]).resolve()
     expected_parent = (IMAGE_OUTPUT / "bananapism10").resolve()
     require(image.parent == expected_parent and archive.parent == expected_parent, "SM10 產物路徑逸出固定目錄")
-    for description, path, artifact, size_field, hash_field in (
-        ("IMG", image, evidence["image"], "raw_size", "raw_sha256"),
-        ("XZ", archive, evidence["archive"], "xz_size", "xz_sha256"),
-    ):
-        require(path.is_file(), f"缺少 SM10 {description}")
-        require((ROOT / artifact["path"]).resolve() == path, f"SM10 {description} 證據路徑不符")
-        require(path.stat().st_size == artifact["size"] == int(row[size_field]), f"SM10 {description} 大小不符")
-        require(digest(path) == artifact["sha256"] == row[hash_field], f"SM10 {description} 雜湊不符")
-    require(subprocess.run(["sgdisk", "-v", str(image)], capture_output=True, check=False).returncode == 0, "SM10 GPT 結構或 CRC 不完整")
-    parsed = subprocess.run(["sfdisk", "--json", str(image)], capture_output=True, text=True, check=False)
-    require(parsed.returncode == 0, "SM10 GPT 無法重新解析")
-    table = json.loads(parsed.stdout)["partitiontable"]
-    require(table.get("label") == "gpt", "SM10 IMG 不是 GPT")
-    partitions = table.get("partitions", [])
-    specifications = config["boards"]["bananapism10"]["required_partitions"]
-    types = config["boards"]["bananapism10"]["required_partition_types"]
-    require(len(partitions) == len(specifications) == len(types) == 2, "SM10 GPT 分割區數量不符")
-    for index, (specification, type_specification) in enumerate(zip(specifications, types)):
-        number, name, start, size = specification.split(":", 3)
-        type_number, expected_type = type_specification.split(":", 1)
-        require("*" not in specification, "L2 GPT 契約不得含萬用值")
-        require(number == type_number == str(index + 1), "SM10 GPT 契約編號不連續")
-        partition = partitions[index]
-        require(
-            (partition.get("name", ""), str(partition.get("start", "")), str(partition.get("size", "")))
-            == (name, start, size),
-            f"SM10 GPT 第 {number} 分割區不符",
-        )
-        require(str(partition.get("type", "")).lower() == expected_type.lower(), f"SM10 GPT 第 {number} 類型不符")
+    require((ROOT / evidence["image"]["path"]).resolve() == image, "SM10 IMG 證據路徑不符")
+    require((ROOT / evidence["archive"]["path"]).resolve() == archive, "SM10 XZ 證據路徑不符")
+    require(
+        evidence["image"]["size"] == int(row["raw_size"])
+        and evidence["image"]["sha256"] == row["raw_sha256"],
+        "SM10 IMG 證據與候選矩陣不符",
+    )
+    require(archive.is_file(), "缺少 SM10 XZ")
+    require(
+        archive.stat().st_size == evidence["archive"]["size"] == int(row["xz_size"]),
+        "SM10 XZ 大小不符",
+    )
+    require(
+        digest(archive) == evidence["archive"]["sha256"] == row["xz_sha256"],
+        "SM10 XZ 雜湊不符",
+    )
     xz_test = subprocess.run(["xz", "-t", "--", str(archive)], capture_output=True, check=False)
     require(xz_test.returncode == 0, "SM10 XZ 結構或校驗碼不符")
-    decompressed = subprocess.Popen(["xz", "-dc", "--", str(archive)], stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
-    image_hash = hashlib.sha256()
-    image_size = 0
-    assert decompressed.stdout is not None
-    for block in iter(lambda: decompressed.stdout.read(1024 * 1024), b""):
-        image_hash.update(block)
-        image_size += len(block)
-    decompressed.stdout.close()
-    require(decompressed.wait() == 0, "SM10 XZ 無法完整解壓")
-    require(image_size == evidence["image"]["size"] and image_hash.hexdigest() == evidence["image"]["sha256"], "SM10 XZ 解壓內容與 IMG 不同")
+    board = config["boards"]["bananapism10"]
+    sizes = split_contract(board["uboot_payload_sizes"], "=")
+    hashes = split_contract(board["uboot_payload_sha256"], "=")
+    offsets = split_contract(board["uboot_payloads"], "@")
+    with tempfile.NamedTemporaryFile(prefix="sm10-history-", suffix=".img") as temporary_image:
+        decompressed = subprocess.run(
+            ["xz", "-dc", "--", str(archive)],
+            stdout=temporary_image,
+            stderr=subprocess.DEVNULL,
+            check=False,
+        )
+        require(decompressed.returncode == 0, "SM10 XZ 無法完整解壓")
+        temporary_image.flush()
+        temporary_path = Path(temporary_image.name)
+        require(
+            temporary_path.stat().st_size == evidence["image"]["size"]
+            and digest(temporary_path) == evidence["image"]["sha256"],
+            "SM10 XZ 解壓內容與 IMG 證據不同",
+        )
+        require(
+            subprocess.run(
+                ["sgdisk", "-v", str(temporary_path)],
+                capture_output=True,
+                check=False,
+            ).returncode
+            == 0,
+            "SM10 GPT 結構或 CRC 不完整",
+        )
+        parsed = subprocess.run(
+            ["sfdisk", "--json", str(temporary_path)],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        require(parsed.returncode == 0, "SM10 GPT 無法重新解析")
+        table = json.loads(parsed.stdout)["partitiontable"]
+        require(table.get("label") == "gpt", "SM10 解壓映像不是 GPT")
+        partitions = table.get("partitions", [])
+        specifications = board["required_partitions"]
+        types = board["required_partition_types"]
+        require(len(partitions) == len(specifications) == len(types) == 2, "SM10 GPT 分割區數量不符")
+        for index, (specification, type_specification) in enumerate(zip(specifications, types)):
+            number, name, start, size = specification.split(":", 3)
+            type_number, expected_type = type_specification.split(":", 1)
+            require("*" not in specification, "L2 GPT 契約不得含萬用值")
+            require(number == type_number == str(index + 1), "SM10 GPT 契約編號不連續")
+            partition = partitions[index]
+            require(
+                (partition.get("name", ""), str(partition.get("start", "")), str(partition.get("size", "")))
+                == (name, start, size),
+                f"SM10 GPT 第 {number} 分割區不符",
+            )
+            require(str(partition.get("type", "")).lower() == expected_type.lower(), f"SM10 GPT 第 {number} 類型不符")
+        with temporary_path.open("rb") as stream:
+            for name, offset in offsets.items():
+                stream.seek(int(offset))
+                payload = stream.read(int(sizes[name]))
+                require(hashlib.sha256(payload).hexdigest() == hashes[name], f"SM10 IMG 內載荷不符：{name}")
 
     completion_data = load_json(completion, "SM10 建置完成狀態")
     verification_data = load_json(verification_status, "SM10 驗證完成狀態")
@@ -340,10 +376,6 @@ def validate_historical_image(config: dict[str, object], evidence: dict[str, obj
     require(digest(payload_manifest) == evidence["uboot_payload_manifest_sha256"], "SM10 U-Boot 載荷清單雜湊不符")
     require(digest(config_manifest) == evidence["final_config_manifest_sha256"], "SM10 最終設定清單雜湊不符")
 
-    board = config["boards"]["bananapism10"]
-    sizes = split_contract(board["uboot_payload_sizes"], "=")
-    hashes = split_contract(board["uboot_payload_sha256"], "=")
-    offsets = split_contract(board["uboot_payloads"], "@")
     expected_payloads = []
     for name, offset in offsets.items():
         expected_payloads.append({"board": "bananapism10", "payload": name, "placement": "image", "offset": offset, "size": sizes[name], "sha256": hashes[name]})
@@ -351,11 +383,6 @@ def validate_historical_image(config: dict[str, object], evidence: dict[str, obj
         expected_payloads.append({"board": "bananapism10", "payload": name, "placement": "package-only", "offset": "-", "size": sizes[name], "sha256": hashes[name]})
     payload_rows = load_tsv(payload_manifest, ["board", "payload", "placement", "offset", "size", "sha256"], "SM10 U-Boot 載荷清單")
     require(payload_rows == expected_payloads, "SM10 U-Boot 載荷清單內容不符")
-    with image.open("rb") as stream:
-        for name, offset in offsets.items():
-            stream.seek(int(offset))
-            payload = stream.read(int(sizes[name]))
-            require(hashlib.sha256(payload).hexdigest() == hashes[name], f"SM10 IMG 內載荷不符：{name}")
     config_rows = load_tsv(config_manifest, ["board", "component", "path", "sha256"], "SM10 最終設定清單")
     require(len(config_rows) == 2, "SM10 最終設定清單必須含核心與 U-Boot")
     by_component = {row["component"]: row for row in config_rows}

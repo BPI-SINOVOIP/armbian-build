@@ -202,12 +202,14 @@ printf 'linux_source=%s\nlinux=%s\nuboot_source=%s\nuboot=%s\nrkbin=%s\nfirmware
         harness = DRIVER_HARNESS.read_text()
         self.assertIn("RTL8852BS_GIT_SOURCE", harness)
         self.assertIn("RTL8852BS_GIT_REF", harness)
-        self.assertIn(self.config["wifi_driver_commit"], harness)
+        default_revision = "58840d11af91d0b72bc830980b4aff740a37b5e3"
+        self.assertIn(default_revision, harness)
         for path in (DRIVER_CACHE, KERNEL_ARTIFACT):
             text = path.read_text()
             self.assertIn("RTL8852BS_GIT_SOURCE", text)
             self.assertIn("RTL8852BS_GIT_REF", text)
-            self.assertIn(self.config["wifi_driver_commit"], text)
+            self.assertIn(default_revision, text)
+        self.assertIn(self.config["wifi_driver_commit"], self.board_text)
 
     def test_io_accelerator_and_diagnostic_contract_is_complete(self) -> None:
         packages = set(self.config["common_packages"])

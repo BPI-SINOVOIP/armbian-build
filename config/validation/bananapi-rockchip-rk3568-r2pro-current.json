@@ -78,11 +78,11 @@
         "sinovoip,rk3568-bpi-r2pro",
         "rockchip,rk3568"
       ],
-      "uboot_tag": "v2024.01",
-      "uboot_version": "2024.01",
+      "uboot_tag": "v2026.01",
+      "uboot_version": "2026.01",
       "uboot_git_source": "https://github.com/u-boot/u-boot",
-      "uboot_git_ref": "commit:866ca972d6c3cabeaf6dbac431e8e08bb30b3c8e",
-      "uboot_revision": "866ca972d6c3cabeaf6dbac431e8e08bb30b3c8e",
+      "uboot_git_ref": "commit:127a42c7257a6ffbbd1575ed1cbaa8f5408a44b3",
+      "uboot_revision": "127a42c7257a6ffbbd1575ed1cbaa8f5408a44b3",
       "uboot_defconfig": "bpi-r2-pro-rk3568_defconfig",
       "uboot_target_index": 1,
       "uboot_required_config_options": [

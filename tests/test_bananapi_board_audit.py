@@ -29,17 +29,36 @@ class BananaPiBoardAuditTests(unittest.TestCase):
         self.assertEqual(len(self.boards), 48)
         self.assertEqual(
             {status: sum(board.status == status for board in self.boards) for status in AUDIT.BOARD_SUFFIXES},
-            {"conf": 12, "csc": 14, "wip": 21, "eos": 1},
+            {"conf": 10, "csc": 16, "wip": 21, "eos": 1},
         )
 
     def test_status_registry_covers_each_board_once(self) -> None:
         status = AUDIT.load_status()
-        self.assertEqual(status["schema_version"], 2)
+        self.assertEqual(status["schema_version"], 3)
         registered = AUDIT.batch_index(status)
         self.assertEqual(set(registered), set(self.by_id))
         for section in ("evidence", "next_gates", "open_findings"):
             with self.subTest(section=section):
                 self.assertEqual(set(status[section]), set(self.by_id))
+        self.assertEqual(set(status["variants"]), set(AUDIT.EXPECTED_VARIANT_IDS))
+        self.assertEqual(
+            status["variants"]["bananapim4zeroemac"]["base_board"],
+            "bananapim4zero",
+        )
+
+    def test_functional_variant_is_tracked_outside_product_inventory(self) -> None:
+        self.assertNotIn("bananapim4zeroemac", self.by_id)
+        self.assertEqual(set(AUDIT.variant_paths()), {"bananapim4zeroemac"})
+        variant = AUDIT.load_status()["variants"]["bananapim4zeroemac"]
+        self.assertEqual(variant["level"], "L2")
+        self.assertTrue(variant["basis"])
+        self.assertTrue(variant["next_gate"])
+
+    def test_each_board_has_only_one_maintenance_level(self) -> None:
+        counts: dict[str, int] = {}
+        for path in AUDIT.all_board_paths():
+            counts[path.stem] = counts.get(path.stem, 0) + 1
+        self.assertTrue(all(count == 1 for count in counts.values()))
 
     def test_registry_rejects_missing_or_extra_per_board_records(self) -> None:
         original = AUDIT.load_status()
@@ -122,11 +141,14 @@ class BananaPiBoardAuditTests(unittest.TestCase):
         self.assertEqual(self.by_id["bpi-ai2n"].level, "L2")
 
     def test_generated_outputs_cover_every_board(self) -> None:
-        report = AUDIT.markdown_text(self.boards, "2026-08-26")
+        status = AUDIT.load_status()
+        report = AUDIT.markdown_text(self.boards, "2026-08-31", status["variants"])
         tsv = AUDIT.tsv_text(self.boards)
         for board_id in self.by_id:
             self.assertIn(f"`{board_id}`", report)
             self.assertIn(f"\n{board_id}\t", "\n" + tsv)
+        self.assertIn("`bananapim4zeroemac`", report)
+        self.assertNotIn("\nbananapim4zeroemac\t", "\n" + tsv)
 
     def test_each_board_uses_its_registered_next_gate(self) -> None:
         status = AUDIT.load_status()

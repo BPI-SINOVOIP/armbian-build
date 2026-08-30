@@ -7,6 +7,7 @@ import unittest
 
 REPO_DIR = Path(__file__).resolve().parents[1]
 BOARD_CONFIG = REPO_DIR / "config/boards/bananapim4berry.conf"
+COMMON_CONFIG = REPO_DIR / "config/boards/include/bananapi-h618-common.inc"
 CURRENT_KERNEL_CONFIG = REPO_DIR / "config/kernel/linux-sunxi64-current.config"
 EDGE_KERNEL_CONFIG = REPO_DIR / "config/kernel/linux-sunxi64-edge.config"
 OVERLAY_DIR = REPO_DIR / "patch/kernel/archive/sunxi-6.18/overlay_64"
@@ -23,7 +24,9 @@ COMPAT_INSTALLER = (
 
 class M4BerryIoTests(unittest.TestCase):
     def test_all_images_include_standard_io_tools(self) -> None:
-        config = BOARD_CONFIG.read_text(encoding="utf-8")
+        config = BOARD_CONFIG.read_text(encoding="utf-8") + COMMON_CONFIG.read_text(
+            encoding="utf-8"
+        )
         for package in (
             "gpiod",
             "i2c-tools",
@@ -34,7 +37,9 @@ class M4BerryIoTests(unittest.TestCase):
             self.assertIn(package, config)
 
     def test_desktop_images_include_acceleration_tools(self) -> None:
-        config = BOARD_CONFIG.read_text(encoding="utf-8")
+        config = BOARD_CONFIG.read_text(encoding="utf-8") + COMMON_CONFIG.read_text(
+            encoding="utf-8"
+        )
         for package in (
             "gstreamer1.0-tools",
             "gstreamer1.0-plugins-bad",

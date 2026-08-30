@@ -17,6 +17,12 @@ Banana Pi R2 的 Linux 與 U-Boot 均已固定至可重建的公開原始碼提�
 | Armbian firmware | `https://github.com/armbian/firmware` | `f50a2a21bcdb77a562b3976930c5c6b521a1df08` |
 | R2 原廠載荷 | `https://github.com/BPI-SINOVOIP/BPI-files.git` | 各檔案依下表固定 |
 
+### 2026-08-31 主線整合註記
+
+本文件其餘段落保留 2026-08-27 候選的歷史證據，不代表現行主線已重新建置。整合分支現已改用 U-Boot `v2026.07` 對應提交 `ece349ade2973e220f524ce59e59711cc919263f`，板級 `BOOT_FDT_FILE` 採核心來源所需的 `mediatek/mt7623n-bananapi-bpi-r2`，映像內 boot script 與 U-Boot 環境仍使用扁平檔名 `mt7623n-bananapi-bpi-r2.dtb`。
+
+現行網路預設不再安裝舊候選的板級 bridge/networkd 檔案，改由 Armbian 通用 `/etc/netplan/10-dhcp-all-interfaces.yaml` 管理 `e*`、`lan*` 與 `wan*` 介面。以上變更須完成新的來源建置與實機網路驗證，才能建立新的 L2／L3 證據；不得沿用下方舊映像數值宣稱新版本已通過。
+
 ## 原廠載荷證據
 
 | 本倉檔名 | 固定來源路徑 | 固定提交 | 解壓後 SHA-256 |

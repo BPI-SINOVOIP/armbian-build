@@ -96,7 +96,7 @@ def read_metadata(path: Path) -> dict[str, str]:
     return values
 
 
-def require_child_path(relative: object, suffix: str) -> Path:
+def require_child_path(relative: object, suffix: str, must_exist: bool = True) -> Path:
     require(valid_artifact_path(relative, suffix), f"L2 產物路徑不安全：{relative}")
     resolved = (OUTPUT_DIR / str(relative)).resolve()
     require(
@@ -104,7 +104,8 @@ def require_child_path(relative: object, suffix: str) -> Path:
         == str(OUTPUT_DIR.resolve()),
         "L2 產物路徑離開固定輸出目錄",
     )
-    require(resolved.is_file(), f"L2 產物不存在：{relative}")
+    if must_exist:
+        require(resolved.is_file(), f"L2 產物不存在：{relative}")
     return resolved
 
 
@@ -329,26 +330,38 @@ def validate_l2_evidence(data: dict[str, object], board: dict[str, object]) -> N
     require(row.get("uboot_tag") == board.get("uboot_tag"), "L2 U-Boot 標籤不符")
     require(row.get("source_commit") == source_commit, "L2 候選矩陣來源提交不符")
 
-    image = require_child_path(evidence["image"].get("path"), ".img")
+    image = require_child_path(evidence["image"].get("path"), ".img", must_exist=False)
     archive = require_child_path(evidence["archive"].get("path"), ".img.xz")
-    for name, path, size_key, hash_key in (
-        ("image", image, "raw_size", "raw_sha256"),
-        ("archive", archive, "xz_size", "xz_sha256"),
-    ):
-        artifact = evidence[name]
-        require(path.stat().st_size == artifact["size"] == int(row[size_key]), f"L2 {name} 大小與實檔不符")
-        require(sha256_path(path) == artifact["sha256"] == row[hash_key], f"L2 {name} 雜湊與實檔不符")
+    require(
+        evidence["image"]["size"] == int(row["raw_size"])
+        and evidence["image"]["sha256"] == row["raw_sha256"],
+        "L2 IMG 證據與候選矩陣不符",
+    )
+    require(
+        archive.stat().st_size == evidence["archive"]["size"] == int(row["xz_size"]),
+        "L2 XZ 大小與實檔不符",
+    )
+    require(
+        sha256_path(archive) == evidence["archive"]["sha256"] == row["xz_sha256"],
+        "L2 XZ 雜湊與實檔不符",
+    )
     require(row["img_path"] == evidence["image"]["path"], "L2 IMG 路徑與候選矩陣不符")
     require(row["xz_path"] == evidence["archive"]["path"], "L2 XZ 路徑與候選矩陣不符")
 
     decompressed = hashlib.sha256()
+    decompressed_size = 0
     try:
         with lzma.open(archive, "rb") as stream:
             for block in iter(lambda: stream.read(1024 * 1024), b""):
                 decompressed.update(block)
+                decompressed_size += len(block)
     except (OSError, lzma.LZMAError) as error:
         fail(f"L2 XZ 串流無法解壓：{error}")
-    require(decompressed.hexdigest() == evidence["image"]["sha256"], "L2 XZ 解壓資料與 IMG 不一致")
+    require(
+        decompressed_size == evidence["image"]["size"]
+        and decompressed.hexdigest() == evidence["image"]["sha256"],
+        "L2 XZ 解壓資料與 IMG 證據不一致",
+    )
 
     metadata = read_metadata(OUTPUT_DIR / "bananapiaim7/artifact.metadata.txt")
     metadata_expected = {
