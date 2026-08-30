@@ -1,0 +1,706 @@
+From 242230ada5883486eaf8a485652a7a142aa23f7f Mon Sep 17 00:00:00 2001
+From: Banana Pi -BPI <lionwang@sinovoip.com.cn>
+Date: Thu, 13 Aug 2026 15:02:45 +0800
+Subject: [PATCH] =?UTF-8?q?=E5=AF=A6=E9=A9=97=EF=BC=9A=E5=8A=A0=E5=85=A5?=
+ =?UTF-8?q?=E5=96=AE=E4=B8=80=E5=9F=B7=E8=A1=8C=E6=9C=9F=20SPL=20DDR=20?=
+ =?UTF-8?q?=E5=AF=A6=E9=A9=97=E5=99=A8?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+以 U0 480 MHz profile 啟動後留在 SRAM。
+透過 M4ZLAB2 UART 記錄接收完整候選，
+不需為時脈、ODT、驅動、TPR、輪數或窗口
+重新編譯。
+
+候選執行前啟動 watchdog。初始化卡死時，
+自動重啟同一份 SPL。測試包含資料線、
+位址線、Rank 邊界、分散窗口與 benchmark，
+並停用 SPL MMC 與 raw 下一階段載入路徑。
+
+Signed-off-by: Banana Pi -BPI <lionwang@sinovoip.com.cn>
+---
+ .../include/asm/arch-sunxi/dram_sun50i_h616.h |  13 +
+ arch/arm/mach-sunxi/Kconfig                   |   9 +
+ arch/arm/mach-sunxi/Makefile                  |   1 +
+ arch/arm/mach-sunxi/board.c                   |   5 +
+ arch/arm/mach-sunxi/dram_sun50i_h616.c        |  10 +-
+ arch/arm/mach-sunxi/dram_sun50i_h616_lab.c    | 538 ++++++++++++++++++
+configs/bananapi_m4zero_defconfig             |   1 +
+ 7 files changed, 575 insertions(+), 1 deletion(-)
+ create mode 100644 arch/arm/mach-sunxi/dram_sun50i_h616_lab.c
+
+diff --git a/arch/arm/include/asm/arch-sunxi/dram_sun50i_h616.h b/arch/arm/include/asm/arch-sunxi/dram_sun50i_h616.h
+index a8fdda124a0..208fd2e694d 100644
+--- a/arch/arm/include/asm/arch-sunxi/dram_sun50i_h616.h
++++ b/arch/arm/include/asm/arch-sunxi/dram_sun50i_h616.h
+@@ -168,13 +168,24 @@ struct dram_config {
+ 	u8 bus_full_width;
+ };
+ 
++extern u32 sunxi_h616_dram_runtime_clk;
++
+ static inline int ns_to_t(int nanoseconds)
+ {
++#if IS_ENABLED(CONFIG_DRAM_SUNXI_H616_LAB)
++	const unsigned int ctrl_freq = sunxi_h616_dram_runtime_clk / 2;
++#else
+ 	const unsigned int ctrl_freq = CONFIG_DRAM_CLK / 2;
++#endif
+ 
+ 	return DIV_ROUND_UP(ctrl_freq * nanoseconds, 1000);
+ }
+ 
+ void mctl_set_timing_params(const struct dram_para *para);
++void sunxi_h616_dram_lab_bootstrap_begin(void);
++void sunxi_h616_dram_lab_set_bootstrap(const struct dram_para *para,
++				       const struct dram_config *config,
++				       ulong size);
++__noreturn void sunxi_h616_dram_lab_run(void);
+ 
+ #endif /* _SUNXI_DRAM_SUN50I_H616_H */
+diff --git a/arch/arm/mach-sunxi/Kconfig b/arch/arm/mach-sunxi/Kconfig
+index 6eb77dc68e5..78779e6c105 100644
+--- a/arch/arm/mach-sunxi/Kconfig
++++ b/arch/arm/mach-sunxi/Kconfig
+@@ -205,6 +205,15 @@ config DRAM_SUNXI_H616_DIAGNOSTICS
+ 	  改變初始化之間的時間，因此只供診斷，不得作為穩定性或量產證明。
+ 
+ 	  只應在有 UART 紀錄需求的板級診斷組態啟用。
++
++config DRAM_SUNXI_H616_LAB
++	bool "啟用 H616 單一 SPL DDR 實驗器"
++	depends on DRAM_SUN50I_H616
++	help
++	  DDR 初始化後留在 SRAM，透過 M4ZLAB2 UART 協定接收執行期
++	  profile 並執行破壞性記憶體測試。候選失去回應時由 watchdog
++	  重新啟動同一份 SPL，讓主機端可以繼續掃描。此組態不載入
++	  下一階段，也不得作為一般開機或量產映像。
+ endif
+ 
+ config SUN6I_PRCM
+diff --git a/arch/arm/mach-sunxi/Makefile b/arch/arm/mach-sunxi/Makefile
+index 9c79b55abf3..8fae4dd02df 100644
+--- a/arch/arm/mach-sunxi/Makefile
++++ b/arch/arm/mach-sunxi/Makefile
+@@ -45,6 +45,7 @@ obj-$(CONFIG_DRAM_SUN50I_H6)	+= dram_sun50i_h6.o dram_dw_helpers.o
+ obj-$(CONFIG_DRAM_SUN50I_H6)	+= dram_timings/
+ obj-$(CONFIG_DRAM_SUN50I_H616)	+= dram_sun50i_h616.o dram_dw_helpers.o
+ obj-$(CONFIG_DRAM_SUN50I_H616)	+= dram_timings/
++obj-$(CONFIG_DRAM_SUNXI_H616_LAB) += dram_sun50i_h616_lab.o
+ obj-$(CONFIG_DRAM_SUN50I_A133)	+= dram_sun50i_a133.o
+ obj-$(CONFIG_DRAM_SUN50I_A133)	+= dram_timings/
+ obj-$(CONFIG_MACH_SUN55I_A523)	+= dram_sun55i_a523.o dram_dw_helpers.o
+diff --git a/arch/arm/mach-sunxi/board.c b/arch/arm/mach-sunxi/board.c
+index 432b1c10f92..83069846706 100644
+--- a/arch/arm/mach-sunxi/board.c
++++ b/arch/arm/mach-sunxi/board.c
+@@ -21,6 +21,7 @@
+ #include <asm/gpio.h>
+ #include <asm/io.h>
+ #include <asm/arch/clock.h>
++#include <asm/arch/dram.h>
+ #include <asm/arch/spl.h>
+ #include <asm/arch/sys_proto.h>
+ #include <asm/arch/timer.h>
+@@ -488,7 +489,11 @@ void board_init_f(ulong dummy)
+ 	i2c_init_board();
+ 	i2c_init(CONFIG_SYS_I2C_SPEED, CONFIG_SYS_I2C_SLAVE);
+ #endif
++	if (IS_ENABLED(CONFIG_DRAM_SUNXI_H616_LAB))
++		sunxi_h616_dram_lab_bootstrap_begin();
+ 	sunxi_board_init();
++	if (IS_ENABLED(CONFIG_DRAM_SUNXI_H616_LAB))
++		sunxi_h616_dram_lab_run();
+ }
+ #endif /* CONFIG_XPL_BUILD */
+ 
+diff --git a/arch/arm/mach-sunxi/dram_sun50i_h616.c b/arch/arm/mach-sunxi/dram_sun50i_h616.c
+index 3999c4ffc8d..14f5ed58768 100644
+--- a/arch/arm/mach-sunxi/dram_sun50i_h616.c
++++ b/arch/arm/mach-sunxi/dram_sun50i_h616.c
+@@ -1404,6 +1404,8 @@ bool mctl_core_init(const struct dram_para *para,
+ {
+ 	bool result;
+ 
++	if (IS_ENABLED(CONFIG_DRAM_SUNXI_H616_LAB))
++		sunxi_h616_dram_runtime_clk = para->clk;
+ 	mctl_diag_begin(config);
+ 	mctl_sys_init(para->clk);
+ 	result = mctl_ctrl_init(para, config);
+@@ -1447,10 +1449,16 @@ unsigned long sunxi_dram_init(void)
+ 	mctl_auto_detect_rank_width(&para, &config);
+ 	mctl_auto_detect_dram_size(&para, &config);
+ 
+-	mctl_core_init(&para, &config);
++	if (!mctl_core_init(&para, &config) &&
++	    IS_ENABLED(CONFIG_DRAM_SUNXI_H616_LAB)) {
++		printf("M4ZLAB2_BOOT_ERROR reason=final_init\n");
++		panic("DDR lab bootstrap initialization failed\n");
++	}
+ 	mctl_diag_snapshot();
+ 
+ 	size = mctl_calc_size(&config);
++	if (IS_ENABLED(CONFIG_DRAM_SUNXI_H616_LAB))
++		sunxi_h616_dram_lab_set_bootstrap(&para, &config, size);
+ 
+ 	if (IS_ENABLED(CONFIG_DRAM_SUNXI_H616_DIAGNOSTICS))
+ 		printf("M4ZDDR1_FINAL size_mib=%lu ranks=%u width=%u rows=%u cols=%u\n",
+diff --git a/arch/arm/mach-sunxi/dram_sun50i_h616_lab.c b/arch/arm/mach-sunxi/dram_sun50i_h616_lab.c
+new file mode 100644
+index 00000000000..fe482e5f309
+--- /dev/null
++++ b/arch/arm/mach-sunxi/dram_sun50i_h616_lab.c
+@@ -0,0 +1,538 @@
++// SPDX-License-Identifier: GPL-2.0+
++/* H616 SRAM 常駐 DDR 實驗伺服器。 */
++
++#include <config.h>
++#include <serial.h>
++#include <string.h>
++#include <time.h>
++#include <asm/barriers.h>
++#include <asm/io.h>
++#include <asm/arch/cpu.h>
++#include <asm/arch/dram.h>
++#include <asm/arch/dram_dw_helpers.h>
++#include <asm/arch/timer.h>
++#include <linux/delay.h>
++#include <linux/kernel.h>
++
++#define LAB_PROTOCOL "M4ZLAB2"
++#define LAB_LINE_MAX 256
++#define LAB_BASE CFG_SYS_SDRAM_BASE
++#define LAB_MIN_CLK 240
++#define LAB_MAX_CLK 900
++#define LAB_MAX_PASSES 1000
++#define LAB_MAX_WINDOW_MIB 64
++#define LAB_WDT_TIMEOUT_BITS (0xb << 4)
++#define LAB_WDT_WORDS ((1UL << 20) / sizeof(u64))
++#define LAB_ALL_FIELDS GENMASK(14, 0)
++
++struct lab_request {
++	u32 id;
++	struct dram_para para;
++	u32 level;
++	u32 passes;
++	u32 window_mib;
++};
++
++static struct dram_config lab_config __section(".data") = {
++	.cols = 10,
++	.rows = 16,
++	.ranks = 1,
++	.bus_full_width = 1,
++};
++
++static ulong lab_size __section(".data") = 2UL << 30;
++u32 sunxi_h616_dram_runtime_clk __section(".data") = 480;
++
++static struct dram_para lab_safe __section(".data") = {
++	.clk = 480,
++};
++
++void sunxi_h616_dram_lab_set_bootstrap(const struct dram_para *para,
++				       const struct dram_config *config,
++				       ulong size)
++{
++	lab_safe = *para;
++	lab_config = *config;
++	lab_size = size;
++}
++
++static struct sunxi_wdog *lab_wdog(void)
++{
++	struct sunxi_timer_reg *timer = (void *)SUNXI_TIMER_BASE;
++
++	return &timer->wdog[0];
++}
++
++static void lab_wdt_stop(void)
++{
++	writel(0, &lab_wdog()->mode);
++}
++
++static void lab_wdt_reload(void)
++{
++	writel(WDT_CTRL_KEY | WDT_CTRL_RESTART, &lab_wdog()->ctl);
++}
++
++static void lab_wdt_start(void)
++{
++	writel(WDT_CFG_RESET, &lab_wdog()->cfg);
++	writel(LAB_WDT_TIMEOUT_BITS | WDT_MODE_EN, &lab_wdog()->mode);
++	lab_wdt_reload();
++}
++
++void sunxi_h616_dram_lab_bootstrap_begin(void)
++{
++	lab_wdt_start();
++}
++
++static __noreturn void lab_reset(void)
++{
++	writel(WDT_CFG_RESET, &lab_wdog()->cfg);
++	writel(WDT_MODE_EN, &lab_wdog()->mode);
++	lab_wdt_reload();
++	for (;;)
++		__asm__ volatile("wfe");
++}
++
++static bool lab_hex(char c, u32 *value)
++{
++	if (c >= '0' && c <= '9')
++		*value = c - '0';
++	else if (c >= 'a' && c <= 'f')
++		*value = c - 'a' + 10;
++	else if (c >= 'A' && c <= 'F')
++		*value = c - 'A' + 10;
++	else
++		return false;
++	return true;
++}
++
++static bool lab_u32(const char *text, u32 *value)
++{
++	u32 base = 10, digit, result = 0;
++
++	if (text[0] == '0' && (text[1] == 'x' || text[1] == 'X')) {
++		base = 16;
++		text += 2;
++	}
++	if (!*text)
++		return false;
++	while (*text) {
++		if (!lab_hex(*text++, &digit) || digit >= base)
++			return false;
++		if (result > (0xffffffffU - digit) / base)
++			return false;
++		result = result * base + digit;
++	}
++	*value = result;
++	return true;
++}
++
++static bool lab_field(const char *key, char *value,
++		      struct lab_request *request, u32 *seen)
++{
++	u32 *member, bit;
++
++	if (!strcmp(key, "id")) {
++		member = &request->id;
++		bit = 0;
++	} else if (!strcmp(key, "clk")) {
++		member = &request->para.clk;
++		bit = 1;
++	} else if (!strcmp(key, "dx_odt")) {
++		member = &request->para.dx_odt;
++		bit = 2;
++	} else if (!strcmp(key, "dx_dri")) {
++		member = &request->para.dx_dri;
++		bit = 3;
++	} else if (!strcmp(key, "ca_dri")) {
++		member = &request->para.ca_dri;
++		bit = 4;
++	} else if (!strcmp(key, "odt_en")) {
++		member = &request->para.odt_en;
++		bit = 5;
++	} else if (!strcmp(key, "tpr0")) {
++		member = &request->para.tpr0;
++		bit = 6;
++	} else if (!strcmp(key, "tpr2")) {
++		member = &request->para.tpr2;
++		bit = 7;
++	} else if (!strcmp(key, "tpr6")) {
++		member = &request->para.tpr6;
++		bit = 8;
++	} else if (!strcmp(key, "tpr10")) {
++		member = &request->para.tpr10;
++		bit = 9;
++	} else if (!strcmp(key, "tpr11")) {
++		member = &request->para.tpr11;
++		bit = 10;
++	} else if (!strcmp(key, "tpr12")) {
++		member = &request->para.tpr12;
++		bit = 11;
++	} else if (!strcmp(key, "level")) {
++		member = &request->level;
++		bit = 12;
++	} else if (!strcmp(key, "passes")) {
++		member = &request->passes;
++		bit = 13;
++	} else if (!strcmp(key, "window")) {
++		member = &request->window_mib;
++		bit = 14;
++	} else {
++		return false;
++	}
++	if (*seen & BIT(bit))
++		return false;
++	*seen |= BIT(bit);
++	return lab_u32(value, member);
++}
++
++static bool lab_parse(char *line, struct lab_request *request)
++{
++	char *key, *value, *next;
++	u32 seen = 0;
++
++	*request = (struct lab_request) {
++		.para.type = SUNXI_DRAM_TYPE_LPDDR4,
++	};
++	if (line[0] != 'R' || line[1] != ' ')
++		return false;
++	key = line + 2;
++	while (*key) {
++		next = strchr(key, ' ');
++		if (next)
++			*next++ = '\0';
++		value = strchr(key, '=');
++		if (!value)
++			return false;
++		*value++ = '\0';
++		if (!lab_field(key, value, request, &seen))
++			return false;
++		key = next;
++		if (!key)
++			break;
++	}
++	return seen == LAB_ALL_FIELDS && request->id &&
++		request->para.clk >= LAB_MIN_CLK &&
++		request->para.clk <= LAB_MAX_CLK &&
++		!(request->para.clk % 12) &&
++		request->level <= 2 && request->passes &&
++		request->passes <= LAB_MAX_PASSES && request->window_mib &&
++		request->window_mib <= LAB_MAX_WINDOW_MIB;
++}
++
++static u64 lab_pattern(ulong index, u64 seed)
++{
++	return seed ^ ((u64)index * 0x9e3779b97f4a7c15ULL);
++}
++
++static bool lab_words(u32 id, ulong address, ulong bytes, u64 seed)
++{
++	volatile u64 *memory = (void *)address;
++	ulong words = bytes / sizeof(*memory), i;
++	u64 expected, actual;
++
++	for (i = 0; i < words; i++)
++		memory[i] = lab_pattern(i, seed ^ address);
++	dsb();
++	for (i = 0; i < words; i++) {
++		expected = lab_pattern(i, seed ^ address);
++		actual = memory[i];
++		if (actual != expected) {
++			printf(LAB_PROTOCOL "_ERROR id=%u test=words addr=%016lx expected=%016lx actual=%016lx\n",
++			       id, address + i * 8, (ulong)expected,
++			       (ulong)actual);
++			return false;
++		}
++		if (!(i & (LAB_WDT_WORDS - 1)))
++			lab_wdt_reload();
++	}
++	return true;
++}
++
++static bool lab_data_bus(u32 id, ulong address)
++{
++	volatile u64 *word = (void *)address;
++	u64 pattern;
++
++	for (pattern = 1; pattern; pattern <<= 1) {
++		*word = pattern;
++		dsb();
++		if (*word != pattern) {
++			printf(LAB_PROTOCOL "_ERROR id=%u test=data addr=%016lx expected=%016lx actual=%016lx\n",
++			       id, address, (ulong)pattern, (ulong)*word);
++			return false;
++		}
++		*word = ~pattern;
++		dsb();
++		if (*word != ~pattern) {
++			printf(LAB_PROTOCOL "_ERROR id=%u test=data addr=%016lx expected=%016lx actual=%016lx\n",
++			       id, address, (ulong)~pattern, (ulong)*word);
++			return false;
++		}
++	}
++	return true;
++}
++
++static bool lab_address_bus(u32 id)
++{
++	volatile u64 *base = (void *)LAB_BASE;
++	ulong offset, words = lab_size / sizeof(*base);
++
++	*base = 0x0123456789abcdefULL;
++	for (offset = 1; offset < words; offset <<= 1)
++		base[offset] = lab_pattern(offset, 0xfedcba9876543210ULL);
++	dsb();
++	if (*base != 0x0123456789abcdefULL) {
++		printf(LAB_PROTOCOL "_ERROR id=%u test=address addr=%016lx expected=0123456789abcdef actual=%016lx\n",
++		       id, (ulong)LAB_BASE, (ulong)*base);
++		return false;
++	}
++	for (offset = 1; offset < words; offset <<= 1) {
++		u64 expected = lab_pattern(offset, 0xfedcba9876543210ULL);
++		u64 actual = base[offset];
++
++		if (actual != expected) {
++			printf(LAB_PROTOCOL "_ERROR id=%u test=address addr=%016lx expected=%016lx actual=%016lx\n",
++			       id, LAB_BASE + offset * 8, (ulong)expected,
++			       (ulong)actual);
++			return false;
++		}
++	}
++	return true;
++}
++
++static bool lab_rank_boundary(u32 id, ulong bytes)
++{
++	ulong boundary;
++	volatile u64 *lower, *upper;
++	ulong words = bytes / 8, i, round;
++	u64 low_expected, high_expected, low_seed, high_seed;
++
++	if (lab_config.ranks == 1)
++		return true;
++	if (lab_config.ranks != 2) {
++		printf(LAB_PROTOCOL "_ERROR id=%u test=geometry ranks=%u\n",
++		       id, lab_config.ranks);
++		return false;
++	}
++	boundary = LAB_BASE + lab_size / lab_config.ranks;
++	lower = (void *)(boundary - bytes);
++	upper = (void *)boundary;
++	for (round = 0; round < 2; round++) {
++		low_seed = round ? 0xfedcba9876543210ULL :
++				   0x0123456789abcdefULL;
++		high_seed = round ? 0x0123456789abcdefULL :
++				    0xfedcba9876543210ULL;
++		for (i = 0; i < words; i++) {
++			lower[i] = round ? ~lab_pattern(i, low_seed) :
++					   lab_pattern(i, low_seed);
++			upper[i] = round ? ~lab_pattern(i, high_seed) :
++					   lab_pattern(i, high_seed);
++		}
++		dsb();
++		for (i = 0; i < words; i++) {
++			low_expected = round ? ~lab_pattern(i, low_seed) :
++					       lab_pattern(i, low_seed);
++			high_expected = round ? ~lab_pattern(i, high_seed) :
++						lab_pattern(i, high_seed);
++			if (lower[i] != low_expected ||
++			    upper[i] != high_expected) {
++				printf(LAB_PROTOCOL "_ERROR id=%u test=rank_boundary round=%lu index=%lu low=%016lx high=%016lx\n",
++				       id, round, i, (ulong)lower[i],
++				       (ulong)upper[i]);
++				return false;
++			}
++		}
++	}
++	return true;
++}
++
++static inline void lab_store64(volatile u64 *address, u64 value)
++{
++	__asm__ volatile("str %x0, [%1]" : : "r" (value), "r" (address) : "memory");
++}
++
++static inline u64 lab_load64(const volatile u64 *address)
++{
++	u64 value;
++
++	__asm__ volatile("ldr %x0, [%1]" : "=r" (value) : "r" (address) : "memory");
++	return value;
++}
++
++static bool lab_benchmark(u32 id, ulong bytes)
++{
++	volatile u64 *source = (void *)(LAB_BASE + (32UL << 20));
++	volatile u64 *target = (void *)(LAB_BASE + lab_size / 2);
++	ulong words = bytes / 8, i, start, write_ticks, read_ticks, copy_ticks;
++	ulong error_address = 0;
++	u64 sum = 0, expected, actual;
++
++	for (i = 0; i < words; i++) {
++		source[i] = lab_pattern(i, 0x5aa53cc3f00f6996ULL);
++		if (!(i & (LAB_WDT_WORDS - 1)))
++			lab_wdt_reload();
++	}
++	dsb();
++	lab_wdt_reload();
++	start = get_ticks();
++	for (i = 0; i < words; i++)
++		lab_store64(&target[i], 0x3cc35aa5f00f9669ULL);
++	dsb();
++	write_ticks = get_ticks() - start;
++	lab_wdt_reload();
++	start = get_ticks();
++	for (i = 0; i < words; i++)
++		sum += lab_load64(&source[i]);
++	read_ticks = get_ticks() - start;
++	lab_wdt_reload();
++	start = get_ticks();
++	for (i = 0; i < words; i++) {
++		actual = lab_load64(&source[i]);
++		lab_store64(&target[i], actual);
++	}
++	dsb();
++	copy_ticks = get_ticks() - start;
++	lab_wdt_reload();
++	for (i = 0; i < words; i++) {
++		expected = lab_pattern(i, 0x5aa53cc3f00f6996ULL);
++		actual = lab_load64(&target[i]);
++		if (actual != expected) {
++			error_address = (ulong)&target[i];
++			goto error;
++		}
++		if (!(i & (LAB_WDT_WORDS - 1)))
++			lab_wdt_reload();
++	}
++	printf(LAB_PROTOCOL "_BENCH id=%u bytes=%lu timer_hz=%lu write_ticks=%lu read_ticks=%lu copy_ticks=%lu checksum=%016lx\n",
++	       id, bytes, get_tbclk(), write_ticks, read_ticks, copy_ticks,
++	       (ulong)sum);
++	return true;
++error:
++	printf(LAB_PROTOCOL "_ERROR id=%u test=benchmark addr=%016lx expected=%016lx actual=%016lx\n",
++	       id, error_address, (ulong)expected, (ulong)actual);
++	return false;
++}
++
++static bool lab_test(const struct lab_request *request)
++{
++	ulong bytes = (ulong)request->window_mib << 20;
++	ulong addresses[5], pass, index;
++	u64 start = get_ticks();
++	u32 id = request->id;
++
++	if (bytes * 4 >= lab_size)
++		return false;
++	if (!lab_data_bus(id, LAB_BASE) || !lab_address_bus(id) ||
++	    !lab_rank_boundary(id, min(bytes, 1UL << 20)))
++		return false;
++	if (!request->level)
++		goto complete;
++	addresses[0] = LAB_BASE;
++	addresses[1] = LAB_BASE + (136UL << 20);
++	addresses[2] = LAB_BASE + lab_size / 4;
++	addresses[3] = LAB_BASE + lab_size / 2 - bytes / 2;
++	addresses[4] = LAB_BASE + lab_size;
++	addresses[4] -= bytes;
++	for (pass = 0; pass < request->passes; pass++) {
++		for (index = 0; index < ARRAY_SIZE(addresses); index++) {
++			if (!lab_words(id, addresses[index], bytes,
++				       0xa55a33cc0ff0c33cULL ^ pass ^ index))
++				return false;
++			lab_wdt_reload();
++		}
++	}
++	if (request->level == 2 && !lab_benchmark(id, bytes))
++		return false;
++complete:
++	printf(LAB_PROTOCOL "_TEST id=%u result=pass level=%u passes=%u window_mib=%u ticks=%lu\n",
++	       id, request->level, request->passes, request->window_mib,
++	       (ulong)(get_ticks() - start));
++	return true;
++}
++
++static bool lab_apply(const struct lab_request *request)
++{
++	printf(LAB_PROTOCOL "_START id=%u clk=%u dx_odt=%08x dx_dri=%08x ca_dri=%08x odt_en=%08x tpr0=%08x tpr2=%08x tpr6=%08x tpr10=%08x tpr11=%08x tpr12=%08x level=%u passes=%u window=%u\n",
++	       request->id, request->para.clk, request->para.dx_odt,
++	       request->para.dx_dri, request->para.ca_dri,
++	       request->para.odt_en, request->para.tpr0, request->para.tpr2,
++	       request->para.tpr6, request->para.tpr10,
++	       request->para.tpr11, request->para.tpr12, request->level,
++	       request->passes, request->window_mib);
++	lab_wdt_start();
++	if (!mctl_core_init(&request->para, &lab_config)) {
++		printf(LAB_PROTOCOL "_ERROR id=%u stage=init\n", request->id);
++		return false;
++	}
++	return lab_test(request);
++}
++
++static void lab_ready(void)
++{
++	printf(LAB_PROTOCOL "_READY size_mib=%lu ranks=%u width=%u rows=%u cols=%u safe_clk=%u timer_hz=%lu\n",
++	       lab_size >> 20, lab_config.ranks,
++	       lab_config.bus_full_width ? 32 : 16, lab_config.rows,
++	       lab_config.cols, lab_safe.clk, get_tbclk());
++}
++
++__noreturn void sunxi_h616_dram_lab_run(void)
++{
++	char line[LAB_LINE_MAX];
++	struct lab_request request;
++	unsigned int length;
++	int c;
++	bool overflow, result;
++
++	if (!lab_safe.clk || (lab_config.ranks != 1 && lab_config.ranks != 2) ||
++	    !lab_size) {
++		printf(LAB_PROTOCOL "_BOOT_ERROR reason=invalid_bootstrap size_mib=%lu ranks=%u safe_clk=%u\n",
++		       lab_size >> 20, lab_config.ranks, lab_safe.clk);
++		lab_reset();
++	}
++	lab_wdt_stop();
++	lab_ready();
++	for (;;) {
++		length = 0;
++		overflow = false;
++		for (;;) {
++			c = serial_getc();
++			if (c == '\r' || c == '\n') {
++				if (length || overflow)
++					break;
++				continue;
++			}
++			if (length < sizeof(line) - 1)
++				line[length++] = c;
++			else
++				overflow = true;
++		}
++		line[length] = '\0';
++		if (overflow) {
++			printf(LAB_PROTOCOL "_REJECT reason=line_too_long\n");
++			continue;
++		}
++		if (line[0] == 'I' && line[1] == '\0') {
++			lab_ready();
++			continue;
++		}
++		if (line[0] == 'Z' && line[1] == '\0')
++			lab_reset();
++		if (!lab_parse(line, &request)) {
++			printf(LAB_PROTOCOL "_REJECT reason=syntax_or_range\n");
++			continue;
++		}
++		result = lab_apply(&request);
++		lab_wdt_reload();
++		if (!mctl_core_init(&lab_safe, &lab_config)) {
++			printf(LAB_PROTOCOL "_ERROR id=%u stage=recover\n",
++			       request.id);
++			lab_reset();
++		}
++		lab_wdt_stop();
++		printf(LAB_PROTOCOL "_FINAL id=%u result=%s recovered=pass\n",
++		       request.id, result ? "pass" : "fail");
++		lab_ready();
++	}
++}
+diff --git a/configs/bananapi_m4zero_defconfig b/configs/bananapi_m4zero_defconfig
+index e200da66c8d..9a2c1c82b70 100644
+--- a/configs/bananapi_m4zero_defconfig
++++ b/configs/bananapi_m4zero_defconfig
+@@ -4,6 +4,7 @@ CONFIG_ARCH_SUNXI=y
+ CONFIG_DEFAULT_DEVICE_TREE="allwinner/sun50i-h618-bananapi-m4-zero"
+ CONFIG_SPL=y
+ CONFIG_DRAM_SUNXI_H616_DIAGNOSTICS=y
++# CONFIG_DRAM_SUNXI_H616_LAB is not set
+ CONFIG_DRAM_SUNXI_DX_ODT=0x07070707
+ CONFIG_DRAM_SUNXI_DX_DRI=0x0e0e0e0e
+ CONFIG_DRAM_SUNXI_CA_DRI=0x0d0d
+-- 
+2.34.1

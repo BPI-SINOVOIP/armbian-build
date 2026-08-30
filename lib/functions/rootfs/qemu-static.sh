@@ -116,7 +116,15 @@ function prepare_host_binfmt_qemu() {
 	if dpkg-architecture -e "${ARCH}"; then
 		display_alert "Native arch build" "target ${ARCH} on host $(dpkg --print-architecture)" "cachehit"
 	else
+		if [[ "${RELEASE:-}" == "resolute" && "${ARCH}" == "riscv64" ]]; then
+			export QEMU_CPU="${QEMU_CPU:-max}"
+			display_alert "使用 qemu CPU 模型" "Ubuntu resolute riscv64：${QEMU_CPU}" "info"
+		fi
 		prepare_host_binfmt_qemu_cross
+		if [[ "${RELEASE:-}" == "resolute" && "${ARCH}" == "armhf" ]]; then
+			refresh_qemu_binfmt_registration "Ubuntu resolute armhf 需要建置容器的新版 qemu-user"
+		fi
+		ensure_qemu_cpu_model_is_supported
 	fi
 
 	if [[ "${SHOW_DEBUG}" == "yes" ]]; then
@@ -130,6 +138,43 @@ function prepare_host_binfmt_qemu() {
 
 	# Everything should be either setup or previously correct if we get here.
 	return 0
+}
+
+function ensure_qemu_cpu_model_is_supported() {
+	[[ -n "${QEMU_CPU:-}" ]] || return 0
+
+	display_alert "檢查 qemu CPU 模型" "${ARCH}：${QEMU_CPU}" "info"
+	if env "QEMU_CPU=${QEMU_CPU}" arch-test "${ARCH}" >/dev/null 2>&1; then
+		return 0
+	fi
+
+	refresh_qemu_binfmt_registration "CPU 模型 ${QEMU_CPU} 不相容"
+	run_host_command_logged env "QEMU_CPU=${QEMU_CPU}" arch-test "${ARCH}"
+}
+
+function refresh_qemu_binfmt_registration() {
+	declare reason="${1}"
+	declare binfmt_name="${QEMU_BINARY%-static}"
+	declare proc_root="${BINFMT_PROC_ROOT:-/proc/sys/fs/binfmt_misc}"
+	declare config_root="${BINFMT_CONFIG_ROOT:-/usr/lib/binfmt.d}"
+	declare binfmt_config="${config_root}/${binfmt_name}.conf"
+
+	[[ -r "${binfmt_config}" ]] || exit_with_error "缺少 binfmt 設定" "${binfmt_config}"
+	display_alert "更新 qemu binfmt" "${binfmt_name}：${reason}" "wrn"
+	if [[ -e "${proc_root}/${binfmt_name}" ]]; then
+		printf '%s' -1 > "${proc_root}/${binfmt_name}"
+	fi
+	cat "${binfmt_config}" > "${proc_root}/register"
+}
+
+function binfmt_registration_needs_update() {
+	declare wanted_arch="${1}"
+	declare proc_root="${BINFMT_PROC_ROOT:-/proc/sys/fs/binfmt_misc}"
+	declare share_root="${BINFMT_SHARE_ROOT:-/usr/share/binfmts}"
+
+	[[ -e "${proc_root}/qemu-${wanted_arch}" && -e "${share_root}/qemu-${wanted_arch}" ]] || return 0
+	update-binfmts --display "qemu-${wanted_arch}" >/dev/null 2>&1 || return 0
+	return 1
 }
 
 # The actual binfmt manipulations when cross-build is confirmed above.
@@ -185,7 +230,7 @@ function prepare_host_binfmt_qemu_cross() {
 		# otherwise the native-COMPAT path is skipped and a stale qemu-arm is never repaired.
 		if [[ "${host_arch}" == "aarch64" && "${wanted_arch}" == "arm" ]]; then
 			prepare_host_binfmt_qemu_cross_arm64_host_armhf_target
-		elif [[ ! -e "/proc/sys/fs/binfmt_misc/qemu-${wanted_arch}" || ! -e "/usr/share/binfmts/qemu-${wanted_arch}" ]]; then
+		elif binfmt_registration_needs_update "${wanted_arch}"; then
 			display_alert "Updating binfmts" "update-binfmts --enable qemu-${wanted_arch}" "debug"
 			run_host_command_logged update-binfmts --enable "qemu-${wanted_arch}" "&>" "/dev/null" || display_alert "Failed to update binfmts" "update-binfmts --enable qemu-${wanted_arch}" "err" # log & continue on failure
 		fi

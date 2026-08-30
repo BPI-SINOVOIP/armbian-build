@@ -1,0 +1,44 @@
+#!/usr/bin/env bash
+set -u
+
+model=$(tr -d '\0' < /proc/device-tree/model 2>/dev/null || true)
+printf '板型：%s\n' "${model:-無法辨識}"
+printf '核心：%s\n' "$(uname -r)"
+printf '命令列：%s\n' "$(cat /proc/cmdline)"
+
+echo
+echo '圖形處理器：'
+if command -v glxinfo >/dev/null 2>&1 && [[ -n "${DISPLAY:-}" ]]; then
+	glxinfo -B 2>/dev/null | grep -E 'direct rendering|OpenGL vendor|OpenGL renderer|OpenGL version' || true
+else
+	dmesg 2>/dev/null | grep -E 'panfrost.*(clock rate|mali-g31)' | tail -4 || true
+fi
+
+echo
+echo '視訊解碼器：'
+if [[ -e /dev/video0 ]] && command -v v4l2-ctl >/dev/null 2>&1; then
+	v4l2-ctl -d /dev/video0 --info 2>/dev/null | grep -E 'Driver name|Card type|Driver version' || true
+	grep -Ei 'video-codec' /proc/interrupts || true
+else
+	echo '未找到 /dev/video0。'
+fi
+
+echo
+echo '密碼學引擎：'
+grep -A5 -E '^name[[:space:]]*: (cbc\(aes\)|sha256)$' /proc/crypto 2>/dev/null \
+	| grep -E 'name|driver|priority' | head -18 || true
+grep -Ei 'crypto' /proc/interrupts || true
+
+echo
+echo '40-pin 介面：'
+if command -v gpiodetect >/dev/null 2>&1; then
+	gpiodetect 2>/dev/null || true
+fi
+printf 'I2C：'; find /dev -maxdepth 1 -name 'i2c-*' -printf '%f ' 2>/dev/null; echo
+printf 'SPI：'; find /dev -maxdepth 1 -name 'spidev*' -printf '%f ' 2>/dev/null; echo
+printf 'UART：'; find /dev -maxdepth 1 -name 'ttyS*' -printf '%f ' 2>/dev/null; echo
+printf 'PWM：'; find /sys/class/pwm -maxdepth 1 -name 'pwmchip*' -printf '%f ' 2>/dev/null; echo
+
+echo
+echo '已設定的覆蓋層：'
+sed -n 's/^overlays=/  /p' /boot/armbianEnv.txt 2>/dev/null || true

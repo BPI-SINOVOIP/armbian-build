@@ -1,0 +1,7 @@
+config:
+  name: filogic-6.19
+  kind: kernel
+  type: mainline
+  branch: 6.19-mtkdts
+  maintainers:
+    - { github: frank-w, name: Frank Wunderlich }

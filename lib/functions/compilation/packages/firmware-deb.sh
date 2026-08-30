@@ -20,10 +20,11 @@ function compile_firmware() {
 
 	local ARMBIAN_FIRMWARE_GIT_SOURCE="${ARMBIAN_FIRMWARE_GIT_SOURCE:-"https://github.com/armbian/firmware"}"
 	local ARMBIAN_FIRMWARE_GIT_BRANCH="${ARMBIAN_FIRMWARE_GIT_BRANCH:-"master"}"
+	local ARMBIAN_FIRMWARE_GIT_REF="${ARMBIAN_FIRMWARE_GIT_REF:-"branch:${ARMBIAN_FIRMWARE_GIT_BRANCH}"}"
 
 	# Fetch Armbian firmware from git.
 	declare fetched_revision
-	do_checkout="no" fetch_from_repo "${ARMBIAN_FIRMWARE_GIT_SOURCE}" "armbian-firmware-git" "branch:${ARMBIAN_FIRMWARE_GIT_BRANCH}"
+	do_checkout="no" fetch_from_repo "${ARMBIAN_FIRMWARE_GIT_SOURCE}" "armbian-firmware-git" "${ARMBIAN_FIRMWARE_GIT_REF}"
 	declare -r armbian_firmware_git_sha1="${fetched_revision}"
 
 	declare extra_conflicts_comma=""

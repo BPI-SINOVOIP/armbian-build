@@ -1,0 +1,44 @@
+# Realtek RTD1395 多媒體板固定來源候選；不同於 M4 Berry 與 M4 Zero。
+BOARD_NAME="Banana Pi M4"
+BOARD_VENDOR="sinovoip"
+BOARDFAMILY="realtek-rtd139x-bpi"
+BOARD_MAINTAINER="BPI-SINOVOIP"
+INTRODUCED="2019"
+
+KERNEL_TARGET="legacy"
+KERNEL_TEST_TARGET="legacy"
+BOOTCONFIG="rtd1395_bananapi_defconfig"
+BOOT_FDT_FILE="realtek/rtd139x/rtd-1395-bananapi-m4-2GB.dtb"
+SRC_EXTLINUX="no"
+BOOTFS_TYPE="fat"
+BOOTSIZE="256"
+BOOT_FS_LABEL="BPI-BOOT"
+ROOT_FS_LABEL="BPI-ROOT"
+SERIALCON="ttyS0"
+HAS_VIDEO_OUTPUT="yes"
+PACKAGE_LIST_BOARD="alsa-utils ethtool evtest fio gpiod hdparm i2c-tools iperf3 iproute2 mmc-utils pciutils python3-libgpiod python3-spidev smartmontools spi-tools stress-ng usb-modeswitch usbutils v4l-utils"
+
+REALTEK_BPI_BSP_REPO="https://github.com/BPI-SINOVOIP/BPI-M4-bsp.git"
+REALTEK_BPI_BSP_BRANCH="commit:25f5b88ec4ba34029f964693dc34028b26e6c67c"
+REALTEK_BPI_BSP_BOARD="BPI-M4-720P"
+REALTEK_BPI_UBOOT_CROSS_COMPILE="toolchains/gcc-linaro-7.3.1-2018.05-x86_64_aarch64-linux-gnu/bin/aarch64-linux-gnu-"
+REALTEK_BPI_VENDOR_BOARD="bpi-m4"
+REALTEK_BPI_VENDOR_CHIP="RTD1395"
+REALTEK_BPI_BOOT_DTB_FILES="realtek/rtd139x/rtd-1395-bananapi-m4-1GB.dtb realtek/rtd139x/rtd-1395-bananapi-m4-2GB.dtb"
+REALTEK_BPI_ROOT_LABEL="BPI-ROOT"
+ARMBIAN_FIRMWARE_GIT_REF_BOARD="commit:f50a2a21bcdb77a562b3976930c5c6b521a1df08"
+
+function post_family_config_branch_legacy__bananapim4_pin_sources() {
+	declare -g ARMBIAN_FIRMWARE_GIT_REF="${ARMBIAN_FIRMWARE_GIT_REF_BOARD}"
+}
+
+function post_family_config__bananapim4_storage_contract() {
+	# U-Boot 自 40 KiB 寫入；使用 MBR 避免 GPT 項目區與載荷重疊。
+	declare -g IMAGE_PARTITION_TABLE="msdos"
+}
+
+function custom_kernel_config__bananapim4_diagnostics() {
+	# 僅固定 vendor 核心已有的介面；可用性仍須實機驗證。
+	opts_y+=(CONFIGFS_FS GPIO_SYSFS RTK_THERMAL RTK_WATCHDOG)
+	opts_y+=(USB_CONFIGFS USB_CONFIGFS_ECM USB_CONFIGFS_MASS_STORAGE)
+}

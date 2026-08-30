@@ -1,3 +1,9 @@
 .gitattributes text eol=lf
 config/boards/pocketbeagle2.conf text eol=lf
 packages/bsp/pocketbeagle2-usb-gadget/* text eol=lf
+patch/kernel/archive/bananapiforge1-vendor/*.patch -whitespace
+patch/u-boot/v2026.07-rk3506/forge1-bpi-identity-and-boot.patch -whitespace
+patch/kernel/archive/sunplus-sp7021-bpi-5.4/*.patch -whitespace
+patch/u-boot/u-boot-sunplus-sp7021-bpi-legacy/*.patch -whitespace
+patch/kernel/archive/bananapim6-legacy/*.patch -whitespace
+patch/u-boot/legacy/u-boot-vs680-bananapim6/*.patch -whitespace

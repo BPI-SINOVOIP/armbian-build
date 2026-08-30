@@ -1,0 +1,358 @@
+{
+  "schema_version": 1,
+  "candidate_branch": "legacy",
+  "candidate_scope": "internal-l2",
+  "evidence_level": "L2",
+  "target_evidence_level": "L2",
+  "allowed_evidence_levels": [
+    "L0",
+    "L2"
+  ],
+  "kernel_family": "renesas",
+  "linux_source": "https://github.com/BPI-SINOVOIP/pi-linux.git",
+  "linux_ref": "commit:48c742429129c095045823c204209bb2a92fb5b4",
+  "linux_commit": "48c742429129c095045823c204209bb2a92fb5b4",
+  "firmware_source": "https://github.com/armbian/firmware",
+  "firmware_ref": "commit:f50a2a21bcdb77a562b3976930c5c6b521a1df08",
+  "firmware_commit": "f50a2a21bcdb77a562b3976930c5c6b521a1df08",
+  "verify_firmware_source_resolution": true,
+  "required_kernel_module_paths": [
+    "kernel/drivers/gpu/drm/panfrost/panfrost.ko"
+  ],
+  "source_commits": {
+    "atf": {
+      "source": "https://github.com/BPI-SINOVOIP/arm-trusted-firmware",
+      "ref": "commit:a011da37865c7649db48efc29b18b36cf87e4bb3",
+      "revision": "a011da37865c7649db48efc29b18b36cf87e4bb3",
+      "license_path": "license.rst",
+      "license_sha256": "e3f7de3cd0aea44aad09419b6dc5e6356d3d43c7bd850801a44a6211b94162b0"
+    },
+    "linux": {
+      "source": "https://github.com/BPI-SINOVOIP/pi-linux.git",
+      "ref": "commit:48c742429129c095045823c204209bb2a92fb5b4",
+      "revision": "48c742429129c095045823c204209bb2a92fb5b4",
+      "license_path": "COPYING",
+      "license_sha256": "fb5a425bd3b3cd6071a3a9aff9909a859e7c1158d54d32e07658398cd67eb6a0"
+    },
+    "uboot": {
+      "source": "https://github.com/BPI-SINOVOIP/pi-u-boot.git",
+      "ref": "commit:8aec7f20bcf5555d7d219c2bad295b4a627b6521",
+      "revision": "8aec7f20bcf5555d7d219c2bad295b4a627b6521",
+      "license_path": "Licenses/README",
+      "license_sha256": "050bd541ef2ab90bb0b55359756832bb9281b4554be0e9be6b33eea3be8669f0"
+    }
+  },
+  "source_built_packaging_tools": {
+    "bptool": {
+      "component": "atf",
+      "source_path": "tools/renesas/rz_boot_param/bptool.c",
+      "source_sha256": "2e55913a71d607234404d16e1e65e3327ca7034e9363e81c2f2255a176477574"
+    },
+    "fiptool": {
+      "component": "atf",
+      "source_path": "tools/fiptool/fiptool.c",
+      "source_sha256": "9c47cf4314e981c5927241bbec129535b0a1181695fc9b185896f32f70ed73cb"
+    }
+  },
+  "atf_build_contract": [
+    "PLAT=v2n",
+    "BOARD=evk_1",
+    "ENABLE_STACK_PROTECTOR=default",
+    "bl2",
+    "bl31"
+  ],
+  "source_tree_binary_inventory": {
+    "atf": {
+      "plat/arm/board/common/protpk/arm_protpk_rsa_sha256.bin": {
+        "sha256": "00e5da5a2a3b1288504107c5ae3564f973d06e9f28d36e20f9924e11b27f3054",
+        "used_by_ai2n_build": false
+      },
+      "plat/arm/board/common/rotpk/arm_rotpk_ecdsa_sha256.bin": {
+        "sha256": "0f6365cd8abca82c087f5961919b80123093f0f61534e7f039e7e00a43bf8bfc",
+        "used_by_ai2n_build": false
+      },
+      "plat/arm/board/common/rotpk/arm_rotpk_rsa_sha256.bin": {
+        "sha256": "05a22ee98a16745524440ea3f6d77f17e15fc237c758c92927b766e7d4724e09",
+        "used_by_ai2n_build": false
+      },
+      "plat/arm/board/common/swd_rotpk/arm_swd_rotpk_rsa_sha256.bin": {
+        "sha256": "d09e276641bae74e8e3a21a2829ee2ec6e7c19c2b2230d35ca47501a475bc237",
+        "used_by_ai2n_build": false
+      },
+      "plat/rockchip/rk3368/drivers/ddr/rk3368_ddr_reg_resume_V1.05.bin": {
+        "sha256": "0fa50bf78ef0160fa4ab08cef92f2e6615414c8aa15709c2ba5b69c7e43fee5e",
+        "used_by_ai2n_build": false
+      },
+      "plat/rockchip/rk3399/drivers/dp/hdcp.bin": {
+        "sha256": "fcdc218d5b3a8e27c93f5ff3dc11509022da362202cbc4d2060e68f298fd1261",
+        "used_by_ai2n_build": false
+      }
+    },
+    "linux": {
+      "net/wireless/certs/sforshee.hex": {
+        "sha256": "ca3dd4d10995168507e0b7b44621917c7e1e77e73e882f85afa92df86daae77a",
+        "used_by_ai2n_build": true
+      },
+      "net/wireless/certs/wens.hex": {
+        "sha256": "6485f5ddecbecbf73113dc669fe23da07f1a5ab60fb1ad932b0062f9d7fe8753",
+        "used_by_ai2n_build": true
+      }
+    },
+    "uboot": {}
+  },
+  "unused_prebuilt_packaging_tools": {
+    "packages/blobs/bpi-renesas/tools/bptool": "a563fe28ecae117d0bb41a0b003965d503d015ef52349e5403e56325b55e9292",
+    "packages/blobs/bpi-renesas/tools/fiptool": "7812693648efc5b7475d601d710f3b36f7e7dca098c195a9b22c734135b2b254"
+  },
+  "proprietary_assets": {
+    "packages/blobs/bpi-renesas/bsp/rzv2n/Codec_Bin.bin": "f0337b054c25ab8fae0b8e70b0d050e099e136c2fa13c6531227efb9651fbb9c",
+    "packages/blobs/bpi-renesas/bsp/rzv2n/Flash_Writer_SCIF_RZV2N_DEV_LPDDR4X.mot": "e4ec7b41a4fc748a6761d111853b5b8d0633adc1180ae7ea483b4d93cfd30714",
+    "packages/blobs/bpi-renesas/bsp/rzv2n/OpenCV_Bin.bin": "f1dfccd3a6f7a41fc0574c0b18a6e5af3bfc09d0759fe58100551487cbf71a06",
+    "packages/bsp/bpi-renesas/usr/lib/firmware/rtl8821cu_config": "f1118d807006197c0c27e838d927aea0ea670289a5d927f8572cd03b8b5e2972",
+    "packages/bsp/bpi-renesas/usr/lib/firmware/rtl8821cu_fw": "816255740f9e22ce730497e992b00b1410e39971c1a7a6ffc5c60e1ae525c518",
+    "packages/bsp/bpi-renesas/usr/local/bin/mali_iv021_isp-single.elf": "a142a0c30d386665125a8585a63aea72a7f6eae209cf779b13c1e7573c78ebb8",
+    "packages/bsp/bpi-renesas/usr/local/bin/mali_iv021_isp.elf": "8358dab9a785c6f97b4a4a9702ebfb31fe3fba6dadf61e2768d2eb4c28a69d10",
+    "packages/bsp/bpi-renesas/usr/local/bin/sample-app": "37bed8ccb2f7a3bead30d9b4d977eb3714546ce35d9b51fdd1361bd21509d179",
+    "packages/bsp/bpi-renesas/usr/local/bin/v4l2-init.sh": "c81231caaef6584c49010c7539c9e7c1fca5ccbac6e0aed32ba64ad500b58a52"
+  },
+  "release_policy": {
+    "public_release_allowed": false,
+    "public_redistribution_authorized": false,
+    "machine_enforced": true,
+    "block_reasons": [
+      "DRP、Codec、相機執行檔與 RTL8821CU 韌體缺少可核對的再散布授權",
+      "預建資產缺少可核對的來源版本與 ABI 契約",
+      "尚無本候選的實體板驗證證據"
+    ]
+  },
+  "hardware_evidence": {
+    "present": false,
+    "node_presence_is_functional_evidence": false,
+    "validated_features": []
+  },
+  "installed_firmware_blobs": {
+    "/boot/Codec_Bin.bin": "f0337b054c25ab8fae0b8e70b0d050e099e136c2fa13c6531227efb9651fbb9c",
+    "/boot/Flash_Writer_SCIF_RZV2N_DEV_LPDDR4X.mot": "e4ec7b41a4fc748a6761d111853b5b8d0633adc1180ae7ea483b4d93cfd30714",
+    "/boot/OpenCV_Bin.bin": "f1dfccd3a6f7a41fc0574c0b18a6e5af3bfc09d0759fe58100551487cbf71a06",
+    "/usr/lib/firmware/rtl8821cu_config": "f1118d807006197c0c27e838d927aea0ea670289a5d927f8572cd03b8b5e2972",
+    "/usr/lib/firmware/rtl8821cu_fw": "816255740f9e22ce730497e992b00b1410e39971c1a7a6ffc5c60e1ae525c518",
+    "/usr/local/bin/mali_iv021_isp-single.elf": "a142a0c30d386665125a8585a63aea72a7f6eae209cf779b13c1e7573c78ebb8",
+    "/usr/local/bin/mali_iv021_isp.elf": "8358dab9a785c6f97b4a4a9702ebfb31fe3fba6dadf61e2768d2eb4c28a69d10",
+    "/usr/local/bin/sample-app": "37bed8ccb2f7a3bead30d9b4d977eb3714546ce35d9b51fdd1361bd21509d179"
+  },
+  "installed_file_sha256": {
+    "/usr/local/bin/v4l2-init.sh": "c81231caaef6584c49010c7539c9e7c1fca5ccbac6e0aed32ba64ad500b58a52"
+  },
+  "common_packages": [
+    "alsa-utils",
+    "ethtool",
+    "gpiod",
+    "i2c-tools",
+    "iperf3",
+    "iproute2",
+    "iw",
+    "pciutils",
+    "python3-libgpiod",
+    "python3-spidev",
+    "rfkill",
+    "spi-tools",
+    "usbutils",
+    "v4l-utils"
+  ],
+  "common_kernel_options": {
+    "CONFIG_ARCH_R9A09G056": "y",
+    "CONFIG_CFG80211": "y",
+    "CONFIG_DRM_PANFROST": "m",
+    "CONFIG_DRM_RCAR_DU": "y",
+    "CONFIG_DRM_RCAR_MIPI_DSI": "y",
+    "CONFIG_DRP": "y",
+    "CONFIG_DRPAI": "y",
+    "CONFIG_DWMAC_DWC_QOS_ETH": "y",
+    "CONFIG_GPIO_CDEV": "y",
+    "CONFIG_GPIO_RCAR": "y",
+    "CONFIG_GPT_RZG2L": "y",
+    "CONFIG_I2C_CHARDEV": "y",
+    "CONFIG_I2C_RIIC": "y",
+    "CONFIG_MMC_SDHI": "y",
+    "CONFIG_MMC_SDHI_INTERNAL_DMAC": "y",
+    "CONFIG_PCIE_RCAR_EP": "y",
+    "CONFIG_PCIE_RCAR_HOST": "y",
+    "CONFIG_RENESAS_WDT": "y",
+    "CONFIG_RFKILL": "y",
+    "CONFIG_RTL8821CU": "m",
+    "CONFIG_SND_SOC": "y",
+    "CONFIG_SND_SOC_DA7213": "m",
+    "CONFIG_SND_SOC_RCAR": "y",
+    "CONFIG_SPI_RSPI": "y",
+    "CONFIG_SPI_SPIDEV": "y",
+    "CONFIG_STMMAC_ETH": "y",
+    "CONFIG_USB_CONFIGFS": "m",
+    "CONFIG_USB_CONFIGFS_MASS_STORAGE": "y",
+    "CONFIG_USB_GADGET": "y",
+    "CONFIG_USB_RENESAS_USBHS": "y",
+    "CONFIG_USB_RENESAS_USBHS_UDC": "y",
+    "CONFIG_USB_STORAGE": "y",
+    "CONFIG_USB_XHCI_RZV2H": "y",
+    "CONFIG_VIDEO_RENESAS_VSP1": "y",
+    "CONFIG_VIDEO_RZG2L_CRU_YUV": "y"
+  },
+  "boards": {
+    "bpi-ai2n": {
+      "family": "renesas",
+      "dtb": "renesas/bananapi-ai2n.dtb",
+      "dtb_sha256": "51b9c6f78e88ceb61d44a56f2507a71da94bb8245d1f6f163f0ff97f306814de",
+      "model": "Bananapi BPI-AI2N",
+      "compatible": [
+        "sinovoip,bpi-ai2n",
+        "renesas,r9a09g056n44",
+        "renesas,r9a09g056"
+      ],
+      "uboot_tag": "v2021.10",
+      "uboot_version": "2021.10",
+      "uboot_git_source": "https://github.com/BPI-SINOVOIP/pi-u-boot.git",
+      "uboot_git_ref": "commit:8aec7f20bcf5555d7d219c2bad295b4a627b6521",
+      "uboot_revision": "8aec7f20bcf5555d7d219c2bad295b4a627b6521",
+      "atf_git_source": "https://github.com/BPI-SINOVOIP/arm-trusted-firmware",
+      "atf_git_ref": "commit:a011da37865c7649db48efc29b18b36cf87e4bb3",
+      "atf_revision": "a011da37865c7649db48efc29b18b36cf87e4bb3",
+      "output_image_prefix": "Bananapi-Armbian_*_",
+      "output_image_board_token": "Bpi-ai2n",
+      "uboot_defconfig": "bananapi_ai2n_defconfig",
+      "uboot_target_index": 1,
+      "uboot_required_config_options": [
+        "CONFIG_ARCH_RMOBILE=y",
+        "CONFIG_CMD_EXT4=y",
+        "CONFIG_CMD_I2C=y",
+        "CONFIG_CMD_MMC=y",
+        "CONFIG_CMD_SPI=y",
+        "CONFIG_CMD_USB=y",
+        "CONFIG_CMD_USB_MASS_STORAGE=y",
+        "CONFIG_DEFAULT_DEVICE_TREE=\"bananapi-ai2n\"",
+        "CONFIG_DEFAULT_FDT_FILE=\"bananapi-ai2n.dtb\"",
+        "CONFIG_DWC_ETH_QOS_RZV2N=y",
+        "CONFIG_ENV_IS_IN_SPI_FLASH=y",
+        "CONFIG_OF_LIBFDT_OVERLAY=y",
+        "CONFIG_R9A09G056=y",
+        "CONFIG_SH_SDHI=y",
+        "CONFIG_SPI_FLASH=y",
+        "CONFIG_TARGET_BANANAPI_AI2N=y",
+        "CONFIG_USB_FUNCTION_MASS_STORAGE=y",
+        "CONFIG_USB_GADGET=y"
+      ],
+      "uboot_target_make_contains": [],
+      "uboot_binary_for_string_checks": "u-boot.bin",
+      "uboot_required_binary_strings": [
+        "Bananapi BPI-AI2N",
+        "Mass Storage",
+        "fdtfile=bananapi-ai2n.dtb",
+        "sinovoip,bpi-ai2n"
+      ],
+      "uboot_payloads": [
+        "bl2_bp_sd.bin@512",
+        "fip.bin@393216"
+      ],
+      "uboot_package_only_payloads": [
+        "u-boot.bin"
+      ],
+      "uboot_payload_minimum_sizes": [
+        "bl2_bp_sd.bin=65536",
+        "fip.bin=524288",
+        "u-boot.bin=524288"
+      ],
+      "partition_table": "msdos",
+      "partition_start_sector": 8192,
+      "logical_sector_size": 512,
+      "root_partition_number": 1,
+      "boot_configuration": "armbian_env",
+      "overlay_prefix": "bpi-ai2n",
+      "overlay_directory": "renesas/overlay",
+      "default_overlays": [],
+      "required_overlays": [
+        "cam0-imx415",
+        "i2c0-mux",
+        "i2c1",
+        "i2c1-flash",
+        "i2c1-rtc",
+        "i2c2",
+        "i2s3-nxez-pcm512x",
+        "i2s3-waveshare-wm8960",
+        "pwm",
+        "pwmfan",
+        "spi0",
+        "spi2",
+        "spi2-flash",
+        "spi2-waveshare-st7789v",
+        "spi2-waveshare-tft24",
+        "spi2-waveshare-tft35c",
+        "uart0",
+        "uart2"
+      ],
+      "sd_node": "/soc/mmc@15c10000",
+      "sd_bus_width": 4,
+      "additional_bus_widths": [
+        "/soc/mmc@15c00000=8"
+      ],
+      "required_boolean_properties": [
+        "/soc/mmc@15c00000:mmc-hs200-1_8v",
+        "/soc/mmc@15c00000:non-removable"
+      ],
+      "required_string_properties": [
+        "/soc/usb@15800000:dr_mode=otg",
+        "/soc/usb@15800100:dr_mode=otg",
+        "/soc/usb@15820000:dr_mode=otg"
+      ],
+      "required_aliases": [
+        "ethernet0=/soc/ethernet@15C30000",
+        "ethernet1=/soc/ethernet@15C40000",
+        "mmc0=/soc/mmc@15c00000",
+        "mmc1=/soc/mmc@15c10000",
+        "serial0=/soc/serial@11c01400",
+        "spi0=/soc/spi@11030000",
+        "spi1=/soc/spi@12800000",
+        "spi2=/soc/spi@12800800"
+      ],
+      "required_status_nodes": [
+        "/soc/adc@11c00000",
+        "/soc/adc@11c02800",
+        "/soc/display@16460000",
+        "/soc/drp1@17000000",
+        "/soc/drpai@16800000",
+        "/soc/dsi@16430000",
+        "/soc/ethernet@15C30000",
+        "/soc/ethernet@15C40000",
+        "/soc/i2c@11c01000",
+        "/soc/i2c@14401000",
+        "/soc/mmc@15c00000",
+        "/soc/mmc@15c10000",
+        "/soc/pcie@13400000",
+        "/soc/spi@11030000",
+        "/soc/usb-phy@15800200",
+        "/soc/usb-phy@15870000",
+        "/soc/usb@15800000",
+        "/soc/usb@15800100",
+        "/soc/usb@15820000",
+        "/soc/usb@15850000",
+        "/soc/watchdog@14400000"
+      ],
+      "required_present_nodes": [
+        "/hdmi-out",
+        "/reserved-memory/DRP-AI@D0000000",
+        "/reserved-memory/OpenCVA@A8000000",
+        "/soc/gpu@14850000"
+      ],
+      "required_disabled_nodes": [
+        "/sound",
+        "/soc/cru0@16000000",
+        "/soc/cru1@16010000",
+        "/soc/csi20@16000400",
+        "/soc/csi21@16010400",
+        "/soc/i2c@14400400",
+        "/soc/i2c@14400800",
+        "/soc/i2c@14400c00",
+        "/soc/isp@16080000",
+        "/soc/spi@12800000",
+        "/soc/spi@12800800"
+      ]
+    }
+  }
+}

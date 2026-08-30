@@ -1,0 +1,222 @@
+{
+  "schema_version": 1,
+  "candidate_branch": "current",
+  "kernel_family": "mt7623",
+  "linux_source": "https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git",
+  "linux_ref": "commit:dc6160265ffc795a1832bc1424f58291d152c7bb",
+  "linux_commit": "dc6160265ffc795a1832bc1424f58291d152c7bb",
+  "firmware_source": "https://github.com/armbian/firmware",
+  "firmware_commit": "f50a2a21bcdb77a562b3976930c5c6b521a1df08",
+  "boot_blob_source_repository": "https://github.com/BPI-SINOVOIP/BPI-files.git",
+  "boot_blob_redistribution_authorized": false,
+  "boot_blob_sources": {
+    "BPI-R2-HEAD440-0k.img": {
+      "source_path": "SD/100MB/BPI-R2-HEAD440-0k.img.gz",
+      "fixed_commit": "e4c2b542f199346853febb240500c8071cdf3006",
+      "earliest_path_commit": "59fd3f6fe73a54944f0a504a310707bdd992cc7d",
+      "decompressed_sha256": "62490bba0931680b65146792b795748a30777b101a8437885dd195c28b868a6b"
+    },
+    "BPI-R2-HEAD1-512b.img": {
+      "source_path": "SD/100MB/BPI-R2-HEAD1-512b.img.gz",
+      "fixed_commit": "e4c2b542f199346853febb240500c8071cdf3006",
+      "earliest_path_commit": "59fd3f6fe73a54944f0a504a310707bdd992cc7d",
+      "decompressed_sha256": "2cf55689fdaecc72a7ca24929b6b79e419e7d9798cfb8e6d36e8c5ea3b96e049"
+    },
+    "BPI-R2-preloader-2k.img": {
+      "source_path": "SD/100MB/BPI-R2-preloader-DDR1600-20191024-2k.img.gz",
+      "fixed_commit": "1b7b6039b9d92c48193f38ac29dd2f71e303e280",
+      "decompressed_sha256": "b6a2cbead0b34fc243b9d8d9bde69496a0dbcf77dcdf0246adf0664fe4e07252"
+    },
+    "BPI-R2-EMMC-boot0-0K-0905.img": {
+      "source_path": "SD/100MB/BPI-R2-EMMC-boot0-DDR1600-0k-0905.img.gz",
+      "fixed_commit": "e28da06a8dd7d77d30b60942008c1255b5fda997",
+      "content_origin_commit": "233dcc2bc117a36b832411feccb55ac2e19a5c30",
+      "decompressed_sha256": "cc0dfb488bed14e23bce8302553714d29e6cba9fe8406cf8c3c0e97e9ae2b417"
+    }
+  },
+  "installed_file_sha256": {
+    "/etc/systemd/network/10-br0.netdev": "1c01a0018c7ed024280a2466e6297246877dd94f61956ba2c33312e397fa63ef",
+    "/etc/systemd/network/10-br0.network": "fa457234799949d9c04e58df13efae2775a0e1559204c3fa78ceb03ba4f80550",
+    "/etc/systemd/network/10-eth0.network": "ec519cd815392b13e83ba589fbea1a3a41b866c5f4f4cf9bfb350d9a88416864",
+    "/etc/systemd/network/10-lan0.network": "7bb867b22a4bcc0646124dbe3e04238e27ad2e6c3dc8b100ed73379b78818143",
+    "/etc/systemd/network/10-lan1.network": "9a8291d667beeddfafc3b65b1251400e180b48e1cd662d13a115b48efeb43c1f",
+    "/etc/systemd/network/10-lan2.network": "0a462ac8a30297d0471253ee6d32e5f99f74b06a2d93a7057fb906067f5bba6a",
+    "/etc/systemd/network/10-lan3.network": "23df5ba82ce9f24004734ded43c12a517b900a35f86c093a1ab33cf4a215b1d5",
+    "/etc/systemd/network/10-wan.network": "284c474a88ec603b153d60b515f9e8514a966ea836a339573f8aac281642349e"
+  },
+  "common_packages": [
+    "alsa-utils",
+    "bridge-utils",
+    "ethtool",
+    "gpiod",
+    "hdparm",
+    "i2c-tools",
+    "iperf3",
+    "iproute2",
+    "iw",
+    "lm-sensors",
+    "nftables",
+    "pciutils",
+    "python3-libgpiod",
+    "python3-spidev",
+    "rfkill",
+    "smartmontools",
+    "tcpdump",
+    "usbutils",
+    "v4l-utils",
+    "vlan",
+    "wireless-regdb"
+  ],
+  "common_kernel_options": {
+    "CONFIG_AHCI_MTK": "m",
+    "CONFIG_ARCH_MEDIATEK": "y",
+    "CONFIG_CRYPTO_DEV_SAFEXCEL": "m",
+    "CONFIG_DRM_LIMA": "m",
+    "CONFIG_DRM_MEDIATEK": "y",
+    "CONFIG_DRM_MEDIATEK_HDMI": "y",
+    "CONFIG_GPIO_CDEV": "y",
+    "CONFIG_HW_RANDOM": "y",
+    "CONFIG_HW_RANDOM_MTK": "y",
+    "CONFIG_I2C_CHARDEV": "y",
+    "CONFIG_I2C_MT65XX": "m",
+    "CONFIG_MEDIATEK_WATCHDOG": "y",
+    "CONFIG_MMC_MTK": "y",
+    "CONFIG_NET_DSA": "m",
+    "CONFIG_NET_DSA_MT7530": "m",
+    "CONFIG_NOP_USB_XCEIV": "y",
+    "CONFIG_PCIE_MEDIATEK": "y",
+    "CONFIG_SPI_MT65XX": "m",
+    "CONFIG_USB": "y",
+    "CONFIG_USB_CONFIGFS": "m",
+    "CONFIG_USB_CONFIGFS_MASS_STORAGE": "y",
+    "CONFIG_USB_GADGET": "y",
+    "CONFIG_USB_MUSB_DUAL_ROLE": "y",
+    "CONFIG_USB_MUSB_HDRC": "y",
+    "CONFIG_USB_MUSB_MEDIATEK": "y",
+    "CONFIG_USB_ROLE_SWITCH": "y",
+    "CONFIG_USB_STORAGE": "y",
+    "CONFIG_USB_XHCI_MTK": "y"
+  },
+  "boards": {
+    "bananapir2": {
+      "family": "mt7623",
+      "dtb": "mt7623n-bananapi-bpi-r2.dtb",
+      "dtb_sha256": "55151de1694bb279e759498eb5f86253e0e90700408044c546b4310a2a81c796",
+      "model": "Bananapi BPI-R2",
+      "compatible": [
+        "bananapi,bpi-r2",
+        "mediatek,mt7623"
+      ],
+      "uboot_tag": "v2024.07",
+      "uboot_version": "2024.07",
+      "uboot_git_source": "https://github.com/u-boot/u-boot.git",
+      "uboot_git_ref": "commit:3f772959501c99fbe5aa0b22a36efe3478d1ae1c",
+      "uboot_revision": "3f772959501c99fbe5aa0b22a36efe3478d1ae1c",
+      "uboot_defconfig": "mt7623n_bpir2_defconfig",
+      "uboot_target_index": 1,
+      "uboot_required_config_options": [
+        "CONFIG_ARCH_MEDIATEK=y",
+        "CONFIG_BOOTCOMMAND=\"mmc dev 1;run scriptload;run scriptboot;setenv devnum 0;mmc dev 0;run scriptload;run scriptboot\"",
+        "CONFIG_CMD_BOOTZ=y",
+        "CONFIG_CMD_EXT4=y",
+        "CONFIG_CMD_EXT4_WRITE=y",
+        "CONFIG_CMD_MMC=y",
+        "CONFIG_DEFAULT_DEVICE_TREE=\"mt7623n-bananapi-bpi-r2\"",
+        "CONFIG_DEFAULT_FDT_FILE=\"mt7623n-bananapi-bpi-r2.dtb\"",
+        "# CONFIG_ENV_IS_IN_MMC is not set",
+        "CONFIG_ENV_IS_NOWHERE=y",
+        "CONFIG_FS_EXT4=y",
+        "CONFIG_MMC_MTK=y",
+        "CONFIG_TARGET_MT7623=y"
+      ],
+      "uboot_target_make_contains": [],
+      "uboot_required_binary_strings": [
+        "boot/boot.scr",
+        "boot/dtb/mt7623n-bananapi-bpi-r2.dtb"
+      ],
+      "uboot_payloads": [
+        "BPI-R2-HEAD440-0k.img@0",
+        "BPI-R2-HEAD1-512b.img@512",
+        "BPI-R2-preloader-2k.img@2048",
+        "u-boot.bin@327680"
+      ],
+      "uboot_package_only_payloads": [
+        "BPI-R2-EMMC-boot0-0K-0905.img"
+      ],
+      "uboot_payload_minimum_sizes": [
+        "BPI-R2-HEAD440-0k.img=440",
+        "BPI-R2-HEAD1-512b.img=1536",
+        "BPI-R2-preloader-2k.img=92140",
+        "BPI-R2-EMMC-boot0-0K-0905.img=94720",
+        "u-boot.bin=400000"
+      ],
+      "uboot_payload_sha256": [
+        "BPI-R2-HEAD440-0k.img=62490bba0931680b65146792b795748a30777b101a8437885dd195c28b868a6b",
+        "BPI-R2-HEAD1-512b.img=2cf55689fdaecc72a7ca24929b6b79e419e7d9798cfb8e6d36e8c5ea3b96e049",
+        "BPI-R2-preloader-2k.img=b6a2cbead0b34fc243b9d8d9bde69496a0dbcf77dcdf0246adf0664fe4e07252",
+        "BPI-R2-EMMC-boot0-0K-0905.img=cc0dfb488bed14e23bce8302553714d29e6cba9fe8406cf8c3c0e97e9ae2b417"
+      ],
+      "partition_table": "msdos",
+      "partition_start_sector": 8192,
+      "logical_sector_size": 512,
+      "root_partition_number": 1,
+      "boot_configuration": "armbian_env",
+      "overlay_prefix": "mt7623",
+      "default_overlays": [],
+      "required_overlays": [],
+      "sd_node": "/mmc@11240000",
+      "sd_bus_width": 4,
+      "additional_bus_widths": [
+        "/mmc@11230000=8"
+      ],
+      "required_boolean_properties": [
+        "/mmc@11230000:non-removable"
+      ],
+      "required_string_properties": [
+        "/ethernet@1b100000/mac@0:phy-mode=trgmii",
+        "/ethernet@1b100000/mac@1:phy-mode=rgmii",
+        "/ethernet@1b100000/mdio-bus/switch@1f:compatible=mediatek,mt7530"
+      ],
+      "required_uint_properties": [
+        "/mmc@11230000:max-frequency=50000000",
+        "/mmc@11240000:max-frequency=50000000"
+      ],
+      "required_aliases": [
+        "serial2=/serial@11004000"
+      ],
+      "required_status_nodes": [
+        "/cec@10012000",
+        "/crypto@1b240000",
+        "/dpi@14014000",
+        "/ethernet@1b100000",
+        "/ethernet@1b100000/mac@0",
+        "/ethernet@1b100000/mac@1",
+        "/gpu@13040000",
+        "/hdmi-phy@10209100",
+        "/hdmi@14015000",
+        "/i2c@11007000",
+        "/i2c@11008000",
+        "/i2c@11013000",
+        "/ir-receiver@10013000",
+        "/mmc@11230000",
+        "/mmc@11240000",
+        "/pcie@1a140000",
+        "/pcie@1a140000/pcie@0,0",
+        "/pcie@1a140000/pcie@1,0",
+        "/pwm@11006000",
+        "/serial@11002000",
+        "/serial@11003000",
+        "/serial@11004000",
+        "/spi@1100a000",
+        "/usb@11200000",
+        "/usb@1a1c0000",
+        "/usb@1a240000"
+      ],
+      "required_present_nodes": [
+        "/ethernet@1b100000/mdio-bus/switch@1f",
+        "/rng@1020f000",
+        "/watchdog@10007000"
+      ]
+    }
+  }
+}

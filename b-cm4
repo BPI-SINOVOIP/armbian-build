@@ -1,0 +1,2 @@
+
+./compile.sh build BOARD=bananapicm4io BRANCH=current BUILD_DESKTOP=no BUILD_MINIMAL=yes KERNEL_CONFIGURE=yes RELEASE=trixie

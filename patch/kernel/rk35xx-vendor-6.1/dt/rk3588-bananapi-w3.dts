@@ -1,0 +1,10 @@
+// SPDX-License-Identifier: (GPL-2.0+ OR MIT)
+
+/dts-v1/;
+
+#include "rk3588-armsom-w3.dts"
+
+/ {
+	model = "Banana Pi W3";
+	compatible = "bananapi,bpi-w3", "armsom,w3", "armsom,lm7", "rockchip,rk3588";
+};

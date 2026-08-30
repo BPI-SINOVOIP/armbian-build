@@ -1,0 +1,71 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Banana Pi Maintainers <support@banana-pi.org>
+Date: Fri, 22 May 2026 10:00:00 +0800
+Subject: [PATCH] ARM: dts: sun8i: add Banana Pi P2 Zero
+
+Banana Pi P2 Zero is based on BPI-M2-Zero and adds eMMC plus
+100M Ethernet.
+---
+ arch/arm/boot/dts/allwinner/Makefile           |  1 +
+ .../allwinner/sun8i-h2-plus-bananapi-p2-zero.dts | 39 ++++++++++++++++++++
+ 2 files changed, 40 insertions(+)
+ create mode 100644 arch/arm/boot/dts/allwinner/sun8i-h2-plus-bananapi-p2-zero.dts
+
+diff --git a/arch/arm/boot/dts/allwinner/Makefile b/arch/arm/boot/dts/allwinner/Makefile
+index f71392a55df8..f71392a55df8 100644
+--- a/arch/arm/boot/dts/allwinner/Makefile
++++ b/arch/arm/boot/dts/allwinner/Makefile
+@@ -223,5 +223,6 @@ dtb-$(CONFIG_MACH_SUN8I) += \
+ 	sun8i-a83t-tbs-a711.dtb \
+ 	sun8i-h2-plus-bananapi-m2-zero.dtb \
++	sun8i-h2-plus-bananapi-p2-zero.dtb \
+ 	sun8i-h2-plus-libretech-all-h3-cc.dtb \
+ 	sun8i-h2-plus-orangepi-r1.dtb \
+ 	sun8i-h2-plus-orangepi-zero.dtb \
+diff --git a/arch/arm/boot/dts/allwinner/sun8i-h2-plus-bananapi-p2-zero.dts b/arch/arm/boot/dts/allwinner/sun8i-h2-plus-bananapi-p2-zero.dts
+new file mode 100644
+index 000000000000..111111111111
+--- /dev/null
++++ b/arch/arm/boot/dts/allwinner/sun8i-h2-plus-bananapi-p2-zero.dts
+@@ -0,0 +1,39 @@
++// SPDX-License-Identifier: (GPL-2.0+ OR MIT)
++/*
++ * Banana Pi BPI-P2-Zero is based on BPI-M2-Zero and adds eMMC and
++ * 100M Ethernet.
++ */
++
++#include "sun8i-h2-plus-bananapi-m2-zero.dts"
++
++/ {
++	model = "Banana Pi BPI-P2-Zero";
++	compatible = "sinovoip,bpi-p2-zero", "sinovoip,bpi-m2-zero",
++		     "allwinner,sun8i-h2-plus";
++
++	aliases {
++		ethernet0 = &emac;
++	};
++};
++
++&emac {
++	phy-handle = <&int_mii_phy>;
++	phy-mode = "mii";
++	allwinner,leds-active-low;
++	status = "okay";
++};
++
++&mmc2 {
++	pinctrl-names = "default";
++	pinctrl-0 = <&mmc2_8bit_pins>;
++	vmmc-supply = <&reg_vcc3v3>;
++	bus-width = <8>;
++	non-removable;
++	cap-mmc-hw-reset;
++	status = "okay";
++};
++
++&mmc2_8bit_pins {
++	drive-strength = <40>;
++	bias-pull-up;
++};
+-- 
+2.43.0

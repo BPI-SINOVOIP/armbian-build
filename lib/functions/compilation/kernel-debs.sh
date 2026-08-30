@@ -202,6 +202,14 @@ function kernel_package_callback_linux_image() {
 
 	# @TODO: we expect _all_ kernels to produce this, which is... not true.
 	declare kernel_pre_package_path="${tmp_kernel_install_dirs[INSTALL_PATH]}"
+	if ! compgen -G "${kernel_pre_package_path}/vmlinu*-${kernel_version_family}" >/dev/null; then
+		call_extension_method "prepare_kernel_image_for_packaging" <<- 'PREPARE_KERNEL_IMAGE_FOR_PACKAGING'
+			*prepare kernel image file before packaging*
+			Some legacy/vendor kernels build a valid arch/*/boot/Image but their install target
+			does not leave a Debian-style vmlinuz-* file in `${kernel_pre_package_path}`.
+			Use this hook to place the expected boot files before linux-image packaging inspects them.
+		PREPARE_KERNEL_IMAGE_FOR_PACKAGING
+	fi
 	kernel_image_installed_file_name=$(basename $(ls ${kernel_pre_package_path}/vmlinu*-${kernel_version_family}))
 	kernel_image_name=${kernel_image_installed_file_name%%-*}
 
@@ -285,6 +293,15 @@ function kernel_package_callback_linux_image() {
 		mkdir -p "${package_directory}/usr/lib"
 		run_host_command_logged cp -rp "${tmp_kernel_install_dirs[INSTALL_DTBS_PATH]}" "${package_directory}/usr/lib/linux-image-${kernel_version_family}"
 	fi
+
+	: "${kernel_git_revision:?kernel_git_revision is not set}"
+	mkdir -p "${package_directory}/usr/lib/linux-image-${kernel_version_family}"
+	cat <<- KERNEL_METADATA_SH > "${package_directory}/usr/lib/linux-image-${kernel_version_family}/armbian-kernel-metadata.sh"
+		declare KERNEL_GIT_SOURCE="${KERNELSOURCE}"
+		declare KERNEL_GIT_BRANCH="${KERNELBRANCH}"
+		declare KERNEL_GIT_REVISION="${kernel_git_revision}"
+		declare KERNEL_GIT_PATCHDIR="${KERNELPATCHDIR}"
+	KERNEL_METADATA_SH
 
 	# Generate a control file
 	cat <<- CONTROL_FILE > "${package_DEBIAN_dir}/control"

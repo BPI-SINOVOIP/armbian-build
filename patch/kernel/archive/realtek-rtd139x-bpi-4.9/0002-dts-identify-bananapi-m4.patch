@@ -1,0 +1,16 @@
+diff --git a/linux-rtk/arch/arm64/boot/dts/realtek/rtd139x/rtd-1395-bananapi-m4-1GB.dts b/linux-rtk/arch/arm64/boot/dts/realtek/rtd139x/rtd-1395-bananapi-m4-1GB.dts
+index a07efd4..799ae11 100755
+--- a/linux-rtk/arch/arm64/boot/dts/realtek/rtd139x/rtd-1395-bananapi-m4-1GB.dts
++++ b/linux-rtk/arch/arm64/boot/dts/realtek/rtd139x/rtd-1395-bananapi-m4-1GB.dts
+@@ -32 +32,2 @@
+-	model= "Sinovoip_Bananapi_M4";
++	model = "Banana Pi BPI-M4";
++	compatible = "bananapi,bpi-m4", "realtek,rtd1395";
+diff --git a/linux-rtk/arch/arm64/boot/dts/realtek/rtd139x/rtd-1395-bananapi-m4-2GB.dts b/linux-rtk/arch/arm64/boot/dts/realtek/rtd139x/rtd-1395-bananapi-m4-2GB.dts
+index 2b216b8..8041b0c 100755
+--- a/linux-rtk/arch/arm64/boot/dts/realtek/rtd139x/rtd-1395-bananapi-m4-2GB.dts
++++ b/linux-rtk/arch/arm64/boot/dts/realtek/rtd139x/rtd-1395-bananapi-m4-2GB.dts
+@@ -32 +32,2 @@
+-	model= "Sinovoip_Bananapi_M4";
++	model = "Banana Pi BPI-M4";
++	compatible = "bananapi,bpi-m4", "realtek,rtd1395";

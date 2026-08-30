@@ -114,7 +114,8 @@ scr-$(CONFIG_ARCH_SUNXI) += \
 
 dtbotxt-$(CONFIG_ARCH_SUNXI) += \
 	README.sun50i-a64-overlays \
-	README.sun50i-h5-overlays
+	README.sun50i-h5-overlays \
+	README.sun50i-h616-overlays
 
 targets += $(dtb-y) $(scr-y) $(dtbotxt-y)
 

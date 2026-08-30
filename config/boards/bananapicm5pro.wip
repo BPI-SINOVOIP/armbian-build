@@ -1,0 +1,66 @@
+# Rockchip RK3576 Banana Pi CM5 Pro 固定來源內部 L2 軟體候選。
+BOARD_NAME="Banana Pi CM5 Pro"
+BOARD_VENDOR="sinovoip"
+BOARDFAMILY="rk35xx"
+BOARD_MAINTAINER="BPI-SINOVOIP"
+INTRODUCED="2024"
+BOOTCONFIG="bananapi-cm5-pro-rk3576_defconfig"
+KERNEL_TARGET="vendor"
+KERNEL_TEST_TARGET="vendor"
+FULL_DESKTOP="yes"
+BOOT_LOGO="desktop"
+BOOT_FDT_FILE="rockchip/rk3576-bananapi-cm5-pro.dtb"
+BOOT_SCENARIO="spl-blobs"
+IMAGE_PARTITION_TABLE="gpt"
+BOOT_SOC="rk3576"
+DDR_BLOB="rk35/rk3576_ddr_lp4_2112MHz_lp5_2736MHz_v1.08.bin"
+BL31_BLOB="rk35/rk3576_bl31_v1.20.elf"
+BOOST_BLOB="rk35/rk3576_boost_v1.02.bin"
+USBPLUG_BLOB="rk35/rk3576_usbplug_v1.03.bin"
+EXTRAWIFI="yes"
+KERNELBRANCH_BOARD="commit:c6157104418d012823413c02f9222f3fe123dd25"
+BOOTBRANCH_BOARD="commit:39cd993e5d6296635438e84f4576b3a9bf76f86e"
+RKBIN_GIT_REF="commit:1d3c61008fa823936ae7a59615393f8294b64456"
+ARMBIAN_FIRMWARE_GIT_REF_BOARD="commit:f50a2a21bcdb77a562b3976930c5c6b521a1df08"
+RTL8852BS_GIT_SOURCE_BOARD="https://github.com/armbian/wifi-rtl8852bs.git"
+RTL8852BS_GIT_REF_BOARD="commit:35d3e2660fd912c36777cc50dd43b3fbc805d56a"
+PACKAGE_LIST_BOARD="rfkill bluetooth bluez bluez-tools wireless-regdb iw ethtool iproute2 iperf3 smartmontools hdparm gpiod i2c-tools python3-libgpiod python3-spidev spi-tools pciutils nvme-cli usbutils usb-modeswitch evtest alsa-utils v4l-utils ffmpeg gstreamer1.0-tools mesa-utils glmark2-es2 vainfo vulkan-tools clinfo libdrm-tests"
+
+function post_family_config_branch_vendor__bananapicm5pro_pin_sources() {
+	declare -g BOOTSOURCE="https://github.com/radxa/u-boot.git"
+	declare -g BOOTBRANCH="${BOOTBRANCH_BOARD}"
+	declare -g KERNELSOURCE="https://github.com/armbian/linux-rockchip.git"
+	declare -g KERNELBRANCH="${KERNELBRANCH_BOARD}"
+	declare -g RKBIN_GIT_URL="https://github.com/armbian/rkbin"
+	declare -g ARMBIAN_FIRMWARE_GIT_SOURCE="https://github.com/armbian/firmware"
+	declare -g ARMBIAN_FIRMWARE_GIT_REF="${ARMBIAN_FIRMWARE_GIT_REF_BOARD}"
+	declare -g RTL8852BS_GIT_SOURCE="${RTL8852BS_GIT_SOURCE_BOARD}"
+	declare -g RTL8852BS_GIT_REF="${RTL8852BS_GIT_REF_BOARD}"
+}
+
+function custom_kernel_config__bananapicm5pro_io_contract() {
+	opts_y+=(BT BT_HCIUART BT_HCIUART_RTL GPIO_CDEV HID HID_GENERIC HIDRAW SERIAL_DEV_BUS SERIAL_DEV_CTRL_TTYPORT USB_HID USB_ROLE_SWITCH)
+	opts_m+=(RTL8852BS)
+}
+
+function post_family_tweaks__bananapicm5pro_naming_audios() {
+	display_alert "${BOARD}" "設定 CM5 Pro 音訊裝置名稱" "info"
+
+	mkdir -p "${SDCARD}/etc/udev/rules.d/"
+	printf '%s\n' \
+		'SUBSYSTEM=="sound", ENV{ID_PATH}=="platform-hdmi-sound", ENV{SOUND_DESCRIPTION}="HDMI Audio"' \
+		'SUBSYSTEM=="sound", ENV{ID_PATH}=="platform-dp0-sound", ENV{SOUND_DESCRIPTION}="DisplayPort Audio"' \
+		'SUBSYSTEM=="sound", ENV{ID_PATH}=="platform-es8388-sound", ENV{SOUND_DESCRIPTION}="ES8388 Audio"' \
+		>"${SDCARD}/etc/udev/rules.d/90-naming-audios.rules"
+}
+
+function post_family_tweaks_bsp__bananapicm5pro_licenses() {
+	local license_dir="${destination}/usr/share/doc/armbian-bsp-${BOARD}"
+	local rkbin_license_source="${RKBIN_DIR}/LICENSE.TXT"
+	local wifi_license_source="${SRC}/cache/sources/rtl8852bs/${RTL8852BS_GIT_REF_BOARD#*:}/LICENSE"
+
+	[[ -f "${rkbin_license_source}" ]] || exit_with_error "CM5 Pro 缺少 RKBin 授權檔：${rkbin_license_source}"
+	[[ -f "${wifi_license_source}" ]] || exit_with_error "CM5 Pro 缺少 RTL8852BS 授權檔：${wifi_license_source}"
+	run_host_command_logged install -Dm0644 "${rkbin_license_source}" "${license_dir}/rkbin.LICENSE.TXT"
+	run_host_command_logged install -Dm0644 "${wifi_license_source}" "${license_dir}/rtl8852bs.LICENSE"
+}

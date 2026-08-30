@@ -1,0 +1,7 @@
+# prebuild build on ubuntu 22.04
+
+cd arm-trusted-firmware/tools/renesas/rz_boot_param/
+make PLAT=v2h
+
+cd arm-trusted-firmware/tools/fiptool/
+make PLAT=v2h

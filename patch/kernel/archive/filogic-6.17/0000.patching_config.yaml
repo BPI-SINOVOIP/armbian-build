@@ -1,0 +1,7 @@
+config:
+  name: filogic-6.17
+  kind: kernel
+  type: mainline
+  branch: 6.17-r4lite
+  maintainers:
+    - { github: frank-w, name: Frank Wunderlich }

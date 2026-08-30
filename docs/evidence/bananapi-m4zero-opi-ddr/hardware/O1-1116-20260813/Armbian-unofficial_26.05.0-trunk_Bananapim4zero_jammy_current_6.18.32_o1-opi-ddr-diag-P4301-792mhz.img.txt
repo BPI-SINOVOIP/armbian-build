@@ -1,0 +1,126 @@
+
+U-Boot SPL 2026.01_armbian-2026.01-S127a-P4301-Hc6a9-V3946-Bd0d2-R448a (Aug 13 2026 - 05:12:32 +0000)
+DRAM:M4ZDDR1_PROFILE0 clk=792 type=8 wl=0 rc=1 rt=0 wt=0
+M4ZDDR1_PROFILE1 dx_odt=07070707 dx_dri=0e0e0e0e ca_dri=00000e0e odt_en=aaaaeeee
+M4ZDDR1_PROFILE2 tpr6=44000000 tpr10=402f6663 tpr11=24242624 tpr12=0f0f100f
+M4ZDDR1_BEGIN ranks=2 width=32 rows=13 cols=8
+M4ZDDR1_RUN stage=rc
+M4ZDDR1_STAGE stage=rc result=pass attempts=1
+M4ZDDR1_END result=pass
+M4ZDDR1_BEGIN ranks=2 width=32 rows=13 cols=11
+M4ZDDR1_RUN stage=rc
+M4ZDDR1_STAGE stage=rc result=pass attempts=1
+M4ZDDR1_END result=pass
+M4ZDDR1_BEGIN ranks=2 width=32 rows=17 cols=8
+M4ZDDR1_RUN stage=rc
+M4ZDDR1_STAGE stage=rc result=pass attempts=1
+M4ZDDR1_END result=pass
+M4ZDDR1_BEGIN ranks=2 width=32 rows=16 cols=10
+M4ZDDR1_RUN stage=rc
+M4ZDDR1_STAGE stage=rc result=pass attempts=1
+M4ZDDR1_END result=pass
+M4ZDDR1_REG block=ctl off=000 value=c3080020
+M4ZDDR1_REG block=ctl off=004 value=00000001
+M4ZDDR1_REG block=ctl off=010 value=00000030
+M4ZDDR1_REG block=ctl off=014 value=00001624
+M4ZDDR1_REG block=ctl off=1bc value=00000001
+M4ZDDR1_REG block=ctl off=324 value=00000001
+M4ZDDR1_REG block=phy off=180 value=00000016
+M4ZDDR1_REG block=phy off=184 value=00000000
+M4ZDDR1_REG block=phy off=188 value=00000000
+M4ZDDR1_REG block=phy off=258 value=00000007
+M4ZDDR1_REG block=phy off=25c value=00000007
+M4ZDDR1_REG block=phy off=26c value=00000001
+M4ZDDR1_REG block=phy off=274 value=00000001
+M4ZDDR1_REG block=phy off=318 value=00000007
+M4ZDDR1_REG block=phy off=31c value=00000007
+M4ZDDR1_REG block=phy off=32c value=00000001
+M4ZDDR1_REG block=phy off=334 value=00000001
+M4ZDDR1_REG block=phy off=840 value=00000000
+M4ZDDR1_REG block=phy off=a40 value=00000000
+M4ZDDR1_REG block=phy off=8e0 value=00000000
+M4ZDDR1_REG block=phy off=ae0 value=00000000
+M4ZDDR1_FINAL size_mib=4096 ranks=2 width=32 rows=16 cols=10
+ 4096 MiB
+Trying to boot from MMC1
+NOTICE:  BL31: v2.12.9(debug):armbian
+NOTICE:  BL31: Built : 04:48:19, Aug 13 2026
+NOTICE:  BL31: Detected Allwinner H616 SoC (1823)
+NOTICE:  BL31: Found U-Boot DTB at 0x4a0b6240, model: BananaPi BPI-M4-Zero
+INFO:    ARM GICv2 driver initialized
+INFO:    Configuring SPC Controller
+INFO:    Probing for PMIC on I2C:
+INFO:    PMIC: found AXP313
+INFO:    BL31: Platform setup done
+INFO:    BL31: Initializing runtime services
+INFO:    BL31: cortex_a53: CPU workaround for erratum 855873 was applied
+INFO:    BL31: cortex_a53: CPU workaround for erratum 1530924 was applied
+INFO:    PSCI: Suspend is unavailable
+INFO:    BL31: Preparing for EL3 exit to normal world
+INFO:    Entry point address = 0x4a000000
+INFO:    SPSR = 0x3c9
+INFO:    Changed devicetree.
+
+
+U-Boot 2026.01_armbian-2026.01-S127a-P4301-Hc6a9-V3946-Bd0d2-R448a (Aug 13 2026 - 05:12:32 +0000) Allwinner Technology
+
+CPU:   Allwinner H616 (SUN50I)
+Model: BananaPi BPI-M4-Zero
+DRAM:  4 GiB
+Core:  65 devices, 22 uclasses, devicetree: separate
+WDT:   Not starting watchdog@30090a0
+MMC:   mmc@4020000: 0, mmc@4022000: 1
+Loading Environment from FAT... Unable to use mmc 0:1...
+In:    serial@5000000
+Out:   serial@5000000
+Err:   serial@5000000
+Allwinner mUSB OTG (Peripheral)
+Net:   using musb-hdrc, OUT ep1out IN ep1in STATUS ep2in
+MAC de:ad:be:ef:00:01
+HOST MAC de:ad:be:ef:00:00
+RNDIS ready
+eth0: usb_ether
+starting USB...
+USB EHCI 1.00
+USB OHCI 1.0
+Bus usb@5311000: 1 USB Device(s) found
+Bus usb@5311400: 1 USB Device(s) found
+       scanning usb for storage devices... 0 Storage Device(s) found
+Hit any key to stop autoboot:  1 Hit any key to stop autoboot: 0
+switch to partitions #0, OK
+mmc0 is current device
+Scanning mmc 0:1...
+Found U-Boot script /boot/boot.scr
+4641 bytes read in 2 ms (2.2 MiB/s)
+## Executing script at 4fc00000
+U-boot loaded from SD
+Boot script loaded from mmc
+231 bytes read in 1 ms (225.6 KiB/s)
+Load fdt: /boot/dtb/allwinner/sun50i-h618-bananapi-m4-zero.dtb
+46478 bytes read in 6 ms (7.4 MiB/s)
+Working FDT set to 4fa00000
+1358 bytes read in 4 ms (331.1 KiB/s)
+Applying kernel provided DT overlay sun50i-h616-bananapi-m4-sdio-wifi-bt.dtbo
+4203 bytes read in 5 ms (820.3 KiB/s)
+Applying kernel provided DT fixup script (sun50i-h616-fixup.scr)
+## Executing script at 45000000
+21293041 bytes read in 880 ms (23.1 MiB/s)
+40086016 bytes read in 1657 ms (23.1 MiB/s)
+Moving Image from 0x40080000 to 0x40200000, end=0x42930000
+## Loading init Ramdisk from Legacy Image at 4ff00000 ...
+   Image Name:   uInitrd
+   Image Type:   AArch64 Linux RAMDisk Image (gzip compressed)
+   Data Size:    21292977 Bytes = 20.3 MiB
+   Load Address: 00000000
+   Entry Point:  00000000
+   Verifying Checksum ... OK
+## Flattened Device Tree blob at 4fa00000
+   Booting using the fdt blob at 0x4fa00000
+Working FDT set to 4fa00000
+   Loading Ramdisk to 48bb1000, end 49fff7b1 ... OK
+   Loading Device Tree to 0000000048b3d000, end 0000000048bb0fff ... OK
+Working FDT set to 48b3d000
+
+Starting kernel ...
+
+Initramfs unpacking failed: no cpio magic

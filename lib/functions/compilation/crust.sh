@@ -29,6 +29,13 @@ compile_crust() {
 	fi
 	cd "$crustdir" || exit
 
+	local crust_git_head
+	crust_git_head="$(git rev-parse HEAD)"
+	[[ "${crust_git_head}" =~ ^[0-9a-f]{40}$ ]] ||
+		exit_with_error "Crust Git revision 格式不符" "${crust_git_head}"
+	# shellcheck disable=SC2034  # 由後續 U-Boot 套件中繼資料使用。
+	declare -g CRUST_GIT_REVISION="${crust_git_head}"
+
 	display_alert "Compiling Crust" "" "info"
 
 	display_alert "Compiler version" "${CRUST_COMPILER}gcc $(eval env "${CRUST_COMPILER}gcc" -dumpfullversion -dumpversion)" "info"

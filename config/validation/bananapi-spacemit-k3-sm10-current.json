@@ -1,0 +1,531 @@
+{
+  "schema_version": 1,
+  "candidate_branch": "current",
+  "candidate_level": "L2 內部軟體候選",
+  "candidate_scope": "internal-l2",
+  "candidate_state": "l2-closed",
+  "current_evidence_level": "L2",
+  "target_evidence_level": "L2",
+  "source_date_epoch": 1777390324,
+  "source_contract_projection_sha256": "3b182f48aac7a05f9baa21801c127d8e6f383ef1cf7933ff3cd7c8089d8353f6",
+  "public_release_allowed": false,
+  "public_distribution_approved": false,
+  "hardware_claims_allowed": false,
+  "hardware_validated": false,
+  "hardware_validation_complete": false,
+  "candidate_public_release_approved": false,
+  "secure_boot_claim_allowed": false,
+  "component_build_completed": true,
+  "full_image_built": true,
+  "rootfs_image_built": true,
+  "full_rootfs_image_built": true,
+  "l1_calibration_evidence": {
+    "source_commit": "0959d5305a3bf22e0c0a80af31aba0f2074c12fa",
+    "source_tree": "f7d62435f0f535346eec07666023300e3d766f99",
+    "verifier_commit": "0959d5305a3bf22e0c0a80af31aba0f2074c12fa",
+    "build_validation_config_sha256": "c1636e5a32a8b306e16c73c73e27cf4fc1e8b76fb326c41138162ff1a35c0f9a",
+    "verification_config_sha256": "c1636e5a32a8b306e16c73c73e27cf4fc1e8b76fb326c41138162ff1a35c0f9a",
+    "source_contract_projection_sha256": "3b182f48aac7a05f9baa21801c127d8e6f383ef1cf7933ff3cd7c8089d8353f6",
+    "calibration_file_sha256": "39461c9fe44dd3d0700ae2e60984441bf0b4ddc1642fca75424eb66e7b9a72c6",
+    "candidate_matrix_sha256": "c8267b00fd4dc504dd2e9c9ffb382a3ad6db64e1e2231b97a68b1a0a101d547c",
+    "completion_status_sha256": "921e1e09ec048ce1f576845750c0fc23b5d61d9d77b7dfc1c35b80e908f546b5",
+    "verification_manifest_sha256": "6b2893f7bd14ea8b1c8be7ba09d409b03a7efb0e928e3b7dcab818ab85bf9bb4",
+    "uboot_payload_manifest_sha256": "7c03393f881d05dca23a99129e9919cfa531bb5d20426c92d8451de573e80bf6",
+    "final_config_manifest_sha256": "f68cd57987a119dc9645cf0fa95ec80c00287351c20dddf80de2e6443d55cfc7",
+    "source_date_epoch": 1777390324,
+    "verified_utc": "2026-08-28T04:32:31Z",
+    "image": {
+      "path": "output/images/2026.08/bananapi-spacemit-k3-sm10-trixie-current-cli/bananapism10/Armbian-unofficial_26.05.0-trunk_Bananapism10_trixie_current_6.18.3_minimal.img",
+      "size": 1916796928,
+      "sha256": "071e865aa1f53f29823dcf171c5de091960d21902a945d880916c96456dacfc1"
+    },
+    "archive": {
+      "path": "output/images/2026.08/bananapi-spacemit-k3-sm10-trixie-current-cli/bananapism10/Armbian-unofficial_26.05.0-trunk_Bananapism10_trixie_current_6.18.3_minimal.img.xz",
+      "size": 477808188,
+      "sha256": "ef6045ef87239cc9b58512da61702f0dbcf2a1e3f7cb51d45d18459927b780a0"
+    }
+  },
+  "image_build_evidence": {
+    "status": "complete",
+    "evidence_level": "L2",
+    "source_commit": "fd360f4e10f812c363eee370734dff28c250c1e9",
+    "source_tree": "aa9ab635005c76d469e8eadcc49e25969609ebc8",
+    "verifier_commit": "fd360f4e10f812c363eee370734dff28c250c1e9",
+    "build_validation_config_sha256": "3800ade7b68eba9474ea86138f7d5d4c94f2578e2260a819cc74d6f4c58b2ea9",
+    "verification_config_sha256": "3800ade7b68eba9474ea86138f7d5d4c94f2578e2260a819cc74d6f4c58b2ea9",
+    "source_contract_projection_sha256": "3b182f48aac7a05f9baa21801c127d8e6f383ef1cf7933ff3cd7c8089d8353f6",
+    "source_date_epoch": 1777390324,
+    "candidate_matrix_sha256": "79ac5a89551337cc30bb18f0d931b06036737ee87a1c9665544c78070c407ef9",
+    "completion_status_sha256": "4c611268144b02e57f8d638835e4f368733a820a2370380769dbe41a791d8b27",
+    "verification_manifest_sha256": "6d5a502196f595b0dd71e61b1beb05164e1fd0afadb50b9d1763edc382c631ce",
+    "uboot_payload_manifest_sha256": "7c03393f881d05dca23a99129e9919cfa531bb5d20426c92d8451de573e80bf6",
+    "final_config_manifest_sha256": "f68cd57987a119dc9645cf0fa95ec80c00287351c20dddf80de2e6443d55cfc7",
+    "verified_utc": "2026-08-28T05:29:33Z",
+    "full_rootfs_image_built": true,
+    "read_only_content_verified": true,
+    "hardware_tested": false,
+    "xz_stream_verified": true,
+    "image": {
+      "path": "output/images/2026.08/bananapi-spacemit-k3-sm10-trixie-current-cli/bananapism10/Armbian-unofficial_26.05.0-trunk_Bananapism10_trixie_current_6.18.3_minimal.img",
+      "size": 1916796928,
+      "sha256": "0de1f1bab7f5b01e56768b6a70cdf55381157430ccaf48dc78b4861ddf8f533e"
+    },
+    "archive": {
+      "path": "output/images/2026.08/bananapi-spacemit-k3-sm10-trixie-current-cli/bananapism10/Armbian-unofficial_26.05.0-trunk_Bananapism10_trixie_current_6.18.3_minimal.img.xz",
+      "size": 479047032,
+      "sha256": "26b6322d46230688701d1ab08747dd15da1ee1a0fef95dca8d10e12055e3b595"
+    },
+    "linux_dtb": {
+      "path": "spacemit/k3-bananapi-sm10.dtb",
+      "sha256": "a74520d979cc62fcdb12dfddd97c7968900109df6a33ae34c1489d87a34695ba"
+    }
+  },
+  "component_build_evidence": {
+    "implementation_commit": "a511c357d1120a18d608cbc798e60f172463c031",
+    "completed_utc": "2026-08-27T03:42:30Z",
+    "manifest_sha256": "14e1f7f8c4ad59493a6a6bae3da9fd8bdeb9bf9e12c5c9156539c1d84ced4931",
+    "status_sha256": "b53d4a5203cc74db77fcf18a388577fb4aa233a4802a2f0d89fdab3a7f17247b",
+    "source_status_sha256": "96460b26ea3ea1a01b5f544acc9b420dd17221274bdbd63ad31f241e126abe75",
+    "source_projects_sha256": "2d7100d2d8c9f9882ab61b5ac84c2de05fff0ca5e6820c61aefaa445ea69e49b",
+    "container_image_id": "sha256:9531810450c5953c0675515ab7deee5d9634966e8abccfcd5ea60f8aee94e335",
+    "compiler_binary_sha256": "7357a5d6e1197ca48da9db6e8a2f7a09784f3b6bb9163acfe213d191ee30bb2d",
+    "artifacts": {
+      "Image": {
+        "component": "linux",
+        "source_revision": "27275ec8240cc49af3a525b8bc325d9b5029fb81",
+        "size": 33821184,
+        "sha256": "7fe1aee56d5b9d49c494e03855d1245262bd13a20c89d5f31af2a8f733c4665d"
+      },
+      "k3-bananapi-sm10.dtb": {
+        "component": "linux",
+        "source_revision": "27275ec8240cc49af3a525b8bc325d9b5029fb81",
+        "size": 142075,
+        "sha256": "a74520d979cc62fcdb12dfddd97c7968900109df6a33ae34c1489d87a34695ba"
+      },
+      "linux.config": {
+        "component": "linux",
+        "source_revision": "27275ec8240cc49af3a525b8bc325d9b5029fb81",
+        "size": 305343,
+        "sha256": "549dd138a5205d71cca5620c4d54f5905d6305dfa502ca80c4d7a319d20d34c5"
+      },
+      "FSBL.bin": {
+        "component": "uboot",
+        "source_revision": "1b10c8119e1a9b5451a4236f6b384f7c91eed1e2",
+        "size": 449984,
+        "sha256": "9a40d9d27ec8de79a38ece8ad00de96d29d45b507c43f46f3bf45589c50034d7"
+      },
+      "bootinfo_block.bin": {
+        "component": "uboot",
+        "source_revision": "1b10c8119e1a9b5451a4236f6b384f7c91eed1e2",
+        "size": 80,
+        "sha256": "8cde21b4e18f0b72f2c98b5ae686dfe8ef75d8dc641393e97b52cf318b294e4b"
+      },
+      "u-boot.itb": {
+        "component": "uboot",
+        "source_revision": "1b10c8119e1a9b5451a4236f6b384f7c91eed1e2",
+        "size": 2134494,
+        "sha256": "f7560b4afd523b484b7f950f038485dea7c28cbf5f9c225290d940ca4461ae13"
+      },
+      "u-boot-env-default.bin": {
+        "component": "uboot",
+        "source_revision": "1b10c8119e1a9b5451a4236f6b384f7c91eed1e2",
+        "size": 16384,
+        "sha256": "e73d2c0c44c6b00019a4c6190e8e7d03a37be710a20fa76b887bdd098fa1ff51"
+      },
+      "uboot.config": {
+        "component": "uboot",
+        "source_revision": "1b10c8119e1a9b5451a4236f6b384f7c91eed1e2",
+        "size": 56594,
+        "sha256": "ffb244d91c6d9ce59f20eeabee15f0391e5d6417548856cacd4720d87cf69b9c"
+      },
+      "fw_dynamic.itb": {
+        "component": "opensbi",
+        "source_revision": "3e2f9efc9660b8d5fcae4e0b6495f306d5c64078",
+        "size": 272223,
+        "sha256": "37dcca0ad696c88900c316a5bab289f1e3e55f09836cb22a4f09c1faa93be86d"
+      },
+      "fw_dynamic.elf": {
+        "component": "opensbi",
+        "source_revision": "3e2f9efc9660b8d5fcae4e0b6495f306d5c64078",
+        "size": 1531736,
+        "sha256": "2820c5181c7925ec5df26dc26d52acbad9ce64393162186f83bb5b9af15fc482"
+      }
+    }
+  },
+  "kernel_family": "spacemit-k3-bpi",
+  "kernel_version": "6.18",
+  "linux_source": "https://github.com/spacemit-com/linux-6.18.git",
+  "linux_ref": "commit:27275ec8240cc49af3a525b8bc325d9b5029fb81",
+  "linux_commit": "27275ec8240cc49af3a525b8bc325d9b5029fb81",
+  "firmware_source": "https://github.com/armbian/firmware",
+  "firmware_ref": "commit:f50a2a21bcdb77a562b3976930c5c6b521a1df08",
+  "firmware_commit": "f50a2a21bcdb77a562b3976930c5c6b521a1df08",
+  "verify_firmware_source_resolution": true,
+  "sdk": {
+    "default_local_path": "/media/pi/SMCI/bpi/bpi-sm10/sdk/k3-buildroot-sdk-1.0",
+    "manifest_source": "git@github.com:spacemit-com/manifests.git",
+    "manifest_branch": "main",
+    "manifest_file": "k3-br-v1.0.y.xml",
+    "manifest_commit": "6d767b42fdbd759dc9511b8a13523c3de42aaa5a",
+    "resolved_manifest_sha256": "6aa7ec0fe51fae1359552efb46ba92007b432e1b8530cf8a8872f663fc2b2b39",
+    "work_branch": "k3-br-v1.0.y",
+    "project_count": 20
+  },
+  "source_commits": {
+    "bsp-src/linux-6.18": "27275ec8240cc49af3a525b8bc325d9b5029fb81",
+    "bsp-src/opensbi": "3e2f9efc9660b8d5fcae4e0b6495f306d5c64078",
+    "bsp-src/uboot-2022.10": "1b10c8119e1a9b5451a4236f6b384f7c91eed1e2",
+    "buildroot": "06a303b332a7216c6ca9360dd7c7f52a3fb8b1da",
+    "buildroot-ext": "67a5f68cf4f3720d9f31fff96860863ef1fe6d51",
+    "package-src/drm-test": "3b8a8ec50ed68150be63926723e84663f50ed813",
+    "package-src/esos": "92a8baf250e42853a094a7af6f7ee849adb3de4a",
+    "package-src/esos/components/esos-lite": "f450844c18781bfaf66b0304c0c1618c9646c162",
+    "package-src/factorytest": "208f7951e722f85c114cf56a02c885cbd90d067c",
+    "package-src/glmark2": "4fdd95768e3634f43c27aa5acad5c0b791960b0c",
+    "package-src/gpu-test": "512b41a49840cb4bad6a100988fb647603882402",
+    "package-src/img-gpu-powervr": "f934f308946f35f8eec25e746c04e4cf91b33853",
+    "package-src/k3x-cam": "0ff226d3baa229cd941f81a31c3a58dfea3916aa",
+    "package-src/k3x-vpu-firmware": "8ece3da96f8cbfbd29c64a0a2366fd27652e9353",
+    "package-src/k3x-vpu-test": "14efe1573905005fe9ee1817c91ff3d436b3a840",
+    "package-src/mesa": "e0f7500a6571846265f4442befdd4a012c5170af",
+    "package-src/mpp": "c0b44e1a31d028af3c82cc0d551b48884727b99f",
+    "package-src/rtk_hciattach": "d22de614ec58374cfe8222f8aa71502fea28cad9",
+    "package-src/v2d-test": "d9257c92cfd373f24e9e7646bfc9f40694b67412",
+    "scripts": "96418825a37a1cf07d3275c13d9d3329934224f0"
+  },
+  "component_sources": {
+    "linux": {
+      "source": "https://github.com/spacemit-com/linux-6.18.git",
+      "ref": "commit:27275ec8240cc49af3a525b8bc325d9b5029fb81",
+      "revision": "27275ec8240cc49af3a525b8bc325d9b5029fb81",
+      "license": "GPL-2.0-only"
+    },
+    "uboot": {
+      "source": "https://github.com/spacemit-com/uboot-2022.10.git",
+      "ref": "commit:1b10c8119e1a9b5451a4236f6b384f7c91eed1e2",
+      "revision": "1b10c8119e1a9b5451a4236f6b384f7c91eed1e2",
+      "license": "GPL-2.0-or-later"
+    },
+    "opensbi": {
+      "source": "https://github.com/spacemit-com/opensbi.git",
+      "ref": "commit:3e2f9efc9660b8d5fcae4e0b6495f306d5c64078",
+      "revision": "3e2f9efc9660b8d5fcae4e0b6495f306d5c64078",
+      "license": "BSD-2-Clause"
+    },
+    "esos": {
+      "source": "https://github.com/spacemit-com/esos.git",
+      "ref": "commit:92a8baf250e42853a094a7af6f7ee849adb3de4a",
+      "revision": "92a8baf250e42853a094a7af6f7ee849adb3de4a",
+      "license": "混合且尚未閉合"
+    }
+  },
+  "source_built_boot_assets": {
+    "packages/blobs/riscv64/spacemit-k3/bpi-sm10/env.bin": {
+      "component": "uboot",
+      "source_revision": "1b10c8119e1a9b5451a4236f6b384f7c91eed1e2",
+      "derived_from": "u-boot-env-default.bin",
+      "size": 16384,
+      "sha256": "e73d2c0c44c6b00019a4c6190e8e7d03a37be710a20fa76b887bdd098fa1ff51",
+      "reproducible_rebuild_count": 2
+    },
+    "packages/blobs/riscv64/spacemit-k3/bpi-sm10/bootinfo_block.bin": {
+      "component": "uboot",
+      "source_revision": "1b10c8119e1a9b5451a4236f6b384f7c91eed1e2",
+      "size": 80,
+      "sha256": "8cde21b4e18f0b72f2c98b5ae686dfe8ef75d8dc641393e97b52cf318b294e4b",
+      "reproducible_rebuild_count": 2
+    },
+    "packages/blobs/riscv64/spacemit-k3/bpi-sm10/FSBL.bin": {
+      "component": "uboot",
+      "source_revision": "1b10c8119e1a9b5451a4236f6b384f7c91eed1e2",
+      "size": 449984,
+      "sha256": "9a40d9d27ec8de79a38ece8ad00de96d29d45b507c43f46f3bf45589c50034d7",
+      "reproducible_rebuild_count": 2
+    },
+    "packages/blobs/riscv64/spacemit-k3/bpi-sm10/fw_dynamic.itb": {
+      "component": "opensbi",
+      "source_revision": "3e2f9efc9660b8d5fcae4e0b6495f306d5c64078",
+      "size": 272223,
+      "sha256": "37dcca0ad696c88900c316a5bab289f1e3e55f09836cb22a4f09c1faa93be86d",
+      "reproducible_rebuild_count": 2
+    },
+    "packages/blobs/riscv64/spacemit-k3/bpi-sm10/u-boot.itb": {
+      "component": "uboot",
+      "source_revision": "1b10c8119e1a9b5451a4236f6b384f7c91eed1e2",
+      "size": 2134494,
+      "sha256": "f7560b4afd523b484b7f950f038485dea7c28cbf5f9c225290d940ca4461ae13",
+      "reproducible_rebuild_count": 2
+    },
+    "packages/blobs/riscv64/spacemit-k3/bpi-sm10/uboot.config": {
+      "component": "uboot",
+      "source_revision": "1b10c8119e1a9b5451a4236f6b384f7c91eed1e2",
+      "size": 56594,
+      "sha256": "ffb244d91c6d9ce59f20eeabee15f0391e5d6417548856cacd4720d87cf69b9c",
+      "reproducible_rebuild_count": 2
+    },
+    "packages/blobs/riscv64/spacemit-k3/bpi-sm10/u-boot-env-default.bin": {
+      "component": "uboot",
+      "source_revision": "1b10c8119e1a9b5451a4236f6b384f7c91eed1e2",
+      "size": 16384,
+      "sha256": "e73d2c0c44c6b00019a4c6190e8e7d03a37be710a20fa76b887bdd098fa1ff51",
+      "reproducible_rebuild_count": 2
+    }
+  },
+  "runtime_prebuilt_assets": {
+    "packages/blobs/riscv64/spacemit-k3/bpi-sm10/esos.itb": {
+      "size": 463799,
+      "sha256": "11099edb92c9721ebb207de3a200905618dcfded32c19f5ef0525275c253bf28",
+      "source_build_available": false,
+      "redistribution_license_verified": false
+    },
+    "packages/blobs/riscv64/spacemit-k3/bpi-sm10/env_k3.txt": {
+      "size": 184,
+      "sha256": "d6f073e147aae8f2f4bca4d711b64301dd98165a19b11ca76be637f695f94366",
+      "source_build_available": false,
+      "redistribution_license_verified": false
+    },
+    "packages/blobs/riscv64/spacemit-k3/bpi-sm10/bianbu.bmp": {
+      "size": 262266,
+      "sha256": "a3567f599894c570d1b62c461d52e227b29eca9ab745ac619553890ecf9c2e8b",
+      "source_build_available": false,
+      "redistribution_license_verified": false
+    }
+  },
+  "trusted_firmware_a": {
+    "applicable": false,
+    "replacement_stage": "OpenSBI M-mode 韌體",
+    "reason": "K3 是 RISC-V 平台，啟動鏈不使用 ARM TF-A"
+  },
+  "boot_chain": [
+    "Boot ROM",
+    "bootinfo_block.bin",
+    "FSBL.bin（U-Boot SPL 與 DDR 初始化）",
+    "esos.itb（遠端即時核心）",
+    "fw_dynamic.itb（OpenSBI）",
+    "u-boot.itb",
+    "env_k3.txt",
+    "Linux Image、initramfs 與 DTB"
+  ],
+  "bootloader_blobs": {
+    "packages/blobs/riscv64/spacemit-k3/bpi-sm10/env.bin": "e73d2c0c44c6b00019a4c6190e8e7d03a37be710a20fa76b887bdd098fa1ff51",
+    "packages/blobs/riscv64/spacemit-k3/bpi-sm10/bootinfo_block.bin": "8cde21b4e18f0b72f2c98b5ae686dfe8ef75d8dc641393e97b52cf318b294e4b",
+    "packages/blobs/riscv64/spacemit-k3/bpi-sm10/FSBL.bin": "9a40d9d27ec8de79a38ece8ad00de96d29d45b507c43f46f3bf45589c50034d7",
+    "packages/blobs/riscv64/spacemit-k3/bpi-sm10/esos.itb": "11099edb92c9721ebb207de3a200905618dcfded32c19f5ef0525275c253bf28",
+    "packages/blobs/riscv64/spacemit-k3/bpi-sm10/fw_dynamic.itb": "37dcca0ad696c88900c316a5bab289f1e3e55f09836cb22a4f09c1faa93be86d",
+    "packages/blobs/riscv64/spacemit-k3/bpi-sm10/u-boot.itb": "f7560b4afd523b484b7f950f038485dea7c28cbf5f9c225290d940ca4461ae13",
+    "packages/blobs/riscv64/spacemit-k3/bpi-sm10/u-boot-env-default.bin": "e73d2c0c44c6b00019a4c6190e8e7d03a37be710a20fa76b887bdd098fa1ff51",
+    "packages/blobs/riscv64/spacemit-k3/bpi-sm10/uboot.config": "ffb244d91c6d9ce59f20eeabee15f0391e5d6417548856cacd4720d87cf69b9c",
+    "packages/blobs/riscv64/spacemit-k3/bpi-sm10/env_k3.txt": "d6f073e147aae8f2f4bca4d711b64301dd98165a19b11ca76be637f695f94366",
+    "packages/blobs/riscv64/spacemit-k3/bpi-sm10/bianbu.bmp": "a3567f599894c570d1b62c461d52e227b29eca9ab745ac619553890ecf9c2e8b",
+    "packages/blobs/riscv64/spacemit-k3/bpi-sm10/README.txt": "803f4300ccde961413127180834cb3ae5e6dfea3f580f6ecb9a0f0e0891f9e45"
+  },
+  "private_signing_keys_in_sdk": [
+    "bsp-src/uboot-2022.10/board/spacemit/k3/configs/key/kernel_key_prv.key",
+    "bsp-src/uboot-2022.10/board/spacemit/k3/configs/key/root_key_prv.key",
+    "bsp-src/uboot-2022.10/board/spacemit/k3/configs/key/rootfs_key_prv.crt",
+    "bsp-src/uboot-2022.10/board/spacemit/k3/configs/key/spl_key_prv.key",
+    "bsp-src/uboot-2022.10/board/spacemit/k3/configs/key/uboot_key_prv.crt",
+    "bsp-src/uboot-2022.10/board/spacemit/k3/configs/key/uboot_key_prv.key"
+  ],
+  "license_status": {
+    "linux": "已識別",
+    "uboot": "已識別",
+    "opensbi": "已識別",
+    "esos": "混合且含未註明項目",
+    "powervr": "授權檔仍含樣板欄位",
+    "vpu_firmware": "逐檔沒有可確認授權"
+  },
+  "common_packages": [
+    "rfkill",
+    "bluetooth",
+    "bluez",
+    "bluez-tools",
+    "gpiod",
+    "i2c-tools",
+    "python3-libgpiod",
+    "python3-spidev",
+    "can-utils",
+    "pciutils",
+    "nvme-cli",
+    "usbutils",
+    "alsa-utils",
+    "iw",
+    "ethtool",
+    "v4l-utils",
+    "mesa-utils"
+  ],
+  "common_kernel_options": {
+    "CONFIG_SOC_SPACEMIT_K3": "y",
+    "CONFIG_GPIO_SPACEMIT_K1": "y",
+    "CONFIG_MMC_SDHCI_OF_K1": "y",
+    "CONFIG_USB_DWC3": "y",
+    "CONFIG_USB_GADGET": "y",
+    "CONFIG_USB_CONFIGFS_MASS_STORAGE": "y",
+    "CONFIG_PCI": "y",
+    "CONFIG_BLK_DEV_NVME": "y",
+    "CONFIG_DRM_SPACEMIT": "y",
+    "CONFIG_VIDEO_LINLON_K3": "y",
+    "CONFIG_DWMAC_SPACEMIT_ETHQOS": "y",
+    "CONFIG_SCSI_UFS_SPACEMIT_K3": "y",
+    "CONFIG_SPACEMIT_K3_REMOTEPROC": "y",
+    "CONFIG_SPACEMIT_V2D": "y"
+  },
+  "installed_file_sha256": {
+    "/boot/env_k3.txt": "d6f073e147aae8f2f4bca4d711b64301dd98165a19b11ca76be637f695f94366",
+    "/boot/bianbu.bmp": "a3567f599894c570d1b62c461d52e227b29eca9ab745ac619553890ecf9c2e8b"
+  },
+  "candidate_boot_media": [
+    "sd"
+  ],
+  "supported_boot_media": [],
+  "excluded_boot_media": [
+    "sd-尚未實機驗證",
+    "emmc",
+    "spi-nor",
+    "spi-nand",
+    "ufs",
+    "nvme",
+    "usb"
+  ],
+  "public_distribution_blockers": [
+    "ESOS 含多來源元件且授權尚未逐檔閉合",
+    "K3 VPU 韌體缺少可確認的逐檔再散布授權",
+    "PowerVR 套件授權中繼資料仍是未完成樣板",
+    "SDK 內含私鑰材料，未建立量產金鑰隔離與輪替程序",
+    "BPI-SM10 載板與 K3-CoM260 電氣拓撲等同性尚無獨立證據",
+    "尚未完成 BPI-SM10 實機啟動及周邊驗證"
+  ],
+  "boards": {
+    "bananapism10": {
+      "family": "spacemit-k3-bpi",
+      "dtb": "spacemit/k3-bananapi-sm10.dtb",
+      "model": "BananaPi BPI-SM10",
+      "compatible": [
+        "bananapi,bpi-sm10",
+        "spacemit,k3-com260"
+      ],
+      "topology_donor": "spacemit/k3_com260.dts",
+      "topology_equivalence_verified": false,
+      "uboot_tag": "v2022.10",
+      "uboot_version": "2022.10",
+      "uboot_git_source": "https://github.com/spacemit-com/uboot-2022.10.git",
+      "uboot_git_ref": "commit:1b10c8119e1a9b5451a4236f6b384f7c91eed1e2",
+      "uboot_revision": "1b10c8119e1a9b5451a4236f6b384f7c91eed1e2",
+      "uboot_defconfig": "k3_defconfig",
+      "uboot_control_dtb": "k3_com260.dtb",
+      "uboot_control_dtb_identity_is_bananapi_specific": false,
+      "uboot_required_config_options": [
+        "CONFIG_TARGET_SPACEMIT_K3=y",
+        "CONFIG_DEFAULT_DEVICE_TREE=\"k3_spl\"",
+        "CONFIG_SPL=y",
+        "CONFIG_OF_BOARD=y",
+        "CONFIG_ENV_IS_NOWHERE=y"
+      ],
+      "uboot_binary_for_string_checks": "u-boot.itb",
+      "uboot_required_binary_strings": [
+        "k3_com260.dtb",
+        "load env_%s.txt from bootfs successful",
+        "product_name",
+        "root=PARTUUID=${rootfs_guid}",
+        "bootfs=PARTUUID=${bootfs_guid}"
+      ],
+      "uboot_payloads": [
+        "env.bin@655360",
+        "bootinfo_block.bin@1048576",
+        "FSBL.bin@1572864",
+        "esos.itb@4194304",
+        "fw_dynamic.itb@7340032",
+        "u-boot.itb@8388608"
+      ],
+      "uboot_package_only_payloads": [
+        "u-boot-env-default.bin",
+        "uboot.config",
+        "README.txt"
+      ],
+      "uboot_payload_minimum_sizes": [
+        "env.bin=16384",
+        "bootinfo_block.bin=80",
+        "FSBL.bin=400000",
+        "esos.itb=400000",
+        "fw_dynamic.itb=250000",
+        "u-boot.itb=2000000",
+        "u-boot-env-default.bin=16384",
+        "uboot.config=56594",
+        "README.txt=1000"
+      ],
+      "uboot_payload_sizes": [
+        "env.bin=16384",
+        "bootinfo_block.bin=80",
+        "FSBL.bin=449984",
+        "esos.itb=463799",
+        "fw_dynamic.itb=272223",
+        "u-boot.itb=2134494",
+        "u-boot-env-default.bin=16384",
+        "uboot.config=56594",
+        "README.txt=2051"
+      ],
+      "uboot_payload_sha256": [
+        "env.bin=e73d2c0c44c6b00019a4c6190e8e7d03a37be710a20fa76b887bdd098fa1ff51",
+        "bootinfo_block.bin=8cde21b4e18f0b72f2c98b5ae686dfe8ef75d8dc641393e97b52cf318b294e4b",
+        "FSBL.bin=9a40d9d27ec8de79a38ece8ad00de96d29d45b507c43f46f3bf45589c50034d7",
+        "esos.itb=11099edb92c9721ebb207de3a200905618dcfded32c19f5ef0525275c253bf28",
+        "fw_dynamic.itb=37dcca0ad696c88900c316a5bab289f1e3e55f09836cb22a4f09c1faa93be86d",
+        "u-boot.itb=f7560b4afd523b484b7f950f038485dea7c28cbf5f9c225290d940ca4461ae13",
+        "u-boot-env-default.bin=e73d2c0c44c6b00019a4c6190e8e7d03a37be710a20fa76b887bdd098fa1ff51",
+        "uboot.config=ffb244d91c6d9ce59f20eeabee15f0391e5d6417548856cacd4720d87cf69b9c",
+        "README.txt=803f4300ccde961413127180834cb3ae5e6dfea3f580f6ecb9a0f0e0891f9e45"
+      ],
+      "uboot_target_index": 1,
+      "uboot_package_defconfig_required": false,
+      "final_uboot_config_sha256": "ffb244d91c6d9ce59f20eeabee15f0391e5d6417548856cacd4720d87cf69b9c",
+      "partition_table": "gpt",
+      "boot_partition_number": 1,
+      "boot_partition_start_sector": 24576,
+      "root_partition_number": 2,
+      "partition_start_sector": 24576,
+      "root_partition_start_sector": 548864,
+      "logical_sector_size": 512,
+      "required_partitions": [
+        "1:bootfs:24576:524288",
+        "2:rootfs:548864:3192832"
+      ],
+      "required_partition_types": [
+        "1:BC13C2FF-59E6-4262-A352-B275FD6F7172",
+        "2:72EC70A6-CF74-40E6-BD49-4BDA08E8F224"
+      ],
+      "boot_partition_label": "BPI-BOOT",
+      "boot_partition_filesystem_type": "vfat",
+      "root_partition_label": "BPI-ROOT",
+      "root_partition_filesystem_type": "ext4",
+      "boot_configuration": "env_k3",
+      "env_k3_source": "packages/blobs/riscv64/spacemit-k3/bpi-sm10/env_k3.txt",
+      "env_k3_source_sha256": "d6f073e147aae8f2f4bca4d711b64301dd98165a19b11ca76be637f695f94366",
+      "boot_environment": {
+        "console": "ttyS0,115200",
+        "bootdelay": "1",
+        "knl_name": "Image",
+        "ramdisk_name": "initramfs-generic.img",
+        "dtb_dir": "dtb/spacemit",
+        "dtb_name": "dtb/spacemit/k3-bananapi-sm10.dtb",
+        "dtb_env": "echo BPI-SM10-DTB",
+        "loglevel": "7"
+      },
+      "dtb_sha256": "a74520d979cc62fcdb12dfddd97c7968900109df6a33ae34c1489d87a34695ba",
+      "image_dtb_sha256": "a74520d979cc62fcdb12dfddd97c7968900109df6a33ae34c1489d87a34695ba",
+      "dtb_sha256_evidence_scope": "full-image-l2",
+      "final_kernel_config_sha256": "2ea6c3b62bd8118b685a10d6c4c22a1718df7a9e533c3e929282fcee90c82445",
+      "overlay_prefix": "k3",
+      "default_overlays": [],
+      "required_overlays": [],
+      "required_status_nodes": [],
+      "forbidden_packaged_assets": [
+        "kernel_key_prv.key",
+        "root_key_prv.key",
+        "rootfs_key_prv.crt",
+        "spl_key_prv.key",
+        "uboot_key_prv.crt",
+        "uboot_key_prv.key"
+      ]
+    }
+  }
+}

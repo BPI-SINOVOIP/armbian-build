@@ -1,0 +1,11 @@
+// SPDX-License-Identifier: GPL-2.0+
+
+/dts-v1/;
+
+#include "rk3528.dtsi"
+#include "rk3528-u-boot.dtsi"
+
+/ {
+	model = "Banana Pi M1 Super";
+	compatible = "bananapi,bpi-m1-super", "armsom,sige1", "rockchip,rk3528";
+};

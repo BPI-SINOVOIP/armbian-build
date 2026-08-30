@@ -1,0 +1,13 @@
+diff --git a/rtk-pack/rtk/bpi-m4/configs/default/linux/uEnv.txt b/rtk-pack/rtk/bpi-m4/configs/default/linux/uEnv.txt
+index 6f59392..b10f8de 100644
+--- a/rtk-pack/rtk/bpi-m4/configs/default/linux/uEnv.txt
++++ b/rtk-pack/rtk/bpi-m4/configs/default/linux/uEnv.txt
+@@ -33,7 +33,7 @@ blue_logo_loadaddr=0x30000000
+ #
+ #root=/dev/ram
+ # SD / eMMC
+-root=/dev/mmcblk0p2 rw rootfstype=ext4 rootwait 
++root=LABEL=BPI-ROOT rw rootfstype=ext4 rootwait
+ #root=/dev/mmcblk2p2 rw rootfstype=ext4 rootwait 
+ # USB / SATA
+ #root=/dev/sda2 rw rootfstype=ext4 rootwait 

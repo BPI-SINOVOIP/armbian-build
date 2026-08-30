@@ -1,0 +1,287 @@
+{
+  "schema_version": 1,
+  "candidate_branch": "legacy",
+  "kernel_family": "sunplus-sp7021-bpi",
+  "source_date_epoch": 1609074838,
+  "linux_source": "https://github.com/BPI-SINOVOIP/BPI-F2S-bsp.git",
+  "linux_ref": "commit:3eee97bd8fb7582c2d9942a533647c3d78222bb5",
+  "linux_commit": "3eee97bd8fb7582c2d9942a533647c3d78222bb5",
+  "uboot_source": "https://github.com/BPI-SINOVOIP/BPI-F2S-bsp.git",
+  "uboot_ref": "commit:3eee97bd8fb7582c2d9942a533647c3d78222bb5",
+  "uboot_commit": "3eee97bd8fb7582c2d9942a533647c3d78222bb5",
+  "atf_applicable": false,
+  "atf_reason": "SP7021 為 32 位元 Cortex-A7；第一階段由 Sunplus xboot 預建碼負責，不使用 TF-A",
+  "linux_license_path": "linux-sp/COPYING",
+  "linux_license_sha256": "ee5808b032a67f587d3541099d46de34f5bec8cd5976114ba07f1299ee6001ff",
+  "uboot_license_path": "u-boot-sp/Licenses/README",
+  "uboot_license_sha256": "7e354ab349b7c11f1fe93639c3096bfe2bb4591659caaa712e2ee101299cf1d4",
+  "documentation_evidence": [
+    {
+      "purpose": "Banana Pi BPI-F2S 官方產品頁本機快照",
+      "local_path": "/media/pi/SMCI/bpi/doc/banana-pi-doc-benchmark-20260621/downloads/bpi-f2s-residual-gap-audit-p417-20260623/bpi_f2s_official_page.html",
+      "sha256": "58842d4e66d56724c580e6fb27cbd602d6b082a1d043019cce3ffebc3b8ad297",
+      "included_in_candidate": false,
+      "redistribution_license_verified": false
+    },
+    {
+      "purpose": "Banana Pi BPI-F2S V3.0 原理圖本機證據",
+      "local_path": "/media/pi/SMCI/bpi/doc/banana-pi-doc-benchmark-20260621/downloads/bpi-f2s-schematic-p239-20260623/Banana-Pi-BPI-F2S-SCH_V3.0.pdf",
+      "sha256": "e43a6bfd16d51a0fa640a7fe372694c41becf2f0c1c511a58a2d2f8c1625d9d5",
+      "included_in_candidate": false,
+      "redistribution_license_verified": false
+    },
+    {
+      "purpose": "Sunplus PLUS1 SP7021 資料表本機證據",
+      "local_path": "/media/pi/SMCI/bpi/doc/banana-pi-doc-benchmark-20260621/downloads/f2-sp7021-datasheet-p198-20260622/PLUS1-SP7021-Datasheet.pdf",
+      "sha256": "d67c027f995e6b9d04a1e2a36c2ee9237561033cd6d9ee5b5e3013bba4acfb6e",
+      "included_in_candidate": false,
+      "redistribution_license_verified": false
+    },
+    {
+      "purpose": "BPI-F2S BSP README 本機快照",
+      "local_path": "/media/pi/SMCI/bpi/doc/banana-pi-doc-benchmark-20260621/downloads/bpi-f2-residual-gap-audit-p385-20260623/github_BPI-F2S-bsp_README.md",
+      "sha256": "409b2d4348f264f9034792954730e3ea43a56f3edeabdd2797fd6f5f2b43cb26",
+      "included_in_candidate": false,
+      "redistribution_license_verified": false
+    }
+  ],
+  "source_assets": {
+    "sp-pack/sp7021/common/bin/ISPBOOOT.BIN": {
+      "purpose": "SD FAT boot 分割區第一階段 xboot",
+      "size": 65536,
+      "sha256": "e01081a92b55156868b9df7918e0d5f503d1dda3af94335ed24637786124964a",
+      "source_build_available": false,
+      "redistribution_license_verified": false
+    },
+    "sp-pack/sp7021/common/bin/BPI-F2S-xboot-emmc-boot0-0k.img.gz": {
+      "purpose": "eMMC boot0 第一階段 xboot 套件資產",
+      "size": 22286,
+      "sha256": "67e507efb5bef1d67f97f22da3e87dcc32a285a8a8d003ff3149416fc7dbc81d",
+      "uncompressed_size": 2097152,
+      "uncompressed_sha256": "bd5d8139bac8cec6bf9776a045484fc8f51b6c50f7e1f4f683c0efb7bf07acd0",
+      "source_build_available": false,
+      "redistribution_license_verified": false
+    }
+  },
+  "full_image_built": true,
+  "image_build_evidence": {
+    "evidence_level": "L2",
+    "completed_utc": "2026-08-27T06:59:31Z",
+    "source_commit": "132646e1eb53644bdc4112cd7af4d9cc54502aca",
+    "verifier_commit": "132646e1eb53644bdc4112cd7af4d9cc54502aca",
+    "build_validation_config_sha256": "ebcc16ed50a12100e465884ca3bffbe3bc14f9eb9f7c40c02d221b749aea2e25",
+    "verification_config_sha256": "ebcc16ed50a12100e465884ca3bffbe3bc14f9eb9f7c40c02d221b749aea2e25",
+    "uboot_payload_manifest_sha256": "530a58d29e445d85b9240dda0b43aa092312441090ba660b1e07b1b259ac9043",
+    "release": "trixie",
+    "profile": "cli",
+    "read_only_content_verified": true,
+    "image": {
+      "path": "output/images/2026.08/bananapi-sunplus-sp7021-f2s-trixie-legacy-cli/bananapif2s/Armbian-unofficial_26.05.0-trunk_Bananapif2s_trixie_legacy_0_minimal.img",
+      "size": 1832910848,
+      "sha256": "08aa83f5e0f002d607214e42b1c67a0a4dc64a341f9567f047b1d1102af60dd3"
+    },
+    "archive": {
+      "path": "output/images/2026.08/bananapi-sunplus-sp7021-f2s-trixie-legacy-cli/bananapif2s/Armbian-unofficial_26.05.0-trunk_Bananapif2s_trixie_legacy_0_minimal.img.xz",
+      "size": 357232960,
+      "sha256": "76c4f116512f5ffc6b39a7a90a21def1c0849d6b0b9d4fbcecc02ca391d3a736"
+    }
+  },
+  "component_build_completed": true,
+  "component_build_evidence": {
+    "completed_utc": "2026-08-27T03:02:31Z",
+    "source_revision": "3eee97bd8fb7582c2d9942a533647c3d78222bb5",
+    "toolchain": {
+      "name": "Linaro GCC 7.3.1 20180425",
+      "gcc_path": "toolchains/gcc-linaro-7.3.1-2018.05-x86_64_arm-linux-gnueabihf/bin/arm-linux-gnueabihf-gcc",
+      "gcc_size": 981376,
+      "gcc_sha256": "ae824ab0542db07ea468297474f3310cdee2abf8d316220b9e3081bada1f7da3",
+      "manifest_path": "toolchains/gcc-linaro-7.3.1-2018.05-x86_64_arm-linux-gnueabihf/gcc-linaro-7.3.1-2018.05-linux-manifest.txt",
+      "manifest_sha256": "8cf7e1718ef3f155bd65355a123d8156fc1227955f9282b661e6f1ec2bb9ffbb",
+      "included_in_runtime_image": false,
+      "redistribution_license_verified": false
+    },
+    "full_rootfs_image_built": false,
+    "uboot_rebuild_hash_match": true,
+    "artifacts": {
+      "u-boot.img": {
+        "size": 431984,
+        "sha256": "79f780497d9ab1e6c59d109c9677b930ea8241f61283384e405dd610d9ab657f"
+      },
+      "u-boot.bin": {
+        "size": 431920,
+        "sha256": "b8e1ee44ea80022e8942ba29e72575a5c4190b30162f6efe55bf5f3c57cb99cd"
+      },
+      "u-boot.dtb": {
+        "size": 20136,
+        "sha256": "91287972ef42e99befccbed6470bd424bd4dcaba848e7fda7e4283fcf6362dbb"
+      },
+      "uImage": {
+        "size": 4314160,
+        "sha256": "37034ac2213700f6b4c877c582899e15f207c80219d03ee3c1d4e8f2464a86fc"
+      },
+      "zImage": {
+        "size": 4314096,
+        "sha256": "4c85d6a202f207362918fb386ae7f9a280d2d5a0598b52348684b3190ddd9454"
+      },
+      "sp7021-bpi-f2s.dtb": {
+        "size": 20348,
+        "sha256": "b2e84da3896f3adc32d8200e51c65bb4c7ec883b54b35fbb652b6dd6b6acd137"
+      },
+      "linux.config": {
+        "size": 91620,
+        "sha256": "b7361ac5bd384e762afd01a71a196df7358de709d42573439639b61f05107e9d"
+      },
+      "linux-modules.tar.xz": {
+        "size": 407824,
+        "sha256": "27849187e317fc26a33a0f0eed7daacec1d2fc9d444c65b917fdc10f598d9c09"
+      }
+    }
+  },
+  "hardware_validated": false,
+  "public_release_allowed": false,
+  "hardware_claims_allowed": false,
+  "installed_file_sha256": {
+    "/boot/ISPBOOOT.BIN": "e01081a92b55156868b9df7918e0d5f503d1dda3af94335ed24637786124964a"
+  },
+  "common_packages": [
+    "ethtool",
+    "iproute2",
+    "iperf3",
+    "mmc-utils",
+    "usbutils",
+    "usb-modeswitch",
+    "evtest",
+    "gpiod",
+    "i2c-tools",
+    "python3-libgpiod",
+    "python3-spidev",
+    "spi-tools",
+    "v4l-utils",
+    "fio",
+    "stress-ng"
+  ],
+  "common_kernel_options": {
+    "CONFIG_ARCH_PENTAGRAM": "y",
+    "CONFIG_FB_SP7021": "y",
+    "CONFIG_GPIO_SYSFS": "y",
+    "CONFIG_I2C_CHARDEV": "y",
+    "CONFIG_I2C_SUNPLUS": "y",
+    "CONFIG_MIPICSI_RX_SUNPLUS_SP7021": "y",
+    "CONFIG_MMC": "y",
+    "CONFIG_NET_VENDOR_SUNPLUS": "y",
+    "CONFIG_PWM_SUNPLUS": "y",
+    "CONFIG_RTC_DRV_SUNPLUS": "y",
+    "CONFIG_SP_EMMC": "y",
+    "CONFIG_SP_SDV2": "y",
+    "CONFIG_SPI_SPIDEV": "y",
+    "CONFIG_SPI_SUNPLUS_SP7021": "y",
+    "CONFIG_SUNPLUS_SP7021_THERMAL": "y",
+    "CONFIG_SUNPLUS_WATCHDOG": "y",
+    "CONFIG_THERMAL": "y",
+    "CONFIG_THERMAL_OF": "y",
+    "CONFIG_USB_CONFIGFS": "y",
+    "CONFIG_USB_CONFIGFS_MASS_STORAGE": "y",
+    "CONFIG_USB_GADGET": "y",
+    "CONFIG_USB_GADGET_SP7021": "y",
+    "CONFIG_USB_STORAGE": "y",
+    "CONFIG_USB_SUNPLUS_OTG": "y",
+    "CONFIG_VIDEO_SP7021_DISP": "y",
+    "CONFIG_VIDEO_SP_HDMITX": "y",
+    "CONFIG_WATCHDOG": "y",
+    "CONFIG_WATCHDOG_CORE": "y"
+  },
+  "boards": {
+    "bananapif2s": {
+      "family": "sunplus-sp7021-bpi",
+      "dtb": "sp7021-bpi-f2s.dtb",
+      "dtb_sha256": "b2e84da3896f3adc32d8200e51c65bb4c7ec883b54b35fbb652b6dd6b6acd137",
+      "dtb_image_path": "/boot/bananapi/bpi-f2s/linux/sp7021-bpi-f2s.dtb",
+      "model": "Banana Pi BPI-F2S",
+      "compatible": [
+        "sinovoip,bpi-f2s",
+        "sunplus,sp7021-achip"
+      ],
+      "uboot_tag": "v2019.04",
+      "uboot_version": "2019.04",
+      "uboot_git_source": "https://github.com/BPI-SINOVOIP/BPI-F2S-bsp.git",
+      "uboot_git_ref": "commit:3eee97bd8fb7582c2d9942a533647c3d78222bb5",
+      "uboot_revision": "3eee97bd8fb7582c2d9942a533647c3d78222bb5",
+      "uboot_defconfig": "sp7021_bpi_f2s_defconfig",
+      "uboot_target_index": 1,
+      "uboot_required_config_options": [
+        "CONFIG_ARCH_PENTAGRAM=y",
+        "CONFIG_BOARD_BPI_F2S=y",
+        "CONFIG_CMD_EXT4=y",
+        "CONFIG_CMD_FAT=y",
+        "CONFIG_CMD_MMC=y",
+        "CONFIG_CMD_USB=y",
+        "CONFIG_DEFAULT_DEVICE_TREE=\"sp7021-bpi-f2s\"",
+        "CONFIG_MMC_SP_7021_SD=y",
+        "CONFIG_MMC_SP_EMMC=y",
+        "CONFIG_SD_BOOT=y",
+        "CONFIG_USB_STORAGE=y"
+      ],
+      "uboot_target_make_contains": [
+        "u-boot-sp/u-boot.img",
+        "sp-pack/sp7021/common/bin/ISPBOOOT.BIN",
+        "sp-pack/sp7021/common/bin/BPI-F2S-xboot-emmc-boot0-0k.img.gz"
+      ],
+      "uboot_binary_for_string_checks": "u-boot.img",
+      "uboot_required_binary_strings": [
+        "Banana Pi BPI-F2S",
+        "sinovoip,bpi-f2s"
+      ],
+      "uboot_forbidden_binary_strings": [
+        "SP7021/CA7/BPI-F2S"
+      ],
+      "uboot_payloads": [
+        "u-boot.img@17408"
+      ],
+      "uboot_package_only_payloads": [
+        "ISPBOOOT.BIN",
+        "BPI-F2S-xboot-emmc-boot0-0k.img.gz"
+      ],
+      "uboot_payload_minimum_sizes": [
+        "u-boot.img=262144",
+        "ISPBOOOT.BIN=65536",
+        "BPI-F2S-xboot-emmc-boot0-0k.img.gz=20000"
+      ],
+      "partition_table": "msdos",
+      "partition_start_sector": 8192,
+      "logical_sector_size": 512,
+      "boot_partition_number": 1,
+      "root_partition_number": 2,
+      "boot_configuration": "sunplus_uenv",
+      "vendor_boot_directory": "bananapi/bpi-f2s/linux",
+      "overlay_prefix": "sunplus-sp7021",
+      "default_overlays": [],
+      "required_overlays": [],
+      "sd_node": "/soc@B/mmc@sdcard",
+      "sd_bus_width": 4,
+      "additional_bus_widths": [
+        "/soc@B/mmc@emmc=8"
+      ],
+      "required_boolean_properties": [
+        "/soc@B/mmc@sdcard:cap-sd-highspeed",
+        "/soc@B/mmc@sdcard:no-mmc",
+        "/soc@B/mmc@emmc:non-removable"
+      ],
+      "required_string_properties": [],
+      "required_uint_properties": [],
+      "required_aliases": [],
+      "required_status_nodes": [],
+      "required_present_nodes": [
+        "/soc@B/l2sw@0x9c108000",
+        "/soc@B/mmc@emmc",
+        "/soc@B/mmc@sdcard",
+        "/soc@B/hdmitx@0x9C00BE00",
+        "/soc@B/mipicsirx@0x9C005280",
+        "/soc@B/led/system-led"
+      ],
+      "required_disabled_nodes": [
+        "/soc@B/sdio@sdcard",
+        "/soc@B/spi@sp_spi_controller0"
+      ]
+    }
+  }
+}

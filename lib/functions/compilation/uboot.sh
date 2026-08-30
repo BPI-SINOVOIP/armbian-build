@@ -250,6 +250,9 @@ function compile_uboot_target() {
 		"CCACHE_BASEDIR=$(pwd)"
 		"PYTHONPATH=\"${PYTHON3_INFO[MODULES_PATH]}:${PYTHONPATH}\"" # Insert the pip modules downloaded by Armbian into PYTHONPATH (needed e.g. for pyelftools)
 	)
+	if [[ -n "${SOURCE_DATE_EPOCH:-}" ]]; then
+		uboot_make_envs+=("SOURCE_DATE_EPOCH=${SOURCE_DATE_EPOCH@Q}")
+	fi
 
 	# Pass the ccache directories explicitly, since we'll run under "env -i"
 	if [[ -n "${CCACHE_DIR}" ]]; then
@@ -541,6 +544,32 @@ function compile_uboot() {
 		declare UBOOT_EXTLINUX_PREFER="${SRC_EXTLINUX:-"no"}"
 		declare UBOOT_EXTLINUX_CMDLINE="${SRC_CMDLINE}"
 	UBOOT_GENERAL_METADATA_SH
+	if [[ -n "${ATFSOURCE:-}" && "${ATFSOURCE}" != "none" ]]; then
+		: "${ATF_GIT_REVISION:?ATF_GIT_REVISION is not set}"
+		cat <<- UBOOT_ATF_METADATA_SH >> "${uboottempdir}/usr/lib/${uboot_name}/u-boot-metadata.sh"
+			declare UBOOT_ATF_GIT_SOURCE="${ATFSOURCE}"
+			declare UBOOT_ATF_GIT_BRANCH="${ATFBRANCH}"
+			declare UBOOT_ATF_GIT_REVISION="${ATF_GIT_REVISION}"
+		UBOOT_ATF_METADATA_SH
+	fi
+	if [[ -n "${CRUSTSOURCE:-}" && "${CRUSTSOURCE}" != "none" ]]; then
+		: "${CRUST_GIT_REVISION:?CRUST_GIT_REVISION is not set}"
+		cat <<- UBOOT_CRUST_METADATA_SH >> "${uboottempdir}/usr/lib/${uboot_name}/u-boot-metadata.sh"
+			declare UBOOT_CRUST_GIT_SOURCE="${CRUSTSOURCE}"
+			declare UBOOT_CRUST_GIT_BRANCH="${CRUSTBRANCH}"
+			declare UBOOT_CRUST_GIT_REVISION="${CRUST_GIT_REVISION}"
+		UBOOT_CRUST_METADATA_SH
+	fi
+	if [[ -n "${RKBIN_DIR:-}" ]]; then
+		: "${RKBIN_GIT_SOURCE_ACTUAL:?RKBIN_GIT_SOURCE_ACTUAL is not set}"
+		: "${RKBIN_GIT_REF_ACTUAL:?RKBIN_GIT_REF_ACTUAL is not set}"
+		: "${RKBIN_GIT_REVISION:?RKBIN_GIT_REVISION is not set}"
+		cat <<- UBOOT_RKBIN_METADATA_SH >> "${uboottempdir}/usr/lib/${uboot_name}/u-boot-metadata.sh"
+			declare UBOOT_RKBIN_GIT_SOURCE="${RKBIN_GIT_SOURCE_ACTUAL}"
+			declare UBOOT_RKBIN_GIT_BRANCH="${RKBIN_GIT_REF_ACTUAL}"
+			declare UBOOT_RKBIN_GIT_REVISION="${RKBIN_GIT_REVISION}"
+		UBOOT_RKBIN_METADATA_SH
+	fi
 
 	if [[ $DEBUG == yes ]]; then
 		display_alert "${uboot_prefix}Showing u-boot metadata for target" "${version} ${target_make}" "debug"

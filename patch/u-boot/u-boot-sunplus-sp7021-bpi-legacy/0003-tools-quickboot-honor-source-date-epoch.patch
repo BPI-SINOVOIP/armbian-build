@@ -1,0 +1,14 @@
+diff --git a/u-boot-sp/tools/qkboot_image.c b/u-boot-sp/tools/qkboot_image.c
+index 132f30a89..a1962fba6 100755
+--- a/u-boot-sp/tools/qkboot_image.c
++++ b/u-boot-sp/tools/qkboot_image.c
+@@ -100,7 +100,8 @@ static void image_set_header(void *ptr, struct stat *sbuf, int ifd,
+ 
+ 	/* Build new header */
+ 	image_set_magic(hdr, IH_MAGIC);
+-	image_set_time(hdr, sbuf->st_mtime);
++	image_set_time(hdr, imagetool_get_source_date(params->cmdname,
++						  sbuf->st_mtime));
+ 	image_set_size(hdr, sbuf->st_size - sizeof(image_header_t));
+ 	image_set_load(hdr, params->addr);
+ 	image_set_ep(hdr, params->ep);

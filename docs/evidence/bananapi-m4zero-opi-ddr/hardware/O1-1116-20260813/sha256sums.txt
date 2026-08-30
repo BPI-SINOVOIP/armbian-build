@@ -1,0 +1,2 @@
+c645d23c74ec4903fa7c51c4a431361bc5452e6b733450a4b8608aa56ba7855f  Armbian-unofficial_26.05.0-trunk_Bananapim4zero_jammy_current_6.18.32_o1-opi-ddr-diag-P4301-792mhz.img.txt
+12d014602a4318a52ff9e2c0f711efa61e43f0612cb8ccf35e928833dab89111  uart-1116-o1-cold-01-parsed.json

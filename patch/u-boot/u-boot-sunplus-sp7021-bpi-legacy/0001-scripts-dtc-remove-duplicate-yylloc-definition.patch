@@ -1,0 +1,7 @@
+diff --git a/u-boot-sp/scripts/dtc/dtc-lexer.l b/u-boot-sp/scripts/dtc/dtc-lexer.l
+index fd825ebba..24af54997 100644
+--- a/u-boot-sp/scripts/dtc/dtc-lexer.l
++++ b/u-boot-sp/scripts/dtc/dtc-lexer.l
+@@ -41,2 +41,1 @@ LINECOMMENT	"//".*\n
+-YYLTYPE yylloc;
+ extern bool treesource_error;

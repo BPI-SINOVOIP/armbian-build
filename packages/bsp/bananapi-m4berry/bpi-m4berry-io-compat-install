@@ -1,0 +1,77 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+readonly WIRINGPI_URL="https://github.com/BPI-SINOVOIP/BPI-WiringPi2.git"
+readonly WIRINGPI_BRANCH="bpi-legacy-io-porting"
+readonly WIRINGPI_COMMIT="da58b589a3ca3e44f569850f07ee17de2e294b5f"
+readonly RPIGPIO_URL="https://github.com/BPI-SINOVOIP/RPi.GPIO.git"
+readonly RPIGPIO_BRANCH="bpi-legacy-io-porting"
+readonly RPIGPIO_COMMIT="c04d27c86f65ed824921a457455a09d6820b9e1d"
+readonly SOURCE_ROOT="${BPI_IO_SOURCE_ROOT:-/usr/local/src/bananapi-io}"
+
+if [[ ${EUID} -ne 0 ]]; then
+	exec sudo -- "$0" "$@"
+fi
+
+model=$(tr -d '\0' < /proc/device-tree/model 2>/dev/null || true)
+if [[ "${model}" != *"M4 Berry"* && "${1:-}" != "--force" ]]; then
+	echo "拒絕安裝：目前板型不是 BPI-M4 Berry；確定要繼續時加入 --force。" >&2
+	exit 2
+fi
+
+echo '安裝編譯相依套件。'
+export DEBIAN_FRONTEND=noninteractive
+apt-get update
+apt-get install -y \
+	build-essential ca-certificates dpkg-dev fakeroot gettext-base git \
+	python3-dev python3-pip python3-setuptools python3-wheel
+
+install -d -m 0755 "${SOURCE_ROOT}"
+
+checkout_pinned_source() {
+	local url="$1"
+	local branch="$2"
+	local commit="$3"
+	local destination="$4"
+
+	if [[ ! -d "${destination}/.git" ]]; then
+		git clone --branch "${branch}" --single-branch "${url}" "${destination}"
+	else
+		git -C "${destination}" fetch origin "${branch}"
+	fi
+	git -C "${destination}" checkout --detach "${commit}"
+	test "$(git -C "${destination}" rev-parse HEAD)" = "${commit}"
+}
+
+wiringpi_dir="${SOURCE_ROOT}/BPI-WiringPi2-${WIRINGPI_COMMIT:0:12}"
+rpigpio_dir="${SOURCE_ROOT}/RPi.GPIO-${RPIGPIO_COMMIT:0:12}"
+
+echo '取得固定版本的 BPI-WiringPi2。'
+checkout_pinned_source "${WIRINGPI_URL}" "${WIRINGPI_BRANCH}" \
+	"${WIRINGPI_COMMIT}" "${wiringpi_dir}"
+(
+	cd "${wiringpi_dir}"
+	WIRINGPI_SUDO='' ./build debian
+	wiringpi_deb=$(find debian-template -maxdepth 1 -type f -name 'wiringpi*.deb' -print -quit)
+	test -n "${wiringpi_deb}"
+	apt-get install --reinstall -y "./${wiringpi_deb}"
+)
+
+echo '取得固定版本的 RPi.GPIO。'
+checkout_pinned_source "${RPIGPIO_URL}" "${RPIGPIO_BRANCH}" \
+	"${RPIGPIO_COMMIT}" "${rpigpio_dir}"
+pip_extra=()
+if python3 -m pip help install 2>/dev/null | grep -q -- '--break-system-packages'; then
+	pip_extra+=(--break-system-packages)
+fi
+python3 -m pip install "${pip_extra[@]}" --no-deps --force-reinstall "${rpigpio_dir}"
+
+echo '執行安裝結果檢查。'
+gpio -v
+python3 - <<'PY'
+import RPi.GPIO as GPIO
+
+print("RPi.GPIO 版本：", GPIO.VERSION)
+PY
+
+echo '安裝完成。舊式直接暫存器介面需要 root；新程式仍建議使用 libgpiod。'

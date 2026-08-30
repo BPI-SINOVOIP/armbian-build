@@ -1,0 +1,347 @@
+{
+  "schema_version": 1,
+  "contract_projection_sha256": "5c5d6570f8a9e72f6c150dab4314de9d2bca7afdb89e796f36d9e41247e22d3d",
+  "source_date_epoch": 1787082913,
+  "candidate_branch": "vendor",
+  "candidate_level": "L2 內部軟體候選",
+  "candidate_scope": "internal-l2",
+  "candidate_public_release_approved": false,
+  "public_release_allowed": false,
+  "hardware_validation_complete": false,
+  "hardware_claims_allowed": false,
+  "component_build_completed": true,
+  "full_image_built": true,
+  "rootfs_image_built": true,
+  "image_build_evidence": {
+    "status": "complete",
+    "evidence_level": "L2",
+    "full_rootfs_image_built": true,
+    "hardware_tested": false,
+    "read_only_content_verified": true,
+    "source_commit": "d2cc8559662e69a4b083cedc2efc85c80e26144c",
+    "source_tree": "c53ce0af035f95b9565481be0fc5345b501a8d15",
+    "verifier_commit": "d2cc8559662e69a4b083cedc2efc85c80e26144c",
+    "contract_projection_sha256": "5c5d6570f8a9e72f6c150dab4314de9d2bca7afdb89e796f36d9e41247e22d3d",
+    "source_date_epoch": 1787082913,
+    "build_validation_config_sha256": "8a426455536755783ce45ea8804ab0fd5e577838e252630867dac44bc8b5a074",
+    "verification_config_sha256": "8a426455536755783ce45ea8804ab0fd5e577838e252630867dac44bc8b5a074",
+    "candidate_matrix_sha256": "1b2eb459d8b7e90734b09428024b478348bcb874393baa42e3a000f684652dfe",
+    "verification_manifest_sha256": "edf3d706096d8072610ac452f06d2fb198bf2b63d1af9d9e09b1f3ef9e005cc4",
+    "uboot_payload_manifest_sha256": "c26193529828daf0c80cb0980dd20b1c06dc802992708a340b4b63bfa622479b",
+    "final_config_manifest_sha256": "e40d737d10a0494a58eedfb5831bf28113ce13a1e618fe78d2c70329ee70e67c",
+    "rkbin_commit": "1d3c61008fa823936ae7a59615393f8294b64456",
+    "rkbin_manifest_sha256": "79a10a440ef02ceb9353ec8f5f8914d9981a47a83e0f291b700ac168be64e458",
+    "verified_utc": "2026-08-27T19:50:21Z",
+    "image": {
+      "path": "output/images/2026.08/bananapi-rockchip-rk3528-m1super-trixie-vendor-cli/bananapim1super/Armbian-unofficial_26.05.0-trunk_Bananapim1super_trixie_vendor_6.1.115_minimal.img",
+      "size": 2420113408,
+      "sha256": "192269a97910729304d635e80921b3fef647a2036d4013958c4cd81cbd4752f8"
+    },
+    "archive": {
+      "path": "output/images/2026.08/bananapi-rockchip-rk3528-m1super-trixie-vendor-cli/bananapim1super/Armbian-unofficial_26.05.0-trunk_Bananapim1super_trixie_vendor_6.1.115_minimal.img.xz",
+      "size": 468870520,
+      "sha256": "b3b640fc04116f0193832354bda899aadcb8f894a22e8b6fed4b1d463fa06b63"
+    },
+    "linux_dtb": {
+      "path": "rockchip/rk3528-bananapi-m1-super.dtb",
+      "sha256": "68c0d6c27d2802abee0b7ab4b0569581048b14fc651d55c103392d81e00f2eb6"
+    }
+  },
+  "kernel_family": "rk35xx",
+  "linux_source": "https://github.com/armbian/linux-rockchip.git",
+  "linux_ref": "commit:c6157104418d012823413c02f9222f3fe123dd25",
+  "linux_commit": "c6157104418d012823413c02f9222f3fe123dd25",
+  "firmware_source": "https://github.com/armbian/firmware",
+  "firmware_ref": "commit:f50a2a21bcdb77a562b3976930c5c6b521a1df08",
+  "firmware_commit": "f50a2a21bcdb77a562b3976930c5c6b521a1df08",
+  "verify_firmware_source_resolution": true,
+  "firmware_redistribution_audit_complete": false,
+  "atf_source": "https://github.com/ARM-software/arm-trusted-firmware.git",
+  "atf_ref": "commit:c17351450c8a513ca3f30f936e26a71db693a145",
+  "atf_commit": "c17351450c8a513ca3f30f936e26a71db693a145",
+  "atf_source_build_available": false,
+  "atf_payload_origin": "rkbin 的 RK3528 BL31 預建載荷",
+  "rkbin_source": "https://github.com/armbian/rkbin",
+  "rkbin_ref": "commit:1d3c61008fa823936ae7a59615393f8294b64456",
+  "rkbin_commit": "1d3c61008fa823936ae7a59615393f8294b64456",
+  "rkbin_license_path": "LICENSE.TXT",
+  "rkbin_copy_and_distribution_grant_present": true,
+  "rkbin_standalone_distribution_authorized": false,
+  "rkbin_binary_modification_authorized": false,
+  "rkbin_license_must_accompany_distribution": true,
+  "rkbin_platform_constraint": "僅可隨採用 Rockchip 積體電路的平台以未修改二進位形式散布",
+  "rkbin_blobs": {
+    "LICENSE.TXT": "0b37e1522c36cf4579c45dfb138798c3cb5665fcf6302b95377179fbed38e35c",
+    "rk35/rk3528_bl31_v1.17.elf": "a93b45eb04c6d05aacff1991f4941bf2704a88b77d37b8f7084c58cd8e2c3948",
+    "rk35/rk3528_ddr_1056MHz_v1.09.bin": "add4338762e67bf1ff151e06977502d98ec0021c217e4bdfb9a54273d0fc289d",
+    "rk35/rk3528_spl_loader_v1.07.104.bin": "a45957495e21136736f312b94ada0f859ec4fad432f2810283da35f027ec41ca"
+  },
+  "component_build_evidence": {
+    "performed_at": "2026-08-27",
+    "portable_evidence_root": "output/components/2026.08/bananapi-rockchip-rk3528-m1super-vendor",
+    "portable_manifest_sha256": "ef452fbc47115ffc34359c44a202733217ff32e95d946c160f8e4ea1ebc3b22a",
+    "portable_artifact_count": 6,
+    "full_rootfs_image_built": false,
+    "hardware_tested": false,
+    "armbian_uboot_patch_stack_complete": false,
+    "linux_dtb": {
+      "path": "arch/arm64/boot/dts/rockchip/rk3528-bananapi-m1-super.dtb",
+      "size": 100436,
+      "sha256": "68c0d6c27d2802abee0b7ab4b0569581048b14fc651d55c103392d81e00f2eb6"
+    },
+    "uboot_spl": {
+      "path": "spl/u-boot-spl.bin",
+      "size": 247972,
+      "sha256": "43c518cf0f5c98c7228d22920c47d5d22e151536fa8e8a984b3522d76b2430be"
+    },
+    "uboot_dtb": {
+      "path": "u-boot.dtb",
+      "size": 7684,
+      "sha256": "b5bdc6143f8a3d2462e12a5a943c0953e85bb7beb9ac499b3d9552540dce9a81"
+    },
+    "uboot_fit": {
+      "path": "u-boot.itb",
+      "size": 1324032,
+      "sha256": "7d095910efac37607dbb65389603aa672b77492c4557f5637ab4ad5a68272f6c"
+    },
+    "idbloader": {
+      "path": "idbloader.img",
+      "size": 313344,
+      "sha256": "513c843f4cb97c3a62508d5b1238b676e29a997eaeeb382a61b808a3198e2c3c"
+    }
+  },
+  "installed_firmware_blobs": {
+    "/lib/firmware/brcm/brcmfmac43752-sdio.bin": "46f62076768e50938d0e29b306b24d4663de20b07b474c4759d5801fcbf0bdde",
+    "/lib/firmware/brcm/brcmfmac43752-sdio.clm_blob": "5143146e1923f87f7aab8df043abcf89a657fa9fdc3b22a38806399730d9a97a",
+    "/lib/firmware/brcm/brcmfmac43752-sdio.txt": "2d2723101fe9c66c853ddb1e2d715851ba100a4390f8ac72fc84dd35736cc66f",
+    "/usr/share/doc/armbian-bsp-bananapim1super/rkbin.LICENSE.TXT": "0b37e1522c36cf4579c45dfb138798c3cb5665fcf6302b95377179fbed38e35c"
+  },
+  "required_kernel_module_paths": [
+    "kernel/drivers/bluetooth/hci_uart.ko",
+    "kernel/drivers/net/wireless/broadcom/brcm80211/brcmfmac/brcmfmac.ko"
+  ],
+  "provisional_wireless_contract": {
+    "contract_id": "provisional-ap6275s",
+    "evidence_basis": "V1.2 原理圖的 AP6275S 類 SDIO 與 UART 設計",
+    "bom_identity_confirmed": false,
+    "wifi_driver": "brcmfmac",
+    "wifi_bus": "SDIO",
+    "bluetooth_driver": "hci_uart",
+    "bluetooth_bus": "UART",
+    "bluetooth_firmware_identity_confirmed": false,
+    "runtime_hardware_validated": false,
+    "required_wifi_firmware_blobs": {
+      "/lib/firmware/brcm/brcmfmac43752-sdio.bin": "46f62076768e50938d0e29b306b24d4663de20b07b474c4759d5801fcbf0bdde",
+      "/lib/firmware/brcm/brcmfmac43752-sdio.clm_blob": "5143146e1923f87f7aab8df043abcf89a657fa9fdc3b22a38806399730d9a97a",
+      "/lib/firmware/brcm/brcmfmac43752-sdio.txt": "2d2723101fe9c66c853ddb1e2d715851ba100a4390f8ac72fc84dd35736cc66f"
+    }
+  },
+  "identity_evidence": {
+    "official_page": "https://docs.banana-pi.org/en/BPI-M1S/BananaPi_BPI-M1S",
+    "official_schematic": "BPI-M1S_ArmSoM-Sige1_V1.2_SCH_20240727.pdf",
+    "official_schematic_sha256": "71d9122b2d6d30916928cc123ce2cece314c922893623a4e6e7d8d2810b279dd",
+    "wifi_bom_conflict_resolved": false
+  },
+  "common_packages": [
+    "gpiod",
+    "i2c-tools",
+    "python3-libgpiod",
+    "python3-spidev",
+    "spi-tools",
+    "mmc-utils",
+    "ethtool",
+    "iproute2",
+    "iperf3",
+    "pciutils",
+    "usbutils",
+    "usb-modeswitch",
+    "rfkill",
+    "iw",
+    "wireless-regdb",
+    "bluetooth",
+    "bluez",
+    "bluez-tools",
+    "v4l-utils",
+    "ffmpeg",
+    "mesa-utils",
+    "kmscube",
+    "vainfo",
+    "libdrm-tests",
+    "alsa-utils",
+    "evtest",
+    "lm-sensors"
+  ],
+  "common_kernel_options": {
+    "CONFIG_ARCH_ROCKCHIP": "y",
+    "CONFIG_BRCMFMAC": "m",
+    "CONFIG_BRCMFMAC_SDIO": "y",
+    "CONFIG_BT_HCIUART": "m",
+    "CONFIG_BT_HCIUART_BCM": "y",
+    "CONFIG_DRM": "y",
+    "CONFIG_DRM_LIMA": "m",
+    "CONFIG_DRM_ROCKCHIP": "y",
+    "CONFIG_DWMAC_ROCKCHIP": "y",
+    "CONFIG_GPIO_CDEV": "y",
+    "CONFIG_I2C_CHARDEV": "y",
+    "CONFIG_I2C_RK3X": "y",
+    "CONFIG_MMC": "y",
+    "CONFIG_MMC_BLOCK": "y",
+    "CONFIG_MMC_DW": "y",
+    "CONFIG_MMC_DW_ROCKCHIP": "y",
+    "CONFIG_MMC_SDHCI": "y",
+    "CONFIG_MMC_SDHCI_OF_DWCMSHC": "y",
+    "CONFIG_R8169": "m",
+    "CONFIG_ROCKCHIP_MPP_RKVDEC": "y",
+    "CONFIG_ROCKCHIP_MPP_RKVENC": "y",
+    "CONFIG_ROCKCHIP_MPP_SERVICE": "y",
+    "CONFIG_SPI": "y",
+    "CONFIG_SPI_ROCKCHIP": "y",
+    "CONFIG_SPI_SPIDEV": "y",
+    "CONFIG_USB": "y",
+    "CONFIG_USB_CONFIGFS": "y",
+    "CONFIG_USB_CONFIGFS_MASS_STORAGE": "y",
+    "CONFIG_USB_DWC3": "y",
+    "CONFIG_USB_GADGET": "y",
+    "CONFIG_USB_STORAGE": "y"
+  },
+  "boards": {
+    "bananapim1super": {
+        "family": "rk35xx",
+        "dtb": "rockchip/rk3528-bananapi-m1-super.dtb",
+        "component_dtb_sha256": "68c0d6c27d2802abee0b7ab4b0569581048b14fc651d55c103392d81e00f2eb6",
+        "image_dtb_sha256": "68c0d6c27d2802abee0b7ab4b0569581048b14fc651d55c103392d81e00f2eb6",
+        "dtb_sha256": "68c0d6c27d2802abee0b7ab4b0569581048b14fc651d55c103392d81e00f2eb6",
+        "dtb_sha256_evidence_scope": "full-image-l2",
+      "model": "Banana Pi M1 Super",
+      "compatible": [
+        "bananapi,bpi-m1-super",
+        "armsom,sige1",
+        "rockchip,rk3528"
+      ],
+      "uboot_tag": "v2017.09",
+      "uboot_version": "2017.09",
+      "uboot_git_source": "https://github.com/radxa/u-boot.git",
+      "uboot_git_ref": "commit:39cd993e5d6296635438e84f4576b3a9bf76f86e",
+      "uboot_revision": "39cd993e5d6296635438e84f4576b3a9bf76f86e",
+      "uboot_defconfig": "bananapi-m1-super-rk3528_defconfig",
+      "uboot_target_index": 1,
+      "uboot_required_config_options": [
+        "CONFIG_ARCH_ROCKCHIP=y",
+        "CONFIG_CMD_GPT=y",
+        "CONFIG_CMD_MMC=y",
+        "CONFIG_CMD_USB=y",
+        "CONFIG_CMD_USB_MASS_STORAGE=y",
+        "CONFIG_DEFAULT_DEVICE_TREE=\"rk3528-bananapi-m1-super\"",
+        "CONFIG_DEFAULT_FDT_FILE=\"rk3528-bananapi-m1-super\"",
+        "CONFIG_MMC_DW_ROCKCHIP=y",
+        "CONFIG_MMC_SDHCI_ROCKCHIP=y",
+        "CONFIG_ROCKCHIP_RK3528=y",
+        "CONFIG_USB_DWC3_GADGET=y",
+        "CONFIG_USB_GADGET=y",
+        "CONFIG_USB_STORAGE=y"
+      ],
+      "uboot_target_make_contains": [
+        "rk35/rk3528_bl31_v1.17.elf",
+        "spl/u-boot-spl.bin",
+        "u-boot.dtb",
+        "u-boot.itb"
+      ],
+      "uboot_binary_for_string_checks": "u-boot.itb",
+      "uboot_forbidden_binary_strings": [
+        "Hinlink H28K"
+      ],
+      "uboot_required_binary_strings": [
+        "Banana Pi M1 Super",
+        "bananapi,bpi-m1-super"
+      ],
+      "uboot_payloads": [
+        "idbloader.img@32768",
+        "u-boot.itb@8388608"
+      ],
+      "uboot_payload_minimum_sizes": [
+        "idbloader.img=65536",
+        "u-boot.itb=262144"
+      ],
+      "uboot_payload_sizes": [
+        "idbloader.img=311296",
+        "u-boot.itb=1320960"
+      ],
+      "uboot_payload_sha256": [
+        "idbloader.img=ecd35b1d69c4b87e2ba170017f58c2f67f44c178dbb7df3488d9b88c26847355",
+        "u-boot.itb=ee2067f149cfc6c74f84c5c09880673dcda9133d4593ec20e9fc6e328f6bd59a"
+      ],
+      "partition_table": "gpt",
+      "partition_name": "rootfs",
+      "partition_start_sector": 32768,
+      "logical_sector_size": 512,
+      "root_partition_number": 1,
+      "root_partition_start_sector": 32768,
+      "required_partitions": [
+        "1:*:32768:4691968"
+      ],
+      "required_partition_types": [
+        "1:b921b045-1df0-41c3-af44-4c6f280d3fae"
+      ],
+      "root_partition_label": "armbi_root",
+      "root_partition_filesystem_type": "ext4",
+      "final_kernel_config_sha256": "24edbbaabf1bd7960e7c2647ec7e96c25e2e9bf4de5a440c30827eb15b162e9e",
+      "final_uboot_config_sha256": "c56f7986bc9d636d51439509c4ad43b8adc247b97783717de61553bba8c7bf60",
+      "boot_configuration": "armbian_env",
+      "overlay_prefix": "rk35xx",
+      "overlay_directory": "rockchip/overlay",
+      "default_overlays": [],
+      "required_overlays": [],
+      "dtb_forbidden_binary_strings": [
+        "Hinlink H28K"
+      ],
+      "sd_node": "/mmc@ffc30000",
+      "sd_bus_width": 4,
+      "additional_bus_widths": [
+        "/mmc@ffbf0000=8",
+        "/mmc@ffc10000=4"
+      ],
+      "required_boolean_properties": [
+        "/mmc@ffbf0000:mmc-hs400-1_8v",
+        "/mmc@ffbf0000:mmc-hs400-enhanced-strobe",
+        "/mmc@ffbf0000:non-removable",
+        "/mmc@ffc10000:non-removable",
+        "/mmc@ffc30000:supports-sd"
+      ],
+      "required_string_properties": [
+        "/ethernet@ffbe0000:phy-mode=rgmii-rxid",
+        "/usbdrd/dwc3@fe500000:dr_mode=otg",
+        "/usbdrd/dwc3@fe500000:maximum-speed=high-speed",
+        "/wireless-wlan:wifi_chip_type=ap6275s"
+      ],
+      "required_uint_properties": [
+        "/spi@ff9c0000/spidev@0:spi-max-frequency=24000000",
+        "/spi@ff9c0000/spidev@1:spi-max-frequency=24000000"
+      ],
+      "required_aliases": [
+        "ethernet0=/ethernet@ffbe0000",
+        "mmc0=/mmc@ffc30000",
+        "mmc1=/mmc@ffbf0000",
+        "mmc2=/mmc@ffc10000"
+      ],
+      "required_status_nodes": [
+        "/ethernet@ffbe0000",
+        "/gpu@ff700000",
+        "/hdmi@ff8d0000",
+        "/i2c@ffa50000",
+        "/i2c@ffa58000",
+        "/mmc@ffbf0000",
+        "/mmc@ffc10000",
+        "/mmc@ffc30000",
+        "/pcie@fe4f0000",
+        "/rkvdec@ff740100",
+        "/rkvenc@ff780000",
+        "/spi@ff9c0000",
+        "/usb@ff100000",
+        "/usb@ff140000",
+        "/usbdrd",
+        "/usbdrd/dwc3@fe500000",
+        "/vop@ff840000"
+      ]
+    }
+  }
+}

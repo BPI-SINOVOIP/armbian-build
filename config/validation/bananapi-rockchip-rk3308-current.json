@@ -1,0 +1,81 @@
+{
+  "schema_version": 1,
+  "kernel_family": "rockchip64",
+  "rkbin_commit": "46c4793ea2dcea7c8331fce9f07b5c80561a0395",
+  "rkbin_blobs": {
+    "rk33/rk3308_bl31_v2.26.elf": "ae2241f1387f03abc4d7ec6423af126e56029e73183dfd984e5d5ce55d9950f7",
+    "rk33/rk3308_ddr_589MHz_uart2_m1_v1.30.bin": "6a7e4b63bed0c131a760b4e63ad0e8ecc44f9a6315d0b761ff611af45b061250",
+    "rk33/rk3308_miniloader_sd_nand_v1.13.bin": "ceaa5d81a652cd71e93ae3e74371744129ed4ed41fab365151b4884317456603"
+  },
+  "common_packages": [
+    "rfkill",
+    "bluetooth",
+    "bluez",
+    "bluez-tools",
+    "gpiod",
+    "i2c-tools",
+    "python3-libgpiod",
+    "python3-spidev",
+    "v4l-utils"
+  ],
+  "common_kernel_options": {
+    "CONFIG_ARCH_ROCKCHIP": "y",
+    "CONFIG_BRCMFMAC": "m",
+    "CONFIG_BT_HCIUART": "m",
+    "CONFIG_BT_HCIUART_BCM": "y",
+    "CONFIG_CRYPTO_DEV_ROCKCHIP": "m",
+    "CONFIG_DWMAC_ROCKCHIP": "y",
+    "CONFIG_I2C_RK3X": "y",
+    "CONFIG_MMC_DW": "y",
+    "CONFIG_MMC_DW_ROCKCHIP": "y",
+    "CONFIG_PWM_ROCKCHIP": "y",
+    "CONFIG_RFKILL": "m",
+    "CONFIG_SPI_ROCKCHIP": "y",
+    "CONFIG_STMMAC_ETH": "y",
+    "CONFIG_USB_CONFIGFS_MASS_STORAGE": "y",
+    "CONFIG_USB_DWC2": "y",
+    "CONFIG_USB_EHCI_HCD_PLATFORM": "y",
+    "CONFIG_USB_GADGET": "y",
+    "CONFIG_USB_OHCI_HCD_PLATFORM": "y"
+  },
+  "boards": {
+    "bananapip2pro": {
+      "family": "rockchip64",
+      "dtb": "rockchip/rk3308-bpi-p2-pro.dtb",
+      "model": "Banana Pi P2 Pro (RK3308) Board",
+      "compatible": [
+        "sinovoip,rk3308-bpi-p2pro",
+        "rockchip,rk3308"
+      ],
+      "uboot_tag": "v2025.04",
+      "uboot_payload": "u-boot-rockchip.bin",
+      "uboot_offset": 32768,
+      "overlay_prefix": "rk3308",
+      "overlay_directory": "rockchip/overlay",
+      "sd_node": "/mmc@ff480000",
+      "sd_bus_width": 4,
+      "additional_bus_widths": [
+        "/mmc@ff490000=8",
+        "/mmc@ff4a0000=4"
+      ],
+      "default_overlays": [],
+      "required_overlays": [
+        "otg-host",
+        "uart1",
+        "uart2",
+        "uart3"
+      ],
+      "required_status_nodes": [
+        "/ethernet@ff4e0000",
+        "/mmc@ff480000",
+        "/mmc@ff490000",
+        "/mmc@ff4a0000",
+        "/serial@ff0c0000",
+        "/serial@ff0e0000",
+        "/usb@ff400000",
+        "/usb@ff440000",
+        "/usb@ff450000"
+      ]
+    }
+  }
+}

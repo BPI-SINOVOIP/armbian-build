@@ -1,0 +1,225 @@
+diff --git a/u-boot-rtk/include/configs/rtd1395_bananapi.h b/u-boot-rtk/include/configs/rtd1395_bananapi.h
+index 4c5d901f4..dd575850e 100755
+--- a/u-boot-rtk/include/configs/rtd1395_bananapi.h
++++ b/u-boot-rtk/include/configs/rtd1395_bananapi.h
+@@ -88,7 +88,7 @@
+ /* SD */
+ #ifdef CONFIG_RTK_SD_DRIVER
+ 	#define CONFIG_SD
+-	//#define CONFIG_SD30
++	/* #define CONFIG_SD30 */
+ 	#ifndef CONFIG_PARTITIONS
+ 		#define CONFIG_PARTITIONS
+ 	#endif
+diff --git a/u-boot-rtk/include/fdt_support.h b/u-boot-rtk/include/fdt_support.h
+index 08b0ee9dd..fea47f6b5 100644
+--- a/u-boot-rtk/include/fdt_support.h
++++ b/u-boot-rtk/include/fdt_support.h
+@@ -10,7 +10,7 @@
+ 
+ #ifdef CONFIG_OF_LIBFDT
+ 
+-#include <libfdt.h>
++#include "libfdt.h"
+ 
+ u32 fdt_getprop_u32_default_node(const void *fdt, int off, int cell,
+ 				const char *prop, const u32 dflt);
+diff --git a/u-boot-rtk/include/fdtdec.h b/u-boot-rtk/include/fdtdec.h
+index 232360341..b610416c0 100644
+--- a/u-boot-rtk/include/fdtdec.h
++++ b/u-boot-rtk/include/fdtdec.h
+@@ -14,7 +14,7 @@
+  * changes to support FDT are minimized.
+  */
+ 
+-#include <libfdt.h>
++#include "libfdt.h"
+ #include <pci.h>
+ 
+ /*
+diff --git a/u-boot-rtk/include/image.h b/u-boot-rtk/include/image.h
+index 5f9482f0b..ee068a8b1 100644
+--- a/u-boot-rtk/include/image.h
++++ b/u-boot-rtk/include/image.h
+@@ -47,8 +47,8 @@ struct lmb;
+ 
+ #if defined(CONFIG_FIT)
+ #include <hash.h>
+-#include <libfdt.h>
+-#include <fdt_support.h>
++#include "libfdt.h"
++#include "fdt_support.h"
+ # ifdef CONFIG_SPL_BUILD
+ #  ifdef CONFIG_SPL_CRC32_SUPPORT
+ #   define IMAGE_ENABLE_CRC32	1
+diff --git a/u-boot-rtk/include/libfdt.h b/u-boot-rtk/include/libfdt.h
+index 70f27f00d..4f3c305e7 100644
+--- a/u-boot-rtk/include/libfdt.h
++++ b/u-boot-rtk/include/libfdt.h
+@@ -51,8 +51,8 @@
+  *     EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+  */
+ 
+-#include <libfdt_env.h>
+-#include <fdt.h>
++#include "libfdt_env.h"
++#include "fdt.h"
+ #include <compiler.h>
+ 
+ #define FDT_FIRST_SUPPORTED_VERSION	0x10
+diff --git a/u-boot-rtk/lib/fdtdec_common.c b/u-boot-rtk/lib/fdtdec_common.c
+index 757931a9c..87a935229 100644
+--- a/u-boot-rtk/lib/fdtdec_common.c
++++ b/u-boot-rtk/lib/fdtdec_common.c
+@@ -13,8 +13,8 @@
+ #include <libfdt.h>
+ #include <fdtdec.h>
+ #else
+-#include "libfdt.h"
+-#include "fdt_support.h"
++#include "../include/libfdt.h"
++#include "../include/fdt_support.h"
+ 
+ #define debug(...)
+ #endif
+diff --git a/u-boot-rtk/scripts/dtc/libfdt/fdt.c b/u-boot-rtk/scripts/dtc/libfdt/fdt.c
+index 22286a1aa..0053358cd 100644
+--- a/u-boot-rtk/scripts/dtc/libfdt/fdt.c
++++ b/u-boot-rtk/scripts/dtc/libfdt/fdt.c
+@@ -50,8 +50,8 @@
+  */
+ #include "libfdt_env.h"
+ 
+-#include <fdt.h>
+-#include <libfdt.h>
++#include "fdt.h"
++#include "libfdt.h"
+ 
+ #include "libfdt_internal.h"
+ 
+diff --git a/u-boot-rtk/scripts/dtc/libfdt/fdt_addresses.c b/u-boot-rtk/scripts/dtc/libfdt/fdt_addresses.c
+index eff4dbcc7..446649ab7 100644
+--- a/u-boot-rtk/scripts/dtc/libfdt/fdt_addresses.c
++++ b/u-boot-rtk/scripts/dtc/libfdt/fdt_addresses.c
+@@ -50,8 +50,8 @@
+  */
+ #include "libfdt_env.h"
+ 
+-#include <fdt.h>
+-#include <libfdt.h>
++#include "fdt.h"
++#include "libfdt.h"
+ 
+ #include "libfdt_internal.h"
+ 
+diff --git a/u-boot-rtk/scripts/dtc/libfdt/fdt_empty_tree.c b/u-boot-rtk/scripts/dtc/libfdt/fdt_empty_tree.c
+index f2ae9b77c..a85de6685 100644
+--- a/u-boot-rtk/scripts/dtc/libfdt/fdt_empty_tree.c
++++ b/u-boot-rtk/scripts/dtc/libfdt/fdt_empty_tree.c
+@@ -50,8 +50,8 @@
+  */
+ #include "libfdt_env.h"
+ 
+-#include <fdt.h>
+-#include <libfdt.h>
++#include "fdt.h"
++#include "libfdt.h"
+ 
+ #include "libfdt_internal.h"
+ 
+diff --git a/u-boot-rtk/scripts/dtc/libfdt/fdt_overlay.c b/u-boot-rtk/scripts/dtc/libfdt/fdt_overlay.c
+index d0b0783d9..a3491bf93 100644
+--- a/u-boot-rtk/scripts/dtc/libfdt/fdt_overlay.c
++++ b/u-boot-rtk/scripts/dtc/libfdt/fdt_overlay.c
+@@ -1,6 +1,6 @@
+ #include "libfdt_env.h"
+ 
+-#include <fdt.h>
++#include "fdt.h"
+ #include "libfdt.h"
+ 
+ #include "libfdt_internal.h"
+diff --git a/u-boot-rtk/scripts/dtc/libfdt/fdt_ro.c b/u-boot-rtk/scripts/dtc/libfdt/fdt_ro.c
+index 08de2cce6..b2c15ac9a 100644
+--- a/u-boot-rtk/scripts/dtc/libfdt/fdt_ro.c
++++ b/u-boot-rtk/scripts/dtc/libfdt/fdt_ro.c
+@@ -50,8 +50,8 @@
+  */
+ #include "libfdt_env.h"
+ 
+-#include <fdt.h>
+-#include <libfdt.h>
++#include "fdt.h"
++#include "libfdt.h"
+ 
+ #include "libfdt_internal.h"
+ 
+diff --git a/u-boot-rtk/scripts/dtc/libfdt/fdt_rw.c b/u-boot-rtk/scripts/dtc/libfdt/fdt_rw.c
+index 5c3a2bb0b..89092089d 100644
+--- a/u-boot-rtk/scripts/dtc/libfdt/fdt_rw.c
++++ b/u-boot-rtk/scripts/dtc/libfdt/fdt_rw.c
+@@ -50,8 +50,8 @@
+  */
+ #include "libfdt_env.h"
+ 
+-#include <fdt.h>
+-#include <libfdt.h>
++#include "fdt.h"
++#include "libfdt.h"
+ 
+ #include "libfdt_internal.h"
+ 
+diff --git a/u-boot-rtk/scripts/dtc/libfdt/fdt_strerror.c b/u-boot-rtk/scripts/dtc/libfdt/fdt_strerror.c
+index 0d2d70b47..371d584d4 100644
+--- a/u-boot-rtk/scripts/dtc/libfdt/fdt_strerror.c
++++ b/u-boot-rtk/scripts/dtc/libfdt/fdt_strerror.c
+@@ -50,7 +50,7 @@
+  */
+ #include "libfdt_env.h"
+ 
+-#include <fdt.h>
++#include "fdt.h"
+ #include "libfdt.h"
+ 
+ #include "libfdt_internal.h"
+diff --git a/u-boot-rtk/scripts/dtc/libfdt/fdt_sw.c b/u-boot-rtk/scripts/dtc/libfdt/fdt_sw.c
+index 2bd15e7ae..a528d444b 100644
+--- a/u-boot-rtk/scripts/dtc/libfdt/fdt_sw.c
++++ b/u-boot-rtk/scripts/dtc/libfdt/fdt_sw.c
+@@ -50,8 +50,8 @@
+  */
+ #include "libfdt_env.h"
+ 
+-#include <fdt.h>
+-#include <libfdt.h>
++#include "fdt.h"
++#include "libfdt.h"
+ 
+ #include "libfdt_internal.h"
+ 
+diff --git a/u-boot-rtk/scripts/dtc/libfdt/fdt_wip.c b/u-boot-rtk/scripts/dtc/libfdt/fdt_wip.c
+index 2f52e0ac7..5652af264 100644
+--- a/u-boot-rtk/scripts/dtc/libfdt/fdt_wip.c
++++ b/u-boot-rtk/scripts/dtc/libfdt/fdt_wip.c
+@@ -50,7 +50,7 @@
+  */
+ #include "libfdt_env.h"
+ 
+-#include <fdt.h>
++#include "fdt.h"
+ #include "libfdt.h"
+ 
+ #include "libfdt_internal.h"
+diff --git a/u-boot-rtk/scripts/dtc/libfdt/libfdt_internal.h b/u-boot-rtk/scripts/dtc/libfdt/libfdt_internal.h
+index 02cfa6fb6..5cb817b36 100644
+--- a/u-boot-rtk/scripts/dtc/libfdt/libfdt_internal.h
++++ b/u-boot-rtk/scripts/dtc/libfdt/libfdt_internal.h
+@@ -50,7 +50,7 @@
+  *     OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
+  *     EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+  */
+-#include <fdt.h>
++#include "fdt.h"
+ 
+ #define FDT_ALIGN(x, a)		(((x) + (a) - 1) & ~((a) - 1))
+ #define FDT_TAGALIGN(x)		(FDT_ALIGN((x), FDT_TAGSIZE))

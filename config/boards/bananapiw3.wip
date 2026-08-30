@@ -1,0 +1,67 @@
+# Rockchip RK3588 Banana Pi W3 固定來源軟體候選。
+BOARD_NAME="Banana Pi W3"
+BOARD_VENDOR="sinovoip"
+BOARDFAMILY="rockchip-rk3588"
+BOARD_MAINTAINER="BPI-SINOVOIP"
+INTRODUCED="2024"
+BOOTCONFIG="bananapi-w3-rk3588_defconfig"
+KERNEL_TARGET="vendor"
+KERNEL_TEST_TARGET="vendor"
+FULL_DESKTOP="yes"
+BOOT_LOGO="desktop"
+BOOT_FDT_FILE="rockchip/rk3588-bananapi-w3.dtb"
+BOOT_SCENARIO="spl-blobs"
+BOOT_SUPPORT_SPI="yes"
+BOOT_SPI_RKSPI_LOADER="yes"
+IMAGE_PARTITION_TABLE="gpt"
+DDR_BLOB="rk35/rk3588_ddr_lp4_2112MHz_lp5_2736MHz_v1.11.bin"
+BL31_BLOB="rk35/rk3588_bl31_v1.38.elf"
+BOOTBRANCH_BOARD="commit:39cd993e5d6296635438e84f4576b3a9bf76f86e"
+KERNELBRANCH_BOARD="commit:c6157104418d012823413c02f9222f3fe123dd25"
+RKBIN_GIT_REF="commit:1d3c61008fa823936ae7a59615393f8294b64456"
+ARMBIAN_FIRMWARE_GIT_REF_BOARD="commit:f50a2a21bcdb77a562b3976930c5c6b521a1df08"
+PACKAGE_LIST_BOARD="rfkill bluetooth bluez bluez-tools gpiod i2c-tools python3-libgpiod python3-spidev spi-tools v4l-utils pciutils nvme-cli usbutils usb-modeswitch evtest alsa-utils iw wireless-regdb ethtool iproute2 iperf3"
+
+function post_family_config_branch_vendor__bananapiw3_pin_sources() {
+	declare -g BOOTSOURCE="https://github.com/radxa/u-boot.git"
+	declare -g BOOTBRANCH="${BOOTBRANCH_BOARD}"
+	declare -g KERNELSOURCE="https://github.com/armbian/linux-rockchip.git"
+	declare -g KERNELBRANCH="${KERNELBRANCH_BOARD}"
+	declare -g RKBIN_GIT_URL="https://github.com/armbian/rkbin"
+	declare -g ARMBIAN_FIRMWARE_GIT_REF="${ARMBIAN_FIRMWARE_GIT_REF_BOARD}"
+}
+
+function custom_kernel_config__bananapiw3_io_contract() {
+	opts_m+=(AP6XXX BRCMFMAC BT_HCIUART R8169)
+	opts_y+=(BRCMFMAC_SDIO BT_HCIUART_BCM GPIO_CDEV HID HID_GENERIC)
+	opts_y+=(RFKILL_RK TYPEC USB_HID USB_ROLE_SWITCH)
+}
+
+function post_family_tweaks__bananapiw3_naming_audios() {
+	display_alert "$BOARD" "設定 W3 音訊裝置名稱" "info"
+
+	mkdir -p "${SDCARD}/etc/udev/rules.d/"
+	printf '%s\n' \
+		'SUBSYSTEM=="sound", ENV{ID_PATH}=="platform-hdmi0-sound", ENV{SOUND_DESCRIPTION}="HDMI0 Audio"' \
+		'SUBSYSTEM=="sound", ENV{ID_PATH}=="platform-hdmi1-sound", ENV{SOUND_DESCRIPTION}="HDMI1 Audio"' \
+		'SUBSYSTEM=="sound", ENV{ID_PATH}=="platform-hdmiin-sound", ENV{SOUND_DESCRIPTION}="HDMI-In Audio"' \
+		'SUBSYSTEM=="sound", ENV{ID_PATH}=="platform-dp0-sound", ENV{SOUND_DESCRIPTION}="DP0 Audio"' \
+		'SUBSYSTEM=="sound", ENV{ID_PATH}=="platform-es8316-sound", ENV{SOUND_DESCRIPTION}="ES8316 Audio"' \
+		>"${SDCARD}/etc/udev/rules.d/90-naming-audios.rules"
+}
+
+function post_family_tweaks__bananapiw3_fix_m2_bluetooth() {
+	display_alert "$BOARD" "設定 W3 M.2 USB Bluetooth" "info"
+
+	mkdir -p "${SDCARD}/etc/udev/rules.d/"
+	printf '%s\n' \
+		'ACTION=="add", SUBSYSTEM=="usb", ATTR{bConfigurationValue}=="", ATTR{bConfigurationValue}="1"' \
+		>"${SDCARD}/etc/udev/rules.d/91-m2-usb-bluetooth.rules"
+}
+
+function post_family_tweaks_bsp__bananapiw3_rkbin_license() {
+	local license_source="${RKBIN_DIR}/LICENSE.TXT"
+	local license_target="${destination}/usr/share/doc/armbian-bsp-${BOARD}/rkbin.LICENSE.TXT"
+	[[ -f "${license_source}" ]] || exit_with_error "BPI-W3 缺少 RKBin 授權檔：${license_source}"
+	run_host_command_logged install -Dm0644 "${license_source}" "${license_target}"
+}

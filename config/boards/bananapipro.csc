@@ -5,6 +5,7 @@ BOARDFAMILY="sun7i"
 BOARD_MAINTAINER=""
 INTRODUCED="2014"
 BOOTCONFIG="Bananapro_defconfig"
+PACKAGE_LIST_BOARD="gpiod i2c-tools python3-libgpiod python3-spidev v4l-utils"
 KERNEL_TARGET="current,edge,legacy"
 KERNEL_TEST_TARGET="current"
 

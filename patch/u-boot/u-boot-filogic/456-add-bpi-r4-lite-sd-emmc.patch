@@ -1,0 +1,1329 @@
+diff -aurN a/arch/arm/dts/mt7987a-bananapi_bpi-r4-lite.dtsi b/arch/arm/dts/mt7987a-bananapi_bpi-r4-lite.dtsi
+--- a/arch/arm/dts/mt7987a-bananapi_bpi-r4-lite.dtsi	1970-01-01 00:00:00.000000000 +0000
++++ b/arch/arm/dts/mt7987a-bananapi_bpi-r4-lite.dtsi	2025-06-28 10:46:50.000000000 +0000
+@@ -0,0 +1,110 @@
++// SPDX-License-Identifier: GPL-2.0
++
++/dts-v1/;
++#include "mt7987a.dtsi"
++#include "mt7987-pinctrl.dtsi"
++#include "mt7987a-u-boot.dtsi"
++#include "mt7987-netsys-u-boot.dtsi"
++#include <dt-bindings/gpio/gpio.h>
++#include <dt-bindings/input/linux-event-codes.h>
++
++/ {
++	model = "BananaPi BPI-R4-Lite";
++	compatible = "mediatek,mt7987", "bananapi,bpi-r4-lite";
++
++	chosen {
++		stdout-path = &uart0;
++	};
++
++        reg_1p8v: regulator-1p8v {
++                compatible = "regulator-fixed";
++                regulator-name = "fixed-1.8V";
++                regulator-min-microvolt = <1800000>;
++                regulator-max-microvolt = <1800000>;
++                regulator-boot-on;
++                regulator-always-on;
++        };
++
++        reg_3p3v: regulator-3p3v {
++                compatible = "regulator-fixed";
++                regulator-name = "fixed-3.3V";
++                regulator-min-microvolt = <3300000>;
++                regulator-max-microvolt = <3300000>;
++                regulator-boot-on;
++                regulator-always-on;
++        };
++
++	keys {
++		compatible = "gpio-keys";
++
++		wps {
++			label = "reset";
++			linux,code = <KEY_RESTART>;
++			gpios = <&pio 0 GPIO_ACTIVE_LOW>;
++		};
++	};
++
++	leds {
++		compatible = "gpio-leds";
++
++		led_status_sys: led-sys {
++			label = "led-sys:statuas";
++			gpios = <&pio 3 GPIO_ACTIVE_HIGH>;
++		};
++        };
++};
++
++&uart0 {
++	status = "okay";
++	clocks = <&clkxtal>;
++};
++
++&eth0 {
++        status = "okay";
++        pinctrl-names = "default";
++        pinctrl-0 = <&mdio0_pins>;
++        phy-mode = "2500base-x";
++        mediatek,switch = "auto";
++        reset-gpios = <&pio 42 GPIO_ACTIVE_HIGH>;
++
++        fixed-link {
++                speed = <2500>;
++                full-duplex;
++                pause;
++        };
++};
++
++&eth1 {
++        status = "okay";
++        pinctrl-names = "i2p5gbe-led";
++        pinctrl-0 = <&i2p5gbe_led0_pins>;
++        phy-mode = "xgmii";
++        phy-handle = <&phy15>;
++
++        phy15: ethernet-phy@15 {
++                compatible = "ethernet-phy-ieee802.3-c45";
++                reg = <15>;
++                phy-mode = "xgmii";
++        };
++};
++
++/* Disable spi0/spi1 node since MSDC shares pins with spi0 and spi1*/
++&spi0 {
++        status = "disabled";
++};
++
++&spi1 {
++        status = "disabled";
++};
++
++&pcie0 {
++	pinctrl-names = "default";
++	pinctrl-0 = <&pcie0_pins>;
++	status = "okay";
++};
++
++&pcie1 {
++	pinctrl-names = "default";
++	pinctrl-0 = <&pcie1_pins>;
++	status = "disabled";
++};
+diff -aurN a/arch/arm/dts/mt7987a-bananapi_bpi-r4-lite-emmc.dts b/arch/arm/dts/mt7987a-bananapi_bpi-r4-lite-emmc.dts
+--- a/arch/arm/dts/mt7987a-bananapi_bpi-r4-lite-emmc.dts	1970-01-01 00:00:00.000000000 +0000
++++ b/arch/arm/dts/mt7987a-bananapi_bpi-r4-lite-emmc.dts	2025-06-28 07:59:46.000000000 +0000
+@@ -0,0 +1,56 @@
++// SPDX-License-Identifier: GPL-2.0
++
++/dts-v1/;
++#include "mt7987a-bananapi_bpi-r4-lite.dtsi"
++
++/ {
++	model = "BananaPi BPI-R4-Lite";
++	compatible = "mediatek,mt7987", "bananapi,bpi-r4-lite-emmc";
++
++	bl2_verify {
++		bl2_compatible = "emmc";
++	};
++};
++
++&spi2 {
++        pinctrl-names = "default";
++        pinctrl-0 = <&spi2_flash_pins>;
++        #address-cells = <1>;
++        #size-cells = <0>;
++        status = "okay";
++        must_tx;
++        enhance_timing;
++        dma_ext;
++        ipm_design;
++        support_quad;
++        tick_dly = <2>;
++        sample_sel = <0>;
++
++	/delete-node/ flash@0;
++        spi_nor@0 {
++                compatible = "jedec,spi-nor";
++                reg = <0>;
++                spi-max-frequency = <52000000>;
++                spi-rx-bus-width = <4>;
++                spi-tx-bus-width = <4>;
++        };
++};
++
++&mmc0 {
++        pinctrl-names = "default", "state_uhs";
++        pinctrl-0 = <&mmc_pins_default>;
++        pinctrl-1 = <&mmc_pins_uhs>;
++        bus-width = <8>;
++        max-frequency = <48000000>;
++        cap-mmc-highspeed;
++	cap-mmc-hw-reset;
++        mmc-hs200-1_8v;
++        mmc-hs400-1_8v;
++        hs400-ds-delay = <0x12814>;
++        vqmmc-supply = <&reg_3p3v>;
++        vmmc-supply = <&reg_3p3v>;
++        non-removable;
++        no-sd;
++        no-sdio;
++        status = "okay";
++};
+diff -aurN a/arch/arm/dts/mt7987a-bananapi_bpi-r4-lite-sd.dts b/arch/arm/dts/mt7987a-bananapi_bpi-r4-lite-sd.dts
+--- a/arch/arm/dts/mt7987a-bananapi_bpi-r4-lite-sd.dts	1970-01-01 00:00:00.000000000 +0000
++++ b/arch/arm/dts/mt7987a-bananapi_bpi-r4-lite-sd.dts	2025-06-29 05:42:32.000000000 +0000
+@@ -0,0 +1,68 @@
++// SPDX-License-Identifier: GPL-2.0
++
++/dts-v1/;
++#include "mt7987a-bananapi_bpi-r4-lite.dtsi"
++
++/ {
++	model = "BananaPi BPI-R4-Lite";
++	compatible = "mediatek,mt7987", "bananapi,bpi-r4-lite-sd";
++
++	bl2_verify {
++		bl2_compatible = "sd";
++	};
++};
++
++&spi2 {
++        pinctrl-names = "default";
++        pinctrl-0 = <&spi2_flash_pins>;
++        #address-cells = <1>;
++        #size-cells = <0>;
++        status = "okay";
++        must_tx;
++        enhance_timing;
++        dma_ext;
++        ipm_design;
++        support_quad;
++        tick_dly = <2>;
++        sample_sel = <0>;
++
++	/delete-node/ flash@0;
++	spi_nand@0 {
++		compatible = "spi-nand";
++                reg = <0>;
++                spi-max-frequency = <52000000>;
++                spi-rx-bus-width = <4>;
++                spi-tx-bus-width = <4>;
++
++		partitions {
++			compatible = "fixed-partitions";
++			#address-cells = <1>;
++			#size-cells = <1>;
++
++			partition@0 {
++				label = "bl2";
++				reg = <0x0 0x200000>;
++			};
++
++			partition@200000 {
++				label = "ubi";
++				reg = <0x200000 0xfe00000>;
++				compatible = "linux,ubi";
++			};
++		};
++	};
++};
++
++&mmc0 {
++        pinctrl-names = "default", "state_uhs";
++        pinctrl-0 = <&sd_pins_default>;
++        pinctrl-1 = <&sd_pins_uhs>;
++        bus-width = <4>;
++        max-frequency = <50000000>;
++        cap-sd-highspeed;
++        vmmc-supply = <&reg_3p3v>;
++        vqmmc-supply = <&reg_3p3v>;
++        no-mmc;
++        no-sdio;
++        status = "okay";
++};
+diff -aurN a/arch/arm/dts/mt7987a-bananapi_bpi-r4-lite-snor.dts b/arch/arm/dts/mt7987a-bananapi_bpi-r4-lite-snor.dts
+--- a/arch/arm/dts/mt7987a-bananapi_bpi-r4-lite-snor.dts	1970-01-01 00:00:00.000000000 +0000
++++ b/arch/arm/dts/mt7987a-bananapi_bpi-r4-lite-snor.dts	2025-07-01 07:17:35.947294188 +0000
+@@ -0,0 +1,77 @@
++// SPDX-License-Identifier: GPL-2.0
++
++/dts-v1/;
++#include "mt7987a-bananapi_bpi-r4-lite.dtsi"
++
++/ {
++	model = "BananaPi BPI-R4-Lite";
++	compatible = "mediatek,mt7987", "bananapi,bpi-r4-lite-snor";
++
++	bl2_verify {
++		bl2_compatible = "nor";
++	};
++};
++
++&spi2 {
++        pinctrl-names = "default";
++        pinctrl-0 = <&spi2_flash_pins>;
++        #address-cells = <1>;
++        #size-cells = <0>;
++        status = "okay";
++        must_tx;
++        enhance_timing;
++        dma_ext;
++        ipm_design;
++        support_quad;
++        tick_dly = <2>;
++        sample_sel = <0>;
++
++	/delete-node/ flash@0;
++        spi_nor@0 {
++                compatible = "jedec,spi-nor";
++                reg = <0>;
++                spi-max-frequency = <52000000>;
++                spi-rx-bus-width = <4>;
++                spi-tx-bus-width = <4>;
++
++		partition@00000 {
++                        label = "BL2";
++                        reg = <0x00000 0x0050000>;
++                };
++                partition@40000 {
++                        label = "u-boot-env";
++                        reg = <0x50000 0x0010000>;
++                };
++                partition@50000 {
++                        label = "Factory";
++                        reg = <0x60000 0x0200000>;
++                };
++                partition@250000 {
++                        label = "FIP";
++                        reg = <0x260000 0x0140000>;
++                };
++                partition@2D0000 {
++                        label = "firmware";
++                        reg = <0x3A0000 0x1C60000>;
++                };
++        };
++};
++
++&mmc0 {
++        pinctrl-names = "default", "state_uhs";
++        pinctrl-0 = <&mmc_pins_default>;
++        pinctrl-1 = <&mmc_pins_uhs>;
++        bus-width = <8>;
++        max-frequency = <48000000>;
++        cap-mmc-highspeed;
++	cap-mmc-hw-reset;
++        mmc-hs200-1_8v;
++        mmc-hs400-1_8v;
++        hs400-ds-delay = <0x12814>;
++        vqmmc-supply = <&reg_3p3v>;
++        vmmc-supply = <&reg_3p3v>;
++        non-removable;
++        no-sd;
++        no-sdio;
++        status = "okay";
++};
+diff -aurN a/arch/arm/dts/mt7987a-bananapi_bpi-r4-lite-spim-nand.dts b/arch/arm/dts/mt7987a-bananapi_bpi-r4-lite-spim-nand.dts
+--- a/arch/arm/dts/mt7987a-bananapi_bpi-r4-lite-spim-nand.dts	1970-01-01 00:00:00.000000000 +0000
++++ b/arch/arm/dts/mt7987a-bananapi_bpi-r4-lite-spim-nand.dts	2025-06-29 05:42:42.000000000 +0000
+@@ -0,0 +1,73 @@
++// SPDX-License-Identifier: GPL-2.0
++
++/dts-v1/;
++#include "mt7987a-bananapi_bpi-r4-lite.dtsi"
++
++/ {
++	model = "BananaPi BPI-R4-Lite";
++	compatible = "mediatek,mt7987", "bananapi,bpi-r4-lite-spim-nand";
++
++	bl2_verify {
++		bl2_compatible = "spim-nand";
++	};
++};
++
++&spi2 {
++        pinctrl-names = "default";
++        pinctrl-0 = <&spi2_flash_pins>;
++        #address-cells = <1>;
++        #size-cells = <0>;
++        status = "okay";
++        must_tx;
++        enhance_timing;
++        dma_ext;
++        ipm_design;
++        support_quad;
++        tick_dly = <2>;
++        sample_sel = <0>;
++
++	/delete-node/ flash@0;
++	spi_nand@0 {
++		compatible = "spi-nand";
++                reg = <0>;
++                spi-max-frequency = <52000000>;
++                spi-rx-bus-width = <4>;
++                spi-tx-bus-width = <4>;
++
++		partitions {
++			compatible = "fixed-partitions";
++			#address-cells = <1>;
++			#size-cells = <1>;
++
++			partition@0 {
++				label = "bl2";
++				reg = <0x0 0x200000>;
++			};
++
++			partition@200000 {
++				label = "ubi";
++				reg = <0x200000 0xfe00000>;
++				compatible = "linux,ubi";
++			};
++		};
++	};
++};
++
++&mmc0 {
++        pinctrl-names = "default", "state_uhs";
++        pinctrl-0 = <&mmc_pins_default>;
++        pinctrl-1 = <&mmc_pins_uhs>;
++        bus-width = <8>;
++        max-frequency = <48000000>;
++        cap-mmc-highspeed;
++	cap-mmc-hw-reset;
++        mmc-hs200-1_8v;
++        mmc-hs400-1_8v;
++        hs400-ds-delay = <0x12814>;
++        vqmmc-supply = <&reg_3p3v>;
++        vmmc-supply = <&reg_3p3v>;
++        non-removable;
++        no-sd;
++        no-sdio;
++        status = "okay";
++};
+diff -aurN a/bananapi_bpi-r4-lite_emmc_env b/bananapi_bpi-r4-lite_emmc_env
+--- a/bananapi_bpi-r4-lite_emmc_env	1970-01-01 00:00:00.000000000 +0000
++++ b/bananapi_bpi-r4-lite_emmc_env	2025-06-30 03:08:39.000000000 +0000
+@@ -0,0 +1,60 @@
++ipaddr=192.168.1.1
++serverip=192.168.1.2
++loadaddr=0x48000000
++bootargs=console=ttyS0,115200n1 pci=pcie_bus_perf root=/dev/fit0 rootwait
++bootcmd=if pstore check ; then run boot_recovery ; else run boot_emmc ; fi
++bootconf=config-mt7987a-bananapi-bpi-r4-lite
++bootconf_base=config-mt7987a-bananapi-bpi-r4-lite
++bootconf_emmc=mt7987a-bananapi-bpi-r4-lite-emmc
++bootconf_sd=mt7987a-bananapi-bpi-r4-lite-sd
++bootconf_snand=mt7987a-bananapi-bpi-r4-lite-spim-nand
++bootconf_snor=mt7987a-bananapi-bpi-r4-lite-spim-nor
++bootconf_extra=mt7987a-bananapi-bpi-r4-lite-1pcie-2L
++bootdelay=0
++bootfile=openwrt-mediatek-filogic-bananapi_bpi-r4-lite-initramfs-recovery.itb
++bootfile_bl2=openwrt-mediatek-filogic-bananapi_bpi-r4-lite-emmc-preloader.bin
++bootfile_fip=openwrt-mediatek-filogic-bananapi_bpi-r4-lite-emmc-bl31-uboot.fip
++bootfile_upg=openwrt-mediatek-filogic-bananapi_bpi-r4-lite-squashfs-sysupgrade.itb
++bootled_pwr=led-sys:statuas
++bootled_rec=led-sys:statuas
++bootmenu_confirm_return=askenv - Press ENTER to return to menu ; bootmenu 60
++bootmenu_default=0
++bootmenu_delay=0
++bootmenu_title=      [0;34m( ( ( [1;39mOpenWrt[0;34m ) ) )  [0;36m[eMMC][0m
++bootmenu_0=Initialize environment.=run _firstboot
++bootmenu_0d=Run default boot command.=run boot_default
++bootmenu_1=Boot system via TFTP.=run boot_tftp ; run bootmenu_confirm_return
++bootmenu_2=Boot production system from eMMC.=run boot_production ; run bootmenu_confirm_return
++bootmenu_3=Boot recovery system from eMMC.=run boot_recovery ; run bootmenu_confirm_return
++bootmenu_4=Load production system via TFTP then write to eMMC.=setenv noboot 1 ; setenv replacevol 1 ; run boot_tftp_production ; setenv noboot ; setenv replacevol ; run bootmenu_confirm_return
++bootmenu_5=Load recovery system via TFTP then write to eMMC.=setenv noboot 1 ; setenv replacevol 1 ; run boot_tftp_recovery ; setenv noboot ; setenv replacevol ; run bootmenu_confirm_return
++bootmenu_6=[31mLoad BL31+U-Boot FIP via TFTP then write to eMMC.[0m=run boot_tftp_write_fip ; run bootmenu_confirm_return
++bootmenu_7=[31mLoad BL2 preloader via TFTP then write to eMMC.[0m=run boot_tftp_write_bl2 ; run bootmenu_confirm_return
++bootmenu_8=Reboot.=reset
++bootmenu_9=Reset all settings to factory defaults.=run reset_factory ; reset
++boot_first=if button reset ; then led $bootled_rec on ; run boot_tftp_recovery ; setenv flag_recover 1 ; run boot_default ; fi ; bootmenu
++boot_default=if env exists flag_recover ; then else run bootcmd ; fi ; run boot_recovery ; setenv replacevol 1 ; run boot_tftp_forever
++boot_production=led $bootled_pwr on ; run emmc_read_production && bootm $loadaddr#$bootconf#$bootconf_emmc#$bootconf_extra ; led $bootled_pwr off
++boot_recovery=led $bootled_rec on ; run emmc_read_recovery && bootm $loadaddr#$bootconf#$bootconf_emmc#$bootconf_extra ; led $bootled_rec off
++boot_emmc=run boot_production ; run boot_recovery
++boot_tftp_forever=led $bootled_rec on ; while true ; do run boot_tftp_recovery ; sleep 1 ; done
++boot_tftp_production=tftpboot $loadaddr $bootfile_upg && env exists replacevol && iminfo $loadaddr && run emmc_write_production ; if env exists noboot ; then else bootm $loadaddr#$bootconf#$bootconf_emmc#$bootconf_extra ; fi
++boot_tftp_recovery=tftpboot $loadaddr $bootfile && env exists replacevol && iminfo $loadaddr && run emmc_write_recovery ; if env exists noboot ; then else bootm $loadaddr#$bootconf#$bootconf_emmc ; fi
++boot_tftp_write_fip=tftpboot $loadaddr $bootfile_fip && run emmc_write_fip
++boot_tftp_write_bl2=tftpboot $loadaddr $bootfile_bl2 && run emmc_write_bl2
++boot_tftp=tftpboot $loadaddr $bootfile && bootm $loadaddr#$bootconf
++mmc_write_vol=imszb $loadaddr image_size && test 0x$image_size -le 0x$part_size && mmc erase 0x$part_addr 0x$image_size && mmc write $loadaddr 0x$part_addr 0x$image_size
++mmc_read_vol=mmc read $loadaddr $part_addr 0x100 && imszb $loadaddr image_size && test 0x$image_size -le 0x$part_size && mmc read $loadaddr 0x$part_addr 0x$image_size && setexpr filesize $image_size * 0x200
++part_default=production
++part_recovery=recovery
++reset_factory=eraseenv && reset
++emmc_read_production=part start mmc 0 $part_default part_addr && part size mmc 0 $part_default part_size && run mmc_read_vol
++emmc_read_recovery=part start mmc 0 $part_recovery part_addr && part size mmc 0 $part_recovery part_size && run mmc_read_vol
++emmc_write_bl2=mmc partconf 0 1 1 1 && mmc erase 0x0 0x400 && mmc write $fileaddr 0x0 0x400 ; mmc partconf 0 1 1 0
++emmc_write_fip=mmc erase 0x3400 0x2000 && mmc write $fileaddr 0x3400 0x2000 && mmc erase 0x2000 0x800
++emmc_write_production=part start mmc 0 $part_default part_addr && part size mmc 0 $part_default part_size && run mmc_write_vol
++emmc_write_recovery=part start mmc 0 $part_recovery part_addr && part size mmc 0 $part_recovery part_size && run mmc_write_vol
++_init_env=setenv _init_env ; setenv _create_env ; saveenv ; saveenv
++_firstboot=setenv _firstboot ; run _switch_to_menu ; run _init_env ; run boot_first
++_switch_to_menu=setenv _switch_to_menu ; setenv bootdelay 3 ; setenv bootmenu_delay 3 ; setenv bootmenu_0 $bootmenu_0d ; setenv bootmenu_0d ; run _bootmenu_update_title
++_bootmenu_update_title=setenv _bootmenu_update_title ; setenv bootmenu_title "$bootmenu_title       [33m$ver[0m"
+diff -aurN a/bananapi_bpi-r4-lite_sdmmc_env b/bananapi_bpi-r4-lite_sdmmc_env
+--- a/bananapi_bpi-r4-lite_sdmmc_env	1970-01-01 00:00:00.000000000 +0000
++++ b/bananapi_bpi-r4-lite_sdmmc_env	2025-06-30 03:07:52.000000000 +0000
+@@ -0,0 +1,69 @@
++ipaddr=192.168.1.1
++serverip=192.168.1.2
++loadaddr=0x48000000
++bootargs=console=ttyS0,115200n1 pci=pcie_bus_perf root=/dev/fit0 rootwait
++bootcmd=if pstore check ; then run boot_recovery ; else run boot_sdmmc ; fi
++bootconf=config-mt7987a-bananapi-bpi-r4-lite
++bootconf_base=config-mt7987a-bananapi-bpi-r4-lite
++bootconf_emmc=mt7987a-bananapi-bpi-r4-lite-emmc
++bootconf_sd=mt7987a-bananapi-bpi-r4-lite-sd
++bootconf_snand=mt7987a-bananapi-bpi-r4-lite-spim-nand
++bootconf_snor=mt7987a-bananapi-bpi-r4-lite-spim-nor
++bootconf_extra=mt7987a-bananapi-bpi-r4-lite-1pcie-2L
++bootdelay=0
++bootfile=openwrt-mediatek-filogic-bananapi_bpi-r4-lite-initramfs-recovery.itb
++bootfile_upg=openwrt-mediatek-filogic-bananapi_bpi-r4-lite-squashfs-sysupgrade.itb
++bootled_pwr=led-sys:statuas
++bootled_rec=led-sys:statuas
++bootmenu_confirm_return=askenv - Press ENTER to return to menu ; bootmenu 60
++bootmenu_default=0
++bootmenu_delay=0
++bootmenu_title=      [0;34m( ( ( [1;39mOpenWrt[0;34m ) ) )  [0;36m[SD card][0m
++bootmenu_0=Initialize environment.=run _firstboot
++bootmenu_0d=Run default boot command.=run boot_default
++bootmenu_1=Boot system via TFTP.=run boot_tftp ; run bootmenu_confirm_return
++bootmenu_2=Boot production system from SD card.=run boot_production ; run bootmenu_confirm_return
++bootmenu_3=Boot recovery system from SD card.=run boot_recovery ; run bootmenu_confirm_return
++bootmenu_4=Load production system via TFTP then write to SD card.=setenv noboot 1 ; setenv replacevol 1 ; run boot_tftp_production ; setenv noboot ; setenv replacevol ; run bootmenu_confirm_return
++bootmenu_5=Load recovery system via TFTP then write to SD card.=setenv noboot 1 ; setenv replacevol 1 ; run boot_tftp_recovery ; setenv noboot ; setenv replacevol ; run bootmenu_confirm_return
++bootmenu_6=[31mInstall bootloader, recovery and production to NAND.[0m=if nand info ; then run ubi_init ; else echo "NAND not detected" ; fi ; run bootmenu_confirm_return
++bootmenu_7=Reboot.=reset
++bootmenu_8=Reset all settings to factory defaults.=run reset_factory ; reset
++boot_first=if button reset ; then led $bootled_rec on ; run boot_tftp_recovery ; setenv flag_recover 1 ; run boot_default ; fi ; bootmenu
++boot_default=if env exists flag_recover ; then else run bootcmd ; fi ; run boot_recovery ; setenv replacevol 1 ; run boot_tftp_forever
++boot_production=led $bootled_pwr on ; run sdmmc_read_production && bootm $loadaddr#$bootconf#$bootconf_sd#$bootconf_extra ; led $bootled_pwr off
++boot_recovery=led $bootled_rec on ; run sdmmc_read_recovery && bootm $loadaddr#$bootconf#$bootconf_sd ; led $bootled_rec off
++boot_sdmmc=run boot_production ; run boot_recovery
++boot_tftp_forever=led $bootled_rec on ; while true ; do run boot_tftp_recovery ; sleep 1 ; done
++boot_tftp_production=tftpboot $loadaddr $bootfile_upg && env exists replacevol && iminfo $loadaddr && run sdmmc_write_production ; if env exists noboot ; then else bootm $loadaddr#$bootconf#$bootconf_sd#$bootconf_extra ; fi
++boot_tftp_recovery=tftpboot $loadaddr $bootfile && env exists replacevol && iminfo $loadaddr && run sdmmc_write_recovery ; if env exists noboot ; then else bootm $loadaddr#$bootconf#$bootconf_sd ; fi
++boot_tftp=tftpboot $loadaddr $bootfile && bootm $loadaddr#$bootconf#$bootconf_sd
++mmc_write_vol=imszb $loadaddr image_size && test 0x$image_size -le 0x$part_size && mmc erase 0x$part_addr 0x$image_size && mmc write $loadaddr 0x$part_addr 0x$image_size
++mmc_read_vol=mmc read $loadaddr $part_addr 0x100 && imszb $loadaddr image_size && test 0x$image_size -le 0x$part_size && mmc read $loadaddr 0x$part_addr 0x$image_size && setexpr filesize $image_size * 0x200
++part_default=production
++part_recovery=recovery
++reset_factory=eraseenv && reset
++sdmmc_read_production=part start mmc 0 $part_default part_addr && part size mmc 0 $part_default part_size && run mmc_read_vol
++sdmmc_read_recovery=part start mmc 0 $part_recovery part_addr && part size mmc 0 $part_recovery part_size && run mmc_read_vol
++sdmmc_read_snand_bl2=part start mmc 0 install part_addr && mmc read $loadaddr $part_addr 0x400
++sdmmc_read_snand_fip=part start mmc 0 install part_addr && setexpr offset $part_addr + 0x800 && mmc read $loadaddr $offset 0x1000
++sdmmc_read_emmc_install=part start mmc 0 install part_addr && setexpr offset $part_addr + 0x3800 && mmc read $loadaddr $offset 0x4000
++sdmmc_write_production=part start mmc 0 $part_default part_addr && part size mmc 0 $part_default part_size && run mmc_write_vol
++sdmmc_write_recovery=part start mmc 0 $part_recovery part_addr && part size mmc 0 $part_recovery part_size && run mmc_write_vol
++snand_write_bl2=mtd erase bl2 && mtd write bl2 $loadaddr 0x0 0x80000 && mtd write bl2 $loadaddr 0x80000 0x80000 && mtd write bl2 $loadaddr 0x100000 0x80000 && mtd write bl2 $loadaddr 0x180000 0x80000
++ubi_create_env=ubi create ubootenv 0x100000 dynamic ; ubi create ubootenv2 0x100000 dynamic
++ubi_format=ubi detach ; mtd erase ubi && ubi part ubi
++ubi_init=run ubi_format && run ubi_init_bl && run ubi_create_env && run ubi_init_openwrt && run ubi_init_emmc_install
++ubi_init_openwrt=run sdmmc_read_recovery && iminfo $loadaddr && run ubi_write_recovery ; run sdmmc_read_production && iminfo $loadaddr && run ubi_write_production
++ubi_init_bl=run sdmmc_read_snand_bl2 && run snand_write_bl2 && run sdmmc_read_snand_fip && run ubi_write_fip
++ubi_init_emmc_install=run sdmmc_read_emmc_install && run ubi_write_emmc_install
++ubi_prepare_rootfs=if ubi check rootfs_data ; then else if env exists rootfs_data_max ; then ubi create rootfs_data $rootfs_data_max dynamic || ubi create rootfs_data - dynamic ; else ubi create rootfs_data - dynamic ; fi ; fi
++ubi_remove_rootfs=ubi check rootfs_data && ubi remove rootfs_data
++ubi_write_fip=run ubi_remove_rootfs ; ubi check fip && ubi remove fip ; ubi create fip 0x200000 static ; ubi write $loadaddr fip 0x200000
++ubi_write_emmc_install=ubi check emmc_install && ubi remove emmc_install ; ubi create emmc_install 0x800000 dynamic ; ubi write $loadaddr emmc_install 0x800000
++ubi_write_production=ubi check fit && ubi remove fit ; run ubi_remove_rootfs ; ubi create fit $filesize dynamic && ubi write $loadaddr fit $filesize
++ubi_write_recovery=ubi check recovery && ubi remove recovery ; run ubi_remove_rootfs ; ubi create recovery $filesize dynamic && ubi write $loadaddr recovery $filesize
++_init_env=setenv _init_env ; setenv _create_env ; saveenv ; saveenv
++_firstboot=setenv _firstboot ; run _switch_to_menu ; run _init_env ; run boot_first
++_switch_to_menu=setenv _switch_to_menu ; setenv bootdelay 3 ; setenv bootmenu_delay 3 ; setenv bootmenu_0 $bootmenu_0d ; setenv bootmenu_0d ; run _bootmenu_update_title
++_bootmenu_update_title=setenv _bootmenu_update_title ; setenv bootmenu_title "$bootmenu_title       [33m$ver[0m"
+diff -aurN a/bananapi_bpi-r4-lite_snand_env b/bananapi_bpi-r4-lite_snand_env
+--- a/bananapi_bpi-r4-lite_snand_env	1970-01-01 00:00:00.000000000 +0000
++++ b/bananapi_bpi-r4-lite_snand_env	2025-06-30 03:13:39.000000000 +0000
+@@ -0,0 +1,72 @@
++ipaddr=192.168.1.1
++serverip=192.168.1.2
++loadaddr=0x48000000
++bootargs=console=ttyS0,115200n1 pci=pcie_bus_perf root=/dev/fit0 rootwait ubi.block=0,fit
++bootconf=config-mt7987a-bananapi-bpi-r4-lite
++bootconf_base=config-mt7987a-bananapi-bpi-r4-lite
++bootconf_emmc=mt7987a-bananapi-bpi-r4-lite-emmc
++bootconf_sd=mt7987a-bananapi-bpi-r4-lite-sd
++bootconf_snand=mt7987a-bananapi-bpi-r4-lite-spim-nand
++bootconf_snor=mt7987a-bananapi-bpi-r4-lite-spim-nor
++bootconf_extra=mt7987a-bananapi-bpi-r4-lite-1pcie-2L
++bootcmd=if pstore check ; then run boot_recovery ; else run boot_ubi ; fi
++bootdelay=0
++bootfile=openwrt-mediatek-filogic-bananapi_bpi-r4-lite-initramfs-recovery.itb
++bootfile_bl2=openwrt-mediatek-filogic-bananapi_bpi-r4-lite-snand-preloader.bin
++bootfile_fip=openwrt-mediatek-filogic-bananapi_bpi-r4-lite-snand-bl31-uboot.fip
++bootfile_upg=openwrt-mediatek-filogic-bananapi_bpi-r4-lite-squashfs-sysupgrade.itb
++bootled_pwr=led-sys:statuas
++bootled_rec=led-sys:statuas
++bootmenu_confirm_return=askenv - Press ENTER to return to menu ; bootmenu 60
++bootmenu_default=0
++bootmenu_delay=0
++bootmenu_title=      [0;34m( ( ( [1;39mOpenWrt[0;34m ) ) )  [0;36m[SPI-NAND][0m
++bootmenu_0=Initialize environment.=run _firstboot
++bootmenu_0d=Run default boot command.=run boot_default
++bootmenu_1=Boot system via TFTP.=run boot_tftp ; run bootmenu_confirm_return
++bootmenu_2=Boot production system from NAND.=run boot_production ; run bootmenu_confirm_return
++bootmenu_3=Boot recovery system from NAND.=run boot_recovery ; run bootmenu_confirm_return
++bootmenu_4=Load production system via TFTP then write to NAND.=setenv noboot 1 ; setenv replacevol 1 ; run boot_tftp_production ; setenv noboot ; setenv replacevol ; run bootmenu_confirm_return
++bootmenu_5=Load recovery system via TFTP then write to NAND.=setenv noboot 1 ; setenv replacevol 1 ; run boot_tftp_recovery ; setenv noboot ; setenv replacevol ; run bootmenu_confirm_return
++bootmenu_6=[31mLoad BL31+U-Boot FIP via TFTP then write to NAND.[0m=run boot_tftp_write_fip ; run bootmenu_confirm_return
++bootmenu_7=[31mLoad BL2 preloader via TFTP then write to NAND.[0m=run boot_tftp_write_bl2 ; run bootmenu_confirm_return
++bootmenu_8=[31mInstall bootloader, recovery and production to eMMC.[0m=if mmc partconf 0 ; then run emmc_init ; else echo "eMMC not detected" ; fi ; run bootmenu_confirm_return
++bootmenu_9=Reboot.=reset
++bootmenu_10=Reset all settings to factory defaults.=run reset_factory ; reset
++boot_first=if button reset ; then led $bootled_rec on ; run boot_tftp_recovery ; setenv flag_recover 1 ; run boot_default ; fi ; bootmenu
++boot_default=if env exists flag_recover ; then else run bootcmd ; fi ; run boot_recovery ; setenv replacevol 1 ; run boot_tftp_forever
++boot_production=led $bootled_pwr on ; run ubi_read_production && bootm $loadaddr#$bootconf#$bootconf_snand#$bootconf_extra ; led $bootled_pwr off
++boot_recovery=led $bootled_rec on ; run ubi_read_recovery && bootm $loadaddr#$bootconf#$bootconf_snand ; led $bootled_rec off
++boot_ubi=run boot_production ; run boot_recovery
++boot_tftp_forever=led $bootled_rec on ; while true ; do run boot_tftp_recovery ; sleep 1 ; done
++boot_tftp_production=tftpboot $loadaddr $bootfile_upg && env exists replacevol && iminfo $loadaddr && run ubi_write_production ; if env exists noboot ; then else bootm $loadaddr#$bootconf#$bootconf_snand#$bootconf_extra ; fi
++boot_tftp_recovery=tftpboot $loadaddr $bootfile && env exists replacevol && iminfo $loadaddr && run ubi_write_recovery ; if env exists noboot ; then else bootm $loadaddr#$bootconf#$bootconf_snand ; fi
++boot_tftp=tftpboot $loadaddr $bootfile && bootm $loadaddr#$bootconf#$bootconf_snand
++boot_tftp_write_fip=tftpboot $loadaddr $bootfile_fip && run ubi_write_fip && run reset_factory
++boot_tftp_write_bl2=tftpboot $loadaddr $bootfile_bl2 && run snand_write_bl2
++part_default=production
++part_recovery=recovery
++reset_factory=ubi part ubi ; mw $loadaddr 0x0 0x800 ; ubi write $loadaddr ubootenv 0x800 ; ubi write $loadaddr ubootenv2 0x800
++snand_write_bl2=mtd erase bl2 && mtd write bl2 $loadaddr 0x0 0x80000 && mtd write bl2 $loadaddr 0x80000 0x80000 && mtd write bl2 $loadaddr 0x100000 0x80000 && mtd write bl2 $loadaddr 0x180000 0x80000
++ubi_create_env=ubi check ubootenv || ubi create ubootenv 0x100000 dynamic ; ubi check ubootenv2 || ubi create ubootenv2 0x100000 dynamic
++ubi_prepare_rootfs=if ubi check rootfs_data ; then else if env exists rootfs_data_max ; then ubi create rootfs_data $rootfs_data_max dynamic || ubi create rootfs_data - dynamic ; else ubi create rootfs_data - dynamic ; fi ; fi
++ubi_read_production=ubi read $loadaddr fit && iminfo $loadaddr && run ubi_prepare_rootfs
++ubi_read_recovery=ubi check recovery && ubi read $loadaddr recovery
++ubi_read_emmc_install=ubi check emmc_install && ubi read $loadaddr emmc_install
++ubi_remove_rootfs=ubi check rootfs_data && ubi remove rootfs_data
++ubi_write_fip=run ubi_remove_rootfs ; ubi check fip && ubi remove fip ; ubi create fip 0x200000 static ; ubi write $loadaddr fip 0x200000
++ubi_write_production=ubi check fit && ubi remove fit ; run ubi_remove_rootfs ; ubi create fit $filesize dynamic && ubi write $loadaddr fit $filesize
++ubi_write_recovery=ubi check recovery && ubi remove recovery ; run ubi_remove_rootfs ; ubi create recovery $filesize dynamic && ubi write $loadaddr recovery $filesize
++mmc_write_vol=imszb $loadaddr image_size && test 0x$image_size -le 0x$part_size && mmc erase 0x$part_addr 0x$image_size && mmc write $loadaddr 0x$part_addr 0x$image_size
++emmc_init=mmc dev 0 && mmc bootbus 0 0 0 0 && run emmc_init_bl && run emmc_init_openwrt ; env default bootcmd ; saveenv ; saveenv
++emmc_init_bl=run ubi_read_emmc_install && setenv fileaddr $loadaddr && run emmc_write_bl2 && setexpr fileaddr $loadaddr + 0x100000 && run emmc_write_fip && setexpr fileaddr $loadaddr + 0x500000 && run emmc_write_hdr
++emmc_init_openwrt=run ubi_read_recovery && iminfo $loadaddr && run emmc_write_recovery ; run ubi_read_production && iminfo $loadaddr && run emmc_write_production
++emmc_write_bl2=mmc partconf 0 1 1 1 && mmc erase 0x0 0x400 && mmc write $fileaddr 0x0 0x400 ; mmc partconf 0 1 1 0
++emmc_write_fip=mmc erase 0x3400 0x2000 && mmc write $fileaddr 0x3400 0x2000 && mmc erase 0x2000 0x800
++emmc_write_hdr=mmc erase 0x0 0x40 && mmc write $fileaddr 0x0 0x40
++emmc_write_production=part start mmc 0 $part_default part_addr && part size mmc 0 $part_default part_size && run mmc_write_vol
++emmc_write_recovery=part start mmc 0 $part_recovery part_addr && part size mmc 0 $part_recovery part_size && run mmc_write_vol
++_init_env=setenv _init_env ; run ubi_create_env ; saveenv ; saveenv
++_firstboot=setenv _firstboot ; run _switch_to_menu ; run _init_env ; run boot_first
++_switch_to_menu=setenv _switch_to_menu ; setenv bootdelay 3 ; setenv bootmenu_delay 3 ; setenv bootmenu_0 $bootmenu_0d ; setenv bootmenu_0d ; run _bootmenu_update_title
++_bootmenu_update_title=setenv _bootmenu_update_title ; setenv bootmenu_title "$bootmenu_title       [33m$ver[0m"
+diff -aurN a/bananapi_bpi-r4-lite_snor_env b/bananapi_bpi-r4-lite_snor_env
+--- a/bananapi_bpi-r4-lite_snor_env	1970-01-01 00:00:00.000000000 +0000
++++ b/bananapi_bpi-r4-lite_snor_env	2025-07-01 12:28:49.101325396 +0000
+@@ -0,0 +1,57 @@
++ipaddr=192.168.1.1
++serverip=192.168.1.2
++loadaddr=0x48000000
++bootargs=console=ttyS0,115200n1 pci=pcie_bus_perf root=/dev/fit0 rootwait ubi.block=0,fit
++bootconf=config-mt7987a-bananapi-bpi-r4-lite
++bootconf_base=config-mt7987a-bananapi-bpi-r4-lite
++bootconf_emmc=mt7987a-bananapi-bpi-r4-lite-emmc
++bootconf_sd=mt7987a-bananapi-bpi-r4-lite-sd
++bootconf_snand=mt7987a-bananapi-bpi-r4-lite-spim-nand
++bootconf_snor=mt7987a-bananapi-bpi-r4-lite-spim-nor
++bootconf_extra=mt7987a-bananapi-bpi-r4-lite-1pcie-2L
++bootcmd=if pstore check ; then run boot_recovery ; else run boot_mtd ; fi
++bootdelay=0
++bootfile=openwrt-mediatek-filogic-bananapi_bpi-r4-lite-initramfs-recovery.itb
++bootfile_bl2=openwrt-mediatek-filogic-bananapi_bpi-r4-lite-snor-preloader.bin
++bootfile_fip=openwrt-mediatek-filogic-bananapi_bpi-r4-lite-snor-bl31-uboot.fip
++bootfile_upg=openwrt-mediatek-filogic-bananapi_bpi-r4-lite-squashfs-sysupgrade.itb
++bootled_pwr=led-sys:statuas
++bootled_rec=led-sys:statuas
++bootmenu_confirm_return=askenv - Press ENTER to return to menu ; bootmenu 60
++bootmenu_default=0
++bootmenu_delay=0
++bootmenu_title=      [0;34m( ( ( [1;39mOpenWrt[0;34m ) ) )  [0;36m[SPI-NAND][0m
++bootmenu_0=Initialize environment.=run _firstboot
++bootmenu_0d=Run default boot command.=run boot_default
++bootmenu_1=Boot system via TFTP.=run boot_tftp ; run bootmenu_confirm_return
++bootmenu_2=Boot production system from NOR.=run boot_production ; run bootmenu_confirm_return
++bootmenu_3=Boot recovery system from NOR.=run boot_recovery ; run bootmenu_confirm_return
++bootmenu_4=Load production system via TFTP then write to NOR.=setenv noboot 1 ; setenv replacevol 1 ; run boot_tftp_production ; setenv noboot ; setenv replacevol ; run bootmenu_confirm_return
++bootmenu_5=Load recovery system via TFTP then write to NOR.=setenv noboot 1 ; setenv replacevol 1 ; run boot_tftp_recovery ; setenv noboot ; setenv replacevol ; run bootmenu_confirm_return
++bootmenu_6=[31mLoad BL31+U-Boot FIP via TFTP then write to NOR.[0m=run boot_tftp_write_fip ; run bootmenu_confirm_return
++bootmenu_7=[31mLoad BL2 preloader via TFTP then write to NOR.[0m=run boot_tftp_write_bl2 ; run bootmenu_confirm_return
++bootmenu_8=Reboot.=reset
++boot_first=if button reset ; then led $bootled_rec on ; run boot_tftp_recovery ; setenv flag_recover 1 ; run boot_default ; fi ; bootmenu
++boot_default=if env exists flag_recover ; then else run bootcmd ; fi ; run boot_recovery ; setenv replacevol 1 ; run boot_tftp_forever
++boot_production=led $bootled_pwr on ; run mtd_read_production && bootm $loadaddr#$bootconf#$bootconf_snor#$bootconf_extra ; led $bootled_pwr off
++boot_recovery=led $bootled_rec on ; run mtd_read_recovery && bootm $loadaddr#$bootconf#$bootconf_snor ; led $bootled_rec off
++boot_mtd=run boot_production ; run boot_recovery
++boot_tftp_forever=led $bootled_rec on ; while true ; do run boot_tftp_recovery ; sleep 1 ; done
++boot_tftp_production=tftpboot $loadaddr $bootfile && env exists replacevol && iminfo $loadaddr && run mtd_write_production ; if env exists noboot ; then else bootm $loadaddr#$bootconf#$bootconf_snor#$bootconf_extra ; fi
++boot_tftp_recovery=tftpboot $loadaddr $bootfile && env exists replacevol && iminfo $loadaddr && run mtd_write_recovery ; if env exists noboot ; then else bootm $loadaddr#$bootconf#$bootconf_snor ; fi
++boot_tftp=tftpboot $loadaddr $bootfile && bootm $loadaddr#$bootconf#$bootconf_snor
++boot_tftp_write_fip=tftpboot $loadaddr $bootfile_fip && run mtd_write_fip && run reset_factory
++boot_tftp_write_bl2=tftpboot $loadaddr $bootfile_bl2 && run mtd_write_bl2
++part_default=production
++part_recovery=recovery
++reset_factory=mtd erase u-boot-env
++mtd_read_production=mtd read firmware $loadaddr && iminfo $loadaddr
++mtd_read_recovery=mtd read firmware $loadaddr && iminfo $loadaddr
++mtd_write_bl2=mtd erase bl2 && mtd write bl2 $loadaddr 0x0 0x50000
++mtd_write_fip=mtd erase fip &&  mtd write fip $loadaddr 0 0x140000
++mtd_write_production=mtd erase firmware &&  mtd write firmware $loadaddr 0 $filesize
++mtd_write_recovery=mtd erase firmware &&  mtd write firmware $loadaddr 0 $filesize
++_init_env=setenv _init_env ; saveenv
++_firstboot=setenv _firstboot ; run _switch_to_menu ; run _init_env ; run boot_first
++_switch_to_menu=setenv _switch_to_menu ; setenv bootdelay 3 ; setenv bootmenu_delay 3 ; setenv bootmenu_0 $bootmenu_0d ; setenv bootmenu_0d ; run _bootmenu_update_title
++_bootmenu_update_title=setenv _bootmenu_update_title ; setenv bootmenu_title "$bootmenu_title       [33m$ver[0m"
+diff -aurN a/configs/mt7987a_bananapi_bpi-r4-lite-emmc_defconfig b/configs/mt7987a_bananapi_bpi-r4-lite-emmc_defconfig
+--- a/configs/mt7987a_bananapi_bpi-r4-lite-emmc_defconfig	1970-01-01 00:00:00.000000000 +0000
++++ b/configs/mt7987a_bananapi_bpi-r4-lite-emmc_defconfig	2025-06-28 10:52:59.000000000 +0000
+@@ -0,0 +1,158 @@
++CONFIG_ARM=y
++CONFIG_SYS_HAS_NONCACHED_MEMORY=y
++CONFIG_POSITION_INDEPENDENT=y
++CONFIG_ARCH_MEDIATEK=y
++CONFIG_TEXT_BASE=0x41e00000
++CONFIG_SYS_MALLOC_F_LEN=0x4000
++CONFIG_NR_DRAM_BANKS=1
++CONFIG_ENV_SIZE=0x40000
++CONFIG_ENV_OFFSET=0x400000
++CONFIG_DEFAULT_DEVICE_TREE="mt7987a-bananapi_bpi-r4-lite-emmc"
++CONFIG_OF_LIBFDT_OVERLAY=y
++CONFIG_TARGET_MT7987=y
++CONFIG_PRE_CON_BUF_ADDR=0x4007EF00
++CONFIG_DEBUG_UART_BASE=0x11000000
++CONFIG_DEBUG_UART_CLOCK=40000000
++CONFIG_ENV_OFFSET_REDUND=0x440000
++CONFIG_SYS_LOAD_ADDR=0x48000000
++CONFIG_PCI=y
++CONFIG_DEBUG_UART=y
++CONFIG_AHCI=y
++CONFIG_FIT=y
++CONFIG_BOOTDELAY=30
++CONFIG_AUTOBOOT_KEYED=y
++CONFIG_AUTOBOOT_MENU_SHOW=y
++CONFIG_OF_SYSTEM_SETUP=y
++CONFIG_DEFAULT_FDT_FILE="mediatek/mt7987a-bananapi_bpi-r4-lite-emmc.dtb"
++CONFIG_SYS_CBSIZE=512
++CONFIG_SYS_PBSIZE=1049
++CONFIG_LOGLEVEL=7
++CONFIG_PRE_CONSOLE_BUFFER=y
++CONFIG_LOG=y
++# CONFIG_BOARD_LATE_INIT is not set
++CONFIG_HUSH_PARSER=y
++CONFIG_SYS_PROMPT="MT7987> "
++CONFIG_CMD_CPU=y
++CONFIG_CMD_LICENSE=y
++# CONFIG_CMD_BOOTEFI_BOOTMGR is not set
++CONFIG_CMD_BOOTMENU=y
++CONFIG_CMD_ASKENV=y
++CONFIG_CMD_ERASEENV=y
++CONFIG_CMD_ENV_FLAGS=y
++CONFIG_CMD_STRINGS=y
++CONFIG_CMD_DM=y
++CONFIG_CMD_GPIO=y
++CONFIG_CMD_PWM=y
++CONFIG_CMD_I2C=y
++CONFIG_CMD_GPT=y
++CONFIG_CMD_MMC=y
++CONFIG_CMD_MTD=y
++CONFIG_CMD_PART=y
++CONFIG_CMD_PCI=y
++CONFIG_CMD_SF_TEST=y
++CONFIG_CMD_USB=y
++CONFIG_CMD_DHCP=y
++CONFIG_CMD_TFTPSRV=y
++CONFIG_CMD_RARP=y
++CONFIG_CMD_PING=y
++CONFIG_CMD_CDP=y
++CONFIG_CMD_SNTP=y
++CONFIG_CMD_DNS=y
++CONFIG_CMD_LINK_LOCAL=y
++CONFIG_CMD_PXE=y
++CONFIG_CMD_CACHE=y
++CONFIG_CMD_PSTORE=y
++CONFIG_CMD_PSTORE_MEM_ADDR=0x42ff0000
++CONFIG_CMD_UUID=y
++CONFIG_CMD_HASH=y
++CONFIG_CMD_SMC=y
++CONFIG_EFI_PARTITION=y
++CONFIG_PARTITION_TYPE_GUID=y
++CONFIG_CMD_EXT4=y
++CONFIG_CMD_FAT=y
++CONFIG_CMD_FS_GENERIC=y
++CONFIG_CMD_FS_UUID=y
++CONFIG_CMD_UBI=y
++CONFIG_CMD_UBI_RENAME=y
++CONFIG_OF_EMBED=y
++CONFIG_ENV_OVERWRITE=y
++CONFIG_ENV_IS_IN_MMC=y
++CONFIG_SYS_REDUNDAND_ENVIRONMENT=y
++CONFIG_SYS_RELOC_GD_ENV_ADDR=y
++CONFIG_USE_DEFAULT_ENV_FILE=y
++CONFIG_DEFAULT_ENV_FILE="bananapi_bpi-r4-lite_emmc_env"
++CONFIG_ENV_VARS_UBOOT_RUNTIME_CONFIG=y
++CONFIG_VERSION_VARIABLE=y
++CONFIG_NET_RANDOM_ETHADDR=y
++CONFIG_NETCONSOLE=y
++CONFIG_USE_IPADDR=y
++CONFIG_IPADDR="192.168.1.1"
++CONFIG_USE_SERVERIP=y
++CONFIG_SERVERIP="192.168.1.2"
++CONFIG_REGMAP=y
++CONFIG_SYSCON=y
++CONFIG_SCSI_AHCI=y
++CONFIG_AHCI_PCI=y
++CONFIG_MTK_AHCI=y
++CONFIG_BUTTON=y
++CONFIG_BUTTON_GPIO=y
++CONFIG_CLK=y
++CONFIG_GPIO_HOG=y
++CONFIG_LED=y
++CONFIG_LED_BLINK=y
++CONFIG_LED_GPIO=y
++CONFIG_SUPPORT_EMMC_BOOT=y
++CONFIG_DM_I2C=y
++CONFIG_SYS_I2C_MTK=y
++CONFIG_MMC_HS200_SUPPORT=y
++CONFIG_MMC_MTK=y
++CONFIG_MTD=y
++CONFIG_DM_MTD=y
++CONFIG_MTD_SPI_NAND=y
++CONFIG_DM_SPI_FLASH=y
++CONFIG_SPI_FLASH_SFDP_SUPPORT=y
++CONFIG_SPI_FLASH_ATMEL=y
++CONFIG_SPI_FLASH_EON=y
++CONFIG_SPI_FLASH_GIGADEVICE=y
++CONFIG_SPI_FLASH_ISSI=y
++CONFIG_SPI_FLASH_MACRONIX=y
++CONFIG_SPI_FLASH_PUYA=y
++CONFIG_SPI_FLASH_SILICONKAISER=y
++CONFIG_SPI_FLASH_SPANSION=y
++CONFIG_SPI_FLASH_STMICRO=y
++CONFIG_SPI_FLASH_WINBOND=y
++CONFIG_SPI_FLASH_XMC=y
++CONFIG_SPI_FLASH_XTX=y
++CONFIG_SPI_FLASH_ZBIT=y
++# CONFIG_SPI_FLASH_USE_4K_SECTORS is not set
++CONFIG_SPI_FLASH_MTD=y
++CONFIG_MTD_UBI_FASTMAP=y
++CONFIG_PHY_ETHERNET_ID=y
++CONFIG_MEDIATEK_ETH=y
++CONFIG_PCIE_MEDIATEK=y
++CONFIG_PHY=y
++CONFIG_PHY_MTK_TPHY=y
++CONFIG_PINCTRL=y
++CONFIG_PINCONF=y
++CONFIG_PINCTRL_MT7987=y
++CONFIG_POWER_DOMAIN=y
++CONFIG_MTK_POWER_DOMAIN=y
++CONFIG_DM_REGULATOR=y
++CONFIG_DM_REGULATOR_FIXED=y
++CONFIG_DM_REGULATOR_GPIO=y
++CONFIG_DM_PWM=y
++CONFIG_PWM_MTK=y
++CONFIG_RAM=y
++CONFIG_SCSI=y
++CONFIG_DM_SERIAL=y
++CONFIG_MTK_SERIAL=y
++CONFIG_SPI=y
++CONFIG_DM_SPI=y
++CONFIG_MTK_SPIM=y
++CONFIG_USB=y
++CONFIG_USB_XHCI_HCD=y
++CONFIG_USB_XHCI_MTK=y
++CONFIG_USB_STORAGE=y
++CONFIG_ZSTD=y
++CONFIG_HEXDUMP=y
++CONFIG_LMB_MAX_REGIONS=64
+diff -aurN a/configs/mt7987a_bananapi_bpi-r4-lite-sdmmc_defconfig b/configs/mt7987a_bananapi_bpi-r4-lite-sdmmc_defconfig
+--- a/configs/mt7987a_bananapi_bpi-r4-lite-sdmmc_defconfig	1970-01-01 00:00:00.000000000 +0000
++++ b/configs/mt7987a_bananapi_bpi-r4-lite-sdmmc_defconfig	2025-06-28 10:53:30.000000000 +0000
+@@ -0,0 +1,158 @@
++CONFIG_ARM=y
++CONFIG_SYS_HAS_NONCACHED_MEMORY=y
++CONFIG_POSITION_INDEPENDENT=y
++CONFIG_ARCH_MEDIATEK=y
++CONFIG_TEXT_BASE=0x41e00000
++CONFIG_SYS_MALLOC_F_LEN=0x4000
++CONFIG_NR_DRAM_BANKS=1
++CONFIG_ENV_SIZE=0x40000
++CONFIG_ENV_OFFSET=0x400000
++CONFIG_DEFAULT_DEVICE_TREE="mt7987a-bananapi_bpi-r4-lite-sd"
++CONFIG_OF_LIBFDT_OVERLAY=y
++CONFIG_TARGET_MT7987=y
++CONFIG_PRE_CON_BUF_ADDR=0x4007EF00
++CONFIG_DEBUG_UART_BASE=0x11000000
++CONFIG_DEBUG_UART_CLOCK=40000000
++CONFIG_ENV_OFFSET_REDUND=0x440000
++CONFIG_SYS_LOAD_ADDR=0x48000000
++CONFIG_PCI=y
++CONFIG_DEBUG_UART=y
++CONFIG_AHCI=y
++CONFIG_FIT=y
++CONFIG_BOOTDELAY=30
++CONFIG_AUTOBOOT_KEYED=y
++CONFIG_AUTOBOOT_MENU_SHOW=y
++CONFIG_OF_SYSTEM_SETUP=y
++CONFIG_DEFAULT_FDT_FILE="mediatek/mt7987a-bananapi_bpi-r4-lite-sd.dtb"
++CONFIG_SYS_CBSIZE=512
++CONFIG_SYS_PBSIZE=1049
++CONFIG_LOGLEVEL=7
++CONFIG_PRE_CONSOLE_BUFFER=y
++CONFIG_LOG=y
++# CONFIG_BOARD_LATE_INIT is not set
++CONFIG_HUSH_PARSER=y
++CONFIG_SYS_PROMPT="MT7987> "
++CONFIG_CMD_CPU=y
++CONFIG_CMD_LICENSE=y
++# CONFIG_CMD_BOOTEFI_BOOTMGR is not set
++CONFIG_CMD_BOOTMENU=y
++CONFIG_CMD_ASKENV=y
++CONFIG_CMD_ERASEENV=y
++CONFIG_CMD_ENV_FLAGS=y
++CONFIG_CMD_STRINGS=y
++CONFIG_CMD_DM=y
++CONFIG_CMD_GPIO=y
++CONFIG_CMD_PWM=y
++CONFIG_CMD_I2C=y
++CONFIG_CMD_GPT=y
++CONFIG_CMD_MMC=y
++CONFIG_CMD_MTD=y
++CONFIG_CMD_PART=y
++CONFIG_CMD_PCI=y
++CONFIG_CMD_SF_TEST=y
++CONFIG_CMD_USB=y
++CONFIG_CMD_DHCP=y
++CONFIG_CMD_TFTPSRV=y
++CONFIG_CMD_RARP=y
++CONFIG_CMD_PING=y
++CONFIG_CMD_CDP=y
++CONFIG_CMD_SNTP=y
++CONFIG_CMD_DNS=y
++CONFIG_CMD_LINK_LOCAL=y
++CONFIG_CMD_PXE=y
++CONFIG_CMD_CACHE=y
++CONFIG_CMD_PSTORE=y
++CONFIG_CMD_PSTORE_MEM_ADDR=0x42ff0000
++CONFIG_CMD_UUID=y
++CONFIG_CMD_HASH=y
++CONFIG_CMD_SMC=y
++CONFIG_EFI_PARTITION=y
++CONFIG_PARTITION_TYPE_GUID=y
++CONFIG_CMD_EXT4=y
++CONFIG_CMD_FAT=y
++CONFIG_CMD_FS_GENERIC=y
++CONFIG_CMD_FS_UUID=y
++CONFIG_CMD_UBI=y
++CONFIG_CMD_UBI_RENAME=y
++CONFIG_OF_EMBED=y
++CONFIG_ENV_OVERWRITE=y
++CONFIG_ENV_IS_IN_MMC=y
++CONFIG_SYS_REDUNDAND_ENVIRONMENT=y
++CONFIG_SYS_RELOC_GD_ENV_ADDR=y
++CONFIG_USE_DEFAULT_ENV_FILE=y
++CONFIG_DEFAULT_ENV_FILE="bananapi_bpi-r4-lite_sdmmc_env"
++CONFIG_ENV_VARS_UBOOT_RUNTIME_CONFIG=y
++CONFIG_VERSION_VARIABLE=y
++CONFIG_NET_RANDOM_ETHADDR=y
++CONFIG_NETCONSOLE=y
++CONFIG_USE_IPADDR=y
++CONFIG_IPADDR="192.168.1.1"
++CONFIG_USE_SERVERIP=y
++CONFIG_SERVERIP="192.168.1.2"
++CONFIG_REGMAP=y
++CONFIG_SYSCON=y
++CONFIG_SCSI_AHCI=y
++CONFIG_AHCI_PCI=y
++CONFIG_MTK_AHCI=y
++CONFIG_BUTTON=y
++CONFIG_BUTTON_GPIO=y
++CONFIG_CLK=y
++CONFIG_GPIO_HOG=y
++CONFIG_LED=y
++CONFIG_LED_BLINK=y
++CONFIG_LED_GPIO=y
++CONFIG_SUPPORT_EMMC_BOOT=y
++CONFIG_DM_I2C=y
++CONFIG_SYS_I2C_MTK=y
++CONFIG_MMC_HS200_SUPPORT=y
++CONFIG_MMC_MTK=y
++CONFIG_MTD=y
++CONFIG_DM_MTD=y
++CONFIG_MTD_SPI_NAND=y
++CONFIG_DM_SPI_FLASH=y
++CONFIG_SPI_FLASH_SFDP_SUPPORT=y
++CONFIG_SPI_FLASH_ATMEL=y
++CONFIG_SPI_FLASH_EON=y
++CONFIG_SPI_FLASH_GIGADEVICE=y
++CONFIG_SPI_FLASH_ISSI=y
++CONFIG_SPI_FLASH_MACRONIX=y
++CONFIG_SPI_FLASH_PUYA=y
++CONFIG_SPI_FLASH_SILICONKAISER=y
++CONFIG_SPI_FLASH_SPANSION=y
++CONFIG_SPI_FLASH_STMICRO=y
++CONFIG_SPI_FLASH_WINBOND=y
++CONFIG_SPI_FLASH_XMC=y
++CONFIG_SPI_FLASH_XTX=y
++CONFIG_SPI_FLASH_ZBIT=y
++# CONFIG_SPI_FLASH_USE_4K_SECTORS is not set
++CONFIG_SPI_FLASH_MTD=y
++CONFIG_MTD_UBI_FASTMAP=y
++CONFIG_PHY_ETHERNET_ID=y
++CONFIG_MEDIATEK_ETH=y
++CONFIG_PCIE_MEDIATEK=y
++CONFIG_PHY=y
++CONFIG_PHY_MTK_TPHY=y
++CONFIG_PINCTRL=y
++CONFIG_PINCONF=y
++CONFIG_PINCTRL_MT7987=y
++CONFIG_POWER_DOMAIN=y
++CONFIG_MTK_POWER_DOMAIN=y
++CONFIG_DM_REGULATOR=y
++CONFIG_DM_REGULATOR_FIXED=y
++CONFIG_DM_REGULATOR_GPIO=y
++CONFIG_DM_PWM=y
++CONFIG_PWM_MTK=y
++CONFIG_RAM=y
++CONFIG_SCSI=y
++CONFIG_DM_SERIAL=y
++CONFIG_MTK_SERIAL=y
++CONFIG_SPI=y
++CONFIG_DM_SPI=y
++CONFIG_MTK_SPIM=y
++CONFIG_USB=y
++CONFIG_USB_XHCI_HCD=y
++CONFIG_USB_XHCI_MTK=y
++CONFIG_USB_STORAGE=y
++CONFIG_ZSTD=y
++CONFIG_HEXDUMP=y
++CONFIG_LMB_MAX_REGIONS=64
+diff -aurN a/configs/mt7987a_bananapi_bpi-r4-lite-snand_defconfig b/configs/mt7987a_bananapi_bpi-r4-lite-snand_defconfig
+--- a/configs/mt7987a_bananapi_bpi-r4-lite-snand_defconfig	1970-01-01 00:00:00.000000000 +0000
++++ b/configs/mt7987a_bananapi_bpi-r4-lite-snand_defconfig	2025-06-28 10:53:49.000000000 +0000
+@@ -0,0 +1,158 @@
++CONFIG_ARM=y
++CONFIG_SYS_HAS_NONCACHED_MEMORY=y
++CONFIG_POSITION_INDEPENDENT=y
++CONFIG_ARCH_MEDIATEK=y
++CONFIG_TEXT_BASE=0x41e00000
++CONFIG_SYS_MALLOC_F_LEN=0x4000
++CONFIG_NR_DRAM_BANKS=1
++CONFIG_DEFAULT_DEVICE_TREE="mt7987a-bananapi_bpi-r4-lite-spim-nand"
++CONFIG_OF_LIBFDT_OVERLAY=y
++CONFIG_TARGET_MT7987=y
++CONFIG_PRE_CON_BUF_ADDR=0x4007EF00
++CONFIG_DEBUG_UART_BASE=0x11000000
++CONFIG_DEBUG_UART_CLOCK=40000000
++CONFIG_SYS_LOAD_ADDR=0x48000000
++CONFIG_PCI=y
++CONFIG_DEBUG_UART=y
++CONFIG_AHCI=y
++CONFIG_FIT=y
++CONFIG_BOOTDELAY=30
++CONFIG_AUTOBOOT_KEYED=y
++CONFIG_AUTOBOOT_MENU_SHOW=y
++CONFIG_OF_SYSTEM_SETUP=y
++CONFIG_DEFAULT_FDT_FILE="mediatek/mt7987a-bananapi_bpi-r4-lite-spim-nand.dtb"
++CONFIG_SYS_CBSIZE=512
++CONFIG_SYS_PBSIZE=1049
++CONFIG_LOGLEVEL=7
++CONFIG_PRE_CONSOLE_BUFFER=y
++CONFIG_LOG=y
++# CONFIG_BOARD_LATE_INIT is not set
++CONFIG_HUSH_PARSER=y
++CONFIG_SYS_PROMPT="MT7987> "
++CONFIG_CMD_CPU=y
++CONFIG_CMD_LICENSE=y
++# CONFIG_CMD_BOOTEFI_BOOTMGR is not set
++CONFIG_CMD_BOOTMENU=y
++CONFIG_CMD_ASKENV=y
++CONFIG_CMD_ERASEENV=y
++CONFIG_CMD_ENV_FLAGS=y
++CONFIG_CMD_STRINGS=y
++CONFIG_CMD_DM=y
++CONFIG_CMD_GPIO=y
++CONFIG_CMD_PWM=y
++CONFIG_CMD_I2C=y
++CONFIG_CMD_GPT=y
++CONFIG_CMD_MMC=y
++CONFIG_CMD_MTD=y
++CONFIG_CMD_PART=y
++CONFIG_CMD_PCI=y
++CONFIG_CMD_SF_TEST=y
++CONFIG_CMD_USB=y
++CONFIG_CMD_DHCP=y
++CONFIG_CMD_TFTPSRV=y
++CONFIG_CMD_RARP=y
++CONFIG_CMD_PING=y
++CONFIG_CMD_CDP=y
++CONFIG_CMD_SNTP=y
++CONFIG_CMD_DNS=y
++CONFIG_CMD_LINK_LOCAL=y
++CONFIG_CMD_PXE=y
++CONFIG_CMD_CACHE=y
++CONFIG_CMD_PSTORE=y
++CONFIG_CMD_PSTORE_MEM_ADDR=0x42ff0000
++CONFIG_CMD_UUID=y
++CONFIG_CMD_HASH=y
++CONFIG_CMD_SMC=y
++CONFIG_EFI_PARTITION=y
++CONFIG_PARTITION_TYPE_GUID=y
++CONFIG_CMD_EXT4=y
++CONFIG_CMD_FAT=y
++CONFIG_CMD_FS_GENERIC=y
++CONFIG_CMD_FS_UUID=y
++CONFIG_CMD_UBI=y
++CONFIG_CMD_UBI_RENAME=y
++CONFIG_OF_EMBED=y
++CONFIG_ENV_OVERWRITE=y
++CONFIG_ENV_IS_IN_UBI=y
++CONFIG_SYS_REDUNDAND_ENVIRONMENT=y
++CONFIG_ENV_UBI_PART="ubi"
++CONFIG_ENV_UBI_VOLUME="ubootenv"
++CONFIG_ENV_UBI_VOLUME_REDUND="ubootenv2"
++CONFIG_SYS_RELOC_GD_ENV_ADDR=y
++CONFIG_USE_DEFAULT_ENV_FILE=y
++CONFIG_DEFAULT_ENV_FILE="bananapi_bpi-r4-lite_snand_env"
++CONFIG_ENV_VARS_UBOOT_RUNTIME_CONFIG=y
++CONFIG_VERSION_VARIABLE=y
++CONFIG_NET_RANDOM_ETHADDR=y
++CONFIG_NETCONSOLE=y
++CONFIG_USE_IPADDR=y
++CONFIG_IPADDR="192.168.1.1"
++CONFIG_USE_SERVERIP=y
++CONFIG_SERVERIP="192.168.1.2"
++CONFIG_REGMAP=y
++CONFIG_SYSCON=y
++CONFIG_SCSI_AHCI=y
++CONFIG_AHCI_PCI=y
++CONFIG_MTK_AHCI=y
++CONFIG_BUTTON=y
++CONFIG_BUTTON_GPIO=y
++CONFIG_CLK=y
++CONFIG_GPIO_HOG=y
++CONFIG_LED=y
++CONFIG_LED_BLINK=y
++CONFIG_LED_GPIO=y
++CONFIG_SUPPORT_EMMC_BOOT=y
++CONFIG_DM_I2C=y
++CONFIG_SYS_I2C_MTK=y
++CONFIG_MMC_HS200_SUPPORT=y
++CONFIG_MMC_MTK=y
++CONFIG_MTD=y
++CONFIG_DM_MTD=y
++CONFIG_MTD_SPI_NAND=y
++CONFIG_DM_SPI_FLASH=y
++CONFIG_SPI_FLASH_SFDP_SUPPORT=y
++CONFIG_SPI_FLASH_ATMEL=y
++CONFIG_SPI_FLASH_EON=y
++CONFIG_SPI_FLASH_GIGADEVICE=y
++CONFIG_SPI_FLASH_ISSI=y
++CONFIG_SPI_FLASH_MACRONIX=y
++CONFIG_SPI_FLASH_PUYA=y
++CONFIG_SPI_FLASH_SILICONKAISER=y
++CONFIG_SPI_FLASH_SPANSION=y
++CONFIG_SPI_FLASH_STMICRO=y
++CONFIG_SPI_FLASH_WINBOND=y
++CONFIG_SPI_FLASH_XMC=y
++CONFIG_SPI_FLASH_XTX=y
++CONFIG_SPI_FLASH_ZBIT=y
++# CONFIG_SPI_FLASH_USE_4K_SECTORS is not set
++CONFIG_SPI_FLASH_MTD=y
++CONFIG_MTD_UBI_FASTMAP=y
++CONFIG_PHY_ETHERNET_ID=y
++CONFIG_MEDIATEK_ETH=y
++CONFIG_PCIE_MEDIATEK=y
++CONFIG_PHY=y
++CONFIG_PHY_MTK_TPHY=y
++CONFIG_PINCTRL=y
++CONFIG_PINCONF=y
++CONFIG_PINCTRL_MT7987=y
++CONFIG_POWER_DOMAIN=y
++CONFIG_MTK_POWER_DOMAIN=y
++CONFIG_DM_REGULATOR=y
++CONFIG_DM_REGULATOR_FIXED=y
++CONFIG_DM_REGULATOR_GPIO=y
++CONFIG_DM_PWM=y
++CONFIG_PWM_MTK=y
++CONFIG_RAM=y
++CONFIG_SCSI=y
++CONFIG_DM_SERIAL=y
++CONFIG_MTK_SERIAL=y
++CONFIG_SPI=y
++CONFIG_DM_SPI=y
++CONFIG_MTK_SPIM=y
++CONFIG_USB=y
++CONFIG_USB_XHCI_HCD=y
++CONFIG_USB_XHCI_MTK=y
++CONFIG_USB_STORAGE=y
++CONFIG_ZSTD=y
++CONFIG_HEXDUMP=y
++CONFIG_LMB_MAX_REGIONS=64
+diff -aurN a/configs/mt7987a_bananapi_bpi-r4-lite-snor_defconfig b/configs/mt7987a_bananapi_bpi-r4-lite-snor_defconfig
+--- a/configs/mt7987a_bananapi_bpi-r4-lite-snor_defconfig	1970-01-01 00:00:00.000000000 +0000
++++ b/configs/mt7987a_bananapi_bpi-r4-lite-snor_defconfig	2025-07-01 11:49:59.472423115 +0000
+@@ -0,0 +1,161 @@
++CONFIG_ARM=y
++CONFIG_SYS_HAS_NONCACHED_MEMORY=y
++CONFIG_POSITION_INDEPENDENT=y
++CONFIG_ARCH_MEDIATEK=y
++CONFIG_TEXT_BASE=0x41e00000
++CONFIG_SYS_MALLOC_F_LEN=0x4000
++CONFIG_NR_DRAM_BANKS=1
++CONFIG_DEFAULT_DEVICE_TREE="mt7987a-bananapi_bpi-r4-lite-snor"
++CONFIG_OF_LIBFDT_OVERLAY=y
++CONFIG_TARGET_MT7987=y
++CONFIG_PRE_CON_BUF_ADDR=0x4007EF00
++CONFIG_DEBUG_UART_BASE=0x11000000
++CONFIG_DEBUG_UART_CLOCK=40000000
++CONFIG_SYS_LOAD_ADDR=0x48000000
++CONFIG_PCI=y
++CONFIG_DEBUG_UART=y
++CONFIG_AHCI=y
++CONFIG_FIT=y
++CONFIG_BOOTDELAY=30
++CONFIG_AUTOBOOT_KEYED=y
++CONFIG_AUTOBOOT_MENU_SHOW=y
++CONFIG_OF_SYSTEM_SETUP=y
++CONFIG_DEFAULT_FDT_FILE="mediatek/mt7987a-bananapi_bpi-r4-lite-snor.dtb"
++CONFIG_SYS_CBSIZE=512
++CONFIG_SYS_PBSIZE=1049
++CONFIG_LOGLEVEL=7
++CONFIG_PRE_CONSOLE_BUFFER=y
++CONFIG_LOG=y
++# CONFIG_BOARD_LATE_INIT is not set
++CONFIG_HUSH_PARSER=y
++CONFIG_SYS_PROMPT="MT7987> "
++CONFIG_CMD_CPU=y
++CONFIG_CMD_LICENSE=y
++# CONFIG_CMD_BOOTEFI_BOOTMGR is not set
++CONFIG_CMD_BOOTMENU=y
++CONFIG_CMD_ASKENV=y
++CONFIG_CMD_ERASEENV=y
++CONFIG_CMD_ENV_FLAGS=y
++CONFIG_CMD_STRINGS=y
++CONFIG_CMD_DM=y
++CONFIG_CMD_GPIO=y
++CONFIG_CMD_PWM=y
++CONFIG_CMD_I2C=y
++CONFIG_CMD_GPT=y
++CONFIG_CMD_MMC=y
++CONFIG_CMD_MTD=y
++CONFIG_CMD_PART=y
++CONFIG_CMD_PCI=y
++CONFIG_CMD_SF_TEST=y
++CONFIG_CMD_USB=y
++CONFIG_CMD_DHCP=y
++CONFIG_CMD_TFTPSRV=y
++CONFIG_CMD_RARP=y
++CONFIG_CMD_PING=y
++CONFIG_CMD_CDP=y
++CONFIG_CMD_SNTP=y
++CONFIG_CMD_DNS=y
++CONFIG_CMD_LINK_LOCAL=y
++CONFIG_CMD_PXE=y
++CONFIG_CMD_CACHE=y
++CONFIG_CMD_PSTORE=y
++CONFIG_CMD_PSTORE_MEM_ADDR=0x42ff0000
++CONFIG_CMD_UUID=y
++CONFIG_CMD_HASH=y
++CONFIG_CMD_SMC=y
++CONFIG_EFI_PARTITION=y
++CONFIG_PARTITION_TYPE_GUID=y
++CONFIG_CMD_EXT4=y
++CONFIG_CMD_FAT=y
++CONFIG_CMD_FS_GENERIC=y
++CONFIG_CMD_FS_UUID=y
++CONFIG_CMD_UBI=y
++CONFIG_CMD_UBI_RENAME=y
++CONFIG_OF_EMBED=y
++CONFIG_ENV_OVERWRITE=y
++CONFIG_MTDIDS_DEFAULT="nor0=nor0"
++CONFIG_MTDPARTS_DEFAULT="nor0:320k(bl2),64k(u-boot-env),2048k(factory),1280k(fip),-(firmware)"
++CONFIG_ENV_IS_IN_MTD=y
++CONFIG_ENV_MTD_NAME="u-boot-env"
++CONFIG_ENV_SIZE=0x10000
++CONFIG_ENV_OFFSET=0x0
++CONFIG_ENV_SIZE_REDUND=0
++CONFIG_SYS_RELOC_GD_ENV_ADDR=y
++CONFIG_USE_DEFAULT_ENV_FILE=y
++CONFIG_DEFAULT_ENV_FILE="bananapi_bpi-r4-lite_snor_env"
++CONFIG_ENV_VARS_UBOOT_RUNTIME_CONFIG=y
++CONFIG_VERSION_VARIABLE=y
++CONFIG_NET_RANDOM_ETHADDR=y
++CONFIG_NETCONSOLE=y
++CONFIG_USE_IPADDR=y
++CONFIG_IPADDR="192.168.1.1"
++CONFIG_USE_SERVERIP=y
++CONFIG_SERVERIP="192.168.1.2"
++CONFIG_REGMAP=y
++CONFIG_SYSCON=y
++CONFIG_SCSI_AHCI=y
++CONFIG_AHCI_PCI=y
++CONFIG_MTK_AHCI=y
++CONFIG_BUTTON=y
++CONFIG_BUTTON_GPIO=y
++CONFIG_CLK=y
++CONFIG_GPIO_HOG=y
++CONFIG_LED=y
++CONFIG_LED_BLINK=y
++CONFIG_LED_GPIO=y
++CONFIG_SUPPORT_EMMC_BOOT=y
++CONFIG_DM_I2C=y
++CONFIG_SYS_I2C_MTK=y
++CONFIG_MMC_HS200_SUPPORT=y
++CONFIG_MMC_MTK=y
++CONFIG_MTD_PARTITIONS=y
++CONFIG_MTD=y
++CONFIG_DM_MTD=y
++CONFIG_MTD_SPI_NAND=y
++CONFIG_DM_SPI_FLASH=y
++CONFIG_SPI_FLASH_SFDP_SUPPORT=y
++CONFIG_SPI_FLASH_ATMEL=y
++CONFIG_SPI_FLASH_EON=y
++CONFIG_SPI_FLASH_GIGADEVICE=y
++CONFIG_SPI_FLASH_ISSI=y
++CONFIG_SPI_FLASH_MACRONIX=y
++CONFIG_SPI_FLASH_PUYA=y
++CONFIG_SPI_FLASH_SILICONKAISER=y
++CONFIG_SPI_FLASH_SPANSION=y
++CONFIG_SPI_FLASH_STMICRO=y
++CONFIG_SPI_FLASH_WINBOND=y
++CONFIG_SPI_FLASH_XMC=y
++CONFIG_SPI_FLASH_XTX=y
++CONFIG_SPI_FLASH_ZBIT=y
++# CONFIG_SPI_FLASH_USE_4K_SECTORS is not set
++CONFIG_SPI_FLASH_MTD=y
++CONFIG_MTD_UBI_FASTMAP=y
++CONFIG_PHY_ETHERNET_ID=y
++CONFIG_MEDIATEK_ETH=y
++CONFIG_PCIE_MEDIATEK=y
++CONFIG_PHY=y
++CONFIG_PHY_MTK_TPHY=y
++CONFIG_PINCTRL=y
++CONFIG_PINCONF=y
++CONFIG_PINCTRL_MT7987=y
++CONFIG_POWER_DOMAIN=y
++CONFIG_MTK_POWER_DOMAIN=y
++CONFIG_DM_REGULATOR=y
++CONFIG_DM_REGULATOR_FIXED=y
++CONFIG_DM_REGULATOR_GPIO=y
++CONFIG_DM_PWM=y
++CONFIG_PWM_MTK=y
++CONFIG_RAM=y
++CONFIG_SCSI=y
++CONFIG_DM_SERIAL=y
++CONFIG_MTK_SERIAL=y
++CONFIG_SPI=y
++CONFIG_DM_SPI=y
++CONFIG_MTK_SPIM=y
++CONFIG_USB=y
++CONFIG_USB_XHCI_HCD=y
++CONFIG_USB_XHCI_MTK=y
++CONFIG_USB_STORAGE=y
++CONFIG_ZSTD=y
++CONFIG_HEXDUMP=y
++CONFIG_LMB_MAX_REGIONS=64

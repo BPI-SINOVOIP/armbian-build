@@ -45,6 +45,184 @@ function create_new_rootfs_cache_tarball() {
 	display_alert "rootfs cache created" "${cache_fname} [${cache_size}]" "info"
 }
 
+function prepare_resolute_gnu_coreutils_chroot_path() {
+	if [[ "${DISTRIBUTION}" != "Ubuntu" || "${RELEASE}" != "resolute" ]]; then
+		return 0
+	fi
+	if [[ ! -x "${SDCARD}/usr/bin/gnuenv" ]]; then
+		return 0
+	fi
+
+	# Ubuntu 26.04 defaults coreutils to rust-coreutils. Some tools panic under
+	# qemu-user during image creation, so prefer GNU-prefixed binaries while
+	# executing chroot build commands.
+	local gnu_path="${SDCARD}/usr/local/lib/armbian-gnu-coreutils"
+	display_alert "Preparing GNU coreutils shim" "Ubuntu resolute chroot PATH" "info"
+	mkdir -p "${gnu_path}"
+
+	local gnu_bin gnu_name plain_name
+	while IFS= read -r gnu_bin; do
+		gnu_name="$(basename "${gnu_bin}")"
+		plain_name="${gnu_name#gnu}"
+		[[ -n "${plain_name}" && "${plain_name}" != "${gnu_name}" ]] || continue
+		ln -sfn "/usr/bin/${gnu_name}" "${gnu_path}/${plain_name}"
+	done < <(find "${SDCARD}/usr/bin" -maxdepth 1 -type f -name 'gnu*' 2>/dev/null)
+
+	# A few tiny coreutils helpers are still prone to qemu-user crashes on
+	# Ubuntu resolute armhf during package postinst scripts. Keep these as
+	# shell wrappers so ucf/openssh can finish configuring reliably.
+	cat > "${gnu_path}/basename" <<'EOF'
+#!/bin/sh
+suffix=
+multiple=no
+zero=no
+while [ "$#" -gt 0 ]; do
+	case "$1" in
+		--)
+			shift
+			break
+			;;
+		-a|--multiple)
+			multiple=yes
+			shift
+			;;
+		-s|--suffix)
+			[ "$#" -ge 2 ] || {
+				echo "basename: option requires an argument -- s" >&2
+				exit 1
+			}
+			suffix="$2"
+			multiple=yes
+			shift 2
+			;;
+		--suffix=*)
+			suffix="${1#*=}"
+			multiple=yes
+			shift
+			;;
+		-z|--zero)
+			zero=yes
+			shift
+			;;
+		-*)
+			echo "basename: invalid option -- ${1#-}" >&2
+			exit 1
+			;;
+		*)
+			break
+			;;
+	esac
+done
+
+if [ "$#" -lt 1 ]; then
+	echo "basename: missing operand" >&2
+	exit 1
+fi
+
+emit_name() {
+	path="$1"
+	while [ "${path%/}" != "$path" ] && [ "$path" != "/" ]; do
+		path="${path%/}"
+	done
+	if [ -z "$path" ]; then
+		name="/"
+	else
+		name="${path##*/}"
+		[ -n "$name" ] || name="/"
+	fi
+	if [ -n "$suffix" ] && [ "$name" != "$suffix" ]; then
+		case "$name" in
+			*"$suffix") name="${name%"$suffix"}" ;;
+		esac
+	fi
+	if [ "$zero" = yes ]; then
+		printf '%s\0' "$name"
+	else
+		printf '%s\n' "$name"
+	fi
+}
+
+if [ "$multiple" = no ]; then
+	if [ "$#" -ge 2 ]; then
+		suffix="$2"
+	fi
+	emit_name "$1"
+	exit 0
+fi
+
+for path do
+	emit_name "$path"
+done
+EOF
+	chmod 0755 "${gnu_path}/basename"
+
+	cat > "${gnu_path}/dirname" <<'EOF'
+#!/bin/sh
+zero=no
+while [ "$#" -gt 0 ]; do
+	case "$1" in
+		--)
+			shift
+			break
+			;;
+		-z|--zero)
+			zero=yes
+			shift
+			;;
+		-*)
+			echo "dirname: invalid option -- ${1#-}" >&2
+			exit 1
+			;;
+		*)
+			break
+			;;
+	esac
+done
+
+if [ "$#" -lt 1 ]; then
+	echo "dirname: missing operand" >&2
+	exit 1
+fi
+
+emit_dir() {
+	path="$1"
+	while [ "${path%/}" != "$path" ] && [ "$path" != "/" ]; do
+		path="${path%/}"
+	done
+	if [ -z "$path" ]; then
+		dir="/"
+	else
+		case "$path" in
+			*/*)
+				dir="${path%/*}"
+				while [ "${dir%/}" != "$dir" ] && [ "$dir" != "/" ]; do
+					dir="${dir%/}"
+				done
+				[ -n "$dir" ] || dir="/"
+				;;
+			*)
+				dir="."
+				;;
+		esac
+	fi
+	if [ "$zero" = yes ]; then
+		printf '%s\0' "$dir"
+	else
+		printf '%s\n' "$dir"
+	fi
+}
+
+for path do
+	emit_dir "$path"
+done
+EOF
+	chmod 0755 "${gnu_path}/dirname"
+
+	if [[ -x "${SDCARD}/usr/sbin/gnuchroot" ]]; then
+		ln -sfn "/usr/sbin/gnuchroot" "${gnu_path}/chroot"
+	fi
+}
+
 # create_new_rootfs_cache_via_debootstrap populates a root FS into
 # SDCARD using mmdebstrap configures locales and apt sources, installs
 # additional packages (and optionally desktop packages), performs chroot
@@ -88,6 +266,12 @@ function create_new_rootfs_cache_via_debootstrap() {
 	debootstrap_bin="${debootstrap_wanted_dir}/mmdebstrap"
 
 	run_host_command_logged chmod a+x "${debootstrap_bin}"
+	if [[ "${DISTRIBUTION}" == "Ubuntu" && "${RELEASE}" == "resolute" ]]; then
+		# Ubuntu 26.04 ships /usr/bin/env from rust-coreutils by default.
+		# Under qemu-user it can panic while mmdebstrap asks apt to run dpkg via
+		# env. Use the GNU coreutils variant that is also present in resolute.
+		sed -i "s#Dir::Bin::dpkg=env#Dir::Bin::dpkg=/usr/bin/gnuenv#g" "${debootstrap_bin}"
+	fi
 	display_alert "mmdebstrap version" "'${debootstrap_version}' for ${debootstrap_bin}" "info"
 
 	display_alert "Installing base system with ${#AGGREGATED_PACKAGES_DEBOOTSTRAP[@]} packages" "Stage 1/1" "info"
@@ -100,6 +284,11 @@ function create_new_rootfs_cache_via_debootstrap() {
 		"'--components=${AGGREGATED_DEBOOTSTRAP_COMPONENTS_COMMA}'" # from aggregation.py
 		"'--skip=check/empty'"                                      # skips check if the rootfs dir is empty at start
 	)
+	if ! dpkg-architecture -e "${ARCH}"; then
+		# Armbian 已在主機準備階段以 arch-test 驗證目標架構；略過 mmdebstrap
+		# 在容器內依賴 update-binfmts 資料庫的重複檢查，實際模擬仍會照常執行。
+		debootstrap_arguments+=("'--skip=check/qemu'")
+	fi
 
 	# Show mmdebstrap's per-package download/install progress when
 	# DEBUG=yes. Default (no flag) keeps the terse log; DEBUG builds
@@ -140,6 +329,13 @@ function create_new_rootfs_cache_via_debootstrap() {
 	# that don't belong to any extracted package.
 	mkdir -p "${SDCARD}/etc/apt/apt.conf.d"
 	echo 'APT::Sandbox::User "root";' > "${SDCARD}/etc/apt/apt.conf.d/99-armbian-sandbox"
+	cat > "${SDCARD}/etc/apt/apt.conf.d/99-armbian-no-contents-indexes" <<- EOF
+	Acquire::ForceIPv4 "true";
+	Acquire::IndexTargets::deb::Contents-deb::DefaultEnabled "false";
+	Acquire::IndexTargets::deb::Contents-deb-legacy::DefaultEnabled "false";
+	Acquire::IndexTargets::deb::Contents-udeb::DefaultEnabled "false";
+	Acquire::IndexTargets::deb-src::Contents-dsc::DefaultEnabled "false";
+	EOF
 
 	deploy_qemu_binary_to_chroot "${SDCARD}" "rootfs" # undeployed near the end of this function
 
@@ -150,6 +346,7 @@ function create_new_rootfs_cache_via_debootstrap() {
 	skip_target_check="yes" local_apt_deb_cache_prepare "for mmdebstrap" # just for size reference in logs
 
 	[[ ! -f "${SDCARD}/bin/bash" ]] && exit_with_error "mmdebstrap did not produce /bin/bash"
+	prepare_resolute_gnu_coreutils_chroot_path
 
 	# Done with mmdebstrap. Clean-up its litterbox.
 	display_alert "Cleaning up after mmdebstrap" "mmdebstrap cleanup" "info"

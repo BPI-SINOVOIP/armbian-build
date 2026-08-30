@@ -1,0 +1,69 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Banana Pi -BPI <lionwang@sinovoip.com.cn>
+Date: Wed, 26 Aug 2026 00:00:00 +0800
+Subject: [PATCH] BPI-M5-U-Boot-eMMC-25MHz-legacy
+
+部分 M5 批次搭配 Hynix eMMC 時，在 U-Boot 高速模式讀取大型檔案可能
+失敗。U-Boot 只負責可靠載入開機檔案，因此以 8-bit legacy 模式限制在
+25 MHz；Linux 仍可依自己的 DTB 使用已驗證的 100 MHz HS200 設定。
+
+Meson MMC 驅動同時讀取標準 max-frequency 與板級
+u-boot,legacy-mmc 屬性，讓降速範圍限於需要的板卡。
+
+Signed-off-by: Banana Pi -BPI <lionwang@sinovoip.com.cn>
+---
+ .../dts/meson-sm1-bananapi-m5-u-boot.dtsi    | 11 +++++++++++
+ drivers/mmc/meson_gx_mmc.c                   | 12 ++++++++++++
+ 2 files changed, 23 insertions(+)
+
+diff --git a/arch/arm/dts/meson-sm1-bananapi-m5-u-boot.dtsi b/arch/arm/dts/meson-sm1-bananapi-m5-u-boot.dtsi
+index a86fdb5668d3..1fdb1fac05a0 100644
+--- a/arch/arm/dts/meson-sm1-bananapi-m5-u-boot.dtsi
++++ b/arch/arm/dts/meson-sm1-bananapi-m5-u-boot.dtsi
+@@ -11,3 +11,14 @@ &ethmac {
+ 	snps,reset-delays-us = <0 10000 1000000>;
+ 	snps,reset-active-low;
+ };
++
++&sd_emmc_c {
++	/delete-property/ cap-mmc-highspeed;
++	/delete-property/ mmc-ddr-1_8v;
++	/delete-property/ mmc-hs200-1_8v;
++	bus-width = <8>;
++	no-mmc-hs400;
++	/* U-Boot 只需穩定載入檔案，Linux 另有較快的 DTB 設定。 */
++	u-boot,legacy-mmc;
++	max-frequency = <25000000>;
++};
+diff --git a/drivers/mmc/meson_gx_mmc.c b/drivers/mmc/meson_gx_mmc.c
+index 0825c0a2a838..e7d12e52dd2e 100644
+--- a/drivers/mmc/meson_gx_mmc.c
++++ b/drivers/mmc/meson_gx_mmc.c
+@@ -263,6 +263,7 @@ static int meson_mmc_probe(struct udevice *dev)
+ 	struct mmc_config *cfg = &pdata->cfg;
+ 	struct clk_bulk clocks;
+ 	uint32_t val;
++	u32 f_max;
+ 	int ret;
+ 
+ 	/* Enable the clocks feeding the MMC controller */
+@@ -280,6 +281,17 @@ static int meson_mmc_probe(struct udevice *dev)
+ 			MMC_MODE_HS_52MHz | MMC_MODE_HS;
+ 	cfg->f_min = DIV_ROUND_UP(SD_EMMC_CLKSRC_24M, CLK_MAX_DIV);
+ 	cfg->f_max = 100000000; /* 100 MHz */
++	if (!dev_read_u32(dev, "max-frequency", &f_max))
++		cfg->f_max = f_max;
++
++	/* 指定 legacy 模式的板卡不得進入高速、DDR、HS200 或 HS400。 */
++	if (dev_read_bool(dev, "u-boot,legacy-mmc")) {
++		cfg->host_caps &= ~(MMC_MODE_HS_52MHz | MMC_MODE_HS |
++				    MMC_MODE_DDR_52MHz | MMC_MODE_HS200 |
++				    MMC_MODE_HS400 |
++				    MMC_MODE_HS400_ES);
++	}
++
+ 	cfg->b_max = 511; /* max 512 - 1 blocks */
+ 	cfg->name = dev->name;
+ 
+-- 
+2.51.0

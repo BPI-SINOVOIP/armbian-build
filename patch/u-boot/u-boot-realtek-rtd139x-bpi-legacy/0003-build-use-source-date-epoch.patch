@@ -1,0 +1,16 @@
+diff --git a/u-boot-rtk/Makefile b/u-boot-rtk/Makefile
+index 0e9369a..1bc586e 100644
+--- a/u-boot-rtk/Makefile
++++ b/u-boot-rtk/Makefile
+@@ -1452,5 +1452,8 @@
+ define filechk_timestamp.h
+-	(LC_ALL=C date +'#define U_BOOT_DATE "%b %d %C%y"'; \
+-	LC_ALL=C date +'#define U_BOOT_TIME "%T"'; \
+-	LC_ALL=C date +'#define U_BOOT_TZ "%z"')
++	(LC_ALL=C date -u \
++		$(if $(SOURCE_DATE_EPOCH),-d "@$(SOURCE_DATE_EPOCH)") \
++		+'#define U_BOOT_DATE "%b %d %C%y"'; \
++	LC_ALL=C date -u $(if $(SOURCE_DATE_EPOCH),-d "@$(SOURCE_DATE_EPOCH)") \
++		+'#define U_BOOT_TIME "%T"'; \
++	echo '#define U_BOOT_TZ "+0000"')
+ endef

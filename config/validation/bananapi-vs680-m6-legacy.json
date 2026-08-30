@@ -1,0 +1,362 @@
+{
+  "schema_version": 1,
+  "candidate_branch": "legacy",
+  "kernel_family": "vs680",
+  "candidate_level": "L2 內部軟體候選",
+  "candidate_scope": "internal-l2",
+  "current_evidence_level": "L2",
+  "target_evidence_level": "L2",
+  "candidate_public_release_approved": false,
+  "public_release_allowed": false,
+  "hardware_validation_complete": false,
+  "hardware_claims_allowed": false,
+  "component_build_scope": [
+    "uboot",
+    "linux-image",
+    "linux-dtb"
+  ],
+  "component_build_exclusions": {
+    "atf": "公開來源未提供可對應此板啟動鏈的獨立 ATF 原始碼或建置流程",
+    "rootfs": "本候選準備任務禁止建立完整 rootfs 映像"
+  },
+  "component_build_completed": true,
+  "rootfs_image_built": true,
+  "full_image_built": true,
+  "full_rootfs_image_built": true,
+  "image_build_evidence": {
+    "status": "complete",
+    "evidence_level": "L2",
+    "full_rootfs_image_built": true,
+    "read_only_content_verified": true,
+    "hardware_tested": false,
+    "source_commit": "ce43f2a3fc93c49e28a4a57ba821b510461b4512",
+    "source_tree": "795fa3fde32fd94d2b41fe9b15c068b4f21263eb",
+    "verifier_commit": "ce43f2a3fc93c49e28a4a57ba821b510461b4512",
+    "source_contract_projection_sha256": "a30c565815b38169f3190253514c6034291d61a0c136ae1244d37eba0f72cb56",
+    "source_date_epoch": 1717001894,
+    "build_validation_config_sha256": "c717302a465e2d179cf4f6113095656672dacec4d0fd79ea9136b51039466880",
+    "verification_config_sha256": "c717302a465e2d179cf4f6113095656672dacec4d0fd79ea9136b51039466880",
+    "candidate_matrix_sha256": "87741b124788ac4db635a3ce0d325d7afb4a727a55a0107e4f2812842b1641d6",
+    "completion_status_sha256": "394e29f16d41b6a10d06a20fecdfc27df9e5b72e21d2deb27d428972a0e1b092",
+    "verification_manifest_sha256": "f80ff8bd179b363e7ae894b7245e0662e8c1fd54b0af84fe1c69dc24393329bf",
+    "uboot_payload_manifest_sha256": "951a791a944e4539c8b505a0bd292c3234e9cc23b5f77b0df3c46bb622e6f474",
+    "final_config_manifest_sha256": "b4a8ba8cd2eda307e232cc4fe5ccd6882ce5c8845db816af530f8475b92453f6",
+    "xz_stream_verified": true,
+    "verified_utc": "2026-08-27T21:55:10Z",
+    "image": {
+      "path": "output/images/2026.08/bananapi-vs680-m6-trixie-legacy-cli/bananapim6/Armbian-unofficial_26.05.0-trunk_Bananapim6_trixie_legacy_5.4.195_minimal.img",
+      "size": 1895825408,
+      "sha256": "83f87457f639daaac2981791cc10a9a8048bb4606466067ab791299d5c959fac"
+    },
+    "archive": {
+      "path": "output/images/2026.08/bananapi-vs680-m6-trixie-legacy-cli/bananapim6/Armbian-unofficial_26.05.0-trunk_Bananapim6_trixie_legacy_5.4.195_minimal.img.xz",
+      "size": 314922984,
+      "sha256": "6e66d1c7312eae214340297955227e637402eea7306f2ee0e3ac5166f8e3e7db"
+    },
+    "linux_dtb": {
+      "path": "synaptics/vs680-a0-bananapi-m6.dtb",
+      "sha256": "52c58e8a1413fd644b812480215350410659371083afa9930684df5752625413"
+    }
+  },
+  "component_build_evidence": {
+    "source_commit": "b6339cf4a2135e3ad75992f7574889d5ff34a249",
+    "completed_utc": "2026-08-27T03:17:12Z",
+    "manifest_sha256": "1eb1cbbe973badcb18c35e46c3e8be147c0fed77a1af940483b41620e153ea7e",
+    "verification_sha256": "aa1c2474fc1c3d12384ba0b1d6fb13735e360bfc0125d09b817582edcd3268e5",
+    "uboot_log_sha256": "3fe6fb6695505f4d5bc93e25ca93470a384c010a5db6c973db4ade862be92aca",
+    "kernel_log_sha256": "d757fc8724b6af059dc352cf6b0314dff3a4b8084f73285765df6703b4f18d79",
+    "dtb_sha256": "52c58e8a1413fd644b812480215350410659371083afa9930684df5752625413",
+    "uboot_sha256": "4d8158b3ed44de9384fabb009a0639cbe2c83e964a32724b5c87ce9911f72bda",
+    "packages": {
+      "linux-dtb": "7c0bf5d91cbbb5e59de906469ddbc830bac1f2ff14dd2656991fb5c62847b966",
+      "linux-headers": "7fd86f58fc015c97b016ed5f55d1015c97186529144c25c143a01f19a2d2fb22",
+      "linux-image": "6e06043378d82078e6b310c5e9d26844507913a4800ee3cc8f952bae614912f3",
+      "linux-libc-dev": "6a6ccb4307e91e2c037763b93cd6fd868211f57a906c62f9e7b3edade99b0194",
+      "uboot": "62924209e23e422845f6ef517e194fb25731ddb132dd02bec4d58d1282faec28"
+    }
+  },
+  "official_evidence": {
+    "board_page": "https://docs.banana-pi.org/en/BPI-M6/BananaPi_BPI-M6",
+    "armbian_historical_commit": "9163a04ca984461bec2516e9be0acd8a990863b9",
+    "linux_repository": "https://github.com/BPI-SINOVOIP/pi-linux.git",
+    "uboot_repository": "https://github.com/BPI-SINOVOIP/pi-u-boot.git"
+  },
+  "local_evidence": [
+    {
+      "path": "downloads/bpi-m6-exact-mainline-status-p357-20260623/BPI-DOC-0015_Banana-Pi-BPI-M6.html",
+      "sha256": "d8bbf75a07d7acff299f48b42bcc772436de58b8e3e21746cd2a6c9d3a15cba0",
+      "scope": "官方板卡頁快照與來源連結"
+    },
+    {
+      "path": "reports/bpi_m6_exact_mainline_status_baseline_20260623.md",
+      "sha256": "d334e351d2754427fc67964080b5ee6f1b03df20511a3dc2d219db2924e8b881",
+      "scope": "精確 M6 主線 DTS 缺口盤點"
+    },
+    {
+      "path": "reports/bpi_m6_residual_gap_audit_20260623.md",
+      "sha256": "e53c34ef2b6491683969883449d7f7950c001cb0fafeee3e50a0dc2c6adc7468",
+      "scope": "BSP、實機與 Yocto 或 Buildroot 證據缺口"
+    },
+    {
+      "path": "downloads/bpi-m6-residual-gap-audit-p423-20260623/local_bananapim6_build.log",
+      "sha256": "5dc1791a5ad4155477314b94459e4b805cc1ae5b8ff2a23c8d7a8c5904d40c9d",
+      "scope": "舊候選建置紀錄；不作為本提交元件驗證"
+    }
+  ],
+  "schematic_identity": {
+    "title": "BPI-M6 V1.1",
+    "filename": "BPI-M6-V11-SCH-Reduce.pdf",
+    "sha256": "a496414df256b834648f9dda141ca4ec24bfd151e5915572904be0dbbbc46f53",
+    "soc": "Synaptics VS680"
+  },
+  "license_policy": {
+    "linux_tree": "GPL-2.0 與檔案級 SPDX 雙授權內容",
+    "uboot_tree": "GPL-2.0+ 與檔案級授權內容",
+    "opaque_payload_redistribution_verified": false,
+    "decision": "不允許公開發布組合映像"
+  },
+  "blockers": [
+    "TZK 與 sm.bin 缺少原始碼、重建流程及逐檔再散布授權",
+    "沒有可對應此啟動鏈的公開 ATF 原始碼與獨立建置方式",
+    "缺少精確 BPI-M6 的 Linux 6.x 主線 DTS",
+    "C05 啟動設定與 BPI-M6 V1.1 原理圖尚未完成逐網路拓撲核對",
+    "尚無本候選的實機啟動與周邊測試證據"
+  ],
+  "linux_source": "https://github.com/BPI-SINOVOIP/pi-linux.git",
+  "linux_ref": "commit:3229415e99a06edc972948c0a856cbcf7de7ce55",
+  "linux_commit": "3229415e99a06edc972948c0a856cbcf7de7ce55",
+  "firmware_source": "https://github.com/armbian/firmware",
+  "firmware_ref": "commit:f50a2a21bcdb77a562b3976930c5c6b521a1df08",
+  "firmware_commit": "f50a2a21bcdb77a562b3976930c5c6b521a1df08",
+  "verify_firmware_source_resolution": true,
+  "firmware_redistribution_license_verified": false,
+  "source_date_epoch": 1717001894,
+  "source_contract_projection_sha256": "a30c565815b38169f3190253514c6034291d61a0c136ae1244d37eba0f72cb56",
+  "source_commits": {
+    "linux": {
+      "source": "https://github.com/BPI-SINOVOIP/pi-linux.git",
+      "original_ref": "refs/heads/pi-5.4-vs680-hdmi-rx",
+      "ref": "commit:3229415e99a06edc972948c0a856cbcf7de7ce55",
+      "revision": "3229415e99a06edc972948c0a856cbcf7de7ce55",
+      "worktree": "cache/sources/linux-kernel-worktree/5.4__vs680__arm64"
+    },
+    "uboot": {
+      "source": "https://github.com/BPI-SINOVOIP/pi-u-boot.git",
+      "original_ref": "refs/heads/v2019.10-vs680-hdmi-rx",
+      "ref": "commit:ccca1c75bb6d06470b8a3f6104068b43763ee468",
+      "revision": "ccca1c75bb6d06470b8a3f6104068b43763ee468",
+      "worktree": "cache/sources/u-boot-worktree/u-boot-vs680/v2019.10-vs680-hdmi-rx"
+    },
+    "firmware": {
+      "source": "https://github.com/armbian/firmware",
+      "ref": "commit:f50a2a21bcdb77a562b3976930c5c6b521a1df08",
+      "revision": "f50a2a21bcdb77a562b3976930c5c6b521a1df08",
+      "worktree": "cache/sources/armbian-firmware-git"
+    }
+  },
+  "source_file_sha256": {
+    "config/bootscripts/boot-vs680.cmd": "9a82b02bd19e194eb82f7c0d8465ec987fcf270e326a3b156f6866e83c9c8ec1",
+    "config/kernel/linux-vs680-legacy.config": "4a1475e883edbac2899acf105033f9dc26230772f3d6e65dbd46c7f626bef4f5",
+    "packages/blobs/vs680/SOURCE.zh-TW.md": "b463786969373390b26600b5dd08a0c234f4def01b0d88322d9eece7f844e84e"
+  },
+  "opaque_boot_payloads": {
+    "packages/blobs/vs680/bpi-m6-tzk-4MB.bin": {
+      "size": 4193792,
+      "sha256": "175e9b9313dffb70a97852ae21d855d3472916cc2af28f678ebcddc44828e411",
+      "source_available": false,
+      "rebuild_available": false,
+      "redistribution_license_verified": false,
+      "image_offset": 512
+    },
+    "uboot:arch/arm/mach-synaptics/sm.bin": {
+      "size": 27004,
+      "sha256": "3896305340cfdc6716861ddac19832b4087f201d6f3a95a0e1fe9f884f6ef2a4",
+      "source_available": false,
+      "rebuild_available": false,
+      "redistribution_license_verified": false,
+      "embedded_in": "u-boot.bin"
+    }
+  },
+  "installed_firmware_blobs": {
+    "/usr/share/doc/armbian-bsp-bananapim6/bpi-m6-tzk-4MB.bin.SOURCE.zh-TW.md": "b463786969373390b26600b5dd08a0c234f4def01b0d88322d9eece7f844e84e"
+  },
+  "common_packages": [
+    "gpiod",
+    "i2c-tools",
+    "python3-libgpiod",
+    "python3-spidev",
+    "spi-tools",
+    "pciutils",
+    "usbutils",
+    "usb-modeswitch",
+    "v4l-utils",
+    "evtest",
+    "alsa-utils",
+    "ethtool",
+    "iproute2",
+    "iperf3"
+  ],
+  "common_kernel_options": {
+    "CONFIG_ARCH_BERLIN": "y",
+    "CONFIG_BERLIN_HRX": "y",
+    "CONFIG_BERLIN_VPP": "y",
+    "CONFIG_BERLIN_VPU": "y",
+    "CONFIG_DRM": "y",
+    "CONFIG_DW_WATCHDOG": "y",
+    "CONFIG_GPIO_DWAPB": "y",
+    "CONFIG_GPIO_SYSFS": "y",
+    "CONFIG_GPU_VS680": "y",
+    "CONFIG_I2C_CHARDEV": "y",
+    "CONFIG_I2C_DESIGNWARE_PLATFORM": "y",
+    "CONFIG_MMC": "y",
+    "CONFIG_MMC_SDHCI_OF_DWCMSHC": "y",
+    "CONFIG_PCIE_BERLIN": "y",
+    "CONFIG_SND_SOC_SYNA": "y",
+    "CONFIG_SPI_SPIDEV": "y",
+    "CONFIG_STMMAC_ETH": "y",
+    "CONFIG_SYNAP": "m",
+    "CONFIG_USB_CONFIGFS": "y",
+    "CONFIG_USB_CONFIGFS_MASS_STORAGE": "y",
+    "CONFIG_USB_DWC2_DUAL_ROLE": "y",
+    "CONFIG_USB_DWC3_SYNA": "y",
+    "CONFIG_USB_GADGET": "y",
+    "CONFIG_USB_STORAGE": "y",
+    "CONFIG_USB_XHCI_HCD": "y",
+    "CONFIG_VIDEO_V4L2": "y"
+  },
+  "boards": {
+    "bananapim6": {
+      "family": "vs680",
+      "dtb": "synaptics/vs680-a0-bananapi-m6.dtb",
+      "component_dtb_sha256": "52c58e8a1413fd644b812480215350410659371083afa9930684df5752625413",
+      "image_dtb_sha256": "52c58e8a1413fd644b812480215350410659371083afa9930684df5752625413",
+      "dtb_sha256": "52c58e8a1413fd644b812480215350410659371083afa9930684df5752625413",
+      "dtb_sha256_evidence_scope": "full-image-l2",
+      "model": "Banana Pi M6",
+      "compatible": [
+        "sinovoip,bananapi-m6",
+        "syna,vs680-evk",
+        "syna,vs680"
+      ],
+      "uboot_tag": "v2019.10",
+      "uboot_version": "2019.10",
+      "uboot_git_source": "https://github.com/BPI-SINOVOIP/pi-u-boot.git",
+      "uboot_git_ref": "commit:ccca1c75bb6d06470b8a3f6104068b43763ee468",
+      "uboot_revision": "ccca1c75bb6d06470b8a3f6104068b43763ee468",
+      "uboot_defconfig": "vs680_oemboot_c05_defconfig",
+      "uboot_target_index": 1,
+      "uboot_required_config_options": [
+        "CONFIG_ARCH_SYNAPTICS=y",
+        "CONFIG_TARGET_VS680_C05=y",
+        "CONFIG_DEFAULT_DEVICE_TREE=\"vs680-bananapi-m6\"",
+        "CONFIG_CMD_MMC=y",
+        "CONFIG_CMD_USB=y",
+        "CONFIG_DM_GPIO=y",
+        "CONFIG_ETH_DESIGNWARE=y",
+        "CONFIG_MMC_DWCMSHC=y",
+        "CONFIG_MMC_HS400_SUPPORT=y",
+        "CONFIG_MMC_HS200_SUPPORT=y",
+        "CONFIG_SPI_FLASH=y",
+        "CONFIG_SYNA_INCLUDE_SM_FW=y",
+        "CONFIG_SYNA_OEMBOOT=y",
+        "CONFIG_USB_DWC3_SYNA=y",
+        "CONFIG_USB_STORAGE=y",
+        "CONFIG_USB_XHCI_HCD=y"
+      ],
+      "uboot_binary_for_string_checks": "u-boot.bin",
+      "uboot_required_binary_strings": [
+        "Banana Pi M6",
+        "sinovoip,bananapi-m6"
+      ],
+      "uboot_payloads": [
+        "bpi-m6-tzk-4MB.bin@512",
+        "u-boot.bin@2097152"
+      ],
+      "payload_write_order": [
+        "bpi-m6-tzk-4MB.bin",
+        "u-boot.bin"
+      ],
+      "payload_overlap_policy": {
+        "allowed": true,
+        "earlier_payload": "bpi-m6-tzk-4MB.bin",
+        "later_payload": "u-boot.bin",
+        "overlap_starts_at_image_offset": 2097152,
+        "verification": "比較 TZK 前段、完整 U-Boot 與 U-Boot 結尾後的 TZK 尾段"
+      },
+      "uboot_payload_minimum_sizes": [
+        "bpi-m6-tzk-4MB.bin=4193792",
+        "u-boot.bin=524288"
+      ],
+      "uboot_payload_sizes": [
+        "bpi-m6-tzk-4MB.bin=4193792",
+        "u-boot.bin=616575"
+      ],
+      "uboot_payload_sha256": [
+        "bpi-m6-tzk-4MB.bin=175e9b9313dffb70a97852ae21d855d3472916cc2af28f678ebcddc44828e411",
+        "u-boot.bin=4d8158b3ed44de9384fabb009a0639cbe2c83e964a32724b5c87ce9911f72bda"
+      ],
+      "partition_table": "msdos",
+      "partition_start_sector": 204800,
+      "root_partition_start_sector": 729088,
+      "required_partitions": [
+        "1:*:204800:524288",
+        "2:*:729088:*"
+      ],
+      "required_partition_types": [
+        "1:ea",
+        "2:83"
+      ],
+      "logical_sector_size": 512,
+      "boot_partition_number": 1,
+      "root_partition_number": 2,
+      "boot_partition_label": "BPI-BOOT",
+      "root_partition_label": "BPI-ROOT",
+      "boot_partition_filesystem_type": "vfat",
+      "root_partition_filesystem_type": "ext4",
+      "boot_configuration": "separate_fat_armbian_env",
+      "boot_script_source": "config/bootscripts/boot-vs680.cmd",
+      "boot_script_source_sha256": "9a82b02bd19e194eb82f7c0d8465ec987fcf270e326a3b156f6866e83c9c8ec1",
+      "final_kernel_config_sha256": "b67480db7854ea797a1813102b2ef1c7a1312c9291797912612368821b058786",
+      "final_uboot_config_sha256": "f31af0f1449901eb3834fd17e9c8c69034bd50b126a29108168683ba6b38c1f6",
+      "sd_node": "/soc/sdhci@f7ab0000",
+      "sd_bus_width": 4,
+      "additional_bus_widths": [
+        "/soc/sdhci@f7aa0000=8"
+      ],
+      "required_boolean_properties": [
+        "/soc/sdhci@f7ab0000:no-mmc",
+        "/soc/sdhci@f7ab0000:no-sdio",
+        "/soc/sdhci@f7aa0000:mmc-hs200-1_8v",
+        "/soc/sdhci@f7aa0000:mmc-hs400-1_8v"
+      ],
+      "required_string_properties": [
+        "/soc/usb@f7c00000:dr_mode=otg",
+        "/soc/xhci@f7d00000/dwc3@f7d00000:dr_mode=host"
+      ],
+      "required_status_nodes": [
+        "/soc/ethernet@f7b60000",
+        "/soc/gpu@0xf7980000",
+        "/soc/hdmi-out",
+        "/soc/hrx@f74a0000",
+        "/soc/npu@f7bc0000",
+        "/soc/pcie@f7e40000",
+        "/soc/sdhci@f7aa0000",
+        "/soc/sdhci@f7ab0000",
+        "/soc/usb@f7c00000",
+        "/soc/xhci@f7d00000"
+      ],
+      "required_present_nodes": [
+        "/soc/apb@f7e80000/i2c@1800",
+        "/soc/apb@f7e80000/i2c@2000",
+        "/soc/apb@f7e80000/spi@1c00/spidev@0",
+        "/soc/apb@f7fc0000/i2c@b000",
+        "/soc/apb@f7fc0000/i2c@c000"
+      ],
+      "inherited_compatibles": [
+        "linux:syna,vs680-evk",
+        "uboot:Synaptics,vs680",
+        "uboot:Synaptics,asserial"
+      ]
+    }
+  }
+}

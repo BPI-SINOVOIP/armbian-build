@@ -1,0 +1,48 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Banana Pi -BPI <lionwang@sinovoip.com.cn>
+Date: Thu, 27 Aug 2026 11:06:55 +0800
+Subject: [PATCH 2/2] =?UTF-8?q?=E9=99=90=E5=88=B6=EF=BC=9AR4=20Pro=20?=
+ =?UTF-8?q?=E9=96=8B=E6=A9=9F=E7=92=B0=E5=A2=83=E5=83=85=E6=8E=83=E6=8F=8F?=
+ =?UTF-8?q?=20SD?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+---
+ include/configs/mt7988.h | 22 ++++++++++++++++++++++
+ 1 file changed, 22 insertions(+)
+
+diff --git a/include/configs/mt7988.h b/include/configs/mt7988.h
+index e63825a5a19..a11abb4a384 100644
+--- a/include/configs/mt7988.h
++++ b/include/configs/mt7988.h
+@@ -11,4 +11,26 @@
+ 
+ #define CFG_MAX_MEM_MAPPED		0xC0000000
+ 
++#include <linux/sizes.h>
++
++#ifndef BOOT_TARGETS
++#define BOOT_TARGETS	"mmc0"
+ #endif
++
++#define ENV_MEM_LAYOUT_SETTINGS		\
++	"scriptaddr=0x50000000\0"	\
++	"script_size_f=0x2000\0"	\
++	"kernel_addr_r=0x52000000\0"	\
++	"fdt_addr_r=0x62000000\0"	\
++	"ramdisk_addr_r=0x62180000\0"
++
++#include <config_distro_bootcmd.h>
++
++#define CFG_EXTRA_ENV_SETTINGS		\
++	"fdtfile=" CONFIG_DEFAULT_FDT_FILE "\0"	\
++	ENV_MEM_LAYOUT_SETTINGS		\
++	"boot_targets=" BOOT_TARGETS "\0" \
++	"bootcmd=sysboot mmc 0:5 any ${scriptaddr} /boot/extlinux/extlinux.conf\0" \
++	"\0"
++
++#endif /* _MT7988_H_ */
+-- 
+2.34.1
+

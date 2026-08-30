@@ -14,6 +14,12 @@ function artifact_uboot_config_dump() {
 	artifact_input_variables[BOARD]="${BOARD}"
 	artifact_input_variables[BRANCH]="${BRANCH}"
 	artifact_input_variables[ARCH]="${ARCH}"
+	artifact_input_variables[UBOOT_SKIP_MAKEFILE_VERSION]="${UBOOT_SKIP_MAKEFILE_VERSION:-"no"}"
+	artifact_input_variables[UBOOT_VERSION_OVERRIDE]="${UBOOT_VERSION_OVERRIDE:-""}"
+	if [[ -n "${RKBIN_DIR:-}" ]]; then
+		artifact_input_variables[RKBIN_GIT_URL]="${RKBIN_GIT_URL:-"https://github.com/armbian/rkbin"}"
+		artifact_input_variables[RKBIN_GIT_REF]="${RKBIN_GIT_REF:-branch:${RKBIN_GIT_BRANCH:-master}}"
+	fi
 }
 
 function artifact_uboot_prepare_version() {
@@ -37,6 +43,8 @@ function artifact_uboot_prepare_version() {
 	debug_var BOOTPATCHDIR
 	debug_var BOARD
 	debug_var BRANCH
+	debug_var UBOOT_SKIP_MAKEFILE_VERSION
+	debug_var UBOOT_VERSION_OVERRIDE
 
 	declare short_hash_size=4
 
@@ -47,7 +55,15 @@ function artifact_uboot_prepare_version() {
 	fi
 
 	declare -A GIT_INFO_UBOOT=([GIT_SOURCE]="${BOOTSOURCE}" [GIT_REF]="${BOOTBRANCH}")
-	memoize_cache_ttl=$uboot_git_cache_ttl_seconds run_memoized GIT_INFO_UBOOT "git2info" memoized_git_ref_to_info "include_makefile_body"
+	if [[ "${UBOOT_SKIP_MAKEFILE_VERSION:-"no"}" == "yes" ]]; then
+		display_alert "Skipping Makefile version for u-boot" "due to UBOOT_SKIP_MAKEFILE_VERSION=yes" "info"
+		memoize_cache_ttl=$uboot_git_cache_ttl_seconds run_memoized GIT_INFO_UBOOT "git2info" memoized_git_ref_to_info
+		GIT_INFO_UBOOT[MAKEFILE_VERSION]="${UBOOT_VERSION_OVERRIDE:-1}"
+		GIT_INFO_UBOOT[MAKEFILE_FULL_VERSION]="${UBOOT_VERSION_OVERRIDE:-1}"
+		GIT_INFO_UBOOT[MAKEFILE_CODENAME]=""
+	else
+		memoize_cache_ttl=$uboot_git_cache_ttl_seconds run_memoized GIT_INFO_UBOOT "git2info" memoized_git_ref_to_info "include_makefile_body"
+	fi
 	debug_dict GIT_INFO_UBOOT
 
 	# Sanity check, the SHA1 gotta be sane.
@@ -103,6 +119,11 @@ function artifact_uboot_prepare_version() {
 	declare hash_hooks_and_functions_short="${hash_hooks_and_functions:0:${short_hash_size}}"
 
 	display_alert "BOOTCONFIG: ${BOOTCONFIG}" "BOOTCONFIG: ${BOOTCONFIG}" "debug"
+	declare rkbin_git_source_for_hash="" rkbin_git_ref_for_hash=""
+	if [[ -n "${RKBIN_DIR:-}" ]]; then
+		rkbin_git_source_for_hash="${RKBIN_GIT_URL:-"https://github.com/armbian/rkbin"}"
+		rkbin_git_ref_for_hash="${RKBIN_GIT_REF:-branch:${RKBIN_GIT_BRANCH:-master}}"
+	fi
 
 	# Hash variables that affect the build and package of u-boot
 	declare -a vars_to_hash=(
@@ -112,6 +133,7 @@ function artifact_uboot_prepare_version() {
 		"${DDR_BLOB}" "${BL31_BLOB}" "${BL32_BLOB}" "${MINILOADER_BLOB}" # More rockchip stuff, even more sorry.
 		"${ATF_COMPILE}" "${ATFSOURCE}" "${ATFBRANCH}" "${ATFPATCHDIR}" "${ATF_TARGET_MAP}" "${ATF_LOG_LEVEL:-40}" # arm-trusted-firmware stuff
 		"${CRUSTCONFIG}" "${CRUSTBRANCH}" "${CRUSTPATCHDIR}"             # crust stuff
+		"${rkbin_git_source_for_hash}" "${rkbin_git_ref_for_hash}"       # rockchip binary source and ref
 		"${IMAGE_PARTITION_TABLE}" "${BOOT_FDT_FILE}" "${SERIALCON}"     # image and kernel related, to be used as reference/docs
 		"${SRC_EXTLINUX}" "${SRC_CMDLINE}"                               # image and kernel related, to be used as reference/docs
 	)

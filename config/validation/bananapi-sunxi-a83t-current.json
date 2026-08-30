@@ -1,0 +1,143 @@
+{
+  "schema_version": 1,
+  "candidate_branch": "current",
+  "kernel_family": "sunxi",
+  "linux_source": "https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git",
+  "linux_commit": "1f99e9ab748fc5c32120de9c4eca31abfe54a4d5",
+  "firmware_source": "https://github.com/armbian/firmware",
+  "firmware_commit": "f50a2a21bcdb77a562b3976930c5c6b521a1df08",
+  "installed_firmware_blobs": {
+    "/lib/firmware/brcm/brcmfmac43430-sdio.bin": "93f3c40c94340c29a40714cb04e3e89974870fcae42a844b8a4544750159f40d",
+    "/lib/firmware/brcm/brcmfmac43430-sdio.txt": "f7ab3c146da63cd41ab3bc3b07b748704b606372b36930652eef3a1507ae8d99",
+    "/lib/firmware/brcm/brcmfmac43430-sdio.clm_blob": "3376b9c9b32d16bf762e21c7fafb665365070ae240d092498d0d1987c22022aa",
+    "/lib/firmware/brcm/BCM43430A1.hcd": "d396912aa4efa7e0ea93dc6b63b1088619b59676ab53404d14fe79f5c71a5da0"
+  },
+  "common_packages": [
+    "rfkill",
+    "bluetooth",
+    "bluez",
+    "bluez-tools",
+    "iw",
+    "ethtool",
+    "usbutils",
+    "alsa-utils",
+    "smartmontools",
+    "gpiod",
+    "i2c-tools",
+    "python3-libgpiod",
+    "python3-spidev",
+    "v4l-utils"
+  ],
+  "common_kernel_options": {
+    "CONFIG_ARCH_SUNXI": "y",
+    "CONFIG_BRCMFMAC": "m",
+    "CONFIG_BRCMFMAC_PROTO_BCDC": "y",
+    "CONFIG_BRCMFMAC_SDIO": "y",
+    "CONFIG_BT": "m",
+    "CONFIG_BT_HCIUART": "m",
+    "CONFIG_BT_HCIUART_BCM": "y",
+    "CONFIG_CFG80211": "m",
+    "CONFIG_DWMAC_SUN8I": "y",
+    "CONFIG_GPIO_CDEV": "y",
+    "CONFIG_I2C_CHARDEV": "y",
+    "CONFIG_I2C_MV64XXX": "y",
+    "CONFIG_IR_SUNXI": "m",
+    "CONFIG_MFD_AXP20X_RSB": "y",
+    "CONFIG_MMC_SUNXI": "y",
+    "CONFIG_PHY_SUN4I_USB": "y",
+    "CONFIG_PWRSEQ_SIMPLE": "m",
+    "CONFIG_RC_CORE": "y",
+    "CONFIG_REGULATOR_AXP20X": "y",
+    "CONFIG_RFKILL": "m",
+    "CONFIG_RTC_DRV_AC100": "m",
+    "CONFIG_SERIAL_8250_DW": "y",
+    "CONFIG_SND_AC100_CODEC": "m",
+    "CONFIG_SND_SOC": "y",
+    "CONFIG_SND_SUN9I_HDMI_AUDIO": "m",
+    "CONFIG_SPI_SPIDEV": "m",
+    "CONFIG_SPI_SUN6I": "y",
+    "CONFIG_STMMAC_ETH": "y",
+    "CONFIG_STMMAC_PLATFORM": "y",
+    "CONFIG_USB_CONFIGFS": "m",
+    "CONFIG_USB_CONFIGFS_MASS_STORAGE": "y",
+    "CONFIG_USB_EHCI_HCD_PLATFORM": "y",
+    "CONFIG_USB_GADGET": "y",
+    "CONFIG_USB_MUSB_SUNXI": "m",
+    "CONFIG_USB_OHCI_HCD_PLATFORM": "y",
+    "CONFIG_VIDEO_SUNXI_CEDRUS": "m"
+  },
+  "boards": {
+    "bananapim3": {
+      "family": "sun8i",
+      "dtb": "allwinner/sun8i-a83t-bananapi-m3.dtb",
+      "model": "Banana Pi BPI-M3",
+      "compatible": [
+        "sinovoip,bpi-m3",
+        "allwinner,sun8i-a83t"
+      ],
+      "uboot_tag": "v2024.01",
+      "uboot_version": "2024.01",
+      "uboot_git_source": "https://github.com/u-boot/u-boot",
+      "uboot_git_ref": "commit:866ca972d6c3cabeaf6dbac431e8e08bb30b3c8e",
+      "uboot_revision": "866ca972d6c3cabeaf6dbac431e8e08bb30b3c8e",
+      "uboot_payload": "u-boot-sunxi-with-spl.bin",
+      "uboot_offset": 8192,
+      "uboot_payload_minimum_sizes": [
+        "u-boot-sunxi-with-spl.bin=500000"
+      ],
+      "overlay_prefix": "sun8i-a83t",
+      "overlay_directory": "overlay",
+      "sd_node": "/soc/mmc@1c0f000",
+      "sd_bus_width": 4,
+      "additional_bus_widths": [
+        "/soc/mmc@1c10000=4",
+        "/soc/mmc@1c11000=8"
+      ],
+      "default_overlays": [],
+      "required_overlays": [],
+      "required_boolean_properties": [
+        "/soc/mmc@1c10000:non-removable",
+        "/soc/mmc@1c11000:non-removable",
+        "/soc/mmc@1c11000:cap-mmc-hw-reset",
+        "/soc/serial@1c28400:uart-has-rtscts"
+      ],
+      "required_string_properties": [
+        "/soc/usb@1c19000:dr_mode=otg",
+        "/soc/ethernet@1c30000:phy-mode=rgmii-id",
+        "/soc/mmc@1c10000/wifi@1:compatible=brcm,bcm4329-fmac",
+        "/soc/serial@1c28400/bluetooth:compatible=brcm,bcm43438-bt",
+        "/pwrseq:compatible=mmc-pwrseq-simple",
+        "/pwrseq:clock-names=ext_clock",
+        "/soc/rsb@1f03400/pmic@3a3:compatible=x-powers,axp813",
+        "/soc/rsb@1f03400/codec@e89:compatible=x-powers,ac100"
+      ],
+      "required_status_nodes": [
+        "/sound_hdmi",
+        "/display-engine",
+        "/soc/mmc@1c0f000",
+        "/soc/mmc@1c10000",
+        "/soc/mmc@1c11000",
+        "/soc/usb@1c19000",
+        "/soc/phy@1c19400",
+        "/soc/usb@1c1a000",
+        "/soc/serial@1c28000",
+        "/soc/serial@1c28400",
+        "/soc/ethernet@1c30000",
+        "/soc/hdmi@1ee0000",
+        "/soc/ir@1f02000",
+        "/soc/rsb@1f03400"
+      ],
+      "required_present_nodes": [
+        "/connector",
+        "/pwrseq",
+        "/regulator-sata-disk-pwr",
+        "/soc/video-codec@01c0e000",
+        "/soc/hdmi-phy@1ef0000",
+        "/soc/rsb@1f03400/pmic@3a3",
+        "/soc/rsb@1f03400/codec@e89",
+        "/soc/rsb@1f03400/codec@e89/codec",
+        "/soc/rsb@1f03400/codec@e89/rtc"
+      ]
+    }
+  }
+}

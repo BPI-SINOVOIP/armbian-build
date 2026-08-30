@@ -1,0 +1,381 @@
+{
+  "schema_version": 1,
+  "candidate_branch": "current",
+  "candidate_level": "L2 內部軟體候選",
+  "candidate_scope": "internal-l2",
+  "current_evidence_level": "L2",
+  "target_evidence_level": "L2",
+  "source_date_epoch": 1787793187,
+  "source_contract_projection_sha256": "ad08cf7707aa0dfc69bf997a3da3ebb098f23237db9cb2881d5e592d7c0a6b0c",
+  "l2_contract_calibration_required": false,
+  "allowed_evidence_levels": [
+    "L1",
+    "L2"
+  ],
+  "component_build_completed": true,
+  "full_rootfs_image_built": true,
+  "component_build_evidence": {
+    "implementation_commit": "717cdc7e91231a16d80b189f43dc6819a80fd739",
+    "completed_utc": "2026-08-27T01:13:07Z",
+    "artifacts": {
+      "linux-dtb": {
+        "filename": "mediatek/mt7986a-bananapi-bpi-r3-mini.dtb",
+        "size": 23104,
+        "sha256": "5457155de554539c902a22507cbd69ad249fd70a24cf6e24a5753c2b5e8b66ab"
+      },
+      "u-boot.bin": {
+        "size": 470264,
+        "sha256": "cee67b1d090f9d1f3066cd40f11b5d6f122a49bf610e84bf5967ee6e9207afe3"
+      },
+      "u-boot.dtb": {
+        "size": 7272,
+        "sha256": "f5e02788cb3e6ba87195b3f0f8f7d98762cd4f40d6a3c218ad577154abb0f55c"
+      },
+      "bl2.img": {
+        "size": 200793,
+        "sha256": "44d4d6b1bdbfdc1f4d2b302047448788f0256b4d68568e9c9dd809005bccedfd"
+      },
+      "bl31.bin": {
+        "size": 37553,
+        "sha256": "328eedb9b89a8fdf4a137a12a18619cc394429f8f977215807505195ac76ad94"
+      },
+      "r3mini-u-boot.fip": {
+        "size": 507953,
+        "sha256": "8f56c689f10b3aa2367f4290f940451e8d5b766cd3c0120e6aa2cc398db3ff67"
+      }
+    }
+  },
+  "kernel_family": "filogic",
+  "linux_source": "https://github.com/frank-w/BPI-Router-Linux.git",
+  "linux_commit": "4a4506842b77b597f11e7fc53be1dcdbdc97eea9",
+  "firmware_source": "https://github.com/armbian/firmware",
+  "firmware_ref": "commit:f50a2a21bcdb77a562b3976930c5c6b521a1df08",
+  "firmware_commit": "f50a2a21bcdb77a562b3976930c5c6b521a1df08",
+  "verify_firmware_source_resolution": true,
+  "mt76_firmware_source": "https://github.com/openwrt/mt76.git",
+  "mt76_firmware_ref": "commit:c5a3bd91aa735b669618610d5f0ebfa5786845a6",
+  "mt76_firmware_commit": "c5a3bd91aa735b669618610d5f0ebfa5786845a6",
+  "verify_mt76_firmware_source_resolution": true,
+  "mt76_firmware_license": "firmware/LICENSE",
+  "linux_firmware_source": "https://gitlab.com/kernel-firmware/linux-firmware.git",
+  "linux_firmware_ref": "commit:01205307636157a12c29e6a774bf83b218732050",
+  "linux_firmware_commit": "01205307636157a12c29e6a774bf83b218732050",
+  "verify_linux_firmware_source_contract": true,
+  "firmware_runtime_sources": [
+    {
+      "name": "mt76",
+      "source": "https://github.com/openwrt/mt76.git",
+      "ref": "commit:c5a3bd91aa735b669618610d5f0ebfa5786845a6",
+      "commit": "c5a3bd91aa735b669618610d5f0ebfa5786845a6",
+      "evidence_role": "installed-content",
+      "log_marker": "R3 Mini MT76 韌體固定來源"
+    },
+    {
+      "name": "linux-firmware",
+      "source": "https://gitlab.com/kernel-firmware/linux-firmware.git",
+      "ref": "commit:01205307636157a12c29e6a774bf83b218732050",
+      "commit": "01205307636157a12c29e6a774bf83b218732050",
+      "evidence_role": "local-content-provenance",
+      "log_marker": "R3 Mini Linux firmware 固定來源"
+    }
+  ],
+  "vendor_reference_source": "https://github.com/BPI-SINOVOIP/BPI-R3MINI-OPENWRT-V21.02.3",
+  "vendor_reference_commit": "9bd78779f267a21c04c5bb4d16c32e83aae8d1d3",
+  "public_release_authorized": false,
+  "hardware_claims_allowed": false,
+  "public_release_blockers": [
+    "atf_mt7986_dram_object_redistribution_scope_unverified",
+    "emmc_boot0_installation_not_hardware_validated"
+  ],
+  "hardware_validation_completed": false,
+  "release_gate": {
+    "status": "blocked",
+    "public_release_authorized": false,
+    "hardware_claims_allowed": false,
+    "full_image_built": true,
+    "component_validation_only": false,
+    "required_blockers": [
+      "atf_mt7986_dram_object_redistribution_scope_unverified",
+      "emmc_boot0_installation_not_hardware_validated"
+    ]
+  },
+  "atf_prebuilt_objects": {
+    "plat/mediatek/mt7986/drivers/dram/release/dram.o": {
+      "sha256": "45acf44f2fe576991d7c0b13862cb41d1ffd37b37e1607e27ca4ddb31820fa79",
+      "redistribution_authorized": false
+    }
+  },
+  "installed_firmware_blobs": {
+    "/lib/firmware/airoha/EthMD32.DSP.bin": "3e4699ec709c836d5fce7c91bc5d205beb54aea326c4b70c7050b355784cbebd",
+    "/lib/firmware/airoha/EthMD32.dm.bin": "874982b88330112c376e484cdce114cf2e1476ccbb901c87f80882f127ffb90f",
+    "/lib/firmware/mediatek/mt7986_eeprom_mt7975.bin": "dc6f3d504207ab46a4be64779297af1b4cec57505a564a96b0a21b2a6ba080cd",
+    "/lib/firmware/mediatek/mt7986_eeprom_mt7975_dual.bin": "21392c9ee930c22b9ae3c870a26f8eea61fb4b60cd784bb4fae72fa64743d715",
+    "/lib/firmware/mediatek/mt7986_eeprom_mt7976.bin": "1d33c8af0adfc2d93a86143b5afd05dfa7b4b30b62eda45347ab83df7faa8890",
+    "/lib/firmware/mediatek/mt7986_eeprom_mt7976_dbdc.bin": "22eefa2204d03c0c4908d818a3461b345e7a8439d2fa422c8ad73e46be3e9f28",
+    "/lib/firmware/mediatek/mt7986_eeprom_mt7976_dual.bin": "a70da76d43eb481a768cd02e74f589c77b505935f081c2ea12e55714228ed62d",
+    "/lib/firmware/mediatek/mt7986_rom_patch.bin": "d8ebdd936384c0528687281b7d3d4c842aa35267bb3b2bbb2b8ffda286c5ab37",
+    "/lib/firmware/mediatek/mt7986_rom_patch_mt7975.bin": "4e4dbd0c1ab3474962d3dd1afb39c9cf500ea92d741a225f5cf502580c65f6ec",
+    "/lib/firmware/mediatek/mt7986_wa.bin": "e76e96e9959ee501fc499ebfd558a52557a2798e6f554e62d101a093fc609625",
+    "/lib/firmware/mediatek/mt7986_wm.bin": "86baa5bcb05436c23ac443dd937cbb6d8cc9920eab6fd86bc4421038f526a03a",
+    "/lib/firmware/mediatek/mt7986_wm_mt7975.bin": "8af5695d6486ac1a0c69bd3951453c6ad267225e8a2574ef00c61961b7200afa",
+    "/lib/firmware/mediatek/mt7986_wo_0.bin": "4c268aed7c9ebd7fdd9afc6d2f93e64e108e335626b7b025d7ab7c80704684d8",
+    "/lib/firmware/mediatek/mt7986_wo_1.bin": "b60e9930e507b9e8228ba229c3ba6d1e4736d34720c744aeb2f85a9c8e5d3f29"
+  },
+  "installed_file_sha256": {
+    "/usr/share/doc/armbian-bsp-bananapir3mini/LICENSE.airoha": "ad548ca0ffb91ec655de0f28e13089ef1cd4e0deabb2f15a9289194990e62252",
+    "/usr/share/doc/armbian-bsp-bananapir3mini/airoha-firmware-SOURCE.md": "06480315ef0caa8a8ddfec7b1a01f73b5b712922d4705c85eda3719a476495aa",
+    "/usr/share/doc/armbian-bsp-bananapir3mini/firmware-source-contract.tsv": "b6dba3eaffbb1eb6eb4d9506e4be8c57d51a31619cabbbb52e133a02190cd74c",
+    "/usr/share/doc/armbian-bsp-bananapir3mini/mt76-firmware.LICENSE": "77c0eb6b7915fdb17b328c1eff3d2074bff2025e88603ac59e01ffc07ba0b541"
+  },
+  "common_packages": [
+    "bridge-utils",
+    "ethtool",
+    "gdisk",
+    "gpiod",
+    "hdparm",
+    "i2c-tools",
+    "iperf3",
+    "iproute2",
+    "iw",
+    "lm-sensors",
+    "mmc-utils",
+    "mtd-utils",
+    "nftables",
+    "nvme-cli",
+    "pciutils",
+    "python3-libgpiod",
+    "python3-spidev",
+    "rfkill",
+    "smartmontools",
+    "tcpdump",
+    "usbutils",
+    "vlan",
+    "wireless-regdb"
+  ],
+  "common_kernel_options": {
+    "CONFIG_AIR_EN8811H_PHY": "m",
+    "CONFIG_ARCH_MEDIATEK": "y",
+    "CONFIG_BLK_DEV_NVME": "y",
+    "CONFIG_CRYPTO_DEV_SAFEXCEL": "m",
+    "CONFIG_I2C_CHARDEV": "y",
+    "CONFIG_MMC": "y",
+    "CONFIG_MMC_MTK": "y",
+    "CONFIG_MTD_SPI_NAND": "y",
+    "CONFIG_MTD_UBI": "y",
+    "CONFIG_MT7915E": "m",
+    "CONFIG_MT798X_WMAC": "y",
+    "CONFIG_NET_MEDIATEK_SOC": "y",
+    "CONFIG_NET_MEDIATEK_SOC_WED": "y",
+    "CONFIG_PCIE_MEDIATEK_GEN3": "y",
+    "CONFIG_PWM_MEDIATEK": "y",
+    "CONFIG_SENSORS_PWM_FAN": "m",
+    "CONFIG_USB_STORAGE": "m",
+    "CONFIG_USB_XHCI_HCD": "m",
+    "CONFIG_USB_XHCI_MTK": "m",
+    "CONFIG_USB_XHCI_PLATFORM": "m"
+  },
+  "boards": {
+    "bananapir3mini": {
+      "family": "mt7986",
+      "dtb": "mediatek/mt7986a-bananapi-bpi-r3-mini.dtb",
+      "component_dtb_sha256": "5457155de554539c902a22507cbd69ad249fd70a24cf6e24a5753c2b5e8b66ab",
+      "image_dtb_sha256": "5457155de554539c902a22507cbd69ad249fd70a24cf6e24a5753c2b5e8b66ab",
+      "dtb_sha256": "5457155de554539c902a22507cbd69ad249fd70a24cf6e24a5753c2b5e8b66ab",
+      "dtb_sha256_evidence_scope": "full-image-l2",
+      "final_kernel_config_sha256": "2c6ea26327285e71fa778ccb360269796da043faa69d0fee4e467f1a0c36367e",
+      "final_uboot_config_sha256": "c4a0328fdaa6b345c6c15096bf99caf7a5a05c68aad38f2ad9e3e241322d937a",
+      "model": "Bananapi BPI-R3 Mini",
+      "compatible": [
+        "bananapi,bpi-r3mini",
+        "mediatek,mt7986a"
+      ],
+      "candidate_boot_media": [
+        "emmc"
+      ],
+      "supported_boot_media": [],
+      "unsupported_boot_media": [
+        "sd"
+      ],
+      "boot_media_contract": {
+        "cold_boot_source": "emmc_boot0",
+        "user_area_contains_gpt": true,
+        "user_area_image_is_complete_cold_boot_installer": false,
+        "boot0_payload_requires_separate_write": true,
+        "boot0_hardware_validated": false,
+        "sd_boot_supported": false
+      },
+      "emmc_user_area_target": "/dev/mmcblk0",
+      "emmc_boot0_target": "/dev/mmcblk0boot0",
+      "emmc_boot0_payload": "bl2.img",
+      "emmc_boot0_offset_bytes": 0,
+      "emmc_boot0_force_ro_required": true,
+      "emmc_boot_partition_enable": "1 1",
+      "automatic_emmc_install_authorized": false,
+      "uboot_tag": "v2025.04",
+      "uboot_version": "2025.04",
+      "uboot_git_source": "https://github.com/u-boot/u-boot",
+      "uboot_git_ref": "commit:34820924edbc4ec7803eb89d9852f4b870fa760a",
+      "uboot_revision": "34820924edbc4ec7803eb89d9852f4b870fa760a",
+      "atf_git_source": "https://github.com/mtk-openwrt/arm-trusted-firmware.git",
+      "atf_git_ref": "commit:c34e37802efaea356991a0811c8fc50f8a810f5b",
+      "atf_revision": "c34e37802efaea356991a0811c8fc50f8a810f5b",
+      "uboot_defconfig": "mt7986a_bpir3mini_emmc_defconfig",
+      "uboot_target_index": 1,
+      "uboot_required_config_options": [
+        "CONFIG_ARCH_MEDIATEK=y",
+        "CONFIG_AUTOBOOT=y",
+        "CONFIG_BOOTDELAY=1",
+        "CONFIG_BOOTMETH_EXTLINUX=y",
+        "CONFIG_BOOTSTD=y",
+        "CONFIG_BOOTSTD_BOOTCOMMAND=y",
+        "CONFIG_BOOTSTD_DEFAULTS=y",
+        "CONFIG_BOOTSTD_FULL=y",
+        "CONFIG_CMD_BOOTFLOW=y",
+        "CONFIG_CMD_BOOTFLOW_FULL=y",
+        "CONFIG_CMD_EXT4=y",
+        "CONFIG_CMD_MMC=y",
+        "CONFIG_DEFAULT_DEVICE_TREE=\"mt7986a-bpi-r3-mini-emmc\"",
+        "CONFIG_DEFAULT_FDT_FILE=\"mediatek/mt7986a-bananapi-bpi-r3-mini.dtb\"",
+        "CONFIG_ENV_IS_IN_MMC=y",
+        "CONFIG_ENV_MMC_PARTITION=\"ubootenv\"",
+        "CONFIG_ENV_OFFSET=0x400000",
+        "CONFIG_ENV_OFFSET_REDUND=0x440000",
+        "CONFIG_ENV_SIZE=0x40000",
+        "CONFIG_FS_EXT4=y",
+        "CONFIG_MMC_HS200_SUPPORT=y",
+        "CONFIG_MMC_MTK=y",
+        "CONFIG_SYS_MMC_ENV_DEV=0",
+        "CONFIG_SYS_REDUNDAND_ENVIRONMENT=y",
+        "CONFIG_TARGET_MT7986=y",
+        "CONFIG_USE_ENV_MMC_PARTITION=y",
+        "# CONFIG_AUTOBOOT_KEYED is not set",
+        "# CONFIG_CMD_BOOTMENU is not set",
+        "# CONFIG_USE_DEFAULT_ENV_FILE is not set"
+      ],
+      "uboot_forbidden_binary_strings": [
+        "root=/dev/fit0",
+        "part_default=production",
+        "sdmmc_read_production="
+      ],
+      "uboot_target_make_contains": [],
+      "uboot_dtb_contract": {
+        "model": "BananaPi BPi-R3 Mini",
+        "compatible": [
+          "bananapi,bpi-r3mini",
+          "mediatek,mt7986"
+        ],
+        "storage_node": "/mmc@11230000",
+        "bus_width": 8,
+        "max_frequency": 200000000,
+        "required_boolean_properties": [
+          "cap-mmc-highspeed",
+          "cap-mmc-hw-reset",
+          "mmc-hs200-1_8v",
+          "no-mmc-hs400",
+          "non-removable"
+        ]
+      },
+      "uboot_payloads": [
+        "bl2.img@17408",
+        "u-boot.fip@6815744"
+      ],
+      "uboot_package_only_payloads": [
+        "gpt"
+      ],
+      "uboot_payload_sha256": [
+        "bl2.img=fcc79a31bc4ea8a1104584991b53ed61834a40171c765a3e3859270ba7509b9e",
+        "gpt=beb31c2284ec7b8e910faeea8d323f40532b26010e87d0bae851d823705efa1d",
+        "u-boot.fip=848ee9f1f6f451658ad179f240231dde24831f301ef8e9a43744621bf6d18408"
+      ],
+      "uboot_payload_minimum_sizes": [
+        "bl2.img=180000",
+        "gpt=17408",
+        "u-boot.fip=400000"
+      ],
+      "uboot_payload_maximum_sizes": [
+        "bl2.img=4176896",
+        "gpt=17408",
+        "u-boot.fip=4194304"
+      ],
+      "uboot_payload_sizes": [
+        "bl2.img=204889",
+        "gpt=17408",
+        "u-boot.fip=510681"
+      ],
+      "partition_table": "gpt",
+      "gpt_template_sha256": "beb31c2284ec7b8e910faeea8d323f40532b26010e87d0bae851d823705efa1d",
+      "partition_name": "bl2",
+      "partition_start_sector": 32768,
+      "logical_sector_size": 512,
+      "root_partition_number": 5,
+      "root_partition_start_sector": 32768,
+      "root_partition_label": "armbi_root",
+      "root_partition_filesystem_type": "ext4",
+      "required_partitions": [
+        "1:bl2:34:8158",
+        "2:ubootenv:8192:1024",
+        "3:factory:9216:4096",
+        "4:fip:13312:8192",
+        "5::32768:2750464"
+      ],
+      "required_partition_types": [
+        "1:0fc63daf-8483-4772-8e79-3d69d8477de4",
+        "2:0fc63daf-8483-4772-8e79-3d69d8477de4",
+        "3:0fc63daf-8483-4772-8e79-3d69d8477de4",
+        "4:c12a7328-f81f-11d2-ba4b-00a0c93ec93b",
+        "5:0fc63daf-8483-4772-8e79-3d69d8477de4"
+      ],
+      "uboot_environment_contract": {
+        "partition_name": "ubootenv",
+        "partition_start_sector": 8192,
+        "partition_sector_count": 1024,
+        "copy_size_bytes": 262144,
+        "resolved_copy_offsets_bytes": [
+          4194304,
+          4456448
+        ]
+      },
+      "boot_configuration": "extlinux",
+      "extlinux_fdt": "/boot/dtb/mediatek/mt7986a-bananapi-bpi-r3-mini.dtb",
+      "overlay_prefix": "mediatek",
+      "default_overlays": [],
+      "required_overlays": [],
+      "sd_node": "/soc/mmc@11230000",
+      "sd_bus_width": 8,
+      "required_uint_properties": [
+        "/soc/mmc@11230000:max-frequency=200000000"
+      ],
+      "required_boolean_properties": [
+        "/soc/mmc@11230000:cap-mmc-highspeed",
+        "/soc/mmc@11230000:cap-mmc-hw-reset",
+        "/soc/mmc@11230000:mmc-hs200-1_8v",
+        "/soc/mmc@11230000:no-mmc-hs400",
+        "/soc/mmc@11230000:non-removable"
+      ],
+      "required_aliases": [
+        "ethernet0=/soc/ethernet@15100000/mac@0",
+        "ethernet1=/soc/ethernet@15100000/mac@1",
+        "serial0=/soc/serial@11002000"
+      ],
+      "required_status_nodes": [
+        "/soc/crypto@10320000",
+        "/soc/ethernet@15100000",
+        "/soc/i2c@11008000",
+        "/soc/mmc@11230000",
+        "/soc/pcie@11280000",
+        "/soc/pwm@10048000",
+        "/soc/rng@1020f000",
+        "/soc/spi@1100a000",
+        "/soc/usb@11200000",
+        "/soc/watchdog@1001c000",
+        "/soc/wifi@18000000"
+      ],
+      "required_present_nodes": [
+        "/gpio-keys",
+        "/pwm-fan",
+        "/soc/ethernet@15100000/mdio-bus/ethernet-phy@14",
+        "/soc/ethernet@15100000/mdio-bus/ethernet-phy@15"
+      ]
+    }
+  }
+}

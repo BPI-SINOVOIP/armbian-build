@@ -1,0 +1,45 @@
+# Rockchip RK3506J Banana Pi BPI-Forge1 固定來源候選。
+BOARD_NAME="Banana Pi BPI-Forge1"
+BOARD_VENDOR="sinovoip"
+BOARDFAMILY="rockchip"
+BOARD_MAINTAINER="BPI-SINOVOIP"
+INTRODUCED="2025"
+KERNEL_TARGET="vendor"
+KERNEL_TEST_TARGET="vendor"
+BOOTCONFIG="forge1-rk3506j_defconfig"
+BOOT_FDT_FILE="rk3506b-bananapi-forge1.dtb"
+IMAGE_PARTITION_TABLE="gpt"
+BOOT_SOC="rk3506"
+DDR_BLOB="rk35/rk3506b_ddr_750MHz_v1.06.bin"
+TEE_BLOB="rk35/rk3506_tee_v2.10.bin"
+SERIALCON="ttyFIQ0:1500000"
+OVERLAY_PREFIX="rockchip"
+PACKAGE_LIST_BOARD="gpiod i2c-tools python3-libgpiod python3-spidev spi-tools usbutils usb-modeswitch evtest can-utils ethtool iproute2 iperf3"
+
+function post_family_config__bananapiforge1_pin_sources() {
+	declare -g BOOTSOURCE="https://source.denx.de/u-boot/contributors/kwiboo/u-boot.git"
+	declare -g BOOTBRANCH="commit:a72ec1294fc6ba6b0bfd5ebc912a7bed2dc2513d"
+	declare -g BOOTPATCHDIR="v2026.07-rk3506"
+	declare -g BOOTDIR="u-boot-rk3506"
+	declare -g BOOTSCRIPT="boot-rk3506-forge1.cmd:boot.cmd"
+	declare -g KERNELSOURCE="https://github.com/armbian/linux-rockchip.git"
+	declare -g KERNELBRANCH="commit:c6157104418d012823413c02f9222f3fe123dd25"
+	declare -g KERNEL_MAJOR_MINOR="6.1"
+	declare -g KERNELPATCHDIR="archive/bananapiforge1-vendor"
+	declare -g LINUXCONFIG="linux-rockchip-vendor"
+	declare -g RKBIN_GIT_URL="https://github.com/armbian/rkbin"
+	declare -g RKBIN_GIT_REF="commit:1d3c61008fa823936ae7a59615393f8294b64456"
+}
+
+function custom_kernel_config__bananapiforge1_usb_hid() {
+	opts_y+=(GPIO_CDEV HID HID_GENERIC HIDRAW USB USB_DWC2 USB_HID)
+	opts_y+=(USB_GADGET USB_CONFIGFS USB_CONFIGFS_MASS_STORAGE)
+	opts_m+=(USB_STORAGE)
+}
+
+function post_family_tweaks_bsp__bananapiforge1_rkbin_license() {
+	local license_source="${RKBIN_DIR}/LICENSE.TXT"
+	local license_target="${destination}/usr/share/doc/armbian-bsp-${BOARD}/rkbin.LICENSE.TXT"
+	[[ -f "${license_source}" ]] || exit_with_error "BPI-Forge1 缺少 RKBin 授權檔：${license_source}"
+	run_host_command_logged install -Dm0644 "${license_source}" "${license_target}"
+}

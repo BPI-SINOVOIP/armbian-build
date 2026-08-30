@@ -1,0 +1,79 @@
+From 90e1d6adc6e4e2c1c3300169a8c30b8fd467a607 Mon Sep 17 00:00:00 2001
+From: BPI-SINOVOIP <support@banana-pi.org>
+Date: Fri, 22 May 2026 22:10:00 +0800
+Subject: [PATCH] k1-x: add extlinux boot fallback for Armbian
+
+Keep the vendor k1-x boot environment for Bianbu-style images, but
+check the boot partition for extlinux, boot scripts, or EFI first so
+Armbian images can boot from the standard single root partition layout.
+
+Signed-off-by: BPI-SINOVOIP <support@banana-pi.org>
+---
+ board/spacemit/k1-x/k1-x.env | 51 +++++++++++++++++++++++++++++++++++---------
+ 1 file changed, 41 insertions(+), 10 deletions(-)
+
+diff --git a/board/spacemit/k1-x/k1-x.env b/board/spacemit/k1-x/k1-x.env
+index f4dadc9a..6f142863 100644
+--- a/board/spacemit/k1-x/k1-x.env
++++ b/board/spacemit/k1-x/k1-x.env
+@@ -217,17 +217,48 @@ nfs_boot=echo "Try to boot from NFS ..."; \
+         echo "########### boot kernel failed from NFS, check your boot config #############"
+ 
+ // Variable "boot_device" is set during board_late_init()
+-autoboot=if test ${boot_device} = nand; then \
+-                run nand_boot; \
+-        elif test ${boot_device} = nor; then \
+-                run nor_boot; \
+-        elif test ${boot_device} = mmc; then \
+-                run mmc_boot; \
+-        elif test ${boot_device} = nfs; then \
+-                run nfs_boot; \
+-        fi;
++nvme_devtype=nvme
++nvme_devnum=0
++nvme_bootpart=1
++mmc_bootpart=1
++
++boot_armbian=if test -e ${devtype} ${devnum}:${distro_bootpart} /extlinux/extlinux.conf; then \
++        sysboot ${devtype} ${devnum}:${distro_bootpart} any 0x2000000 /extlinux/extlinux.conf; \
++    elif test -e ${devtype} ${devnum}:${distro_bootpart} /boot/extlinux/extlinux.conf; then \
++        sysboot ${devtype} ${devnum}:${distro_bootpart} any 0x2000000 /boot/extlinux/extlinux.conf; \
++    elif test -e ${devtype} ${devnum}:${distro_bootpart} /boot.scr; then \
++        load ${devtype} ${devnum}:${distro_bootpart} 0x2000000 /boot.scr; source 0x2000000; \
++    elif test -e ${devtype} ${devnum}:${distro_bootpart} /boot/boot.scr; then \
++        load ${devtype} ${devnum}:${distro_bootpart} 0x2000000 /boot/boot.scr; source 0x2000000; \
++    elif test -e ${devtype} ${devnum}:${distro_bootpart} EFI/BOOT/BOOTRISCV64.EFI; then \
++        load ${devtype} ${devnum}:${distro_bootpart} ${kernel_addr_r} EFI/BOOT/BOOTRISCV64.EFI; bootefi ${kernel_addr_r}; \
++    fi;
++
++boot_armbian_mmc=setenv devtype mmc; \
++    setenv devnum ${boot_devnum}; \
++    setenv distro_bootpart ${mmc_bootpart}; \
++    run boot_armbian;
++
++boot_armbian_nvme=nvme part; \
++    setenv devtype $nvme_devtype; \
++    setenv devnum $nvme_devnum; \
++    setenv distro_bootpart $nvme_bootpart; \
++    run boot_armbian;
++
++autoboot=if test ${boot_device} = nand; then \
++        run nand_boot; \
++    elif test ${boot_device} = nor; then \
++        run nor_boot; \
++    elif test ${boot_device} = mmc; then \
++        run mmc_boot; \
++    elif test ${boot_device} = nfs; then \
++        run nfs_boot; \
++    fi;
+ 
+-bootcmd=run autoboot; echo "run autoboot"
++bootcmd=echo "Loading K1-X Environment ..."; \
++    if test ${boot_device} = mmc; then run boot_armbian_mmc; fi; \
++    run boot_armbian_nvme; \
++    run autoboot; echo "run autoboot"
+ 
+ // Boot menu definitions
+ boot_default=echo "Current Boot Device: ${boot_device}"
+-- 
+2.53.0

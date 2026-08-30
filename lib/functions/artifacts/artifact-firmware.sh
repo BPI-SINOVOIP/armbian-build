@@ -17,14 +17,14 @@ function artifact_firmware_prepare_version() {
 	artifact_version_reason="undetermined" # outer scope
 
 	local ARMBIAN_FIRMWARE_SOURCE="${ARMBIAN_FIRMWARE_GIT_SOURCE:-"https://github.com/armbian/firmware"}"
-	local ARMBIAN_FIRMWARE_BRANCH="branch:${ARMBIAN_FIRMWARE_GIT_BRANCH:-"master"}"
+	local ARMBIAN_FIRMWARE_REF="${ARMBIAN_FIRMWARE_GIT_REF:-"branch:${ARMBIAN_FIRMWARE_GIT_BRANCH:-"master"}"}"
 
 	debug_var ARMBIAN_FIRMWARE_SOURCE
-	debug_var ARMBIAN_FIRMWARE_BRANCH
+	debug_var ARMBIAN_FIRMWARE_REF
 
 	declare short_hash_size=4
 
-	declare -A GIT_INFO_ARMBIAN_FIRMWARE=([GIT_SOURCE]="${ARMBIAN_FIRMWARE_SOURCE}" [GIT_REF]="${ARMBIAN_FIRMWARE_BRANCH}")
+	declare -A GIT_INFO_ARMBIAN_FIRMWARE=([GIT_SOURCE]="${ARMBIAN_FIRMWARE_SOURCE}" [GIT_REF]="${ARMBIAN_FIRMWARE_REF}")
 	run_memoized GIT_INFO_ARMBIAN_FIRMWARE "git2info" memoized_git_ref_to_info
 	debug_dict GIT_INFO_ARMBIAN_FIRMWARE
 

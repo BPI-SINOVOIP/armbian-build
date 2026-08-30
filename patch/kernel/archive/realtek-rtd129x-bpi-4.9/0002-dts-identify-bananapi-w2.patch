@@ -1,0 +1,8 @@
+diff --git a/linux-rtk/arch/arm64/boot/dts/realtek/rtd129x/rtd-1296-bananapi-w2-2GB.dts b/linux-rtk/arch/arm64/boot/dts/realtek/rtd129x/rtd-1296-bananapi-w2-2GB.dts
+index 2072c37..274456e 100644
+--- a/linux-rtk/arch/arm64/boot/dts/realtek/rtd129x/rtd-1296-bananapi-w2-2GB.dts
++++ b/linux-rtk/arch/arm64/boot/dts/realtek/rtd129x/rtd-1296-bananapi-w2-2GB.dts
+@@ -23,0 +24,3 @@
++	model = "Banana Pi BPI-W2";
++	compatible = "bananapi,bpi-w2", "realtek,rtd1296";
++

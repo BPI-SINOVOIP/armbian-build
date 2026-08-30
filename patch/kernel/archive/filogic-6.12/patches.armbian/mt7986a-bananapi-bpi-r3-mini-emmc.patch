@@ -1,0 +1,43 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Banana Pi -BPI <lionwang@sinovoip.com.cn>
+Date: Thu, 27 Aug 2026 10:00:00 +0800
+Subject: [PATCH] arm64: dts: enable BPI-R3 Mini onboard eMMC
+
+板級 DTS 原本只設定腳位與電源，卻保留 SoC 預設的停用狀態及
+1-bit 匯流排，導致映像雖可建置，核心仍無法存取板載 eMMC。
+
+啟用 8-bit、non-removable 與 HS200 1.8V 模式，並明確停用尚未
+完成本候選實機驗證的 HS400。此設定仍須以實體板壓力測試確認。
+
+Signed-off-by: Banana Pi -BPI <lionwang@sinovoip.com.cn>
+---
+ arch/arm64/boot/dts/mediatek/mt7986a-bananapi-bpi-r3-mini.dts | 8 ++++++++
+ 1 file changed, 8 insertions(+)
+
+diff --git a/arch/arm64/boot/dts/mediatek/mt7986a-bananapi-bpi-r3-mini.dts b/arch/arm64/boot/dts/mediatek/mt7986a-bananapi-bpi-r3-mini.dts
+index e2a2fea7adf09bc44e8014f27d3a8e8c9a79667a..9400dbc48fd985e887a1aa8962d63d9a0bd8317b 100644
+--- a/arch/arm64/boot/dts/mediatek/mt7986a-bananapi-bpi-r3-mini.dts
++++ b/arch/arm64/boot/dts/mediatek/mt7986a-bananapi-bpi-r3-mini.dts
+@@ -173,7 +173,15 @@
+ &mmc0 {
+-	pinctrl-names = "default", "state_uhs";
+-	pinctrl-0 = <&mmc0_pins_default>;
+-	pinctrl-1 = <&mmc0_pins_uhs>;
+-	vmmc-supply = <&reg_3p3v>;
+-	vqmmc-supply = <&reg_1p8v>;
++	bus-width = <8>;
++	max-frequency = <200000000>;
++	pinctrl-names = "default", "state_uhs";
++	pinctrl-0 = <&mmc0_pins_default>;
++	pinctrl-1 = <&mmc0_pins_uhs>;
++	cap-mmc-highspeed;
++	cap-mmc-hw-reset;
++	mmc-hs200-1_8v;
++	no-mmc-hs400;
++	non-removable;
++	vmmc-supply = <&reg_3p3v>;
++	vqmmc-supply = <&reg_1p8v>;
++	status = "okay";
+ };
+--
+2.39.5

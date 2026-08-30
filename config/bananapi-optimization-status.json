@@ -1,0 +1,407 @@
+{
+  "schema_version": 2,
+  "updated": "2026-08-28",
+  "batches": {
+    "A": [
+      "bananapim5",
+      "bananapim2pro",
+      "bananapicm4io",
+      "bananapim2s"
+    ],
+    "B": [
+      "bananapi",
+      "bananapim2plus",
+      "bananapif3",
+      "bananapim5pro",
+      "bananapim7",
+      "bpi-ai2n"
+    ],
+    "C": [
+      "bananapim1plus",
+      "bananapipro",
+      "bananapim2",
+      "bananapim2berry",
+      "bananapim2magic",
+      "bananapim2ultra",
+      "bananapim2zero",
+      "bananapim3",
+      "bananapim64",
+      "bananapip2zero",
+      "bananapi6204"
+    ],
+    "D": [
+      "bananapir2",
+      "bananapir2pro",
+      "bananapir3",
+      "bananapir3mini",
+      "bananapir4",
+      "bananapir4lite",
+      "bananapir4pro",
+      "bananapir64"
+    ],
+    "E": [
+      "bananapiaim7",
+      "bananapicm2",
+      "bananapicm5pro",
+      "bananapiforge1",
+      "bananapim1super",
+      "bananapim4super",
+      "bananapip2pro",
+      "bananapiw3"
+    ],
+    "F": [
+      "bananapicm6",
+      "bananapif2p",
+      "bananapif2s",
+      "bananapim2c",
+      "bananapim4",
+      "bananapim6",
+      "bananapism10",
+      "bananapiw2"
+    ],
+    "G": [
+      "bananapir1"
+    ],
+    "R": [
+      "bananapim4zero",
+      "bananapim4berry"
+    ]
+  },
+  "evidence": {
+    "bananapim5": {
+      "level": "L2",
+      "basis": "Trixie current CLI 已由乾淨來源完整建置並通過映像、U-Boot、FIP、eMMC 與功能設定唯讀守門；仍待實機驗證"
+    },
+    "bananapim2pro": {
+      "level": "L2",
+      "basis": "Trixie current CLI 已由乾淨來源完整建置並通過映像、U-Boot、FIP、eMMC 與功能設定唯讀守門；仍待實機驗證"
+    },
+    "bananapicm4io": {
+      "level": "L2",
+      "basis": "Trixie current CLI 已由乾淨來源完整建置並通過映像、U-Boot、FIP、Hynix eMMC 保守設定與功能設定唯讀守門；仍待實機驗證"
+    },
+    "bananapim2s": {
+      "level": "L2",
+      "basis": "Trixie current CLI 已由乾淨來源完整建置並通過映像、U-Boot、FIP、eMMC 與功能設定唯讀守門；仍待實機驗證"
+    },
+    "bananapi": {
+      "level": "L2",
+      "basis": "Trixie current CLI 已由乾淨來源完整建置並通過映像、U-Boot、A20 DTB、核心功能與標準 I/O 工具唯讀守門；仍待實機驗證"
+    },
+    "bananapim1plus": {
+      "level": "L2",
+      "basis": "Trixie current CLI 已由乾淨來源完整建置並通過映像、固定 Linux／U-Boot 來源、A20 M1+ DTB、AP6210 Wi-Fi 韌體、12 個 overlay、核心功能與標準 I/O 工具唯讀守門；仍待實機驗證"
+    },
+    "bananapim2": {
+      "level": "L2",
+      "basis": "Trixie current CLI 已由乾淨來源完整建置並通過映像、固定 Linux／U-Boot／firmware 來源、A31s M2 DTB、AP6210 Wi-Fi 韌體、核心功能與標準 I/O 工具唯讀守門；仍待實機驗證"
+    },
+    "bananapim2plus": {
+      "level": "L2",
+      "basis": "Trixie current CLI 已由乾淨來源完整建置並通過映像、U-Boot、H3 DTB、Wi-Fi／Bluetooth 設定、硬體加速設定、overlay 與標準 I/O 工具唯讀守門；仍待實機驗證"
+    },
+    "bananapim2berry": {
+      "level": "L2",
+      "basis": "Trixie current CLI 已由乾淨來源完整建置並通過映像、固定 Linux／U-Boot／firmware 來源、R40 M2 Berry DTB、AP6212 韌體、八項 overlay、核心功能與標準 I/O 工具唯讀守門；仍待實機驗證"
+    },
+    "bananapim2magic": {
+      "level": "L2",
+      "basis": "Trixie current CLI 已由乾淨來源完整建置並通過映像、固定 Linux／U-Boot／firmware 來源、A33 M2 Magic DTB、SD／SDIO／eMMC、AP6212、OTG、音訊、Lima、Cedrus 與標準 I/O 工具唯讀守門；仍待實機驗證"
+    },
+    "bananapim2ultra": {
+      "level": "L2",
+      "basis": "Trixie current CLI 已由乾淨來源完整建置並通過映像、固定 Linux／U-Boot／firmware 來源、R40 M2 Ultra DTB、8-bit eMMC、AP6212 韌體、八項 overlay、核心功能與標準 I/O 工具唯讀守門；仍待實機驗證"
+    },
+    "bananapim3": {
+      "level": "L2",
+      "basis": "Trixie current CLI 已由乾淨來源完整建置並通過映像、固定 Linux／U-Boot／firmware 來源、A83T M3 DTB、SD／SDIO／eMMC、AP6212、USB OTG、GbE、HDMI／類比音訊與標準 I/O 工具唯讀守門；仍待實機驗證"
+    },
+    "bananapim64": {
+      "level": "L2",
+      "basis": "Trixie current CLI 已由乾淨來源完整建置並通過映像、固定 Linux／U-Boot／ATF／Crust／firmware 來源、A64 M64 DTB、SD／SDIO／eMMC、AP6212、USB OTG、GbE、HDMI／類比音訊、Lima、Cedrus 與標準 I/O 工具唯讀守門；仍待實機驗證"
+    },
+    "bananapif3": {
+      "level": "L2",
+      "basis": "Trixie current CLI 已由乾淨來源完整建置並通過映像、固定 Linux／U-Boot／OpenSBI 來源、六項 SpacemiT 啟動載荷、F3 DTB、核心功能與標準 I/O 工具唯讀守門；仍待實機驗證"
+    },
+    "bananapicm6": {
+      "level": "L2",
+      "basis": "Trixie legacy minimal CLI 已由隔離快取完整建置並通過映像、固定 Linux／U-Boot／OpenSBI 來源、六項 SpacemiT 啟動載荷、MBR、CM6 專用 DTB、核心功能、韌體授權與標準 I/O 工具唯讀守門；SD、eMMC 與實體功能仍待實機驗證"
+    },
+    "bananapiw2": {
+      "level": "L2",
+      "basis": "Trixie legacy 精簡 CLI 已由已推送提交 7882ba85d 與專用隔離快取乾淨重建；IMG、XZ、MBR 雙分割區、唯讀 FAT／ext4、W2 DTB、固定時間 U-Boot 載荷、最終核心設定、固定 BSP／firmware 來源及必要套件均通過物質守門與歷史重驗；不透明載荷授權與實機功能仍待驗證"
+    },
+    "bananapim5pro": {
+      "level": "L2",
+      "basis": "Trixie edge CLI 已由乾淨來源完整建置並通過映像、固定 Linux／U-Boot／RKBin 來源、雙 U-Boot 載荷、RK3576 M5 Pro DTB、核心功能與標準 I/O 工具唯讀守門；仍待實機驗證"
+    },
+    "bananapim7": {
+      "level": "L2",
+      "basis": "Trixie current CLI 已由乾淨來源完整建置並通過映像、雙 U-Boot payload、固定 RKBin 啟動依賴、RK3588 M7 DTB、核心功能與標準 I/O 工具唯讀守門；仍待實機驗證"
+    },
+    "bananapim2zero": {
+      "level": "L2",
+      "basis": "Trixie current CLI 已由乾淨來源完整建置並通過映像、U-Boot、H2+ DTB、SD／SDIO、硬體加速設定、overlay 與標準 I/O 工具唯讀守門；仍待實機驗證"
+    },
+    "bananapip2zero": {
+      "level": "L2",
+      "basis": "Trixie current CLI 已由乾淨來源完整建置並通過映像、U-Boot、H2+ DTB、SD／SDIO／8-bit eMMC、Ethernet、硬體加速設定、overlay 與標準 I/O 工具唯讀守門；仍待實機驗證"
+    },
+    "bananapip2pro": {
+      "level": "L2",
+      "basis": "Trixie current CLI 已由乾淨來源完整建置並通過映像、U-Boot、固定 RKBin 啟動依賴、RK3308 DTB、SD／eMMC／SDIO、overlay 與標準 I/O 工具唯讀守門；仍待實機驗證"
+    },
+    "bananapiaim7": {
+      "level": "L2",
+      "basis": "Trixie vendor minimal CLI 已由專用 OverlayFS 隔離快取與固定來源完整建置；IMG／XZ、GPT、U-Boot 載荷、RKBin、AIM7 DTB、最終核心與 U-Boot 設定、診斷套件及唯讀內容守門均通過，仍待載板差異、授權與實機驗證"
+    },
+    "bananapicm2": {
+      "level": "L0",
+      "basis": "固定 Linux 6.18.46、U-Boot 2024.01、RKBin 與 firmware 來源及 R2 Pro 參考板契約已建立；目前沒有證據證明 R2 Pro 是 CM2 載板，也沒有可接受的 CM2 元件、完整映像或實機證據，故維持 L0"
+    },
+    "bananapicm5pro": {
+      "level": "L2",
+      "basis": "Trixie vendor minimal CLI 已由隔離快取完整建置，IMG／XZ、GPT、U-Boot 載荷、固定 Linux／U-Boot／RKBin／firmware／RTL8852BS 來源、專用包裝 DTB、核心設定、診斷套件與授權副本均通過唯讀守門；載板等同性、韌體散布授權與實體功能仍待驗證"
+    },
+    "bananapiforge1": {
+      "level": "L2",
+      "basis": "Trixie vendor minimal CLI 已由隔離快取完整建置並通過映像、固定 Linux／U-Boot／RKBin 來源、GPT、U-Boot 載荷、Banana Pi 專用 DTB、雙乙太網路、USB gadget、顯示、音訊、CAN 與標準 I/O 工具唯讀守門；供應商核心、預編譯 RKBin、硬體描述等同性與實體功能仍待驗證"
+    },
+    "bananapim1super": {
+      "level": "L2",
+      "basis": "Trixie vendor 精簡 CLI 已由已推送提交 d2cc85596 與專用隔離快取乾淨重建；IMG、XZ、GPT、唯讀 ext4、M1 Super DTB、U-Boot 載荷、最終設定、固定 Linux／U-Boot／firmware／RKBin 來源、必要套件及核心模組均通過即時物質守門與二次回讀；無線 BOM、韌體授權及實機功能仍待驗證"
+    },
+    "bananapim2c": {
+      "level": "L0",
+      "basis": "已辨識 UNC_LINUX_RLS_25C_W26.07.2 的 95 個 repo 專案提交、41 組本機追蹤差異、6,751 個未分類未追蹤檔與歷史 secure PAC；來源尚不可重放，授權、簽署鏈、完整映像與實機證據均未封閉"
+    },
+    "bananapim4": {
+      "level": "L2",
+      "basis": "Trixie legacy 精簡 CLI 已由已推送提交 19b21c370 與專用隔離快取乾淨重建；IMG、XZ、MBR 雙分割區、唯讀 FAT／ext4、雙記憶體 DTB、固定時間 U-Boot 載荷、最終核心設定、固定 BSP／firmware 來源、必要套件與 RTL8821CU 模組均通過物質守門及歷史重驗；不透明載荷授權與實機功能仍待驗證"
+    },
+    "bananapim4super": {
+      "level": "L0",
+      "basis": "只建立 ArmSoM Sige3 donor 的固定來源與禁止聲明契約；官方 SYN43752 無線模組及 PCIe lane 資料和 donor 描述尚未閉合，未建立 M4 Super 專屬 DTS、U-Boot、元件或映像"
+    },
+    "bananapir2pro": {
+      "level": "L2",
+      "basis": "Trixie current CLI 已由乾淨來源完整建置並通過映像、固定 Linux／U-Boot／RKBin／firmware 來源、GPT、雙啟動載荷、RK3568 R2 Pro DTB、雙乙太網路、MT7531、SATA、雙 PCIe、USB host、顯示與媒體設定唯讀守門；仍待實機驗證"
+    },
+    "bananapir3": {
+      "level": "L2",
+      "basis": "Trixie current minimal CLI 已由隔離快取完整建置並通過映像、固定 Linux／U-Boot／ATF／firmware／mt76 來源、五分割區 GPT、BL2／FIP、R3 SD／NOR DTB、MT7986 WMAC／WED、SATA、PCIe、USB、DSA、SFP 與標準 I/O 工具唯讀守門；仍待實機驗證"
+    },
+    "bananapir4": {
+      "level": "L2",
+      "basis": "Trixie current minimal CLI 已由隔離快取完整建置並通過映像、固定 Linux／U-Boot／ATF／firmware／mt76／linux-firmware 來源、五分割區 GPT、BL2／FIP、R4 SD DTB、MT7988 2.5G PHY／WED、MT7996、PCIe、USB、DSA、SFP 與標準 I/O 工具唯讀守門；仍待實機驗證"
+    },
+    "bananapir4lite": {
+      "level": "L2",
+      "basis": "實驗性 Trixie current minimal CLI 已由隔離快取完整建置並通過映像、固定 Linux／U-Boot／ATF／firmware／linux-firmware 來源、五分割區 GPT、BL2／FIP、R4 Lite SD DTB、MT7987 2.5GbE PHY、PCIe、USB、DSA、SFP 與標準 I/O 工具唯讀守門；6.17.0-rc1 核心與實體功能仍待驗證"
+    },
+    "bananapir64": {
+      "level": "L2",
+      "basis": "Trixie current minimal CLI 已由隔離快取完整建置並通過映像、固定 Linux／U-Boot／ATF／firmware／linux-firmware 來源、五分割區 GPT、BL2／FIP、R64 SD DTB、MT7622 無線網路／藍牙、SATA、PCIe、USB、DSA 與標準 I/O 工具唯讀守門；GPIO90 模式與實體功能仍待實機驗證"
+    },
+    "bananapi6204": {
+      "level": "L2",
+      "basis": "Trixie legacy minimal CLI 已由乾淨來源完整建置並通過映像、固定 Linux／U-Boot／firmware 來源、完整 R40 6204 DTB、eMMC 保守設定、SATA、GMAC、CAN、雙 RTC、五組 UART、USB、Lima、Cedrus 與工控 I/O 工具唯讀守門；仍待實機驗證"
+    },
+    "bananapism10": {
+      "level": "L2",
+      "basis": "內部 Trixie current minimal CLI 已由已推送提交與專用隔離快取完整重建；IMG／XZ、GPT、唯讀 FAT／ext4、SM10 專用 DTB、U-Boot FSBL／FIT、OpenSBI、最終核心與 U-Boot 設定及固定 Linux／U-Boot／OpenSBI／firmware 來源均通過物質守門；預建資產授權、載板拓撲及實機功能仍待驗證"
+    },
+    "bananapif2s": {
+      "level": "L2",
+      "basis": "內部 Trixie legacy minimal CLI 已由隔離快取與固定 BPI-F2S BSP 提交完整建置，並通過 MBR、FAT boot、UUID root、U-Boot 2019.04、Linux 5.4.35、F2S DTB、核心功能、套件與唯讀映像守門；xboot 與工具鏈授權及實機功能仍待驗證"
+    },
+    "bananapif2p": {
+      "level": "L2",
+      "basis": "內部 Trixie legacy minimal CLI 已由隔離快取與固定 BPI-F2S BSP、Armbian firmware 提交完整建置，並通過 XZ、MBR、雙分割區、UUID root、U-Boot 偏移、F2P DTB、核心與 U-Boot 最終設定及禁止 F2S eMMC 資產的唯讀守門；仍未完成實機與再散布授權驗證"
+    },
+    "bananapim6": {
+      "level": "L2",
+      "basis": "內部 Trixie legacy minimal CLI 已由已推送乾淨提交與隔離快取完整重建，並通過 IMG／XZ 同一性、MBR 雙分割區、唯讀 FAT／ext4、根 UUID、M6 DTB、最終核心與 U-Boot 設定、固定來源及 TZK／U-Boot 受控重疊載荷守門；再散布授權與實機功能仍待驗證"
+    },
+    "bananapir2": {
+      "level": "L2",
+      "basis": "Trixie current CLI 已由固定來源完整建置，並通過 IMG／XZ 同一性、分割表、五個啟動載荷、R2 DTB、核心設定、套件與唯讀根檔案系統守門；啟動載荷再散布授權與實機功能仍待驗證"
+    },
+    "bananapir1": {
+      "level": "L2",
+      "basis": "2026-05-21 的五個發行版、CLI／XFCE 共十組歷史映像已通過 SHA-256、XZ 串流、日誌與說明契約；Trixie CLI 另通過唯讀分割區、EOS 身分、核心、initrd 與 DTB 內容守門。這是歷史／封存 L2，不是本次新建置、現行支援或實機證據"
+    },
+    "bananapir3mini": {
+      "level": "L2",
+      "basis": "Debian Trixie current 精簡 CLI 已由固定提交乾淨重建；IMG、單一 XZ 串流、GPT、唯讀 ext4 根檔案系統、DTB、核心與 U-Boot 設定、BL2、FIP、套件及固定 firmware 來源守門全部通過；仍未驗證空白 eMMC boot0 冷啟動與實機功能"
+    },
+    "bananapir4pro": {
+      "level": "L2",
+      "basis": "內部 Trixie current minimal CLI 已由隔離快取與固定來源完整建置，並通過 GPT、BL2／FIP、R4 Pro 8X DTB、核心設定、韌體與唯讀映像守門；預編譯 ATF 物件授權、候選核心與實機功能仍待驗證"
+    },
+    "bananapiw3": {
+      "level": "L2",
+      "basis": "Trixie vendor minimal CLI 已由隔離快取與固定來源完整建置，並通過 GPT、U-Boot、W3 DTB、RKBin 授權副本、核心設定、套件與唯讀映像守門；實機冷啟動、介面與硬體加速仍待驗證"
+    },
+    "bpi-ai2n": {
+      "level": "L2",
+      "basis": "內部 Trixie legacy minimal CLI 已由隔離快取與固定 Linux、U-Boot、TF-A、Armbian 韌體來源完整建置，並通過 IMG／XZ 同一性、SD BL2／FIP、AI2N DTB、Linux 6.1.107、Panfrost 模組、九個執行期資產與唯讀映像守門；資產再散布授權及全部實體功能仍待驗證"
+    },
+    "bananapipro": {
+      "level": "L2",
+      "basis": "Trixie current CLI 已由乾淨來源完整建置並通過映像、U-Boot、A20 DTB、核心功能與標準 I/O 工具唯讀守門；仍待實機驗證"
+    },
+    "bananapim4zero": {
+      "level": "L2",
+      "basis": "H618 DDR 792 MHz 軟體候選、DDR 實驗工具、映像矩陣與多板啟動紀錄已保存；證據尚未完成受控樣本矩陣、長時間冷啟動、壓力與全功能實測，因此維持 L2"
+    },
+    "bananapim4berry": {
+      "level": "L2",
+      "basis": "H618 2／4 GiB 最佳化映像矩陣及單片 2 GiB 的 GPU、VPU、Crypto、I/O 紀錄已保存；仍缺 4 GiB、多板、冷啟動、外接迴路與長時間壓力實測，因此維持 L2"
+    }
+  },
+  "next_gates": {
+    "bananapim5": "以多家 eMMC 樣品完成冷啟動、重新啟動、關機、HDMI、USB 主機與網路實測",
+    "bananapim2pro": "完成 SD／eMMC、GbE、HDMI、USB 與 40-pin 的實機回歸矩陣",
+    "bananapicm4io": "以 Hynix eMMC 完成多輪冷啟動、重新啟動、關機、網路與 USB 實測",
+    "bananapim2s": "完成 SD／eMMC、網路、USB、顯示與重新啟動實機回歸",
+    "bananapi": "完成 SD 冷啟動、GbE、SATA、USB 與 40-pin 外接迴路實測",
+    "bananapim1plus": "完成 SD、GbE、SATA、Wi-Fi、Bluetooth、USB 與 40-pin 實測",
+    "bananapim2": "完成 SD、eMMC、Wi-Fi、Bluetooth、HDMI、USB 與 40-pin 實測",
+    "bananapim2plus": "完成無線網路、Bluetooth、HDMI、USB、GPIO 與長時間負載實測",
+    "bananapim2berry": "完成 SD／eMMC、SATA、GbE、無線網路、USB、顯示與 40-pin 實測",
+    "bananapim2magic": "完成 SD／eMMC、Wi-Fi、Bluetooth、OTG、音訊與 Lima／Cedrus 實測",
+    "bananapim2ultra": "完成 SD／eMMC、SATA、GbE、無線網路、USB、顯示與 40-pin 實測",
+    "bananapim3": "完成 SD／eMMC、GbE、Wi-Fi、Bluetooth、USB OTG、HDMI 與音訊實測",
+    "bananapim64": "完成 SD／eMMC、GbE、Wi-Fi、Bluetooth、USB OTG、HDMI、Lima 與 Cedrus 實測",
+    "bananapif3": "完成 SD／eMMC、GbE、PCIe、USB、GPU、VPU、NPU 與 40-pin 實測",
+    "bananapicm6": "完成 SD／eMMC 冷啟動、網路、USB、顯示與加速器實測",
+    "bananapiw2": "閉合四個靜態庫、bluecore.audio 與工具鏈再散布授權，再完成 SD／eMMC、SATA、PCIe、網路、USB、顯示、音訊及 40-pin 實測",
+    "bananapim5pro": "完成儲存、網路、無線、顯示、GPU、VPU、RGA、NPU 與 40-pin 實測",
+    "bananapim7": "完成儲存、網路、顯示、媒體、NPU、USB 與 40-pin 實測",
+    "bananapim2zero": "完成 SD、Wi-Fi、Bluetooth、USB OTG、HDMI、Lima、Cedrus 與 40-pin 實測",
+    "bananapip2zero": "完成 SD／eMMC、Ethernet、USB、顯示、Lima、Cedrus 與 40-pin 實測",
+    "bananapip2pro": "完成 SD／eMMC、SDIO、網路、音訊、USB 與 40-pin 實測",
+    "bananapiaim7": "完成 AIM7 與 AIM7 IO 載板差異、RKBin／韌體散布授權、冷啟動、儲存、網路、顯示、GPU、VPU、RGA、NPU、PCIe、USB 與排針實測",
+    "bananapicm2": "依三個 L0 外部協助計畫取得模組／載板身分、原理圖、逐腳映射、固定 BSP、授權與兩片實機紀錄，再建立專屬 DTS",
+    "bananapicm5pro": "完成載板等同性與 RTL8852BS 授權審查，再做冷啟動及全介面實測",
+    "bananapiforge1": "完成冷啟動、雙網路、USB gadget、顯示、CAN、音訊與 40-pin 實測",
+    "bananapim1super": "釐清量產無線 BOM 與韌體授權，再完成 SD／eMMC、網路、無線、顯示、GPU、VPU、USB 與 40-pin 實測",
+    "bananapim2c": "依三個 L0 外部協助計畫取得 95 專案可攜來源、41 組有序修補、6,751 檔分類、固定 Yocto 環境、授權與受控簽署收據",
+    "bananapim4": "閉合不透明啟動與音訊載荷、工具鏈再散布授權，再完成 SD／eMMC、網路、USB、HDMI、GPU、VPU、無線與 40-pin 實測",
+    "bananapim4super": "依三個 L0 外部協助計畫取得原理圖、網表、量產 BOM、SYN43752、PCIe lane、固定 BSP、授權與兩片實機紀錄，再建立專屬 DTS",
+    "bananapir2pro": "完成 SD／eMMC、雙網路、SATA、PCIe、USB、顯示、媒體與 40-pin 實測",
+    "bananapir3": "完成 SD／NOR、雙網路、SFP、SATA、PCIe、USB、無線與長時間流量實測",
+    "bananapir4": "完成 SD／NOR、2.5GbE、SFP、PCIe、USB、Wi-Fi 7 與長時間流量實測",
+    "bananapir4lite": "先驗證候選核心穩定性，再完成 2.5GbE、SFP、PCIe、USB 與長時間流量實測",
+    "bananapir64": "完成 SD、GbE、DSA、SATA、PCIe、USB、Wi-Fi、Bluetooth 與 GPIO90 實測",
+    "bananapi6204": "完成 eMMC、SATA、GMAC、CAN、雙 RTC、UART、USB、工控 I/O 與長時間實測",
+    "bananapism10": "閉合 ESOS、PowerVR、VPU 韌體及三個執行期預建資產的再散布授權，再完成 SD 冷啟動、儲存、網路、USB、顯示、GPU、VPU、NPU 與排針實測",
+    "bananapif2s": "閉合 xboot 與工具鏈授權，再完成 SD／eMMC、網路、USB、顯示與 40-pin 實測",
+    "bananapif2p": "閉合 ISPBOOOT.BIN 與工具鏈授權，再完成 microSD 冷啟動、網路、USB、顯示、TPM 與 GPIO 實測；eMMC 維持禁止直到取得專用 xboot",
+    "bananapim6": "固定最終核心設定與專有啟動載荷邊界，完成來源一致的完整映像守門",
+    "bananapir2": "取得五個啟動載荷的再散布核准，再完成 eMMC、網路、SATA、USB 與交換器實測",
+    "bananapir1": "保留最後可用封存基線與安全限制，不列入新發布",
+    "bananapir3mini": "釐清 ATF MT7986 DRAM 物件再散布範圍，再做空白 eMMC 的 boot0 分離寫入、boot partition enable、冷啟動及網路功能實測",
+    "bananapir4pro": "完成候選核心與預編譯 ATF 邊界審查，再做網路、SFP、PCIe、USB 與無線實測",
+    "bananapiw3": "完成冷啟動、儲存、網路、無線、顯示、GPU、VPU、RGA 與 NPU 實測",
+    "bpi-ai2n": "完成 SD 冷啟動、雙網路、USB、PCIe、顯示、相機、Panfrost、DRP-AI 與 40-pin 實測",
+    "bananapipro": "完成 SD 冷啟動、GbE、SATA、USB 與 40-pin 外接迴路實測",
+    "bananapim4zero": "以 2／4 GiB 多批次板完成冷啟動、DDR 壓力、儲存、網路、顯示、媒體與 40-pin 實測",
+    "bananapim4berry": "以 2／4 GiB 多板完成冷啟動、Wi-Fi、Bluetooth、GPU、VPU、USB、40-pin 與長時間壓力實測"
+  },
+  "open_findings": {
+    "bananapi": [],
+    "bananapi6204": [],
+    "bananapicm4io": [],
+    "bananapicm6": [],
+    "bananapif3": [],
+    "bananapiforge1": [],
+    "bananapim1plus": [],
+    "bananapim2": [],
+    "bananapim2berry": [],
+    "bananapim2magic": [],
+    "bananapim2plus": [],
+    "bananapim2pro": [],
+    "bananapim2s": [],
+    "bananapim2ultra": [],
+    "bananapim2zero": [],
+    "bananapim3": [],
+    "bananapim4berry": [],
+    "bananapim4zero": [],
+    "bananapim5": [],
+    "bananapim5pro": [],
+    "bananapim64": [],
+    "bananapim7": [],
+    "bananapip2pro": [],
+    "bananapip2zero": [],
+    "bananapipro": [],
+    "bananapir2pro": [],
+    "bananapir3": [],
+    "bananapir4": [],
+    "bananapir4lite": [],
+    "bananapir64": [],
+    "bananapiw2": [
+      "四個 U-Boot 靜態庫、bluecore.audio、內含工具鏈與外部文件的再散布授權尚未確認",
+      "完整映像已通過 L2 軟體守門；實體開機、儲存、網路、USB、顯示、音訊及 40-pin I/O 尚未驗證",
+      "Linux 4.9.119、U-Boot 2015.07 與正式建置的 229 筆 vendor 警告仍有維護及安全風險；initramfs 與 APT 輸入也未達逐位元重現"
+    ],
+    "bananapiaim7": [
+      "AIM7 與 ArmSoM AIM7 IO 的原理圖差異尚未閉合，既有 DTS 只啟用單 lane PCIe 且 SPI／DSI 停用；GPU、VPU、RGA、NPU 使用者空間與韌體授權仍待完整映像稽核"
+    ],
+    "bananapicm2": [
+      "尚未取得 BPI-CM2 實際載板原理圖、連接器映射與供電拓撲；R2 Pro 僅可作同 SoC 軟體參考，不能宣稱 CM2 支援"
+    ],
+    "bananapicm5pro": [
+      "Linux 與 U-Boot DTS 仍以 ArmSoM CM5 IO 為 donor；官方產品身分可支持來源關聯，但尚未完成 IO 載板逐網路等同性審查",
+      "RTL8852BS 韌體缺少逐檔再散布授權，外部驅動也尚未完成上游與安全稽核",
+      "完整映像已通過 L2 軟體守門；冷啟動、儲存、網路、40-pin、顯示、GPU、VPU、RGA 與 NPU 尚未實機驗證"
+    ],
+    "bananapim4super": [
+      "官方 M4 Super 無線模組為 SYN43752，Sige3 donor DTS 為 AP6275S；同一官方頁面的 PCIe 規格也同時出現 x1 與 x2，必須取得原理圖及 PCB 資料後才能建立真正板級描述"
+    ],
+    "bananapif2s": [
+      "xboot 與預建工具鏈缺少完整可重建來源或明確再散布授權，完整映像只能作內部驗證"
+    ],
+    "bananapif2p": [
+      "ISPBOOOT.BIN 與預建工具鏈再散布授權未閉合，且缺少 F2P 專用 eMMC xboot；目前只能保留內部 SD 候選"
+    ],
+    "bananapim6": [
+      "TZK 與 U-Boot sm.bin 缺少原始碼、重建鏈及逐檔再散布授權，C05 拓撲與實機啟動尚未驗證"
+    ],
+    "bananapir2": [
+      "五個 MediaTek 啟動載荷尚未取得可保存的書面再散布授權"
+    ],
+    "bananapir1": [
+      "板卡維持 EOS；歷史映像沒有目前來源重建、實機開機、安全更新、授權審查或公開發布證據"
+    ],
+    "bananapir3mini": [
+      "ATF MT7986 預編譯 DRAM 物件再散布範圍未確認，eMMC boot0 安裝與 boot partition enable 尚未實機驗證"
+    ],
+    "bananapir4pro": [
+      "Linux 6.19.0-rc1 與 ATF MT7988 預編譯 DRAM／eFuse 物件不得視為公開發布核准"
+    ],
+    "bananapism10": [],
+    "bananapiw3": [
+      "尚未完成實機冷啟動、儲存、網路、無線、顯示與硬體加速驗證"
+    ],
+    "bananapim1super": [
+      "Wi-Fi 量產 BOM 在 SYN43752、AP6275S 與 RTL8852BS 證據間不一致；RKBin 只可依授權隨 Rockchip 平台散布，Armbian 韌體逐檔授權仍待確認",
+      "現行整合提交的完整映像已通過內部 L2 軟體守門；SD／eMMC 冷啟動、網路、無線、顯示、GPU、VPU、USB 與 40-pin 仍無實機證據"
+    ],
+    "bpi-ai2n": [
+      "九個 DRP、Codec、相機與 RTL8821CU runtime 資產缺少可核對再散布授權或 ABI 契約；完整映像已通過內部 L2 軟體守門，但仍無實機證據"
+    ],
+    "bananapim2c": [
+      "仍採 secure PAC 與 Yocto 混合流程，尚非一般 Armbian SD 首階段啟動",
+      "41 組追蹤差異尚未整理成可重放修補集，55 個專案共有 6,751 個未分類未追蹤檔，Unisoc 遠端也需要授權",
+      "chipram、簽署與 PAC 工具、modem、Trusty、GPU、NPU、VPU、GNSS 及其他預建內容缺少完整逐項再散布授權"
+    ],
+    "bananapim4": [
+      "bluecore.audio、六個未以固定 MIPS 工具鏈重建的啟動影像及內含工具鏈缺少完整逐項再散布授權",
+      "Linux 4.9.119 與 U-Boot 2015.07 已停止受維護，核心建置仍有 230 個 vendor 警告",
+      "已有完整 Armbian 內部 L2 映像，但尚無 SD、eMMC、網路、USB、HDMI、GPU、VPU、無線與 40-pin 實機證據"
+    ]
+  }
+}

@@ -1,0 +1,20 @@
+# UNISOC UIS7885 安全開機 PAC 平台；目前只提供 L0 本機來源快照稽核。
+BOARD_NAME="Banana Pi M2C"
+BOARD_VENDOR="sinovoip"
+BOARDFAMILY="unisoc-uis7885-bpi"
+BOARD_MAINTAINER="BPI-SINOVOIP"
+INTRODUCED="2026"
+
+KERNEL_TARGET="vendor"
+KERNEL_TEST_TARGET="vendor"
+SERIALCON="ttyS1"
+FULL_DESKTOP="yes"
+
+# 供來源守門與後續候選工具識別；不得視為一般 Armbian 映像來源。
+UNISOC_UIS7885_BPI_BASELINE="UNC_LINUX_RLS_25C_W26.07.2"
+UNISOC_UIS7885_BPI_MANIFEST_COMMIT="7ac2b5ae548b9dd9c4d2f0b32476abd5c6fa7058"
+UNISOC_UIS7885_BPI_VALIDATION_CONTRACT="bananapi-unisoc-uis7885-m2c-vendor"
+
+# 原廠 Yocto/PAC 流程供應已簽署 boot chain、DTB、核心、rootfs、modem
+# 韌體與分割表。授權、簽署材料、完整重建與實機開機證據未封閉前，
+# 本板必須維持 .wip，且不得宣稱已完成公開映像或硬體支援。

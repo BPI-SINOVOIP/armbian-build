@@ -1,0 +1,234 @@
+diff --git a/u-boot-rtk/include/fdt_support.h b/u-boot-rtk/include/fdt_support.h
+index 7289ab362..13e71bf77 100644
+--- a/u-boot-rtk/include/fdt_support.h
++++ b/u-boot-rtk/include/fdt_support.h
+@@ -10,7 +10,7 @@
+ 
+ #ifdef CONFIG_OF_LIBFDT
+ 
+-#include <libfdt.h>
++#include "libfdt.h"
+ 
+ u32 fdt_getprop_u32_default_node(const void *fdt, int off, int cell,
+ 				const char *prop, const u32 dflt);
+diff --git a/u-boot-rtk/include/fdtdec.h b/u-boot-rtk/include/fdtdec.h
+index 232360341..b610416c0 100644
+--- a/u-boot-rtk/include/fdtdec.h
++++ b/u-boot-rtk/include/fdtdec.h
+@@ -14,7 +14,7 @@
+  * changes to support FDT are minimized.
+  */
+ 
+-#include <libfdt.h>
++#include "libfdt.h"
+ #include <pci.h>
+ 
+ /*
+diff --git a/u-boot-rtk/include/image.h b/u-boot-rtk/include/image.h
+index b6eb57e18..bcd3e7508 100644
+--- a/u-boot-rtk/include/image.h
++++ b/u-boot-rtk/include/image.h
+@@ -47,8 +47,8 @@ struct lmb;
+ 
+ #if defined(CONFIG_FIT)
+ #include <hash.h>
+-#include <libfdt.h>
+-#include <fdt_support.h>
++#include "libfdt.h"
++#include "fdt_support.h"
+ # ifdef CONFIG_SPL_BUILD
+ #  ifdef CONFIG_SPL_CRC32_SUPPORT
+ #   define IMAGE_ENABLE_CRC32	1
+diff --git a/u-boot-rtk/include/libfdt.h b/u-boot-rtk/include/libfdt.h
+index f3cbb637b..ea42aedb7 100644
+--- a/u-boot-rtk/include/libfdt.h
++++ b/u-boot-rtk/include/libfdt.h
+@@ -51,8 +51,8 @@
+  *     EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+  */
+ 
+-#include <libfdt_env.h>
+-#include <fdt.h>
++#include "libfdt_env.h"
++#include "fdt.h"
+ 
+ #define FDT_FIRST_SUPPORTED_VERSION	0x10
+ #define FDT_LAST_SUPPORTED_VERSION	0x11
+diff --git a/u-boot-rtk/lib/fdtdec_common.c b/u-boot-rtk/lib/fdtdec_common.c
+index 757931a9c..87a935229 100644
+--- a/u-boot-rtk/lib/fdtdec_common.c
++++ b/u-boot-rtk/lib/fdtdec_common.c
+@@ -13,8 +13,8 @@
+ #include <libfdt.h>
+ #include <fdtdec.h>
+ #else
+-#include "libfdt.h"
+-#include "fdt_support.h"
++#include "../include/libfdt.h"
++#include "../include/fdt_support.h"
+ 
+ #define debug(...)
+ #endif
+diff --git a/u-boot-rtk/lib/libfdt/fdt.c b/u-boot-rtk/lib/libfdt/fdt.c
+index e146aba6e..8418ab06e 100644
+--- a/u-boot-rtk/lib/libfdt/fdt.c
++++ b/u-boot-rtk/lib/libfdt/fdt.c
+@@ -3,11 +3,11 @@
+  * Copyright (C) 2006 David Gibson, IBM Corporation.
+  * SPDX-License-Identifier:	GPL-2.0+ BSD-2-Clause
+  */
+-#include "libfdt_env.h"
++#include "../../include/libfdt_env.h"
+ 
+ #ifndef USE_HOSTCC
+-#include <fdt.h>
+-#include <libfdt.h>
++#include "../../include/fdt.h"
++#include "../../include/libfdt.h"
+ #else
+ #include "fdt_host.h"
+ #endif
+diff --git a/u-boot-rtk/lib/libfdt/fdt_addresses.c b/u-boot-rtk/lib/libfdt/fdt_addresses.c
+index 76054d98e..bbdb7c7f5 100644
+--- a/u-boot-rtk/lib/libfdt/fdt_addresses.c
++++ b/u-boot-rtk/lib/libfdt/fdt_addresses.c
+@@ -3,11 +3,11 @@
+  * Copyright (C) 2014 David Gibson <david@gibson.dropbear.id.au>
+  * SPDX-License-Identifier:	GPL-2.0+ BSD-2-Clause
+  */
+-#include "libfdt_env.h"
++#include "../../include/libfdt_env.h"
+ 
+ #ifndef USE_HOSTCC
+-#include <fdt.h>
+-#include <libfdt.h>
++#include "../../include/fdt.h"
++#include "../../include/libfdt.h"
+ #else
+ #include "fdt_host.h"
+ #endif
+diff --git a/u-boot-rtk/lib/libfdt/fdt_empty_tree.c b/u-boot-rtk/lib/libfdt/fdt_empty_tree.c
+index 34f1c8443..835d7c59f 100644
+--- a/u-boot-rtk/lib/libfdt/fdt_empty_tree.c
++++ b/u-boot-rtk/lib/libfdt/fdt_empty_tree.c
+@@ -3,10 +3,10 @@
+  * Copyright (C) 2012 David Gibson, IBM Corporation.
+  * SPDX-License-Identifier:	GPL-2.0+ BSD-2-Clause
+  */
+-#include "libfdt_env.h"
++#include "../../include/libfdt_env.h"
+ 
+-#include <fdt.h>
+-#include <libfdt.h>
++#include "../../include/fdt.h"
++#include "../../include/libfdt.h"
+ 
+ #include "libfdt_internal.h"
+ 
+diff --git a/u-boot-rtk/lib/libfdt/fdt_ro.c b/u-boot-rtk/lib/libfdt/fdt_ro.c
+index 44fc0aa90..9346277c5 100644
+--- a/u-boot-rtk/lib/libfdt/fdt_ro.c
++++ b/u-boot-rtk/lib/libfdt/fdt_ro.c
+@@ -3,11 +3,11 @@
+  * Copyright (C) 2006 David Gibson, IBM Corporation.
+  * SPDX-License-Identifier:	GPL-2.0+ BSD-2-Clause
+  */
+-#include "libfdt_env.h"
++#include "../../include/libfdt_env.h"
+ 
+ #ifndef USE_HOSTCC
+-#include <fdt.h>
+-#include <libfdt.h>
++#include "../../include/fdt.h"
++#include "../../include/libfdt.h"
+ #else
+ #include "fdt_host.h"
+ #endif
+diff --git a/u-boot-rtk/lib/libfdt/fdt_rw.c b/u-boot-rtk/lib/libfdt/fdt_rw.c
+index bec8b8ad8..53da5c13a 100644
+--- a/u-boot-rtk/lib/libfdt/fdt_rw.c
++++ b/u-boot-rtk/lib/libfdt/fdt_rw.c
+@@ -3,11 +3,11 @@
+  * Copyright (C) 2006 David Gibson, IBM Corporation.
+  * SPDX-License-Identifier:	GPL-2.0+ BSD-2-Clause
+  */
+-#include "libfdt_env.h"
++#include "../../include/libfdt_env.h"
+ 
+ #ifndef USE_HOSTCC
+-#include <fdt.h>
+-#include <libfdt.h>
++#include "../../include/fdt.h"
++#include "../../include/libfdt.h"
+ #else
+ #include "fdt_host.h"
+ #endif
+diff --git a/u-boot-rtk/lib/libfdt/fdt_strerror.c b/u-boot-rtk/lib/libfdt/fdt_strerror.c
+index 2f3cc243d..8b26caa42 100644
+--- a/u-boot-rtk/lib/libfdt/fdt_strerror.c
++++ b/u-boot-rtk/lib/libfdt/fdt_strerror.c
+@@ -3,11 +3,11 @@
+  * Copyright (C) 2006 David Gibson, IBM Corporation.
+  * SPDX-License-Identifier:	GPL-2.0+ BSD-2-Clause
+  */
+-#include "libfdt_env.h"
++#include "../../include/libfdt_env.h"
+ 
+ #ifndef USE_HOSTCC
+-#include <fdt.h>
+-#include <libfdt.h>
++#include "../../include/fdt.h"
++#include "../../include/libfdt.h"
+ #else
+ #include "fdt_host.h"
+ #endif
+diff --git a/u-boot-rtk/lib/libfdt/fdt_sw.c b/u-boot-rtk/lib/libfdt/fdt_sw.c
+index 320a91499..8559e6ddf 100644
+--- a/u-boot-rtk/lib/libfdt/fdt_sw.c
++++ b/u-boot-rtk/lib/libfdt/fdt_sw.c
+@@ -3,10 +3,10 @@
+  * Copyright (C) 2006 David Gibson, IBM Corporation.
+  * SPDX-License-Identifier:	GPL-2.0+ BSD-2-Clause
+  */
+-#include "libfdt_env.h"
++#include "../../include/libfdt_env.h"
+ 
+-#include <fdt.h>
+-#include <libfdt.h>
++#include "../../include/fdt.h"
++#include "../../include/libfdt.h"
+ 
+ #include "libfdt_internal.h"
+ 
+diff --git a/u-boot-rtk/lib/libfdt/fdt_wip.c b/u-boot-rtk/lib/libfdt/fdt_wip.c
+index 3f2dfa573..9bfdcc8e1 100644
+--- a/u-boot-rtk/lib/libfdt/fdt_wip.c
++++ b/u-boot-rtk/lib/libfdt/fdt_wip.c
+@@ -3,11 +3,11 @@
+  * Copyright (C) 2006 David Gibson, IBM Corporation.
+  * SPDX-License-Identifier:	GPL-2.0+ BSD-2-Clause
+  */
+-#include "libfdt_env.h"
++#include "../../include/libfdt_env.h"
+ 
+ #ifndef USE_HOSTCC
+-#include <fdt.h>
+-#include <libfdt.h>
++#include "../../include/fdt.h"
++#include "../../include/libfdt.h"
+ #else
+ #include "fdt_host.h"
+ #endif
+diff --git a/u-boot-rtk/lib/libfdt/libfdt_internal.h b/u-boot-rtk/lib/libfdt/libfdt_internal.h
+index 9a79fe85d..4b14af4f9 100644
+--- a/u-boot-rtk/lib/libfdt/libfdt_internal.h
++++ b/u-boot-rtk/lib/libfdt/libfdt_internal.h
+@@ -5,7 +5,7 @@
+  * Copyright (C) 2006 David Gibson, IBM Corporation.
+  * SPDX-License-Identifier:	GPL-2.0+ BSD-2-Clause
+  */
+-#include <fdt.h>
++#include "../../include/fdt.h"
+ 
+ #define FDT_ALIGN(x, a)		(((x) + (a) - 1) & ~((a) - 1))
+ #define FDT_TAGALIGN(x)		(FDT_ALIGN((x), FDT_TAGSIZE))

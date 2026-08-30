@@ -1,0 +1,29 @@
+diff --git a/linux-rtk/scripts/dtc/dtc-lexer.l b/linux-rtk/scripts/dtc/dtc-lexer.l
+index 790fbf6cf..e4e0f6a8d 100644
+--- a/linux-rtk/scripts/dtc/dtc-lexer.l
++++ b/linux-rtk/scripts/dtc/dtc-lexer.l
+@@ -38,7 +38,6 @@ LINECOMMENT	"//".*\n
+ #include "srcpos.h"
+ #include "dtc-parser.tab.h"
+ 
+-YYLTYPE yylloc;
+ extern bool treesource_error;
+ 
+ /* CAUTION: this will stop working if we ever use yyless() or yyunput() */
+diff --git a/linux-rtk/scripts/dtc/dtc-lexer.lex.c_shipped b/linux-rtk/scripts/dtc/dtc-lexer.lex.c_shipped
+index ba525c2f9..f3d573f78 100644
+--- a/linux-rtk/scripts/dtc/dtc-lexer.lex.c_shipped
++++ b/linux-rtk/scripts/dtc/dtc-lexer.lex.c_shipped
+@@ -637,7 +637,6 @@ char *yytext;
+ #include "srcpos.h"
+ #include "dtc-parser.tab.h"
+ 
+-YYLTYPE yylloc;
+ extern bool treesource_error;
+ 
+ /* CAUTION: this will stop working if we ever use yyless() or yyunput() */
+@@ -2243,4 +2242,3 @@ static void lexical_error(const char *fmt, ...)
+ 
+ 	treesource_error = true;
+ }
+-

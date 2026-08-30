@@ -13,6 +13,15 @@ function build_rootfs_and_image() {
 	# get a basic rootfs, either from cache or from scratch
 	get_or_create_rootfs_cache_chroot_sdcard # only occurrence of this; has its own logging sections
 
+	mkdir -p "${SDCARD}/etc/apt/apt.conf.d"
+	cat > "${SDCARD}/etc/apt/apt.conf.d/99-armbian-no-contents-indexes" <<- EOF
+	Acquire::ForceIPv4 "true";
+	Acquire::IndexTargets::deb::Contents-deb::DefaultEnabled "false";
+	Acquire::IndexTargets::deb::Contents-deb-legacy::DefaultEnabled "false";
+	Acquire::IndexTargets::deb::Contents-udeb::DefaultEnabled "false";
+	Acquire::IndexTargets::deb-src::Contents-dsc::DefaultEnabled "false";
+	EOF
+
 	# deploy the qemu binary, no matter where the rootfs came from (built or cached)
 	LOG_SECTION="deploy_qemu_binary_to_chroot_image" do_with_logging deploy_qemu_binary_to_chroot "${SDCARD}" "image" # undeployed at end of this function
 
