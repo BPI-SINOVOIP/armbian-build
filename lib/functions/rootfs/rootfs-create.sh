@@ -244,6 +244,11 @@ function create_new_rootfs_cache_via_debootstrap() {
 	if [[ $BUILD_DESKTOP == "yes" ]]; then
 		display_alert "Installing desktop via armbian-config" "${DESKTOP_ENVIRONMENT} tier=${DESKTOP_TIER:-mid}" "info"
 		chroot_sdcard_apt_get_install armbian-config
+		# armbian-config 的共用清單可能使用較新發行版才有的套件名稱；
+		# 在進入 chroot 安裝桌面前，依目標發行版修正套件對應。
+		python3 "${SRC}/lib/tools/common/patch-desktop-package-compatibility.py" \
+			--rootfs "${SDCARD}" \
+			--release "${RELEASE}"
 		chroot_sdcard "SUDO_USER= DEBIAN_FRONTEND=noninteractive DIALOG=read armbian-config --api module_desktops install de=${DESKTOP_ENVIRONMENT} tier=${DESKTOP_TIER:-mid} mode=build"
 	fi
 
