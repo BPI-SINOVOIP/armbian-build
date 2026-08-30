@@ -45,6 +45,20 @@ class M4ZeroEmacImageVerifierTests(unittest.TestCase):
             with self.subTest(value=value):
                 self.assertIn(value, self.script)
 
+    def test_checks_cpu_thermal_cooling_policy(self) -> None:
+        required = (
+            "/thermal-zones/cpu-thermal",
+            "cpu-trip-0",
+            "cpu-trip-1",
+            "60000",
+            "70000",
+            '"${cpu_phandle} 1 3"',
+            '"${cpu_phandle} 4 ffffffff"',
+        )
+        for value in required:
+            with self.subTest(value=value):
+                self.assertIn(value, self.script)
+
     def test_checks_board_files_packages_and_tools(self) -> None:
         required = (
             "sun50i-h618-bananapi-m4-zero-emac.dtb",

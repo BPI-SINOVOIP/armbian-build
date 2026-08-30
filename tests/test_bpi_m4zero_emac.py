@@ -86,6 +86,18 @@ class M4ZeroEmacTests(unittest.TestCase):
                 self.assertIn('status = "okay";', node_body(dts, label))
         self.assertIn("clk_bypass_output = <0x1>;", node_body(dts, "pwm5"))
 
+    def test_derivative_dts_binds_cpu_thermal_cooling(self) -> None:
+        dts = BOARD_DTS.read_text(encoding="utf-8")
+        self.assertIn("&{/thermal-zones/cpu-thermal}", dts)
+        self.assertIn("cooling-maps", dts)
+        self.assertIn("trip = <&cpu_threshold>;", dts)
+        self.assertIn("cooling-device = <&cpu0 1 3>;", dts)
+        self.assertIn("trip = <&cpu_target>;", dts)
+        self.assertIn(
+            "cooling-device = <&cpu0 4 THERMAL_NO_LIMIT>;",
+            dts,
+        )
+
     def test_standard_board_keeps_fpc_ethernet_opt_in(self) -> None:
         standard_board = STANDARD_BOARD_CONFIG.read_text(encoding="utf-8")
         standard_dts = STANDARD_DTS.read_text(encoding="utf-8")

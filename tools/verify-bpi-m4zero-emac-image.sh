@@ -129,6 +129,29 @@ grep -Fq 'allwinner,sun50i-h618-ac300-ephy' <<<"${phy_compatible}" ||
 [[ "$(fdtget "${dtb}" "${phy_node}" clock-names)" == "ephy pwm" ]] ||
 	fail "AC300 EPHY 時鐘來源不符"
 
+cpu_phandle="$(fdtget -tx "${dtb}" /cpus/cpu@0 phandle)"
+thermal_base=/thermal-zones/cpu-thermal
+trip0="${thermal_base}/trips/cpu-trip-0"
+trip1="${thermal_base}/trips/cpu-trip-1"
+map0="${thermal_base}/cooling-maps/map0"
+map1="${thermal_base}/cooling-maps/map1"
+[[ "$(fdtget "${dtb}" "${trip0}" temperature)" == 60000 ]] ||
+	fail "CPU 第一級被動節流溫度不符"
+[[ "$(fdtget "${dtb}" "${trip1}" temperature)" == 70000 ]] ||
+	fail "CPU 第二級被動節流溫度不符"
+[[ "$(fdtget "${dtb}" "${trip0}" type)" == passive ]] ||
+	fail "CPU 第一級節流類型不符"
+[[ "$(fdtget "${dtb}" "${trip1}" type)" == passive ]] ||
+	fail "CPU 第二級節流類型不符"
+[[ "$(fdtget -tx "${dtb}" "${map0}" trip)" == "$(fdtget -tx "${dtb}" "${trip0}" phandle)" ]] ||
+	fail "CPU 第一級節流未綁定正確 trip"
+[[ "$(fdtget -tx "${dtb}" "${map1}" trip)" == "$(fdtget -tx "${dtb}" "${trip1}" phandle)" ]] ||
+	fail "CPU 第二級節流未綁定正確 trip"
+[[ "$(fdtget -tx "${dtb}" "${map0}" cooling-device)" == "${cpu_phandle} 1 3" ]] ||
+	fail "CPU 第一級 cooling-device 範圍不符"
+[[ "$(fdtget -tx "${dtb}" "${map1}" cooling-device)" == "${cpu_phandle} 4 ffffffff" ]] ||
+	fail "CPU 第二級 cooling-device 範圍不符"
+
 config_file="$(find "${mount_dir}/boot" -maxdepth 1 -type f -name 'config-*' -print -quit)"
 [[ -n "${config_file}" ]] || fail "缺少核心設定檔"
 for setting in \
