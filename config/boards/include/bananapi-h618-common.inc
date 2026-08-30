@@ -1,4 +1,4 @@
-PACKAGE_LIST_BOARD+=" gpiod i2c-tools python3-libgpiod python3-spidev v4l-utils"
+PACKAGE_LIST_BOARD+=" ethtool gpiod i2c-tools python3-libgpiod python3-spidev v4l-utils"
 
 if [[ "${BUILD_DESKTOP:-no}" == "yes" ]]; then
 	PACKAGE_LIST_BOARD+=" gstreamer1.0-tools gstreamer1.0-plugins-bad libdrm-tests"

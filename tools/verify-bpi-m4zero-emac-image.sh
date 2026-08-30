@@ -262,6 +262,8 @@ for package in bluez bluez-tools ethtool gpiod i2c-tools python3-libgpiod \
 	python3-spidev rfkill v4l-utils; do
 	package_installed "${package}" || fail "缺少套件：${package}"
 done
+[[ -s "${mount_dir}/usr/lib/sysctl.d/60-armbian-defaults.conf" ]] ||
+	fail "缺少新版 Armbian sysctl 設定檔"
 for tool in usr/local/bin/bpi-h618-hw-info \
 	usr/local/sbin/bpi-h618-io-compat-install; do
 	[[ -x "${mount_dir}/${tool}" ]] || fail "缺少板型工具：${tool}"

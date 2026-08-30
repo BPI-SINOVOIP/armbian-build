@@ -20,6 +20,7 @@ class BpiH618IoTests(unittest.TestCase):
     def test_all_images_include_standard_io_tools(self) -> None:
         common = COMMON_CONFIG.read_text(encoding="utf-8")
         for package in (
+            "ethtool",
             "gpiod",
             "i2c-tools",
             "python3-libgpiod",

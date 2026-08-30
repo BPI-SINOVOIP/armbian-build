@@ -55,7 +55,13 @@ class M4ZeroEmacTests(unittest.TestCase):
         common = COMMON_CONFIG.read_text(encoding="utf-8")
         self.assertIn("bananapi-h618-common.inc", board)
         self.assertIn("cma=256M", common)
-        for package in ("gpiod", "i2c-tools", "python3-spidev", "v4l-utils"):
+        for package in (
+            "ethtool",
+            "gpiod",
+            "i2c-tools",
+            "python3-spidev",
+            "v4l-utils",
+        ):
             with self.subTest(package=package):
                 self.assertIn(package, common)
 

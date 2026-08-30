@@ -90,6 +90,7 @@ class M4ZeroEmacImageVerifierTests(unittest.TestCase):
             "cma=256M",
             "python3-libgpiod",
             "python3-spidev",
+            "60-armbian-defaults.conf",
             "bpi-h618-hw-info",
             "bpi-h618-io-compat-install",
         )
