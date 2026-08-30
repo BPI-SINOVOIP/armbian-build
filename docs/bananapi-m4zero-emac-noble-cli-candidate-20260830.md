@@ -1,7 +1,7 @@
 # Banana Pi M4 Zero EMAC Noble CLI 工程候選紀錄
 
 - 日期：2026-08-30
-- 狀態：完整建置、離線驗證與單片 4 GiB 最終映像實測通過主要硬體路徑；EMAC 實體驗證待擴充板
+- 狀態：單一 Noble CLI 候選已完成主要非 EMAC 實測；十映像矩陣已完成離線驗證，EMAC 實體驗證待擴充板
 - 板型：`bananapim4zeroemac`
 - 分支：`bpi-integration-20260829`
 - 映像來源提交：`069fb20fe17c862498bccd0e7cc5e3dc379c5957`
@@ -10,7 +10,7 @@
 
 ## 1. 候選用途與證據邊界
 
-本候選整合 BPI-M4 Zero A1 792 MHz DDR、AC300 internal EPHY、Mali-G31
+本候選整合 BPI-M4 Zero A1 792 MHz DDR 工程目標組態、AC300 internal EPHY、Mali-G31
 Panfrost、Cedrus、Crypto Engine、40-pin I/O、板載 BCM/CYW43455 無線功能，
 以及額外 USB RTL8821CU 網卡的核心驅動支援。
 
@@ -22,7 +22,7 @@ Wi-Fi、Bluetooth、Panfrost、Cedrus、Crypto Engine、USB gadget 能力、40-p
 
 本紀錄不代表量產、多片、多容量、電氣或正式發布驗證通過。
 
-## 2. 最終新產物
+## 2. Noble CLI 候選產物
 
 產物目錄：
 
@@ -55,7 +55,7 @@ Armbian-unofficial_26.11.0-trunk_Bananapim4zeroemac_noble_current_6.18.48_minima
 建置結果：
 
 - 完整編譯並封裝 U-Boot `v2026.01`、Linux `6.18.48`、DTB、核心模組、韌體與 BSP。
-- U-Boot 套用 M4 Zero A1 792 MHz DDR 修正。
+- U-Boot 套用 M4 Zero A1 792 MHz DDR 工程目標組態。
 - Noble minimal 根檔案系統完成組裝；映像採 MBR，ext4 分割區從 sector 8192 開始。
 - 建置成功結束，執行時間為 20 分 23 秒。
 
@@ -71,7 +71,7 @@ output/debs/linux-u-boot-bananapim4zeroemac-current_26.11.0-trunk_arm64__2026.01
 ffdd5159c9ed0c298f0cddb7ac584680208cb00e8944ae4c5b51fb3b3e10d992
 ```
 
-## 4. 最終映像離線驗證
+## 4. Noble CLI 候選映像離線驗證
 
 驗證器以唯讀 loop 裝置及 `mount -o ro,noload` 檢查映像，確認：
 
@@ -87,22 +87,28 @@ ffdd5159c9ed0c298f0cddb7ac584680208cb00e8944ae4c5b51fb3b3e10d992
 - Bluetooth、GPIO、I²C、SPI 與 V4L2 使用工具已安裝。
 - `bpi-h618-hw-info` 與 `bpi-h618-io-compat-install` 已安裝。
 
-映像內 offset 8 KiB 起的 U-Boot 內容 SHA-256：
+映像內位移 8 KiB 起的 U-Boot 內容 SHA-256：
 
 ```text
 57153608a7c7e80b34f1c66dfc51be46434f854817843a5100a0576797e997c7
 ```
 
-此次執行的 17 個 M4 Zero EMAC 回歸測試、Bash 語法、ShellCheck 與
-`git diff --check` 均通過。
+候選階段執行的 17 個 M4 Zero EMAC 回歸測試、Bash 語法、ShellCheck 與
+`git diff --check` 均通過；此數字只代表單一候選階段，不作為十映像矩陣證據。
 
-可重複執行完整離線驗證：
+原始候選 `.img` 已依空間保存政策移除。在原整合倉庫中，保留 `.tmp` 矩陣清單、完成
+狀態與對應 U-Boot 套件時，可由交付壓縮映像重複執行十映像完整離線驗證：
 
 ```bash
-./tools/verify-bpi-m4zero-emac-image.sh \
-  output/images/Armbian-unofficial_26.11.0-trunk_Bananapim4zeroemac_noble_current_6.18.48_minimal.img \
-  output/debs/linux-u-boot-bananapim4zeroemac-current_26.11.0-trunk_arm64__2026.01-S127a-P0d3f-H8076-Vc787-B5da4-R448a.deb
+./tools/verify-bpi-m4zero-emac-matrix.sh
 ```
+
+只複製交付目錄到另一台機器不能執行此完整內部驗證器；外部使用者應核對
+`SHA256SUMS`、`DELIVERY_METADATA_SHA256SUMS` 與已保存的 `VALIDATION_REPORT.txt`。
+
+實測候選來源提交為 `069fb20fe17c862498bccd0e7cc5e3dc379c5957`；矩陣 Noble CLI
+來源提交為 `61bed876ebd608626b1d729c3cac43280d7449ae`。兩者不是位元相同產物，實測結果
+不得直接視為矩陣 Noble CLI 已完成實板驗證。
 
 ## 5. 最終映像單片 4 GiB 實測結果
 
@@ -194,7 +200,8 @@ ls -l /dev/spidev* /dev/ttyS* /sys/class/pwm/pwmchip* 2>/dev/null
 - USB、GPIO、I²C、SPI、UART 與 PWM 尚未做實體周邊或迴路驗證。
 - USB RTL8821CU 目前只有映像內驅動與 USB modalias 證據，未接實體網卡。
 - 尚未完成十次斷電冷啟動、長時間影音、複合 I/O 壓力與斷電恢復測試。
-- 十映像矩陣尚未展開；目前只有 Noble minimal CLI 工程候選。
+- 五個發行版、CLI／XFCE 共十個映像已完成建置與離線驗證；完整紀錄位於
+  `docs/bananapi-m4zero-emac-image-matrix-delivery-20260830.md`，但尚未逐套完成實板開機。
 - 原有 `bananapim4zero` 板型未改成預設啟用 EMAC，兩種板型不可混用。
 
 完成 EMAC 擴充板實體連線、2 GiB／4 GiB 多片冷啟動與外接 I/O 驗證前，

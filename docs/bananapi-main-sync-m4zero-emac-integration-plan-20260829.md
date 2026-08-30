@@ -1,7 +1,7 @@
 # Banana Pi 主線同步與 BPI-M4 Zero EMAC 完整最佳化計劃
 
 日期：2026-08-29  
-狀態：執行中，首套 Noble CLI 已完成離線驗證，待實板 Gate
+狀態：軟體交付完成；EMAC 與多片實板關卡待硬體
 
 整合分支：`bpi-integration-20260829`
 
@@ -107,7 +107,7 @@ Orange Pi Zero3 的 `EMAC0 + RGMII` 只作外接千兆 PHY 參考，不是本板
 
 優先移植範圍：
 
-1. BPI-M4 Zero A1 792 MHz DDR 設定與診斷。
+1. BPI-M4 Zero A1 792 MHz DDR 工程目標組態與診斷。
 2. BPI-M4 Zero 主線 `rtw88_8821cu` 修正，移除錯誤黑名單。
 3. M4 Berry 的 GPU、Cedrus、Crypto 與 CMA 最佳化。
 4. GPIO、I2C、SPI、UART、PWM overlays、套件與權限。
@@ -116,7 +116,7 @@ Orange Pi Zero3 的 `EMAC0 + RGMII` 只作外接千兆 PHY 參考，不是本板
 
 ## 6. DDR 移植
 
-M4 Zero A1 工程候選維持 792 MHz 與 upstream 容量、Rank、bus width 自動探測：
+M4 Zero A1 工程候選維持 792 MHz 工程目標組態與上游容量、Rank、匯流排寬度自動探測：
 
 ```text
 dx_odt=0x07070707
@@ -192,7 +192,9 @@ FPC24 乙太網路會使用 PA0 至 PA9 與 PWM5／PA12。這些資源啟用後�
 
 ## 10. 首套實板驗證
 
-先完整編譯 Noble CLI `current` 映像，完成以下項目後才准許展開十映像矩陣：
+原計畫要求先完整編譯 Noble CLI `current` 並完成下列實板關卡，再展開十映像矩陣。
+為縮短硬體到手後的驗證等待時間，實際執行先完成十映像預建置與離線守門；此偏差不
+代表下列實板關卡已通過，也不授權正式發布或量產宣稱：
 
 - 2 GiB 與 4 GiB DDR 容量、Rank 與全容量壓力測試。
 - 完全斷電冷啟動至少 `10/10`。
@@ -209,15 +211,15 @@ DHCP 位址判定成功。
 
 ## 11. 十映像矩陣
 
-首套映像通過後，完整建置：
+五個發行版的 CLI／XFCE 已完成完整建置與離線守門：
 
 | 發行版 | CLI | XFCE |
 |---|---|---|
-| Bookworm | 必須 | 必須 |
-| Jammy | 必須 | 必須 |
-| Noble | 必須 | 必須 |
-| Resolute | 必須 | 必須 |
-| Trixie | 必須 | 必須 |
+| Bookworm | 完成 | 完成 |
+| Jammy | 完成 | 完成 |
+| Noble | 完成 | 完成 |
+| Resolute | 完成 | 完成 |
+| Trixie | 完成 | 完成 |
 
 每套只交付 `.img.xz`、對應 SHA-256、繁體中文發行說明與驗證手冊。未壓縮
 `.img` 僅在建置與檢查期間保留，矩陣完成並核對壓縮串流後才依空間政策清理。
@@ -237,8 +239,8 @@ DHCP 位址判定成功。
 
 ## 12. 磁碟空間與資料清理
 
-目前 `/media/pi/SMCI` 可用空間約 268 GiB。十映像前必須估算最壞用量並保留
-安全餘量。清理只處理可重建快取、重複未壓縮映像與已有新版本替代的交付副本。
+完成十映像與最終驗證時，`/media/pi/SMCI` 可用空間約 200 GiB。清理只處理可重建
+快取、已驗證壓縮映像對應的暫存未壓縮映像，以及已有新版本替代的交付副本。
 
 清理前必須：
 
@@ -307,14 +309,21 @@ DHCP 位址判定成功。
 - 以唯讀掛載檢查 DTB、overlay、CMA、套件與板型工具。
 - 驗證原始映像、XZ 串流及解壓後內容 SHA-256 一致。
 - 建立可重複執行的映像驗證工具，並確認映像內 U-Boot 與套件位元一致。
+- 完成 Bookworm、Trixie、Jammy、Noble、Resolute 的 CLI／XFCE 十映像矩陣。
+- 十套映像均通過 XZ、SHA-256、分割表、ext4、核心、initrd、DTB、模組、套件與
+  映像角色唯讀驗證。
+- 加入續跑中繼資料驗證，保留沿用產物的真實來源提交。
+- 完成繁體中文發布說明、燒錄與驗證指南及工程交付紀錄。
+- 依矩陣清單移除十個已驗證的暫存未壓縮映像，可用空間由約 200 GiB 增加至
+  234 GiB，並保留中繼資料、狀態與雜湊。
 
 尚未完成：
 
 - 2 GiB／4 GiB 多片實板冷啟動與全容量 DDR 壓力。
-- SD／eMMC、AC300 EMAC、GPU、Cedrus、無線、USB 與 40-pin 實體驗證。
-- 首套實板 Gate 通過後的十映像矩陣。
+- 十套映像逐一實板開機，以及 SD／eMMC、AC300 EMAC、USB 與 40-pin 實體矩陣。
 - 依實證整理可送官方的獨立主題分支。
 
 首套候選的完整紀錄位於
-`docs/bananapi-m4zero-emac-noble-cli-candidate-20260830.md`。依第 10、11 與
-15 節規則，首套實板 Gate 未完成前不展開十映像矩陣，也不宣稱正式發布。
+`docs/bananapi-m4zero-emac-noble-cli-candidate-20260830.md`；十映像工程交付紀錄位於
+`docs/bananapi-m4zero-emac-image-matrix-delivery-20260830.md`。矩陣先行預建置不能取代
+第 10 節實板關卡，完成 EMAC 與多片硬體驗證前不宣稱正式發布或量產通過。
