@@ -153,6 +153,9 @@ function docker_cli_prepare() {
 	# IMPORTANT: This has to match the naming scheme for tag the is used in the GitHub actions workflow.
 	if [[ "${DOCKERFILE_USE_ARMBIAN_IMAGE_AS_BASE}" != "no" && "${DOCKER_SIMULATE_CLEAN}" != "yes" ]]; then
 		DOCKER_ARMBIAN_BASE_IMAGE="${DOCKER_ARMBIAN_BASE_COORDINATE_PREFIX:-"ghcr.io/armbian/docker-armbian-build:armbian-"}${wanted_os_tag}-${DOCKER_WANTED_RELEASE}-latest"
+		if [[ -n "${DOCKER_ARMBIAN_BASE_IMAGE_LOCKED:-}" ]]; then
+			DOCKER_ARMBIAN_BASE_IMAGE="${DOCKER_ARMBIAN_BASE_IMAGE_LOCKED}"
+		fi
 		display_alert "Using prebuilt Armbian image as base for '${wanted_os_tag}-${DOCKER_WANTED_RELEASE}'" "DOCKER_ARMBIAN_BASE_IMAGE: ${DOCKER_ARMBIAN_BASE_IMAGE}" "info"
 	fi
 

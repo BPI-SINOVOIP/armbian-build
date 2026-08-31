@@ -11,10 +11,15 @@ state_root="${STATE_ROOT:-${repo_dir}/output/bananapi-latest-rebuild/${source_sh
 archive_root="${ARCHIVE_ROOT:-$(dirname "$(dirname "${release_root}")")/archive/2026.08}"
 xz_threads="${XZ_THREADS:-6}"
 minimum_free_gib="${MINIMUM_FREE_GIB:-15}"
+container_image="${ARMBIAN_CONTAINER_IMAGE:-ghcr.io/armbian/docker-armbian-build:armbian-debian-trixie-latest}"
+source_remote_ref="${SOURCE_REMOTE_REF:-}"
 selected_board=""
 dry_run=no
 matrix_sha256=""
 userpatches_sha256=""
+container_image_id=""
+container_image_locked=""
+build_context_sha256=""
 
 usage() {
 	cat <<'EOF'
@@ -55,9 +60,9 @@ while (($#)); do
 done
 
 required_commands=(
-	awk basename cp date df find flock git grep lsblk losetup mkdir mktemp mount
-	mountpoint mv readlink rmdir rm sed sha256sum sort stat sudo sync tee umount
-	uname wc xz
+	awk basename cp date df docker find flock git grep head lsblk losetup mkdir
+	mktemp mount mountpoint mv partprobe readlink rmdir rm sed sha256sum sleep
+	sort stat sudo sync tee udevadm umount uname uuidgen wc xz
 )
 for command in "${required_commands[@]}"; do
 	command -v "${command}" >/dev/null || {
@@ -109,17 +114,48 @@ validate_matrix() {
 }
 
 calculate_userpatches_hash() {
-	local directory="${repo_dir}/userpatches"
+	local directory="${repo_dir}/userpatches" entry mode
 	if [[ ! -d "${directory}" ]]; then
 		printf 'none\n'
 		return 0
 	fi
 	(
 		cd "${directory}"
-		while IFS= read -r -d '' file; do
-			sha256sum "${file}"
-		done < <(find . -type f -print0 | sort -z)
+		while IFS= read -r -d '' entry; do
+			mode="$(stat -c '%a' -- "${entry}")"
+			if [[ -L "${entry}" ]]; then
+				printf 'link\\0%s\\0%s\\0%s\\0' "${mode}" "${entry}" "$(readlink -- "${entry}")"
+			elif [[ -f "${entry}" ]]; then
+				printf 'file\\0%s\\0%s\\0%s\\0' "${mode}" "${entry}" \
+					"$(sha256sum "${entry}" | awk '{ print $1 }')"
+			elif [[ -d "${entry}" ]]; then
+				printf 'directory\\0%s\\0%s\\0' "${mode}" "${entry}"
+			else
+			printf '不支援的 userpatches 項目：%s\n' "${entry}" >&2
+				exit 1
+			fi
+		done < <(find . -mindepth 1 -print0 | sort -z)
 	) | sha256sum | awk '{ print $1 }'
+}
+
+assert_pushed_source() {
+	local branch
+	if [[ -z "${source_remote_ref}" ]]; then
+		branch="$(git -C "${repo_dir}" branch --show-current)" || return 1
+		[[ -n "${branch}" ]] || {
+			printf '來源目前不是具名分支，請設定 SOURCE_REMOTE_REF。\n' >&2
+			return 1
+		}
+		source_remote_ref="origin/${branch}"
+	fi
+	git -C "${repo_dir}" show-ref --verify --quiet "refs/remotes/${source_remote_ref}" || {
+		printf '找不到遠端追蹤分支：%s\n' "${source_remote_ref}" >&2
+		return 1
+	}
+	git -C "${repo_dir}" merge-base --is-ancestor "${source_commit}" "${source_remote_ref}" || {
+		printf '實際建置提交尚未推送到 %s：%s\n' "${source_remote_ref}" "${source_commit}" >&2
+		return 1
+	}
 }
 
 find_board_file() {
@@ -178,8 +214,9 @@ safe_remove_work_dir() {
 
 verify_raw_image() (
 	set -Eeuo pipefail
-	local image="$1" board="$2" loop_device="" root_partition="" root_fstype=""
-	local mount_dir="" image_board=""
+	local image="$1" board="$2" branch="$3" release="$4" profile="$5"
+	local loop_device="" root_partition="" root_fstype="" mount_dir=""
+	local image_board="" image_release="" provenance=""
 
 	cleanup() {
 		local status=$?
@@ -199,8 +236,14 @@ verify_raw_image() (
 
 	loop_device="$(sudo -n losetup --find --show --partscan --read-only "${image}")"
 	mount_dir="$(mktemp -d "${state_root}/mount.XXXXXX")"
-	root_partition="$(lsblk -lnpo NAME,FSTYPE "${loop_device}" |
-		awk '$2 == "ext4" || $2 == "btrfs" { print $1; exit }')"
+	sudo -n partprobe "${loop_device}" || true
+	sudo -n udevadm settle
+	for _ in {1..20}; do
+		root_partition="$(lsblk -lnpo NAME,FSTYPE "${loop_device}" |
+			awk '$2 == "ext4" || $2 == "btrfs" { print $1; exit }')"
+		[[ -n "${root_partition}" ]] && break
+		sleep 0.2
+	done
 	root_fstype="$(lsblk -lnpo NAME,FSTYPE "${loop_device}" |
 		awk '$2 == "ext4" || $2 == "btrfs" { print $2; exit }')"
 	[[ -n "${root_partition}" ]] || {
@@ -220,6 +263,56 @@ verify_raw_image() (
 		printf '映像內 BOARD 與目標不一致：預期 %s，實際 %s。\n' "${board}" "${image_board}" >&2
 		exit 1
 	}
+	image_release="$(sed -n -E 's/^VERSION_CODENAME="?([^"]+)"?$/\1/p' \
+		"${mount_dir}/etc/os-release" | head -n 1)"
+	[[ "${image_release}" == "${release}" ]] || {
+		printf '映像內發行版與目標不一致：預期 %s，實際 %s。\n' "${release}" "${image_release}" >&2
+		exit 1
+	}
+	provenance="${mount_dir}/etc/bananapi-build-provenance"
+	[[ -f "${provenance}" ]] || {
+		printf '映像缺少 Banana Pi 建置來源證據：%s\n' "${image}" >&2
+		exit 1
+	}
+	for expected in \
+		"bsp_base_commit=${bsp_base_commit}" \
+		"source_commit=${source_commit}" \
+		"matrix_sha256=${matrix_sha256}" \
+		"userpatches_sha256=${userpatches_sha256}" \
+		"build_context_sha256=${build_context_sha256}" \
+		"board=${board}" "branch=${branch}" "release=${release}" "profile=${profile}"; do
+		grep -Fqx -- "${expected}" "${provenance}" || {
+			printf '映像建置來源證據不符：%s 缺少 %s。\n' "${image}" "${expected}" >&2
+			exit 1
+		}
+	done
+	awk -v prefix="linux-image-${branch}-" '
+		$1 == "Package:" { matched = index($2, prefix) == 1 }
+		matched && $0 == "Status: install ok installed" { found = 1 }
+		END { exit(found ? 0 : 1) }
+	' "${mount_dir}/var/lib/dpkg/status" || {
+		printf '映像缺少目標核心分支套件：%s。\n' "${branch}" >&2
+		exit 1
+	}
+	if [[ "${profile}" == xfce ]]; then
+		[[ -f "${mount_dir}/usr/share/xsessions/xfce.desktop" ]] || {
+			printf 'XFCE 映像缺少 xfce.desktop。\n' >&2
+			exit 1
+		}
+		awk '
+			$1 == "Package:" { matched = $2 == "xfce4-session" }
+			matched && $0 == "Status: install ok installed" { found = 1 }
+			END { exit(found ? 0 : 1) }
+		' "${mount_dir}/var/lib/dpkg/status" || {
+			printf 'XFCE 映像缺少 xfce4-session。\n' >&2
+			exit 1
+		}
+	else
+		[[ ! -e "${mount_dir}/usr/share/xsessions/xfce.desktop" ]] || {
+			printf '精簡映像意外包含 XFCE 工作階段。\n' >&2
+			exit 1
+		}
+	fi
 )
 
 item_marker_path() {
@@ -232,15 +325,28 @@ read_marker_value() {
 	sed -n "s/^${key}=//p" "${marker}" | head -n 1
 }
 
+verify_sha_sidecar() {
+	local archive="$1" sha_file="$2" expected_digest="$3"
+	local sidecar_digest sidecar_name extra actual
+	[[ -f "${archive}" && -f "${sha_file}" ]] || return 1
+	[[ "$(wc -l < "${sha_file}")" -eq 1 ]] || return 1
+	read -r sidecar_digest sidecar_name extra < "${sha_file}" || return 1
+	[[ -z "${extra:-}" && "${sidecar_digest}" == "${expected_digest}" &&
+		"${sidecar_name}" == "$(basename "${archive}")" ]] || return 1
+	actual="$(sha256sum "${archive}" | awk '{ print $1 }')" || return 1
+	[[ "${actual}" == "${expected_digest}" ]]
+}
+
 item_is_complete() {
 	local stage="$1" folder="$2" board="$3" branch="$4" release="$5" profile="$6"
-	local marker archive digest actual sha_file
+	local marker archive digest sha_file log_file log_digest resolved_log
 	marker="$(item_marker_path "${folder}" "${release}" "${profile}")"
 	[[ -f "${marker}" ]] || return 1
 	[[ "$(read_marker_value "${marker}" source_commit)" == "${source_commit}" ]] || return 1
 	[[ "$(read_marker_value "${marker}" bsp_base_commit)" == "${bsp_base_commit}" ]] || return 1
 	[[ "$(read_marker_value "${marker}" matrix_sha256)" == "${matrix_sha256}" ]] || return 1
 	[[ "$(read_marker_value "${marker}" userpatches_sha256)" == "${userpatches_sha256}" ]] || return 1
+	[[ "$(read_marker_value "${marker}" build_context_sha256)" == "${build_context_sha256}" ]] || return 1
 	[[ "$(read_marker_value "${marker}" folder)" == "${folder}" ]] || return 1
 	[[ "$(read_marker_value "${marker}" board)" == "${board}" ]] || return 1
 	[[ "$(read_marker_value "${marker}" branch)" == "${branch}" ]] || return 1
@@ -251,22 +357,38 @@ item_is_complete() {
 	sha_file="${stage}/${archive}.sha"
 	[[ -n "${archive}" && "${archive}" == "$(basename "${archive}")" &&
 		"${digest}" =~ ^[0-9a-f]{64}$ && -f "${stage}/${archive}" && -f "${sha_file}" ]] || return 1
-	actual="$(sha256sum "${stage}/${archive}" | awk '{ print $1 }')" || return 1
-	[[ "${actual}" == "${digest}" ]] || return 1
-	(
-		cd "${stage}"
-		sha256sum -c "$(basename "${sha_file}")" >/dev/null
-	) || return 1
-	xz -t "${stage}/${archive}"
+	verify_sha_sidecar "${stage}/${archive}" "${sha_file}" "${digest}" || return 1
+	xz -t "${stage}/${archive}" || return 1
+	log_file="$(read_marker_value "${marker}" log)"
+	log_digest="$(read_marker_value "${marker}" log_sha256)"
+	resolved_log="$(readlink -m -- "${log_file}")" || return 1
+	[[ "${resolved_log}" == "$(readlink -f -- "${state_root}/logs")"/* &&
+		"${log_digest}" =~ ^[0-9a-f]{64}$ && -s "${log_file}" ]] || return 1
+	[[ "$(sha256sum "${log_file}" | awk '{ print $1 }')" == "${log_digest}" ]]
+}
+
+prune_stage_item() {
+	local stage="$1" folder="$2" release="$3" profile="$4"
+	local marker archive suffix candidate
+	marker="$(item_marker_path "${folder}" "${release}" "${profile}")"
+	archive="$(read_marker_value "${marker}" archive)"
+	if [[ "${profile}" == minimal ]]; then suffix=minimal; else suffix=xfce_desktop; fi
+	while IFS= read -r -d '' candidate; do
+		[[ "$(basename "${candidate}")" == "${archive}" ||
+			"$(basename "${candidate}")" == "${archive}.sha" ]] && continue
+		rm -f -- "${candidate}" || return 1
+	done < <(find "${stage}" -maxdepth 1 -type f \
+		-name "*_${release}_*_${suffix}.img.xz*" -print0)
 }
 
 build_item() {
 	local stage="$1" folder="$2" board="$3" branch="$4" release="$5" profile="$6"
-	local marker log_file board_token suffix status image archive digest forced=no
-	local item_marker partial_archive
-	local -a args candidates
+	local marker log_file board_token suffix status tee_status image archive digest forced=no
+	local item_marker partial_archive build_uuid framework_log expected_name log_digest
+	local -a args expected_names pipeline_status
 
 	if item_is_complete "${stage}" "${folder}" "${board}" "${branch}" "${release}" "${profile}"; then
+		prune_stage_item "${stage}" "${folder}" "${release}" "${profile}" || return 1
 		printf '沿用本次來源與輸入雜湊已完成項目：%s %s %s\n' "${board}" "${release}" "${profile}"
 		return 0
 	fi
@@ -276,10 +398,22 @@ build_item() {
 	marker="${state_root}/markers/${folder}-${release}-${profile}-$RANDOM.marker"
 	: > "${marker}" || return 1
 	log_file="${state_root}/logs/${folder}-${release}-${profile}.log"
+	build_uuid="$(uuidgen)"
+	framework_log="${repo_dir}/output/logs/log-build-${build_uuid}.log"
 	args=(
 		build "BOARD=${board}" "BRANCH=${branch}" "RELEASE=${release}"
 		KERNEL_CONFIGURE=no EXPERT=yes SHARE_LOG=no DOWNLOAD_MIRROR=bfsu
 		"COMPRESS_OUTPUTIMAGE=sha,img" ALLOW_HEADLESS_DESKTOP=yes
+		"ARMBIAN_BUILD_UUID=${build_uuid}"
+		ENABLE_EXTENSIONS=bananapi-build-provenance
+		BPI_RELEASE_PROVENANCE_REQUIRED=yes
+		"BPI_RELEASE_BSP_BASE_COMMIT=${bsp_base_commit}"
+		"BPI_RELEASE_SOURCE_COMMIT=${source_commit}"
+		"BPI_RELEASE_MATRIX_SHA256=${matrix_sha256}"
+		"BPI_RELEASE_USERPATCHES_SHA256=${userpatches_sha256}"
+		"BPI_RELEASE_BUILD_CONTEXT_SHA256=${build_context_sha256}"
+		"BPI_RELEASE_PROFILE=${profile}"
+		"DOCKER_ARMBIAN_BASE_IMAGE_LOCKED=${container_image_locked}"
 	)
 	case "${profile}" in
 		minimal)
@@ -307,40 +441,53 @@ build_item() {
 		cd "${repo_dir}" || exit 1
 		./compile.sh "${args[@]}"
 	) 2>&1 | tee "${log_file}"
-	status=${PIPESTATUS[0]}
-	if ((status != 0)); then
+	pipeline_status=("${PIPESTATUS[@]}")
+	status=${pipeline_status[0]}
+	tee_status=${pipeline_status[1]}
+	if ((status != 0 || tee_status != 0)) || [[ ! -s "${log_file}" ]]; then
 		rm -f -- "${marker}"
-		printf '建置失敗：%s %s %s，狀態 %s。\n' \
-			"${board}" "${release}" "${profile}" "${status}" >&2
-		return "${status}"
+		printf '建置或日誌寫入失敗：%s %s %s，建置狀態 %s，日誌狀態 %s。\n' \
+			"${board}" "${release}" "${profile}" "${status}" "${tee_status}" >&2
+		((status != 0)) && return "${status}"
+		return 74
 	fi
 	assert_clean_source || {
 		rm -f -- "${marker}"
 		return 1
 	}
 
-	board_token="${board^}"
-	mapfile -t candidates < <(
-		find "${repo_dir}/output/images" -maxdepth 1 -type f \
-			\( -name "Armbian-*_${board_token}_${release}_${branch}_*_${suffix}.img" -o \
-			-name "Bananapi-Armbian_*_${board_token}_${release}_${branch}_*_${suffix}.img" \) \
-			-newer "${marker}" -print | sort
+	[[ -s "${framework_log}" ]] || {
+		printf '找不到本次 UUID 的 Armbian 內部建置日誌：%s\n' "${framework_log}" >&2
+		rm -f -- "${marker}"
+		return 1
+	}
+	mapfile -t expected_names < <(
+		sed -n -E "s#.*image-${build_uuid}/([^[:space:]']+\\.img).*#\\1#p" "${framework_log}" | sort -u
 	)
 	rm -f -- "${marker}"
-	if [[ ${#candidates[@]} -ne 1 ]]; then
-		printf '新映像數量錯誤：%s %s %s，找到 %s 個。\n' \
-			"${board}" "${release}" "${profile}" "${#candidates[@]}" >&2
+	if [[ ${#expected_names[@]} -ne 1 ]]; then
+		printf '本次 UUID 的精確映像路徑數量錯誤：%s，找到 %s 個。\n' \
+			"${build_uuid}" "${#expected_names[@]}" >&2
 		return 1
 	fi
-	image="${candidates[0]}"
-	verify_raw_image "${image}" "${board}" || {
+	expected_name="${expected_names[0]}"
+	board_token="${board^}"
+	[[ "${expected_name}" == Armbian-*_${board_token}_${release}_${branch}_*_${suffix}.img ||
+		"${expected_name}" == Bananapi-Armbian_*_${board_token}_${release}_${branch}_*_${suffix}.img ]] || {
+		printf '本次 UUID 的映像檔名不符合矩陣：%s\n' "${expected_name}" >&2
+		return 1
+	}
+	image="${repo_dir}/output/images/${expected_name}"
+	[[ -f "${image}" ]] || {
+		printf '本次 UUID 的映像不存在：%s\n' "${image}" >&2
+		return 1
+	}
+	verify_raw_image "${image}" "${board}" "${branch}" "${release}" "${profile}" || {
 		printf '原始映像唯讀內容檢查失敗：%s\n' "${image}" >&2
 		return 1
 	}
-	find "${stage}" -maxdepth 1 -type f \
-		-name "*_${release}_${branch}_*_${suffix}.img.xz*" -delete || return 1
 	archive="${stage}/$(basename "${image}").xz"
-	partial_archive="${archive}.partial"
+	partial_archive="${archive}.partial-${build_uuid}"
 	rm -f -- "${partial_archive}" || return 1
 	if ! xz -T"${xz_threads}" -6 -c "${image}" > "${partial_archive}"; then
 		rm -f -- "${partial_archive}"
@@ -353,22 +500,30 @@ build_item() {
 	mv -T "${partial_archive}" "${archive}" || return 1
 	digest="$(sha256sum "${archive}" | awk '{ print $1 }')" || return 1
 	printf '%s  %s\n' "${digest}" "$(basename "${archive}")" > "${archive}.sha" || return 1
+	verify_sha_sidecar "${archive}" "${archive}.sha" "${digest}" || return 1
 	sync -f "${archive}" || return 1
 	rm -f -- "${image}" "${image}.sha" "${image}.txt" || return 1
+	log_digest="$(sha256sum "${log_file}" | awk '{ print $1 }')" || return 1
 	item_marker="$(item_marker_path "${folder}" "${release}" "${profile}")"
 	{
 		printf 'source_commit=%s\n' "${source_commit}"
 		printf 'bsp_base_commit=%s\n' "${bsp_base_commit}"
 		printf 'matrix_sha256=%s\n' "${matrix_sha256}"
 		printf 'userpatches_sha256=%s\n' "${userpatches_sha256}"
+		printf 'build_context_sha256=%s\n' "${build_context_sha256}"
 		printf 'folder=%s\nboard=%s\nbranch=%s\n' "${folder}" "${board}" "${branch}"
 		printf 'release=%s\nprofile=%s\n' "${release}" "${profile}"
 		printf 'archive=%s\n' "$(basename "${archive}")"
 		printf 'sha256=%s\n' "${digest}"
 		printf 'fresh_artifacts=%s\n' "${forced}"
+		printf 'build_uuid=%s\n' "${build_uuid}"
 		printf 'log=%s\n' "${log_file}"
+		printf 'log_sha256=%s\n' "${log_digest}"
+		printf 'framework_log=%s\n' "${framework_log}"
 	} > "${item_marker}.partial" || return 1
 	mv -T "${item_marker}.partial" "${item_marker}" || return 1
+	sync -f "${item_marker}" || return 1
+	prune_stage_item "${stage}" "${folder}" "${release}" "${profile}"
 }
 
 verify_board_dir() {
@@ -422,14 +577,6 @@ BSP 整合基準提交：\`${bsp_base_commit}\`
 EOF
 }
 
-cleanup_local_board_outputs() {
-	local board="$1" token
-	token="${board^}"
-	find "${repo_dir}/output/images" -maxdepth 1 -type f \
-		\( -name "Armbian-*_${token}_*" -o -name "Bananapi-Armbian_*_${token}_*" \) \
-		-delete
-}
-
 transaction_path() {
 	local folder="$1"
 	printf '%s/transactions/%s.state\n' "${state_root}" "${folder}"
@@ -440,11 +587,30 @@ write_transaction() {
 	path="$(transaction_path "${folder}")"
 	{
 		printf 'source_commit=%s\n' "${source_commit}"
+		printf 'bsp_base_commit=%s\n' "${bsp_base_commit}"
 		printf 'matrix_sha256=%s\n' "${matrix_sha256}"
+		printf 'userpatches_sha256=%s\n' "${userpatches_sha256}"
+		printf 'build_context_sha256=%s\n' "${build_context_sha256}"
 		printf 'folder=%s\nphase=%s\nhad_previous=%s\n' "${folder}" "${phase}" "${had_previous}"
 	} > "${path}.partial" || return 1
 	mv -T "${path}.partial" "${path}" || return 1
 	sync -f "${path}" || return 1
+}
+
+transaction_is_valid() {
+	local folder="$1" path phase had_previous
+	path="$(transaction_path "${folder}")"
+	[[ -f "${path}" && ! -L "${path}" ]] || return 1
+	[[ "$(read_marker_value "${path}" source_commit)" == "${source_commit}" ]] || return 1
+	[[ "$(read_marker_value "${path}" bsp_base_commit)" == "${bsp_base_commit}" ]] || return 1
+	[[ "$(read_marker_value "${path}" matrix_sha256)" == "${matrix_sha256}" ]] || return 1
+	[[ "$(read_marker_value "${path}" userpatches_sha256)" == "${userpatches_sha256}" ]] || return 1
+	[[ "$(read_marker_value "${path}" build_context_sha256)" == "${build_context_sha256}" ]] || return 1
+	[[ "$(read_marker_value "${path}" folder)" == "${folder}" ]] || return 1
+	phase="$(read_marker_value "${path}" phase)"
+	had_previous="$(read_marker_value "${path}" had_previous)"
+	[[ "${phase}" =~ ^(prepared|old-moved|new-installed|verified|committed)$ ]] || return 1
+	[[ "${had_previous}" == yes || "${had_previous}" == no ]]
 }
 
 write_board_complete() {
@@ -455,6 +621,7 @@ write_board_complete() {
 		printf 'bsp_base_commit=%s\n' "${bsp_base_commit}"
 		printf 'matrix_sha256=%s\n' "${matrix_sha256}"
 		printf 'userpatches_sha256=%s\n' "${userpatches_sha256}"
+		printf 'build_context_sha256=%s\n' "${build_context_sha256}"
 		printf 'board=%s\nfolder=%s\nbranch=%s\n' "${board}" "${folder}" "${branch}"
 		printf 'images=%s\nstatus=complete\n' "${expected}"
 	} > "${path}.partial" || return 1
@@ -472,6 +639,7 @@ board_is_complete() {
 	[[ "$(read_marker_value "${marker}" bsp_base_commit)" == "${bsp_base_commit}" ]] || return 1
 	[[ "$(read_marker_value "${marker}" matrix_sha256)" == "${matrix_sha256}" ]] || return 1
 	[[ "$(read_marker_value "${marker}" userpatches_sha256)" == "${userpatches_sha256}" ]] || return 1
+	[[ "$(read_marker_value "${marker}" build_context_sha256)" == "${build_context_sha256}" ]] || return 1
 	[[ "$(read_marker_value "${marker}" folder)" == "${folder}" ]] || return 1
 	[[ "$(read_marker_value "${marker}" board)" == "${board}" ]] || return 1
 	[[ "$(read_marker_value "${marker}" branch)" == "${branch}" ]] || return 1
@@ -482,13 +650,27 @@ board_is_complete() {
 
 recover_board_transaction() {
 	local folder="$1" board="$2" branch="$3" releases_csv="$4" expected="$5"
-	local destination previous failed transaction
+	local destination previous failed transaction stage phase had_previous
 	destination="${release_root}/${folder}"
 	previous="${release_root}/.previous-${folder}-${source_short}"
 	failed="${release_root}/.failed-${folder}-${source_short}"
+	stage="${release_root}/.staging-${folder}-${source_short}"
 	transaction="$(transaction_path "${folder}")"
 
 	if [[ -d "${previous}" ]]; then
+		[[ ! -L "${previous}" ]] || {
+			printf '回復目錄不可為符號連結：%s\n' "${previous}" >&2
+			return 1
+		}
+		transaction_is_valid "${folder}" || {
+			printf '回復目錄存在，但交易狀態缺少或無效；保留現場並停止：%s\n' "${folder}" >&2
+			return 1
+		}
+		had_previous="$(read_marker_value "${transaction}" had_previous)"
+		[[ "${had_previous}" == yes ]] || {
+			printf '回復目錄與交易狀態矛盾；保留現場並停止：%s\n' "${folder}" >&2
+			return 1
+		}
 		if [[ -d "${destination}" ]] && verify_board_dir "${destination}" "${folder}" "${board}" "${branch}" "${releases_csv}"; then
 			write_board_complete "${folder}" "${board}" "${branch}" "${expected}" || return 1
 			safe_remove_work_dir "${previous}" "${release_root}" || return 1
@@ -510,11 +692,33 @@ recover_board_transaction() {
 		return 0
 	fi
 
-	if [[ -f "${transaction}" && ! -e "${destination}" ]]; then
-		printf '交易狀態存在，但正式與回復目錄都不存在；拒絕自動猜測：%s\n' "${folder}" >&2
-		return 1
-	fi
 	if [[ -f "${transaction}" ]]; then
+		transaction_is_valid "${folder}" || {
+			printf '交易狀態無效；保留現場並停止：%s\n' "${folder}" >&2
+			return 1
+		}
+		phase="$(read_marker_value "${transaction}" phase)"
+		had_previous="$(read_marker_value "${transaction}" had_previous)"
+		[[ -e "${destination}" ]] || {
+			printf '交易狀態存在，但正式與回復目錄都不存在；拒絕自動猜測：%s\n' "${folder}" >&2
+			return 1
+		}
+		if [[ "${had_previous}" == yes ]]; then
+			[[ "${phase}" == prepared ]] || {
+				printf '交易宣告有舊矩陣，但回復目錄遺失；保留現場並停止：%s\n' "${folder}" >&2
+				return 1
+			}
+			rm -f -- "${transaction}" || return 1
+			return 0
+		fi
+		if verify_board_dir "${destination}" "${folder}" "${board}" "${branch}" "${releases_csv}"; then
+			write_board_complete "${folder}" "${board}" "${branch}" "${expected}" || return 1
+			rm -f -- "${transaction}" || return 1
+			return 0
+		fi
+		if [[ "${phase}" =~ ^(new-installed|verified|committed)$ && ! -e "${stage}" ]]; then
+			mv -T "${destination}" "${stage}" || return 1
+		fi
 		rm -f -- "${transaction}" || return 1
 	fi
 }
@@ -590,7 +794,7 @@ install_board_transaction() {
 
 archive_r1_eos() {
 	local source="${release_root}/bpi-r1" destination="${archive_root}/bpi-r1-eos"
-	local archive sha_file
+	local archive sha_file digest
 	[[ -d "${source}" ]] || return 0
 	[[ ! -e "${destination}" ]] || {
 		printf 'R1 歷史封存目的地已存在，拒絕猜測：%s\n' "${destination}" >&2
@@ -603,17 +807,41 @@ archive_r1_eos() {
 	while IFS= read -r -d '' archive; do
 		sha_file="${archive}.sha"
 		[[ -f "${sha_file}" ]] || return 1
-		(
-			cd "${source}" || exit 1
-			sha256sum -c "$(basename "${sha_file}")" >/dev/null
-		) || return 1
+		digest="$(sha256sum "${archive}" | awk '{ print $1 }')" || return 1
+		verify_sha_sidecar "${archive}" "${sha_file}" "${digest}" || return 1
 		xz -t "${archive}" || return 1
 	done < <(find "${source}" -maxdepth 1 -type f -name '*.img.xz' -print0 | sort -z)
 	mkdir -p "${archive_root}" || return 1
+	[[ "$(stat -c '%d' "${source}")" == "$(stat -c '%d' "${archive_root}")" ]] || {
+		printf 'R1 封存來源與目的地不在同一檔案系統，拒絕非交易式搬移。\n' >&2
+		return 1
+	}
 	mv -T "${source}" "${destination}" || return 1
 	printf 'source=%s\ndestination=%s\nstatus=archived\n' \
 		"${source}" "${destination}" > "${state_root}/boards/bpi-r1-eos.complete" || return 1
 	printf 'R1 已驗證並移至歷史封存區：%s\n' "${destination}"
+}
+
+verify_full_release_matrix() {
+	local rows=0 images=0 folder board branch releases_csv expected
+	local default_matrix="${repo_dir}/config/bananapi-latest-release-matrix.tsv"
+	local -a releases
+	[[ "$(readlink -f -- "${matrix_file}")" == "$(readlink -f -- "${default_matrix}")" ]] || {
+		printf '使用覆寫矩陣時不得自動封存 R1。\n' >&2
+		return 1
+	}
+	while IFS=$'\t' read -r folder board branch releases_csv; do
+		[[ "${folder}" == folder ]] && continue
+		IFS=, read -r -a releases <<< "${releases_csv}"
+		expected=$(( ${#releases[@]} * 2 ))
+		board_is_complete "${folder}" "${board}" "${branch}" "${releases_csv}" "${expected}" || return 1
+		rows=$((rows + 1))
+		images=$((images + expected))
+	done < "${matrix_file}"
+	[[ "${rows}" -eq 45 && "${images}" -eq 444 ]] || {
+		printf '全域驗收數量錯誤：板卡 %s/45，映像 %s/444。\n' "${rows}" "${images}" >&2
+		return 1
+	}
 }
 
 rebuild_board() {
@@ -646,12 +874,40 @@ rebuild_board() {
 	fi
 	verify_board_dir "${stage}" "${folder}" "${board}" "${branch}" "${releases_csv}" || return 1
 	install_board_transaction "${folder}" "${board}" "${branch}" "${releases_csv}" "${expected}" "${stage}" || return 1
-	cleanup_local_board_outputs "${board}" || return 1
 	printf '完成並替換：%s，共 %s 個最新映像。\n' "${board}" "${expected}"
 }
 
+prepare_build_context() {
+	local source_tree compile_sha extension_sha host_identity
+	local pull_log="${state_root}/container-pull.log"
+	if ! docker pull "${container_image}" 2>&1 | tee "${pull_log}"; then
+		printf '無法固定 Armbian 建置容器：%s\n' "${container_image}" >&2
+		return 1
+	fi
+	[[ -s "${pull_log}" ]] || return 1
+	container_image_id="$(docker image inspect --format '{{.Id}}' "${container_image}")" || return 1
+	container_image_locked="$(docker image inspect --format '{{range .RepoDigests}}{{println .}}{{end}}' \
+		"${container_image}" | head -n 1)" || return 1
+	[[ "${container_image_id}" =~ ^sha256:[0-9a-f]{64}$ &&
+		"${container_image_locked}" =~ @sha256:[0-9a-f]{64}$ ]] || {
+		printf '容器映像缺少固定 ID 或 registry digest。\n' >&2
+		return 1
+	}
+	source_tree="$(git -C "${repo_dir}" rev-parse "${source_commit}^{tree}")" || return 1
+	compile_sha="$(sha256sum "${repo_dir}/compile.sh" | awk '{ print $1 }')" || return 1
+	extension_sha="$(sha256sum "${repo_dir}/extensions/bananapi-build-provenance.sh" | awk '{ print $1 }')" || return 1
+	host_identity="$(uname -srmo)"
+	build_context_sha256="$(
+		printf '%s\\0' "${source_tree}" "${matrix_sha256}" "${userpatches_sha256}" \
+			"${container_image_id}" "${container_image_locked}" "${compile_sha}" \
+			"${extension_sha}" "${host_identity}" "${BASH_VERSION}" "$(xz --version | head -n 1)" |
+			sha256sum | awk '{ print $1 }'
+	)" || return 1
+}
+
 write_build_manifest() {
-	local path="${state_root}/build-inputs.tsv"
+	local path="${state_root}/build-inputs-${build_context_sha256:0:12}.tsv"
+	[[ ! -e "${path}" ]] || return 0
 	{
 		printf 'key\tvalue\n'
 		printf 'bsp_base_commit\t%s\n' "${bsp_base_commit}"
@@ -660,6 +916,11 @@ write_build_manifest() {
 		printf 'matrix_path\t%s\n' "${matrix_file}"
 		printf 'matrix_sha256\t%s\n' "${matrix_sha256}"
 		printf 'userpatches_sha256\t%s\n' "${userpatches_sha256}"
+		printf 'build_context_sha256\t%s\n' "${build_context_sha256}"
+		printf 'source_remote_ref\t%s\n' "${source_remote_ref}"
+		printf 'container_image\t%s\n' "${container_image}"
+		printf 'container_image_id\t%s\n' "${container_image_id}"
+		printf 'container_image_locked\t%s\n' "${container_image_locked}"
 		printf 'build_started_utc\t%s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 		printf 'host_kernel\t%s\n' "$(uname -srmo)"
 		printf 'bash_version\t%s\n' "${BASH_VERSION}"
@@ -690,6 +951,7 @@ if [[ "${dry_run}" == yes ]]; then
 fi
 
 assert_clean_source
+assert_pushed_source
 sudo -n true
 mkdir -p "${release_root}" "${repo_dir}/output/images" "${state_root}/boards" \
 	"${state_root}/items" "${state_root}/logs" "${state_root}/markers" "${state_root}/transactions"
@@ -698,11 +960,13 @@ flock -n 9 || {
 	printf '另一個最新矩陣重建或替換程序正在執行。\n' >&2
 	exit 1
 }
-exec 8> "${repo_dir}/output/images/.bananapi-latest-build.lock"
+exec 8> "${repo_dir}/output/images/.armbian-build.lock"
 flock -n 8 || {
 	printf '另一個受控映像建置程序正在使用共用輸出目錄。\n' >&2
 	exit 1
 }
+export BPI_ARMBIAN_BUILD_LOCK_HELD=yes
+prepare_build_context
 write_build_manifest
 
 summary="${state_root}/summary.tsv"
@@ -716,7 +980,6 @@ while IFS=$'\t' read -r folder board branch releases_csv; do
 	IFS=, read -r -a releases <<< "${releases_csv}"
 	expected=$(( ${#releases[@]} * 2 ))
 	if board_is_complete "${folder}" "${board}" "${branch}" "${releases_csv}" "${expected}"; then
-		cleanup_local_board_outputs "${board}"
 		printf '已完成並重驗：%s。\n' "${board}"
 		printf '%s\t%s\t%s\tverified-existing\n' "${folder}" "${board}" "${branch}" >> "${summary}"
 		continue
@@ -728,6 +991,11 @@ while IFS=$'\t' read -r folder board branch releases_csv; do
 	if ((status == 0)); then
 		printf '%s\t%s\t%s\tcomplete\n' "${folder}" "${board}" "${branch}" >> "${summary}"
 	else
+		if [[ "${status}" =~ ^(129|130|137|141|143)$ ]]; then
+			printf '%s\t%s\t%s\tinterrupted-%s\n' "${folder}" "${board}" "${branch}" "${status}" >> "${summary}"
+			printf '收到中斷狀態 %s，停止後續板卡並保留舊矩陣。\n' "${status}" >&2
+			exit "${status}"
+		fi
 		failed=$((failed + 1))
 		printf '%s\t%s\t%s\tfailed-%s\n' "${folder}" "${board}" "${branch}" "${status}" >> "${summary}"
 	fi
@@ -738,6 +1006,7 @@ done < "${matrix_file}"
 	exit 2
 }
 if [[ -z "${selected_board}" && "${failed}" -eq 0 ]]; then
+	verify_full_release_matrix
 	archive_r1_eos
 fi
 printf '本輪板卡：%s，失敗：%s，摘要：%s\n' "${selected}" "${failed}" "${summary}"

@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import csv
+import fcntl
 import json
 import os
 import re
@@ -108,7 +109,8 @@ set -Eeuo pipefail
 source {SCRIPT!s}
 matrix_sha256=test-matrix
 userpatches_sha256=test-userpatches
-mkdir -p "$STATE_ROOT/boards" "$STATE_ROOT/items" "$STATE_ROOT/transactions"
+build_context_sha256=test-context
+mkdir -p "$STATE_ROOT/boards" "$STATE_ROOT/items" "$STATE_ROOT/logs" "$STATE_ROOT/markers" "$STATE_ROOT/transactions"
 {body}
 """
             return subprocess.run(
@@ -178,6 +180,64 @@ test -d "$RELEASE_ROOT/demo"
         )
         self.assertEqual(result.returncode, 0, result.stderr)
 
+    def test_transaction_refuses_corrupt_state_with_previous_matrix(self) -> None:
+        result = self.run_library_shell(
+            r"""
+previous="$RELEASE_ROOT/.previous-demo-$source_short"
+mkdir -p "$previous" "$RELEASE_ROOT/demo"
+printf old > "$previous/old.img.xz"
+printf new > "$RELEASE_ROOT/demo/new.img.xz"
+printf 'corrupt=yes\n' > "$(transaction_path demo)"
+if recover_board_transaction demo bananapim5 current trixie 2; then
+	exit 9
+fi
+test -f "$previous/old.img.xz"
+test -f "$RELEASE_ROOT/demo/new.img.xz"
+test -f "$(transaction_path demo)"
+"""
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_sha_sidecar_rejects_wrong_archive_name(self) -> None:
+        result = self.run_library_shell(
+            r"""
+archive="$RELEASE_ROOT/demo.img.xz"
+printf payload | xz -c > "$archive"
+digest="$(sha256sum "$archive" | awk '{ print $1 }')"
+printf '%s  %s\n' "$digest" wrong.img.xz > "$archive.sha"
+if verify_sha_sidecar "$archive" "$archive.sha" "$digest"; then
+	exit 9
+fi
+"""
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_compile_entrypoint_honours_global_lock(self) -> None:
+        lock_path = ROOT / "output/images/.armbian-build.lock"
+        lock_path.parent.mkdir(parents=True, exist_ok=True)
+        with lock_path.open("w") as stream:
+            fcntl.flock(stream, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            result = subprocess.run(
+                ["bash", str(ROOT / "compile.sh"), "--help"],
+                cwd=ROOT,
+                check=False,
+                text=True,
+                capture_output=True,
+            )
+        self.assertEqual(result.returncode, 73)
+        self.assertIn("另一個受控 Armbian 建置", result.stderr)
+
+    def test_script_contains_release_provenance_and_full_gate(self) -> None:
+        script = SCRIPT.read_text(encoding="utf-8")
+        extension = (ROOT / "extensions/bananapi-build-provenance.sh").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn("ENABLE_EXTENSIONS=bananapi-build-provenance", script)
+        self.assertIn("BPI_RELEASE_BUILD_CONTEXT_SHA256", script)
+        self.assertIn('[[ "${rows}" -eq 45 && "${images}" -eq 444 ]]', script)
+        self.assertIn("/etc/bananapi-build-provenance", script)
+        self.assertIn("${SDCARD}/etc/bananapi-build-provenance", extension)
+
     def test_board_verification_rejects_wrong_board_filenames(self) -> None:
         result = self.run_library_shell(
             r"""
@@ -185,19 +245,24 @@ directory="$RELEASE_ROOT/demo"
 mkdir -p "$directory"
 for profile in minimal xfce; do
 	if [[ "$profile" == minimal ]]; then suffix=minimal; else suffix=xfce_desktop; fi
-	archive="Armbian-test_Wrongboard_trixie_current_1.0_$suffix.img.xz"
-	printf payload | xz -c > "$directory/$archive"
-	digest="$(sha256sum "$directory/$archive" | awk '{ print $1 }')"
-	printf '%s  %s\n' "$digest" "$archive" > "$directory/$archive.sha"
+		archive="Armbian-test_Wrongboard_trixie_current_1.0_$suffix.img.xz"
+		printf payload | xz -c > "$directory/$archive"
+		digest="$(sha256sum "$directory/$archive" | awk '{ print $1 }')"
+		printf '%s  %s\n' "$digest" "$archive" > "$directory/$archive.sha"
 	marker="$(item_marker_path demo trixie "$profile")"
+	log="$STATE_ROOT/logs/demo-trixie-$profile.log"
+	printf log > "$log"
+	log_digest="$(sha256sum "$log" | awk '{ print $1 }')"
 	{
 		printf 'source_commit=%s\n' "$source_commit"
 		printf 'bsp_base_commit=%s\n' "$bsp_base_commit"
 		printf 'matrix_sha256=%s\n' "$matrix_sha256"
 		printf 'userpatches_sha256=%s\n' "$userpatches_sha256"
+		printf 'build_context_sha256=%s\n' "$build_context_sha256"
 		printf 'folder=demo\nboard=bananapim5\nbranch=current\n'
 		printf 'release=trixie\nprofile=%s\n' "$profile"
 		printf 'archive=%s\nsha256=%s\n' "$archive" "$digest"
+		printf 'log=%s\nlog_sha256=%s\n' "$log" "$log_digest"
 	} > "$marker"
 done
 if verify_board_dir "$directory" demo bananapim5 current trixie; then

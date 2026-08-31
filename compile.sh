@@ -21,6 +21,16 @@ set -o errexit  ## set -e : exit the script if any statement returns a non-true 
 SRC="$(dirname "$(realpath "${BASH_SOURCE[0]}")")"
 cd "${SRC}" || exit
 
+if [[ "${ARMBIAN_RUNNING_IN_CONTAINER:-no}" != yes &&
+	"${BPI_ARMBIAN_BUILD_LOCK_HELD:-no}" != yes ]]; then
+	mkdir -p "${SRC}/output/images"
+	exec 198> "${SRC}/output/images/.armbian-build.lock"
+	if ! flock -n 198; then
+		printf '另一個受控 Armbian 建置正在使用此工作樹。\n' >&2
+		exit 73
+	fi
+fi
+
 # check for whitespace in ${SRC} and exit for safety reasons
 grep -q "[[:space:]]" <<< "${SRC}" && {
 	echo "\"${SRC}\" contains whitespace. Not supported. Aborting." >&2
