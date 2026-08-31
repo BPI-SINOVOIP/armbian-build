@@ -223,9 +223,16 @@ verify_raw_image() (
 		trap - EXIT INT TERM HUP
 		set +e
 		if [[ -n "${mount_dir}" ]] && mountpoint -q "${mount_dir}"; then
-			sudo -n umount "${mount_dir}" || status=1
+			for _ in {1..20}; do
+				sudo -n umount "${mount_dir}" && break
+				sleep 0.25
+			done
+			mountpoint -q "${mount_dir}" && status=1
 		fi
-		[[ -z "${loop_device}" ]] || sudo -n losetup -d "${loop_device}" || status=1
+		if [[ -n "${loop_device}" ]] && ! mountpoint -q "${mount_dir}" &&
+			sudo -n losetup "${loop_device}" >/dev/null 2>&1; then
+			sudo -n losetup -d "${loop_device}" || status=1
+		fi
 		[[ -z "${mount_dir}" ]] || rmdir "${mount_dir}" 2>/dev/null || true
 		exit "${status}"
 	}

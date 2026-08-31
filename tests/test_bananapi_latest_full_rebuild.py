@@ -236,6 +236,8 @@ fi
         self.assertIn("BPI_RELEASE_BUILD_CONTEXT_SHA256", script)
         self.assertIn('[[ "${rows}" -eq 45 && "${images}" -eq 444 ]]', script)
         self.assertIn("/etc/bananapi-build-provenance", script)
+        self.assertIn("for _ in {1..20}", script)
+        self.assertIn('mountpoint -q "${mount_dir}" && status=1', script)
         self.assertIn("${SDCARD}/etc/bananapi-build-provenance", extension)
 
     def test_board_verification_rejects_wrong_board_filenames(self) -> None:
