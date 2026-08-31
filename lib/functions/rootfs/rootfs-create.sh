@@ -223,6 +223,37 @@ EOF
 	fi
 }
 
+function prepare_resolute_mmdebstrap_dpkg_wrapper() {
+	if [[ "${DISTRIBUTION}" != "Ubuntu" || "${RELEASE}" != "resolute" ]]; then
+		return 0
+	fi
+
+	# mmdebstrap 首次呼叫 dpkg 時，gnu-coreutils 可能尚未完成解包。
+	# 先以受限包裝器處理固定參數，基礎系統完成後立即移除。
+	local wrapper="${SDCARD}/usr/bin/armbian-bootstrap-env"
+	mkdir -p "${SDCARD}/usr/bin"
+	cat > "${wrapper}" <<'EOF'
+#!/bin/sh
+if [ "${1-}" != "--unset=TMPDIR" ]; then
+	echo "armbian-bootstrap-env: unsupported invocation" >&2
+	exit 64
+fi
+unset TMPDIR
+shift
+if [ "${1-}" != "dpkg" ]; then
+	echo "armbian-bootstrap-env: expected dpkg" >&2
+	exit 64
+fi
+shift
+exec /usr/bin/dpkg "$@"
+EOF
+	chmod 0755 "${wrapper}"
+
+	sed -i -E \
+		's#Dir::Bin::dpkg=(env|/usr/bin/gnuenv|/usr/bin/armbian-bootstrap-env)#Dir::Bin::dpkg=/usr/bin/armbian-bootstrap-env#g' \
+		"${debootstrap_bin}"
+}
+
 # create_new_rootfs_cache_via_debootstrap populates a root FS into
 # SDCARD using mmdebstrap configures locales and apt sources, installs
 # additional packages (and optionally desktop packages), performs chroot
@@ -266,12 +297,6 @@ function create_new_rootfs_cache_via_debootstrap() {
 	debootstrap_bin="${debootstrap_wanted_dir}/mmdebstrap"
 
 	run_host_command_logged chmod a+x "${debootstrap_bin}"
-	if [[ "${DISTRIBUTION}" == "Ubuntu" && "${RELEASE}" == "resolute" ]]; then
-		# Ubuntu 26.04 ships /usr/bin/env from rust-coreutils by default.
-		# Under qemu-user it can panic while mmdebstrap asks apt to run dpkg via
-		# env. Use the GNU coreutils variant that is also present in resolute.
-		sed -i "s#Dir::Bin::dpkg=env#Dir::Bin::dpkg=/usr/bin/gnuenv#g" "${debootstrap_bin}"
-	fi
 	display_alert "mmdebstrap version" "'${debootstrap_version}' for ${debootstrap_bin}" "info"
 
 	display_alert "Installing base system with ${#AGGREGATED_PACKAGES_DEBOOTSTRAP[@]} packages" "Stage 1/1" "info"
@@ -336,6 +361,7 @@ function create_new_rootfs_cache_via_debootstrap() {
 	Acquire::IndexTargets::deb::Contents-udeb::DefaultEnabled "false";
 	Acquire::IndexTargets::deb-src::Contents-dsc::DefaultEnabled "false";
 	EOF
+	prepare_resolute_mmdebstrap_dpkg_wrapper
 
 	deploy_qemu_binary_to_chroot "${SDCARD}" "rootfs" # undeployed near the end of this function
 
@@ -346,6 +372,7 @@ function create_new_rootfs_cache_via_debootstrap() {
 	skip_target_check="yes" local_apt_deb_cache_prepare "for mmdebstrap" # just for size reference in logs
 
 	[[ ! -f "${SDCARD}/bin/bash" ]] && exit_with_error "mmdebstrap did not produce /bin/bash"
+	rm -f "${SDCARD}/usr/bin/armbian-bootstrap-env"
 	prepare_resolute_gnu_coreutils_chroot_path
 
 	# Done with mmdebstrap. Clean-up its litterbox.

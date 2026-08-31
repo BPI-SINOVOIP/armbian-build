@@ -340,6 +340,52 @@ fi
         self.assertEqual(native.stdout, "")
         self.assertEqual(cross.stdout.strip(), "'--skip=check/qemu'")
 
+    def test_resolute_mmdebstrap_uses_temporary_dpkg_wrapper(self) -> None:
+        """Resolute 啟動階段必須在 gnu-coreutils 解包前提供受限包裝器。"""
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            temporary = Path(temporary_directory)
+            rootfs = temporary / "rootfs"
+            mmdebstrap = temporary / "mmdebstrap"
+            mmdebstrap.write_text(
+                "Dir::Bin::dpkg=/usr/bin/gnuenv\n",
+                encoding="utf-8",
+            )
+            shell = f'''
+source {ROOTFS_SCRIPT!s}
+DISTRIBUTION=Ubuntu
+RELEASE=resolute
+SDCARD={rootfs!s}
+debootstrap_bin={mmdebstrap!s}
+prepare_resolute_mmdebstrap_dpkg_wrapper
+'''
+            result = subprocess.run(
+                ["bash", "-c", shell],
+                capture_output=True,
+                text=True,
+            )
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            wrapper = rootfs / "usr/bin/armbian-bootstrap-env"
+            self.assertTrue(os.access(wrapper, os.X_OK))
+            self.assertEqual(
+                subprocess.run(
+                    ["sh", "-n", str(wrapper)],
+                    capture_output=True,
+                    text=True,
+                ).returncode,
+                0,
+            )
+            self.assertIn(
+                "Dir::Bin::dpkg=/usr/bin/armbian-bootstrap-env",
+                mmdebstrap.read_text(encoding="utf-8"),
+            )
+            rejected = subprocess.run(
+                [str(wrapper), "--preserve-env", "dpkg"],
+                capture_output=True,
+                text=True,
+            )
+            self.assertEqual(rejected.returncode, 64)
+
     def test_unsupported_qemu_cpu_model_refreshes_only_target_binfmt(self) -> None:
         """既有模擬器不支援指定模型時，只重新註冊目標架構。"""
         with tempfile.TemporaryDirectory() as temporary_directory:
