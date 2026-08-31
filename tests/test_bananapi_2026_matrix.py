@@ -376,6 +376,10 @@ prepare_resolute_mmdebstrap_dpkg_wrapper
                 0,
             )
             self.assertIn(
+                "Dir::Bin::dpkg=armbian-bootstrap-env",
+                mmdebstrap.read_text(encoding="utf-8"),
+            )
+            self.assertNotIn(
                 "Dir::Bin::dpkg=/usr/bin/armbian-bootstrap-env",
                 mmdebstrap.read_text(encoding="utf-8"),
             )

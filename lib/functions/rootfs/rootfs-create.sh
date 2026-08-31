@@ -229,7 +229,9 @@ function prepare_resolute_mmdebstrap_dpkg_wrapper() {
 	fi
 
 	# mmdebstrap 首次呼叫 dpkg 時，gnu-coreutils 可能尚未完成解包。
-	# 先以受限包裝器處理固定參數，基礎系統完成後立即移除。
+	# 先以受限包裝器處理固定參數，基礎系統完成後立即移除。APT
+	# 會在 chroot 前檢查含絕對路徑的執行檔，因此必須沿用 mmdebstrap
+	# 原本對 env 的作法，設定裸命令名稱，再由目標 PATH 找到包裝器。
 	local wrapper="${SDCARD}/usr/bin/armbian-bootstrap-env"
 	mkdir -p "${SDCARD}/usr/bin"
 	cat > "${wrapper}" <<'EOF'
@@ -250,7 +252,7 @@ EOF
 	chmod 0755 "${wrapper}"
 
 	sed -i -E \
-		's#Dir::Bin::dpkg=(env|/usr/bin/gnuenv|/usr/bin/armbian-bootstrap-env)#Dir::Bin::dpkg=/usr/bin/armbian-bootstrap-env#g' \
+		's#Dir::Bin::dpkg=(env|/usr/bin/gnuenv|/usr/bin/armbian-bootstrap-env|armbian-bootstrap-env)#Dir::Bin::dpkg=armbian-bootstrap-env#g' \
 		"${debootstrap_bin}"
 }
 
