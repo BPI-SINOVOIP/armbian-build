@@ -435,6 +435,9 @@ driver_rtl8852bs() {
 		cp "${SRC}/cache/sources/rtl8852bs/${rtl8852bs_ver#*:}"/common.mk \
 			"$kerneldir/drivers/net/wireless/realtek/rtl8852bs/common.mk"
 
+		# 修正舊版固定來源在 Linux 6.1 與關閉除錯時的編譯相容性。
+		process_patch_file "${SRC}/patch/misc/wireless-rtl8852bs-fixed-source-6.1.patch" "applying"
+
 		# Disable debug
 		sed -i "s/^CONFIG_RTW_DEBUG.*/CONFIG_RTW_DEBUG = n/" \
 			"$kerneldir/drivers/net/wireless/realtek/rtl8852bs/Makefile"

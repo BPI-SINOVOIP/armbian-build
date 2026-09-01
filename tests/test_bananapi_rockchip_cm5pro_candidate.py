@@ -38,6 +38,7 @@ COMPONENT_VERIFIER = ROOT / "tools/verify-bananapi-rockchip-cm5pro-components.sh
 ROCKCHIP_BUILDER = ROOT / "tools/build-bananapi-rockchip-candidates.sh"
 ROCKCHIP_VERIFIER = ROOT / "tools/verify-bananapi-rockchip-candidates.sh"
 DRIVER_HARNESS = ROOT / "lib/functions/compilation/patch/drivers_network.sh"
+DRIVER_COMPAT_PATCH = ROOT / "patch/misc/wireless-rtl8852bs-fixed-source-6.1.patch"
 DRIVER_CACHE = ROOT / "lib/functions/compilation/patch/drivers-harness.sh"
 KERNEL_ARTIFACT = ROOT / "lib/functions/artifacts/artifact-kernel.sh"
 POLICY = (
@@ -210,6 +211,21 @@ printf 'linux_source=%s\nlinux=%s\nuboot_source=%s\nuboot=%s\nrkbin=%s\nfirmware
             self.assertIn("RTL8852BS_GIT_REF", text)
             self.assertIn(default_revision, text)
         self.assertIn(self.config["wifi_driver_commit"], self.board_text)
+
+    def test_fixed_wifi_driver_supports_linux_6_1(self) -> None:
+        harness = DRIVER_HARNESS.read_text()
+        patch = DRIVER_COMPAT_PATCH.read_text()
+        self.assertIn(DRIVER_COMPAT_PATCH.name, harness)
+        self.assertIn(
+            "(LINUX_VERSION_CODE < KERNEL_VERSION(6, 1, 0))",
+            patch,
+        )
+        self.assertIn(
+            "rtl8852bs/os_dep/linux/wifi_regd.c",
+            patch,
+        )
+        self.assertIn("#define RTW_WARN_LMT(x,...)", patch)
+        self.assertIn("rtl8852bs/include/rtw_debug.h", patch)
 
     def test_io_accelerator_and_diagnostic_contract_is_complete(self) -> None:
         packages = set(self.config["common_packages"])
