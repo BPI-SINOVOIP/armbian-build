@@ -30,6 +30,23 @@ class BpiAi2nConfigTests(unittest.TestCase):
             re.search(r"^\s*(?:declare\s+-g\s+)?ROOTPWD=", config, re.MULTILINE)
         )
 
+    def test_rootfs_payload_uses_explicit_ownership_and_permissions(self) -> None:
+        config = FAMILY_CONFIG.read_text(encoding="utf-8")
+        self.assertNotIn(
+            'rsync -a "${SRC}"/packages/bsp/bpi-renesas/* "${SDCARD}"', config
+        )
+        for expected in (
+            "install -d -o root -g root -m 0755",
+            "install -o root -g root -m 0644",
+            "install -o root -g root -m 0755",
+            '"${SDCARD}/usr"',
+            '"${SDCARD}/usr/lib"',
+            '"${SDCARD}/usr/local"',
+            '"${SDCARD}/lib64/ld-linux-aarch64.so.1"',
+        ):
+            with self.subTest(expected=expected):
+                self.assertIn(expected, config)
+
 
 if __name__ == "__main__":
     unittest.main()
