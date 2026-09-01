@@ -217,6 +217,14 @@ printf 'linux_source=%s\nlinux=%s\nuboot_source=%s\nuboot=%s\nrkbin=%s\nfirmware
         patch = DRIVER_COMPAT_PATCH.read_text()
         self.assertIn(DRIVER_COMPAT_PATCH.name, harness)
         self.assertIn(
+            f'if [[ "${{rtl8852bs_ver}}" == "commit:{self.config["wifi_driver_commit"]}" ]]',
+            harness,
+        )
+        self.assertNotEqual(
+            self.config["wifi_driver_commit"],
+            "58840d11af91d0b72bc830980b4aff740a37b5e3",
+        )
+        self.assertIn(
             "(LINUX_VERSION_CODE < KERNEL_VERSION(6, 1, 0))",
             patch,
         )
