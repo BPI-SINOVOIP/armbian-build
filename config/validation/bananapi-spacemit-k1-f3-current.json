@@ -3,7 +3,7 @@
   "kernel_family": "spacemit",
   "source_commits": {
     "linux": {
-      "source": "https://github.com/jmontleon/linux-bianbu.git",
+      "source": "https://github.com/jasonmontleon/linux-spacemit.git",
       "ref": "commit:3e8e7fd730721aee3926a365cef6635221705b61",
       "revision": "3e8e7fd730721aee3926a365cef6635221705b61",
       "worktree": "cache/sources/linux-kernel-worktree/6.18__spacemit__riscv64"

@@ -32,6 +32,21 @@ class BananaPiSpacemitSourcePolicyTests(unittest.TestCase):
                 self.assertRegex(revision, r"^[0-9a-f]{40}$")
                 self.assertIn(f'commit:{revision}', self.board)
 
+    def test_current_kernel_uses_archived_source_with_pinned_commit(self) -> None:
+        linux = self.config["source_commits"]["linux"]
+        self.assertEqual(
+            linux["source"],
+            "https://github.com/jasonmontleon/linux-spacemit.git",
+        )
+        self.assertIn(
+            f'KERNELSOURCE_BOARD="{linux["source"]}"',
+            self.board,
+        )
+        self.assertIn(
+            'declare -g KERNELSOURCE="${KERNELSOURCE_BOARD}"',
+            self.board,
+        )
+
     def test_board_exposes_k1_overlays_and_required_packages(self) -> None:
         self.assertIn('OVERLAY_PREFIX="k1"', self.board)
         package_line = next(
