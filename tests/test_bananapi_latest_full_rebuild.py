@@ -240,6 +240,15 @@ fi
         self.assertIn('mountpoint -q "${mount_dir}" && status=1', script)
         self.assertIn("${SDCARD}/etc/bananapi-build-provenance", extension)
 
+    def test_script_supports_separate_read_only_boot_partition(self) -> None:
+        script = SCRIPT.read_text(encoding="utf-8")
+        self.assertIn('mountpoint -q "${mount_dir}/boot"', script)
+        self.assertIn("boot_partition=", script)
+        self.assertIn(
+            'mount -o ro,nosuid,nodev,noexec "${boot_partition}" "${mount_dir}/boot"',
+            script,
+        )
+
     def test_board_verification_rejects_wrong_board_filenames(self) -> None:
         result = self.run_library_shell(
             r"""

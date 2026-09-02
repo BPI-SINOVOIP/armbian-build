@@ -215,13 +215,20 @@ safe_remove_work_dir() {
 verify_raw_image() (
 	set -Eeuo pipefail
 	local image="$1" board="$2" branch="$3" release="$4" profile="$5"
-	local loop_device="" root_partition="" root_fstype="" mount_dir=""
+	local loop_device="" root_partition="" root_fstype="" boot_partition="" mount_dir=""
 	local image_board="" image_release="" provenance=""
 
 	cleanup() {
 		local status=$?
 		trap - EXIT INT TERM HUP
 		set +e
+		if [[ -n "${mount_dir}" ]] && mountpoint -q "${mount_dir}/boot"; then
+			for _ in {1..20}; do
+				sudo -n umount "${mount_dir}/boot" && break
+				sleep 0.25
+			done
+			mountpoint -q "${mount_dir}/boot" && status=1
+		fi
 		if [[ -n "${mount_dir}" ]] && mountpoint -q "${mount_dir}"; then
 			for _ in {1..20}; do
 				sudo -n umount "${mount_dir}" && break
@@ -230,6 +237,7 @@ verify_raw_image() (
 			mountpoint -q "${mount_dir}" && status=1
 		fi
 		if [[ -n "${loop_device}" ]] && ! mountpoint -q "${mount_dir}" &&
+			! mountpoint -q "${mount_dir}/boot" &&
 			sudo -n losetup "${loop_device}" >/dev/null 2>&1; then
 			sudo -n losetup -d "${loop_device}" || status=1
 		fi
@@ -263,7 +271,20 @@ verify_raw_image() (
 		sudo -n mount -o ro,nosuid,nodev,noexec "${root_partition}" "${mount_dir}"
 	fi
 	[[ -f "${mount_dir}/etc/armbian-release" && -d "${mount_dir}/boot" ]] || exit 1
-	[[ -n "$(find "${mount_dir}/boot" -mindepth 1 -maxdepth 2 -print -quit)" ]] || exit 1
+	if [[ -z "$(find "${mount_dir}/boot" -mindepth 1 -maxdepth 2 -print -quit)" ]]; then
+		boot_partition="$(lsblk -lnpo NAME,FSTYPE "${loop_device}" |
+			awk '$2 == "vfat" { print $1; exit }')"
+		[[ -n "${boot_partition}" ]] || {
+			printf '映像的根檔案系統 /boot 為空，且沒有可辨識的 FAT 開機分割區：%s\n' \
+				"${image}" >&2
+			exit 1
+		}
+		sudo -n mount -o ro,nosuid,nodev,noexec "${boot_partition}" "${mount_dir}/boot"
+	fi
+	[[ -n "$(find "${mount_dir}/boot" -mindepth 1 -maxdepth 2 -print -quit)" ]] || {
+		printf '映像的開機分割區沒有內容：%s\n' "${image}" >&2
+		exit 1
+	}
 	image_board="$(sed -n -E "s/^BOARD=['\"]?([^'\"]+)['\"]?$/\1/p" \
 		"${mount_dir}/etc/armbian-release" | head -n 1)"
 	[[ "${image_board}" == "${board}" ]] || {
