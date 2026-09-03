@@ -90,6 +90,31 @@ class BananaPiLatestFullRebuildTests(unittest.TestCase):
         )
         self.assertIn("預定建置映像總數：444", result.stdout)
 
+    def test_userpatches_hash_is_locale_independent(self) -> None:
+        digests = set()
+        for locale in ("C", "C.UTF-8", "en_US.UTF-8"):
+            env = os.environ.copy()
+            env.update(
+                {
+                    "BPI_REBUILD_LIBRARY_ONLY": "yes",
+                    "LC_ALL": locale,
+                }
+            )
+            result = subprocess.run(
+                [
+                    "bash",
+                    "-c",
+                    f"source {SCRIPT!s}; calculate_userpatches_hash",
+                ],
+                cwd=ROOT,
+                env=env,
+                check=True,
+                text=True,
+                capture_output=True,
+            )
+            digests.add(result.stdout.strip())
+        self.assertEqual(len(digests), 1)
+
     def run_library_shell(self, body: str) -> subprocess.CompletedProcess[str]:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)

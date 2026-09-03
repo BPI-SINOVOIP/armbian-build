@@ -134,7 +134,7 @@ calculate_userpatches_hash() {
 			printf '不支援的 userpatches 項目：%s\n' "${entry}" >&2
 				exit 1
 			fi
-		done < <(find . -mindepth 1 -print0 | sort -z)
+		done < <(find . -mindepth 1 -print0 | LC_ALL=C sort -z)
 	) | sha256sum | awk '{ print $1 }'
 }
 
