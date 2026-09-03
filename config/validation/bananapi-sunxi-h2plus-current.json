@@ -39,7 +39,7 @@
         "sinovoip,bpi-m2-zero",
         "allwinner,sun8i-h2-plus"
       ],
-      "uboot_tag": "v2024.01",
+      "uboot_tag": "v2026.07",
       "uboot_payload": "u-boot-sunxi-with-spl.bin",
       "uboot_offset": 8192,
       "overlay_prefix": "sun8i-h3",
@@ -80,7 +80,7 @@
         "sinovoip,bpi-m2-zero",
         "allwinner,sun8i-h2-plus"
       ],
-      "uboot_tag": "v2024.01",
+      "uboot_tag": "v2026.07",
       "uboot_payload": "u-boot-sunxi-with-spl.bin",
       "uboot_offset": 8192,
       "overlay_prefix": "sun8i-h3",

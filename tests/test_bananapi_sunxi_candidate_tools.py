@@ -135,6 +135,7 @@ Provides: unavailable-virtual
         for board, policy in config["boards"].items():
             with self.subTest(board=board):
                 self.assertEqual(policy["family"], "sun8i")
+                self.assertEqual(policy["uboot_tag"], "v2026.07")
                 self.assertEqual(policy["sd_bus_width"], 4)
                 self.assertIn("/soc/mmc@1c10000=4", policy["additional_bus_widths"])
                 board_text = next((ROOT / "config/boards").glob(f"{board}.*")).read_text()
@@ -154,6 +155,16 @@ Provides: unavailable-virtual
             "/soc/mmc@1c11000=8",
             config["boards"]["bananapip2zero"]["additional_bus_widths"],
         )
+
+        p2_zero_patch = (
+            ROOT
+            / "patch/u-boot/v2026.07-sunxi/board_bananapip2zero"
+            / "0001-sunxi-add-bananapi-p2-zero.patch"
+        )
+        self.assertTrue(p2_zero_patch.is_file())
+        patch_text = p2_zero_patch.read_text()
+        self.assertIn("configs/bananapi_p2_zero_defconfig", patch_text)
+        self.assertIn("sun8i-h2-plus-bananapi-p2-zero.dts", patch_text)
 
     def test_m1plus_policy_pins_sources_wireless_and_header_io(self) -> None:
         config = json.loads(M1PLUS_CONFIG.read_text())
