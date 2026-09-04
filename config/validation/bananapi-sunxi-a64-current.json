@@ -82,6 +82,7 @@
       "uboot_git_source": "https://github.com/u-boot/u-boot",
       "uboot_git_ref": "commit:866ca972d6c3cabeaf6dbac431e8e08bb30b3c8e",
       "uboot_revision": "866ca972d6c3cabeaf6dbac431e8e08bb30b3c8e",
+      "uboot_patch_directory": "v2024.01/board_bananapim64",
       "atf_git_source": "https://github.com/ARM-software/arm-trusted-firmware",
       "atf_git_ref": "commit:c2a0e7080d64d69940be4ad0ff6578501f3cbf9e",
       "atf_revision": "c2a0e7080d64d69940be4ad0ff6578501f3cbf9e",

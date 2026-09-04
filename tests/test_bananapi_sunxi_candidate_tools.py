@@ -572,6 +572,10 @@ Provides: unavailable-virtual
             policy["crust_revision"],
             "ffe9f1ac9c675e6e67db9084bd19fbdeffd8e162",
         )
+        self.assertEqual(
+            policy["uboot_patch_directory"],
+            "v2024.01/board_bananapim64",
+        )
         self.assertIn(
             "/soc/usb@1c19000:dr_mode=otg",
             policy["required_string_properties"],
@@ -590,6 +594,10 @@ Provides: unavailable-virtual
         self.assertTrue(
             set(config["common_packages"])
             <= set(package_line.split('"', 2)[1].split())
+        )
+        self.assertIn(
+            'BOOTPATCHDIR="v2024.01/board_bananapim64"',
+            board_text,
         )
         self.assertNotIn("CONFIG_DRAM_CLK", board_text)
 
