@@ -12,9 +12,12 @@ state_root="${STATE_ROOT:-${repo_dir}/output/bananapi-latest-rebuild/${source_sh
 archive_root="${ARCHIVE_ROOT:-$(dirname "$(dirname "${release_root}")")/archive/2026.08}"
 xz_threads="${XZ_THREADS:-6}"
 minimum_free_gib="${MINIMUM_FREE_GIB:-15}"
+defer_xz="${DEFER_XZ:-no}"
 container_image="${ARMBIAN_CONTAINER_IMAGE:-ghcr.io/armbian/docker-armbian-build:armbian-debian-trixie-latest}"
 source_remote_ref="${SOURCE_REMOTE_REF:-}"
 selected_board=""
+selected_release=""
+selected_profile=""
 dry_run=no
 allow_full_rebuild=no
 matrix_sha256=""
@@ -32,6 +35,8 @@ usage() {
 
 選項：
   --board ID     只處理指定板卡識別碼或交付目錄名稱
+  --release ID   只處理指定發行版；必須同時指定 --board 與 --profile
+  --profile ID   只處理 minimal 或 xfce；必須同時指定 --board 與 --release
   --dry-run      只列出矩陣與建置命令，不修改檔案
   --allow-full-rebuild
                  明確允許重建整個矩陣；一般補缺流程不得使用
@@ -47,6 +52,14 @@ while (($#)); do
 		--board)
 			shift
 			selected_board="${1:?--board 缺少值}"
+			;;
+		--release)
+			shift
+			selected_release="${1:?--release 缺少值}"
+			;;
+		--profile)
+			shift
+			selected_profile="${1:?--profile 缺少值}"
 			;;
 		--dry-run)
 			dry_run=yes
@@ -67,6 +80,17 @@ while (($#)); do
 	shift
 done
 
+if [[ -n "${selected_release}" || -n "${selected_profile}" ]]; then
+	[[ -n "${selected_board}" && -n "${selected_release}" && -n "${selected_profile}" ]] || {
+		printf '單項建置必須同時指定 --board、--release 與 --profile。\n' >&2
+		exit 2
+	}
+	[[ "${selected_profile}" == minimal || "${selected_profile}" == xfce ]] || {
+		printf '未知映像類型：%s\n' "${selected_profile}" >&2
+		exit 2
+	}
+fi
+
 required_commands=(
 	awk basename cp date df docker find flock git grep head lsblk losetup mkdir
 	mktemp mount mountpoint mv partprobe readlink rmdir rm sed sha256sum sleep
@@ -85,6 +109,10 @@ done
 }
 [[ "${minimum_free_gib}" =~ ^[0-9]+$ ]] || {
 	printf 'MINIMUM_FREE_GIB 必須是非負整數。\n' >&2
+	exit 2
+}
+[[ "${defer_xz}" == yes || "${defer_xz}" == no ]] || {
+	printf 'DEFER_XZ 必須是 yes 或 no。\n' >&2
 	exit 2
 }
 [[ -f "${matrix_file}" ]] || {
@@ -356,6 +384,57 @@ item_marker_path() {
 	printf '%s/items/%s-%s-%s.complete\n' "${state_root}" "${folder}" "${release}" "${profile}"
 }
 
+raw_item_marker_path() {
+	local folder="$1" release="$2" profile="$3" marker found=""
+	for marker in \
+		"${state_root}/raw-items/${folder}-${release}-${profile}.ready" \
+		"${state_root}/raw-items/${folder}-${release}-${profile}.compressing"; do
+		[[ -f "${marker}" ]] || continue
+		[[ -z "${found}" ]] || return 2
+		found="${marker}"
+	done
+	[[ -n "${found}" ]] || return 1
+	printf '%s\n' "${found}"
+}
+
+raw_item_state_exists() {
+	local folder="$1" release="$2" profile="$3" suffix
+	for suffix in handoff ready compressing; do
+		[[ -e "${state_root}/raw-items/${folder}-${release}-${profile}.${suffix}" ]] && return 0
+	done
+	return 1
+}
+
+recover_raw_handoff() {
+	local folder="$1" release="$2" profile="$3" marker source_image source_sidecar
+	local raw_image raw_sidecar digest sidecar_digest sidecar_name sidecar_extra
+	marker="${state_root}/raw-items/${folder}-${release}-${profile}.handoff"
+	[[ -f "${marker}" ]] || return 0
+	[[ "$(read_marker_value "${marker}" source_commit)" == "${source_commit}" ]] || return 1
+	[[ "$(read_marker_value "${marker}" build_context_sha256)" == "${build_context_sha256}" ]] || return 1
+	source_image="$(read_marker_value "${marker}" source_image)"
+	source_sidecar="${source_image}.sha"
+	raw_image="$(read_marker_value "${marker}" raw_image)"
+	raw_sidecar="${raw_image}.sha"
+	digest="$(read_marker_value "${marker}" raw_sha256)"
+	[[ "$(readlink -m -- "${raw_image}")" == "$(readlink -f -- "${state_root}/raw-images")"/* ]] || return 1
+	mkdir -p "$(dirname "${raw_image}")" || return 1
+	if [[ ! -f "${raw_image}" ]]; then
+		[[ -f "${source_image}" ]] || return 1
+		mv -T "${source_image}" "${raw_image}" || return 1
+	fi
+	if [[ ! -f "${raw_sidecar}" ]]; then
+		[[ -f "${source_sidecar}" ]] || return 1
+		mv -T "${source_sidecar}" "${raw_sidecar}" || return 1
+	fi
+	[[ "$(wc -l < "${raw_sidecar}")" -eq 1 ]] || return 1
+	read -r sidecar_digest sidecar_name sidecar_extra < "${raw_sidecar}" || return 1
+	[[ -z "${sidecar_extra:-}" && "${sidecar_digest}" == "${digest}" &&
+		"${sidecar_name#\*}" == "$(basename "${raw_image}")" ]] || return 1
+	mv -T "${marker}" "${state_root}/raw-items/${folder}-${release}-${profile}.ready" || return 1
+	sync -f "${state_root}/raw-items/${folder}-${release}-${profile}.ready" || return 1
+}
+
 read_marker_value() {
 	local marker="$1" key="$2"
 	sed -n "s/^${key}=//p" "${marker}" | head -n 1
@@ -371,6 +450,33 @@ verify_sha_sidecar() {
 		"${sidecar_name}" == "$(basename "${archive}")" ]] || return 1
 	actual="$(sha256sum "${archive}" | awk '{ print $1 }')" || return 1
 	[[ "${actual}" == "${expected_digest}" ]]
+}
+
+raw_item_is_pending() {
+	local folder="$1" board="$2" branch="$3" release="$4" profile="$5"
+	local marker image digest sha_file sidecar_digest sidecar_name extra resolved_image
+	recover_raw_handoff "${folder}" "${release}" "${profile}" || return 1
+	marker="$(raw_item_marker_path "${folder}" "${release}" "${profile}")" || return 1
+	[[ "$(read_marker_value "${marker}" source_commit)" == "${source_commit}" ]] || return 1
+	[[ "$(read_marker_value "${marker}" bsp_base_commit)" == "${bsp_base_commit}" ]] || return 1
+	[[ "$(read_marker_value "${marker}" matrix_sha256)" == "${matrix_sha256}" ]] || return 1
+	[[ "$(read_marker_value "${marker}" userpatches_sha256)" == "${userpatches_sha256}" ]] || return 1
+	[[ "$(read_marker_value "${marker}" build_context_sha256)" == "${build_context_sha256}" ]] || return 1
+	[[ "$(read_marker_value "${marker}" folder)" == "${folder}" ]] || return 1
+	[[ "$(read_marker_value "${marker}" board)" == "${board}" ]] || return 1
+	[[ "$(read_marker_value "${marker}" branch)" == "${branch}" ]] || return 1
+	[[ "$(read_marker_value "${marker}" release)" == "${release}" ]] || return 1
+	[[ "$(read_marker_value "${marker}" profile)" == "${profile}" ]] || return 1
+	image="$(read_marker_value "${marker}" raw_image)"
+	digest="$(read_marker_value "${marker}" raw_sha256)"
+	sha_file="${image}.sha"
+	resolved_image="$(readlink -m -- "${image}")" || return 1
+	[[ "${resolved_image}" == "$(readlink -f -- "${state_root}/raw-images")"/* &&
+		"${digest}" =~ ^[0-9a-f]{64}$ && -f "${image}" && -f "${sha_file}" ]] || return 1
+	[[ "$(wc -l < "${sha_file}")" -eq 1 ]] || return 1
+	read -r sidecar_digest sidecar_name extra < "${sha_file}" || return 1
+	[[ -z "${extra:-}" && "${sidecar_digest}" == "${digest}" &&
+		"${sidecar_name#\*}" == "$(basename "${image}")" ]]
 }
 
 item_is_complete() {
@@ -431,13 +537,23 @@ build_item() {
 	local stage="$1" folder="$2" board="$3" branch="$4" release="$5" profile="$6"
 	local marker log_file board_token suffix status tee_status image archive digest forced=no
 	local item_marker partial_archive build_uuid framework_log expected_name log_digest
-	local preserved_framework_log framework_log_digest
+	local preserved_framework_log framework_log_digest raw_marker raw_directory raw_image
+	local raw_digest raw_sidecar_digest raw_sidecar_name raw_sidecar_extra handoff_marker
 	local -a args expected_names pipeline_status
 
 	if item_is_complete "${stage}" "${folder}" "${board}" "${branch}" "${release}" "${profile}"; then
 		prune_stage_item "${stage}" "${folder}" "${release}" "${profile}" || return 1
 		printf '沿用本次來源與輸入雜湊已完成項目：%s %s %s\n' "${board}" "${release}" "${profile}"
 		return 0
+	fi
+	if raw_item_is_pending "${folder}" "${board}" "${branch}" "${release}" "${profile}"; then
+		printf '沿用已進入壓縮佇列的原始映像：%s %s %s\n' "${board}" "${release}" "${profile}"
+		return 0
+	fi
+	if raw_item_state_exists "${folder}" "${release}" "${profile}"; then
+		printf '原始映像狀態存在但驗證失敗，拒絕重新編譯：%s %s %s\n' \
+			"${board}" "${release}" "${profile}" >&2
+		return 1
 	fi
 
 	check_free_space || return 1
@@ -538,6 +654,52 @@ build_item() {
 		return 1
 	}
 	archive="${stage}/$(basename "${image}").xz"
+	if [[ "${defer_xz}" == yes ]]; then
+		[[ -f "${image}.sha" && "$(wc -l < "${image}.sha")" -eq 1 ]] || {
+			printf '原始映像缺少單列 SHA 檔：%s.sha\n' "${image}" >&2
+			return 1
+		}
+		read -r raw_sidecar_digest raw_sidecar_name raw_sidecar_extra < "${image}.sha" || return 1
+		[[ -z "${raw_sidecar_extra:-}" && "${raw_sidecar_digest}" =~ ^[0-9a-f]{64}$ &&
+			"${raw_sidecar_name#\*}" == "$(basename "${image}")" ]] || {
+			printf '原始映像 SHA 檔格式或檔名不符：%s.sha\n' "${image}" >&2
+			return 1
+		}
+		raw_digest="${raw_sidecar_digest}"
+		raw_directory="${state_root}/raw-images/${build_uuid}"
+		mkdir -p "${raw_directory}" || return 1
+		raw_image="${raw_directory}/$(basename "${image}")"
+		log_digest="$(sha256sum "${log_file}" | awk '{ print $1 }')" || return 1
+		raw_marker="${state_root}/raw-items/${folder}-${release}-${profile}.ready"
+		handoff_marker="${state_root}/raw-items/${folder}-${release}-${profile}.handoff"
+		{
+			printf 'source_commit=%s\n' "${source_commit}"
+			printf 'bsp_base_commit=%s\n' "${bsp_base_commit}"
+			printf 'matrix_sha256=%s\n' "${matrix_sha256}"
+			printf 'userpatches_sha256=%s\n' "${userpatches_sha256}"
+			printf 'build_context_sha256=%s\n' "${build_context_sha256}"
+			printf 'folder=%s\nboard=%s\nbranch=%s\n' "${folder}" "${board}" "${branch}"
+			printf 'release=%s\nprofile=%s\n' "${release}" "${profile}"
+			printf 'archive=%s\n' "$(basename "${archive}")"
+			printf 'target_archive=%s\n' "${archive}"
+			printf 'source_image=%s\n' "${image}"
+			printf 'raw_image=%s\nraw_sha256=%s\n' "${raw_image}" "${raw_digest}"
+			printf 'fresh_artifacts=%s\nbuild_uuid=%s\n' "${forced}" "${build_uuid}"
+			printf 'log=%s\nlog_sha256=%s\n' "${log_file}" "${log_digest}"
+			printf 'framework_log=%s\n' "${preserved_framework_log}"
+			printf 'framework_log_sha256=%s\n' "${framework_log_digest}"
+			printf 'status=handoff\ncreated_utc=%s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+		} > "${handoff_marker}.partial" || return 1
+		mv -T "${handoff_marker}.partial" "${handoff_marker}" || return 1
+		sync -f "${handoff_marker}" || return 1
+		mv -T "${image}" "${raw_image}" || return 1
+		mv -T "${image}.sha" "${raw_image}.sha" || return 1
+		rm -f -- "${image}.txt" || return 1
+		mv -T "${handoff_marker}" "${raw_marker}" || return 1
+		sync -f "${raw_marker}" || return 1
+		printf '原始映像已交付壓縮佇列：%s\n' "${raw_image}"
+		return 0
+	fi
 	partial_archive="${archive}.partial-${build_uuid}"
 	rm -f -- "${partial_archive}" || return 1
 	if ! xz -T"${xz_threads}" -6 -c "${image}" > "${partial_archive}"; then
@@ -898,7 +1060,7 @@ verify_full_release_matrix() {
 
 rebuild_board() {
 	local folder="$1" board="$2" branch="$3" releases_csv="$4"
-	local stage destination release profile expected old_english
+	local stage destination release profile expected old_english selected_items=0
 	local -a releases
 
 	find_board_file "${board}" >/dev/null || {
@@ -917,10 +1079,27 @@ rebuild_board() {
 	mkdir -p "${stage}" || return 1
 
 	for release in "${releases[@]}"; do
+		[[ -z "${selected_release}" || "${release}" == "${selected_release}" ]] || continue
 		for profile in minimal xfce; do
+			[[ -z "${selected_profile}" || "${profile}" == "${selected_profile}" ]] || continue
+			selected_items=$((selected_items + 1))
 			build_item "${stage}" "${folder}" "${board}" "${branch}" "${release}" "${profile}" || return 1
 		done
 	done
+	((selected_items > 0)) || {
+		printf '指定發行版不屬於板卡矩陣：%s / %s。\n' "${board}" "${selected_release}" >&2
+		return 2
+	}
+	if [[ -n "${selected_release}" ]]; then
+		printf '完成單項並保留整板 staging：%s %s %s。\n' \
+			"${board}" "${selected_release}" "${selected_profile}"
+		return 0
+	fi
+	if [[ "$(find "${stage}" -maxdepth 1 -type f -name '*.img.xz' | wc -l)" -ne "${expected}" ||
+		"$(find "${stage}" -maxdepth 1 -type f -name '*.img.xz.sha' | wc -l)" -ne "${expected}" ]]; then
+		printf '整板 staging 尚未齊備：%s。\n' "${board}" >&2
+		return 0
+	fi
 
 	write_release_note "${stage}/Release-Notes-zh-TW.md" \
 		"${board}" "${branch}" "${releases_csv}" "${expected}" || return 1
@@ -999,8 +1178,14 @@ if [[ "${dry_run}" == yes ]]; then
 		[[ "${folder}" == folder ]] && continue
 		[[ -z "${selected_board}" || "${selected_board}" == "${board}" || "${selected_board}" == "${folder}" ]] || continue
 		IFS=, read -r -a releases <<< "${releases_csv}"
-		printf '%s\t%s\t%s\t%s\t%s\n' "${folder}" "${board}" "${branch}" "${releases_csv}" "$(( ${#releases[@]} * 2 ))"
-		total=$((total + ${#releases[@]} * 2))
+		if [[ -n "${selected_release}" ]]; then
+			[[ ",${releases_csv}," == *",${selected_release},"* ]] || continue
+			printf '%s\t%s\t%s\t%s\t1\n' "${folder}" "${board}" "${branch}" "${selected_release}/${selected_profile}"
+			total=$((total + 1))
+		else
+			printf '%s\t%s\t%s\t%s\t%s\n' "${folder}" "${board}" "${branch}" "${releases_csv}" "$(( ${#releases[@]} * 2 ))"
+			total=$((total + ${#releases[@]} * 2))
+		fi
 	done < "${matrix_file}"
 	printf '預定建置映像總數：%s\n' "${total}"
 	exit 0
@@ -1014,9 +1199,10 @@ fi
 assert_clean_source
 assert_pushed_source
 sudo -n true
-mkdir -p "${release_root}" "${repo_dir}/output/images" "${state_root}/boards" \
-	"${state_root}/items" "${state_root}/logs" "${state_root}/framework-logs" \
-	"${state_root}/markers" "${state_root}/runs" "${state_root}/transactions"
+	mkdir -p "${release_root}" "${repo_dir}/output/images" "${state_root}/boards" \
+		"${state_root}/items" "${state_root}/logs" "${state_root}/framework-logs" \
+		"${state_root}/markers" "${state_root}/raw-images" "${state_root}/raw-items" \
+		"${state_root}/runs" "${state_root}/transactions"
 exec 9> "${release_root}/.latest-rebuild.lock"
 flock -n 9 || {
 	printf '另一個最新矩陣重建或替換程序正在執行。\n' >&2

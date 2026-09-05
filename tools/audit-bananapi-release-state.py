@@ -69,6 +69,17 @@ class Artifact:
 
 
 @dataclass(frozen=True)
+class RawArtifact:
+    key: ItemKey
+    source: CandidateSource
+    image: Path
+    digest: str
+    source_commit: str
+    build_context: str
+    marker: Path
+
+
+@dataclass(frozen=True)
 class CandidateBoard:
     source: CandidateSource
     artifacts: dict[ItemKey, Artifact]
@@ -299,6 +310,75 @@ def find_candidate_artifact(
     )
 
 
+def find_candidate_raw_artifact(
+    source: CandidateSource,
+    key: ItemKey,
+    *,
+    verify_digests: bool,
+) -> RawArtifact | None:
+    prefix = source.state_root / "raw-items" / (
+        f"{key.folder}-{key.release}-{key.profile}"
+    )
+    markers = [
+        marker
+        for marker in (Path(f"{prefix}.ready"), Path(f"{prefix}.compressing"))
+        if marker.is_file()
+    ]
+    if not markers:
+        return None
+    if len(markers) != 1:
+        raise ValueError(f"原始映像有多個壓縮狀態標記：{key.value}")
+    marker = markers[0]
+    values = read_key_values(marker)
+    expected = {
+        "folder": key.folder,
+        "board": key.board,
+        "branch": key.branch,
+        "release": key.release,
+        "profile": key.profile,
+    }
+    for field, value in expected.items():
+        if values.get(field) != value:
+            raise ValueError(f"原始映像標記欄位不符：{marker} / {field}")
+    image = Path(values.get("raw_image", ""))
+    digest = values.get("raw_sha256", "")
+    raw_root = (source.state_root / "raw-images").resolve()
+    try:
+        image.resolve().relative_to(raw_root)
+    except (OSError, ValueError) as error:
+        raise ValueError(f"原始映像不在受控目錄：{marker}") from error
+    if not image.is_file() or not SHA256_RE.fullmatch(digest):
+        raise ValueError(f"原始映像或雜湊無效：{marker}")
+    sidecar = Path(f"{image}.sha")
+    if not sidecar.is_file():
+        raise ValueError(f"原始映像缺少同名 SHA 檔：{image}")
+    lines = sidecar.read_text(encoding="utf-8").splitlines()
+    fields = lines[0].split() if len(lines) == 1 else []
+    if (
+        len(fields) != 2
+        or fields[0] != digest
+        or fields[1].lstrip("*") != image.name
+    ):
+        raise ValueError(f"原始映像 SHA 檔格式錯誤：{sidecar}")
+    if verify_digests and sha256_file(image) != digest:
+        raise ValueError(f"原始映像 SHA-256 驗證失敗：{image}")
+    log = Path(values.get("log", ""))
+    log_digest = values.get("log_sha256", "")
+    if not log.is_file() or not SHA256_RE.fullmatch(log_digest):
+        raise ValueError(f"原始映像標記缺少有效日誌證據：{marker}")
+    if verify_digests and sha256_file(log) != log_digest:
+        raise ValueError(f"原始映像日誌 SHA-256 驗證失敗：{log}")
+    return RawArtifact(
+        key,
+        source,
+        image,
+        digest,
+        values.get("source_commit", "未知"),
+        values.get("build_context_sha256", "未知"),
+        marker,
+    )
+
+
 def board_marker_valid(source: CandidateSource, row: MatrixRow) -> bool:
     marker = source.state_root / "boards" / f"{row.folder}.complete"
     if not marker.is_file():
@@ -336,6 +416,7 @@ def main() -> int:
     formal: dict[ItemKey, Artifact] = {}
     candidate_boards: dict[tuple[str, str], CandidateBoard] = {}
     candidate_artifacts: dict[tuple[str, ItemKey], Artifact] = {}
+    raw_artifacts: dict[tuple[str, ItemKey], RawArtifact] = {}
     for row in matrix:
         keys = item_keys(row)
         for key in keys:
@@ -350,6 +431,7 @@ def main() -> int:
         for source in candidates:
             artifacts: dict[ItemKey, Artifact] = {}
             for key in keys:
+                artifact_accepted = False
                 artifact = find_candidate_artifact(
                     source,
                     key,
@@ -361,14 +443,36 @@ def main() -> int:
                         args.target_source_commit
                         and artifact.source_commit != args.target_source_commit
                     ):
-                        continue
-                    if (
+                        artifact = None
+                    elif (
                         args.target_build_context
                         and artifact.build_context != args.target_build_context
                     ):
+                        artifact = None
+                    else:
+                        artifacts[key] = artifact
+                        candidate_artifacts[(source.name, key)] = artifact
+                        artifact_accepted = True
+                raw_artifact = find_candidate_raw_artifact(
+                    source,
+                    key,
+                    verify_digests=args.verify_digests,
+                )
+                if raw_artifact:
+                    if (
+                        args.target_source_commit
+                        and raw_artifact.source_commit != args.target_source_commit
+                    ):
                         continue
-                    artifacts[key] = artifact
-                    candidate_artifacts[(source.name, key)] = artifact
+                    if (
+                        args.target_build_context
+                        and raw_artifact.build_context != args.target_build_context
+                    ):
+                        continue
+                    if artifact_accepted:
+                        # 壓縮完成標記先落盤、原始標記再清除的短暫交疊是合法狀態。
+                        continue
+                    raw_artifacts[(source.name, key)] = raw_artifact
             candidate_boards[(source.name, row.folder)] = CandidateBoard(
                 source, artifacts, board_marker_valid(source, row)
             )
@@ -442,6 +546,25 @@ def main() -> int:
                     chosen_candidates.add((artifact.source_name, key))
                     selected_items += 1
                     ledger_rows.append(ledger_row(artifact, "本輪已完成", "不再建置"))
+                elif raw_options := [
+                    artifact
+                    for (name, item_key), artifact in raw_artifacts.items()
+                    if item_key == key
+                ]:
+                    if len(raw_options) > 1:
+                        raise ValueError(f"待壓縮項目有多個候選來源：{key.value}")
+                    raw = raw_options[0]
+                    selected_items += 1
+                    ledger_rows.append(raw_ledger_row(raw))
+                    queue_rows.append(
+                        queue_row(
+                            row,
+                            key.release,
+                            key.profile,
+                            "等待壓縮",
+                            str(raw.marker),
+                        )
+                    )
                 elif args.reuse_formal and key in formal:
                     ledger_rows.append(
                         ledger_row(formal[key], "沿用既有正式", "不再建置")
@@ -558,7 +681,9 @@ def main() -> int:
     board_order = {row.folder: index for index, row in enumerate(matrix)}
     queue_rows.sort(
         key=lambda row: (
-            0 if row["動作"] == "補整板驗證" else 1,
+            {"補整板驗證": 0, "等待壓縮": 1, "建置缺少項目": 2}.get(
+                row["動作"], 9
+            ),
             board_order[row["板目錄"]],
             RELEASE_ORDER.get(row["發行版"], -1),
             PROFILE_ORDER.get(row["類型"], -1),
@@ -670,6 +795,25 @@ def missing_ledger_row(key: ItemKey, has_formal_baseline: bool) -> dict[str, str
     }
 
 
+def raw_ledger_row(artifact: RawArtifact) -> dict[str, str]:
+    key = artifact.key
+    return {
+        "唯一鍵": key.value,
+        "板目錄": key.folder,
+        "板卡": key.board,
+        "分支": key.branch,
+        "發行版": key.release,
+        "類型": key.profile,
+        "狀態": "待壓縮",
+        "選用來源": artifact.source.name,
+        "映像": str(artifact.image),
+        "SHA256": artifact.digest,
+        "來源提交": artifact.source_commit,
+        "建置內容雜湊": artifact.build_context,
+        "處置": "不得重新編譯；由壓縮工作續作",
+    }
+
+
 def queue_row(
     row: MatrixRow, release: str, profile: str, action: str, reason: str
 ) -> dict[str, str]:
@@ -724,7 +868,7 @@ def write_summary(
             "",
             "## 待辦",
             "",
-            f"待辦列數：{len(queue)}。待建項目依受控矩陣的板卡順序分組，再依發行版與類型排序；已完成項目不得再次呼叫建置。",
+            f"待辦列數：{len(queue)}。執行端依架構、發行版、類型與板卡排序；已完成或待壓縮項目不得再次呼叫建置。",
             "",
             "## 矩陣外項目",
             "",

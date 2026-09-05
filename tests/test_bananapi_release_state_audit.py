@@ -28,6 +28,8 @@ class BananaPiReleaseStateAuditTests(unittest.TestCase):
         (self.state / "items").mkdir(parents=True)
         (self.state / "boards").mkdir()
         (self.state / "logs").mkdir()
+        (self.state / "raw-items").mkdir()
+        (self.state / "raw-images").mkdir()
         self.matrix.write_text(
             "folder\tboard\tbranch\treleases\n"
             "bpi-demo\tbananapidemonstration\tcurrent\ttrixie,bookworm\n",
@@ -71,6 +73,32 @@ class BananaPiReleaseStateAuditTests(unittest.TestCase):
             f"profile={profile}\n"
             f"archive={archive.name}\n"
             f"sha256={digest}\n"
+            f"log={log}\n"
+            f"log_sha256={log_digest}\n",
+            encoding="utf-8",
+        )
+
+    def create_raw_item(self, release: str, profile: str) -> None:
+        raw_dir = self.state / "raw-images" / f"{release}-{profile}"
+        raw_dir.mkdir(parents=True)
+        raw = raw_dir / f"demo-{release}-{profile}.img"
+        raw.write_bytes(f"raw-{release}-{profile}".encode())
+        digest = hashlib.sha256(raw.read_bytes()).hexdigest()
+        Path(f"{raw}.sha").write_text(f"{digest}  {raw.name}\n", encoding="utf-8")
+        log = self.state / "logs" / f"raw-{release}-{profile}.log"
+        log.write_text("原始映像建置完成\n", encoding="utf-8")
+        log_digest = hashlib.sha256(log.read_bytes()).hexdigest()
+        marker = self.state / "raw-items" / f"bpi-demo-{release}-{profile}.ready"
+        marker.write_text(
+            "source_commit=" + "a" * 40 + "\n"
+            "build_context_sha256=" + "b" * 64 + "\n"
+            "folder=bpi-demo\n"
+            "board=bananapidemonstration\n"
+            "branch=current\n"
+            f"release={release}\n"
+            f"profile={profile}\n"
+            f"raw_image={raw}\n"
+            f"raw_sha256={digest}\n"
             f"log={log}\n"
             f"log_sha256={log_digest}\n",
             encoding="utf-8",
@@ -148,6 +176,24 @@ class BananaPiReleaseStateAuditTests(unittest.TestCase):
         queue = self.read_tsv("待辦佇列.tsv")
         self.assertEqual(len(queue), 1)
         self.assertEqual(queue[0]["動作"], "補整板驗證")
+
+    def test_raw_item_waits_for_compression_without_rebuild(self) -> None:
+        self.create_candidate_item("trixie", "minimal")
+        self.create_raw_item("trixie", "xfce")
+        result = self.run_audit(
+            "--target-source-commit",
+            "a" * 40,
+            "--target-build-context",
+            "b" * 64,
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+        queue = self.read_tsv("待辦佇列.tsv")
+        actions = [row["動作"] for row in queue]
+        self.assertEqual(actions.count("等待壓縮"), 1)
+        self.assertEqual(actions.count("建置缺少項目"), 2)
+        ledger = self.read_tsv("映像盤點.tsv")
+        raw_row = next(row for row in ledger if row["狀態"] == "待壓縮")
+        self.assertEqual(raw_row["處置"], "不得重新編譯；由壓縮工作續作")
 
     def test_missing_items_are_sorted_and_never_invented(self) -> None:
         result = self.run_audit()

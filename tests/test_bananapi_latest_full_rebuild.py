@@ -90,6 +90,25 @@ class BananaPiLatestFullRebuildTests(unittest.TestCase):
         )
         self.assertIn("預定建置映像總數：444", result.stdout)
 
+        selected = subprocess.run(
+            [
+                "bash",
+                str(SCRIPT),
+                "--dry-run",
+                "--board",
+                "bpi-m1",
+                "--release",
+                "trixie",
+                "--profile",
+                "minimal",
+            ],
+            cwd=ROOT,
+            check=True,
+            text=True,
+            capture_output=True,
+        )
+        self.assertIn("預定建置映像總數：1", selected.stdout)
+
     def test_userpatches_hash_is_locale_independent(self) -> None:
         digests = set()
         for locale in ("C", "C.UTF-8", "en_US.UTF-8"):
@@ -312,6 +331,47 @@ rebuild_board demo bananapim5 current trixie
         )
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertNotIn("不應執行建置", result.stderr)
+
+    def test_exact_item_filter_builds_only_selected_item(self) -> None:
+        result = self.run_library_shell(
+            r"""
+selected_release=bookworm
+selected_profile=xfce
+recover_board_transaction() { return 0; }
+board_is_complete() { return 1; }
+find_board_file() { printf '/tmp/board.conf\n'; }
+build_item() { printf '%s/%s\n' "$5" "$6" >> "$STATE_ROOT/calls"; }
+rebuild_board demo bananapim5 current trixie,bookworm
+test "$(wc -l < "$STATE_ROOT/calls")" -eq 1
+test "$(cat "$STATE_ROOT/calls")" = bookworm/xfce
+test ! -e "$STATE_ROOT/boards/demo.complete"
+"""
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_interrupted_raw_handoff_is_recovered_without_rebuild(self) -> None:
+        result = self.run_library_shell(
+            r"""
+mkdir -p "$STATE_ROOT/raw-items" "$STATE_ROOT/raw-images/build-uuid" "$RELEASE_ROOT/source"
+source_image="$RELEASE_ROOT/source/demo.img"
+printf raw > "$source_image"
+digest="$(sha256sum "$source_image" | awk '{ print $1 }')"
+printf '%s  %s\n' "$digest" demo.img > "$source_image.sha"
+raw_image="$STATE_ROOT/raw-images/build-uuid/demo.img"
+marker="$STATE_ROOT/raw-items/demo-trixie-minimal.handoff"
+{
+	printf 'source_commit=%s\n' "$source_commit"
+	printf 'build_context_sha256=%s\n' "$build_context_sha256"
+	printf 'source_image=%s\nraw_image=%s\nraw_sha256=%s\n' "$source_image" "$raw_image" "$digest"
+} > "$marker"
+recover_raw_handoff demo trixie minimal
+test -f "$STATE_ROOT/raw-items/demo-trixie-minimal.ready"
+test -f "$raw_image"
+test -f "$raw_image.sha"
+test ! -e "$source_image"
+"""
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
 
     def test_script_supports_separate_read_only_boot_partition(self) -> None:
         script = SCRIPT.read_text(encoding="utf-8")
