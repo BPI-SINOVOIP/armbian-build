@@ -1,0 +1,6 @@
+候選來源	類別	大小bytes	處置	路徑
+main-c867	未完成壓縮檔	191406080	不得視為完成；正式收斂後才依清冊移除	/media/pi/SMCI/bpi/main-release-c8673931c96c/.staging-bpi-m1super-c8673931c96c/Armbian-unofficial_26.11.0-trunk_Bananapim1super_bookworm_vendor_6.1.115_xfce_desktop.img.xz.partial-8c99b2e6-754e-4b92-9525-06492ca6246c
+main-c867	未完成原始映像	5393874944	不得視為完成；正式收斂後才依清冊移除	/media/pi/SMCI/armbian/bpi-v26.2.1-bananapi-optimize/output/images/Armbian-unofficial_26.11.0-trunk_Bananapim1super_bookworm_vendor_6.1.115_xfce_desktop.img
+p1-c867	未完成觸發標記	0	不得視為完成；正式收斂後才依清冊移除	/media/pi/SMCI/armbian/bpi-v26.2.1-bananapi-parallel/output/bananapi-latest-rebuild/c8673931c96c/markers/bpi-sm10-noble-minimal-10367.marker
+p2-c867	未完成壓縮檔	911329044	不得視為完成；正式收斂後才依清冊移除	/media/pi/SMCI/bpi/parallel2-release-c8673931c96c/.staging-bpi-pro-c8673931c96c/Armbian-unofficial_26.11.0-trunk_Bananapipro_noble_current_6.18.49_xfce_desktop.img.xz.partial-a84f7eb9-23f5-4648-9acc-e760ec813821
+p2-c867	未完成原始映像	3896508416	不得視為完成；正式收斂後才依清冊移除	/media/pi/SMCI/armbian/bpi-v26.2.1-bananapi-parallel2/output/images/Armbian-unofficial_26.11.0-trunk_Bananapipro_noble_current_6.18.49_xfce_desktop.img

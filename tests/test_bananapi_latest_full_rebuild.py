@@ -135,7 +135,7 @@ source {SCRIPT!s}
 matrix_sha256=test-matrix
 userpatches_sha256=test-userpatches
 build_context_sha256=test-context
-mkdir -p "$STATE_ROOT/boards" "$STATE_ROOT/items" "$STATE_ROOT/logs" "$STATE_ROOT/markers" "$STATE_ROOT/transactions"
+mkdir -p "$STATE_ROOT/boards" "$STATE_ROOT/items" "$STATE_ROOT/logs" "$STATE_ROOT/framework-logs" "$STATE_ROOT/markers" "$STATE_ROOT/transactions"
 {body}
 """
             return subprocess.run(
@@ -264,6 +264,53 @@ fi
         self.assertIn("for _ in {1..20}", script)
         self.assertIn('mountpoint -q "${mount_dir}" && status=1', script)
         self.assertIn("${SDCARD}/etc/bananapi-build-provenance", extension)
+        self.assertIn("--allow-full-rebuild", script)
+        self.assertIn('repo_dir="${REPO_DIR:-', script)
+        self.assertIn("framework_log_sha256", script)
+        self.assertIn('summary="${state_root}/runs/summary-${run_uuid}.tsv"', script)
+
+    def test_legacy_completed_item_keeps_valid_primary_log(self) -> None:
+        result = self.run_library_shell(
+            r"""
+stage="$RELEASE_ROOT/.staging-demo-$source_short"
+mkdir -p "$stage"
+archive="Armbian-test_Bananapim5_trixie_current_1.0_minimal.img.xz"
+printf payload | xz -c > "$stage/$archive"
+digest="$(sha256sum "$stage/$archive" | awk '{ print $1 }')"
+printf '%s  %s\n' "$digest" "$archive" > "$stage/$archive.sha"
+log="$STATE_ROOT/logs/demo-trixie-minimal.log"
+printf '完整建置日誌\n' > "$log"
+log_digest="$(sha256sum "$log" | awk '{ print $1 }')"
+marker="$(item_marker_path demo trixie minimal)"
+{
+	printf 'source_commit=%s\n' "$source_commit"
+	printf 'bsp_base_commit=%s\n' "$bsp_base_commit"
+	printf 'matrix_sha256=%s\n' "$matrix_sha256"
+	printf 'userpatches_sha256=%s\n' "$userpatches_sha256"
+	printf 'build_context_sha256=%s\n' "$build_context_sha256"
+	printf 'folder=demo\nboard=bananapim5\nbranch=current\n'
+	printf 'release=trixie\nprofile=minimal\n'
+	printf 'archive=%s\nsha256=%s\n' "$archive" "$digest"
+	printf 'log=%s\nlog_sha256=%s\n' "$log" "$log_digest"
+	printf 'framework_log=/tmp/已輪替.log\n'
+} > "$marker"
+item_is_complete "$stage" demo bananapim5 current trixie minimal
+"""
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_recovered_complete_board_does_not_enter_build_loop(self) -> None:
+        result = self.run_library_shell(
+            r"""
+recover_board_transaction() { return 0; }
+board_is_complete() { return 0; }
+build_item() { printf '不應執行建置\n' >&2; return 99; }
+find_board_file() { printf '/tmp/board.conf\n'; }
+rebuild_board demo bananapim5 current trixie
+"""
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertNotIn("不應執行建置", result.stderr)
 
     def test_script_supports_separate_read_only_boot_partition(self) -> None:
         script = SCRIPT.read_text(encoding="utf-8")

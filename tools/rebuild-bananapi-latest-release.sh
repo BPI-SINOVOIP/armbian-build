@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-repo_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+repo_dir="${REPO_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
+repo_dir="$(readlink -f -- "${repo_dir}")"
 matrix_file="${MATRIX_FILE:-${repo_dir}/config/bananapi-latest-release-matrix.tsv}"
 release_root="${RELEASE_ROOT:-/media/pi/SMCI/bpi/google-drive-upload/2026/2026.08}"
 source_commit="${SOURCE_COMMIT:-$(git -C "${repo_dir}" rev-parse HEAD)}"
@@ -15,6 +16,7 @@ container_image="${ARMBIAN_CONTAINER_IMAGE:-ghcr.io/armbian/docker-armbian-build
 source_remote_ref="${SOURCE_REMOTE_REF:-}"
 selected_board=""
 dry_run=no
+allow_full_rebuild=no
 matrix_sha256=""
 userpatches_sha256=""
 container_image_id=""
@@ -30,10 +32,12 @@ usage() {
 選項：
   --board ID     只處理指定板卡識別碼或交付目錄名稱
   --dry-run      只列出矩陣與建置命令，不修改檔案
+  --allow-full-rebuild
+                 明確允許重建整個矩陣；一般補缺流程不得使用
   -h, --help     顯示本說明
 
 可覆寫環境變數：
-  MATRIX_FILE、RELEASE_ROOT、ARCHIVE_ROOT、SOURCE_COMMIT、BSP_BASE_COMMIT、STATE_ROOT、XZ_THREADS、MINIMUM_FREE_GIB
+  REPO_DIR、MATRIX_FILE、RELEASE_ROOT、ARCHIVE_ROOT、SOURCE_COMMIT、BSP_BASE_COMMIT、STATE_ROOT、XZ_THREADS、MINIMUM_FREE_GIB
 EOF
 }
 
@@ -45,6 +49,9 @@ while (($#)); do
 			;;
 		--dry-run)
 			dry_run=yes
+			;;
+		--allow-full-rebuild)
+			allow_full_rebuild=yes
 			;;
 		-h | --help)
 			usage
@@ -368,6 +375,7 @@ verify_sha_sidecar() {
 item_is_complete() {
 	local stage="$1" folder="$2" board="$3" branch="$4" release="$5" profile="$6"
 	local marker archive digest sha_file log_file log_digest resolved_log
+	local framework_log framework_log_digest resolved_framework_log
 	marker="$(item_marker_path "${folder}" "${release}" "${profile}")"
 	[[ -f "${marker}" ]] || return 1
 	[[ "$(read_marker_value "${marker}" source_commit)" == "${source_commit}" ]] || return 1
@@ -392,7 +400,16 @@ item_is_complete() {
 	resolved_log="$(readlink -m -- "${log_file}")" || return 1
 	[[ "${resolved_log}" == "$(readlink -f -- "${state_root}/logs")"/* &&
 		"${log_digest}" =~ ^[0-9a-f]{64}$ && -s "${log_file}" ]] || return 1
-	[[ "$(sha256sum "${log_file}" | awk '{ print $1 }')" == "${log_digest}" ]]
+	[[ "$(sha256sum "${log_file}" | awk '{ print $1 }')" == "${log_digest}" ]] || return 1
+	framework_log="$(read_marker_value "${marker}" framework_log)"
+	framework_log_digest="$(read_marker_value "${marker}" framework_log_sha256)"
+	if [[ -n "${framework_log_digest}" ]]; then
+		resolved_framework_log="$(readlink -m -- "${framework_log}")" || return 1
+		[[ "${resolved_framework_log}" == "$(readlink -f -- "${state_root}/framework-logs")"/* &&
+			"${framework_log_digest}" =~ ^[0-9a-f]{64}$ && -s "${framework_log}" ]] || return 1
+		[[ "$(sha256sum "${framework_log}" | awk '{ print $1 }')" == "${framework_log_digest}" ]] || return 1
+	fi
+	return 0
 }
 
 prune_stage_item() {
@@ -413,6 +430,7 @@ build_item() {
 	local stage="$1" folder="$2" board="$3" branch="$4" release="$5" profile="$6"
 	local marker log_file board_token suffix status tee_status image archive digest forced=no
 	local item_marker partial_archive build_uuid framework_log expected_name log_digest
+	local preserved_framework_log framework_log_digest
 	local -a args expected_names pipeline_status
 
 	if item_is_complete "${stage}" "${folder}" "${board}" "${branch}" "${release}" "${profile}"; then
@@ -425,9 +443,10 @@ build_item() {
 	assert_clean_source || return 1
 	marker="${state_root}/markers/${folder}-${release}-${profile}-$RANDOM.marker"
 	: > "${marker}" || return 1
-	log_file="${state_root}/logs/${folder}-${release}-${profile}.log"
 	build_uuid="$(uuidgen)"
+	log_file="${state_root}/logs/${folder}-${release}-${profile}-${build_uuid}.log"
 	framework_log="${repo_dir}/output/logs/log-build-${build_uuid}.log"
+	preserved_framework_log="${state_root}/framework-logs/log-build-${build_uuid}.log"
 	args=(
 		build "BOARD=${board}" "BRANCH=${branch}" "RELEASE=${release}"
 		KERNEL_CONFIGURE=no EXPERT=yes SHARE_LOG=no DOWNLOAD_MIRROR=bfsu
@@ -489,6 +508,9 @@ build_item() {
 		rm -f -- "${marker}"
 		return 1
 	}
+	cp -- "${framework_log}" "${preserved_framework_log}.partial" || return 1
+	mv -T "${preserved_framework_log}.partial" "${preserved_framework_log}" || return 1
+	framework_log_digest="$(sha256sum "${preserved_framework_log}" | awk '{ print $1 }')" || return 1
 	mapfile -t expected_names < <(
 		sed -n -E "s#.*image-${build_uuid}/([^[:space:]']+\\.img).*#\\1#p" "${framework_log}" | sort -u
 	)
@@ -547,7 +569,8 @@ build_item() {
 		printf 'build_uuid=%s\n' "${build_uuid}"
 		printf 'log=%s\n' "${log_file}"
 		printf 'log_sha256=%s\n' "${log_digest}"
-		printf 'framework_log=%s\n' "${framework_log}"
+		printf 'framework_log=%s\n' "${preserved_framework_log}"
+		printf 'framework_log_sha256=%s\n' "${framework_log_digest}"
 	} > "${item_marker}.partial" || return 1
 	mv -T "${item_marker}.partial" "${item_marker}" || return 1
 	sync -f "${item_marker}" || return 1
@@ -886,6 +909,10 @@ rebuild_board() {
 	stage="${release_root}/.staging-${folder}-${source_short}"
 	destination="${release_root}/${folder}"
 	recover_board_transaction "${folder}" "${board}" "${branch}" "${releases_csv}" "${expected}" || return 1
+	if board_is_complete "${folder}" "${board}" "${branch}" "${releases_csv}" "${expected}"; then
+		printf '中斷交易已完成驗證，不再進入建置迴圈：%s。\n' "${board}"
+		return 0
+	fi
 	mkdir -p "${stage}" || return 1
 
 	for release in "${releases[@]}"; do
@@ -978,11 +1005,17 @@ if [[ "${dry_run}" == yes ]]; then
 	exit 0
 fi
 
+if [[ -z "${selected_board}" && "${allow_full_rebuild}" != yes ]]; then
+	printf '拒絕未盤點的全矩陣重建；請先產生防重帳本，或明確指定 --board。\n' >&2
+	exit 2
+fi
+
 assert_clean_source
 assert_pushed_source
 sudo -n true
 mkdir -p "${release_root}" "${repo_dir}/output/images" "${state_root}/boards" \
-	"${state_root}/items" "${state_root}/logs" "${state_root}/markers" "${state_root}/transactions"
+	"${state_root}/items" "${state_root}/logs" "${state_root}/framework-logs" \
+	"${state_root}/markers" "${state_root}/runs" "${state_root}/transactions"
 exec 9> "${release_root}/.latest-rebuild.lock"
 flock -n 9 || {
 	printf '另一個最新矩陣重建或替換程序正在執行。\n' >&2
@@ -997,7 +1030,8 @@ export BPI_ARMBIAN_BUILD_LOCK_HELD=yes
 prepare_build_context
 write_build_manifest
 
-summary="${state_root}/summary.tsv"
+run_uuid="$(uuidgen)"
+summary="${state_root}/runs/summary-${run_uuid}.tsv"
 printf 'folder\tboard\tbranch\tstatus\n' > "${summary}"
 selected=0
 failed=0
