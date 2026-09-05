@@ -266,6 +266,7 @@ fi
         self.assertIn("${SDCARD}/etc/bananapi-build-provenance", extension)
         self.assertIn("--allow-full-rebuild", script)
         self.assertIn('repo_dir="${REPO_DIR:-', script)
+        self.assertIn("EXPECTED_BUILD_CONTEXT_SHA256", script)
         self.assertIn("framework_log_sha256", script)
         self.assertIn('summary="${state_root}/runs/summary-${run_uuid}.tsv"', script)
 

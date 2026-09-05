@@ -22,6 +22,7 @@ userpatches_sha256=""
 container_image_id=""
 container_image_locked=""
 build_context_sha256=""
+expected_build_context_sha256="${EXPECTED_BUILD_CONTEXT_SHA256:-}"
 
 usage() {
 	cat <<'EOF'
@@ -37,7 +38,7 @@ usage() {
   -h, --help     顯示本說明
 
 可覆寫環境變數：
-  REPO_DIR、MATRIX_FILE、RELEASE_ROOT、ARCHIVE_ROOT、SOURCE_COMMIT、BSP_BASE_COMMIT、STATE_ROOT、XZ_THREADS、MINIMUM_FREE_GIB
+  REPO_DIR、MATRIX_FILE、RELEASE_ROOT、ARCHIVE_ROOT、SOURCE_COMMIT、BSP_BASE_COMMIT、STATE_ROOT、EXPECTED_BUILD_CONTEXT_SHA256、XZ_THREADS、MINIMUM_FREE_GIB
 EOF
 }
 
@@ -1028,6 +1029,12 @@ flock -n 8 || {
 }
 export BPI_ARMBIAN_BUILD_LOCK_HELD=yes
 prepare_build_context
+if [[ -n "${expected_build_context_sha256}" &&
+	"${build_context_sha256}" != "${expected_build_context_sha256}" ]]; then
+	printf '建置內容雜湊改變，拒絕重做既有完成項目：預期 %s，實際 %s。\n' \
+		"${expected_build_context_sha256}" "${build_context_sha256}" >&2
+	exit 1
+fi
 write_build_manifest
 
 run_uuid="$(uuidgen)"
