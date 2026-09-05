@@ -81,7 +81,7 @@ run_audit() {
 }
 
 queue_count() {
-	awk 'END { print NR > 0 ? NR - 1 : 0 }' "${audit_root}/current/待辦佇列.tsv"
+	awk 'END { print (NR > 0 ? NR - 1 : 0) }' "${audit_root}/current/待辦佇列.tsv"
 }
 
 board_queue_count() {
