@@ -17,6 +17,8 @@ class BananaPiIncrementalQueueTests(unittest.TestCase):
         self.assertIn('before="$(queue_count)"', script)
         self.assertIn('after="$(queue_count)"', script)
         self.assertIn("after >= before", script)
+        self.assertIn('decision[$1] == "候選只補整板驗證"', script)
+        self.assertIn('decision[$1] == "保留部分候選並補缺"', script)
         self.assertIn("--board", script)
         self.assertNotIn("--allow-full-rebuild", script)
         self.assertNotIn("&\n", script)

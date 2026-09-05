@@ -16,7 +16,7 @@ run_uuid="$(uuidgen)"
 progress="${candidate_state}/runs/queue-${run_uuid}.tsv"
 declare -a matrix_rows
 
-required_commands=(awk date flock git mkdir mv python3 readlink uuidgen)
+required_commands=(awk cut date flock git mkdir mv python3 readlink sort uuidgen)
 for command in "${required_commands[@]}"; do
 	command -v "${command}" >/dev/null || {
 		printf '缺少必要命令：%s\n' "${command}" >&2
@@ -92,7 +92,21 @@ board_queue_count() {
 
 printf '時間UTC\t板目錄\t板卡\t分支\t執行前待辦\t板卡待辦\t執行後待辦\t狀態\n' > "${progress}"
 run_audit
-mapfile -t matrix_rows < <(awk -F '\t' 'NR > 1 { print $1 "\t" $2 "\t" $3 }' "${matrix_file}")
+mapfile -t matrix_rows < <(
+	awk -F '\t' '
+		NR == FNR {
+			if (NR > 1) decision[$1] = $5
+			next
+		}
+		NR > 1 {
+			priority = decision[$1] == "候選只補整板驗證" ? 0 :
+				(decision[$1] == "保留部分候選並補缺" ? 1 : 2)
+			print priority "\t" NR "\t" $1 "\t" $2 "\t" $3
+		}
+	' "${audit_root}/current/板卡決策.tsv" "${matrix_file}" |
+		LC_ALL=C sort -t $'\t' -k1,1n -k2,2n |
+		cut -f3-5
+)
 
 for matrix_row in "${matrix_rows[@]}"; do
 	IFS=$'\t' read -r folder board branch <<< "${matrix_row}"
