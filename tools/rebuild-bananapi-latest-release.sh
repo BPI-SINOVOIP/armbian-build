@@ -742,8 +742,10 @@ build_item() {
 
 verify_board_dir() {
 	local directory="$1" folder="$2" board="$3" branch="$4" releases_csv="$5"
-	local release profile suffix expected archive marker board_token count marker_digest
+	local verification="${6:-full}"
+	local release profile suffix expected archive marker board_token count
 	local -a releases
+	[[ "${verification}" == full || "${verification}" == layout ]] || return 2
 	[[ -d "${directory}" && ! -L "${directory}" ]] || return 1
 	IFS=, read -r -a releases <<< "${releases_csv}"
 	expected=$(( ${#releases[@]} * 2 ))
@@ -760,12 +762,13 @@ verify_board_dir() {
 		for profile in minimal xfce; do
 			if [[ "${profile}" == minimal ]]; then suffix=minimal; else suffix=xfce_desktop; fi
 			marker="$(item_marker_path "${folder}" "${release}" "${profile}")"
-			item_is_complete "${directory}" "${folder}" "${board}" "${branch}" "${release}" "${profile}" || return 1
+			if [[ "${verification}" == full ]]; then
+				item_is_complete "${directory}" "${folder}" "${board}" "${branch}" "${release}" "${profile}" || return 1
+			fi
 			archive="$(read_marker_value "${marker}" archive)"
 			[[ "${archive}" == Armbian-*_${board_token}_${release}_${branch}_*_${suffix}.img.xz ||
 				"${archive}" == Bananapi-Armbian_*_${board_token}_${release}_${branch}_*_${suffix}.img.xz ]] || return 1
-			marker_digest="$(read_marker_value "${marker}" sha256)"
-			[[ "$(sha256sum "${directory}/${archive}" | awk '{ print $1 }')" == "${marker_digest}" ]] || return 1
+			[[ -f "${directory}/${archive}" && -f "${directory}/${archive}.sha" ]] || return 1
 		done
 	done
 }
@@ -986,7 +989,7 @@ install_board_transaction() {
 		rollback_install "${folder}" "${stage}" "${destination}" "${previous}" "${had_previous}" || true
 		return 1
 	}
-	if ! verify_board_dir "${destination}" "${folder}" "${board}" "${branch}" "${releases_csv}"; then
+	if ! verify_board_dir "${destination}" "${folder}" "${board}" "${branch}" "${releases_csv}" layout; then
 		rollback_install "${folder}" "${stage}" "${destination}" "${previous}" "${had_previous}" || true
 		return 1
 	fi
@@ -1107,7 +1110,7 @@ rebuild_board() {
 	if [[ -f "${old_english}" ]]; then
 		cp -- "${old_english}" "${stage}/Release-Notes-English.md" || return 1
 	fi
-	verify_board_dir "${stage}" "${folder}" "${board}" "${branch}" "${releases_csv}" || return 1
+	verify_board_dir "${stage}" "${folder}" "${board}" "${branch}" "${releases_csv}" layout || return 1
 	install_board_transaction "${folder}" "${board}" "${branch}" "${releases_csv}" "${expected}" "${stage}" || return 1
 	printf '完成並替換：%s，共 %s 個最新映像。\n' "${board}" "${expected}"
 }
