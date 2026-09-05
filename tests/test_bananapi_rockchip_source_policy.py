@@ -15,6 +15,7 @@ M7_UBOOT_COMMIT = "39cd993e5d6296635438e84f4576b3a9bf76f86e"
 M5PRO_LINUX_COMMIT = "458c6079fc1d41d564c37679c8ace02cd83ee817"
 M5PRO_UBOOT_COMMIT = "39cd993e5d6296635438e84f4576b3a9bf76f86e"
 M5PRO_RKBIN_COMMIT = "1d3c61008fa823936ae7a59615393f8294b64456"
+M5PRO_PATCHDIR = "archive/rockchip64-7.0"
 R2PRO_LINUX_COMMIT = "1f99e9ab748fc5c32120de9c4eca31abfe54a4d5"
 R2PRO_UBOOT_COMMIT = "127a42c7257a6ffbbd1575ed1cbaa8f5408a44b3"
 R2PRO_RKBIN_COMMIT = "46c4793ea2dcea7c8331fce9f07b5c80561a0395"
@@ -173,6 +174,7 @@ printf 'ddr=%s\\nbl31=%s\\n' "$DDR_BLOB" "$BL31_BLOB"
     def test_m5_pro_pins_edge_sources_and_rk3576_blobs(self) -> None:
         for expected in (
             f'KERNELBRANCH_BOARD="commit:{M5PRO_LINUX_COMMIT}"',
+            f'KERNELPATCHDIR_BOARD="{M5PRO_PATCHDIR}"',
             f'BOOTBRANCH_BOARD="commit:{M5PRO_UBOOT_COMMIT}"',
             f'RKBIN_GIT_REF="commit:{M5PRO_RKBIN_COMMIT}"',
             'DDR_BLOB="rk35/rk3576_ddr_lp4_2112MHz_lp5_2736MHz_v1.08.bin"',
@@ -198,8 +200,8 @@ source "{ROOT / 'config/sources/families/rk35xx.conf'}"
 printf 'before_kernel=%s\\n' "$KERNELBRANCH"
 printf 'before_uboot=%s\\n' "$BOOTBRANCH"
 post_family_config_branch_edge__bananapim5pro_pin_sources
-printf 'kernel_source=%s\\nkernel=%s\\nuboot=%s\\nrkbin=%s\\n' \
-    "$KERNELSOURCE" "$KERNELBRANCH" "$BOOTBRANCH" "$RKBIN_GIT_REF"
+printf 'kernel_source=%s\\nkernel=%s\\npatchdir=%s\\nuboot=%s\\nrkbin=%s\\n' \
+    "$KERNELSOURCE" "$KERNELBRANCH" "$KERNELPATCHDIR" "$BOOTBRANCH" "$RKBIN_GIT_REF"
 '''
         result = subprocess.run(
             ["bash", "-c", harness],
@@ -215,6 +217,7 @@ printf 'kernel_source=%s\\nkernel=%s\\nuboot=%s\\nrkbin=%s\\n' \
             result.stdout,
         )
         self.assertIn(f"kernel=commit:{M5PRO_LINUX_COMMIT}", result.stdout)
+        self.assertIn(f"patchdir={M5PRO_PATCHDIR}", result.stdout)
         self.assertIn(f"uboot=commit:{M5PRO_UBOOT_COMMIT}", result.stdout)
         self.assertIn(f"rkbin=commit:{M5PRO_RKBIN_COMMIT}", result.stdout)
 
@@ -230,9 +233,10 @@ printf 'kernel_source=%s\\nkernel=%s\\nuboot=%s\\nrkbin=%s\\n' \
         self.assertTrue({"pciutils", "nvme-cli", "usbutils", "iw", "ethtool"} <= packages)
 
     def test_linux_7_0_does_not_reapply_upstream_sysrq_fix(self) -> None:
+        patch_directory = ROOT / "patch/kernel/archive/rockchip64-7.0"
+        self.assertTrue((patch_directory / "0000.patching_config.yaml").is_file())
         obsolete_patch = (
-            ROOT
-            / "patch/kernel/archive/rockchip64-7.0"
+            patch_directory
             / "general-serial-8250-fix-sysrq-break-dw-apb.patch"
         )
         self.assertFalse(obsolete_patch.exists())

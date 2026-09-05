@@ -11,12 +11,15 @@
 | 元件 | 來源 | 固定提交 |
 | --- | --- | --- |
 | Linux 7.0.14 | `https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git` | `458c6079fc1d41d564c37679c8ace02cd83ee817` |
+| Linux 修補集 | `patch/kernel/archive/rockchip64-7.0` | 復原先前通過完整建置的固定內容 |
 | U-Boot | `https://github.com/radxa/u-boot.git` | `39cd993e5d6296635438e84f4576b3a9bf76f86e` |
 | RKBin | `https://github.com/armbian/rkbin` | `1d3c61008fa823936ae7a59615393f8294b64456` |
 
 三個提交皆可由宣告遠端取得。固定只在 M5 Pro 的 `edge` hook 生效，不改動其他 RK3576 板卡或 `vendor` 分支。
 
 Linux 7.0.14 已包含 `serial: 8250_dw: dispatch SysRq character in dw8250_handle_irq()` 的穩定分支修正。舊的 Armbian 7.0 臨時修補會重複修改相同鎖定路徑，因此本次移除該過時修補，避免對已修正的核心重複套用；此變更只影響 `rockchip64-7.0` 修補目錄。
+
+2026-09-06 整併上游後，通用 edge 修補目錄已移至 Linux 7.1，但 M5 Pro 仍固定 Linux 7.0.14，造成三個 7.1 修補無法套用。本板現由板級 hook 明確固定 `archive/rockchip64-7.0`，並復原先前建置通過的完整修補集；其他 Rockchip edge 板仍跟隨上游新版，不受此相容修正影響。
 
 ## RK3576 啟動輸入
 

@@ -16,6 +16,7 @@ audit_root="${AUDIT_ROOT:-${candidate_state}/audits}"
 max_raw_queue="${MAX_RAW_QUEUE:-4}"
 minimum_free_gib="${MINIMUM_FREE_GIB:-40}"
 compression_xz_threads="${COMPRESSION_XZ_THREADS:-2}"
+defer_folders="${DEFER_FOLDERS:-}"
 run_uuid="$(uuidgen)"
 progress="${candidate_state}/runs/queue-${run_uuid}.tsv"
 compression_progress="${candidate_state}/runs/compression-${run_uuid}.tsv"
@@ -89,6 +90,21 @@ awk -F '\t' '
 	printf '架構分組與受控矩陣不一致。\n' >&2
 	exit 2
 }
+
+folder_is_deferred() {
+	local folder="$1"
+	[[ " ${defer_folders} " == *" ${folder} "* ]]
+}
+
+for deferred_folder in ${defer_folders}; do
+	awk -F '\t' -v folder="${deferred_folder}" '
+		NR > 1 && $1 == folder { found = 1 }
+		END { exit(found ? 0 : 1) }
+	' "${matrix_file}" || {
+		printf '延後板目錄不在受控矩陣：%s。\n' "${deferred_folder}" >&2
+		exit 2
+	}
+done
 
 mkdir -p "${audit_root}" "${candidate_state}/runs"
 resolved_state="$(readlink -f -- "${candidate_state}")"
@@ -271,6 +287,11 @@ awk -F '\t' '
 while IFS=$'\t' read -r architecture family folder board branch release profile; do
 	item_pending=""
 	[[ -n "${folder}" ]] || continue
+	if folder_is_deferred "${folder}"; then
+		printf '受控延後：%s / %s / %s，本階段不建置。\n' \
+			"${folder}" "${release}" "${profile}"
+		continue
+	fi
 	run_audit
 	item_pending="$(item_action_count "${folder}" "${release}" "${profile}" "建置缺少項目")"
 	if ((item_pending == 0)); then
@@ -315,8 +336,19 @@ waiting_compression="$(action_count "等待壓縮")"
 finalize_pending_boards
 run_audit
 remaining="$(queue_count)"
-((remaining == 0)) || {
-	printf '矩陣走完後仍有 %s 個待辦，拒絕宣告完成。\n' "${remaining}" >&2
-	exit 1
-}
+if ((remaining != 0)); then
+	nondeferred=0
+	while IFS=$'\t' read -r folder _; do
+		[[ "${folder}" == folder ]] && continue
+		folder_is_deferred "${folder}" || nondeferred=$((nondeferred + 1))
+	done < "${audit_root}/current/待辦佇列.tsv"
+	((nondeferred == 0)) || {
+		printf '矩陣走完後仍有 %s 個非延後待辦，拒絕宣告本階段完成。\n' \
+			"${nondeferred}" >&2
+		exit 1
+	}
+	printf '本階段已完成；受控延後項目尚餘 %s 個：%s。\n' \
+		"${remaining}" "${defer_folders}"
+	exit 0
+fi
 printf '增量佇列完成，待辦為零：%s；壓縮紀錄：%s。\n' "${progress}" "${compression_progress}"

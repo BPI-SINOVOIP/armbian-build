@@ -64,6 +64,13 @@ class BananaPiIncrementalQueueTests(unittest.TestCase):
         ):
             self.assertIn(variable, script)
 
+    def test_queue_runner_supports_explicitly_deferred_boards(self) -> None:
+        script = SCRIPT.read_text(encoding="utf-8")
+        self.assertIn("DEFER_FOLDERS", script)
+        self.assertIn("folder_is_deferred", script)
+        self.assertIn("受控延後", script)
+        self.assertIn("nondeferred", script)
+
     def test_architecture_groups_cover_matrix_exactly(self) -> None:
         with MATRIX.open(encoding="utf-8", newline="") as stream:
             matrix = list(csv.DictReader(stream, delimiter="\t"))
