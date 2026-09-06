@@ -302,14 +302,21 @@ validate_board_directory() {
 	local releases="${MATRIX_RELEASES[${folder}]}"
 	local directory="${CANDIDATE_RELEASE}/${folder}"
 	local token="${board^}"
-	local entry archive name release profile suffix sidecar_count match_count
+	local entry archive name release profile suffix sidecar_count match_count note
 	local -a archives=() matches=() release_list=()
 	local -A archive_match_counts=()
 
 	while IFS= read -r -d '' entry; do
 		[[ -f "${entry}" && ! -L "${entry}" ]] ||
 			die "板目錄只允許第一層實體檔案：${entry}"
+		case "${entry##*/}" in
+		*.img.xz | *.img.xz.sha | Release-Notes-zh-TW.md) ;;
+		*) die "板目錄含未受控檔案：${entry}" ;;
+		esac
 	done < <(find "${directory}" -mindepth 1 -maxdepth 1 -print0)
+	note="${directory}/Release-Notes-zh-TW.md"
+	[[ -s "${note}" && ! -L "${note}" ]] ||
+		die "板目錄缺少繁體中文發行說明：${note}"
 
 	mapfile -d '' archives < <(
 		find "${directory}" -mindepth 1 -maxdepth 1 -type f -name '*.img.xz' -print0 | sort -z

@@ -151,6 +151,20 @@ class BananaPiCandidatePromotionTests(unittest.TestCase):
         self.assertTrue((self.formal / "舊板目錄/舊版本.txt").is_file())
         self.assertEqual(self.transaction_residue(), [])
 
+    def test_missing_note_and_uncontrolled_file_are_rejected(self) -> None:
+        note = self.candidate / "bpi-demo-a/Release-Notes-zh-TW.md"
+        note.unlink()
+        result = self.run_tool()
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("缺少繁體中文發行說明", result.stderr)
+
+        note.write_text("# 候選發行說明\n", encoding="utf-8")
+        uncontrolled = self.candidate / "bpi-demo-a/暫存紀錄.txt"
+        uncontrolled.write_text("不得發布\n", encoding="utf-8")
+        result = self.run_tool()
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("含未受控檔案", result.stderr)
+
     def test_cross_filesystem_test_double_is_rejected_without_copying(self) -> None:
         fake_bin = self.root / "fake-stat-bin"
         fake_bin.mkdir()
