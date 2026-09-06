@@ -21,6 +21,7 @@ RELEASE_ORDER = {
 }
 PROFILE_ORDER = {"minimal": 0, "xfce": 1}
 SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
+COMMIT_RE = re.compile(r"^[0-9a-f]{40}$")
 
 
 @dataclass(frozen=True)
@@ -86,6 +87,13 @@ class CandidateBoard:
     board_marker_valid: bool
 
 
+@dataclass(frozen=True)
+class CandidateInputPolicy:
+    folder: str
+    source_commit: str
+    build_context: str
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="盤點既有 Banana Pi 映像，先建立帳本再決定是否建置。"
@@ -110,6 +118,11 @@ def parse_args() -> argparse.Namespace:
         "--target-build-context",
         default="",
         help="只把指定建置內容雜湊的候選視為本輪已完成",
+    )
+    parser.add_argument(
+        "--candidate-input-policy",
+        type=Path,
+        help="依板目錄限定候選的來源提交與建置內容雜湊",
     )
     parser.add_argument(
         "--reuse-formal",
@@ -149,6 +162,57 @@ def read_matrix(path: Path) -> list[MatrixRow]:
             raise ValueError(f"矩陣含未知發行版：{folder}")
         result.append(MatrixRow(folder, board, raw["branch"], releases))
     return result
+
+
+def read_candidate_input_policy(
+    path: Path, matrix: list[MatrixRow]
+) -> dict[str, CandidateInputPolicy]:
+    with path.open(encoding="utf-8", newline="") as stream:
+        rows = list(csv.DictReader(stream, delimiter="\t"))
+    expected_fields = ["folder", "source_commit", "build_context_sha256"]
+    if not rows or list(rows[0]) != expected_fields:
+        raise ValueError(f"候選輸入政策欄位錯誤：{path}")
+    expected_folders = {row.folder for row in matrix}
+    result: dict[str, CandidateInputPolicy] = {}
+    for raw in rows:
+        folder = raw["folder"]
+        source_commit = raw["source_commit"]
+        build_context = raw["build_context_sha256"]
+        if folder in result:
+            raise ValueError(f"候選輸入政策重複板目錄：{folder}")
+        if folder not in expected_folders:
+            raise ValueError(f"候選輸入政策含矩陣外板目錄：{folder}")
+        if not COMMIT_RE.fullmatch(source_commit):
+            raise ValueError(f"候選輸入政策來源提交錯誤：{folder}")
+        if not SHA256_RE.fullmatch(build_context):
+            raise ValueError(f"候選輸入政策建置內容雜湊錯誤：{folder}")
+        result[folder] = CandidateInputPolicy(folder, source_commit, build_context)
+    missing = expected_folders - set(result)
+    if missing:
+        raise ValueError(
+            f"候選輸入政策缺少板目錄：{','.join(sorted(missing))}"
+        )
+    return result
+
+
+def candidate_input_matches(
+    folder: str,
+    source_commit: str,
+    build_context: str,
+    policy: dict[str, CandidateInputPolicy],
+    target_source_commit: str,
+    target_build_context: str,
+) -> bool:
+    if policy:
+        expected = policy[folder]
+        return (
+            source_commit == expected.source_commit
+            and build_context == expected.build_context
+        )
+    return not (
+        (target_source_commit and source_commit != target_source_commit)
+        or (target_build_context and build_context != target_build_context)
+    )
 
 
 def parse_candidate(raw: str) -> CandidateSource:
@@ -405,6 +469,17 @@ def write_tsv(path: Path, fields: list[str], rows: list[dict[str, str]]) -> None
 def main() -> int:
     args = parse_args()
     matrix = read_matrix(args.matrix)
+    if args.candidate_input_policy and (
+        args.target_source_commit or args.target_build_context
+    ):
+        raise ValueError(
+            "逐板候選輸入政策不可與全域來源或建置內容限定同時使用"
+        )
+    input_policy = (
+        read_candidate_input_policy(args.candidate_input_policy, matrix)
+        if args.candidate_input_policy
+        else {}
+    )
     candidates = [parse_candidate(raw) for raw in args.candidate]
     for path in (args.matrix, args.formal_release):
         if not path.exists():
@@ -439,14 +514,13 @@ def main() -> int:
                     verify_xz=args.verify_xz,
                 )
                 if artifact:
-                    if (
-                        args.target_source_commit
-                        and artifact.source_commit != args.target_source_commit
-                    ):
-                        artifact = None
-                    elif (
-                        args.target_build_context
-                        and artifact.build_context != args.target_build_context
+                    if not candidate_input_matches(
+                        row.folder,
+                        artifact.source_commit,
+                        artifact.build_context,
+                        input_policy,
+                        args.target_source_commit,
+                        args.target_build_context,
                     ):
                         artifact = None
                     else:
@@ -459,14 +533,13 @@ def main() -> int:
                     verify_digests=args.verify_digests,
                 )
                 if raw_artifact:
-                    if (
-                        args.target_source_commit
-                        and raw_artifact.source_commit != args.target_source_commit
-                    ):
-                        continue
-                    if (
-                        args.target_build_context
-                        and raw_artifact.build_context != args.target_build_context
+                    if not candidate_input_matches(
+                        row.folder,
+                        raw_artifact.source_commit,
+                        raw_artifact.build_context,
+                        input_policy,
+                        args.target_source_commit,
+                        args.target_build_context,
                     ):
                         continue
                     if artifact_accepted:
@@ -739,6 +812,19 @@ def main() -> int:
         ["目錄", "檔案數", "大小bytes", "處置", "路徑"],
         stale_staging_rows,
     )
+    if input_policy:
+        write_tsv(
+            args.output_dir / "候選輸入政策.tsv",
+            ["folder", "source_commit", "build_context_sha256"],
+            [
+                {
+                    "folder": row.folder,
+                    "source_commit": input_policy[row.folder].source_commit,
+                    "build_context_sha256": input_policy[row.folder].build_context,
+                }
+                for row in matrix
+            ],
+        )
     write_summary(
         args.output_dir / "盤點摘要.md",
         matrix,
@@ -858,6 +944,13 @@ def write_summary(
         "## 結果",
         "",
     ]
+    if args.candidate_input_policy:
+        lines.extend(
+            [
+                f"候選輸入已依逐板政策驗證：`{args.candidate_input_policy}`。",
+                "",
+            ]
+        )
     for status in sorted(status_counts):
         lines.append(f"- {status}：{status_counts[status]}")
     lines.extend(["", "## 候選處置", ""])

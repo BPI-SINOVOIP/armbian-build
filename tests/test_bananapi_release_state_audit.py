@@ -23,6 +23,7 @@ class BananaPiReleaseStateAuditTests(unittest.TestCase):
         self.candidate = self.root / "candidate"
         self.state = self.root / "state"
         self.output = self.root / "output"
+        self.policy = self.root / "candidate-input-policy.tsv"
         self.formal.mkdir()
         self.candidate.mkdir()
         (self.state / "items").mkdir(parents=True)
@@ -55,7 +56,13 @@ class BananaPiReleaseStateAuditTests(unittest.TestCase):
         )
         return archive
 
-    def create_candidate_item(self, release: str, profile: str) -> None:
+    def create_candidate_item(
+        self,
+        release: str,
+        profile: str,
+        source_commit: str = "a" * 40,
+        build_context: str = "b" * 64,
+    ) -> None:
         stage = self.candidate / ".staging-bpi-demo-source"
         archive = self.create_archive(stage, release, profile)
         digest = hashlib.sha256(archive.read_bytes()).hexdigest()
@@ -64,8 +71,8 @@ class BananaPiReleaseStateAuditTests(unittest.TestCase):
         log_digest = hashlib.sha256(log.read_bytes()).hexdigest()
         marker = self.state / "items" / f"bpi-demo-{release}-{profile}.complete"
         marker.write_text(
-            "source_commit=" + "a" * 40 + "\n"
-            "build_context_sha256=" + "b" * 64 + "\n"
+            f"source_commit={source_commit}\n"
+            f"build_context_sha256={build_context}\n"
             "folder=bpi-demo\n"
             "board=bananapidemonstration\n"
             "branch=current\n"
@@ -75,6 +82,15 @@ class BananaPiReleaseStateAuditTests(unittest.TestCase):
             f"sha256={digest}\n"
             f"log={log}\n"
             f"log_sha256={log_digest}\n",
+            encoding="utf-8",
+        )
+
+    def write_policy(
+        self, source_commit: str = "a" * 40, build_context: str = "b" * 64
+    ) -> None:
+        self.policy.write_text(
+            "folder\tsource_commit\tbuild_context_sha256\n"
+            f"bpi-demo\t{source_commit}\t{build_context}\n",
             encoding="utf-8",
         )
 
@@ -194,6 +210,34 @@ class BananaPiReleaseStateAuditTests(unittest.TestCase):
         ledger = self.read_tsv("映像盤點.tsv")
         raw_row = next(row for row in ledger if row["狀態"] == "待壓縮")
         self.assertEqual(raw_row["處置"], "不得重新編譯；由壓縮工作續作")
+
+    def test_candidate_input_policy_accepts_only_the_board_identity(self) -> None:
+        self.create_candidate_item("trixie", "minimal")
+        self.write_policy()
+        result = self.run_audit("--candidate-input-policy", str(self.policy))
+        self.assertEqual(result.returncode, 0, result.stderr)
+        ledger = self.read_tsv("映像盤點.tsv")
+        self.assertEqual(sum(row["狀態"] == "本輪已完成" for row in ledger), 1)
+        copied_policy = self.read_tsv("候選輸入政策.tsv")
+        self.assertEqual(copied_policy[0]["source_commit"], "a" * 40)
+
+    def test_candidate_input_policy_rejects_a_different_context(self) -> None:
+        self.create_candidate_item("trixie", "minimal")
+        self.write_policy(build_context="c" * 64)
+        result = self.run_audit("--candidate-input-policy", str(self.policy))
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(len(self.read_tsv("待辦佇列.tsv")), 4)
+
+    def test_candidate_input_policy_cannot_mix_with_global_identity(self) -> None:
+        self.write_policy()
+        result = self.run_audit(
+            "--candidate-input-policy",
+            str(self.policy),
+            "--target-source-commit",
+            "a" * 40,
+        )
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("不可與全域來源", result.stderr)
 
     def test_missing_items_are_sorted_and_never_invented(self) -> None:
         result = self.run_audit()
