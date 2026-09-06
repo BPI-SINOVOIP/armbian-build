@@ -62,9 +62,15 @@ class BananaPiReleaseStateAuditTests(unittest.TestCase):
         profile: str,
         source_commit: str = "a" * 40,
         build_context: str = "b" * 64,
+        *,
+        staged: bool = False,
     ) -> None:
-        stage = self.candidate / ".staging-bpi-demo-source"
-        archive = self.create_archive(stage, release, profile)
+        directory = (
+            self.candidate / ".staging-bpi-demo-source"
+            if staged
+            else self.candidate / "bpi-demo"
+        )
+        archive = self.create_archive(directory, release, profile)
         digest = hashlib.sha256(archive.read_bytes()).hexdigest()
         log = self.state / "logs" / f"bpi-demo-{release}-{profile}.log"
         log.write_text("成功建置\n", encoding="utf-8")
@@ -82,6 +88,22 @@ class BananaPiReleaseStateAuditTests(unittest.TestCase):
             f"sha256={digest}\n"
             f"log={log}\n"
             f"log_sha256={log_digest}\n",
+            encoding="utf-8",
+        )
+
+    def create_board_marker(
+        self,
+        source_commit: str = "a" * 40,
+        build_context: str = "b" * 64,
+    ) -> None:
+        (self.state / "boards" / "bpi-demo.complete").write_text(
+            f"source_commit={source_commit}\n"
+            f"build_context_sha256={build_context}\n"
+            "folder=bpi-demo\n"
+            "board=bananapidemonstration\n"
+            "branch=current\n"
+            "images=4\n"
+            "status=complete\n",
             encoding="utf-8",
         )
 
@@ -210,6 +232,10 @@ class BananaPiReleaseStateAuditTests(unittest.TestCase):
         ledger = self.read_tsv("映像盤點.tsv")
         raw_row = next(row for row in ledger if row["狀態"] == "待壓縮")
         self.assertEqual(raw_row["處置"], "不得重新編譯；由壓縮工作續作")
+        residues = self.read_tsv("候選交易殘留.tsv")
+        self.assertEqual(len(residues), 1)
+        self.assertEqual(residues[0]["類別"], "原始映像狀態")
+        self.assertEqual(residues[0]["處置"], "等待壓縮")
 
     def test_candidate_input_policy_accepts_only_the_board_identity(self) -> None:
         self.create_candidate_item("trixie", "minimal")
@@ -227,6 +253,42 @@ class BananaPiReleaseStateAuditTests(unittest.TestCase):
         result = self.run_audit("--candidate-input-policy", str(self.policy))
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(len(self.read_tsv("待辦佇列.tsv")), 4)
+
+    def test_candidate_input_policy_accepts_matching_board_marker(self) -> None:
+        for release in ("trixie", "bookworm"):
+            for profile in ("minimal", "xfce"):
+                self.create_candidate_item(release, profile)
+        self.create_board_marker()
+        self.write_policy()
+        result = self.run_audit("--candidate-input-policy", str(self.policy))
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(self.read_tsv("板卡決策.tsv")[0]["決策"], "沿用完整候選")
+        self.assertEqual(self.read_tsv("待辦佇列.tsv"), [])
+
+    def test_candidate_input_policy_rejects_mismatched_board_marker(self) -> None:
+        for release in ("trixie", "bookworm"):
+            for profile in ("minimal", "xfce"):
+                self.create_candidate_item(release, profile)
+        self.write_policy()
+        cases = (
+            ("c" * 40, "b" * 64, "板級完成標記來源提交不符逐板政策"),
+            ("a" * 40, "c" * 64, "板級完成標記建置內容雜湊不符逐板政策"),
+        )
+        for source_commit, build_context, reason in cases:
+            with self.subTest(reason=reason):
+                self.create_board_marker(source_commit, build_context)
+                result = self.run_audit(
+                    "--candidate-input-policy", str(self.policy)
+                )
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertEqual(
+                    self.read_tsv("板卡決策.tsv")[0]["決策"],
+                    "候選只補整板驗證",
+                )
+                queue = self.read_tsv("待辦佇列.tsv")
+                self.assertEqual(len(queue), 1)
+                self.assertEqual(queue[0]["動作"], "補整板驗證")
+                self.assertEqual(queue[0]["原因"], reason)
 
     def test_candidate_input_policy_cannot_mix_with_global_identity(self) -> None:
         self.write_policy()
@@ -255,19 +317,70 @@ class BananaPiReleaseStateAuditTests(unittest.TestCase):
         )
         self.assertEqual(self.read_tsv("中止產物.tsv"), [])
         self.assertEqual(self.read_tsv("舊暫存目錄.tsv"), [])
+        self.assertEqual(self.read_tsv("候選交易殘留.tsv"), [])
+
+    def test_transaction_state_is_visible_and_queued(self) -> None:
+        transactions = self.state / "transactions"
+        transactions.mkdir()
+        transaction = transactions / "bpi-demo.state"
+        transaction.write_text(
+            "folder=bpi-demo\nphase=prepared\n",
+            encoding="utf-8",
+        )
+        result = self.run_audit()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        residues = self.read_tsv("候選交易殘留.tsv")
+        self.assertEqual(len(residues), 1)
+        self.assertEqual(residues[0]["類別"], "交易狀態")
+        self.assertEqual(residues[0]["板目錄"], "bpi-demo")
+        self.assertEqual(residues[0]["處置"], "等待整板交易收斂")
+        queue = self.read_tsv("待辦佇列.tsv")
+        self.assertEqual(
+            sum(row["動作"] == "等待整板交易收斂" for row in queue), 1
+        )
+
+    def test_in_progress_release_directories_are_visible_and_queued(self) -> None:
+        kinds = {
+            ".staging-bpi-demo-source": "候選暫存目錄",
+            ".previous-bpi-demo-source": "候選回復目錄",
+            ".failed-bpi-demo-source": "候選失敗目錄",
+        }
+        for name in kinds:
+            directory = self.candidate / name
+            directory.mkdir()
+            (directory / "狀態.txt").write_text("進行中\n", encoding="utf-8")
+        result = self.run_audit()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        residues = self.read_tsv("候選交易殘留.tsv")
+        self.assertEqual({row["類別"] for row in residues}, set(kinds.values()))
+        self.assertEqual({row["板目錄"] for row in residues}, {"bpi-demo"})
+        queue = self.read_tsv("待辦佇列.tsv")
+        self.assertEqual(
+            sum(row["動作"] == "等待整板交易收斂" for row in queue), 2
+        )
+        self.assertEqual(
+            sum(row["動作"] == "檢查失敗交易殘留" for row in queue), 1
+        )
+
+    def test_staged_candidate_item_is_counted_without_aborting_audit(self) -> None:
+        self.create_candidate_item("trixie", "minimal", staged=True)
+        result = self.run_audit()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        ledger = self.read_tsv("映像盤點.tsv")
+        self.assertEqual(sum(row["狀態"] == "本輪已完成" for row in ledger), 1)
+        residues = self.read_tsv("候選交易殘留.tsv")
+        self.assertEqual(len(residues), 1)
+        self.assertEqual(residues[0]["類別"], "候選暫存目錄")
+        queue = self.read_tsv("待辦佇列.tsv")
+        self.assertEqual(
+            sum(row["動作"] == "等待整板交易收斂" for row in queue), 1
+        )
 
     def test_valid_board_marker_selects_complete_candidate(self) -> None:
         for release in ("trixie", "bookworm"):
             for profile in ("minimal", "xfce"):
                 self.create_candidate_item(release, profile)
-        (self.state / "boards" / "bpi-demo.complete").write_text(
-            "folder=bpi-demo\n"
-            "board=bananapidemonstration\n"
-            "branch=current\n"
-            "images=4\n"
-            "status=complete\n",
-            encoding="utf-8",
-        )
+        self.create_board_marker()
         result = self.run_audit()
         self.assertEqual(result.returncode, 0, result.stderr)
         decisions = self.read_tsv("板卡決策.tsv")
@@ -275,6 +388,7 @@ class BananaPiReleaseStateAuditTests(unittest.TestCase):
         self.assertEqual(
             {row["處置"] for row in self.read_tsv("候選處置.tsv")}, {"採用"}
         )
+        self.assertEqual(self.read_tsv("待辦佇列.tsv"), [])
 
     def test_profile_marker_can_precede_board_specific_tag(self) -> None:
         for release in ("trixie", "bookworm"):

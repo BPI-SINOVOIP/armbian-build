@@ -85,6 +85,7 @@ class CandidateBoard:
     source: CandidateSource
     artifacts: dict[ItemKey, Artifact]
     board_marker_valid: bool
+    board_marker_issue: str
 
 
 @dataclass(frozen=True)
@@ -443,20 +444,79 @@ def find_candidate_raw_artifact(
     )
 
 
-def board_marker_valid(source: CandidateSource, row: MatrixRow) -> bool:
+def board_marker_status(
+    source: CandidateSource,
+    row: MatrixRow,
+    expected_input: CandidateInputPolicy | None,
+) -> tuple[bool, str]:
     marker = source.state_root / "boards" / f"{row.folder}.complete"
     if not marker.is_file():
-        return False
+        return False, "缺少板級完成標記"
     values = read_key_values(marker)
-    return all(
-        (
-            values.get("folder") == row.folder,
-            values.get("board") == row.board,
-            values.get("branch") == row.branch,
-            values.get("images") == str(row.expected),
-            values.get("status") == "complete",
-        )
-    )
+    expected_fields = {
+        "folder": row.folder,
+        "board": row.board,
+        "branch": row.branch,
+        "images": str(row.expected),
+        "status": "complete",
+    }
+    for field, expected in expected_fields.items():
+        if values.get(field) != expected:
+            return False, f"板級完成標記欄位不符：{field}"
+    if expected_input:
+        if values.get("source_commit") != expected_input.source_commit:
+            return False, "板級完成標記來源提交不符逐板政策"
+        if values.get("build_context_sha256") != expected_input.build_context:
+            return False, "板級完成標記建置內容雜湊不符逐板政策"
+    return True, ""
+
+
+def path_inventory(path: Path) -> tuple[int, int] | None:
+    """讀取暫存項目概況；項目在並行流程中消失時略過該次快照。"""
+    try:
+        if not path.is_dir() or path.is_symlink():
+            return 1, path.lstat().st_size
+        files = [item for item in path.rglob("*") if item.is_file()]
+        return len(files), sum(item.stat().st_size for item in files)
+    except FileNotFoundError:
+        return None
+
+
+def infer_folder_from_item(
+    item: Path, matrix: list[MatrixRow], explicit_folder: str = ""
+) -> str:
+    folders = {row.folder for row in matrix}
+    if explicit_folder in folders:
+        return explicit_folder
+    name = item.name
+    for prefix in (".staging-", ".previous-", ".failed-"):
+        if name.startswith(prefix):
+            name = name.removeprefix(prefix)
+            break
+    if name.endswith(".state"):
+        name = name.removesuffix(".state")
+    for row in sorted(matrix, key=lambda entry: len(entry.folder), reverse=True):
+        if name == row.folder or name.startswith(f"{row.folder}-"):
+            return row.folder
+    return explicit_folder
+
+
+def residue_queue_row(
+    folder: str,
+    matrix_by_folder: dict[str, MatrixRow],
+    action: str,
+    reason: str,
+) -> dict[str, str]:
+    row = matrix_by_folder.get(folder)
+    return {
+        "板目錄": folder,
+        "板卡": row.board if row else "",
+        "分支": row.branch if row else "",
+        "發行版": "",
+        "類型": "",
+        "動作": action,
+        "原因": reason,
+    }
 
 
 def write_tsv(path: Path, fields: list[str], rows: list[dict[str, str]]) -> None:
@@ -492,6 +552,8 @@ def main() -> int:
     candidate_boards: dict[tuple[str, str], CandidateBoard] = {}
     candidate_artifacts: dict[tuple[str, ItemKey], Artifact] = {}
     raw_artifacts: dict[tuple[str, ItemKey], RawArtifact] = {}
+    recognized_raw_markers: dict[Path, RawArtifact] = {}
+    accepted_raw_markers: set[Path] = set()
     for row in matrix:
         keys = item_keys(row)
         for key in keys:
@@ -533,6 +595,7 @@ def main() -> int:
                     verify_digests=args.verify_digests,
                 )
                 if raw_artifact:
+                    recognized_raw_markers[raw_artifact.marker] = raw_artifact
                     if not candidate_input_matches(
                         row.folder,
                         raw_artifact.source_commit,
@@ -542,12 +605,16 @@ def main() -> int:
                         args.target_build_context,
                     ):
                         continue
+                    accepted_raw_markers.add(raw_artifact.marker)
                     if artifact_accepted:
                         # 壓縮完成標記先落盤、原始標記再清除的短暫交疊是合法狀態。
                         continue
                     raw_artifacts[(source.name, key)] = raw_artifact
+            marker_valid, marker_issue = board_marker_status(
+                source, row, input_policy.get(row.folder) if input_policy else None
+            )
             candidate_boards[(source.name, row.folder)] = CandidateBoard(
-                source, artifacts, board_marker_valid(source, row)
+                source, artifacts, marker_valid, marker_issue
             )
 
     ledger_rows: list[dict[str, str]] = []
@@ -555,6 +622,7 @@ def main() -> int:
     queue_rows: list[dict[str, str]] = []
     chosen_candidates: set[tuple[str, ItemKey]] = set()
     pending_candidates: set[tuple[str, ItemKey]] = set()
+    queued_raw_markers: set[Path] = set()
 
     for row in matrix:
         keys = item_keys(row)
@@ -597,7 +665,13 @@ def main() -> int:
                     ledger_row(artifact, "候選待整板驗證", "不得重新編譯")
                 )
             queue_rows.append(
-                queue_row(row, "", "", "補整板驗證", "全部映像已存在")
+                queue_row(
+                    row,
+                    "",
+                    "",
+                    "補整板驗證",
+                    board.board_marker_issue or "全部映像已存在",
+                )
             )
         elif args.reuse_formal and formal_complete:
             decision = "沿用既有正式"
@@ -638,6 +712,7 @@ def main() -> int:
                             str(raw.marker),
                         )
                     )
+                    queued_raw_markers.add(raw.marker)
                 elif args.reuse_formal and key in formal:
                     ledger_rows.append(
                         ledger_row(formal[key], "沿用既有正式", "不再建置")
@@ -751,13 +826,125 @@ def main() -> int:
             }
         )
 
+    matrix_by_folder = {row.folder: row for row in matrix}
+    residue_rows: list[dict[str, str]] = []
+    for source in candidates:
+        transactions = source.state_root / "transactions"
+        transaction_items = (
+            sorted(transactions.iterdir()) if transactions.is_dir() else []
+        )
+        for item in transaction_items:
+            inventory = path_inventory(item)
+            if inventory is None:
+                continue
+            explicit_folder = ""
+            if item.is_file():
+                try:
+                    explicit_folder = read_key_values(item).get("folder", "")
+                except (OSError, UnicodeError):
+                    pass
+            folder = infer_folder_from_item(item, matrix, explicit_folder)
+            files, size = inventory
+            action = "等待整板交易收斂"
+            residue_rows.append(
+                {
+                    "候選來源": source.name,
+                    "類別": "交易狀態",
+                    "板目錄": folder,
+                    "項目": item.name,
+                    "檔案數": str(files),
+                    "大小bytes": str(size),
+                    "處置": action,
+                    "路徑": str(item),
+                }
+            )
+            queue_rows.append(
+                residue_queue_row(folder, matrix_by_folder, action, str(item))
+            )
+
+        raw_items = source.state_root / "raw-items"
+        raw_item_entries = (
+            sorted(raw_items.iterdir()) if raw_items.is_dir() else []
+        )
+        for item in raw_item_entries:
+            inventory = path_inventory(item)
+            if inventory is None:
+                continue
+            explicit_folder = ""
+            if item.is_file():
+                try:
+                    explicit_folder = read_key_values(item).get("folder", "")
+                except (OSError, UnicodeError):
+                    pass
+            folder = infer_folder_from_item(item, matrix, explicit_folder)
+            if item in queued_raw_markers:
+                action = "等待壓縮"
+            elif item in accepted_raw_markers:
+                action = "等待壓縮狀態收斂"
+            elif item in recognized_raw_markers:
+                action = "清理非政策原始映像"
+            else:
+                action = "檢查原始映像殘留"
+            files, size = inventory
+            residue_rows.append(
+                {
+                    "候選來源": source.name,
+                    "類別": "原始映像狀態",
+                    "板目錄": folder,
+                    "項目": item.name,
+                    "檔案數": str(files),
+                    "大小bytes": str(size),
+                    "處置": action,
+                    "路徑": str(item),
+                }
+            )
+            if item not in queued_raw_markers:
+                queue_rows.append(
+                    residue_queue_row(folder, matrix_by_folder, action, str(item))
+                )
+
+        transient_kinds = (
+            (".staging-*", "候選暫存目錄", "等待整板交易收斂"),
+            (".previous-*", "候選回復目錄", "等待整板交易收斂"),
+            (".failed-*", "候選失敗目錄", "檢查失敗交易殘留"),
+        )
+        for pattern, kind, action in transient_kinds:
+            for item in sorted(source.release_root.glob(pattern)):
+                inventory = path_inventory(item)
+                if inventory is None:
+                    continue
+                folder = infer_folder_from_item(item, matrix)
+                files, size = inventory
+                residue_rows.append(
+                    {
+                        "候選來源": source.name,
+                        "類別": kind,
+                        "板目錄": folder,
+                        "項目": item.name,
+                        "檔案數": str(files),
+                        "大小bytes": str(size),
+                        "處置": action,
+                        "路徑": str(item),
+                    }
+                )
+                queue_rows.append(
+                    residue_queue_row(folder, matrix_by_folder, action, str(item))
+                )
+
     board_order = {row.folder: index for index, row in enumerate(matrix)}
     queue_rows.sort(
         key=lambda row: (
-            {"補整板驗證": 0, "等待壓縮": 1, "建置缺少項目": 2}.get(
-                row["動作"], 9
-            ),
-            board_order[row["板目錄"]],
+            {
+                "補整板驗證": 0,
+                "等待壓縮": 1,
+                "等待壓縮狀態收斂": 2,
+                "等待整板交易收斂": 3,
+                "檢查失敗交易殘留": 4,
+                "清理非政策原始映像": 5,
+                "檢查原始映像殘留": 6,
+                "建置缺少項目": 7,
+            }.get(row["動作"], 9),
+            board_order.get(row["板目錄"], len(board_order)),
             RELEASE_ORDER.get(row["發行版"], -1),
             PROFILE_ORDER.get(row["類型"], -1),
         )
@@ -812,6 +999,20 @@ def main() -> int:
         ["目錄", "檔案數", "大小bytes", "處置", "路徑"],
         stale_staging_rows,
     )
+    write_tsv(
+        args.output_dir / "候選交易殘留.tsv",
+        [
+            "候選來源",
+            "類別",
+            "板目錄",
+            "項目",
+            "檔案數",
+            "大小bytes",
+            "處置",
+            "路徑",
+        ],
+        residue_rows,
+    )
     if input_policy:
         write_tsv(
             args.output_dir / "候選輸入政策.tsv",
@@ -834,6 +1035,7 @@ def main() -> int:
         extra_rows,
         interrupted_rows,
         stale_staging_rows,
+        residue_rows,
         args,
     )
     print(f"盤點完成：{args.output_dir}")
@@ -923,6 +1125,7 @@ def write_summary(
     extras: list[dict[str, str]],
     interrupted: list[dict[str, str]],
     stale_staging: list[dict[str, str]],
+    residues: list[dict[str, str]],
     args: argparse.Namespace,
 ) -> None:
     status_counts: dict[str, int] = {}
@@ -969,7 +1172,9 @@ def write_summary(
             "",
             "## 中止現場",
             "",
-            f"中止產物：{len(interrupted)}；舊暫存目錄：{len(stale_staging)}。這些項目不得視為完成，也不會在盤點階段自動刪除。",
+            f"中止產物：{len(interrupted)}；舊暫存目錄：{len(stale_staging)}；"
+            f"候選交易殘留：{len(residues)}。候選交易殘留均會列入待辦；"
+            "建置中的合法狀態由後續工作續作，盤點階段不會自動刪除。",
             "",
             "## 完整性範圍",
             "",
