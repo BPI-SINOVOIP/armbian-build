@@ -7,6 +7,7 @@ import os
 import shutil
 import subprocess
 import tempfile
+import time
 import unittest
 from pathlib import Path
 
@@ -65,7 +66,10 @@ class BananaPiCandidatePromotionTests(unittest.TestCase):
                     )
 
     def run_tool(
-        self, *extra: str, env: dict[str, str] | None = None
+        self,
+        *extra: str,
+        env: dict[str, str] | None = None,
+        pass_fds: tuple[int, ...] = (),
     ) -> subprocess.CompletedProcess[str]:
         return subprocess.run(
             [
@@ -84,13 +88,46 @@ class BananaPiCandidatePromotionTests(unittest.TestCase):
             text=True,
             capture_output=True,
             check=False,
+            pass_fds=pass_fds,
         )
+
+    def tool_command(self, *extra: str) -> list[str]:
+        return [
+            "bash",
+            str(SCRIPT),
+            "--candidate-release",
+            str(self.candidate),
+            "--formal-release",
+            str(self.formal),
+            "--matrix",
+            str(self.matrix),
+            *extra,
+        ]
+
+    @staticmethod
+    def fixed_lock_path(root: Path) -> Path:
+        return root.parent / f".{root.name}.build.lock"
+
+    def wait_for_path(
+        self, path: Path, process: subprocess.Popen[str], timeout: float = 5.0
+    ) -> None:
+        deadline = time.monotonic() + timeout
+        while time.monotonic() < deadline:
+            if path.exists():
+                return
+            if process.poll() is not None:
+                stdout, stderr = process.communicate()
+                self.fail(
+                    f"子程序提前結束：{process.returncode}\n標準輸出：{stdout}\n錯誤輸出：{stderr}"
+                )
+            time.sleep(0.01)
+        self.fail(f"等待同步點逾時：{path}")
 
     def candidate_snapshot(self) -> dict[str, tuple[bytes, int]]:
         return {
             str(path.relative_to(self.candidate)): (path.read_bytes(), path.stat().st_ino)
             for path in self.candidate.rglob("*")
-            if path.is_file()
+            if path.is_file() and path.name != ".latest-rebuild.lock"
         }
 
     def transaction_residue(self) -> list[Path]:
@@ -125,7 +162,7 @@ class BananaPiCandidatePromotionTests(unittest.TestCase):
         self.assertEqual(self.candidate_snapshot(), candidate_before)
         self.assertEqual(
             sorted(path.name for path in self.formal.iterdir()),
-            sorted(folder for folder, *_ in self.rows),
+            sorted([*(folder for folder, *_ in self.rows), ".latest-rebuild.lock"]),
         )
         for relative, (content, inode) in candidate_before.items():
             promoted = self.formal / relative
@@ -233,6 +270,52 @@ class BananaPiCandidatePromotionTests(unittest.TestCase):
         )
         self.assertEqual(self.transaction_residue(), [])
 
+    def test_competing_formal_directory_is_preserved_while_old_release_recovers(
+        self,
+    ) -> None:
+        fake_bin = self.root / "fake-collision-mv-bin"
+        fake_bin.mkdir()
+        counter = self.root / "collision-mv-count"
+        real_mv = shutil.which("mv")
+        self.assertIsNotNone(real_mv)
+        wrapper = fake_bin / "mv"
+        wrapper.write_text(
+            "#!/usr/bin/env bash\n"
+            "count=0\n"
+            "[[ ! -f \"$TEST_COUNTER\" ]] || count=$(<\"$TEST_COUNTER\")\n"
+            "count=$((count + 1))\n"
+            "printf '%s\\n' \"$count\" >\"$TEST_COUNTER\"\n"
+            "if [[ \"$count\" == 2 ]]; then\n"
+            "  mkdir \"$TEST_FORMAL\"\n"
+            "  printf '不得刪除\\n' >\"$TEST_FORMAL/不明資料.txt\"\n"
+            "  exit 73\n"
+            "fi\n"
+            f"exec {real_mv} \"$@\"\n",
+            encoding="utf-8",
+        )
+        wrapper.chmod(0o755)
+
+        result = self.run_tool(
+            "--execute",
+            env={
+                "PATH": f"{fake_bin}:{os.environ['PATH']}",
+                "TEST_COUNTER": str(counter),
+                "TEST_FORMAL": str(self.formal),
+            },
+        )
+
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("不明路徑保留於", result.stderr)
+        self.assertTrue((self.formal / "舊板目錄/舊版本.txt").is_file())
+        retained = list(self.root.glob(".formal.failed-rollback-*"))
+        self.assertEqual(len(retained), 1)
+        self.assertEqual(
+            (retained[0] / "不明資料.txt").read_text(encoding="utf-8"),
+            "不得刪除\n",
+        )
+        self.assertEqual(list(self.root.glob(".formal.previous-*")), [])
+        self.assertEqual(list(self.root.glob(".formal.staging-*")), [])
+
     def test_parent_directory_lock_blocks_a_second_transaction(self) -> None:
         descriptor = os.open(self.root, os.O_RDONLY)
         try:
@@ -260,6 +343,307 @@ class BananaPiCandidatePromotionTests(unittest.TestCase):
         result = self.run_tool()
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("殘留交易目錄", result.stderr)
+
+    def test_formal_root_symlink_is_rejected_before_realpath_resolution(self) -> None:
+        real_formal = self.root / "正式目錄實體"
+        self.formal.rename(real_formal)
+        self.formal.symlink_to(real_formal, target_is_directory=True)
+
+        result = self.run_tool()
+
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("正式發布根目錄不得為符號連結", result.stderr)
+        self.assertTrue((real_formal / "舊板目錄/舊版本.txt").is_file())
+
+    def test_exact_unlocked_compat_lock_is_allowed_and_locked_one_is_rejected(
+        self,
+    ) -> None:
+        build_lock = self.candidate / ".latest-rebuild.lock"
+        build_lock.touch()
+        result = self.run_tool()
+        self.assertEqual(result.returncode, 0, result.stderr)
+
+        with build_lock.open("r+", encoding="utf-8") as stream:
+            fcntl.flock(stream, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            result = self.run_tool()
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("仍有建置器持有根內相容鎖", result.stderr)
+
+    def test_exact_formal_build_lock_is_archived_only_when_unlocked(self) -> None:
+        build_lock = self.formal / ".latest-rebuild.lock"
+        build_lock.touch()
+        old_lock_inode = build_lock.stat().st_ino
+        result = self.run_tool("--execute")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertTrue((self.formal / ".latest-rebuild.lock").is_file())
+        self.assertEqual(
+            (self.formal / ".latest-rebuild.lock").stat().st_ino, old_lock_inode
+        )
+        previous = list(self.root.glob(".formal.previous-*"))
+        self.assertEqual(len(previous), 1)
+        self.assertTrue((previous[0] / ".latest-rebuild.lock").is_file())
+        self.assertEqual(
+            (previous[0] / ".latest-rebuild.lock").stat().st_ino, old_lock_inode
+        )
+
+        # 重新建立測試現場，確認被占用的正式建置鎖會阻擋交易。
+        current_lock = self.formal / ".latest-rebuild.lock"
+        current_lock.touch()
+        with current_lock.open("r+", encoding="utf-8") as stream:
+            fcntl.flock(stream, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            result = self.run_tool()
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("正式發布仍有建置器持有根內相容鎖", result.stderr)
+
+    def test_missing_fixed_locks_are_created_outside_release_roots(self) -> None:
+        candidate_lock = self.fixed_lock_path(self.candidate)
+        formal_lock = self.fixed_lock_path(self.formal)
+        candidate_before = self.candidate_snapshot()
+
+        self.assertFalse(candidate_lock.exists())
+        self.assertFalse(formal_lock.exists())
+        result = self.run_tool()
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertTrue(candidate_lock.is_file())
+        self.assertTrue(formal_lock.is_file())
+        self.assertEqual(self.candidate_snapshot(), candidate_before)
+        self.assertFalse((self.candidate / ".latest-rebuild.lock").exists())
+        self.assertFalse((self.formal / ".latest-rebuild.lock").exists())
+
+    def test_fixed_candidate_and_formal_lock_conflicts_are_rejected(self) -> None:
+        cases = (
+            (self.fixed_lock_path(self.candidate), "候選發布固定鎖"),
+            (self.fixed_lock_path(self.formal), "正式發布固定鎖"),
+        )
+        for lock_path, message in cases:
+            with self.subTest(lock_path=lock_path):
+                lock_path.touch(exist_ok=True)
+                with lock_path.open("r+", encoding="utf-8") as stream:
+                    fcntl.flock(stream, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                    result = self.run_tool()
+                self.assertNotEqual(result.returncode, 0)
+                self.assertIn(message, result.stderr)
+
+    def test_fixed_lock_symlink_is_rejected_before_opening_target(self) -> None:
+        target = self.root / "固定鎖目標"
+        target.write_text("不得變更\n", encoding="utf-8")
+        self.fixed_lock_path(self.candidate).symlink_to(target)
+
+        result = self.run_tool()
+
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("固定鎖不得為符號連結", result.stderr)
+        self.assertEqual(target.read_text(encoding="utf-8"), "不得變更\n")
+
+    def test_inherited_fixed_lock_fds_are_verified_and_reused(self) -> None:
+        candidate_lock = self.fixed_lock_path(self.candidate)
+        formal_lock = self.fixed_lock_path(self.formal)
+        candidate_fd = os.open(candidate_lock, os.O_RDWR | os.O_CREAT, 0o600)
+        formal_fd = os.open(formal_lock, os.O_RDWR | os.O_CREAT, 0o600)
+        try:
+            fcntl.flock(candidate_fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            fcntl.flock(formal_fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            result = self.run_tool(
+                env={
+                    "BANANAPI_CANDIDATE_BUILD_LOCK_FD": str(candidate_fd),
+                    "BANANAPI_FORMAL_BUILD_LOCK_FD": str(formal_fd),
+                },
+                pass_fds=(candidate_fd, formal_fd),
+            )
+        finally:
+            os.close(candidate_fd)
+            os.close(formal_fd)
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_inherited_fixed_lock_fd_rejects_invalid_number_and_wrong_path(
+        self,
+    ) -> None:
+        result = self.run_tool(
+            env={"BANANAPI_CANDIDATE_BUILD_LOCK_FD": "不是數字"}
+        )
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("鎖 FD 必須是數字", result.stderr)
+
+        result = self.run_tool(
+            env={"BANANAPI_CANDIDATE_BUILD_LOCK_FD": "999999"}
+        )
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("鎖 FD 未開啟", result.stderr)
+
+        wrong_lock = self.root / ".錯誤.build.lock"
+        wrong_fd = os.open(wrong_lock, os.O_RDWR | os.O_CREAT, 0o600)
+        try:
+            result = self.run_tool(
+                env={"BANANAPI_CANDIDATE_BUILD_LOCK_FD": str(wrong_fd)},
+                pass_fds=(wrong_fd,),
+            )
+        finally:
+            os.close(wrong_fd)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("鎖 FD 路徑不符", result.stderr)
+
+    def test_read_only_root_compatibility_locks_are_supported(self) -> None:
+        candidate_lock = self.candidate / ".latest-rebuild.lock"
+        formal_lock = self.formal / ".latest-rebuild.lock"
+        candidate_lock.touch(mode=0o444)
+        formal_lock.touch(mode=0o444)
+        candidate_lock.chmod(0o444)
+        formal_lock.chmod(0o444)
+
+        result = self.run_tool()
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_root_compatibility_lock_symlink_is_rejected_before_opening_target(
+        self,
+    ) -> None:
+        target = self.root / "相容鎖目標"
+        target.write_text("不得變更\n", encoding="utf-8")
+        (self.candidate / ".latest-rebuild.lock").symlink_to(target)
+
+        result = self.run_tool()
+
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("根內相容鎖不得為符號連結", result.stderr)
+        self.assertEqual(target.read_text(encoding="utf-8"), "不得變更\n")
+
+    def test_fixed_locks_remain_held_during_formal_directory_switch(self) -> None:
+        fake_bin = self.root / "fake-paused-mv-bin"
+        fake_bin.mkdir()
+        counter = self.root / "paused-mv-count"
+        old_moved = self.root / "old-moved"
+        resume = self.root / "resume"
+        real_mv = shutil.which("mv")
+        self.assertIsNotNone(real_mv)
+        wrapper = fake_bin / "mv"
+        wrapper.write_text(
+            "#!/usr/bin/env bash\n"
+            "count=0\n"
+            "[[ ! -f \"$TEST_COUNTER\" ]] || count=$(<\"$TEST_COUNTER\")\n"
+            "count=$((count + 1))\n"
+            "printf '%s\\n' \"$count\" >\"$TEST_COUNTER\"\n"
+            "if [[ \"$count\" == 2 ]]; then\n"
+            "  : >\"$TEST_OLD_MOVED\"\n"
+            "  while [[ ! -e \"$TEST_RESUME\" ]]; do sleep 0.01; done\n"
+            "fi\n"
+            f"exec {real_mv} \"$@\"\n",
+            encoding="utf-8",
+        )
+        wrapper.chmod(0o755)
+        env = {
+            **os.environ,
+            "PATH": f"{fake_bin}:{os.environ['PATH']}",
+            "TEST_COUNTER": str(counter),
+            "TEST_OLD_MOVED": str(old_moved),
+            "TEST_RESUME": str(resume),
+        }
+        process = subprocess.Popen(
+            self.tool_command("--execute"),
+            cwd=ROOT,
+            env=env,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+        try:
+            self.wait_for_path(old_moved, process)
+            self.assertFalse(self.formal.exists())
+            for lock_path in (
+                self.fixed_lock_path(self.candidate),
+                self.fixed_lock_path(self.formal),
+            ):
+                descriptor = os.open(lock_path, os.O_RDWR)
+                try:
+                    with self.assertRaises(BlockingIOError):
+                        fcntl.flock(descriptor, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                finally:
+                    os.close(descriptor)
+        finally:
+            resume.touch()
+        stdout, stderr = process.communicate(timeout=10)
+        self.assertEqual(process.returncode, 0, f"{stdout}\n{stderr}")
+        self.assertTrue(self.formal.is_dir())
+
+    def test_sigkill_during_staging_creation_leaves_predeclared_journal(self) -> None:
+        fake_bin = self.root / "fake-killing-mkdir-bin"
+        fake_bin.mkdir()
+        marker = self.root / "提升交易.tsv"
+        real_mkdir = shutil.which("mkdir")
+        self.assertIsNotNone(real_mkdir)
+        wrapper = fake_bin / "mkdir"
+        wrapper.write_text(
+            "#!/usr/bin/env bash\n"
+            "set -euo pipefail\n"
+            f'"{real_mkdir}" "$@"\n'
+            'last="${@: -1}"\n'
+            'if [[ "$last" == "$TEST_PARENT/.formal.staging-"* ]]; then\n'
+            '  kill -KILL "$PPID"\n'
+            "  sleep 1\n"
+            "fi\n",
+            encoding="utf-8",
+        )
+        wrapper.chmod(0o755)
+
+        result = self.run_tool(
+            "--execute",
+            env={
+                "PATH": f"{fake_bin}:{os.environ['PATH']}",
+                "TEST_PARENT": str(self.root),
+                "BANANAPI_PROMOTION_COMMIT_MARKER": str(marker),
+            },
+        )
+
+        self.assertEqual(result.returncode, -9, result.stderr)
+        self.assertIn("狀態\t準備", marker.read_text(encoding="utf-8"))
+        self.assertEqual(len(list(self.root.glob(".formal.staging-*"))), 1)
+        self.assertTrue((self.formal / "舊板目錄/舊版本.txt").is_file())
+
+    def test_failed_promoted_rollback_retains_journal_for_parent_recovery(
+        self,
+    ) -> None:
+        fake_bin = self.root / "fake-rollback-failure-bin"
+        fake_bin.mkdir()
+        marker = self.root / "提升交易.tsv"
+        real_mv = shutil.which("mv")
+        self.assertIsNotNone(real_mv)
+        wrapper = fake_bin / "mv"
+        wrapper.write_text(
+            "#!/usr/bin/env bash\n"
+            "set -euo pipefail\n"
+            'source_path="${@: -2:1}"\n'
+            'target_path="${@: -1}"\n'
+            'if [[ "$source_path" == "$TEST_PARENT/.formal.staging-"* &&\n'
+            '    "$target_path" == "$TEST_FORMAL" ]]; then\n'
+            f'  "{real_mv}" "$@"\n'
+            '  rm -f -- "$TEST_FORMAL/.latest-rebuild.lock"\n'
+            "  exit 0\n"
+            "fi\n"
+            'if [[ "$source_path" == "$TEST_FORMAL" &&\n'
+            '    "$target_path" == "$TEST_PARENT/.formal.failed-rollback-"* ]]; then\n'
+            "  exit 73\n"
+            "fi\n"
+            f'exec "{real_mv}" "$@"\n',
+            encoding="utf-8",
+        )
+        wrapper.chmod(0o755)
+
+        result = self.run_tool(
+            "--execute",
+            env={
+                "PATH": f"{fake_bin}:{os.environ['PATH']}",
+                "TEST_PARENT": str(self.root),
+                "TEST_FORMAL": str(self.formal),
+                "BANANAPI_PROMOTION_COMMIT_MARKER": str(marker),
+            },
+        )
+
+        self.assertEqual(result.returncode, 94, result.stderr)
+        self.assertIn("保留交易日誌供父程序復原", result.stderr)
+        self.assertIn("狀態\t已備份", marker.read_text(encoding="utf-8"))
+        self.assertEqual(len(list(self.root.glob(".formal.previous-*"))), 1)
+        self.assertTrue((self.formal / "bpi-demo-a").is_dir())
 
     def test_optional_audit_output_is_a_strict_additional_gate(self) -> None:
         self.audit.mkdir()

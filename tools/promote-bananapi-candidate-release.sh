@@ -15,6 +15,15 @@ STAGING_PATH=""
 PREVIOUS_PATH=""
 TRANSACTION_PHASE="none"
 LOCK_FD=""
+CANDIDATE_BUILD_LOCK_FD=""
+FORMAL_BUILD_LOCK_FD=""
+CANDIDATE_COMPAT_LOCK_FD=""
+FORMAL_COMPAT_LOCK_FD=""
+CANDIDATE_BUILD_LOCK_PATH=""
+FORMAL_BUILD_LOCK_PATH=""
+ACQUIRED_BUILD_LOCK_FD=""
+PROMOTION_COMMIT_MARKER="${BANANAPI_PROMOTION_COMMIT_MARKER:-}"
+PROMOTION_STAGING_PATH=""
 
 declare -a MATRIX_FOLDERS=()
 declare -A MATRIX_BOARDS=()
@@ -102,6 +111,8 @@ canonicalize_inputs() {
 		die "候選發布目錄不存在：${CANDIDATE_RELEASE}"
 	[[ ! -L "${CANDIDATE_RELEASE}" ]] ||
 		die "候選發布根目錄不得為符號連結：${CANDIDATE_RELEASE}"
+	[[ ! -L "${FORMAL_RELEASE}" ]] ||
+		die "正式發布根目錄不得為符號連結：${FORMAL_RELEASE}"
 	[[ -f "${MATRIX_FILE}" ]] || die "矩陣檔不存在：${MATRIX_FILE}"
 	[[ ! -L "${MATRIX_FILE}" ]] || die "矩陣檔不得為符號連結：${MATRIX_FILE}"
 
@@ -126,6 +137,13 @@ canonicalize_inputs() {
 			die "稽核輸出目錄不得為符號連結：${AUDIT_OUTPUT}"
 		AUDIT_OUTPUT="$(realpath -e -- "${AUDIT_OUTPUT}")"
 	fi
+	if [[ -n "${PROMOTION_COMMIT_MARKER}" ]]; then
+		PROMOTION_COMMIT_MARKER="$(realpath -m -- "${PROMOTION_COMMIT_MARKER}")"
+		[[ -d "$(dirname -- "${PROMOTION_COMMIT_MARKER}")" ]] ||
+			die "提升提交標記父目錄不存在：${PROMOTION_COMMIT_MARKER}"
+		[[ ! -e "${PROMOTION_COMMIT_MARKER}" && ! -L "${PROMOTION_COMMIT_MARKER}" ]] ||
+			die "提升提交標記已存在，拒絕覆寫：${PROMOTION_COMMIT_MARKER}"
+	fi
 
 	case "${FORMAL_RELEASE}/" in
 	"${CANDIDATE_RELEASE}/"*)
@@ -146,18 +164,133 @@ acquire_lock() {
 		die "另一個發布提升交易正鎖定正式發布父目錄：${FORMAL_PARENT}"
 }
 
+fixed_build_lock_path() {
+	local root="$1"
+	printf '%s/.%s.build.lock\n' "$(dirname -- "${root}")" "$(basename -- "${root}")"
+}
+
+validate_lock_fd_path() {
+	local label="$1"
+	local fd="$2"
+	local expected_path="$3"
+	local proc_path="/proc/self/fd/${fd}"
+	local actual_path
+
+	[[ "${fd}" =~ ^[0-9]+$ ]] || die "${label}鎖 FD 必須是數字：${fd}"
+	[[ -e "${proc_path}" ]] || die "${label}鎖 FD 未開啟：${fd}"
+	actual_path="$(readlink -- "${proc_path}")" || die "無法讀取${label}鎖 FD 路徑：${fd}"
+	[[ "${actual_path}" == "${expected_path}" ]] ||
+		die "${label}鎖 FD 路徑不符：預期 ${expected_path}，實際 ${actual_path}"
+	[[ -f "${expected_path}" && ! -L "${expected_path}" ]] ||
+		die "${label}鎖必須是實體一般檔案：${expected_path}"
+	[[ "${expected_path}" -ef "${proc_path}" ]] ||
+		die "${label}鎖 FD 與鎖檔已不是同一 inode：${expected_path}"
+}
+
+acquire_fixed_build_lock() {
+	local label="$1"
+	local expected_path="$2"
+	local inherited_name="$3"
+	local inherited_fd="${!inherited_name:-}"
+	local fd
+
+	[[ ! -L "${expected_path}" ]] ||
+		die "${label}固定鎖不得為符號連結：${expected_path}"
+	[[ ! -e "${expected_path}" || -f "${expected_path}" ]] ||
+		die "${label}固定鎖必須是實體一般檔案：${expected_path}"
+	if [[ -n "${inherited_fd}" ]]; then
+		fd="${inherited_fd}"
+		validate_lock_fd_path "${label}" "${fd}" "${expected_path}"
+	else
+		exec {fd}<>"${expected_path}" || die "無法開啟${label}固定鎖：${expected_path}"
+		validate_lock_fd_path "${label}" "${fd}" "${expected_path}"
+	fi
+	flock -n "${fd}" || die "${label}固定鎖正由其他程序持有：${expected_path}"
+	ACQUIRED_BUILD_LOCK_FD="${fd}"
+}
+
+acquire_compatibility_lock() {
+	local label="$1"
+	local root="$2"
+	local inherited_name="$3"
+	local create_missing="$4"
+	local path="${root}/.latest-rebuild.lock"
+	local inherited_fd="${!inherited_name:-}"
+	local fd
+
+	ACQUIRED_BUILD_LOCK_FD=""
+	[[ ! -L "${path}" ]] || die "${label}根內相容鎖不得為符號連結：${path}"
+	if [[ ! -e "${path}" && ! -L "${path}" && "${create_missing}" != "yes" ]]; then
+		return 0
+	fi
+	[[ ! -e "${path}" || -f "${path}" ]] ||
+		die "${label}根內相容鎖必須是實體一般檔案：${path}"
+	if [[ -n "${inherited_fd}" ]]; then
+		fd="${inherited_fd}"
+		validate_lock_fd_path "${label}根內相容" "${fd}" "${path}"
+	elif [[ -e "${path}" ]]; then
+		exec {fd}<"${path}" || die "無法唯讀開啟${label}根內相容鎖：${path}"
+		validate_lock_fd_path "${label}根內相容" "${fd}" "${path}"
+	else
+		exec {fd}<>"${path}" || die "無法開啟${label}根內相容鎖：${path}"
+		validate_lock_fd_path "${label}根內相容" "${fd}" "${path}"
+	fi
+	flock -n "${fd}" || die "${label}仍有建置器持有根內相容鎖：${path}"
+	ACQUIRED_BUILD_LOCK_FD="${fd}"
+}
+
+acquire_build_locks() {
+	CANDIDATE_BUILD_LOCK_PATH="$(fixed_build_lock_path "${CANDIDATE_RELEASE}")"
+	FORMAL_BUILD_LOCK_PATH="$(fixed_build_lock_path "${FORMAL_RELEASE}")"
+
+	acquire_fixed_build_lock "候選發布" "${CANDIDATE_BUILD_LOCK_PATH}" \
+		BANANAPI_CANDIDATE_BUILD_LOCK_FD
+	CANDIDATE_BUILD_LOCK_FD="${ACQUIRED_BUILD_LOCK_FD}"
+	acquire_fixed_build_lock "正式發布" "${FORMAL_BUILD_LOCK_PATH}" \
+		BANANAPI_FORMAL_BUILD_LOCK_FD
+	FORMAL_BUILD_LOCK_FD="${ACQUIRED_BUILD_LOCK_FD}"
+
+	acquire_compatibility_lock "候選發布" "${CANDIDATE_RELEASE}" \
+		BANANAPI_CANDIDATE_COMPAT_LOCK_FD "${EXECUTE}"
+	CANDIDATE_COMPAT_LOCK_FD="${ACQUIRED_BUILD_LOCK_FD}"
+	if [[ -d "${FORMAL_RELEASE}" && ! -L "${FORMAL_RELEASE}" ]]; then
+		acquire_compatibility_lock "正式發布" "${FORMAL_RELEASE}" \
+			BANANAPI_FORMAL_COMPAT_LOCK_FD "${EXECUTE}"
+		FORMAL_COMPAT_LOCK_FD="${ACQUIRED_BUILD_LOCK_FD}"
+	fi
+}
+
+validate_held_build_locks() {
+	validate_lock_fd_path "候選發布" "${CANDIDATE_BUILD_LOCK_FD}" \
+		"${CANDIDATE_BUILD_LOCK_PATH}"
+	validate_lock_fd_path "正式發布" "${FORMAL_BUILD_LOCK_FD}" \
+		"${FORMAL_BUILD_LOCK_PATH}"
+	flock -n "${CANDIDATE_BUILD_LOCK_FD}" ||
+		die "候選發布固定鎖在交易前遺失：${CANDIDATE_BUILD_LOCK_PATH}"
+	flock -n "${FORMAL_BUILD_LOCK_FD}" ||
+		die "正式發布固定鎖在交易前遺失：${FORMAL_BUILD_LOCK_PATH}"
+	if [[ -n "${CANDIDATE_COMPAT_LOCK_FD}" ]]; then
+		flock -n "${CANDIDATE_COMPAT_LOCK_FD}" ||
+			die "候選發布根內相容鎖在交易前遺失"
+	fi
+	if [[ -n "${FORMAL_COMPAT_LOCK_FD}" ]]; then
+		flock -n "${FORMAL_COMPAT_LOCK_FD}" ||
+			die "正式發布根內相容鎖在交易前遺失"
+	fi
+}
+
 read_matrix() {
-	local header line_number=1 folder board branch releases extra release
+	local header line_number=1 folder board branch releases extra release matrix_fd
 	local -a release_list=()
 	local -A release_seen=()
 
-	exec 3<"${MATRIX_FILE}"
-	IFS= read -r header <&3 || die "矩陣檔為空：${MATRIX_FILE}"
+	exec {matrix_fd}<"${MATRIX_FILE}"
+	IFS= read -r header <&"${matrix_fd}" || die "矩陣檔為空：${MATRIX_FILE}"
 	header="${header%$'\r'}"
 	[[ "${header}" == $'folder\tboard\tbranch\treleases' ]] ||
 		die "矩陣欄位錯誤，必須依序為 folder、board、branch、releases：${MATRIX_FILE}"
 
-	while IFS=$'\t' read -r folder board branch releases extra <&3 ||
+	while IFS=$'\t' read -r folder board branch releases extra ||
 		[[ -n "${folder}${board}${branch}${releases}${extra}" ]]; do
 		((line_number += 1))
 		releases="${releases%$'\r'}"
@@ -194,8 +327,8 @@ read_matrix() {
 		MATRIX_FOLDER_SET["${folder}"]=1
 		MATRIX_BOARD_SET["${board}"]=1
 		((EXPECTED_IMAGE_TOTAL += ${#release_list[@]} * 2))
-	done
-	exec 3<&-
+	done <&"${matrix_fd}"
+	exec {matrix_fd}<&-
 
 	((${#MATRIX_FOLDERS[@]} > 0)) || die "矩陣沒有任何板卡資料：${MATRIX_FILE}"
 }
@@ -221,6 +354,9 @@ validate_candidate_root() {
 	while IFS= read -r -d '' entry; do
 		name="${entry##*/}"
 		if [[ -f "${entry}" && ! -L "${entry}" ]]; then
+			if [[ "${name}" == ".latest-rebuild.lock" ]]; then
+				continue
+			fi
 			die "候選發布根目錄不得含一般檔案：${entry}"
 		fi
 		[[ -d "${entry}" && ! -L "${entry}" ]] ||
@@ -248,6 +384,9 @@ validate_formal_root() {
 		while IFS= read -r -d '' entry; do
 			name="${entry##*/}"
 			if [[ -f "${entry}" && ! -L "${entry}" ]]; then
+				if [[ "${name}" == ".latest-rebuild.lock" ]]; then
+					continue
+				fi
 				die "正式發布根目錄不得含一般檔案：${entry}"
 			fi
 			[[ -d "${entry}" && ! -L "${entry}" ]] ||
@@ -428,11 +567,18 @@ validate_audit_output() {
 		$'板目錄\t映像數\t處置\t路徑'
 	validate_tsv_header "${AUDIT_OUTPUT}/候選交易殘留.tsv" \
 		$'候選來源\t類別\t板目錄\t項目\t檔案數\t大小bytes\t處置\t路徑'
-	for path in 待辦佇列.tsv 中止產物.tsv 舊暫存目錄.tsv 矩陣外項目.tsv 候選交易殘留.tsv; do
+	for path in 待辦佇列.tsv 中止產物.tsv 舊暫存目錄.tsv 候選交易殘留.tsv; do
 		rows="$(tsv_data_rows "${AUDIT_OUTPUT}/${path}")"
 		[[ "${rows}" == "0" ]] ||
 			die "稽核輸出仍有阻擋項目：${AUDIT_OUTPUT}/${path}，共 ${rows} 列"
 	done
+	if ! awk -F '\t' -v root="${FORMAL_RELEASE}/" '
+		NR == 1 { next }
+		NF != 4 || $1 == "" || $2 !~ /^[0-9]+$/ ||
+			$3 != "不屬於目前矩陣，先保留待封存" || index($4 "/", root) != 1 { exit 1 }
+	' "${AUDIT_OUTPUT}/矩陣外項目.tsv"; then
+		die "矩陣外項目不是提升後會隨舊正式版本封存的安全項目"
+	fi
 }
 
 validate_same_filesystem() {
@@ -463,48 +609,104 @@ preflight() {
 remove_generated_staging() {
 	local path="$1"
 	[[ -n "${path}" ]] || return 0
-	[[ "$(dirname -- "${path}")" == "${FORMAL_PARENT}" ]] ||
-		die "拒絕清理不在正式發布父目錄內的路徑：${path}"
+	if [[ "$(dirname -- "${path}")" != "${FORMAL_PARENT}" ]]; then
+		printf '錯誤：拒絕清理不在正式發布父目錄內的路徑：%s\n' "${path}" >&2
+		return 1
+	fi
 	case "$(basename -- "${path}")" in
 	".${FORMAL_NAME}.staging-"*) rm -rf -- "${path}" ;;
-	*) die "拒絕清理非本工具 staging 路徑：${path}" ;;
+	*)
+		printf '錯誤：拒絕清理非本工具 staging 路徑：%s\n' "${path}" >&2
+		return 1
+		;;
 	esac
 }
 
 rollback_transaction() {
 	local status="$1"
 	local failed_path
+	local recovery_complete="no"
 
 	trap - EXIT INT TERM HUP
 	if [[ "${EXECUTE}" == "yes" && "${TRANSACTION_PHASE}" == "promoted" ]]; then
 		failed_path="${FORMAL_PARENT}/.${FORMAL_NAME}.failed-rollback-$$"
-		if [[ -e "${FORMAL_RELEASE}" ]] && mv -T -- "${FORMAL_RELEASE}" "${failed_path}"; then
+		if [[ -d "${FORMAL_RELEASE}" && ! -L "${FORMAL_RELEASE}" ]] &&
+			mv -T -- "${FORMAL_RELEASE}" "${failed_path}"; then
 			if [[ -n "${PREVIOUS_PATH}" && -d "${PREVIOUS_PATH}" ]]; then
 				if mv -T -- "${PREVIOUS_PATH}" "${FORMAL_RELEASE}"; then
 					log "交易異常，已將舊正式版本復原：${FORMAL_RELEASE}" >&2
-					rm -rf -- "${failed_path}"
+					if ! rm -rf -- "${failed_path}"; then
+						printf '錯誤：舊正式版本已復原，但無法清理失敗候選：%s\n' \
+							"${failed_path}" >&2
+						status=94
+					fi
+					recovery_complete="yes"
 				else
 					printf '嚴重錯誤：無法復原舊正式版本；舊版本仍在 %s，新候選暫存在 %s\n' \
 						"${PREVIOUS_PATH}" "${failed_path}" >&2
 					status=90
 				fi
 			else
-				rm -rf -- "${failed_path}"
+				if ! rm -rf -- "${failed_path}"; then
+					printf '錯誤：原先沒有正式版本，但無法清理失敗候選：%s\n' \
+						"${failed_path}" >&2
+					status=94
+				fi
+				recovery_complete="yes"
 			fi
+		else
+			printf '嚴重錯誤：無法移走已提升的新正式版本；保留交易日誌供父程序復原：%s\n' \
+				"${FORMAL_RELEASE}" >&2
+			status=94
 		fi
 	elif [[ "${EXECUTE}" == "yes" && "${TRANSACTION_PHASE}" == "backed_up" ]]; then
-		if [[ ! -e "${FORMAL_RELEASE}" && -n "${PREVIOUS_PATH}" && -d "${PREVIOUS_PATH}" ]]; then
+		if [[ -e "${FORMAL_RELEASE}" || -L "${FORMAL_RELEASE}" ]]; then
+			failed_path="${FORMAL_PARENT}/.${FORMAL_NAME}.failed-rollback-$$"
+			if mv -T -- "${FORMAL_RELEASE}" "${failed_path}"; then
+				if [[ -n "${PREVIOUS_PATH}" && -d "${PREVIOUS_PATH}" ]] &&
+					mv -T -- "${PREVIOUS_PATH}" "${FORMAL_RELEASE}"; then
+					log "交易失敗，已復原舊正式版本；競態產生的不明路徑保留於：${failed_path}" >&2
+					recovery_complete="yes"
+				else
+					printf '嚴重錯誤：已保留不明正式路徑於 %s，但無法復原舊正式版本；舊版本仍在 %s\n' \
+						"${failed_path}" "${PREVIOUS_PATH}" >&2
+					status=92
+				fi
+			else
+				printf '嚴重錯誤：正式路徑遭其他程序建立，無法在不刪除內容的前提下復原；舊版本仍在 %s\n' \
+					"${PREVIOUS_PATH}" >&2
+				status=93
+			fi
+		elif [[ -n "${PREVIOUS_PATH}" && -d "${PREVIOUS_PATH}" ]]; then
 			if mv -T -- "${PREVIOUS_PATH}" "${FORMAL_RELEASE}"; then
 				log "交易失敗，已將舊正式版本復原：${FORMAL_RELEASE}" >&2
+				recovery_complete="yes"
 			else
 				printf '嚴重錯誤：交易失敗且無法復原；舊正式版本仍在 %s\n' "${PREVIOUS_PATH}" >&2
 				status=91
 			fi
+		else
+			printf '嚴重錯誤：交易失敗且 previous 目錄遺失：%s\n' "${PREVIOUS_PATH}" >&2
+			status=94
 		fi
+	elif [[ "${TRANSACTION_PHASE}" == "prepared" || "${TRANSACTION_PHASE}" == "none" ]]; then
+		recovery_complete="yes"
 	fi
 
-	if [[ -n "${STAGING_PATH}" && -e "${STAGING_PATH}" ]]; then
-		remove_generated_staging "${STAGING_PATH}"
+	if [[ "${recovery_complete}" == "yes" && -n "${STAGING_PATH}" &&
+		( -e "${STAGING_PATH}" || -L "${STAGING_PATH}" ) ]]; then
+		if ! remove_generated_staging "${STAGING_PATH}"; then
+			status=95
+			recovery_complete="no"
+		fi
+	fi
+	if [[ "${recovery_complete}" == "yes" && -n "${PROMOTION_COMMIT_MARKER}" &&
+		"${TRANSACTION_PHASE}" != "committed" ]]; then
+		if ! rm -f -- "${PROMOTION_COMMIT_MARKER}" "${PROMOTION_COMMIT_MARKER}.tmp.$$"; then
+			printf '嚴重錯誤：交易已復原，但無法移除交易日誌：%s\n' \
+				"${PROMOTION_COMMIT_MARKER}" >&2
+			status=95
+		fi
 	fi
 	exit "${status}"
 }
@@ -514,6 +716,19 @@ create_hardlink_staging() {
 	local linked_files=0
 
 	mkdir -- "${STAGING_PATH}"
+	if [[ -n "${FORMAL_COMPAT_LOCK_FD}" ]]; then
+		ln -- "${FORMAL_RELEASE}/.latest-rebuild.lock" \
+			"${STAGING_PATH}/.latest-rebuild.lock" ||
+			die "無法把正式根內相容鎖帶入新正式版本"
+		[[ "${FORMAL_RELEASE}/.latest-rebuild.lock" -ef \
+			"${STAGING_PATH}/.latest-rebuild.lock" ]] ||
+			die "新正式版本的根內相容鎖不是既有受鎖 inode"
+	else
+		exec {FORMAL_COMPAT_LOCK_FD}<>"${STAGING_PATH}/.latest-rebuild.lock" ||
+			die "無法建立新正式版本的根內相容鎖"
+		flock -n "${FORMAL_COMPAT_LOCK_FD}" ||
+			die "無法鎖定新正式版本的根內相容鎖"
+	fi
 	for folder in "${MATRIX_FOLDERS[@]}"; do
 		source_directory="${CANDIDATE_RELEASE}/${folder}"
 		target_directory="${STAGING_PATH}/${folder}"
@@ -530,21 +745,42 @@ create_hardlink_staging() {
 	log "已建立同檔案系統硬連結 staging：${STAGING_PATH}（${linked_files} 個檔案）"
 }
 
+write_promotion_transaction_marker() {
+	local phase="$1" temporary
+	[[ -n "${PROMOTION_COMMIT_MARKER}" ]] || return 0
+	temporary="${PROMOTION_COMMIT_MARKER}.tmp.$$"
+	{
+		printf '欄位\t值\n'
+		printf '狀態\t%s\n' "${phase}"
+		printf '正式路徑\t%s\n' "${FORMAL_RELEASE}"
+		printf 'previous\t%s\n' "${PREVIOUS_PATH:-無}"
+		printf 'staging\t%s\n' "${PROMOTION_STAGING_PATH:-無}"
+	} >"${temporary}" || die "無法寫入提升提交標記暫存檔：${temporary}"
+	mv -T -- "${temporary}" "${PROMOTION_COMMIT_MARKER}" ||
+		die "無法發布提升交易標記：${PROMOTION_COMMIT_MARKER}"
+}
+
 execute_transaction() {
 	local transaction_id
 
 	transaction_id="$(date -u '+%Y%m%dT%H%M%SZ')-$$"
 	STAGING_PATH="${FORMAL_PARENT}/.${FORMAL_NAME}.staging-${transaction_id}"
+	PROMOTION_STAGING_PATH="${STAGING_PATH}"
 	PREVIOUS_PATH="${FORMAL_PARENT}/.${FORMAL_NAME}.previous-${transaction_id}"
 	trap 'rollback_transaction $?' EXIT
 	trap 'exit 130' INT TERM HUP
 
+	write_promotion_transaction_marker "準備"
+	TRANSACTION_PHASE="prepared"
 	create_hardlink_staging
+	validate_held_build_locks
 	if [[ -e "${FORMAL_RELEASE}" ]]; then
 		if ! mv -T -- "${FORMAL_RELEASE}" "${PREVIOUS_PATH}"; then
 			die "無法把舊正式版本原子更名為 previous：${FORMAL_RELEASE} -> ${PREVIOUS_PATH}"
 		fi
 		TRANSACTION_PHASE="backed_up"
+		write_promotion_transaction_marker "已備份"
+		validate_held_build_locks
 	fi
 
 	if ! mv -T -- "${STAGING_PATH}" "${FORMAL_RELEASE}"; then
@@ -552,6 +788,11 @@ execute_transaction() {
 	fi
 	TRANSACTION_PHASE="promoted"
 	STAGING_PATH=""
+	[[ -f "${FORMAL_RELEASE}/.latest-rebuild.lock" &&
+		! -L "${FORMAL_RELEASE}/.latest-rebuild.lock" &&
+		"${FORMAL_RELEASE}/.latest-rebuild.lock" -ef "/proc/self/fd/${FORMAL_COMPAT_LOCK_FD}" ]] ||
+		die "新正式版本的根內相容鎖不是交易持有的 inode"
+	write_promotion_transaction_marker "已提交"
 	TRANSACTION_PHASE="committed"
 	trap - EXIT INT TERM HUP
 
@@ -567,13 +808,15 @@ execute_transaction() {
 main() {
 	local command_name
 
-	for command_name in awk basename date dirname find flock ln mapfile mkdir mv realpath rm sha256sum sort stat wc; do
+	for command_name in awk basename date dirname find flock ln mapfile mkdir mv readlink realpath rm sha256sum sort stat wc; do
 		require_command "${command_name}"
 	done
 	parse_args "$@"
 	canonicalize_inputs
 	acquire_lock
+	acquire_build_locks
 	preflight
+	validate_held_build_locks
 
 	if [[ "${EXECUTE}" != "yes" ]]; then
 		log "預演完成：未修改候選或正式發布內容。若要執行交易，請明確加入 --execute。"

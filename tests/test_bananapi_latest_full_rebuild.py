@@ -271,6 +271,227 @@ fi
         self.assertEqual(result.returncode, 73)
         self.assertIn("另一個受控 Armbian 建置", result.stderr)
 
+    def test_rebuild_fixed_lock_is_acquired_before_release_root_creation(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            release_root = root / "release"
+            fixed_lock = root / ".release.build.lock"
+            env = os.environ.copy()
+            env.update(
+                {
+                    "BPI_REBUILD_LIBRARY_ONLY": "yes",
+                    "RELEASE_ROOT": str(release_root),
+                }
+            )
+            result = subprocess.run(
+                [
+                    "bash",
+                    "-c",
+                    (
+                        f"source {SCRIPT!s}; "
+                        "test ! -e \"$RELEASE_ROOT\"; "
+                        "acquire_release_fixed_build_lock; "
+                        "test -f \"$release_build_lock_path\"; "
+                        "test ! -e \"$RELEASE_ROOT\"; "
+                        "mkdir \"$RELEASE_ROOT\"; "
+                        "acquire_release_compatibility_lock; "
+                        "test -f \"$RELEASE_ROOT/.latest-rebuild.lock\""
+                    ),
+                ],
+                cwd=ROOT,
+                env=env,
+                check=False,
+                text=True,
+                capture_output=True,
+            )
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertTrue(fixed_lock.is_file())
+
+    def test_rebuild_main_lock_order_is_fixed_root_then_compatibility(self) -> None:
+        script = SCRIPT.read_text(encoding="utf-8")
+        main = script[script.index("assert_clean_source\n") :]
+        fixed = main.index("acquire_release_fixed_build_lock")
+        create_root = main.index('mkdir -p "${release_root}"')
+        compatibility = main.index("acquire_release_compatibility_lock")
+
+        self.assertLess(fixed, create_root)
+        self.assertLess(create_root, compatibility)
+
+    def test_rebuild_rejects_fixed_release_lock_conflict(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            release_root = root / "release"
+            fixed_lock = root / ".release.build.lock"
+            fixed_lock.touch()
+            env = os.environ.copy()
+            env.update(
+                {
+                    "BPI_REBUILD_LIBRARY_ONLY": "yes",
+                    "RELEASE_ROOT": str(release_root),
+                }
+            )
+            with fixed_lock.open("r+", encoding="utf-8") as stream:
+                fcntl.flock(stream, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                result = subprocess.run(
+                    [
+                        "bash",
+                        "-c",
+                        f"source {SCRIPT!s}; acquire_release_fixed_build_lock",
+                    ],
+                    cwd=ROOT,
+                    env=env,
+                    check=False,
+                    text=True,
+                    capture_output=True,
+                )
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("重建或發布提升程序正在執行", result.stderr)
+            self.assertFalse(release_root.exists())
+
+    def test_rebuild_rejects_fixed_lock_symlink_before_opening_target(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            release_root = root / "release"
+            target = root / "固定鎖目標"
+            target.write_text("不得變更\n", encoding="utf-8")
+            (root / ".release.build.lock").symlink_to(target)
+            env = os.environ.copy()
+            env.update(
+                {
+                    "BPI_REBUILD_LIBRARY_ONLY": "yes",
+                    "RELEASE_ROOT": str(release_root),
+                }
+            )
+
+            result = subprocess.run(
+                [
+                    "bash",
+                    "-c",
+                    f"source {SCRIPT!s}; acquire_release_fixed_build_lock",
+                ],
+                cwd=ROOT,
+                env=env,
+                check=False,
+                text=True,
+                capture_output=True,
+            )
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("發布固定鎖不得為符號連結", result.stderr)
+            self.assertEqual(target.read_text(encoding="utf-8"), "不得變更\n")
+            self.assertFalse(release_root.exists())
+
+    def test_rebuild_retains_root_compatibility_lock_defence(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            release_root = root / "release"
+            release_root.mkdir()
+            compatibility_lock = release_root / ".latest-rebuild.lock"
+            compatibility_lock.touch()
+            env = os.environ.copy()
+            env.update(
+                {
+                    "BPI_REBUILD_LIBRARY_ONLY": "yes",
+                    "RELEASE_ROOT": str(release_root),
+                }
+            )
+            with compatibility_lock.open("r+", encoding="utf-8") as stream:
+                fcntl.flock(stream, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                result = subprocess.run(
+                    [
+                        "bash",
+                        "-c",
+                        (
+                            f"source {SCRIPT!s}; "
+                            "acquire_release_fixed_build_lock; "
+                            "acquire_release_compatibility_lock"
+                        ),
+                    ],
+                    cwd=ROOT,
+                    env=env,
+                    check=False,
+                    text=True,
+                    capture_output=True,
+                )
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("相容版最新矩陣重建", result.stderr)
+
+    def test_rebuild_rejects_root_compatibility_lock_symlink(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            release_root = root / "release"
+            release_root.mkdir()
+            target = root / "相容鎖目標"
+            target.write_text("不得變更\n", encoding="utf-8")
+            (release_root / ".latest-rebuild.lock").symlink_to(target)
+            env = os.environ.copy()
+            env.update(
+                {
+                    "BPI_REBUILD_LIBRARY_ONLY": "yes",
+                    "RELEASE_ROOT": str(release_root),
+                }
+            )
+
+            result = subprocess.run(
+                [
+                    "bash",
+                    "-c",
+                    (
+                        f"source {SCRIPT!s}; "
+                        "acquire_release_fixed_build_lock; "
+                        "acquire_release_compatibility_lock"
+                    ),
+                ],
+                cwd=ROOT,
+                env=env,
+                check=False,
+                text=True,
+                capture_output=True,
+            )
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("根內相容鎖不得為符號連結", result.stderr)
+            self.assertEqual(target.read_text(encoding="utf-8"), "不得變更\n")
+
+    def test_rebuild_rejects_symlink_and_non_directory_release_root(self) -> None:
+        for root_kind in ("符號連結", "一般檔案"):
+            with self.subTest(root_kind=root_kind), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                release_root = root / "release"
+                if root_kind == "符號連結":
+                    target = root / "實體目錄"
+                    target.mkdir()
+                    release_root.symlink_to(target, target_is_directory=True)
+                else:
+                    release_root.write_text("不得變更\n", encoding="utf-8")
+                env = os.environ.copy()
+                env.update(
+                    {
+                        "BPI_REBUILD_LIBRARY_ONLY": "yes",
+                        "RELEASE_ROOT": str(release_root),
+                    }
+                )
+
+                result = subprocess.run(
+                    ["bash", "-c", f"source {SCRIPT!s}"],
+                    cwd=ROOT,
+                    env=env,
+                    check=False,
+                    text=True,
+                    capture_output=True,
+                )
+
+                self.assertNotEqual(result.returncode, 0)
+                if root_kind == "符號連結":
+                    self.assertIn("發布根目錄不得為符號連結", result.stderr)
+                    self.assertEqual(list(target.iterdir()), [])
+                else:
+                    self.assertIn("必須是實體目錄", result.stderr)
+                    self.assertEqual(
+                        release_root.read_text(encoding="utf-8"), "不得變更\n"
+                    )
+                self.assertFalse((root / ".release.build.lock").exists())
+
     def test_script_contains_release_provenance_and_full_gate(self) -> None:
         script = SCRIPT.read_text(encoding="utf-8")
         extension = (ROOT / "extensions/bananapi-build-provenance.sh").read_text(

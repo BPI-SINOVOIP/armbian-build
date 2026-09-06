@@ -4,7 +4,8 @@ set -Eeuo pipefail
 repo_dir="${REPO_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
 repo_dir="$(readlink -f -- "${repo_dir}")"
 matrix_file="${MATRIX_FILE:-${repo_dir}/config/bananapi-latest-release-matrix.tsv}"
-release_root="${RELEASE_ROOT:-/media/pi/SMCI/bpi/google-drive-upload/2026/2026.08}"
+release_root_requested="${RELEASE_ROOT:-/media/pi/SMCI/bpi/google-drive-upload/2026/2026.08}"
+release_root="${release_root_requested}"
 source_commit="${SOURCE_COMMIT:-$(git -C "${repo_dir}" rev-parse HEAD)}"
 bsp_base_commit="${BSP_BASE_COMMIT:-8893355b34efc97a1e7677c6541beb177ec014e1}"
 source_short="${source_commit:0:12}"
@@ -26,6 +27,11 @@ container_image_id=""
 container_image_locked=""
 build_context_sha256=""
 expected_build_context_sha256="${EXPECTED_BUILD_CONTEXT_SHA256:-}"
+release_build_lock_fd=""
+release_compat_lock_fd=""
+release_parent=""
+release_name=""
+release_build_lock_path=""
 
 usage() {
 	cat <<'EOF'
@@ -92,7 +98,7 @@ if [[ -n "${selected_release}" || -n "${selected_profile}" ]]; then
 fi
 
 required_commands=(
-	awk basename cp date df docker find flock git grep head lsblk losetup mkdir
+	awk basename cp date df dirname docker find flock git grep head lsblk losetup mkdir
 	mktemp mount mountpoint mv partprobe readlink rmdir rm sed sha256sum sleep
 	sort stat sudo sync tee udevadm umount uname uuidgen wc xz
 )
@@ -102,6 +108,23 @@ for command in "${required_commands[@]}"; do
 		exit 1
 	}
 done
+
+[[ ! -L "${release_root_requested}" ]] || {
+	printf '發布根目錄不得為符號連結：%s\n' "${release_root_requested}" >&2
+	exit 1
+}
+[[ ! -e "${release_root_requested}" || -d "${release_root_requested}" ]] || {
+	printf '既有發布根路徑必須是實體目錄：%s\n' "${release_root_requested}" >&2
+	exit 1
+}
+release_root="$(readlink -m -- "${release_root}")"
+release_parent="$(dirname -- "${release_root}")"
+release_name="$(basename -- "${release_root}")"
+release_build_lock_path="${release_parent}/.${release_name}.build.lock"
+[[ "${release_root}" != "/" ]] || {
+	printf '發布根目錄不得為系統根目錄。\n' >&2
+	exit 2
+}
 
 [[ "${xz_threads}" =~ ^[0-9]+$ ]] || {
 	printf 'XZ_THREADS 必須是非負整數。\n' >&2
@@ -145,6 +168,88 @@ validate_matrix() {
 		END { if (NR < 2) exit 14 }
 	' "${matrix_file}" || {
 		printf '建置矩陣欄位、字元、分支或唯一性檢查失敗：%s\n' "${matrix_file}" >&2
+		return 1
+	}
+}
+
+validate_release_lock_fd_path() {
+	local fd="$1"
+	local expected_path="$2"
+	local label="$3"
+	local actual_path
+
+	actual_path="$(readlink -- "/proc/self/fd/${fd}")" || {
+		printf '無法讀取%s鎖 FD 路徑：%s\n' "${label}" "${fd}" >&2
+		return 1
+	}
+	[[ "${actual_path}" == "${expected_path}" ]] || {
+		printf '%s鎖 FD 路徑不符：預期 %s，實際 %s\n' \
+			"${label}" "${expected_path}" "${actual_path}" >&2
+		return 1
+	}
+	[[ -f "${expected_path}" && ! -L "${expected_path}" &&
+		"${expected_path}" -ef "/proc/self/fd/${fd}" ]] || {
+		printf '%s鎖不是預期的實體一般檔案：%s\n' "${label}" "${expected_path}" >&2
+		return 1
+	}
+}
+
+validate_release_root_path() {
+	[[ ! -L "${release_root}" ]] || {
+		printf '發布根目錄不得為符號連結：%s\n' "${release_root}" >&2
+		return 1
+	}
+	[[ ! -e "${release_root}" || -d "${release_root}" ]] || {
+		printf '既有發布根路徑必須是實體目錄：%s\n' "${release_root}" >&2
+		return 1
+	}
+}
+
+acquire_release_fixed_build_lock() {
+	[[ -d "${release_parent}" && ! -L "${release_parent}" ]] || {
+		printf '發布根目錄父目錄必須是實體目錄：%s\n' "${release_parent}" >&2
+		return 1
+	}
+	[[ ! -L "${release_build_lock_path}" ]] || {
+		printf '發布固定鎖不得為符號連結：%s\n' "${release_build_lock_path}" >&2
+		return 1
+	}
+	[[ ! -e "${release_build_lock_path}" || -f "${release_build_lock_path}" ]] || {
+		printf '發布固定鎖必須是實體一般檔案：%s\n' "${release_build_lock_path}" >&2
+		return 1
+	}
+	exec {release_build_lock_fd}<>"${release_build_lock_path}" || {
+		printf '無法開啟發布固定鎖：%s\n' "${release_build_lock_path}" >&2
+		return 1
+	}
+	validate_release_lock_fd_path "${release_build_lock_fd}" \
+		"${release_build_lock_path}" "發布固定" || return 1
+	flock -n "${release_build_lock_fd}" || {
+		printf '另一個最新矩陣重建或發布提升程序正在執行：%s\n' \
+			"${release_build_lock_path}" >&2
+		return 1
+	}
+}
+
+acquire_release_compatibility_lock() {
+	local path="${release_root}/.latest-rebuild.lock"
+
+	[[ ! -L "${path}" ]] || {
+		printf '發布根內相容鎖不得為符號連結：%s\n' "${path}" >&2
+		return 1
+	}
+	[[ ! -e "${path}" || -f "${path}" ]] || {
+		printf '發布根內相容鎖必須是實體一般檔案：%s\n' "${path}" >&2
+		return 1
+	}
+	exec {release_compat_lock_fd}<>"${path}" || {
+		printf '無法開啟發布根內相容鎖：%s\n' "${path}" >&2
+		return 1
+	}
+	validate_release_lock_fd_path "${release_compat_lock_fd}" "${path}" \
+		"發布根內相容" || return 1
+	flock -n "${release_compat_lock_fd}" || {
+		printf '另一個相容版最新矩陣重建或替換程序正在執行。\n' >&2
 		return 1
 	}
 }
@@ -1202,15 +1307,15 @@ fi
 assert_clean_source
 assert_pushed_source
 sudo -n true
-	mkdir -p "${release_root}" "${repo_dir}/output/images" "${state_root}/boards" \
+validate_release_root_path
+mkdir -p "${release_parent}"
+acquire_release_fixed_build_lock
+validate_release_root_path
+mkdir -p "${release_root}" "${repo_dir}/output/images" "${state_root}/boards" \
 		"${state_root}/items" "${state_root}/logs" "${state_root}/framework-logs" \
 		"${state_root}/markers" "${state_root}/raw-images" "${state_root}/raw-items" \
 		"${state_root}/runs" "${state_root}/transactions"
-exec 9> "${release_root}/.latest-rebuild.lock"
-flock -n 9 || {
-	printf '另一個最新矩陣重建或替換程序正在執行。\n' >&2
-	exit 1
-}
+acquire_release_compatibility_lock
 exec 8> "${repo_dir}/output/images/.armbian-build.lock"
 flock -n 8 || {
 	printf '另一個受控映像建置程序正在使用共用輸出目錄。\n' >&2
