@@ -333,7 +333,7 @@ class BananaPiMixedSourceFinalizerTests(unittest.TestCase):
         empty_staging = self.formal / ".staging-old"
         empty_staging.mkdir()
 
-        result = self.run_tool()
+        result = self.run_tool(VERIFICATION_WORKERS="4")
 
         self.assertEqual(result.returncode, 0, result.stderr)
         calls = self.call_log.read_text(encoding="utf-8").splitlines()
@@ -342,6 +342,7 @@ class BananaPiMixedSourceFinalizerTests(unittest.TestCase):
             ["政策", "說明", "候選稽核", "提升-預演", "提升-執行", "正式稽核"],
         )
         for line in (calls[2], calls[5]):
+            self.assertIn("--verification-workers 4", line)
             self.assertIn("--verify-digests", line)
             self.assertIn("--verify-xz", line)
             self.assertIn("--candidate-input-policy", line)
@@ -359,6 +360,14 @@ class BananaPiMixedSourceFinalizerTests(unittest.TestCase):
         previous = list(self.root.glob(".formal.previous-*"))
         self.assertEqual(len(previous), 1)
         self.assertIn(str(previous[0]), result.stdout)
+
+    def test_invalid_verification_worker_count_stops_before_writes(self) -> None:
+        for value in ("0", "17", "invalid", "1.5"):
+            with self.subTest(value=value):
+                result = self.run_tool(VERIFICATION_WORKERS=value)
+                self.assertNotEqual(result.returncode, 0)
+                self.assertIn("VERIFICATION_WORKERS", result.stderr)
+                self.assertFalse(self.call_log.exists())
 
     def test_matrix_and_tools_use_one_immutable_snapshot(self) -> None:
         result = self.run_tool(TEST_MUTATE_INPUTS="yes")

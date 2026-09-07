@@ -8,7 +8,10 @@ import csv
 import hashlib
 import re
 import subprocess
+from concurrent.futures import ThreadPoolExecutor
+from contextlib import nullcontext
 from dataclasses import dataclass
+from functools import partial
 from pathlib import Path
 
 
@@ -95,6 +98,16 @@ class CandidateInputPolicy:
     build_context: str
 
 
+def verification_workers(value: str) -> int:
+    try:
+        workers = int(value)
+    except ValueError as error:
+        raise argparse.ArgumentTypeError("驗證工作數必須是 1 到 16 的正整數") from error
+    if not 1 <= workers <= 16:
+        raise argparse.ArgumentTypeError("驗證工作數必須是 1 到 16 的正整數")
+    return workers
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="盤點既有 Banana Pi 映像，先建立帳本再決定是否建置。"
@@ -138,6 +151,13 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--verify-xz", action="store_true", help="重新執行全部 XZ 串流檢查"
+    )
+    parser.add_argument(
+        "--verification-workers",
+        type=verification_workers,
+        default=1,
+        metavar="工作數",
+        help="同板映像驗證工作數，範圍 1–16；預設 1，依序執行",
     )
     return parser.parse_args()
 
@@ -554,68 +574,81 @@ def main() -> int:
     raw_artifacts: dict[tuple[str, ItemKey], RawArtifact] = {}
     recognized_raw_markers: dict[Path, RawArtifact] = {}
     accepted_raw_markers: set[Path] = set()
-    for row in matrix:
-        keys = item_keys(row)
-        for key in keys:
-            artifact = find_formal_artifact(
-                args.formal_release,
-                key,
-                verify_digests=args.verify_digests,
-                verify_xz=args.verify_xz,
-            )
-            if artifact:
-                formal[key] = artifact
-        for source in candidates:
-            artifacts: dict[ItemKey, Artifact] = {}
-            for key in keys:
-                artifact_accepted = False
-                artifact = find_candidate_artifact(
-                    source,
-                    key,
+    with (
+        ThreadPoolExecutor(max_workers=args.verification_workers)
+        if args.verification_workers > 1
+        else nullcontext()
+    ) as executor:
+        # 依輸入順序取回結果與例外；所有帳本及原始映像狀態只由主執行緒更新。
+        map_artifacts = executor.map if executor is not None else map
+        for row in matrix:
+            keys = item_keys(row)
+            formal_results = map_artifacts(
+                partial(
+                    find_formal_artifact,
+                    args.formal_release,
                     verify_digests=args.verify_digests,
                     verify_xz=args.verify_xz,
-                )
+                ),
+                keys,
+            )
+            for key, artifact in zip(keys, formal_results):
                 if artifact:
-                    if not candidate_input_matches(
-                        row.folder,
-                        artifact.source_commit,
-                        artifact.build_context,
-                        input_policy,
-                        args.target_source_commit,
-                        args.target_build_context,
-                    ):
-                        artifact = None
-                    else:
-                        artifacts[key] = artifact
-                        candidate_artifacts[(source.name, key)] = artifact
-                        artifact_accepted = True
-                raw_artifact = find_candidate_raw_artifact(
-                    source,
-                    key,
-                    verify_digests=args.verify_digests,
+                    formal[key] = artifact
+            for source in candidates:
+                artifacts: dict[ItemKey, Artifact] = {}
+                candidate_results = map_artifacts(
+                    partial(
+                        find_candidate_artifact,
+                        source,
+                        verify_digests=args.verify_digests,
+                        verify_xz=args.verify_xz,
+                    ),
+                    keys,
                 )
-                if raw_artifact:
-                    recognized_raw_markers[raw_artifact.marker] = raw_artifact
-                    if not candidate_input_matches(
-                        row.folder,
-                        raw_artifact.source_commit,
-                        raw_artifact.build_context,
-                        input_policy,
-                        args.target_source_commit,
-                        args.target_build_context,
-                    ):
-                        continue
-                    accepted_raw_markers.add(raw_artifact.marker)
-                    if artifact_accepted:
-                        # 壓縮完成標記先落盤、原始標記再清除的短暫交疊是合法狀態。
-                        continue
-                    raw_artifacts[(source.name, key)] = raw_artifact
-            marker_valid, marker_issue = board_marker_status(
-                source, row, input_policy.get(row.folder) if input_policy else None
-            )
-            candidate_boards[(source.name, row.folder)] = CandidateBoard(
-                source, artifacts, marker_valid, marker_issue
-            )
+                for key, artifact in zip(keys, candidate_results):
+                    artifact_accepted = False
+                    if artifact:
+                        if not candidate_input_matches(
+                            row.folder,
+                            artifact.source_commit,
+                            artifact.build_context,
+                            input_policy,
+                            args.target_source_commit,
+                            args.target_build_context,
+                        ):
+                            artifact = None
+                        else:
+                            artifacts[key] = artifact
+                            candidate_artifacts[(source.name, key)] = artifact
+                            artifact_accepted = True
+                    raw_artifact = find_candidate_raw_artifact(
+                        source,
+                        key,
+                        verify_digests=args.verify_digests,
+                    )
+                    if raw_artifact:
+                        recognized_raw_markers[raw_artifact.marker] = raw_artifact
+                        if not candidate_input_matches(
+                            row.folder,
+                            raw_artifact.source_commit,
+                            raw_artifact.build_context,
+                            input_policy,
+                            args.target_source_commit,
+                            args.target_build_context,
+                        ):
+                            continue
+                        accepted_raw_markers.add(raw_artifact.marker)
+                        if artifact_accepted:
+                            # 壓縮完成標記先落盤、原始標記再清除的短暫交疊是合法狀態。
+                            continue
+                        raw_artifacts[(source.name, key)] = raw_artifact
+                marker_valid, marker_issue = board_marker_status(
+                    source, row, input_policy.get(row.folder) if input_policy else None
+                )
+                candidate_boards[(source.name, row.folder)] = CandidateBoard(
+                    source, artifacts, marker_valid, marker_issue
+                )
 
     ledger_rows: list[dict[str, str]] = []
     board_rows: list[dict[str, str]] = []

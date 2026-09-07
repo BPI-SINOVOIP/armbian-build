@@ -13,6 +13,7 @@ candidate_state=""
 formal_release=""
 formal_parent=""
 formal_name=""
+verification_workers="${VERIFICATION_WORKERS:-1}"
 
 output_final=""
 output_failed=""
@@ -819,6 +820,8 @@ main() {
 	local command tool run_id original_tool_repo original_matrix_file
 
 	(($# == 0)) || fail "本工具只接受環境變數，不接受命令列參數。"
+	[[ "${verification_workers}" =~ ^([1-9]|1[0-6])$ ]] ||
+		fail "VERIFICATION_WORKERS 必須為 1 至 16 的整數。"
 	for command in awk basename cat cmp cp date dirname find flock mapfile mkdir mktemp mv pgrep \
 		python3 realpath readlink rm rmdir sha256sum sort stat; do
 		require_command "${command}"
@@ -939,6 +942,7 @@ main() {
 		--candidate "整併候選|${candidate_release}|${candidate_state}" \
 		--candidate-input-policy "${candidate_policy}" \
 		--output-dir "${candidate_audit}" \
+		--verification-workers "${verification_workers}" \
 		--verify-digests \
 		--verify-xz
 	validate_complete_audit "${candidate_audit}" "${candidate_policy}" yes
@@ -972,6 +976,7 @@ main() {
 		--candidate "正式發布|${formal_release}|${candidate_state}" \
 		--candidate-input-policy "${candidate_policy}" \
 		--output-dir "${formal_audit}" \
+		--verification-workers "${verification_workers}" \
 		--verify-digests \
 		--verify-xz
 	validate_complete_audit "${formal_audit}" "${candidate_policy}" no

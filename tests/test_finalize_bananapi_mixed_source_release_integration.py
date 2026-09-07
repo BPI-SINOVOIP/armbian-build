@@ -174,6 +174,7 @@ class BananaPiMixedSourceFinalizerIntegrationTests(unittest.TestCase):
             parser.add_argument("--output-dir", type=Path, required=True)
             parser.add_argument("--verify-digests", action="store_true")
             parser.add_argument("--verify-xz", action="store_true")
+            parser.add_argument("--verification-workers", type=int, default=1)
             args = parser.parse_args()
 
             if not args.verify_digests or not args.verify_xz:

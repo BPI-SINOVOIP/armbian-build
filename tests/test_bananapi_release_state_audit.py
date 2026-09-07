@@ -3,15 +3,24 @@ from __future__ import annotations
 
 import csv
 import hashlib
+import importlib.util
 import lzma
 import subprocess
+import sys
 import tempfile
+import threading
 import unittest
 from pathlib import Path
+from unittest import mock
 
 
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = ROOT / "tools/audit-bananapi-release-state.py"
+SPEC = importlib.util.spec_from_file_location("bananapi_release_state_audit", SCRIPT)
+assert SPEC and SPEC.loader
+AUDIT = importlib.util.module_from_spec(SPEC)
+sys.modules[SPEC.name] = AUDIT
+SPEC.loader.exec_module(AUDIT)
 
 
 class BananaPiReleaseStateAuditTests(unittest.TestCase):
@@ -142,32 +151,283 @@ class BananaPiReleaseStateAuditTests(unittest.TestCase):
             encoding="utf-8",
         )
 
+    def audit_command(self, *extra: str) -> list[str]:
+        return [
+            "python3",
+            str(SCRIPT),
+            "--matrix",
+            str(self.matrix),
+            "--formal-release",
+            str(self.formal),
+            "--candidate",
+            f"測試候選|{self.candidate}|{self.state}",
+            "--output-dir",
+            str(self.output),
+            "--verify-digests",
+            "--verify-xz",
+            *extra,
+        ]
+
     def run_audit(self, *extra: str) -> subprocess.CompletedProcess[str]:
         return subprocess.run(
-            [
-                "python3",
-                str(SCRIPT),
-                "--matrix",
-                str(self.matrix),
-                "--formal-release",
-                str(self.formal),
-                "--candidate",
-                f"測試候選|{self.candidate}|{self.state}",
-                "--output-dir",
-                str(self.output),
-                "--verify-digests",
-                "--verify-xz",
-                *extra,
-            ],
+            self.audit_command(*extra),
             cwd=ROOT,
             text=True,
             capture_output=True,
             check=False,
+            timeout=30,
         )
+
+    def run_audit_in_process(self, *extra: str) -> int:
+        with (
+            mock.patch.object(sys, "argv", self.audit_command(*extra)[1:]),
+            mock.patch("builtins.print"),
+        ):
+            return AUDIT.main()
 
     def read_tsv(self, name: str) -> list[dict[str, str]]:
         with (self.output / name).open(encoding="utf-8", newline="") as stream:
             return list(csv.DictReader(stream, delimiter="\t"))
+
+    def test_verification_workers_default_and_limits(self) -> None:
+        for extra, expected in (
+            ((), 1),
+            (("--verification-workers", "1"), 1),
+            (("--verification-workers", "2"), 2),
+            (("--verification-workers", "4"), 4),
+            (("--verification-workers", "16"), 16),
+        ):
+            with self.subTest(extra=extra):
+                with mock.patch.object(sys, "argv", self.audit_command(*extra)[1:]):
+                    self.assertEqual(AUDIT.parse_args().verification_workers, expected)
+
+    def test_verification_workers_rejects_invalid_values(self) -> None:
+        for value in ("0", "-1", "17", "1.5", "文字", ""):
+            with self.subTest(value=value):
+                result = self.run_audit("--verification-workers", value)
+                self.assertEqual(result.returncode, 2, result.stderr)
+                self.assertIn("驗證工作數必須是 1 到 16 的正整數", result.stderr)
+                self.assertNotIn("盤點完成", result.stdout)
+                self.assertFalse(self.output.exists())
+
+    def test_default_and_one_worker_do_not_create_a_pool(self) -> None:
+        def on_main_thread(finder):
+            def checked(*args, **kwargs):
+                self.assertIs(threading.current_thread(), threading.main_thread())
+                return finder(*args, **kwargs)
+
+            return checked
+
+        for extra in ((), ("--verification-workers", "1")):
+            with self.subTest(extra=extra):
+                with (
+                    mock.patch.object(
+                        AUDIT, "ThreadPoolExecutor",
+                        side_effect=AssertionError("單工不得建立執行緒池"),
+                    ) as pool,
+                    mock.patch.object(
+                        AUDIT, "find_formal_artifact",
+                        side_effect=on_main_thread(AUDIT.find_formal_artifact),
+                    ) as formal,
+                    mock.patch.object(
+                        AUDIT, "find_candidate_artifact",
+                        side_effect=on_main_thread(AUDIT.find_candidate_artifact),
+                    ) as candidate,
+                    mock.patch.object(
+                        AUDIT, "find_candidate_raw_artifact",
+                        side_effect=on_main_thread(AUDIT.find_candidate_raw_artifact),
+                    ) as raw,
+                ):
+                    self.assertEqual(self.run_audit_in_process(*extra), 0)
+                    pool.assert_not_called()
+                    self.assertEqual(formal.call_count, 4)
+                    self.assertEqual(candidate.call_count, 4)
+                    self.assertEqual(raw.call_count, 4)
+
+    def test_two_workers_overlap_and_preserve_all_output_order(self) -> None:
+        self.matrix.write_text(
+            self.matrix.read_text(encoding="utf-8")
+            + "bpi-second\tbananapisecond\tcurrent\tbookworm,trixie\n",
+            encoding="utf-8",
+        )
+        for release in ("trixie", "bookworm"):
+            for profile in ("minimal", "xfce"):
+                self.create_archive(self.formal / "bpi-demo", release, profile)
+        self.create_candidate_item("trixie", "minimal")
+        self.create_candidate_item("bookworm", "minimal", build_context="c" * 64)
+        self.create_raw_item("trixie", "minimal")
+        self.create_raw_item("trixie", "xfce")
+        extra = ("--target-build-context", "b" * 64)
+        result = self.run_audit(*extra)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        baseline = {path.name: path.read_bytes() for path in self.output.iterdir()}
+        barrier = threading.Barrier(2, timeout=5)
+        lock = threading.Lock()
+        rows = AUDIT.read_matrix(self.matrix)
+        finished = {
+            (name, row.folder, release): threading.Event()
+            for name in ("formal", "candidate")
+            for row in rows
+            for release in row.releases
+        }
+        completed = []
+        active = 0
+        peak = 0
+
+        def concurrent_finder(name, finder):
+            def checked(source, key, **kwargs):
+                nonlocal active, peak
+                self.assertIsNot(threading.current_thread(), threading.main_thread())
+                self.assertEqual(kwargs, {"verify_digests": True, "verify_xz": True})
+                with lock:
+                    active += 1
+                    peak = max(peak, active)
+                try:
+                    # 同時進入兩項驗證，並強制後提交的項目先完成。
+                    barrier.wait()
+                    artifact = finder(source, key, **kwargs)
+                    event = finished[(name, key.folder, key.release)]
+                    if key.profile == "minimal":
+                        self.assertTrue(event.wait(5), "並行驗證未如期完成")
+                    with lock:
+                        completed.append((name, key))
+                    if key.profile == "xfce":
+                        event.set()
+                    return artifact
+                finally:
+                    with lock:
+                        active -= 1
+
+            return checked
+
+        def on_main_thread(function):
+            def checked(*args, **kwargs):
+                self.assertIs(threading.current_thread(), threading.main_thread())
+                return function(*args, **kwargs)
+
+            return checked
+
+        with (
+            mock.patch.object(
+                AUDIT, "ThreadPoolExecutor", wraps=AUDIT.ThreadPoolExecutor
+            ) as pool,
+            mock.patch.object(
+                AUDIT, "find_formal_artifact",
+                side_effect=concurrent_finder("formal", AUDIT.find_formal_artifact),
+            ),
+            mock.patch.object(
+                AUDIT, "find_candidate_artifact",
+                side_effect=concurrent_finder("candidate", AUDIT.find_candidate_artifact),
+            ),
+            mock.patch.object(
+                AUDIT, "find_candidate_raw_artifact",
+                side_effect=on_main_thread(AUDIT.find_candidate_raw_artifact),
+            ) as raw,
+            mock.patch.object(
+                AUDIT, "candidate_input_matches",
+                side_effect=on_main_thread(AUDIT.candidate_input_matches),
+            ),
+            mock.patch.object(
+                AUDIT, "board_marker_status",
+                side_effect=on_main_thread(AUDIT.board_marker_status),
+            ),
+            mock.patch.object(
+                AUDIT, "write_tsv", side_effect=on_main_thread(AUDIT.write_tsv),
+            ),
+        ):
+            self.assertEqual(
+                self.run_audit_in_process("--verification-workers", "2", *extra), 0
+            )
+            pool.assert_called_once_with(max_workers=2)
+            self.assertEqual(raw.call_count, 8)
+        self.assertEqual(peak, 2)
+        self.assertEqual(active, 0)
+        self.assertEqual(
+            completed,
+            [
+                (name, AUDIT.ItemKey(row.folder, row.board, row.branch, release, profile))
+                for row in rows
+                for name in ("formal", "candidate")
+                for release in row.releases
+                for profile in ("xfce", "minimal")
+            ],
+        )
+        self.assertEqual(
+            {path.name: path.read_bytes() for path in self.output.iterdir()}, baseline
+        )
+        for workers in ("2", "4"):
+            with self.subTest(workers=workers):
+                result = self.run_audit("--verification-workers", workers, *extra)
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertEqual(
+                    {path.name: path.read_bytes() for path in self.output.iterdir()},
+                    baseline,
+                )
+
+    def test_parallel_worker_exceptions_propagate_before_output(self) -> None:
+        for finder in ("find_formal_artifact", "find_candidate_artifact"):
+            with self.subTest(finder=finder):
+                with (
+                    mock.patch.object(
+                        AUDIT, finder, side_effect=RuntimeError("驗證工作失敗")
+                    ),
+                    mock.patch.object(AUDIT, "write_tsv") as write_tsv,
+                    self.assertRaisesRegex(RuntimeError, "驗證工作失敗"),
+                ):
+                    self.run_audit_in_process("--verification-workers", "2")
+                write_tsv.assert_not_called()
+                self.assertFalse(self.output.exists())
+
+    def test_parallel_sha_and_xz_failures_prevent_success(self) -> None:
+        for source in ("formal", "candidate"):
+            for verification in ("sha", "xz"):
+                with self.subTest(source=source, verification=verification):
+                    if source == "formal":
+                        archive = self.create_archive(
+                            self.formal / "bpi-demo", "trixie", "minimal"
+                        )
+                    else:
+                        self.create_candidate_item("trixie", "minimal")
+                        archive = next((self.candidate / "bpi-demo").glob("*.img.xz"))
+                    original = archive.read_bytes()
+                    original_digest = hashlib.sha256(original).hexdigest()
+                    archive.write_bytes("損壞的 XZ 串流".encode("utf-8"))
+                    if verification == "xz":
+                        digest = hashlib.sha256(archive.read_bytes()).hexdigest()
+                        Path(f"{archive}.sha").write_text(
+                            f"{digest}  {archive.name}\n", encoding="utf-8"
+                        )
+                        if source == "candidate":
+                            marker = self.state / "items" / "bpi-demo-trixie-minimal.complete"
+                            marker.write_text(
+                                marker.read_text(encoding="utf-8").replace(
+                                    f"sha256={original_digest}\n", f"sha256={digest}\n"
+                                ),
+                                encoding="utf-8",
+                            )
+                    result = self.run_audit("--verification-workers", "2")
+                    self.assertNotEqual(result.returncode, 0)
+                    self.assertIn(
+                        "映像 SHA-256 驗證失敗" if verification == "sha"
+                        else "CalledProcessError",
+                        result.stderr,
+                    )
+                    self.assertNotIn("盤點完成", result.stdout)
+                    self.assertFalse(self.output.exists())
+                    archive.write_bytes(original)
+                    Path(f"{archive}.sha").write_text(
+                        f"{original_digest}  {archive.name}\n", encoding="utf-8"
+                    )
+
+    def test_parallel_candidate_log_digest_failure_prevents_success(self) -> None:
+        self.create_candidate_item("trixie", "minimal")
+        log = self.state / "logs" / "bpi-demo-trixie-minimal.log"
+        log.write_text("遭修改的建置日誌\n", encoding="utf-8")
+        result = self.run_audit("--verification-workers", "2")
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("候選日誌 SHA-256 驗證失敗", result.stderr)
+        self.assertNotIn("盤點完成", result.stdout)
+        self.assertFalse(self.output.exists())
 
     def test_complete_formal_board_wins_over_partial_candidate(self) -> None:
         for release in ("trixie", "bookworm"):
