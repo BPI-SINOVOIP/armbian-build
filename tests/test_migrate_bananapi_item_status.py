@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
+import json
 import subprocess
 import tempfile
 import unittest
@@ -118,11 +119,16 @@ args.output.write_text(
         self.temporary.cleanup()
 
     def write_audit(
-        self, fail_full: bool = False, fail_structure: bool = False
+        self,
+        fail_full: bool = False,
+        fail_structure: bool = False,
+        report_fault: str = "",
+        fault_full: bool = True,
     ) -> None:
         self.audit.write_text(
             f"""#!/usr/bin/env python3
 import argparse
+import json
 from pathlib import Path
 
 parser = argparse.ArgumentParser()
@@ -133,8 +139,17 @@ parser.add_argument('--candidate-input-policy')
 parser.add_argument('--output-dir', type=Path)
 parser.add_argument('--verify-digests', action='store_true')
 parser.add_argument('--verify-xz', action='store_true')
+parser.add_argument('--verification-workers', type=int)
+parser.add_argument('--candidate-only', action='store_true')
 args = parser.parse_args()
 args.output_dir.mkdir()
+(args.output_dir / '稽核參數.json').write_text(
+    json.dumps(vars(args), default=str), encoding='utf-8'
+)
+(args.output_dir / '稽核前執行狀態.tsv').write_text(
+    (args.output_dir.parent / '執行狀態.tsv').read_text(encoding='utf-8'),
+    encoding='utf-8',
+)
 source = 'a' * 40
 context = 'b' * 64
 digest = {self.archive_digest!r}
@@ -174,6 +189,20 @@ xfce = 'bpi-test/bananapitest/current/trixie/xfce'
     '完整' if args.verify_digests and args.verify_xz else '結構',
     encoding='utf-8',
 )
+if {report_fault!r} and args.verify_xz == {fault_full!r}:
+    if {report_fault!r} == 'missing_item':
+        report = args.output_dir / '映像盤點.tsv'
+        rows = report.read_text(encoding='utf-8').splitlines()
+        report.write_text('\\n'.join(rows[:-1]) + '\\n', encoding='utf-8')
+    elif {report_fault!r} == 'invalid_header':
+        report = args.output_dir / '候選處置.tsv'
+        report.write_text(
+            report.read_text(encoding='utf-8').replace('SHA256', '錯誤欄位', 1),
+            encoding='utf-8',
+        )
+    elif {report_fault!r} == 'pending':
+        with (args.output_dir / '待辦佇列.tsv').open('a', encoding='utf-8') as stream:
+            stream.write('bpi-test\\tbananapitest\\tcurrent\\ttrixie\\tminimal\\t重建\\t測試待辦\\n')
 if {fail_full!r} and args.verify_xz:
     raise SystemExit(7)
 if {fail_structure!r} and not args.verify_xz:
@@ -183,7 +212,7 @@ if {fail_structure!r} and not args.verify_xz:
         )
 
     def run_migration(
-        self, allow_test_tools: bool = True
+        self, allow_test_tools: bool = True, extra_args: tuple[str, ...] = ()
     ) -> subprocess.CompletedProcess[str]:
         command = [
                 "python3",
@@ -209,6 +238,7 @@ if {fail_structure!r} and not args.verify_xz:
             ]
         if allow_test_tools:
             command.append("--allow-test-tools")
+        command.extend(extra_args)
         return subprocess.run(
             command,
             cwd=ROOT,
@@ -216,6 +246,65 @@ if {fail_structure!r} and not args.verify_xz:
             capture_output=True,
             check=False,
         )
+
+    def assert_audit_options(self, workers: int, candidate_only: bool) -> None:
+        scope = (
+            "僅候選；既有正式映像本體未驗證"
+            if candidate_only
+            else "候選與既有正式映像"
+        )
+        for name, full, status in (
+            ("完整性稽核", True, "驗證中"),
+            ("遷移後結構稽核", False, "準備遷移"),
+        ):
+            audit = self.output / name
+            arguments = json.loads((audit / "稽核參數.json").read_text(encoding="utf-8"))
+            self.assertEqual(arguments["verification_workers"], workers)
+            self.assertIs(arguments["candidate_only"], candidate_only)
+            self.assertIs(arguments["verify_digests"], full)
+            self.assertIs(arguments["verify_xz"], full)
+            self.assertEqual(
+                arguments["candidate"], f"整併候選|{self.release}|{self.state}"
+            )
+            self.assertTrue(arguments["candidate_input_policy"])
+            evidence = (audit / "稽核前執行狀態.tsv").read_text(encoding="utf-8")
+            self.assertIn(f"狀態\t{status}\n", evidence)
+            self.assertIn(f"驗證工作數\t{workers}\n", evidence)
+            self.assertIn(f"稽核範圍\t{scope}\n", evidence)
+        evidence = (self.output / "執行狀態.tsv").read_text(encoding="utf-8")
+        self.assertIn(f"驗證工作數\t{workers}\n", evidence)
+        self.assertIn(f"稽核範圍\t{scope}\n", evidence)
+
+    def test_verification_workers_rejects_invalid_values_before_writes(self) -> None:
+        for workers in ("0", "17", "-1", "1.5", "無效"):
+            with self.subTest(workers=workers):
+                result = self.run_migration(extra_args=("--verification-workers", workers))
+
+                self.assertEqual(result.returncode, 2)
+                self.assertIn("驗證工作數必須是 1 到 16 的正整數", result.stderr)
+                self.assertFalse(self.output.parent.exists())
+                self.assertFalse((self.state / ".incremental-queue.lock").exists())
+
+    def test_verification_workers_are_forwarded_to_both_audits(self) -> None:
+        for workers in (1, 8, 16):
+            with self.subTest(workers=workers):
+                self.output = self.state / "migrations" / f"workers-{workers}"
+                result = self.run_migration(
+                    extra_args=("--verification-workers", str(workers))
+                )
+
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assert_audit_options(workers, False)
+
+    def test_candidate_only_preserves_full_verification_and_scope(self) -> None:
+        result = self.run_migration(extra_args=("--candidate-only",))
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assert_audit_options(1, True)
+        for profile in ("minimal", "xfce"):
+            name = f"bpi-test-trixie-{profile}.complete"
+            self.assertIn("status=complete\n", (self.state / "items" / name).read_text())
+            self.assertNotIn("status=complete\n", (self.output / "原始標記" / name).read_text())
 
     def test_formal_mode_rejects_alternate_validation_tools(self) -> None:
         result = self.run_migration(allow_test_tools=False)
@@ -227,6 +316,7 @@ if {fail_structure!r} and not args.verify_xz:
         result = self.run_migration()
 
         self.assertEqual(result.returncode, 0, result.stderr)
+        self.assert_audit_options(1, False)
         self.assertEqual((self.output / "完整性稽核" / "模式.txt").read_text(), "完整")
         self.assertEqual(
             (self.output / "遷移後結構稽核" / "模式.txt").read_text(), "結構"
@@ -254,6 +344,90 @@ if {fail_structure!r} and not args.verify_xz:
         repeated = self.run_migration()
         self.assertNotEqual(repeated.returncode, 0)
         self.assertIn("拒絕未重新稽核即回報成功", repeated.stderr)
+
+    def test_candidate_only_audit_failures_preserve_markers_and_scope(self) -> None:
+        before = {
+            path: path.read_bytes()
+            for path in (self.state / "items").glob("*.complete")
+        }
+        for full in (True, False):
+            with self.subTest(full=full):
+                self.output = self.state / "migrations" / f"failure-{full}"
+                self.write_audit(fail_full=full, fail_structure=not full)
+                result = self.run_migration(
+                    extra_args=("--candidate-only", "--verification-workers", "16")
+                )
+
+                self.assertNotEqual(result.returncode, 0)
+                self.assertIn(f"退出碼 {7 if full else 8}", result.stderr)
+                for path, content in before.items():
+                    self.assertEqual(path.read_bytes(), content)
+                if full:
+                    self.assertFalse(self.output.exists())
+                    partial, = self.output.parent.glob(f".{self.output.name}.*.partial")
+                    evidence = (partial / "執行狀態.tsv").read_text(encoding="utf-8")
+                    self.assertIn("狀態\t驗證中\n", evidence)
+                    self.assertIn("驗證工作數\t16\n", evidence)
+                    self.assertIn("稽核範圍\t僅候選；既有正式映像本體未驗證\n", evidence)
+                else:
+                    self.assert_audit_options(16, True)
+                    self.assertIn("狀態\t已回滾\n", (self.output / "執行狀態.tsv").read_text())
+                    self.write_audit()
+                    recovered = self.run_migration()
+                    self.assertEqual(recovered.returncode, 0, recovered.stderr)
+                    self.assert_audit_options(1, False)
+                    previous, = self.output.parent.glob(f"{self.output.name}.recovered-*")
+                    evidence = (previous / "執行狀態.tsv").read_text(encoding="utf-8")
+                    self.assertIn("驗證工作數\t16\n", evidence)
+                    self.assertIn("稽核範圍\t僅候選；既有正式映像本體未驗證\n", evidence)
+
+    def test_candidate_only_keeps_report_gates_in_both_audits(self) -> None:
+        before = {
+            path: path.read_bytes()
+            for path in (self.state / "items").glob("*.complete")
+        }
+        for full in (True, False):
+            for fault, error in (
+                ("missing_item", "未達 1/2 精確數量"),
+                ("invalid_header", "完整稽核欄位錯誤"),
+                ("pending", "仍有待辦、中止產物或交易殘留"),
+            ):
+                with self.subTest(full=full, fault=fault):
+                    self.output = self.state / "migrations" / f"gate-{full}-{fault}"
+                    self.write_audit(report_fault=fault, fault_full=full)
+                    result = self.run_migration(
+                        extra_args=("--candidate-only", "--verification-workers", "16")
+                    )
+
+                    self.assertNotEqual(result.returncode, 0)
+                    self.assertIn(error, result.stderr)
+                    for path, content in before.items():
+                        self.assertEqual(path.read_bytes(), content)
+                    if full:
+                        self.assertFalse(self.output.exists())
+                    else:
+                        self.assertIn("狀態\t已回滾\n", (self.output / "執行狀態.tsv").read_text())
+
+    def test_candidate_only_keeps_scale_and_log_gates(self) -> None:
+        for option, value, error in (
+            ("--expected-boards", "45", "不得使用正式 45/444 規模"),
+            ("--expected-items", "444", "不得使用正式 45/444 規模"),
+            ("--expected-boards", "2", "矩陣未達精確數量"),
+            ("--expected-items", "4", "矩陣未達精確數量"),
+        ):
+            with self.subTest(option=option, value=value):
+                result = self.run_migration(extra_args=("--candidate-only", option, value))
+                self.assertNotEqual(result.returncode, 0)
+                self.assertIn(error, result.stderr)
+                self.assertFalse(self.output.exists())
+
+        (self.state / "logs" / "minimal.log").write_text("遭異動的日誌\n", encoding="utf-8")
+        result = self.run_migration(extra_args=("--candidate-only",))
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("主要日誌 SHA-256 不符", result.stderr)
+        self.assertFalse(self.output.exists())
+        for path in (self.state / "items").glob("*.complete"):
+            self.assertNotIn("status=complete\n", path.read_text(encoding="utf-8"))
 
     def test_failed_full_audit_does_not_modify_markers(self) -> None:
         before = {

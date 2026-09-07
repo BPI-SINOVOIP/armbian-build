@@ -66,6 +66,16 @@ AUDIT_HEADERS = {
 }
 
 
+def verification_workers(value: str) -> int:
+    try:
+        workers = int(value)
+    except ValueError as error:
+        raise argparse.ArgumentTypeError("驗證工作數必須是 1 到 16 的正整數") from error
+    if not 1 <= workers <= 16:
+        raise argparse.ArgumentTypeError("驗證工作數必須是 1 到 16 的正整數")
+    return workers
+
+
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     root = Path(__file__).resolve().parents[1]
     parser = argparse.ArgumentParser(
@@ -87,6 +97,18 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     )
     parser.add_argument(
         "--expected-items", type=int, default=444, help="預期映像數，正式值為 444"
+    )
+    parser.add_argument(
+        "--verification-workers",
+        type=verification_workers,
+        default=1,
+        metavar="工作數",
+        help="映像驗證工作數，範圍 1 到 16；預設 1",
+    )
+    parser.add_argument(
+        "--candidate-only",
+        action="store_true",
+        help="僅稽核候選，仍完整核驗候選 SHA256 與 XZ；不驗證既有正式映像本體",
     )
     parser.add_argument(
         "--policy-tool",
@@ -714,7 +736,12 @@ def rollback_from_evidence(output: Path, state: Path) -> None:
         "狀態\t已回滾\n"
         f"預計遷移\t{expected_count}\n"
         f"回滾時間UTC\t{timestamp()}\n"
-        f"回滾標記數\t{len(rows)}\n",
+        f"回滾標記數\t{len(rows)}\n"
+        + "".join(
+            f"{field}\t{execution[field]}\n"
+            for field in ("驗證工作數", "稽核範圍")
+            if field in execution
+        ),
     )
 
 
@@ -736,6 +763,18 @@ def recover_existing_output(output: Path, state: Path) -> bool:
 
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv)
+    audit_options = ["--verification-workers", str(args.verification_workers)]
+    if args.candidate_only:
+        audit_options.append("--candidate-only")
+    verification_scope = (
+        "僅候選；既有正式映像本體未驗證"
+        if args.candidate_only
+        else "候選與既有正式映像"
+    )
+    verification_evidence = (
+        f"驗證工作數\t{args.verification_workers}\n"
+        f"稽核範圍\t{verification_scope}\n"
+    )
     descriptors: list[int] = []
     try:
         if args.expected_boards <= 0 or args.expected_items <= 0:
@@ -865,7 +904,8 @@ def main(argv: list[str] | None = None) -> int:
         fsync_directory(backups)
         atomic_write(
             staging / "執行狀態.tsv",
-            f"欄位\t值\n狀態\t驗證中\n預計遷移\t{len(legacy)}\n",
+            f"欄位\t值\n狀態\t驗證中\n預計遷移\t{len(legacy)}\n"
+            + verification_evidence,
         )
         fsync_directory(staging)
 
@@ -901,6 +941,7 @@ def main(argv: list[str] | None = None) -> int:
                 str(audit),
                 "--verify-digests",
                 "--verify-xz",
+                *audit_options,
             ],
             staging / "完整性稽核日誌.txt",
         )
@@ -919,7 +960,8 @@ def main(argv: list[str] | None = None) -> int:
             f"遷移工具SHA256\t{snapshot_digests['遷移工具']}\n"
             f"政策工具SHA256\t{snapshot_digests['政策工具']}\n"
             f"稽核工具SHA256\t{snapshot_digests['稽核工具']}\n"
-            "完整SHA256與XZ稽核\tyes\n",
+            "完整SHA256與XZ稽核\tyes\n"
+            + verification_evidence,
         )
         fsync_tree(staging)
         os.replace(staging, output)
@@ -968,6 +1010,7 @@ def main(argv: list[str] | None = None) -> int:
                     str(strict_policy),
                     "--output-dir",
                     str(final_audit),
+                    *audit_options,
                 ],
                 output / "遷移後結構稽核日誌.txt",
             )
@@ -988,7 +1031,8 @@ def main(argv: list[str] | None = None) -> int:
                 f"政策工具SHA256\t{snapshot_digests['政策工具']}\n"
                 f"稽核工具SHA256\t{snapshot_digests['稽核工具']}\n"
                 "完整SHA256與XZ稽核\tyes\n"
-                "遷移後零待辦\tyes\n",
+                "遷移後零待辦\tyes\n"
+                + verification_evidence,
             )
         except BaseException:
             rollback_from_evidence(output, state)

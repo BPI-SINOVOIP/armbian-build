@@ -984,6 +984,7 @@ main() {
 		--formal-release "${formal_release}" \
 		--candidate "整併候選|${candidate_release}|${candidate_state}" \
 		--candidate-input-policy "${candidate_policy}" \
+		--candidate-only \
 		--output-dir "${candidate_audit}" \
 		--verification-workers "${verification_workers}" \
 		--verify-digests \
@@ -1018,6 +1019,7 @@ main() {
 		--formal-release "${formal_release}" \
 		--candidate "正式發布|${formal_release}|${candidate_state}" \
 		--candidate-input-policy "${candidate_policy}" \
+		--candidate-only \
 		--output-dir "${formal_audit}" \
 		--verification-workers "${verification_workers}" \
 		--verify-digests \

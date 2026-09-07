@@ -363,6 +363,7 @@ class BananaPiMixedSourceFinalizerTests(unittest.TestCase):
             self.assertIn("--verify-digests", line)
             self.assertIn("--verify-xz", line)
             self.assertIn("--candidate-input-policy", line)
+            self.assertIn("--candidate-only", line)
         self.assertIn("--replace", calls[1])
         self.assertIn("--check", calls[2])
         self.assertIn("--check", calls[7])

@@ -1,0 +1,10 @@
+[Unit]
+Description=Banana Pi 候選完整核驗與完成狀態遷移加速
+OnSuccess=bananapi-m5pro-deferred-4a8086c3.service
+
+[Service]
+Type=exec
+User=pi
+Group=pi
+WorkingDirectory=/media/pi/SMCI/armbian/bpi-v26.2.1-bananapi-optimize
+ExecStart=/usr/bin/python3 /media/pi/SMCI/armbian/bpi-v26.2.1-bananapi-optimize/tools/migrate-bananapi-item-status.py --matrix /media/pi/SMCI/armbian/bpi-v26.2.1-bananapi-optimize/config/bananapi-latest-release-matrix.tsv --formal-release /media/pi/SMCI/bpi/google-drive-upload/2026/2026.08 --candidate-release /media/pi/SMCI/bpi/bananapi-release-c8673931c96c --candidate-state /media/pi/SMCI/bpi/bananapi-state-c8673931c96c --output-dir /media/pi/SMCI/bpi/bananapi-state-c8673931c96c/migrations/item-status-20260907 --verification-workers 12 --candidate-only

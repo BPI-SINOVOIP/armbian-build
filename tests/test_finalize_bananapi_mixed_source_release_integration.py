@@ -196,6 +196,7 @@ class BananaPiMixedSourceFinalizerIntegrationTests(unittest.TestCase):
             parser.add_argument("--formal-release", type=Path, required=True)
             parser.add_argument("--candidate", required=True)
             parser.add_argument("--candidate-input-policy", type=Path, required=True)
+            parser.add_argument("--candidate-only", action="store_true")
             parser.add_argument("--output-dir", type=Path, required=True)
             parser.add_argument("--verify-digests", action="store_true")
             parser.add_argument("--verify-xz", action="store_true")
@@ -204,6 +205,8 @@ class BananaPiMixedSourceFinalizerIntegrationTests(unittest.TestCase):
 
             if not args.verify_digests or not args.verify_xz:
                 raise SystemExit("整合稽核必須要求雜湊與 XZ 驗證旗標")
+            if not args.candidate_only:
+                raise SystemExit("正式收尾必須只驗證本輪候選，避免重讀舊正式本體")
 
             def verify_inherited_lock(variable, root):
                 descriptor_text = os.environ.get(variable, "")

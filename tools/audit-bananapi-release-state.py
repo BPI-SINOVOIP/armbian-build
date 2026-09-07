@@ -143,6 +143,10 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="明確允許舊正式映像抵銷本輪待辦；完整重建預設禁止",
     )
+    parser.add_argument(
+        "--candidate-only", action="store_true",
+        help="只核驗逐板政策限定的候選，不核驗或沿用舊正式映像；仍盤點舊目錄殘留",
+    )
     parser.add_argument("--output-dir", type=Path, required=True, help="盤點輸出目錄")
     parser.add_argument(
         "--verify-digests",
@@ -548,6 +552,10 @@ def write_tsv(path: Path, fields: list[str], rows: list[dict[str, str]]) -> None
 
 def main() -> int:
     args = parse_args()
+    if args.candidate_only and (
+        not args.candidate_input_policy or not args.candidate or args.reuse_formal
+    ):
+        raise ValueError("僅候選模式必須指定候選與逐板政策，且不得沿用舊正式")
     matrix = read_matrix(args.matrix)
     if args.candidate_input_policy and (
         args.target_source_commit or args.target_build_context
@@ -583,7 +591,7 @@ def main() -> int:
         map_artifacts = executor.map if executor is not None else map
         for row in matrix:
             keys = item_keys(row)
-            formal_results = map_artifacts(
+            formal_results = () if args.candidate_only else map_artifacts(
                 partial(
                     find_formal_artifact,
                     args.formal_release,
@@ -1168,6 +1176,8 @@ def write_summary(
     for row in candidates:
         disposition_counts[row["處置"]] = disposition_counts.get(row["處置"], 0) + 1
     integrity = "已重新計算 SHA-256" if args.verify_digests else "沿用既有 SHA-256 證據"
+    if args.candidate_only:
+        integrity = "僅針對候選映像；舊正式映像本體未核驗且不得沿用。" + integrity
     if args.verify_xz:
         integrity += "，並重新執行 XZ 串流檢查"
     else:

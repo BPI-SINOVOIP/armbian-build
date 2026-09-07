@@ -442,6 +442,73 @@ class BananaPiReleaseStateAuditTests(unittest.TestCase):
         self.assertEqual(candidates[0]["處置"], "未採用部分候選")
         self.assertEqual(self.read_tsv("待辦佇列.tsv"), [])
 
+    def test_candidate_only_never_opens_old_formal_images(self) -> None:
+        for release in ("trixie", "bookworm"):
+            for profile in ("minimal", "xfce"):
+                self.create_candidate_item(release, profile)
+                archive = self.create_archive(self.formal / "bpi-demo", release, profile)
+                archive.write_bytes(b"invalid-old-archive")
+        self.create_board_marker()
+        self.write_policy()
+        with mock.patch.object(
+            AUDIT, "find_formal_artifact", side_effect=AssertionError("不得核驗舊正式本體")
+        ):
+            self.assertEqual(self.run_audit_in_process(
+                "--candidate-only", "--candidate-input-policy", str(self.policy),
+                "--verification-workers", "12",
+            ), 0)
+        self.assertEqual(len(self.read_tsv("映像盤點.tsv")), 4)
+        self.assertEqual(self.read_tsv("待辦佇列.tsv"), [])
+        self.assertTrue(all(row["狀態"] == "已驗證候選" for row in self.read_tsv("映像盤點.tsv")))
+        summaries = list(self.output.glob("*.md"))
+        self.assertTrue(any("舊正式映像本體未核驗且不得沿用" in path.read_text() for path in summaries))
+
+    def test_candidate_only_requires_policy_and_rejects_formal_reuse(self) -> None:
+        self.write_policy()
+        for extra in (
+            ("--candidate-only",),
+            ("--candidate-only", "--candidate-input-policy", str(self.policy), "--reuse-formal"),
+        ):
+            result = self.run_audit(*extra)
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("僅候選模式必須指定候選與逐板政策", result.stderr)
+            self.assertFalse(self.output.exists())
+
+    def test_candidate_only_does_not_fill_missing_items_from_formal(self) -> None:
+        self.write_policy()
+        self.create_board_marker()
+        for release in ("trixie", "bookworm"):
+            for profile in ("minimal", "xfce"):
+                self.create_archive(self.formal / "bpi-demo", release, profile)
+                if (release, profile) != ("bookworm", "xfce"):
+                    self.create_candidate_item(release, profile)
+        result = self.run_audit("--candidate-only", "--candidate-input-policy", str(self.policy))
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(len(self.read_tsv("待辦佇列.tsv")), 1)
+        self.assertFalse(any(row["狀態"] == "沿用既有正式" for row in self.read_tsv("映像盤點.tsv")))
+
+    def test_candidate_only_preserves_sha_xz_and_log_failure_gates(self) -> None:
+        self.write_policy()
+        for failure in ("sha", "xz", "log"):
+            with self.subTest(failure=failure):
+                self.create_candidate_item("trixie", "minimal")
+                marker = self.state / "items/bpi-demo-trixie-minimal.complete"
+                archive = next((self.candidate / "bpi-demo").glob("*.img.xz"))
+                if failure == "log":
+                    (self.state / "logs/bpi-demo-trixie-minimal.log").write_bytes(b"changed")
+                else:
+                    original_digest = hashlib.sha256(archive.read_bytes()).hexdigest()
+                    archive.write_bytes(b"invalid-xz")
+                    if failure == "xz":
+                        digest = hashlib.sha256(archive.read_bytes()).hexdigest()
+                        Path(f"{archive}.sha").write_text(f"{digest}  {archive.name}\n")
+                        marker.write_text(marker.read_text().replace(original_digest, digest))
+                result = self.run_audit(
+                    "--candidate-only", "--candidate-input-policy", str(self.policy),
+                    "--verification-workers", "12",
+                )
+                self.assertNotEqual(result.returncode, 0)
+                self.assertFalse(self.output.exists())
     def test_formal_board_is_only_a_baseline_by_default(self) -> None:
         for release in ("trixie", "bookworm"):
             for profile in ("minimal", "xfce"):
