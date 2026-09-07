@@ -248,7 +248,7 @@ def render_release_note(row: MatrixRow, artifacts: list[Artifact]) -> str:
         "",
         "## 映像清單",
         "",
-        "| 發行版 | 分支 | 變體 | 實際核心版本 | 映像檔 | SHA-256 邊車 |",
+        "| 發行版 | 分支 | 變體 | 檔名核心標籤 | 映像檔 | SHA-256 邊車 |",
         "|---|---|---|---|---|---|",
     ]
     for artifact in artifacts:
@@ -262,6 +262,8 @@ def render_release_note(row: MatrixRow, artifacts: list[Artifact]) -> str:
 
     lines.extend(
         [
+            "",
+            "核心標籤取自檔名，並非實機版本量測；`0` 表示封裝未提供有效版號，不代表 Linux 0。登入後請以 `uname -r` 核對實際核心版本。",
             "",
             "CLI 變體提供最小化命令列環境；XFCE 變體提供桌面環境。請依實際部署需求選擇，不應由檔名推定周邊硬體已通過驗證。",
             "",

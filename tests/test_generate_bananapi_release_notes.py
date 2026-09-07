@@ -156,7 +156,7 @@ class GenerateBananaPiReleaseNotesTests(unittest.TestCase):
             {row["folder"] for row in controlled_rows},
         )
 
-    def test_actual_kernel_versions_are_parsed_per_image(self) -> None:
+    def test_filename_kernel_labels_are_parsed_without_claiming_runtime_version(self) -> None:
         for directory in self.candidate.iterdir():
             for path in directory.iterdir():
                 path.unlink()
@@ -176,6 +176,9 @@ class GenerateBananaPiReleaseNotesTests(unittest.TestCase):
         )
         for version in versions.values():
             self.assertIn(f"`{version}`", content)
+        self.assertIn("檔名核心標籤", content)
+        self.assertIn("不代表 Linux 0", content)
+        self.assertNotIn("實際核心版本 |", content)
 
     def test_missing_image_is_rejected_before_any_note_is_written(self) -> None:
         archive = next((self.candidate / "bpi-first").glob("*trixie*minimal.img.xz"))
