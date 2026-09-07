@@ -14,6 +14,10 @@ formal_release=""
 formal_parent=""
 formal_name=""
 verification_workers="${VERIFICATION_WORKERS:-1}"
+prior_xz_migration_evidence="${PRIOR_XZ_MIGRATION_EVIDENCE:-}"
+prior_xz_proof=""
+prior_xz_proof_digest=""
+required_input_policy="${REQUIRED_INPUT_POLICY:-}"
 
 output_final=""
 output_failed=""
@@ -43,6 +47,13 @@ journal_staging=""
 
 declare -a removed_formal_staging=()
 declare -a archived_formal_staging=()
+declare -a xz_verification_args=(--verify-xz)
+declare -a required_tools=(
+	generate-bananapi-candidate-input-policy.py
+	translate-bananapi-release-notes-english.py
+	audit-bananapi-release-state.py
+	promote-bananapi-candidate-release.sh
+)
 
 fail() {
 	printf '錯誤：%s\n' "$*" >&2
@@ -181,11 +192,16 @@ prepare_input_snapshot() {
 		relative_target="輸入快照/受控矩陣.tsv"
 		printf '受控矩陣\t%s\t%s\t%s\n' \
 			"${matrix_file}" "${relative_target}" "${digest%% *}"
-		for name in \
-			generate-bananapi-candidate-input-policy.py \
-			translate-bananapi-release-notes-english.py \
-			audit-bananapi-release-state.py \
-			promote-bananapi-candidate-release.sh; do
+		if [[ -n "${required_input_policy}" ]]; then
+			require_regular_file "${required_input_policy}" "預期逐板輸入政策"
+			target="${snapshot_repo}/預期逐板輸入政策.tsv"
+			cp -p -- "${required_input_policy}" "${target}"
+			digest="$(sha256sum -- "${target}")"
+			printf '預期政策\t%s\t%s\t%s\n' "${required_input_policy}" \
+				"輸入快照/預期逐板輸入政策.tsv" "${digest%% *}"
+			required_input_policy="${target}"
+		fi
+		for name in "${required_tools[@]}"; do
 			source="${tool_repo}/tools/${name}"
 			target="${snapshot_repo}/tools/${name}"
 			relative_target="輸入快照/tools/${name}"
@@ -812,6 +828,9 @@ write_result_summary() {
 		printf '正式政策\t%s\n' "${output_final}/正式輸入政策.tsv"
 		printf '正式稽核\t%s\n' "${output_final}/正式完整稽核"
 		printf '繁中說明原始雜湊\t%s\n' "${output_final}/繁中說明原始雜湊.tsv"
+		if [[ -n "${prior_xz_proof}" ]]; then
+			printf '先前XZ完整證據\t%s\n' "${output_final}/先前XZ完整證據.json"
+		fi
 		printf 'previous\t%s\n' "${previous_path}"
 	} >"${temporary}"
 	mv -- "${temporary}" "${output_staging}/收斂結果.tsv"
@@ -851,6 +870,15 @@ else:
         raise SystemExit("繁中說明與翻譯前原始雜湊不同，拒絕發布")
 print(f"繁中說明保全檢查通過：{len(rows)} 板。")
 PY
+}
+
+verify_prior_xz_proof() {
+	local audit_root="$1" log_name="$2"
+	[[ -n "${prior_xz_proof}" ]] || return 0
+	run_logged "${output_staging}/${log_name}" \
+		python3 "${tool_repo}/tools/verify-bananapi-xz-proof.py" \
+		--matrix "${matrix_file}" --proof "${prior_xz_proof}" \
+		--proof-sha256 "${prior_xz_proof_digest}" --audit-output "${audit_root}"
 }
 
 main() {
@@ -895,11 +923,10 @@ main() {
 	[[ "$(stat -c '%d' -- "${candidate_state}")" == "$(stat -c '%d' -- "${formal_release}")" ]] ||
 		fail "候選狀態與正式發布不在同一檔案系統，無法原樣封存及復原空 staging。"
 
-	for tool in \
-		generate-bananapi-candidate-input-policy.py \
-		translate-bananapi-release-notes-english.py \
-		audit-bananapi-release-state.py \
-		promote-bananapi-candidate-release.sh; do
+	if [[ -n "${prior_xz_migration_evidence}" ]]; then
+		required_tools+=(verify-bananapi-xz-proof.py)
+	fi
+	for tool in "${required_tools[@]}"; do
 		require_regular_file "${tool_repo}/tools/${tool}" "必要工具"
 	done
 	validate_matrix_size
@@ -965,6 +992,24 @@ main() {
 	require_regular_file "${candidate_policy}" "候選逐板政策"
 	[[ "$(tsv_data_rows "${candidate_policy}")" == "${EXPECTED_BOARD_TOTAL}" ]] ||
 		fail "候選逐板政策不是 ${EXPECTED_BOARD_TOTAL} 板：${candidate_policy}"
+	if [[ -n "${required_input_policy}" ]]; then
+		cmp -s -- "${candidate_policy}" "${required_input_policy}" ||
+			fail "候選逐板政策與外部指定來源身分不一致，拒絕發布。"
+	fi
+	if [[ -n "${prior_xz_migration_evidence}" ]]; then
+		prior_xz_proof="${output_staging}/先前XZ完整證據.json"
+		run_logged "${output_staging}/01-核對先前XZ完整證據.log" \
+			python3 "${tool_repo}/tools/verify-bananapi-xz-proof.py" \
+			--matrix "${matrix_file}" --candidate-state "${candidate_state}" \
+			--migration-evidence "${prior_xz_migration_evidence}" --output "${prior_xz_proof}"
+		require_regular_file "${prior_xz_proof}" "先前XZ完整證據摘要"
+		prior_xz_proof_digest="$(sha256sum -- "${prior_xz_proof}")"
+		prior_xz_proof_digest="${prior_xz_proof_digest%% *}"
+		printf '先前XZ證據SHA256\t%s\n先前XZ遷移證據\t%s\n' \
+			"${prior_xz_proof_digest}" "${prior_xz_migration_evidence}" \
+			>>"${output_staging}/執行輸入.tsv"
+		xz_verification_args=()
+	fi
 
 	check_chinese_note_preservation "${candidate_release}" record
 	run_logged "${output_staging}/02-補齊英文說明.log" \
@@ -988,8 +1033,9 @@ main() {
 		--output-dir "${candidate_audit}" \
 		--verification-workers "${verification_workers}" \
 		--verify-digests \
-		--verify-xz
+		"${xz_verification_args[@]}"
 	validate_complete_audit "${candidate_audit}" "${candidate_policy}" yes
+	verify_prior_xz_proof "${candidate_audit}" "03-候選XZ證據一致性.log"
 
 	run_logged "${output_staging}/04-提升預演.log" \
 		bash "${tool_repo}/tools/promote-bananapi-candidate-release.sh" \
@@ -1023,8 +1069,9 @@ main() {
 		--output-dir "${formal_audit}" \
 		--verification-workers "${verification_workers}" \
 		--verify-digests \
-		--verify-xz
+		"${xz_verification_args[@]}"
 	validate_complete_audit "${formal_audit}" "${candidate_policy}" no
+	verify_prior_xz_proof "${formal_audit}" "06-正式XZ證據一致性.log"
 	check_chinese_note_preservation "${formal_release}" check
 	run_logged "${output_staging}/07-正式中英文說明核對.log" \
 		python3 "${tool_repo}/tools/translate-bananapi-release-notes-english.py" \

@@ -203,8 +203,9 @@ class BananaPiMixedSourceFinalizerIntegrationTests(unittest.TestCase):
             parser.add_argument("--verification-workers", type=int, default=1)
             args = parser.parse_args()
 
-            if not args.verify_digests or not args.verify_xz:
-                raise SystemExit("整合稽核必須要求雜湊與 XZ 驗證旗標")
+            reuse_xz = bool(os.environ.get("PRIOR_XZ_MIGRATION_EVIDENCE"))
+            if not args.verify_digests or args.verify_xz == reuse_xz:
+                raise SystemExit("整合稽核必須重新計算雜湊，且正確選擇完整 XZ 或既有證據模式")
             if not args.candidate_only:
                 raise SystemExit("正式收尾必須只驗證本輪候選，避免重讀舊正式本體")
 
@@ -472,6 +473,51 @@ class BananaPiMixedSourceFinalizerIntegrationTests(unittest.TestCase):
             ".formal.previous-*",
         )
         return sorted(path for pattern in patterns for path in self.root.glob(pattern))
+
+    def install_proof_double(self) -> None:
+        self.write_executable(
+            self.tool_repo / "tools/verify-bananapi-xz-proof.py",
+            r"""
+            #!/usr/bin/env python3
+            import hashlib
+            import os
+            from pathlib import Path
+            import sys
+
+            args = sys.argv[1:]
+            if "--output" in args:
+                Path(args[args.index("--output") + 1]).write_bytes(b"test-proof")
+            else:
+                proof = Path(args[args.index("--proof") + 1])
+                if hashlib.sha256(proof.read_bytes()).hexdigest() != args[args.index("--proof-sha256") + 1]:
+                    raise SystemExit(51)
+                count = Path(os.environ["TEST_AUDIT_COUNT"]).read_text()
+                if os.environ.get("TEST_PROOF_COMPARE_FAIL") == count:
+                    raise SystemExit(52)
+            """,
+        )
+
+    def test_proof_mode_with_real_promoter_and_fresh_sha_audits(self) -> None:
+        self.install_proof_double()
+        result = self.run_finalizer(
+            PRIOR_XZ_MIGRATION_EVIDENCE=str(self.state / "migrations/prior")
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(self.audit_count.read_text(), "2")
+        self.assertEqual(len(list(self.formal.glob("*/*.img.xz"))), 444)
+        for relative, original in self.original_notes.items():
+            self.assertEqual((self.formal / relative).read_bytes(), original)
+
+    def test_formal_proof_mismatch_rolls_back_real_promotion(self) -> None:
+        self.install_proof_double()
+        result = self.run_finalizer(
+            PRIOR_XZ_MIGRATION_EVIDENCE=str(self.state / "migrations/prior"),
+            TEST_PROOF_COMPARE_FAIL="2",
+        )
+        self.assertEqual(result.returncode, 52, result.stderr)
+        self.assertEqual(self.old_formal_file.stat().st_ino, self.old_formal_inode)
+        self.assertEqual(self.transaction_residue(), [])
+        self.assertEqual(list(self.state.glob("final-*-*")), [])
 
     def test_real_promoter_creates_hardlinks_and_reaudits_formal_release(self) -> None:
         result = self.run_finalizer()

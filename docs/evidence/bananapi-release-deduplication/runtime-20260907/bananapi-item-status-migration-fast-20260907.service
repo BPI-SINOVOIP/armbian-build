@@ -1,6 +1,6 @@
 [Unit]
 Description=Banana Pi 候選完整核驗與完成狀態遷移加速
-OnSuccess=bananapi-m5pro-deferred-4a8086c3.service
+OnSuccess=bananapi-final-release-20260907.service
 
 [Service]
 Type=exec

@@ -13,5 +13,7 @@ Environment=CANDIDATE_RELEASE=/media/pi/SMCI/bpi/bananapi-release-c8673931c96c
 Environment=CANDIDATE_STATE=/media/pi/SMCI/bpi/bananapi-state-c8673931c96c
 Environment=FORMAL_RELEASE=/media/pi/SMCI/bpi/google-drive-upload/2026/2026.08
 Environment=VERIFICATION_WORKERS=12
+Environment=PRIOR_XZ_MIGRATION_EVIDENCE=/media/pi/SMCI/bpi/bananapi-state-c8673931c96c/migrations/item-status-20260907
+Environment=REQUIRED_INPUT_POLICY=/media/pi/SMCI/armbian/bpi-v26.2.1-bananapi-optimize/docs/evidence/bananapi-release-deduplication/runtime-20260907/required-input-policy.tsv
 ExecCondition=/usr/bin/python3 -c 'import csv, sys; rows=list(csv.reader(open(sys.argv[1]),delimiter=chr(9))); states=[r[1] for r in rows if len(r)==2 and r[0]=="狀態"]; sys.exit(states!=["成功"])' /media/pi/SMCI/bpi/bananapi-state-c8673931c96c/migrations/item-status-20260907/執行狀態.tsv
 ExecStart=/usr/bin/bash /media/pi/SMCI/armbian/bpi-v26.2.1-bananapi-optimize/tools/finalize-bananapi-mixed-source-release.sh

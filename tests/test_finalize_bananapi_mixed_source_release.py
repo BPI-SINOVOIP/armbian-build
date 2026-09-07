@@ -241,6 +241,37 @@ class BananaPiMixedSourceFinalizerTests(unittest.TestCase):
             """,
         )
         self.write_executable(
+            self.tool_repo / "tools/migrate-bananapi-item-status.py",
+            "raise SystemExit('此替身不得直接執行')\n",
+        )
+        self.write_executable(
+            self.tool_repo / "tools/verify-bananapi-xz-proof.py",
+            r"""
+            #!/usr/bin/env python3
+            import hashlib
+            import os
+            from pathlib import Path
+            import sys
+
+            args = sys.argv[1:]
+            preparing = "--output" in args
+            with Path(os.environ["TEST_CALL_LOG"]).open("a", encoding="utf-8") as log:
+                log.write(("XZ準備" if preparing else "XZ核對") + " " + " ".join(args) + "\n")
+            if preparing:
+                if os.environ.get("TEST_XZ_PREPARE_FAIL") == "yes":
+                    raise SystemExit(58)
+                Path(args[args.index("--output") + 1]).write_text("合成已驗證證據\n")
+            else:
+                proof = Path(args[args.index("--proof") + 1])
+                expected = args[args.index("--proof-sha256") + 1]
+                if hashlib.sha256(proof.read_bytes()).hexdigest() != expected:
+                    raise SystemExit(59)
+                count = Path(os.environ["TEST_AUDIT_COUNT"]).read_text()
+                if os.environ.get("TEST_XZ_COMPARE_FAIL") == count:
+                    raise SystemExit(60)
+            """,
+        )
+        self.write_executable(
             self.tool_repo / "tools/promote-bananapi-candidate-release.sh",
             r"""
             #!/usr/bin/env bash
@@ -391,6 +422,59 @@ class BananaPiMixedSourceFinalizerTests(unittest.TestCase):
                 self.assertNotEqual(result.returncode, 0)
                 self.assertIn("VERIFICATION_WORKERS", result.stderr)
                 self.assertFalse(self.call_log.exists())
+
+    def test_prior_xz_proof_is_bound_to_both_fresh_digest_audits(self) -> None:
+        result = self.run_tool(PRIOR_XZ_MIGRATION_EVIDENCE=str(self.state / "migrations/prior"))
+        self.assertEqual(result.returncode, 0, result.stderr)
+        calls = self.call_log.read_text().splitlines()
+        for prefix in ("候選稽核", "正式稽核"):
+            call = next(line for line in calls if line.startswith(prefix + " "))
+            self.assertIn("--verify-digests", call)
+            self.assertNotIn("--verify-xz", call)
+        checks = [line for line in calls if line.startswith("XZ核對 ")]
+        self.assertEqual(len(checks), 2)
+        self.assertTrue(all("--proof-sha256 " in line for line in checks))
+        output = self.final_outputs()[0]
+        self.assertTrue((output / "先前XZ完整證據.json").is_file())
+        self.assertIn("先前XZ證據SHA256", (output / "執行輸入.tsv").read_text())
+
+    def test_prior_xz_proof_failure_prevents_promotion_or_rolls_back(self) -> None:
+        for overrides in (
+            {"TEST_XZ_PREPARE_FAIL": "yes"},
+            {"TEST_XZ_COMPARE_FAIL": "1"},
+            {"TEST_XZ_COMPARE_FAIL": "2"},
+        ):
+            with self.subTest(overrides=overrides):
+                result = self.run_tool(
+                    PRIOR_XZ_MIGRATION_EVIDENCE=str(self.state / "migrations/prior"),
+                    **overrides,
+                )
+                self.assertNotEqual(result.returncode, 0)
+                self.assertTrue(self.old_formal_file().is_file())
+                self.assertEqual(self.final_outputs(), [])
+                self.call_log.unlink(missing_ok=True)
+                self.audit_count.unlink(missing_ok=True)
+
+    def test_required_input_policy_mismatch_stops_before_audits(self) -> None:
+        required = self.root / "required.tsv"
+        required.write_text("folder\tsource_commit\tbuild_context_sha256\n")
+        result = self.run_tool(REQUIRED_INPUT_POLICY=str(required))
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("候選逐板政策與外部指定來源身分不一致", result.stderr)
+        self.assertFalse(self.audit_count.exists())
+        self.assertTrue(self.old_formal_file().is_file())
+
+    def test_required_input_policy_is_snapshotted_and_matches(self) -> None:
+        required = self.root / "required.tsv"
+        required.write_text(
+            "folder\tsource_commit\tbuild_context_sha256\n" + "".join(
+                f"bpi-test-{i:02d}\t{'a' * 40}\t{'b' * 64}\n" for i in range(1, 46)
+            )
+        )
+        result = self.run_tool(REQUIRED_INPUT_POLICY=str(required))
+        self.assertEqual(result.returncode, 0, result.stderr)
+        output = self.final_outputs()[0]
+        self.assertEqual((output / "輸入快照/預期逐板輸入政策.tsv").read_bytes(), required.read_bytes())
 
     def test_matrix_and_tools_use_one_immutable_snapshot(self) -> None:
         result = self.run_tool(TEST_MUTATE_INPUTS="yes")
