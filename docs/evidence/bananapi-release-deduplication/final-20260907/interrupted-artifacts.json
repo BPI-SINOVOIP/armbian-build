@@ -1,0 +1,52 @@
+[
+  {
+    "path": "/media/pi/SMCI/bpi/main-release-c8673931c96c/.staging-bpi-m1super-c8673931c96c/Armbian-unofficial_26.11.0-trunk_Bananapim1super_bookworm_vendor_6.1.115_xfce_desktop.img.xz.partial-8c99b2e6-754e-4b92-9525-06492ca6246c",
+    "mode": 33188,
+    "dev": 66306,
+    "ino": 110936107,
+    "size": 191406080,
+    "mtime_ns": 1788569816079748136,
+    "nlink": 1,
+    "blocks": 373848
+  },
+  {
+    "path": "/media/pi/SMCI/armbian/bpi-v26.2.1-bananapi-optimize/output/images/Armbian-unofficial_26.11.0-trunk_Bananapim1super_bookworm_vendor_6.1.115_xfce_desktop.img",
+    "mode": 33204,
+    "dev": 66306,
+    "ino": 167956368,
+    "size": 5393874944,
+    "mtime_ns": 1788569653599202830,
+    "nlink": 1,
+    "blocks": 10534920
+  },
+  {
+    "path": "/media/pi/SMCI/armbian/bpi-v26.2.1-bananapi-parallel/output/bananapi-latest-rebuild/c8673931c96c/markers/bpi-sm10-noble-minimal-10367.marker",
+    "mode": 33188,
+    "dev": 66306,
+    "ino": 110530000,
+    "size": 0,
+    "mtime_ns": 1788569645642078179,
+    "nlink": 1,
+    "blocks": 0
+  },
+  {
+    "path": "/media/pi/SMCI/bpi/parallel2-release-c8673931c96c/.staging-bpi-pro-c8673931c96c/Armbian-unofficial_26.11.0-trunk_Bananapipro_noble_current_6.18.49_xfce_desktop.img.xz.partial-a84f7eb9-23f5-4648-9acc-e760ec813821",
+    "mode": 33188,
+    "dev": 66306,
+    "ino": 110936067,
+    "size": 911329044,
+    "mtime_ns": 1788569799549489185,
+    "nlink": 1,
+    "blocks": 1779952
+  },
+  {
+    "path": "/media/pi/SMCI/armbian/bpi-v26.2.1-bananapi-parallel2/output/images/Armbian-unofficial_26.11.0-trunk_Bananapipro_noble_current_6.18.49_xfce_desktop.img",
+    "mode": 33204,
+    "dev": 66306,
+    "ino": 104217534,
+    "size": 3896508416,
+    "mtime_ns": 1788569324080040814,
+    "nlink": 1,
+    "blocks": 7610376
+  }
+]

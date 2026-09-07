@@ -1,0 +1,6 @@
+原始工具倉庫	/media/pi/SMCI/armbian/bpi-v26.2.1-bananapi-optimize
+原始矩陣	/media/pi/SMCI/armbian/bpi-v26.2.1-bananapi-optimize/config/bananapi-latest-release-matrix.tsv
+候選固定鎖	/media/pi/SMCI/bpi/.bananapi-release-c8673931c96c.build.lock
+正式固定鎖	/media/pi/SMCI/bpi/google-drive-upload/2026/.2026.08.build.lock
+先前XZ證據SHA256	de4c0a05eb713a46d98af55b3bd864ef50d3e1fde53246523d115c07112c25de
+先前XZ遷移證據	/media/pi/SMCI/bpi/bananapi-state-c8673931c96c/migrations/item-status-20260907
