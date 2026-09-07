@@ -17,6 +17,7 @@ ROOT = Path(__file__).resolve().parents[1]
 FINALIZER = ROOT / "tools/finalize-bananapi-mixed-source-release.sh"
 REAL_PROMOTER = ROOT / "tools/promote-bananapi-candidate-release.sh"
 REAL_NOTE_GENERATOR = ROOT / "tools/generate-bananapi-release-notes.py"
+REAL_NOTE_TRANSLATOR = ROOT / "tools/translate-bananapi-release-notes-english.py"
 RELEASES_FIVE = ("trixie", "bookworm", "jammy", "noble", "resolute")
 RELEASES_FOUR = ("trixie", "bookworm", "jammy", "noble")
 PROFILES = ("minimal", "xfce_desktop")
@@ -50,6 +51,10 @@ class BananaPiMixedSourceFinalizerIntegrationTests(unittest.TestCase):
 
         self.rows = self.write_matrix()
         self.write_complete_candidate()
+        self.original_notes = {
+            path.relative_to(self.candidate): path.read_bytes()
+            for path in self.candidate.glob("*/Release-Notes-zh-TW.md")
+        }
         self.write_old_formal_release()
         self.write_tools()
 
@@ -79,6 +84,22 @@ class BananaPiMixedSourceFinalizerIntegrationTests(unittest.TestCase):
         for folder, board, branch, releases in self.rows:
             directory = self.candidate / folder
             directory.mkdir()
+            (directory / "Release-Notes-zh-TW.md").write_text(
+                f"# {board} 最新內部候選映像\n\n"
+                f"BSP 整合基準提交：`{'c' * 40}`\n\n"
+                f"建置工具與最終來源提交：`{'a' * 40}`\n\n"
+                f"建置矩陣 SHA-256：`{hashlib.sha256(self.matrix.read_bytes()).hexdigest()}`\n\n"
+                f"核心分支：`{branch}`\n\n"
+                f"發行版：`{','.join(releases)}`\n\n"
+                f"本目錄包含 {len(releases) * 2} 個映像，分別為精簡命令列版與 XFCE 桌面版。"
+                "所有映像均由上述最終來源提交執行 `compile.sh build`；第一個 Trixie 精簡映像"
+                "另強制清理並重建 U-Boot、Kernel、ATF 與 Crust 等實際適用元件。"
+                "同板後續映像只可沿用本輪已驗證的元件快取。\n\n"
+                "每個映像均通過原始映像唯讀內容與板型檢查、SHA-256 及 XZ 串流完整性檢查。"
+                "這是軟體候選結果，不代表未執行的實機、全介面、長時間壓力、量產或再散布門檻已通過。"
+                "燒錄前請再次核對同名 `.img.xz.sha`。\n",
+                encoding="utf-8",
+            )
             board_token = board[0].upper() + board[1:]
             for release in releases:
                 for profile in PROFILES:
@@ -115,6 +136,10 @@ class BananaPiMixedSourceFinalizerIntegrationTests(unittest.TestCase):
         shutil.copy2(
             REAL_NOTE_GENERATOR,
             self.tool_repo / "tools/generate-bananapi-release-notes.py",
+        )
+        shutil.copy2(
+            REAL_NOTE_TRANSLATOR,
+            self.tool_repo / "tools/translate-bananapi-release-notes-english.py",
         )
         self.write_executable(
             self.fake_bin / "pgrep",
@@ -239,10 +264,11 @@ class BananaPiMixedSourceFinalizerIntegrationTests(unittest.TestCase):
                 releases = tuple(row["releases"].split(","))
                 board_token = board[0].upper() + board[1:]
                 directory = release_root / folder
-                note = directory / "Release-Notes-zh-TW.md"
-                if note.is_symlink() or not note.is_file() or note.stat().st_size == 0:
-                    raise SystemExit(f"板目錄缺少繁中發行說明：{folder}")
-                expected_names = {note.name}
+                expected_names = {"Release-Notes-zh-TW.md", "Release-Notes-English.md"}
+                for name in expected_names:
+                    note = directory / name
+                    if note.is_symlink() or not note.is_file() or note.stat().st_size == 0:
+                        raise SystemExit(f"板目錄缺少發行說明：{folder}/{name}")
                 for release in releases:
                     for profile in ("minimal", "xfce_desktop"):
                         archive = directory / (
@@ -314,6 +340,12 @@ class BananaPiMixedSourceFinalizerIntegrationTests(unittest.TestCase):
                 )
                 if os.environ.get("TEST_FORMAL_AUDIT_FAIL") == "yes":
                     raise SystemExit(32)
+                note_name = os.environ.get("TEST_FORMAL_NOTE_MUTATION", "")
+                if note_name:
+                    note = release_root / rows[0]["folder"] / note_name
+                    temporary = note.with_suffix(".tmp")
+                    temporary.write_text("正式說明遭非預期替換\n", encoding="utf-8")
+                    os.replace(temporary, note)
 
             args.output_dir.mkdir(parents=True)
             (args.output_dir / "映像盤點.tsv").write_text(
@@ -454,7 +486,10 @@ class BananaPiMixedSourceFinalizerIntegrationTests(unittest.TestCase):
             for path in self.candidate.rglob("*")
             if path.is_file() and path.name != ".latest-rebuild.lock"
         )
-        self.assertEqual(len(candidate_files), 444 * 2 + 45)
+        self.assertEqual(len(candidate_files), 444 * 2 + 90)
+        for relative, original in self.original_notes.items():
+            self.assertEqual((self.candidate / relative).read_bytes(), original)
+            self.assertEqual((self.formal / relative).read_bytes(), original)
         for candidate_file in candidate_files:
             relative = candidate_file.relative_to(self.candidate)
             promoted_file = self.formal / relative
@@ -521,6 +556,24 @@ class BananaPiMixedSourceFinalizerIntegrationTests(unittest.TestCase):
         self.assertIn("正式提升完成\tno", status)
         self.assertIn("正式重新稽核通過\tno", status)
         self.assertIn("已復原提升前正式版本", result.stderr)
+
+    def test_changed_formal_chinese_note_rolls_back_release(self) -> None:
+        result = self.run_finalizer(TEST_FORMAL_NOTE_MUTATION="Release-Notes-zh-TW.md")
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("繁中說明與翻譯前原始雜湊不同", result.stderr)
+        self.assertEqual(self.old_formal_file.stat().st_ino, self.old_formal_inode)
+        self.assertEqual(self.transaction_residue(), [])
+        self.assertEqual(list(self.state.glob("final-*-*")), [])
+        for relative, original in self.original_notes.items():
+            self.assertEqual((self.candidate / relative).read_bytes(), original)
+
+    def test_changed_formal_english_note_rolls_back_release(self) -> None:
+        result = self.run_finalizer(TEST_FORMAL_NOTE_MUTATION="Release-Notes-English.md")
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("英文說明缺少或與中文翻譯不一致", result.stderr)
+        self.assertEqual(self.old_formal_file.stat().st_ino, self.old_formal_inode)
+        self.assertEqual(self.transaction_residue(), [])
+        self.assertEqual(list(self.state.glob("final-*-*")), [])
 
     def test_sigkill_after_old_formal_move_recovers_and_archives_staging(
         self,

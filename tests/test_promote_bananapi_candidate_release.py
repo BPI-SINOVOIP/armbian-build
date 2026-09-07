@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
+import csv
 import fcntl
 import hashlib
 import os
@@ -14,6 +15,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = ROOT / "tools/promote-bananapi-candidate-release.sh"
+RELEASE_NOTES = ("Release-Notes-zh-TW.md", "Release-Notes-English.md")
 
 
 class BananaPiCandidatePromotionTests(unittest.TestCase):
@@ -51,6 +53,9 @@ class BananaPiCandidatePromotionTests(unittest.TestCase):
             directory.mkdir()
             (directory / "Release-Notes-zh-TW.md").write_text(
                 f"# {folder} 發布說明\n", encoding="utf-8"
+            )
+            (directory / "Release-Notes-English.md").write_bytes(
+                f"```text\r\nboard={board}\r\nbranch={branch}\r\n```\r\n".encode()
             )
             token = board[0].upper() + board[1:]
             for release in releases:
@@ -154,6 +159,9 @@ class BananaPiCandidatePromotionTests(unittest.TestCase):
 
     def test_execute_atomically_promotes_hardlinks_and_retains_previous(self) -> None:
         candidate_before = self.candidate_snapshot()
+        for folder, *_ in self.rows:
+            for name in RELEASE_NOTES:
+                self.assertIn(f"{folder}/{name}", candidate_before)
 
         result = self.run_tool("--execute")
 
@@ -201,6 +209,224 @@ class BananaPiCandidatePromotionTests(unittest.TestCase):
         result = self.run_tool()
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("含未受控檔案", result.stderr)
+
+    def test_missing_english_note_is_rejected_before_promotion(self) -> None:
+        note = self.candidate / "bpi-demo-b/Release-Notes-English.md"
+        note.unlink()
+        candidate_before = self.candidate_snapshot()
+
+        for extra in ((), ("--execute",)):
+            with self.subTest(extra=extra):
+                result = self.run_tool(*extra)
+                self.assertNotEqual(result.returncode, 0)
+                self.assertIn("缺少英文發行說明", result.stderr)
+                self.assertIn(str(note), result.stderr)
+                self.assertEqual(self.candidate_snapshot(), candidate_before)
+                self.assertTrue((self.formal / "舊板目錄/舊版本.txt").is_file())
+                self.assertEqual(self.transaction_residue(), [])
+
+    def test_symlinked_release_notes_are_rejected_before_promotion(self) -> None:
+        for name in RELEASE_NOTES:
+            with self.subTest(name=name):
+                note = self.candidate / "bpi-demo-a" / name
+                content = note.read_bytes()
+                target = self.root / name
+                note.rename(target)
+                note.symlink_to(target)
+                try:
+                    result = self.run_tool("--execute")
+                    self.assertNotEqual(result.returncode, 0)
+                    self.assertIn("只允許第一層實體檔案", result.stderr)
+                    self.assertIn(str(note), result.stderr)
+                    self.assertTrue(note.is_symlink())
+                    self.assertEqual(target.read_bytes(), content)
+                    self.assertTrue((self.formal / "舊板目錄/舊版本.txt").is_file())
+                    self.assertEqual(self.transaction_residue(), [])
+                finally:
+                    note.unlink()
+                    target.rename(note)
+
+    def test_empty_release_notes_are_rejected_before_promotion(self) -> None:
+        for name in RELEASE_NOTES:
+            with self.subTest(name=name):
+                note = self.candidate / "bpi-demo-a" / name
+                content = note.read_bytes()
+                note.write_bytes(b"")
+                try:
+                    result = self.run_tool("--execute")
+                    self.assertNotEqual(result.returncode, 0)
+                    self.assertIn("不是正常非空檔案", result.stderr)
+                    self.assertIn(str(note), result.stderr)
+                    self.assertEqual(note.read_bytes(), b"")
+                    self.assertTrue((self.formal / "舊板目錄/舊版本.txt").is_file())
+                    self.assertEqual(self.transaction_residue(), [])
+                finally:
+                    note.write_bytes(content)
+
+    def test_release_note_directories_are_rejected_before_promotion(self) -> None:
+        for name in RELEASE_NOTES:
+            with self.subTest(name=name):
+                note = self.candidate / "bpi-demo-a" / name
+                content = note.read_bytes()
+                note.unlink()
+                note.mkdir()
+                try:
+                    result = self.run_tool("--execute")
+                    self.assertNotEqual(result.returncode, 0)
+                    self.assertIn("只允許第一層實體檔案", result.stderr)
+                    self.assertIn(str(note), result.stderr)
+                    self.assertTrue(note.is_dir())
+                    self.assertTrue((self.formal / "舊板目錄/舊版本.txt").is_file())
+                    self.assertEqual(self.transaction_residue(), [])
+                finally:
+                    note.rmdir()
+                    note.write_bytes(content)
+
+    def test_uncontrolled_note_names_are_rejected_before_promotion(self) -> None:
+        for name in (
+            "Release-Notes.md",
+            "Release-Notes-en.md",
+            "Release-Notes-en-US.md",
+            "Release-Notes-English.md.bak",
+            "Release-Notes-english.md",
+            "README.md",
+        ):
+            with self.subTest(name=name):
+                note = self.candidate / "bpi-demo-a" / name
+                note.write_text("不得發布\n", encoding="utf-8")
+                try:
+                    result = self.run_tool("--execute")
+                    self.assertNotEqual(result.returncode, 0)
+                    self.assertIn("含未受控檔案", result.stderr)
+                    self.assertIn(str(note), result.stderr)
+                    self.assertTrue((self.formal / "舊板目錄/舊版本.txt").is_file())
+                    self.assertEqual(self.transaction_residue(), [])
+                finally:
+                    note.unlink()
+
+    def test_controlled_matrix_still_promotes_45_boards_and_444_images(self) -> None:
+        with (ROOT / "config/bananapi-latest-release-matrix.tsv").open(
+            encoding="utf-8", newline=""
+        ) as stream:
+            self.rows = [
+                (
+                    row["folder"],
+                    row["board"],
+                    row["branch"],
+                    tuple(row["releases"].split(",")),
+                )
+                for row in csv.DictReader(stream, delimiter="\t")
+            ]
+        self.assertEqual(len(self.rows), 45)
+        self.assertEqual(sum(len(releases) * 2 for *_, releases in self.rows), 444)
+        shutil.rmtree(self.candidate)
+        self.candidate.mkdir()
+        self.write_matrix()
+        self.create_complete_candidate()
+        candidate_before = self.candidate_snapshot()
+
+        result = self.run_tool("--execute")
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("45 個板目錄、444 個映像", result.stdout)
+        self.assertEqual(sum(path.is_dir() for path in self.formal.iterdir()), 45)
+        self.assertEqual(len(list(self.formal.rglob("*.img.xz"))), 444)
+        self.assertEqual(len(list(self.formal.rglob("*.img.xz.sha"))), 444)
+        for name in RELEASE_NOTES:
+            self.assertEqual(len(list(self.formal.rglob(name))), 45)
+        for relative, (content, inode) in candidate_before.items():
+            promoted = self.formal / relative
+            self.assertFalse(promoted.is_symlink())
+            self.assertEqual(promoted.read_bytes(), content)
+            self.assertEqual(promoted.stat().st_ino, inode)
+        self.assertEqual(self.candidate_snapshot(), candidate_before)
+
+    def test_missing_staged_english_note_aborts_before_formal_switch(self) -> None:
+        fake_bin = self.root / "fake-note-ln-bin"
+        fake_bin.mkdir()
+        real_ln = shutil.which("ln")
+        self.assertIsNotNone(real_ln)
+        wrapper = fake_bin / "ln"
+        wrapper.write_text(
+            "#!/usr/bin/env bash\n"
+            "set -euo pipefail\n"
+            f'"{real_ln}" "$@"\n'
+            'target_path="${@: -1}"\n'
+            'if [[ "$target_path" == */Release-Notes-zh-TW.md ]]; then\n'
+            '  rm -- "${target_path%/*}/Release-Notes-English.md"\n'
+            "fi\n",
+            encoding="utf-8",
+        )
+        wrapper.chmod(0o755)
+        candidate_before = self.candidate_snapshot()
+
+        result = self.run_tool(
+            "--execute", env={"PATH": f"{fake_bin}:{os.environ['PATH']}"}
+        )
+
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("缺少英文發行說明", result.stderr)
+        self.assertIn(".formal.staging-", result.stderr)
+        self.assertEqual(self.candidate_snapshot(), candidate_before)
+        self.assertTrue((self.formal / "舊板目錄/舊版本.txt").is_file())
+        self.assertEqual(self.transaction_residue(), [])
+
+    def test_invalid_promoted_english_note_rolls_back_the_formal_release(self) -> None:
+        fake_bin = self.root / "fake-note-mv-bin"
+        fake_bin.mkdir()
+        real_mv = shutil.which("mv")
+        real_cp = shutil.which("cp")
+        self.assertIsNotNone(real_mv)
+        self.assertIsNotNone(real_cp)
+        wrapper = fake_bin / "mv"
+        wrapper.write_text(
+            "#!/usr/bin/env bash\n"
+            "set -euo pipefail\n"
+            f'"{real_mv}" "$@"\n'
+            'source_path="${@: -2:1}"\n'
+            'target_path="${@: -1}"\n'
+            'if [[ "$source_path" == "$TEST_PARENT/.formal.staging-"* &&\n'
+            '    "$target_path" == "$TEST_FORMAL" ]]; then\n'
+            '  note="$TEST_FORMAL/bpi-demo-b/Release-Notes-English.md"\n'
+            '  original="$TEST_CANDIDATE/bpi-demo-b/Release-Notes-English.md"\n'
+            '  rm -- "$note"\n'
+            '  case "$TEST_NOTE_MODE" in\n'
+            "  missing) ;;\n"
+            '  empty) : >"$note" ;;\n'
+            '  symlink) ln -s -- "$original" "$note" ;;\n'
+            f'  copy) "{real_cp}" -- "$original" "$note" ;;\n'
+            "  esac\n"
+            "fi\n",
+            encoding="utf-8",
+        )
+        wrapper.chmod(0o755)
+        candidate_before = self.candidate_snapshot()
+        for mode, message in (
+            ("missing", "缺少英文發行說明"),
+            ("empty", "不是正常非空檔案"),
+            ("symlink", "不是正常非空檔案"),
+            ("copy", "不是候選原件的硬連結"),
+        ):
+            with self.subTest(mode=mode):
+                result = self.run_tool(
+                    "--execute",
+                    env={
+                        "PATH": f"{fake_bin}:{os.environ['PATH']}",
+                        "TEST_PARENT": str(self.root),
+                        "TEST_FORMAL": str(self.formal),
+                        "TEST_CANDIDATE": str(self.candidate),
+                        "TEST_NOTE_MODE": mode,
+                    },
+                )
+                self.assertNotEqual(result.returncode, 0)
+                self.assertIn(message, result.stderr)
+                self.assertIn("已將舊正式版本復原", result.stderr)
+                self.assertEqual(self.candidate_snapshot(), candidate_before)
+                self.assertEqual(
+                    (self.formal / "舊板目錄/舊版本.txt").read_text(encoding="utf-8"),
+                    "舊正式版本\n",
+                )
+                self.assertEqual(self.transaction_residue(), [])
 
     def test_cross_filesystem_test_double_is_rejected_without_copying(self) -> None:
         fake_bin = self.root / "fake-stat-bin"
@@ -550,6 +776,15 @@ class BananaPiCandidatePromotionTests(unittest.TestCase):
         try:
             self.wait_for_path(old_moved, process)
             self.assertFalse(self.formal.exists())
+            staging = list(self.root.glob(".formal.staging-*"))
+            self.assertEqual(len(staging), 1)
+            for folder, *_ in self.rows:
+                for name in RELEASE_NOTES:
+                    source = self.candidate / folder / name
+                    staged = staging[0] / folder / name
+                    self.assertFalse(staged.is_symlink())
+                    self.assertEqual(staged.read_bytes(), source.read_bytes())
+                    self.assertEqual(staged.stat().st_ino, source.stat().st_ino)
             for lock_path in (
                 self.fixed_lock_path(self.candidate),
                 self.fixed_lock_path(self.formal),

@@ -434,6 +434,26 @@ validate_sidecar() {
 		die "映像 SHA-256 驗證失敗：${archive}"
 }
 
+validate_release_notes() {
+	local directory="$1"
+	local reference_directory="${2:-}"
+	local name note language
+
+	for name in Release-Notes-zh-TW.md Release-Notes-English.md; do
+		note="${directory}/${name}"
+		case "${name}" in
+		Release-Notes-zh-TW.md) language="繁體中文" ;;
+		Release-Notes-English.md) language="英文" ;;
+		esac
+		[[ -f "${note}" && -s "${note}" && ! -L "${note}" ]] ||
+			die "板目錄缺少${language}發行說明，或檔案不是正常非空檔案：${note}"
+		if [[ -n "${reference_directory}" ]]; then
+			[[ "${note}" -ef "${reference_directory}/${name}" ]] ||
+				die "發行說明不是候選原件的硬連結：${note}"
+		fi
+	done
+}
+
 validate_board_directory() {
 	local folder="$1"
 	local board="${MATRIX_BOARDS[${folder}]}"
@@ -441,7 +461,7 @@ validate_board_directory() {
 	local releases="${MATRIX_RELEASES[${folder}]}"
 	local directory="${CANDIDATE_RELEASE}/${folder}"
 	local token="${board^}"
-	local entry archive name release profile suffix sidecar_count match_count note
+	local entry archive name release profile suffix sidecar_count match_count
 	local -a archives=() matches=() release_list=()
 	local -A archive_match_counts=()
 
@@ -449,13 +469,11 @@ validate_board_directory() {
 		[[ -f "${entry}" && ! -L "${entry}" ]] ||
 			die "板目錄只允許第一層實體檔案：${entry}"
 		case "${entry##*/}" in
-		*.img.xz | *.img.xz.sha | Release-Notes-zh-TW.md) ;;
+		*.img.xz | *.img.xz.sha | Release-Notes-zh-TW.md | Release-Notes-English.md) ;;
 		*) die "板目錄含未受控檔案：${entry}" ;;
 		esac
 	done < <(find "${directory}" -mindepth 1 -maxdepth 1 -print0)
-	note="${directory}/Release-Notes-zh-TW.md"
-	[[ -s "${note}" && ! -L "${note}" ]] ||
-		die "板目錄缺少繁體中文發行說明：${note}"
+	validate_release_notes "${directory}"
 
 	mapfile -d '' archives < <(
 		find "${directory}" -mindepth 1 -maxdepth 1 -type f -name '*.img.xz' -print0 | sort -z
@@ -741,6 +759,7 @@ create_hardlink_staging() {
 				die "staging 檔案不是候選原件的硬連結：${target}"
 			((linked_files += 1))
 		done < <(find "${source_directory}" -mindepth 1 -maxdepth 1 -type f -print0 | sort -z)
+		validate_release_notes "${target_directory}" "${source_directory}"
 	done
 	log "已建立同檔案系統硬連結 staging：${STAGING_PATH}（${linked_files} 個檔案）"
 }
@@ -761,7 +780,7 @@ write_promotion_transaction_marker() {
 }
 
 execute_transaction() {
-	local transaction_id
+	local transaction_id folder
 
 	transaction_id="$(date -u '+%Y%m%dT%H%M%SZ')-$$"
 	STAGING_PATH="${FORMAL_PARENT}/.${FORMAL_NAME}.staging-${transaction_id}"
@@ -792,6 +811,9 @@ execute_transaction() {
 		! -L "${FORMAL_RELEASE}/.latest-rebuild.lock" &&
 		"${FORMAL_RELEASE}/.latest-rebuild.lock" -ef "/proc/self/fd/${FORMAL_COMPAT_LOCK_FD}" ]] ||
 		die "新正式版本的根內相容鎖不是交易持有的 inode"
+	for folder in "${MATRIX_FOLDERS[@]}"; do
+		validate_release_notes "${FORMAL_RELEASE}/${folder}" "${CANDIDATE_RELEASE}/${folder}"
+	done
 	write_promotion_transaction_marker "已提交"
 	TRANSACTION_PHASE="committed"
 	trap - EXIT INT TERM HUP

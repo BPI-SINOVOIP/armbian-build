@@ -46,6 +46,12 @@ class BananaPiMixedSourceFinalizerTests(unittest.TestCase):
             "舊正式版本\n", encoding="utf-8"
         )
         self.write_matrix()
+        for index in range(1, 46):
+            directory = self.candidate / f"bpi-test-{index:02d}"
+            directory.mkdir()
+            (directory / "Release-Notes-zh-TW.md").write_text(
+                f"原始繁中說明 {index}\n", encoding="utf-8"
+            )
         self.write_test_doubles()
 
     def tearDown(self) -> None:
@@ -121,12 +127,22 @@ class BananaPiMixedSourceFinalizerTests(unittest.TestCase):
         )
         self.write_executable(
             self.tool_repo / "tools/generate-bananapi-release-notes.py",
+            "raise SystemExit('不得重新產生繁中說明')\n",
+        )
+        self.write_executable(
+            self.tool_repo / "tools/translate-bananapi-release-notes-english.py",
             r"""
             #!/usr/bin/env python3
             import os
             from pathlib import Path
             import sys
 
+            if os.environ.get("TEST_MUTATE_CHINESE") == "yes":
+                args = sys.argv[1:]
+                root = Path(args[args.index("--candidate-release") + 1])
+                (root / "bpi-test-01/Release-Notes-zh-TW.md").write_text(
+                    "非預期修改\n", encoding="utf-8"
+                )
             if os.environ.get("TEST_MUTATE_INPUTS") == "yes":
                 Path(os.environ["TEST_ORIGINAL_MATRIX"]).write_text(
                     "已在快照後改變\n", encoding="utf-8"
@@ -270,6 +286,7 @@ class BananaPiMixedSourceFinalizerTests(unittest.TestCase):
 	            staging="$(dirname "${formal}")/.$(basename "${formal}").staging-test"
                 mv -T -- "${formal}" "${previous}"
                 mkdir -- "${formal}"
+	            cp -al -- "${candidate}"/bpi-test-* "${formal}/"
 	            ln -- "${previous}/.latest-rebuild.lock" \
 	                "${formal}/.latest-rebuild.lock"
 	            marker="${BANANAPI_PROMOTION_COMMIT_MARKER:?}"
@@ -339,20 +356,25 @@ class BananaPiMixedSourceFinalizerTests(unittest.TestCase):
         calls = self.call_log.read_text(encoding="utf-8").splitlines()
         self.assertEqual(
             [line.split(" ", 1)[0] for line in calls],
-            ["政策", "說明", "候選稽核", "提升-預演", "提升-執行", "正式稽核"],
+            ["政策", "說明", "說明", "候選稽核", "提升-預演", "提升-執行", "正式稽核", "說明"],
         )
-        for line in (calls[2], calls[5]):
+        for line in (calls[3], calls[6]):
             self.assertIn("--verification-workers 4", line)
             self.assertIn("--verify-digests", line)
             self.assertIn("--verify-xz", line)
             self.assertIn("--candidate-input-policy", line)
         self.assertIn("--replace", calls[1])
+        self.assertIn("--check", calls[2])
+        self.assertIn("--check", calls[7])
         self.assertFalse(empty_staging.exists())
         outputs = self.final_outputs()
         self.assertEqual(len(outputs), 1)
         self.assertTrue((outputs[0] / "候選輸入政策.tsv").is_file())
         self.assertTrue((outputs[0] / "正式輸入政策.tsv").is_file())
         self.assertTrue((outputs[0] / "收斂結果.tsv").is_file())
+        self.assertEqual(
+            len((outputs[0] / "繁中說明原始雜湊.tsv").read_text().splitlines()), 46
+        )
         status = (outputs[0] / "執行狀態.tsv").read_text(encoding="utf-8")
         self.assertIn("狀態\t成功", status)
         self.assertIn("正式重新稽核通過\tyes", status)
@@ -383,12 +405,19 @@ class BananaPiMixedSourceFinalizerTests(unittest.TestCase):
             for line in calls.splitlines()
             if "--matrix " in line
         ]
-        self.assertEqual(len(matrix_arguments), 6)
+        self.assertEqual(len(matrix_arguments), 8)
         self.assertEqual(len(set(matrix_arguments)), 1)
         self.assertIn("/輸入快照/受控矩陣.tsv", matrix_arguments[0])
         manifest = (output / "輸入快照.tsv").read_text(encoding="utf-8")
         self.assertIn("輸入快照/受控矩陣.tsv", manifest)
         self.assertNotIn("/.final-", manifest)
+
+    def test_chinese_notes_must_not_change_during_translation(self) -> None:
+        result = self.run_tool(TEST_MUTATE_CHINESE="yes")
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("繁中說明與翻譯前原始雜湊不同", result.stderr)
+        self.assertNotIn("提升-", self.call_log.read_text(encoding="utf-8"))
+        self.assertTrue(self.old_formal_file().is_file())
 
     def test_audit_must_exactly_cover_matrix_keys_and_board_decisions(self) -> None:
         for variable, expected in (

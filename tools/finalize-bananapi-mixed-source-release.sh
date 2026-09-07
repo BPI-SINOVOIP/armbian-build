@@ -183,7 +183,7 @@ prepare_input_snapshot() {
 			"${matrix_file}" "${relative_target}" "${digest%% *}"
 		for name in \
 			generate-bananapi-candidate-input-policy.py \
-			generate-bananapi-release-notes.py \
+			translate-bananapi-release-notes-english.py \
 			audit-bananapi-release-state.py \
 			promote-bananapi-candidate-release.sh; do
 			source="${tool_repo}/tools/${name}"
@@ -811,9 +811,46 @@ write_result_summary() {
 		printf '候選稽核\t%s\n' "${output_final}/候選完整稽核"
 		printf '正式政策\t%s\n' "${output_final}/正式輸入政策.tsv"
 		printf '正式稽核\t%s\n' "${output_final}/正式完整稽核"
+		printf '繁中說明原始雜湊\t%s\n' "${output_final}/繁中說明原始雜湊.tsv"
 		printf 'previous\t%s\n' "${previous_path}"
 	} >"${temporary}"
 	mv -- "${temporary}" "${output_staging}/收斂結果.tsv"
+}
+
+check_chinese_note_preservation() {
+	local root="$1" mode="$2"
+	python3 - "${matrix_file}" "${root}" \
+		"${output_staging}/繁中說明原始雜湊.tsv" "${mode}" <<'PY'
+import csv
+import hashlib
+from pathlib import Path
+import sys
+
+matrix, root, manifest = map(Path, sys.argv[1:4])
+mode = sys.argv[4]
+with matrix.open(encoding="utf-8", newline="") as stream:
+    folders = [row["folder"] for row in csv.DictReader(stream, delimiter="\t")]
+rows = []
+for folder in folders:
+    directory = root / folder
+    note = directory / "Release-Notes-zh-TW.md"
+    if directory.is_symlink() or not directory.is_dir():
+        raise SystemExit(f"板目錄不是實體目錄：{directory}")
+    if note.is_symlink() or not note.is_file() or note.stat().st_size == 0:
+        raise SystemExit(f"繁中說明不是非空實體檔案：{note}")
+    rows.append({"板目錄": folder, "SHA256": hashlib.sha256(note.read_bytes()).hexdigest()})
+if mode == "record":
+    with manifest.open("x", encoding="utf-8", newline="") as stream:
+        writer = csv.DictWriter(stream, fieldnames=["板目錄", "SHA256"], delimiter="\t")
+        writer.writeheader()
+        writer.writerows(rows)
+else:
+    with manifest.open(encoding="utf-8", newline="") as stream:
+        original = list(csv.DictReader(stream, delimiter="\t"))
+    if rows != original:
+        raise SystemExit("繁中說明與翻譯前原始雜湊不同，拒絕發布")
+print(f"繁中說明保全檢查通過：{len(rows)} 板。")
+PY
 }
 
 main() {
@@ -860,7 +897,7 @@ main() {
 
 	for tool in \
 		generate-bananapi-candidate-input-policy.py \
-		generate-bananapi-release-notes.py \
+		translate-bananapi-release-notes-english.py \
 		audit-bananapi-release-state.py \
 		promote-bananapi-candidate-release.sh; do
 		require_regular_file "${tool_repo}/tools/${tool}" "必要工具"
@@ -929,11 +966,17 @@ main() {
 	[[ "$(tsv_data_rows "${candidate_policy}")" == "${EXPECTED_BOARD_TOTAL}" ]] ||
 		fail "候選逐板政策不是 ${EXPECTED_BOARD_TOTAL} 板：${candidate_policy}"
 
-	run_logged "${output_staging}/02-更新繁中說明.log" \
-		python3 "${tool_repo}/tools/generate-bananapi-release-notes.py" \
+	check_chinese_note_preservation "${candidate_release}" record
+	run_logged "${output_staging}/02-補齊英文說明.log" \
+		python3 "${tool_repo}/tools/translate-bananapi-release-notes-english.py" \
 		--matrix "${matrix_file}" \
 		--candidate-release "${candidate_release}" \
 		--replace
+	check_chinese_note_preservation "${candidate_release}" check
+	run_logged "${output_staging}/02-候選中英文說明核對.log" \
+		python3 "${tool_repo}/tools/translate-bananapi-release-notes-english.py" \
+		--matrix "${matrix_file}" \
+		--candidate-release "${candidate_release}" --check
 
 	run_logged "${output_staging}/03-候選完整稽核.log" \
 		python3 "${tool_repo}/tools/audit-bananapi-release-state.py" \
@@ -980,6 +1023,11 @@ main() {
 		--verify-digests \
 		--verify-xz
 	validate_complete_audit "${formal_audit}" "${candidate_policy}" no
+	check_chinese_note_preservation "${formal_release}" check
+	run_logged "${output_staging}/07-正式中英文說明核對.log" \
+		python3 "${tool_repo}/tools/translate-bananapi-release-notes-english.py" \
+		--matrix "${matrix_file}" \
+		--candidate-release "${formal_release}" --check
 	cp -- "${formal_audit}/候選輸入政策.tsv" "${formal_policy}.tmp"
 	mv -- "${formal_policy}.tmp" "${formal_policy}"
 	cmp -s -- "${candidate_policy}" "${formal_policy}" ||
