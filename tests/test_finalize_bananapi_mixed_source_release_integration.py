@@ -162,8 +162,10 @@ class BananaPiMixedSourceFinalizerIntegrationTests(unittest.TestCase):
             import hashlib
             import os
             from pathlib import Path
+            import runpy
             import shutil
 
+            ItemKey = runpy.run_path(os.environ["TEST_REAL_AUDIT"])["ItemKey"]
             parser = argparse.ArgumentParser()
             parser.add_argument("--matrix", type=Path, required=True)
             parser.add_argument("--formal-release", type=Path, required=True)
@@ -257,7 +259,7 @@ class BananaPiMixedSourceFinalizerIntegrationTests(unittest.TestCase):
                             raise SystemExit(f"SHA 邊車驗證失敗：{sidecar}")
                         expected_names.update((archive.name, sidecar.name))
                         profile_name = "minimal" if profile == "minimal" else "xfce"
-                        key = f"{folder}|{board}|{branch}|{release}|{profile_name}"
+                        key = ItemKey(folder, board, branch, release, profile_name).value
                         ledger_rows.append(
                             "\t".join(
                                 (
@@ -371,6 +373,7 @@ class BananaPiMixedSourceFinalizerIntegrationTests(unittest.TestCase):
                 "FORMAL_RELEASE": str(self.formal),
                 "TEST_AUDIT_COUNT": str(self.audit_count),
                 "TEST_AUDIT_LOG": str(self.audit_log),
+                "TEST_REAL_AUDIT": str(ROOT / "tools/audit-bananapi-release-state.py"),
                 "TEST_CANDIDATE_ROOT": str(self.candidate),
                 "TEST_FORMAL_ROOT": str(self.formal),
                 "TEST_STATE_ROOT": str(self.state),
