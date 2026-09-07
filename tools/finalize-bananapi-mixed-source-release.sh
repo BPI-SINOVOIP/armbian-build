@@ -685,7 +685,7 @@ for row in matrix_rows:
     expected_boards[folder] = (row["board"], row["branch"], len(releases) * 2)
     for release in releases:
         for profile in ("minimal", "xfce"):
-            key = "|".join(
+            key = "/".join(
                 (folder, row["board"], row["branch"], release, profile)
             )
             expected_images[key] = (

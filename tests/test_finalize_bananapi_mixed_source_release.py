@@ -145,9 +145,11 @@ class BananaPiMixedSourceFinalizerTests(unittest.TestCase):
             #!/usr/bin/env python3
             import os
             from pathlib import Path
+            import runpy
             import shutil
             import sys
 
+            ItemKey = runpy.run_path(os.environ["TEST_REAL_AUDIT"])["ItemKey"]
             args = sys.argv[1:]
             counter = Path(os.environ["TEST_AUDIT_COUNT"])
             count = int(counter.read_text() if counter.exists() else "0") + 1
@@ -176,7 +178,7 @@ class BananaPiMixedSourceFinalizerTests(unittest.TestCase):
             for folder, board, branch, releases in matrix_rows:
                 for release in releases:
                     for profile in ("minimal", "xfce"):
-                        key = "|".join((folder, board, branch, release, profile))
+                        key = ItemKey(folder, board, branch, release, profile).value
                         ledger_rows.append(
                             f"{key}\t{folder}\t{board}\t{branch}\t{release}\t{profile}\t"
                             f"已驗證候選\t來源\t{key}.img.xz\t{'c' * 64}\t"
@@ -297,6 +299,7 @@ class BananaPiMixedSourceFinalizerTests(unittest.TestCase):
                 "FORMAL_RELEASE": str(self.formal),
                 "TEST_CALL_LOG": str(self.call_log),
                 "TEST_AUDIT_COUNT": str(self.audit_count),
+                "TEST_REAL_AUDIT": str(ROOT / "tools/audit-bananapi-release-state.py"),
                 "TEST_ORIGINAL_MATRIX": str(self.matrix),
                 "TEST_ORIGINAL_AUDIT": str(
                     self.tool_repo / "tools/audit-bananapi-release-state.py"
