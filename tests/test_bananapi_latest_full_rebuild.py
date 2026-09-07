@@ -508,6 +508,7 @@ fi
         self.assertIn('repo_dir="${REPO_DIR:-', script)
         self.assertIn("EXPECTED_BUILD_CONTEXT_SHA256", script)
         self.assertIn("framework_log_sha256", script)
+        self.assertIn("status=complete\\ncompleted_utc=", script)
         self.assertIn('summary="${state_root}/runs/summary-${run_uuid}.tsv"', script)
 
     def test_legacy_completed_item_keeps_valid_primary_log(self) -> None:
@@ -536,6 +537,50 @@ marker="$(item_marker_path demo trixie minimal)"
 	printf 'framework_log=/tmp/已輪替.log\n'
 } > "$marker"
 item_is_complete "$stage" demo bananapim5 current trixie minimal
+"""
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_explicit_failed_item_is_not_reused(self) -> None:
+        result = self.run_library_shell(
+            r"""
+stage="$RELEASE_ROOT/.staging-demo-$source_short"
+mkdir -p "$stage"
+archive="Armbian-test_Bananapim5_trixie_current_1.0_minimal.img.xz"
+printf payload | xz -c > "$stage/$archive"
+digest="$(sha256sum "$stage/$archive" | awk '{ print $1 }')"
+printf '%s  %s\n' "$digest" "$archive" > "$stage/$archive.sha"
+log="$STATE_ROOT/logs/demo-trixie-minimal.log"
+printf '完整建置日誌\n' > "$log"
+log_digest="$(sha256sum "$log" | awk '{ print $1 }')"
+marker="$(item_marker_path demo trixie minimal)"
+{
+	printf 'source_commit=%s\n' "$source_commit"
+	printf 'bsp_base_commit=%s\n' "$bsp_base_commit"
+	printf 'matrix_sha256=%s\n' "$matrix_sha256"
+	printf 'userpatches_sha256=%s\n' "$userpatches_sha256"
+	printf 'build_context_sha256=%s\n' "$build_context_sha256"
+	printf 'folder=demo\nboard=bananapim5\nbranch=current\n'
+	printf 'release=trixie\nprofile=minimal\n'
+	printf 'archive=%s\nsha256=%s\n' "$archive" "$digest"
+	printf 'log=%s\nlog_sha256=%s\n' "$log" "$log_digest"
+	printf 'status=failed\n'
+} > "$marker"
+if item_is_complete "$stage" demo bananapim5 current trixie minimal; then
+	exit 9
+fi
+"""
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_duplicate_item_status_is_not_reused(self) -> None:
+        result = self.run_library_shell(
+            r"""
+marker="$(item_marker_path demo trixie minimal)"
+printf 'status=complete\nstatus=failed\n' > "$marker"
+if marker_has_optional_complete_status "$marker"; then
+	exit 9
+fi
 """
         )
         self.assertEqual(result.returncode, 0, result.stderr)

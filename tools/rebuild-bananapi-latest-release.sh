@@ -545,6 +545,14 @@ read_marker_value() {
 	sed -n "s/^${key}=//p" "${marker}" | head -n 1
 }
 
+marker_has_optional_complete_status() {
+	local marker="$1"
+	local -a status_values=()
+	mapfile -t status_values < <(sed -n 's/^status=//p' "${marker}")
+	((${#status_values[@]} <= 1)) || return 1
+	((${#status_values[@]} == 0)) || [[ "${status_values[0]}" == complete ]]
+}
+
 verify_sha_sidecar() {
 	local archive="$1" sha_file="$2" expected_digest="$3"
 	local sidecar_digest sidecar_name extra actual
@@ -600,6 +608,7 @@ item_is_complete() {
 	[[ "$(read_marker_value "${marker}" branch)" == "${branch}" ]] || return 1
 	[[ "$(read_marker_value "${marker}" release)" == "${release}" ]] || return 1
 	[[ "$(read_marker_value "${marker}" profile)" == "${profile}" ]] || return 1
+	marker_has_optional_complete_status "${marker}" || return 1
 	archive="$(read_marker_value "${marker}" archive)"
 	digest="$(read_marker_value "${marker}" sha256)"
 	sha_file="${stage}/${archive}.sha"
@@ -839,6 +848,7 @@ build_item() {
 		printf 'log_sha256=%s\n' "${log_digest}"
 		printf 'framework_log=%s\n' "${preserved_framework_log}"
 		printf 'framework_log_sha256=%s\n' "${framework_log_digest}"
+		printf 'status=complete\ncompleted_utc=%s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 	} > "${item_marker}.partial" || return 1
 	mv -T "${item_marker}.partial" "${item_marker}" || return 1
 	sync -f "${item_marker}" || return 1

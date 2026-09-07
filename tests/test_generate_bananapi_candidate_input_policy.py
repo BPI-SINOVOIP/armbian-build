@@ -120,7 +120,9 @@ class GenerateBananaPiCandidateInputPolicyTests(unittest.TestCase):
                 )
 
     def run_generator(
-        self, matrix: Path | None = None
+        self,
+        matrix: Path | None = None,
+        *extra: str,
     ) -> subprocess.CompletedProcess[str]:
         return subprocess.run(
             [
@@ -132,6 +134,7 @@ class GenerateBananaPiCandidateInputPolicyTests(unittest.TestCase):
                 str(self.state),
                 "--output",
                 str(self.output),
+                *extra,
             ],
             cwd=ROOT,
             text=True,
@@ -193,6 +196,44 @@ class GenerateBananaPiCandidateInputPolicyTests(unittest.TestCase):
             [(row["source_commit"], row["build_context_sha256"]) for row in policy],
             [(SOURCE_A, CONTEXT_A), (SOURCE_B, CONTEXT_B)],
         )
+
+    def test_legacy_item_markers_require_explicit_migration_mode(self) -> None:
+        for row in self.rows:
+            self.create_complete_board(row)
+        for marker in (self.state / "items").glob("*.complete"):
+            marker.write_text(
+                marker.read_text(encoding="utf-8").replace("status=complete\n", ""),
+                encoding="utf-8",
+            )
+
+        strict = self.run_generator()
+
+        self.assertNotEqual(strict.returncode, 0)
+        self.assertIn("缺少必要欄位 status", strict.stderr)
+        self.assertFalse(self.output.exists())
+
+        result = self.run_generator(None, "--allow-legacy-item-status")
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("只可供受控遷移稽核使用", result.stdout)
+        self.assertEqual(len(self.read_policy()), 2)
+
+    def test_explicit_noncomplete_item_status_is_rejected(self) -> None:
+        for row in self.rows:
+            self.create_complete_board(row)
+        marker = self.state / "items" / "bpi-first-trixie-minimal.complete"
+        marker.write_text(
+            marker.read_text(encoding="utf-8").replace(
+                "status=complete", "status=failed"
+            ),
+            encoding="utf-8",
+        )
+
+        result = self.run_generator(None, "--allow-legacy-item-status")
+
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("項目標記狀態不是 complete", result.stderr)
+        self.assertFalse(self.output.exists())
 
     def test_missing_item_is_rejected(self) -> None:
         self.create_complete_board(self.rows[0], omit={("bookworm", "xfce")})

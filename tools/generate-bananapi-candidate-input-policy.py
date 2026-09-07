@@ -49,6 +49,11 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         "--candidate-state", type=Path, required=True, help="候選狀態根目錄"
     )
     parser.add_argument("--output", type=Path, required=True, help="政策輸出 TSV")
+    parser.add_argument(
+        "--allow-legacy-item-status",
+        action="store_true",
+        help="只供受控遷移前稽核使用，允許項目標記缺少 status",
+    )
     return parser.parse_args(argv)
 
 
@@ -186,6 +191,7 @@ def load_item_identities(
     state_root: Path,
     matrix: list[MatrixRow],
     board_identities: dict[str, InputIdentity],
+    allow_legacy_item_status: bool = False,
 ) -> None:
     item_directory = state_root / "items"
     if item_directory.is_symlink() or not item_directory.is_dir():
@@ -195,19 +201,21 @@ def load_item_identities(
     found: dict[tuple[str, str, str], tuple[Path, InputIdentity]] = {}
     for path in sorted(item_directory.glob("*.complete")):
         values = read_marker(path)
+        required_fields = {
+            "source_commit",
+            "build_context_sha256",
+            "folder",
+            "board",
+            "branch",
+            "release",
+            "profile",
+        }
+        if not allow_legacy_item_status:
+            required_fields.add("status")
         require_fields(
             path,
             values,
-            {
-                "source_commit",
-                "build_context_sha256",
-                "folder",
-                "board",
-                "branch",
-                "release",
-                "profile",
-                "status",
-            },
+            required_fields,
         )
         folder = values["folder"]
         if folder not in matrix_by_folder:
@@ -222,7 +230,7 @@ def load_item_identities(
             raise ValueError(f"項目標記板卡或分支與矩陣不一致：{path}")
         if release not in row.releases or profile not in PROFILES:
             raise ValueError(f"候選狀態含矩陣外發行版或設定檔：{path}")
-        if values["status"] != "complete":
+        if values.get("status", "complete") != "complete":
             raise ValueError(f"項目標記狀態不是 complete：{path}")
 
         key = (folder, release, profile)
@@ -258,9 +266,18 @@ def load_item_identities(
             raise ValueError(f"板卡項目標記含多組候選輸入：{row.folder}")
 
 
-def generate_policy(matrix: list[MatrixRow], state_root: Path) -> list[dict[str, str]]:
+def generate_policy(
+    matrix: list[MatrixRow],
+    state_root: Path,
+    allow_legacy_item_status: bool = False,
+) -> list[dict[str, str]]:
     board_identities = load_board_markers(state_root, matrix)
-    load_item_identities(state_root, matrix, board_identities)
+    load_item_identities(
+        state_root,
+        matrix,
+        board_identities,
+        allow_legacy_item_status,
+    )
     return [
         {
             "folder": row.folder,
@@ -310,11 +327,17 @@ def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv)
     try:
         matrix = read_matrix(args.matrix)
-        rows = generate_policy(matrix, args.candidate_state)
+        rows = generate_policy(
+            matrix,
+            args.candidate_state,
+            args.allow_legacy_item_status,
+        )
         write_policy_atomic(args.output, rows)
     except (OSError, ValueError) as error:
         print(f"錯誤：{error}", file=sys.stderr)
         return 1
+    if args.allow_legacy_item_status:
+        print("警告：本政策使用舊項目狀態寬限，只可供受控遷移稽核使用。")
     print(f"已產生逐板候選輸入政策：{args.output}（{len(rows)} 板）")
     return 0
 
