@@ -70,6 +70,11 @@ class BananaPiIncrementalQueueTests(unittest.TestCase):
         self.assertIn("folder_is_deferred", script)
         self.assertIn("受控延後", script)
         self.assertIn("nondeferred", script)
+        self.assertIn(
+            "done < <(awk 'NR > 1' \"${audit_root}/current/待辦佇列.tsv\")",
+            script,
+        )
+        self.assertNotIn('[[ "${folder}" == folder ]]', script)
 
     def test_architecture_groups_cover_matrix_exactly(self) -> None:
         with MATRIX.open(encoding="utf-8", newline="") as stream:

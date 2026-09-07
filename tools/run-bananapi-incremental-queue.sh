@@ -339,9 +339,8 @@ remaining="$(queue_count)"
 if ((remaining != 0)); then
 	nondeferred=0
 	while IFS=$'\t' read -r folder _; do
-		[[ "${folder}" == folder ]] && continue
 		folder_is_deferred "${folder}" || nondeferred=$((nondeferred + 1))
-	done < "${audit_root}/current/待辦佇列.tsv"
+	done < <(awk 'NR > 1' "${audit_root}/current/待辦佇列.tsv")
 	((nondeferred == 0)) || {
 		printf '矩陣走完後仍有 %s 個非延後待辦，拒絕宣告本階段完成。\n' \
 			"${nondeferred}" >&2
