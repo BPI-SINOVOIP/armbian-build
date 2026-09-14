@@ -1,0 +1,275 @@
+diff --git a/arch/arm/config.mk b/arch/arm/config.mk
+--- a/arch/arm/config.mk
++++ b/arch/arm/config.mk
+@@ -149,3 +149,7 @@
+ 
++ifdef CONFIG_BPI_SRAM_SUPERVISOR
++OBJCOPYFLAGS += -j .vectors -j .blk_drivers -j .image_copy_end -j .end
++endif
++
+ # if a dtb section exists we always have to include it
+ # there are only two cases where it is generated
+diff --git a/arch/arm/Kconfig b/arch/arm/Kconfig
+--- a/arch/arm/Kconfig
++++ b/arch/arm/Kconfig
+@@ -1166,5 +1166,5 @@
+ 	select SPECIFY_CONSOLE_INDEX
+ 	select SPL_SEPARATE_BSS if SPL
+-	select SPL_STACK_R if SPL
++	select SPL_STACK_R if SPL && !BPI_SRAM_SUPERVISOR
+ 	select SPL_SYS_MALLOC_SIMPLE if SPL
+ 	select SPL_SYS_THUMB_BUILD if SPL && !ARM64
+diff --git a/arch/arm/mach-sunxi/Kconfig b/arch/arm/mach-sunxi/Kconfig
+--- a/arch/arm/mach-sunxi/Kconfig
++++ b/arch/arm/mach-sunxi/Kconfig
+@@ -1,5 +1,11 @@
+ if ARCH_SUNXI
+ 
++config BPI_SRAM_SUPERVISOR
++	bool "啟用 M4 Zero SRAM 救援原型"
++	depends on MACH_SUN50I_H616 && SPL
++	help
++	  僅提供無 DDR 的 UART 與 SD 唯讀載入，不供正常 OS 開機。
++
+ config IDENT_STRING
+ 	default " Allwinner Technology"
+ 
+@@ -195,5 +201,5 @@
+ config SUN50I_GEN_H6
+ 	bool
+ 	select FIT
+-	select SPL_LOAD_FIT if SPL
++	select SPL_LOAD_FIT if SPL && !BPI_SRAM_SUPERVISOR
+ 	select MMC_SUNXI_HAS_NEW_MODE
+@@ -435,5 +441,5 @@
+ config MACH_SUN50I_H616
+ 	bool "sun50i (Allwinner H616)"
+ 	select ARM64
+-	select DRAM_SUN50I_H616
++	select DRAM_SUN50I_H616 if !BPI_SRAM_SUPERVISOR
+ 	select SUN50I_GEN_H6
+diff --git a/arch/arm/mach-sunxi/Makefile b/arch/arm/mach-sunxi/Makefile
+--- a/arch/arm/mach-sunxi/Makefile
++++ b/arch/arm/mach-sunxi/Makefile
+@@ -32,3 +32,4 @@
+ 
+ ifdef CONFIG_SPL_BUILD
++obj-$(CONFIG_BPI_SRAM_SUPERVISOR) += supervisor.o supervisor_core.o supervisor_entry.o
+ obj-$(CONFIG_MACH_SUNIV)	+= dram_suniv.o
+diff --git a/arch/arm/mach-sunxi/board.c b/arch/arm/mach-sunxi/board.c
+--- a/arch/arm/mach-sunxi/board.c
++++ b/arch/arm/mach-sunxi/board.c
+@@ -28,4 +28,7 @@
+ 
+ #include <linux/compiler.h>
++#if defined(CONFIG_BPI_SRAM_SUPERVISOR) && defined(CONFIG_SPL_BUILD)
++#include "supervisor.h"
++#endif
+ 
+ struct fel_stash {
+@@ -455,4 +458,19 @@
+ void board_init_f(ulong dummy)
+ {
++#ifdef CONFIG_BPI_SRAM_SUPERVISOR
++	extern char __bss_start[], __bss_end[];
++
++	sup_prepare();
++	memset(__bss_start, 0, __bss_end - __bss_start);
++	/* 不調整 CPU／DDR PLL，先保留 UART 救援。 */
++	clock_init_uart();
++	timer_init();
++	gpio_init();
++	if (spl_init())
++		for (;;)
++			asm volatile("wfe");
++	preloader_console_init();
++	bpi_supervisor_run();
++#else
+ 	sunxi_sram_init();
+ 
+@@ -479,4 +498,5 @@
+ #endif
+ 	sunxi_board_init();
++#endif
+ }
+ #endif /* CONFIG_SPL_BUILD */
+diff --git a/drivers/mmc/sunxi_mmc.c b/drivers/mmc/sunxi_mmc.c
+--- a/drivers/mmc/sunxi_mmc.c
++++ b/drivers/mmc/sunxi_mmc.c
+@@ -16,3 +16,11 @@
+ #include <common.h>
++#ifdef CONFIG_BPI_SRAM_SUPERVISOR
++extern int sup_sd_live(void);
++#else
++static inline int sup_sd_live(void)
++{
++	return 1;
++}
++#endif
+ #include <dm.h>
+ #include <errno.h>
+@@ -170,4 +178,4 @@
+ 	while (readl(&priv->reg->cmd) & SUNXI_MMC_CMD_START) {
+-		if (get_timer(start) > timeout_msecs)
++		if (get_timer(start) > timeout_msecs || !sup_sd_live())
+ 			return -1;
+ 	}
+@@ -261,6 +269,10 @@
+ 	for (i = 0; i < word_cnt;) {
+ 		unsigned int in_fifo;
+ 
++		if (IS_ENABLED(CONFIG_BPI_SRAM_SUPERVISOR) &&
++		    (!reading || !sup_sd_live() || get_timer(start) > timeout_msecs))
++			return -ETIMEDOUT;
++
+ 		while ((status = readl(&priv->reg->status)) & status_bit) {
+-			if (get_timer(start) > timeout_msecs)
++			if (get_timer(start) > timeout_msecs || !sup_sd_live())
+ 				return -1;
+@@ -294,5 +299,7 @@
+ 		in_fifo = SUNXI_MMC_STATUS_FIFO_LEVEL(status);
+ 		if (in_fifo == 0 && (status & SUNXI_MMC_STATUS_FIFO_FULL))
+ 			in_fifo = 32;
++		if (IS_ENABLED(CONFIG_BPI_SRAM_SUPERVISOR))
++			in_fifo = min(in_fifo, word_cnt - i);
+ 		for (; in_fifo > 0; in_fifo--)
+ 			buff[i++] = readl_relaxed(&priv->reg->fifo);
+@@ -311,3 +328,3 @@
+ 		if ((get_timer(start) > timeout_msecs) ||
+-		    (status & SUNXI_MMC_RINT_INTERRUPT_ERROR_BIT)) {
++		    !sup_sd_live() || (status & SUNXI_MMC_RINT_INTERRUPT_ERROR_BIT)) {
+ 			debug("%s timeout %x\n", what,
+@@ -323,4 +340,10 @@
+ 	unsigned int bytecnt = 0;
+ 
++	if (!sup_sd_live())
++		return -ETIMEDOUT;
++	if (IS_ENABLED(CONFIG_BPI_SRAM_SUPERVISOR) && data &&
++	    (data->flags & MMC_DATA_WRITE))
++		return -EPERM;
++
+ 	if (priv->fatal_err)
+ 		return -1;
+@@ -411,3 +434,3 @@
+ 			status = readl(&priv->reg->status);
+-			if (get_timer(start) > timeout_msecs) {
++			if (get_timer(start) > timeout_msecs || !sup_sd_live()) {
+ 				debug("busy timeout\n");
+@@ -490,4 +513,6 @@
+ 	struct sunxi_mmc_priv *priv = mmc->priv;
+ 
++	if (IS_ENABLED(CONFIG_BPI_SRAM_SUPERVISOR))
++		priv->fatal_err = 0;
+ 	/* Reset controller */
+ 	writel(SUNXI_MMC_GCTRL_RESET, &priv->reg->gctrl);
+@@ -549,4 +556,8 @@
+ 	cfg->f_min = 400000;
+ 	cfg->f_max = 52000000;
++	if (IS_ENABLED(CONFIG_BPI_SRAM_SUPERVISOR)) {
++		cfg->f_max = 24000000;
++		cfg->host_caps &= ~(MMC_MODE_HS_52MHz | MMC_MODE_HS);
++	}
+ 
+ 	if (mmc_resource_init(sdc_no) != 0)
+diff --git a/common/xyzModem.c b/common/xyzModem.c
+--- a/common/xyzModem.c
++++ b/common/xyzModem.c
+@@ -27,4 +27,7 @@
+ #include <env.h>
+ 
++#ifdef CONFIG_BPI_SRAM_SUPERVISOR
++extern int sup_io_live(void);
++#endif
+ /* Assumption - run xyzModem protocol over the console port */
+ 
+@@ -65,3 +68,7 @@
+   ulong now = get_timer(0);
+   schedule();
++#ifdef CONFIG_BPI_SRAM_SUPERVISOR
++  if (!sup_io_live())
++    return 0;
++#endif
+   while (!tstc ())
+@@ -69,4 +76,8 @@
+     {
++#ifdef CONFIG_BPI_SRAM_SUPERVISOR
++      if (!sup_io_live())
++        return 0;
++#endif
+       if (get_timer(now) > xyzModem_CHAR_TIMEOUT)
+         break;
+     }
+@@ -549,3 +563,4 @@
+-		      if (xyz.mode == xyzModem_xmodem || xyz.file_length == 0)
++		      if (!IS_ENABLED(CONFIG_BPI_SRAM_SUPERVISOR) &&
++		          (xyz.mode == xyzModem_xmodem || xyz.file_length == 0))
+ 			{
+ 			  /* Data blocks can be padded with ^Z (EOF) characters */
+diff --git a/drivers/serial/ns16550.c b/drivers/serial/ns16550.c
+--- a/drivers/serial/ns16550.c
++++ b/drivers/serial/ns16550.c
+@@ -252,4 +252,14 @@
++#ifdef CONFIG_BPI_SRAM_SUPERVISOR
++	{
++		unsigned long start = get_timer(0);
++
++		while (!(serial_in(&com_port->lsr) & UART_LSR_TEMT))
++			if (get_timer(start) > 20)
++				break;
++	}
++#else
+ 	while (!(serial_in(&com_port->lsr) & UART_LSR_TEMT))
+ 		;
++#endif
+ 
+ 	serial_out(CFG_SYS_NS16550_IER, &com_port->ier);
+@@ -287,5 +287,13 @@
+ void ns16550_putc(struct ns16550 *com_port, char c)
+ {
++#ifdef CONFIG_BPI_SRAM_SUPERVISOR
++	unsigned long start = get_timer(0);
++
++	while ((serial_in(&com_port->lsr) & UART_LSR_THRE) == 0)
++		if (get_timer(start) > 20)
++			return;
++#else
+ 	while ((serial_in(&com_port->lsr) & UART_LSR_THRE) == 0)
+ 		;
++#endif
+ 	serial_out(c, &com_port->thr);
+diff --git a/arch/arm/cpu/armv8/start.S b/arch/arm/cpu/armv8/start.S
+--- a/arch/arm/cpu/armv8/start.S
++++ b/arch/arm/cpu/armv8/start.S
+@@ -59,3 +59,6 @@
+ save_boot_params_ret:
++#ifdef CONFIG_BPI_SRAM_SUPERVISOR
++	msr daifset, #0xf
++#endif
+ 
+ #if CONFIG_POSITION_INDEPENDENT && !defined(CONFIG_SPL_BUILD)
+@@ -138,3 +141,5 @@
+ 0:
++#ifndef CONFIG_BPI_SRAM_SUPERVISOR
+ 	msr	daifclr, #0x4			/* Unmask SError interrupts */
++#endif
+ 
+diff --git a/arch/arm/lib/crt0_64.S b/arch/arm/lib/crt0_64.S
+--- a/arch/arm/lib/crt0_64.S
++++ b/arch/arm/lib/crt0_64.S
+@@ -97,5 +97,11 @@
+ 	mov	x0, #0
+ 	bl	board_init_f
+ 
++#ifdef CONFIG_BPI_SRAM_SUPERVISOR
++sup_unexpected_return:
++	msr daifset, #0xf
++	wfe
++	b sup_unexpected_return
++#else
+ #if !defined(CONFIG_SPL_BUILD)
+ /*
+@@ -179,3 +185,4 @@
+ #endif
+ 
++#endif /* CONFIG_BPI_SRAM_SUPERVISOR */
+ ENDPROC(_main)
