@@ -10,6 +10,8 @@
   "release_status": "實驗開發，不供客戶發布",
   "device_observation": "已依追加授權掃描直連內網，13 台 ARP 回應、2 台 SSH 端點；兩者回報 Darwin 及 M2 Ultra，未定位 Berry",
   "board_inventory_complete": false,
+  "active_hardware_target": "使用者確認先做 M4 Zero，板號 0845；Berry 暫不等待",
+  "minimal_sd_deployment_authorized": true,
   "evidence_directory": "output/evidence/bpi-h618-recovery-network/N1-20260915",
   "evidence_limits": "未發現歷史位址、MAC 或主機金鑰，不代表 Berry 必然未上電；未掃其他網段或非標準 SSH 連接埠",
   "final_verification": "67 項本機測試通過，零失敗、零跳過；實際非目標板回應重播拒絕，產物一致性檢查通過",
@@ -31,7 +33,7 @@
   "stages": [
     {"id": "N0", "status": "完成並已推送核對", "work": "計劃、討論決策、來源查核及狀態表"},
     {"id": "N1", "status": "部分完成", "work": "工具、審查修正、回歸及內網候選探索完成；Berry 當前實機盤點仍待定位"},
-    {"id": "N2", "status": "未開始", "work": "專用救援卡布局與 SRAM 實板驗證"},
+    {"id": "N2", "status": "進行中", "work": "使用者明確核准 0845 的縮限部署：備份前 4 MiB，只改 SPL1 與槽 0，保留 6.6.75 系統；首次上電尚未驗證"},
     {"id": "N3", "status": "未開始", "work": "HW_ID 採樣與多板選擇"},
     {"id": "N4", "status": "未開始", "work": "更新交易、eMMC 槽與安全 Linux 下載"},
     {"id": "N5", "status": "未開始", "work": "Berry U-Boot 固定 IP、TFTP、PXE"},
@@ -39,5 +41,5 @@
     {"id": "N7", "status": "未開始", "work": "DDR、多 OS 與無人值守回歸"},
     {"id": "N8", "status": "未開始", "work": "操作復原文檔與發布包"}
   ],
-  "next_action": "確認 Berry 供電、網線或目前網段後續作唯讀盤點；工具不需重做。未核對目前配對前不部署救援卡或操作電源"
+  "next_action": "完成 0845 受控 SD 最小部署與回讀，交回使用者插卡；再核對 UART 實體路徑並進行首次冷啟動，不自行切換電源"
 }
