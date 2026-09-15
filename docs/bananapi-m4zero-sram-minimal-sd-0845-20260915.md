@@ -35,7 +35,7 @@
 output/evidence/bpi-h618-recovery-network/N2-m4zero-0845-20260915/
 ```
 
-其中 `validation/` 保存這次原型回歸；`deployment/` 預定保存備份、預期前綴、身分清單及逐位元回讀。原始證據留在本機，不推送內網資料或卡片識別碼。
+其中 `validation/` 保存這次原型回歸；`deployment/` 已保存備份、預期前綴、身分清單及逐位元回讀。原始證據留在本機，不推送內網資料或卡片識別碼。
 
 ## 工具與操作分離
 
@@ -68,4 +68,17 @@ python3 -B tools/bpi_sram_uart.py load-slot \
 
 ## 狀態
 
-尚未宣告 BootROM、UART、SD 槽 0 或 DDR 實板驗收通過。寫卡結果與下一次驗證狀態以[整合狀態表](bananapi-h618-recovery-network-status-20260915.json)及後續本機回讀紀錄為準，不回寫先前離線階段的歷史結論。
+本次最小部署已完成。工具及 24 項回歸先以提交 `ab67ba50de0760d48578ce8332dabf9c2fc63553` 推送並核對遠端，之後才執行 `prepare`、`apply`。獨立審查提出的復原中斷重試問題已修正；每次操作使用獨立目錄，保留前次成功或失敗證據。
+
+| 證據 | SHA-256 |
+| --- | --- |
+| 原始前 4 MiB：`deployment/before.bin` | `cf21a379c169725ecdc89681f7508e426a60ffaa9bc700e08b6051b98cf58a0d` |
+| 預期及回讀：`deployment/expected.bin`、`deployment/apply-0001/after.bin` | `3d88fc15f1d86ddb23e86285d844dcce6ae210e76fba166ee8ec1ab5e4965596` |
+| 備份清單：`deployment/prepared.json` | `a176f613c4dadfa70b32e7618d4c6e062068270d1dbd7410910956e328f99f15` |
+| 寫入結果：`deployment/apply-0001/result.json` | `bfec503f46d61c4fd176b6ed4e6e90c551e4334de861d3b5d24f7196562a3529` |
+
+結果為 `applied`：完整前 4 MiB 等於預期，白名單外三段與分割區首尾各 1 MiB 的雜湊不變。寫後再次以 `sfdisk --json` 確認分割布局不變，`lsblk` 確認卡片及分割區未掛載。沒有重刷整卡、恢復舊啟動區或改寫系統分割區。
+
+**尚未宣告 BootROM、UART、SD 槽 0 或 DDR 實板驗收通過。** 本次未操作 UART 或電源；兩支同型 CH340 的板卡配對仍待確認。SD 可拔下插回 0845，但須先核對 UART 再上電。此版不進 Linux；若要恢復原系統開機，須依同一份備份另行明確執行兩範圍的 `restore`。
+
+下一次驗證狀態以[整合狀態表](bananapi-h618-recovery-network-status-20260915.json)及新增本機證據為準，不回寫先前離線階段的歷史結論。
