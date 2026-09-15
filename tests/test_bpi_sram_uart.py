@@ -333,6 +333,12 @@ class FlowTests(unittest.TestCase):
                 self.channel.overrides["R"] = response
                 self.assert_failed(self.upload(run=True))
 
+    def test_unaligned_smoke_stack_cannot_pass(self):
+        for stack in (b"00040001", b"00047ff1", b"00047fff"):
+            with self.subTest(stack=stack):
+                self.channel.overrides["R"] = smoke().replace(b"sp=00047ff0", b"sp=" + stack)
+                self.assert_failed(self.upload(run=True))
+
     def test_invalid_package_rejected_before_serial_and_sender(self):
         variants = [b"", self.blob[:-1], self.blob + b"\x1a", self.blob[:-1] + b"\x01"]
         for offset, value in ((16, 0), (28, 0), (32, 1), (36, 2), (24, 15)):

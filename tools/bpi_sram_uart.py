@@ -186,7 +186,8 @@ class SupervisorSession:
         stack = fields.get("sp", "")
         if (fields.get("result") != "pass" or fields.get("el") != "3"
                 or fields.get("ddr") != "off" or not re.fullmatch(r"[0-9a-f]{8}", stack)
-                or not 0x40000 <= int(stack, 16) < 0x48000):
+                or not 0x40000 <= int(stack, 16) < 0x48000
+                or int(stack, 16) % 16):
             raise UartError("smoke 執行證據不符合 SRAM 契約")
         return {"nonce_hex": fields["nonce_hex"], "sp": stack, "el": 3,
                 "ddr": "off", "result": "pass"}

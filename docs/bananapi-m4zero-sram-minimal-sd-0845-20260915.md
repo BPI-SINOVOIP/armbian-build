@@ -79,6 +79,8 @@ python3 -B tools/bpi_sram_uart.py load-slot \
 
 結果為 `applied`：完整前 4 MiB 等於預期，白名單外三段與分割區首尾各 1 MiB 的雜湊不變。寫後再次以 `sfdisk --json` 確認分割布局不變，`lsblk` 確認卡片及分割區未掛載。沒有重刷整卡、恢復舊啟動區或改寫系統分割區。
 
-**尚未宣告 BootROM、UART、SD 槽 0 或 DDR 實板驗收通過。** 本次未操作 UART 或電源；兩支同型 CH340 的板卡配對仍待確認。SD 可拔下插回 0845，但須先核對 UART 再上電。此版不進 Linux；若要恢復原系統開機，須依同一份備份另行明確執行兩範圍的 `restore`。
+**上述部署完成時尚未進行實板首驗。** 當時未操作 UART 或電源，兩支同型 CH340 的板卡配對仍待確認。此版不進 Linux；若要恢復原系統開機，須依同一份備份另行明確執行兩範圍的 `restore`。
+
+當日使用者接續確認 `/dev/ttyUSB0`，並指示使用 `bpi-pw-1` 自行上電。後續已完成 UART 與 SD 槽 0 的 SRAM 冒煙測試，以及兩次斷電重啟後的救援重入；詳見[實板首驗紀錄](bananapi-m4zero-sram-hardware-0845-20260915.md)。這不改變前述部署當時的證據範圍，也不代表 DDR、Linux 或整卡驗證通過。
 
 下一次驗證狀態以[整合狀態表](bananapi-h618-recovery-network-status-20260915.json)及新增本機證據為準，不回寫先前離線階段的歷史結論。

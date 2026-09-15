@@ -14,7 +14,7 @@
   "minimal_sd_deployment_authorized": true,
   "evidence_directory": "output/evidence/bpi-h618-recovery-network/N1-20260915",
   "evidence_limits": "未發現歷史位址、MAC 或主機金鑰，不代表 Berry 必然未上電；未掃其他網段或非標準 SSH 連接埠",
-  "final_verification": "67 項本機測試通過，零失敗、零跳過；實際非目標板回應重播拒絕，產物一致性檢查通過",
+  "final_verification": "N1 保留原 67 項結果；N2 縮限實板首驗通過。主機 SP 對齊守門修正後，162 項原型與 24 項媒體工具回歸、8 組稽核通過，未重寫韌體或重跑硬體",
   "validation": {
     "passed_tests": 67,
     "artifact_tests": 28,
@@ -26,10 +26,10 @@
     "artifact_manifest_sha256": "b14609dcb40417372d8180ac1e43b2a39b26ada6908a692442b13232148398fb",
     "scope": "離線工具、受控程序替身、既有 IO 回歸及非目標板唯讀回應；不含 Berry 實板或開機驗收"
   },
-  "device_reset_performed": false,
+  "device_reset_performed": true,
   "media_written": true,
   "minimal_sd_deployment": {
-    "status": "最小部署與回讀完成，實板冷啟動待驗",
+    "status": "最小部署、回讀及 0845 的 SRAM 縮限首驗完成",
     "board_label": "0845",
     "tool_commit": "ab67ba50de0760d48578ce8332dabf9c2fc63553",
     "evidence_directory": "output/evidence/bpi-h618-recovery-network/N2-m4zero-0845-20260915",
@@ -50,16 +50,52 @@
     "prefix_outside_extents_unchanged": true,
     "partition_end_guards_unchanged": true,
     "full_card_verified": false,
-    "cold_boot_verified": false,
-    "uart_endpoint_confirmed": false,
+    "cold_boot_verified": true,
+    "uart_endpoint_confirmed": true,
     "scope": "只寫 SPL1 與槽 0；未寫系統分割區；本次韌體不初始化 DDR、不進 Linux"
   },
-  "sram_hardware_validated": false,
+  "sram_hardware_validated": true,
+  "sram_hardware_validation": {
+    "scope": "僅 0845、當前 SD、build-009 固定 smoke；不代表完整 N2、多板或 DDR／Linux 通過",
+    "uart": "/dev/ttyUSB0",
+    "power_device": "bpi-pw-1",
+    "power_tool_version": "0.4.0",
+    "power_authorized_by_user": true,
+    "report": "output/evidence/bpi-h618-recovery-network/N2-m4zero-0845-20260915/hardware-validation.json",
+    "report_sha256": "194eda6d076439fe695b5747efb594c83b28d77a5c8f89a6426e8c911eb1adf7",
+    "ready_occurrences": 3,
+    "verified_power_off_on_cycles": 2,
+    "uart_upload_without_run_passed": true,
+    "uart_upload_smoke_passed": true,
+    "sd_slot0_smoke_passed": true,
+    "unloaded_run_rejected": true,
+    "rescue_reentry_after_uart_and_sd_smoke": true,
+    "uart_released": true,
+    "power_final_state": "on",
+    "firmware_final_state": "SPL1 等待命令",
+    "post_boot_media_integrity_verified": false,
+    "physical_power_rails_measured": false,
+    "ddr_hardware_validated": false,
+    "linux_hardware_validated": false,
+    "other_slots_tested": false,
+    "limits": "插座回讀與救援重入未量測電源軌；ddr=off 為固定韌體宣告；未回插主機作開機後整卡或保留區核對"
+  },
+  "post_hardware_regression": {
+    "prototype_tests_passed": 162,
+    "deployment_tests_passed": 24,
+    "audits_passed": 8,
+    "failed_tests": 0,
+    "skipped_tests": 0,
+    "report_sha256": "4721ee072771f71ea98303bd73804f8648a22e6a5af22df1d03bd61e6c1831b4",
+    "deployment_report_sha256": "03b4ac52c2b761008afdc96df320c5f91e6a88169f8574947b2e9e943fd54b21",
+    "uart_tool_sha256": "f8d30d7873f335418f8d3687e8bf4ece3397576b48c679cb60400694ac54ac34",
+    "scope": "只補主機 SP 對齊判定及反例；先前一次泛用測試呼叫缺少 BPI_SRAM_BUILD，失敗後改用既有驗證器完整重跑，初次失敗另存"
+  },
   "pxe_hardware_validated": false,
   "stages": [
     {"id": "N0", "status": "完成並已推送核對", "work": "計劃、討論決策、來源查核及狀態表"},
     {"id": "N1", "status": "部分完成", "work": "工具、審查修正、回歸及內網候選探索完成；Berry 當前實機盤點仍待定位"},
-    {"id": "N2", "status": "進行中", "work": "0845 最小 SD 部署與前 4 MiB 回讀完成；原分割表及系統分割區未改寫；冷啟動、UART 與 SRAM 首驗待進行"},
+    {"id": "N2", "status": "部分完成", "work": "0845 縮限 SRAM 首驗通過：UART／SD 槽 0 執行及救援重入；完整專用多槽布局、實機復原及開機後媒體保留區複核尚未驗證"},
     {"id": "N3", "status": "未開始", "work": "HW_ID 採樣與多板選擇"},
     {"id": "N4", "status": "未開始", "work": "更新交易、eMMC 槽與安全 Linux 下載"},
     {"id": "N5", "status": "未開始", "work": "Berry U-Boot 固定 IP、TFTP、PXE"},
@@ -67,5 +103,5 @@
     {"id": "N7", "status": "未開始", "work": "DDR、多 OS 與無人值守回歸"},
     {"id": "N8", "status": "未開始", "work": "操作復原文檔與發布包"}
   ],
-  "next_action": "SD 已卸載並完成部署校驗，可交回插入 0845；先確認兩支 CH340 中哪支接至該板，再錄製冷啟動及測 UART 載入與槽 0，不自行切換電源"
+  "next_action": "保持 0845 的 SPL1 救援入口及原系統不變；依新實板紀錄續接 DDR SPL2 與受控復原設計，不把 smoke 當作 DDR 或 Linux 已完成，不操作槽 1 至 4"
 }
