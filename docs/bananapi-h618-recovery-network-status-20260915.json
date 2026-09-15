@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "updated": "2026-09-15",
+  "updated": "2026-09-16",
   "branch": "bpi-h618-recovery-network-20260915",
   "base_commit": "a8bdccdcee7c12e251677421ef0e8b2b4a73c87b",
   "plan_commit": "7e25217e27ee2efa0db5afc057775a06298ac621",
@@ -14,7 +14,7 @@
   "minimal_sd_deployment_authorized": true,
   "evidence_directory": "output/evidence/bpi-h618-recovery-network/N1-20260915",
   "evidence_limits": "未發現歷史位址、MAC 或主機金鑰，不代表 Berry 必然未上電；未掃其他網段或非標準 SSH 連接埠",
-  "final_verification": "N1 保留原 67 項結果；N2 縮限實板首驗通過。主機 SP 對齊守門修正後，162 項原型與 24 項媒體工具回歸、8 組稽核通過，未重寫韌體或重跑硬體",
+  "final_verification": "N1／N2 原紀錄保留；P4A 完成五種 UART 故障復原實測，空等期限仍待新版實板驗收。最終預設 V1 171 項、新 V2 312 項測試，各 8 組稽核通過；DDR 前置仍封鎖，沒有 DDR 實板通過結論",
   "validation": {
     "passed_tests": 67,
     "artifact_tests": 28,
@@ -100,24 +100,38 @@
     {"id": "N4", "status": "未開始", "work": "更新交易、eMMC 槽與安全 Linux 下載"},
     {"id": "N5", "status": "未開始", "work": "Berry U-Boot 固定 IP、TFTP、PXE"},
     {"id": "N6", "status": "未開始", "work": "NFS、多板交付及 Zero EMAC"},
-    {"id": "N7", "status": "未開始", "work": "DDR、多 OS 與無人值守回歸"},
+    {"id": "N7", "status": "部分進行", "work": "P4A 已建立 SRAM DDR 框架與離線串接；DDR 前置、訓練、多 OS 與無人值守矩陣未完成"},
     {"id": "N8", "status": "未開始", "work": "操作復原文檔與發布包"}
   ],
   "uart_ddr_extension": {
     "approved": true,
     "plan": "docs/bananapi-m4zero-uart-ddr-plan-20260915.md",
-    "status": "計劃已推送；既有 UART 故障復原實測完成，期限門檻未全過；DDR 離線移植進行中",
+    "status": "故障復原實測、新版載入契約與 SRAM 離線串接完成；期限修正待新版上板，DDR 電源與幾何接合尚未完成",
     "plan_commit": "215e7b8290863be0c118723f40108289475624ab",
     "fault_results": "docs/bananapi-m4zero-uart-fault-results-20260915.md",
     "fault_report_sha256": "d6328d4645dac9c78523985fab007639768984ecb5c6af9585328f10f4c5d1c4",
+    "fault_commit": "daba19e1823c060de355b31329dd51948e3165cb",
+    "offline_delivery": "docs/bananapi-m4zero-uart-ddr-offline-20260915.md",
+    "offline_report_sha256": "90a1580be942c67956c754220f85e93dcf6271e87365e8482906fa9391517b7d",
+    "v1_tests_passed": 171,
+    "v2_tests_passed": 312,
+    "audits_per_variant": 8,
+    "failed_tests": 0,
+    "skipped_tests": 0,
+    "loader_build": "output/evidence/bpi-h618-recovery-network/P4A-0845-20260915/loader-v2-build-003",
+    "ddr_build": "output/evidence/bpi-sram-ddr-build-008",
+    "ddr_preflight_implemented": false,
+    "ddr_training_enabled": false,
+    "ddr_hardware_validated": false,
+    "uart_released": true,
     "media_write_authorized": false,
     "stages": [
       {"id": "P4A0", "status": "復原實測完成，期限修正待新版上板", "work": "五種 UART 故障皆拒絕執行並可重新交握；空等 36.021 秒，未達 15 秒門檻；正常重傳通過"},
-      {"id": "P4A1", "status": "進行中", "work": "固定來源、DDR 負載型別及交接契約"},
-      {"id": "P4A2", "status": "進行中", "work": "DDR SPL2 離線移植、建置與測試"},
+      {"id": "P4A1", "status": "完成", "work": "固定來源、DDR 型別、上下文及主機守門；新舊契約離線回歸通過"},
+      {"id": "P4A2", "status": "部分完成", "work": "獨立 SRAM ELF、參數解析、模型交接與拒絕通過；R-I2C／PMIC／PRCM／幾何前置接合未完成，訓練固定封鎖"},
       {"id": "P4A3", "status": "前置未齊", "work": "需另行核准相容 SPL1 升級後，才做 DDR 實板首驗"},
       {"id": "P4A4", "status": "未開始", "work": "單變量參數矩陣與續接"}
     ]
   },
-  "next_action": "完成 DDR SPL2 離線移植與新版載入契約回歸；不寫媒體、不把 DDR 偽裝成 smoke；實板前另提 SPL1 精確升級與復原方案"
+  "next_action": "討論並另核准 SPL1 40,960 B 最小升級，保留槽 0 與原系統；先驗證新版救援與 DDR 就緒，再完成並審查電源／幾何前置，最後才進行單組 DDR 與 792 MHz 矩陣"
 }

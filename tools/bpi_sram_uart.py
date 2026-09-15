@@ -68,6 +68,9 @@ def parse_control_line(raw: bytes) -> tuple[str, dict[str, str]] | None:
 class SupervisorSession:
     """只從已驗證的協定狀態產生固定命令，不執行裝置輸出的文字。"""
 
+    CONTROL_ABI = 1
+    CAPABILITIES = CAPABILITIES
+
     def __init__(self, channel: object, timeout: float, clock=None) -> None:
         self.channel = channel
         self.timeout = timeout
@@ -116,7 +119,7 @@ class SupervisorSession:
                 continue
             identity, fields = parsed
             if identity == "BPI-SUP1" and fields["event"] == "ready" and event == "info":
-                if fields.get("abi") != "1" or fields.get("board") != "06180001":
+                if fields.get("abi") != str(self.CONTROL_ABI) or fields.get("board") != "06180001":
                     raise UartError("ready 的 ABI 或板型不符")
                 continue
             if identity != prefix or fields["event"] != event:
@@ -136,13 +139,13 @@ class SupervisorSession:
         self.channel.reset_input_buffer()
         self._send("I")
         fields = self._wait("info")
-        if fields.get("abi") != "1" or fields.get("board") != "06180001":
+        if fields.get("abi") != str(self.CONTROL_ABI) or fields.get("board") != "06180001":
             raise UartError("交握 ABI 或板型不符")
-        if fields.get("capabilities") != CAPABILITIES:
+        if fields.get("capabilities") != self.CAPABILITIES:
             raise UartError("交握能力清單不符")
         self.probed = True
-        return {"nonce": self.nonce, "abi": 1, "board": "06180001",
-                "capabilities": CAPABILITIES.split(",")}
+        return {"nonce": self.nonce, "abi": self.CONTROL_ABI, "board": "06180001",
+                "capabilities": self.CAPABILITIES.split(",")}
 
     def begin_load(self, transport: str, value: int) -> None:
         if not self.probed:

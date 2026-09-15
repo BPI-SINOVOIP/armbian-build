@@ -350,6 +350,14 @@ def report_metadata(report: dict) -> dict:
     require(report.get("status") == "離線建置完成，尚未實板驗證" and "error" not in report,
             "建置報告未標示離線完成，或仍包含錯誤")
     require(report.get("inputs_unchanged") is True, "建置未確認輸入快照保持一致")
+    ddr_v2 = report.get("ddr_v2", False)
+    require(type(ddr_v2) is bool, "報告 ddr_v2 必須是布林值")
+    invocation = report.get("invocation")
+    require(isinstance(invocation, list) and bool(invocation)
+            and all(isinstance(arg, str) and bool(arg) for arg in invocation),
+            "建置 invocation 必須是非空字串參數陣列")
+    require(("--ddr-v2" in invocation) is ddr_v2,
+            "報告 ddr_v2 與建置 invocation 的 --ddr-v2 不符")
     source = report.get("source", {})
     for key in ("commit", "tree"):
         require(isinstance(source.get(key), str) and re.fullmatch(r"[0-9a-f]{40}", source[key])
@@ -376,6 +384,7 @@ def report_metadata(report: dict) -> dict:
         require(environment.get(key) == value, f"固定建置環境不符：{key}")
     return {"source_commit": source["commit"], "source_tree": source["tree"],
             "archive_sha256": archive["sha256"], "commands": len(commands), "source_date_epoch": epoch,
+            "ddr_v2": ddr_v2,
             "note": "來源身分依建置報告交叉核對，未重新匯出或驗證上游簽章"}
 
 
@@ -434,11 +443,15 @@ def audit_build(root: Path) -> dict:
         check_digest(recorded, hashlib.sha256(actual).hexdigest(), len(actual), "建置組態")
         require(recorded.get("text") == actual.decode("utf-8"), "報告內組態文字與實檔不同")
         config = parse_config(actual)
+        ddr_v2 = config.get("CONFIG_BPI_SRAM_DDR_V2", "n")
+        require(ddr_v2 in ("y", "n"), "CONFIG_BPI_SRAM_DDR_V2 必須為 y 或 n")
+        require((ddr_v2 == "y") is report.get("ddr_v2", False),
+                "最終 CONFIG_BPI_SRAM_DDR_V2 與報告 ddr_v2 不符")
         generated = parse_config(evidence.read("build/include/config/auto.conf", limit=1024 * 1024))
         expected = {key: config_value(value) for key, value in config.items() if value != "n"}
         require({key: config_value(value) for key, value in generated.items()} == expected,
                 "auto.conf 與 .config 不一致")
-        return inspect_config(evidence.read("inputs/" + DEFCONFIG), actual)
+        return {**inspect_config(evidence.read("inputs/" + DEFCONFIG), actual), "ddr_v2": ddr_v2 == "y"}
 
     audit.check("快照、建置組態與最低 SRAM 限制", verify_config)
     for stage, stem in (("spl1", "spl1"), ("spl2", "spl2-smoke")):

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""從固定 U-Boot 原版離線建置 SRAM 管理器與 smoke 負載，不操作硬體。"""
+"""從固定 U-Boot 原版離線建置 SRAM 管理器；DDR 型別需明確選用，不操作硬體。"""
 
 from __future__ import annotations
 
@@ -91,6 +91,8 @@ def build_parser() -> argparse.ArgumentParser:
                         help="交叉工具前綴，預設 aarch64-linux-gnu-")
     parser.add_argument("--jobs", type=jobs_value, default=4, metavar="數量",
                         help="平行工作數，預設 4，上限 16")
+    parser.add_argument("--ddr-v2", action="store_true",
+                        help="另建可接受正式 DDR 第二版封包的管理器；不部署至 SD")
     return parser
 
 
@@ -349,6 +351,13 @@ def execute_build(runner: Runner, args, source_git: Path, inputs: dict[str, byte
             f"LD={tools.get('ld.bfd', tools['ld'])}", "KCFLAGS=-fstack-usage", "V=1"]
     runner.run([*make, DEFCONFIG])
     config = build / ".config"
+    if getattr(args, "ddr_v2", False):
+        runner.run([str(source / "scripts/config"), "--file", str(config),
+                    "--enable", "BPI_SRAM_DDR_V2"])
+        runner.run([*make, "olddefconfig"])
+    actual_ddr_v2 = "CONFIG_BPI_SRAM_DDR_V2=y" in config.read_text().splitlines()
+    if actual_ddr_v2 != bool(getattr(args, "ddr_v2", False)):
+        raise BuildError("最終 DDR V2 組態與明確建置選項不符")
     runner.report["config"] = {**file_record(config), "text": config.read_text(encoding="utf-8")}
     runner.run([*make, f"-j{args.jobs}", "spl/sunxi-spl.bin"])
     runner.report["config"] = {**file_record(config), "text": config.read_text(encoding="utf-8")}
@@ -400,6 +409,7 @@ def build(args, invocation: Sequence[str]) -> Path:
     output.mkdir(mode=0o700)
     report = {
         "status": "失敗", "hardware_validation": "尚未執行", "payload_packaged": False,
+        "ddr_v2": bool(getattr(args, "ddr_v2", False)),
         "builder": {"path": str(Path(__file__).resolve()), **file_record(Path(__file__))},
         "invocation": list(invocation), "commands": [], "tools": {}, "inputs": {}, "artifacts": {},
         "source": {"git_dir": str(source_git), "expected_commit": COMMIT, "expected_tree": TREE,

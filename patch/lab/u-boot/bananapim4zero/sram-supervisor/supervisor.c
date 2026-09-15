@@ -15,6 +15,7 @@ static struct sup_context context;
 static int verified;
 static struct mmc *card;
 static ulong transfer_start;
+static ulong transfer_activity;
 static ulong sd_start;
 static const unsigned long guard_addresses[] = {0x48000, 0x4fff0, 0x50000};
 
@@ -40,7 +41,13 @@ static int guards_valid(void)
 
 int sup_io_live(void)
 {
-	return get_timer(transfer_start) < 120000;
+	return get_timer(transfer_start) < 120000 &&
+	       get_timer(transfer_activity) < 10000;
+}
+
+void sup_io_progress(void)
+{
+	transfer_activity = get_timer(0);
 }
 
 int sup_sd_live(void)
@@ -86,6 +93,7 @@ static int receive(u32 expected)
 
 	verified = 0;
 	transfer_start = get_timer(0);
+	transfer_activity = transfer_start;
 	if (expected < 1024 || expected > SUP_PACKAGE_MAX || (expected & 511))
 		return -1;
 	if (xyzModem_stream_open(&info, &error))
@@ -189,7 +197,11 @@ void bpi_supervisor_run(void)
 	int result;
 
 	init_guards();
+#ifdef CONFIG_BPI_SRAM_DDR_V2
+	puts("BPI-SUP1 event=ready abi=2 board=06180001 ddr=off sd_write=off\n");
+#else
 	puts("BPI-SUP1 event=ready abi=1 board=06180001 ddr=off sd_write=off\n");
+#endif
 	for (;;) {
 		if (!guards_valid()) {
 			puts("BPI-SUP1 event=halt reason=guard\n");
@@ -210,7 +222,11 @@ void bpi_supervisor_run(void)
 		if (sup_decimal(nonce_text, 0xffffffffU, &nonce))
 			goto reject;
 		if (line[0] == 'I' && !argument) {
+#ifdef CONFIG_BPI_SRAM_DDR_V2
+			printf("BPI-SUP1 event=info nonce=%u abi=2 board=06180001 capabilities=uart-ram,sd-read,smoke-run,ddr-run\n", nonce);
+#else
 			printf("BPI-SUP1 event=info nonce=%u abi=1 board=06180001 capabilities=uart-ram,sd-read,smoke-run\n", nonce);
+#endif
 			continue;
 		}
 		if ((line[0] == 'U' || line[0] == 'S') && argument &&
@@ -219,14 +235,26 @@ void bpi_supervisor_run(void)
 			result = line[0] == 'U' ? receive(value) : load_slot(value);
 			source = line[0] == 'U' ? 0xffffffffU : value;
 			loaded_nonce = nonce;
+#ifdef CONFIG_BPI_SRAM_DDR_V2
+			printf("BPI-SUP1 event=loaded nonce=%u result=%d kind=%u sha256=",
+			       nonce, result, result ? 0 : loaded.kind);
+			if (result) {
+				puts("none\n");
+			} else {
+				for (u32 i = 0; i < sizeof(loaded.digest); i++)
+					printf("%02x", loaded.digest[i]);
+				puts("\n");
+			}
+#else
 			printf("BPI-SUP1 event=loaded nonce=%u result=%d\n", nonce, result);
+#endif
 			continue;
 		}
 		if (line[0] == 'R' && !argument && verified && nonce == loaded_nonce &&
 		    current_el() == 3 && !(get_sctlr() & (CR_M | CR_C | CR_I)) &&
 		    guards_valid() && digest_matches()) {
 			context.magic = SUP_CONTEXT_MAGIC;
-			context.abi = 1;
+			context.abi = loaded.kind;
 			context.bytes = sizeof(context);
 			context.board = SUP_BOARD_ID;
 			context.nonce = nonce;

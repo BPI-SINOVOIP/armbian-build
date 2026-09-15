@@ -25,11 +25,17 @@ int sup_header(const u8 *header, struct sup_image *out)
 	for (i = 0; i < sizeof(magic); ++i)
 		if (header[i] != magic[i])
 			return -1;
-	if (read_le32(header + 8) != 1 ||
+	if (
+#ifdef CONFIG_BPI_SRAM_DDR_V2
+	    !((read_le32(header + 8) == 1 && read_le32(header + 36) == 1) ||
+	      (read_le32(header + 8) == 2 && read_le32(header + 36) == 2)) ||
+#else
+	    read_le32(header + 8) != 1 || read_le32(header + 36) != 1 ||
+#endif
 	    read_le32(header + 12) != SUP_HEADER_BYTES ||
 	    read_le32(header + 16) != SUP_BOARD_ID ||
 	    read_le32(header + 28) != SUP_LOAD_BASE ||
-	    read_le32(header + 32) != 0 || read_le32(header + 36) != 1 ||
+	    read_le32(header + 32) != 0 ||
 	    sup_padding(header + 72, 436) ||
 	    sup_crc32(header, 508) != read_le32(header + 508))
 		return -1;
@@ -42,7 +48,11 @@ int sup_header(const u8 *header, struct sup_image *out)
 	out->image_bytes = image_bytes;
 	out->runtime_bytes = runtime_bytes;
 	out->package_bytes = SUP_HEADER_BYTES + (image_bytes / 512 + 1) * 512;
+#ifdef CONFIG_BPI_SRAM_DDR_V2
+	out->kind = read_le32(header + 36);
+#else
 	out->kind = 1;
+#endif
 	for (i = 0; i < 32; ++i)
 		out->digest[i] = header[40 + i];
 	return 0;

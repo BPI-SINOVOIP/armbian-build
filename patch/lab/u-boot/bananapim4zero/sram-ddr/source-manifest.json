@@ -1,0 +1,30 @@
+{
+  "schema": 1,
+  "description": "固定本機 v2026.01 DDRlab 與 A1 來源；雜湊覆蓋套補丁後內容，不能只以基底提交識別。",
+  "base_commit": "127a42c7257a6ffbbd1575ed1cbaa8f5408a44b3",
+  "base_tree": "fe36192530da93b7ae57a2cdc1be2ac9a74ed0a9",
+  "hardware_status": "PMIC 與幾何未核准；第一版禁止進入 DDR 初始化。",
+  "files": {
+    "arch/arm/mach-sunxi/dram_sun50i_h616.c": "2d36dbe850240ea727df54a349a2715c25058a0a43c913332b1b93471564c9ae",
+    "arch/arm/mach-sunxi/dram_sun50i_h616_lab.c": "63271c36f8f6ca67ae43de06184c9913b1e580a0b6d46878c9c24e0452ede587",
+    "arch/arm/mach-sunxi/dram_dw_helpers.c": "e677b3496e5e6dc86a981b5234aa343eb50c5894ecd4e97a3460854e6a33fb1e",
+    "arch/arm/mach-sunxi/dram_helpers.c": "eba2d671fada416e67644c47300be38ee38621f9f2a4aac44e1f4aa4d1566572",
+    "arch/arm/mach-sunxi/dram_timings/h616_lpddr4_2133.c": "7dac7df582b79dd69bc085e6bad7518f5332e7168a05fd474014ac7c539ac74f",
+    "arch/arm/include/asm/arch-sunxi/dram_sun50i_h616.h": "fee55d227c887ff6ca59b31acdbe46856a0fec8fd0814e5f6ef098a55608d048",
+    "arch/arm/include/asm/arch-sunxi/dram_dw_helpers.h": "2efd07fa7975ad3a278cee1a79712b632f3030c173f6e6400c7d28b9a0006e15",
+    "arch/arm/include/asm/arch-sunxi/dram.h": "a55033737a996701e4767bf761e070f6c7f44d2c2f0c625eeb1e91e02f9ad393",
+    "arch/arm/include/asm/arch-sunxi/cpu.h": "3e4d2063358f49b90d4f52a1d4f5efb76d01634c3ce5a88af036b8cb99308af2",
+    "arch/arm/include/asm/arch-sunxi/cpu_sun50i_h6.h": "d6f67eaa12fa645a51a31adcaf0b87a934bf9a48856b079ebe7aa6b203267bef",
+    "arch/arm/include/asm/arch-sunxi/clock.h": "a326c5db60ae76595dbbb2551b68974a559f6ce1e3b1149fb8294470b6702e29",
+    "arch/arm/include/asm/arch-sunxi/clock_sun50i_h6.h": "78b8993d82bb4ac742bc37c3fb45d95b4536d39c77e3df10e4571fe4e3071c63",
+    "arch/arm/include/asm/arch-sunxi/prcm.h": "fc946aaabe6c479941a796519c968327e329d556bd74ce25a6c12d1b6c8eb547",
+    "arch/arm/include/asm/arch-sunxi/prcm_sun50i.h": "7fde7c3ae2e4741960ec8e257d1346719b397caed334b833ffced334c1b3e351",
+    "arch/arm/include/asm/arch-sunxi/timer.h": "f41551de5eb1b6180ee3794861475aea93568a5cefbdd5671e8b966534974335",
+    "arch/arm/include/asm/arch-sunxi/watchdog.h": "6afd6984d995c1015380a9364248d33ec58ebf8a3ee2fa421d787e30bf67ce7a",
+    "lib/tiny-printf.c": "c49ae11e09f0715c10a7c94bacd2e76800c274bc9989084b32ad56502e8081fc",
+    "configs/bananapi_m4zero_defconfig": "2e31591285e33be02635b420d57659fd7e4a0e090ca77bf78d6b51a628764258",
+    "Licenses/README": "79feed9f3865276aa9acb7fdc5ea2aba63d2f2502eda0327c10af03c8f639db2",
+    "Licenses/gpl-2.0.txt": "8177f97513213526df2cf6184d8ff986c675afb514d4e68a404010521b880643",
+    "Licenses/lgpl-2.1.txt": "dc626520dcd53a22f727af3ee42c770e56c97a64fe3adb063799d8ab032fe551"
+  }
+}

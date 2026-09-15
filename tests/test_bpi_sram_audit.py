@@ -7,9 +7,11 @@ from contextlib import redirect_stderr
 import hashlib
 import importlib.util
 import io
+import json
 from pathlib import Path
 import struct
 import unittest
+from unittest import mock
 
 
 MODULE = Path(__file__).resolve().parents[1] / "tools/audit_bpi_sram_build.py"
@@ -210,9 +212,12 @@ class ElfTests(unittest.TestCase):
 
 
 class ReportTests(unittest.TestCase):
-    def fixture(self):
+    @staticmethod
+    def fixture():
         return {
             "status": "離線建置完成，尚未實板驗證", "inputs_unchanged": True,
+            "invocation": ["/usr/bin/python3", "/repo/tools/build_bpi_sram_supervisor.py",
+                           "--source-git", "/source.git", "--output", "/build"],
             "source": {"commit": "1" * 40, "expected_commit": "1" * 40,
                        "tree": "2" * 40, "expected_tree": "2" * 40,
                        "archive": {"sha256": "3" * 64, "bytes": 1},
@@ -238,6 +243,148 @@ class ReportTests(unittest.TestCase):
         report["commands"].append({"argv": ["/usr/bin/make", "all"], "returncode": 0})
         with self.assertRaisesRegex(audit.AuditError, "正常 U-Boot"):
             audit.report_metadata(report)
+
+    def test_missing_ddr_v2_defaults_to_false(self):
+        report = self.fixture()
+        self.assertNotIn("ddr_v2", report)
+        self.assertIs(audit.report_metadata(report)["ddr_v2"], False)
+
+    def test_ddr_v2_requires_boolean_not_truthiness(self):
+        for value in (None, 0, 1, 0.0, 1.0, "false", "true", "y", [], {}):
+            with self.subTest(value=value):
+                report = self.fixture()
+                report["ddr_v2"] = value
+                with self.assertRaisesRegex(audit.AuditError, "ddr_v2 必須是布林值"):
+                    audit.report_metadata(report)
+
+    def test_invocation_requires_nonempty_string_argument_array(self):
+        for value in (None, False, 1, "python3 builder.py --ddr-v2", {}, [],
+                      [None], [False], [1], [[]], [""], ["python3", "--ddr-v2", 1]):
+            with self.subTest(value=value):
+                report = self.fixture()
+                report["invocation"] = value
+                with self.assertRaisesRegex(audit.AuditError, "invocation 必須"):
+                    audit.report_metadata(report)
+        report = self.fixture()
+        del report["invocation"]
+        with self.assertRaisesRegex(audit.AuditError, "invocation 必須"):
+            audit.report_metadata(report)
+
+    def test_explicit_flag_and_report_must_agree_in_both_directions(self):
+        for declared in (False, True):
+            for flag in (False, True):
+                with self.subTest(declared=declared, flag=flag):
+                    report = self.fixture()
+                    report["ddr_v2"] = declared
+                    if flag:
+                        report["invocation"].append("--ddr-v2")
+                    if declared == flag:
+                        self.assertIs(audit.report_metadata(report)["ddr_v2"], declared)
+                    else:
+                        with self.assertRaisesRegex(audit.AuditError, "invocation 的 --ddr-v2 不符"):
+                            audit.report_metadata(report)
+
+    def test_flag_is_an_exact_argument_not_a_substring(self):
+        for token in ("--ddr-v2=true", "--ddr-v2=0", "--ddr-v2-extra", "--no-ddr-v2",
+                      "/output/--ddr-v2", "--output=/output/--ddr-v2", " --ddr-v2", "--ddr-v2 ",
+                      "python3 builder.py --ddr-v2", "--ddr-v2\n"):
+            with self.subTest(token=token):
+                report = self.fixture()
+                report["invocation"].append(token)
+                self.assertIs(audit.report_metadata(report)["ddr_v2"], False)
+                report["ddr_v2"] = True
+                with self.assertRaisesRegex(audit.AuditError, "invocation 的 --ddr-v2 不符"):
+                    audit.report_metadata(report)
+
+    def test_command_record_cannot_substitute_for_build_invocation(self):
+        report = self.fixture()
+        report["ddr_v2"] = True
+        report["commands"].append({"argv": ["/repo/tool", "--ddr-v2"], "returncode": 0})
+        with self.assertRaisesRegex(audit.AuditError, "invocation 的 --ddr-v2 不符"):
+            audit.report_metadata(report)
+
+
+class BuildIntentTests(unittest.TestCase):
+    def fixture(self, declared=None, config_value=None, flag=False):
+        """在記憶體建立完整證據；只有檔案讀取使用替身，保留實際解析與守門。"""
+        report = ReportTests.fixture()
+        if declared is not None:
+            report["ddr_v2"] = declared
+        if flag:
+            report["invocation"].append("--ddr-v2")
+        actual = config_fixture(**({"CONFIG_BPI_SRAM_DDR_V2": config_value}
+                                   if config_value is not None else {}))
+        files = {name: b"" for name in audit.REQUIRED_ARTIFACTS}
+        files.update({"inputs/" + name: b"" for name in audit.INPUT_FILES})
+        files["inputs/" + audit.DEFCONFIG] = config_fixture()
+        for name in (*audit.SOURCE_FILES, audit.DEFCONFIG):
+            directory = "configs/" if name == audit.DEFCONFIG else "arch/arm/mach-sunxi/"
+            files["source/" + directory + name] = files["inputs/" + name]
+        files["build/.config"] = files["spl1.config"] = actual
+        files["build/include/config/auto.conf"] = b"\n".join(
+            line for line in actual.splitlines() if line.startswith(b"CONFIG_")) + b"\n"
+        for stage, stem in (("spl1", "spl1"), ("spl2", "spl2-smoke")):
+            files[stem + ".elf"], files[stem + ".bin"] = elf_fixture(stage)
+            files["stack-usage/" + stem + "/test.su"] = b""
+        files["spl1-egon.bin"] = egon_fixture(files["spl1.bin"])
+
+        def record(blob):
+            return {"sha256": hashlib.sha256(blob).hexdigest(), "bytes": len(blob)}
+
+        report["config"] = {**record(actual), "text": actual.decode()}
+        report["inputs"] = {name: record(files["inputs/" + name]) for name in audit.INPUT_FILES}
+        report["artifacts"] = {name: record(blob) for name, blob in files.items()
+                               if name in audit.REQUIRED_ARTIFACTS or name.startswith("stack-usage/")}
+        return report, files
+
+    def inspect(self, report, files):
+        files = {**files, "build-report.json": json.dumps(report, ensure_ascii=False).encode()}
+        evidence = mock.Mock(root=Path("/memory/build"), observed={})
+
+        def read(name, *, record=None, keep=True, limit=256 * 1024 * 1024):
+            blob = files[name]
+            self.assertLessEqual(len(blob), limit)
+            digest = hashlib.sha256(blob).hexdigest()
+            if record is not None:
+                audit.check_digest(record, digest, len(blob), name)
+            evidence.observed[name] = {"sha256": digest, "bytes": len(blob)}
+            return blob if keep else b""
+
+        evidence.read.side_effect = read
+        with mock.patch.object(audit, "Evidence", return_value=evidence):
+            return audit.audit_build(evidence.root)
+
+    def test_all_report_config_and_invocation_combinations(self):
+        for declared in (None, False, True):
+            for config in (None, "n", "y"):
+                for flag in (False, True):
+                    with self.subTest(declared=declared, config=config, flag=flag):
+                        result = self.inspect(*self.fixture(declared, config, flag))
+                        expected = (declared is True) == (config == "y") == flag
+                        self.assertIs(result["passed"], expected, result["checks"])
+                        self.assertEqual(len(result["checks"]), 8)
+                        self.assertEqual(result["hardware_validation"], "未執行")
+                        if expected:
+                            for check in (result["checks"][0], result["checks"][3]):
+                                self.assertIs(check["detail"]["ddr_v2"], declared is True)
+                        else:
+                            failed = [check for check in result["checks"] if check["status"] == "未通過"]
+                            self.assertTrue(failed)
+                            self.assertTrue(all("ddr_v2" in check["detail"] for check in failed), failed)
+
+    def test_invalid_config_values_are_not_treated_as_disabled(self):
+        for value in ("m", "1", "true", '"y"'):
+            with self.subTest(value=value):
+                result = self.inspect(*self.fixture(False, value, False))
+                self.assertIs(result["passed"], False)
+                self.assertEqual(result["checks"][3]["status"], "未通過")
+                self.assertIn("CONFIG_BPI_SRAM_DDR_V2 必須為 y 或 n", result["checks"][3]["detail"])
+
+    def test_integer_report_does_not_match_enabled_config(self):
+        result = self.inspect(*self.fixture(1, "y", True))
+        self.assertIs(result["passed"], False)
+        self.assertEqual(result["checks"][0]["status"], "未通過")
+        self.assertEqual(result["checks"][3]["status"], "未通過")
 
 
 class EgonTests(unittest.TestCase):

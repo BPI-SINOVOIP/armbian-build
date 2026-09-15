@@ -22,7 +22,7 @@ diff --git a/arch/arm/Kconfig b/arch/arm/Kconfig
 diff --git a/arch/arm/mach-sunxi/Kconfig b/arch/arm/mach-sunxi/Kconfig
 --- a/arch/arm/mach-sunxi/Kconfig
 +++ b/arch/arm/mach-sunxi/Kconfig
-@@ -1,5 +1,11 @@
+@@ -1,5 +1,17 @@
  if ARCH_SUNXI
  
 +config BPI_SRAM_SUPERVISOR
@@ -30,6 +30,12 @@ diff --git a/arch/arm/mach-sunxi/Kconfig b/arch/arm/mach-sunxi/Kconfig
 +	depends on MACH_SUN50I_H616 && SPL
 +	help
 +	  僅提供無 DDR 的 UART 與 SD 唯讀載入，不供正常 OS 開機。
++
++config BPI_SRAM_DDR_V2
++	bool "啟用獨立型別的 DDR SPL2 載入契約"
++	depends on BPI_SRAM_SUPERVISOR
++	help
++	  保留舊 smoke，另接受第二版 DDR 封包；不自動執行或寫入媒體。
 +
  config IDENT_STRING
  	default " Allwinner Technology"
@@ -174,11 +180,12 @@ diff --git a/drivers/mmc/sunxi_mmc.c b/drivers/mmc/sunxi_mmc.c
 diff --git a/common/xyzModem.c b/common/xyzModem.c
 --- a/common/xyzModem.c
 +++ b/common/xyzModem.c
-@@ -27,4 +27,7 @@
+@@ -27,4 +27,8 @@
  #include <env.h>
  
 +#ifdef CONFIG_BPI_SRAM_SUPERVISOR
 +extern int sup_io_live(void);
++extern void sup_io_progress(void);
 +#endif
  /* Assumption - run xyzModem protocol over the console port */
  
@@ -199,7 +206,38 @@ diff --git a/common/xyzModem.c b/common/xyzModem.c
        if (get_timer(now) > xyzModem_CHAR_TIMEOUT)
          break;
      }
-@@ -549,3 +563,4 @@
+@@ -77,3 +91,6 @@
+       *c = getchar();
++#ifdef CONFIG_BPI_SRAM_SUPERVISOR
++      sup_io_progress();
++#endif
+       return 1;
+     }
+@@ -520,3 +537,11 @@
+   while (!xyz.at_eof && xyz.len >= 0 && (size > 0))
+     {
++#ifdef CONFIG_BPI_SRAM_SUPERVISOR
++      if (!sup_io_live())
++        {
++          *err = xyzModem_timeout;
++          xyz.len = -1;
++          return total;
++        }
++#endif
+       if (xyz.len == 0)
+@@ -525,3 +547,11 @@
+ 	  while (retries-- > 0)
+ 	    {
++#ifdef CONFIG_BPI_SRAM_SUPERVISOR
++              if (!sup_io_live())
++                {
++                  *err = xyzModem_timeout;
++                  xyz.len = -1;
++                  return total;
++                }
++#endif
+ 	      if (xyz.first_xmodem_packet && xyz.timeout &&
+@@ -549,3 +579,4 @@
 -		      if (xyz.mode == xyzModem_xmodem || xyz.file_length == 0)
 +		      if (!IS_ENABLED(CONFIG_BPI_SRAM_SUPERVISOR) &&
 +		          (xyz.mode == xyzModem_xmodem || xyz.file_length == 0))

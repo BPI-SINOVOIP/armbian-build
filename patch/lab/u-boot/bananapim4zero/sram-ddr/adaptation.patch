@@ -1,0 +1,32 @@
+diff --git a/arch/arm/mach-sunxi/dram_sun50i_h616_lab.c b/arch/arm/mach-sunxi/dram_sun50i_h616_lab.c
+--- a/arch/arm/mach-sunxi/dram_sun50i_h616_lab.c
++++ b/arch/arm/mach-sunxi/dram_sun50i_h616_lab.c
+@@ -71,5 +71,5 @@
+ static void lab_wdt_reload(void)
+ {
+-	writel(WDT_CTRL_KEY | WDT_CTRL_RESTART, &lab_wdog()->ctl);
++	/* 單輪框架不啟用或改寫 watchdog，由主機另行處理復原。 */
+ }
+ 
+diff --git a/lib/tiny-printf.c b/lib/tiny-printf.c
+--- a/lib/tiny-printf.c
++++ b/lib/tiny-printf.c
+@@ -202,5 +202,6 @@
+ 	char *p;
+ 	unsigned long num;
+-	char buf[12];
++	/* 64 位元十進位、十六進位與結尾字元都必須放得下。 */
++	char buf[32];
+ 	unsigned long div;
+ 
+@@ -263,8 +264,8 @@
+ 				if (ch != 'u') {
+ 					if (islong && (long)num < 0) {
+-						num = -(long)num;
++						num = 0UL - num;
+ 						out(info, '-');
+ 					} else if (!islong && (int)num < 0) {
+-						num = -(int)num;
++						num = -(unsigned int)num;
+ 						out(info, '-');
+ 					}
