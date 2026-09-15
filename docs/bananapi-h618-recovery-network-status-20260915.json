@@ -3,17 +3,34 @@
   "updated": "2026-09-15",
   "branch": "bpi-h618-recovery-network-20260915",
   "base_commit": "a8bdccdcee7c12e251677421ef0e8b2b4a73c87b",
-  "plan_commit": null,
+  "plan_commit": "7e25217e27ee2efa0db5afc057775a06298ac621",
+  "plan_review_commit": "424adfedbaabe1272be0ef6cb7252efad992118a",
+  "plan_pushed_before_execution": true,
   "scope": "討論保存、分階段整合、主機離線工具與已知候選唯讀盤點",
   "release_status": "實驗開發，不供客戶發布",
-  "device_observation": "尚未連線；已找到歷史 Berry 候選，仍須核對",
+  "device_observation": "已依追加授權掃描直連內網，13 台 ARP 回應、2 台 SSH 端點；兩者回報 Darwin 及 M2 Ultra，未定位 Berry",
+  "board_inventory_complete": false,
+  "evidence_directory": "output/evidence/bpi-h618-recovery-network/N1-20260915",
+  "evidence_limits": "未發現歷史位址、MAC 或主機金鑰，不代表 Berry 必然未上電；未掃其他網段或非標準 SSH 連接埠",
+  "final_verification": "67 項本機測試通過，零失敗、零跳過；實際非目標板回應重播拒絕，產物一致性檢查通過",
+  "validation": {
+    "passed_tests": 67,
+    "artifact_tests": 28,
+    "observation_tests": 32,
+    "existing_io_regression_tests": 7,
+    "skipped_tests": 0,
+    "report": "final-validation.json",
+    "report_sha256": "6630c53bce0b8baa5a5fc920a6cb3c94ed19da4ebe7cf915c9ee685b828df1da",
+    "artifact_manifest_sha256": "b14609dcb40417372d8180ac1e43b2a39b26ada6908a692442b13232148398fb",
+    "scope": "離線工具、受控程序替身、既有 IO 回歸及非目標板唯讀回應；不含 Berry 實板或開機驗收"
+  },
   "device_reset_performed": false,
   "media_written": false,
   "sram_hardware_validated": false,
   "pxe_hardware_validated": false,
   "stages": [
-    {"id": "N0", "status": "文件完成，待推送核對", "work": "計劃、討論決策、來源查核及狀態表"},
-    {"id": "N1", "status": "未開始", "work": "已知候選唯讀盤點、離線產物清單與校驗工具"},
+    {"id": "N0", "status": "完成並已推送核對", "work": "計劃、討論決策、來源查核及狀態表"},
+    {"id": "N1", "status": "部分完成", "work": "工具、審查修正、回歸及內網候選探索完成；Berry 當前實機盤點仍待定位"},
     {"id": "N2", "status": "未開始", "work": "專用救援卡布局與 SRAM 實板驗證"},
     {"id": "N3", "status": "未開始", "work": "HW_ID 採樣與多板選擇"},
     {"id": "N4", "status": "未開始", "work": "更新交易、eMMC 槽與安全 Linux 下載"},
@@ -22,5 +39,5 @@
     {"id": "N7", "status": "未開始", "work": "DDR、多 OS 與無人值守回歸"},
     {"id": "N8", "status": "未開始", "work": "操作復原文檔與發布包"}
   ],
-  "next_action": "先提交推送並核對遠端，再開始 N1；不操作 UART、電源或儲存寫入"
+  "next_action": "確認 Berry 供電、網線或目前網段後續作唯讀盤點；工具不需重做。未核對目前配對前不部署救援卡或操作電源"
 }
