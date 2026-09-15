@@ -1,6 +1,8 @@
 {
   "schema": 1,
   "updated": "2026-09-16",
+  "current_hardware_status": "docs/bananapi-m4zero-unattended-lab-status-20260916.json",
+  "current_hardware_status_note": "本檔 N2／P4A／P4B 保留歷史結果；0845 已升級 ABI3 並插回板子，最新實板進度以指定狀態檔為準，不再執行舊版部署。",
   "branch": "bpi-h618-recovery-network-20260915",
   "base_commit": "a8bdccdcee7c12e251677421ef0e8b2b4a73c87b",
   "plan_commit": "7e25217e27ee2efa0db5afc057775a06298ac621",
@@ -160,5 +162,5 @@
     "uart_released": true,
     "sd_location": "主機完成更新並已釋放，已通知插回0845"
   },
-  "next_action": "等待使用者將已升級SD插回0845，再由具名電源及UART驗證新版救援與DDR就緒／封鎖；不重複燒錄。電源／幾何前置完成並審查前，不啟用DDR訓練或792MHz矩陣"
+  "next_action": "先讀 current_hardware_status：ABI3 槽 2／4 更新、槽 2 重載及原系統登入畫面已有實板證據；等待有效 Linux 登入資料續作，不再要求插拔卡或使用 ABI2 工具重複部署。"
 }
