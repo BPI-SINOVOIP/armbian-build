@@ -103,5 +103,18 @@
     {"id": "N7", "status": "未開始", "work": "DDR、多 OS 與無人值守回歸"},
     {"id": "N8", "status": "未開始", "work": "操作復原文檔與發布包"}
   ],
-  "next_action": "保持 0845 的 SPL1 救援入口及原系統不變；依新實板紀錄續接 DDR SPL2 與受控復原設計，不把 smoke 當作 DDR 或 Linux 已完成，不操作槽 1 至 4"
+  "uart_ddr_extension": {
+    "approved": true,
+    "plan": "docs/bananapi-m4zero-uart-ddr-plan-20260915.md",
+    "status": "計劃已建立，先推送再實作",
+    "media_write_authorized": false,
+    "stages": [
+      {"id": "P4A0", "status": "未開始", "work": "既有 UART 救援的故障注入與重入"},
+      {"id": "P4A1", "status": "未開始", "work": "固定來源、DDR 負載型別及交接契約"},
+      {"id": "P4A2", "status": "未開始", "work": "DDR SPL2 離線移植、建置與測試"},
+      {"id": "P4A3", "status": "前置未齊", "work": "需另行核准相容 SPL1 升級後，才做 DDR 實板首驗"},
+      {"id": "P4A4", "status": "未開始", "work": "單變量參數矩陣與續接"}
+    ]
+  },
+  "next_action": "先推送 P4A 計劃，再完成 UART 故障復原與 DDR SPL2 離線移植；不寫媒體、不把 DDR 偽裝成 smoke，若需 SPL1 升級則另提精確部署與復原方案"
 }
