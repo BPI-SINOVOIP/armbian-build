@@ -43,7 +43,9 @@ SRAM 全區間為 `[0x30000,0x48000)`，共 98,304 B。負載裸映像 20,176 B�
 
 最終 `validation-v1-002` 為 **171 項測試及 8 組稽核通過**；`validation-v2-002` 為 **312 項測試及 8 組稽核通過**。兩條路徑均無失敗、無跳過，來源雜湊與最終工作樹相符。兩套含共享測試，不應相加宣稱 483 個獨立案例。新版其中包含 26 項 AArch64 串接／反例及 28 項負載來源、解析和結構測試。
 
-Ruff 通過，但明確排除既有 auditor 未修改的 `E731` lambda；不是未帶任何例外的全倉 lint。`git diff --check` 亦通過。最終彙總為證據根目錄的 `offline-validation.json`，SHA-256：`90a1580be942c67956c754220f85e93dcf6271e87365e8482906fa9391517b7d`。
+Ruff 通過，但明確排除既有 auditor 未修改的 `E731` lambda；不是未帶任何例外的全倉 lint。最終彙總為證據根目錄的 `offline-validation.json`，SHA-256：`90a1580be942c67956c754220f85e93dcf6271e87365e8482906fa9391517b7d`。
+
+新增補丁檔以一般文字執行 `git diff --check` 時，其必要的上下文前綴空白會觸發警告，因此完整暫存區的此命令並未通過，不能省略限制。一般程式／文件使用 `git diff --check HEAD^ HEAD -- . ':!*.patch'` 通過；補丁本身另對固定 `pristine/` 來源執行 `git apply --check --whitespace=error-all` 通過。未刪除上下文空白或放寬補丁實際新增程式的空白檢查。
 
 - V1 驗證報告 SHA-256：`b886421a17cffefa9f74cf9aaf85b279d9ed7fe2f12c320a9446b2daa51d03f0`。
 - V2 驗證報告 SHA-256：`1ba4c9fefcda56e7674b7efece104681485a70f8bd00c4cd4ad62566e80f0d71`。
