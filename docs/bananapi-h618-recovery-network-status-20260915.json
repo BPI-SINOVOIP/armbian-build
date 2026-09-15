@@ -133,5 +133,32 @@
       {"id": "P4A4", "status": "未開始", "work": "單變量參數矩陣與續接"}
     ]
   },
-  "next_action": "討論並另核准 SPL1 40,960 B 最小升級，保留槽 0 與原系統；先驗證新版救援與 DDR 就緒，再完成並審查電源／幾何前置，最後才進行單組 DDR 與 792 MHz 矩陣"
+  "spl1_upgrade": {
+    "approved": true,
+    "plan": "docs/bananapi-m4zero-spl1-upgrade-20260916.md",
+    "plan_commit": "78372c72e",
+    "plan_pushed_before_execution": true,
+    "board_label": "0845",
+    "evidence_directory": "output/evidence/bpi-h618-recovery-network/P4B-0845-20260916",
+    "status": "工具、428項新版回歸與8組稽核通過；40KiB升級及回讀完成，待插回0845驗證新版啟動",
+    "write_offset": 8192,
+    "write_bytes": 40960,
+    "slot0_write_authorized": false,
+    "partition_write_authorized": false,
+    "emmc_write_authorized": false,
+    "old_spl1_sha256": "aef7a1a8c4eb84eb73b4fee519b93561ef5722fc0fc442049e308836695f7f76",
+    "new_spl1_sha256": "80e67d7ebaacb58d8b2b64a6a01a94b4d4329c5f11f8f9cb35e917d060f7e33d",
+    "media_written": true,
+    "hardware_validated": false,
+    "tests_passed": 428,
+    "audits_passed": 8,
+    "validation_report_sha256": "c419052ee70cd1a8660f4a977b9456fe4df5c0d9c3a4f83203cbd2fb64419819",
+    "prepared_sha256": "481d9c332811b74b927be70e79d128ddd653aecf43f2179928f3c5ddd603ae10",
+    "readback_sha256": "59a8e09244f38ac4134944e23212e4ca69d754171b0ac830694b910a457012f2",
+    "apply_result_sha256": "86eb575de7dab7dd9b9973ffba8527487325a0f073fa0d9eda8f78e46c0d4946",
+    "power_final_state": "off",
+    "uart_released": true,
+    "sd_location": "主機完成更新並已釋放，已通知插回0845"
+  },
+  "next_action": "等待使用者將已升級SD插回0845，再由具名電源及UART驗證新版救援與DDR就緒／封鎖；不重複燒錄。電源／幾何前置完成並審查前，不啟用DDR訓練或792MHz矩陣"
 }

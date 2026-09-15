@@ -17,7 +17,8 @@ ROOT = Path(__file__).resolve().parents[1]
 TESTS = (
     "test_bpi_sram_build.py", "test_bpi_sram_audit.py", "test_bpi_sram_package.py",
     "test_bpi_sram_core.py", "test_bpi_sram_uart.py", "test_bpi_sram_execution.py",
-    "test_bpi_sram_driver_model.py",
+    "test_bpi_sram_driver_model.py", "test_bpi_sram_sd_minimal.py",
+    "test_bpi_sram_spl1_upgrade.py",
 )
 
 
@@ -57,7 +58,7 @@ def main():
                           for name in TESTS) + (
                 "test_bpi_sram_uart_faults.py", "test_bpi_sram_ddr_contract.py",
                 "test_bpi_sram_ddr_uart.py", "test_bpi_sram_ddr_payload.py", "test_bpi_sram_xmodem_deadline.py",
-                "test_bpi_sram_validation.py",
+                "test_bpi_sram_validation.py", "test_bpi_sram_v2_uart.py",
             )
         report["dependencies"] = {name: importlib.metadata.version(name)
                                   for name in ("unicorn", "pyelftools", "pyserial")}
