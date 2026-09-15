@@ -106,15 +106,18 @@
   "uart_ddr_extension": {
     "approved": true,
     "plan": "docs/bananapi-m4zero-uart-ddr-plan-20260915.md",
-    "status": "計劃已建立，先推送再實作",
+    "status": "計劃已推送；既有 UART 故障復原實測完成，期限門檻未全過；DDR 離線移植進行中",
+    "plan_commit": "215e7b8290863be0c118723f40108289475624ab",
+    "fault_results": "docs/bananapi-m4zero-uart-fault-results-20260915.md",
+    "fault_report_sha256": "d6328d4645dac9c78523985fab007639768984ecb5c6af9585328f10f4c5d1c4",
     "media_write_authorized": false,
     "stages": [
-      {"id": "P4A0", "status": "未開始", "work": "既有 UART 救援的故障注入與重入"},
-      {"id": "P4A1", "status": "未開始", "work": "固定來源、DDR 負載型別及交接契約"},
-      {"id": "P4A2", "status": "未開始", "work": "DDR SPL2 離線移植、建置與測試"},
+      {"id": "P4A0", "status": "復原實測完成，期限修正待新版上板", "work": "五種 UART 故障皆拒絕執行並可重新交握；空等 36.021 秒，未達 15 秒門檻；正常重傳通過"},
+      {"id": "P4A1", "status": "進行中", "work": "固定來源、DDR 負載型別及交接契約"},
+      {"id": "P4A2", "status": "進行中", "work": "DDR SPL2 離線移植、建置與測試"},
       {"id": "P4A3", "status": "前置未齊", "work": "需另行核准相容 SPL1 升級後，才做 DDR 實板首驗"},
       {"id": "P4A4", "status": "未開始", "work": "單變量參數矩陣與續接"}
     ]
   },
-  "next_action": "先推送 P4A 計劃，再完成 UART 故障復原與 DDR SPL2 離線移植；不寫媒體、不把 DDR 偽裝成 smoke，若需 SPL1 升級則另提精確部署與復原方案"
+  "next_action": "完成 DDR SPL2 離線移植與新版載入契約回歸；不寫媒體、不把 DDR 偽裝成 smoke；實板前另提 SPL1 精確升級與復原方案"
 }
