@@ -1,0 +1,54 @@
+{
+  "schema": 1,
+  "board": "0845",
+  "phase": "U5",
+  "status": "已完成主機部署，等待插回板子；尚未實板驗證",
+  "uart": "/dev/ttyUSB0",
+  "power": {
+    "name": "bpi-pw-1",
+    "ip": "192.168.50.245",
+    "mac": "EC:B9:31:24:F7:D1",
+    "on": false,
+    "identity_verified": true,
+    "observed_timestamp_unix_ms": 1789506443353
+  },
+  "sd": {
+    "cid": "03534453523634478697bc8c07018401",
+    "bytes": 63864569856,
+    "sectors": 124735488,
+    "partition_start": 8192,
+    "partition_sectors": 123461632,
+    "prefix_sha256": "125116dd6b8d08b838240912d021599ccd93d8f13c4b9cef4ef08bac324a7272"
+  },
+  "offline": {
+    "tests_passed": 188,
+    "audit_checks_passed": 8,
+    "ruff_passed": true,
+    "inputs_unchanged": true,
+    "report": "output/evidence/bpi-h618-recovery-network/U0-0845-20260916/validation-001/validation-report.json",
+    "sha256": "d1a8cc9c751e9469ebf0529a07d361fa6134008f8f716e5c25dfc952e6928587"
+  },
+  "deployment": {
+    "directory": "output/evidence/bpi-h618-recovery-network/U0-0845-20260916/deployment",
+    "prepared_sha256": "c343d9af7498edb1745bc6aab5971a24023f62b297b2dc6986c6f629e4d3fc4e",
+    "attempt": "apply-0001",
+    "prefix_readback_matches": true,
+    "unchanged_outside_ranges": true,
+    "partition_guards_match": true
+  },
+  "artifacts": {
+    "loader": "output/evidence/bpi-h618-recovery-network/U0-0845-20260916/loader-v3-build-001/spl1-egon.bin",
+    "updater": "output/evidence/bpi-h618-recovery-network/U0-0845-20260916/updater-build-001/update.pkg",
+    "boot": "output/evidence/bpi-sram-a1-fit-2048-002/bridge/bridge-package.bin",
+    "fit": "output/evidence/bpi-sram-a1-fit-2048-002/a1-fit.itb"
+  },
+  "hardware": {
+    "loader_abi3_verified": false,
+    "uart_update_verified": false,
+    "slot_reload_verified": false,
+    "linux_boot_verified": false,
+    "recovery_after_hang_verified": false,
+    "full_system_update_verified": false
+  },
+  "next_action": "收到卡已插回 0845 的確認後，先確認本機讀卡機已不持有該卡，再以具名電源及 UART 依操作交接完成實板驗收。"
+}

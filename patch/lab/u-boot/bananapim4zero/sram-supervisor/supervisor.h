@@ -20,7 +20,11 @@ typedef uint32_t u32;
 #define SUP_SLOT_BYTES 0x20000U
 #define SUP_SLOT_COUNT 5U
 #define SUP_FIRST_SLOT_LBA 6144U
+#ifdef CONFIG_BPI_SRAM_LAB_V3
+#define SUP_SLOT_STRIDE_LBA 256U
+#else
 #define SUP_SLOT_STRIDE_LBA 2048U
+#endif
 #define SUP_CONTEXT_MAGIC 0x31505553U
 
 struct sup_image {

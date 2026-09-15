@@ -26,7 +26,12 @@ int sup_header(const u8 *header, struct sup_image *out)
 		if (header[i] != magic[i])
 			return -1;
 	if (
-#ifdef CONFIG_BPI_SRAM_DDR_V2
+#ifdef CONFIG_BPI_SRAM_LAB_V3
+	    !((read_le32(header + 8) == 1 && read_le32(header + 36) == 1) ||
+	      (read_le32(header + 8) == 2 && read_le32(header + 36) == 2) ||
+	      (read_le32(header + 8) == 3 &&
+	       (read_le32(header + 36) == 3 || read_le32(header + 36) == 4))) ||
+#elif defined(CONFIG_BPI_SRAM_DDR_V2)
 	    !((read_le32(header + 8) == 1 && read_le32(header + 36) == 1) ||
 	      (read_le32(header + 8) == 2 && read_le32(header + 36) == 2)) ||
 #else

@@ -197,7 +197,9 @@ void bpi_supervisor_run(void)
 	int result;
 
 	init_guards();
-#ifdef CONFIG_BPI_SRAM_DDR_V2
+#ifdef CONFIG_BPI_SRAM_LAB_V3
+	puts("BPI-SUP1 event=ready abi=3 board=06180001 ddr=off sd_write=off\n");
+#elif defined(CONFIG_BPI_SRAM_DDR_V2)
 	puts("BPI-SUP1 event=ready abi=2 board=06180001 ddr=off sd_write=off\n");
 #else
 	puts("BPI-SUP1 event=ready abi=1 board=06180001 ddr=off sd_write=off\n");
@@ -222,7 +224,9 @@ void bpi_supervisor_run(void)
 		if (sup_decimal(nonce_text, 0xffffffffU, &nonce))
 			goto reject;
 		if (line[0] == 'I' && !argument) {
-#ifdef CONFIG_BPI_SRAM_DDR_V2
+#ifdef CONFIG_BPI_SRAM_LAB_V3
+			printf("BPI-SUP1 event=info nonce=%u abi=3 board=06180001 capabilities=uart-ram,sd-read,smoke-run,ddr-run,update-run,boot-run\n", nonce);
+#elif defined(CONFIG_BPI_SRAM_DDR_V2)
 			printf("BPI-SUP1 event=info nonce=%u abi=2 board=06180001 capabilities=uart-ram,sd-read,smoke-run,ddr-run\n", nonce);
 #else
 			printf("BPI-SUP1 event=info nonce=%u abi=1 board=06180001 capabilities=uart-ram,sd-read,smoke-run\n", nonce);

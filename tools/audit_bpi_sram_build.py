@@ -270,7 +270,8 @@ def inspect_elf(blob: bytes, raw: bytes, stage: str) -> dict:
     require(not banned, "ELF 含禁止的 DDR／正常開機符號：" + ", ".join(banned))
     for name in ("_start", "__bss_start", "__bss_end"):
         require(name in symbols and len(symbols[name]) == 1, f"ELF 缺少或具有歧義符號：{name}")
-    value = lambda name: next(iter(symbols[name]))
+    def value(name):
+        return next(iter(symbols[name]))
     require(value("_start") == entry, "_start 與 ELF 入口不一致")
     require(data_sections and min(s[0] for s in data_sections) == entry, "裸映像起點不符入口")
     require(any(start <= entry < end and flags & 4 for start, end, _, flags, _ in data_sections),
@@ -351,12 +352,15 @@ def report_metadata(report: dict) -> dict:
             "建置報告未標示離線完成，或仍包含錯誤")
     require(report.get("inputs_unchanged") is True, "建置未確認輸入快照保持一致")
     ddr_v2 = report.get("ddr_v2", False)
+    lab_v3 = report.get("lab_v3", False)
     require(type(ddr_v2) is bool, "報告 ddr_v2 必須是布林值")
+    require(type(lab_v3) is bool and (not lab_v3 or ddr_v2), "報告 lab_v3 必須是布林值且保留 DDR 契約")
     invocation = report.get("invocation")
     require(isinstance(invocation, list) and bool(invocation)
             and all(isinstance(arg, str) and bool(arg) for arg in invocation),
             "建置 invocation 必須是非空字串參數陣列")
-    require(("--ddr-v2" in invocation) is ddr_v2,
+    require(("--lab-v3" in invocation) is lab_v3, "報告 lab_v3 與建置 invocation 的 --lab-v3 不符")
+    require(("--ddr-v2" in invocation or "--lab-v3" in invocation) is ddr_v2,
             "報告 ddr_v2 與建置 invocation 的 --ddr-v2 不符")
     source = report.get("source", {})
     for key in ("commit", "tree"):
@@ -384,7 +388,7 @@ def report_metadata(report: dict) -> dict:
         require(environment.get(key) == value, f"固定建置環境不符：{key}")
     return {"source_commit": source["commit"], "source_tree": source["tree"],
             "archive_sha256": archive["sha256"], "commands": len(commands), "source_date_epoch": epoch,
-            "ddr_v2": ddr_v2,
+            "ddr_v2": ddr_v2, "lab_v3": lab_v3,
             "note": "來源身分依建置報告交叉核對，未重新匯出或驗證上游簽章"}
 
 
@@ -447,6 +451,9 @@ def audit_build(root: Path) -> dict:
         require(ddr_v2 in ("y", "n"), "CONFIG_BPI_SRAM_DDR_V2 必須為 y 或 n")
         require((ddr_v2 == "y") is report.get("ddr_v2", False),
                 "最終 CONFIG_BPI_SRAM_DDR_V2 與報告 ddr_v2 不符")
+        lab_v3 = config.get("CONFIG_BPI_SRAM_LAB_V3", "n")
+        require(lab_v3 in ("y", "n") and (lab_v3 == "y") is report.get("lab_v3", False),
+                "最終 CONFIG_BPI_SRAM_LAB_V3 與報告不符")
         generated = parse_config(evidence.read("build/include/config/auto.conf", limit=1024 * 1024))
         expected = {key: config_value(value) for key, value in config.items() if value != "n"}
         require({key: config_value(value) for key, value in generated.items()} == expected,

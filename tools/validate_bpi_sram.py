@@ -31,6 +31,8 @@ def main():
     parser.add_argument("--build-dir", type=Path, required=True, help="既有建置目錄")
     parser.add_argument("--output-dir", type=Path, required=True, help="尚不存在的驗證輸出目錄")
     parser.add_argument("--ddr-build-dir", type=Path, help="新版 DDR 契約必填的獨立負載建置目錄")
+    parser.add_argument("--update-build-dir", type=Path, help="第三版更新器獨立建置目錄")
+    parser.add_argument("--boot-build-dir", type=Path, help="第三版 SRAM 開機橋接建置目錄")
     args = parser.parse_args()
     report = {"status": "未通過", "hardware_validation": "未執行", "commands": []}
     output = args.output_dir.absolute()
@@ -38,6 +40,9 @@ def main():
         paths = [output, args.build_dir.absolute()]
         if args.ddr_build_dir is not None:
             paths.append(args.ddr_build_dir.absolute())
+        for path in (args.update_build_dir, args.boot_build_dir):
+            if path is not None:
+                paths.append(path.absolute())
         for path in paths:
             if ".." in path.parts or any(p.is_symlink() for p in (path, *path.parents)):
                 raise ValueError("目錄不得包含 .. 或經過符號連結")
@@ -47,11 +52,39 @@ def main():
         if not isinstance(metadata, dict):
             raise ValueError("建置報告必須是 JSON 物件")
         ddr_v2 = metadata.get("ddr_v2", False)
-        if type(ddr_v2) is not bool or ddr_v2 != (args.ddr_build_dir is not None):
+        lab_v3 = metadata.get("lab_v3", False)
+        if type(lab_v3) is not bool:
+            raise ValueError("第三版標記必須是布林值")
+        if lab_v3 and (ddr_v2 is not True or args.ddr_build_dir is not None
+                       or args.update_build_dir is None or args.boot_build_dir is None):
+            raise ValueError("第三版須指定更新器與橋接建置；DDR 診斷不混入此輪驗證")
+        if not lab_v3 and (args.update_build_dir is not None or args.boot_build_dir is not None):
+            raise ValueError("舊版不得指定第三版更新或橋接產物")
+        if not lab_v3 and (type(ddr_v2) is not bool or ddr_v2 != (args.ddr_build_dir is not None)):
             raise ValueError("新版 DDR 建置必須同時指定 --ddr-build-dir；舊版不得套用 DDR 執行測試")
         tests = TESTS
         ddr_build = None
-        if ddr_v2:
+        if lab_v3:
+            tests = ("test_bpi_sram_build.py", "test_bpi_sram_audit.py",
+                     "test_bpi_sram_lab_package.py", "test_bpi_sram_lab_uart.py",
+                     "test_bpi_sram_lab_capture.py", "test_bpi_sram_a1_fit.py",
+                     "test_bpi_sram_lab_execution.py", "test_bpi_sram_update_execution.py",
+                     "test_bpi_sram_update_driver.py",
+                     "test_bpi_sram_boot.py", "test_bpi_sram_lab_deploy.py",
+                     "test_bpi_sram_validation.py")
+            report["lab_builds"] = {name: {"path": str(path.absolute()),
+                "report_sha256": digest(path.absolute() / "build-report.json")}
+                for name, path in (("update", args.update_build_dir), ("boot", args.boot_build_dir))}
+            for name, names in (("update", ("spl2-update.bin", "spl2-update.elf", "update.pkg")),
+                                ("boot", ("bridge.bin", "bridge.elf", "bridge-package.bin"))):
+                record = report["lab_builds"][name]
+                directory = Path(record["path"])
+                contents = json.loads(package.read_regular_file(directory / "build-report.json", 16 * 1024 * 1024))
+                record["artifact_sha256"] = {filename: digest(directory / filename) for filename in names}
+                if any(contents["artifacts"][filename]["sha256"] != sha
+                       for filename, sha in record["artifact_sha256"].items()):
+                    raise ValueError("實驗產物與建置報告雜湊不符")
+        elif ddr_v2:
             ddr_build = args.ddr_build_dir.absolute()
             report["ddr_build_report_sha256"] = digest(ddr_build / "build-report.json")
             tests = tuple("test_bpi_sram_v2_execution.py" if name == "test_bpi_sram_execution.py" else name
@@ -69,6 +102,8 @@ def main():
                      ROOT / "tests/test_bpi_sram_execution.py",
                      *ROOT.glob("tools/*bpi_sram*.py"),
                      *ROOT.glob("patch/lab/u-boot/bananapim4zero/sram-supervisor/*"),
+                     *ROOT.glob("patch/lab/u-boot/bananapim4zero/sram-update/*"),
+                     *ROOT.glob("patch/lab/u-boot/bananapim4zero/sram-boot/*"),
                      *ROOT.glob("patch/lab/u-boot/bananapim4zero/sram-ddr/*")]))
         report["source_sha256"] = {str(p.relative_to(ROOT)): digest(p) for p in sources}
         driver_sources = ("drivers/mmc/sunxi_mmc.c", "drivers/mmc/sunxi_mmc.h",
@@ -80,6 +115,10 @@ def main():
                            PYTHONHASHSEED="0", LC_ALL="C")
         if ddr_build is not None:
             environment["BPI_DDR_BUILD_DIR"] = str(ddr_build)
+        if lab_v3:
+            environment["BPI_UPDATE_BUILD"] = str(args.update_build_dir.absolute())
+            environment["BPI_BOOT_BUILD"] = str(args.boot_build_dir.absolute())
+            environment["BPI_SRAM_A1_FIT_BUILD"] = str(args.boot_build_dir.absolute().parent)
         success = True
         for index, script in enumerate(scripts):
             argv = [sys.executable, "-B", str(script)]
@@ -106,6 +145,12 @@ def main():
         stable &= digest(build / "build-report.json") == report["build_report_sha256"]
         if ddr_build is not None:
             stable &= digest(ddr_build / "build-report.json") == report["ddr_build_report_sha256"]
+        if lab_v3:
+            stable &= all(digest(Path(record["path"]) / "build-report.json") == record["report_sha256"]
+                          for record in report["lab_builds"].values())
+            stable &= all(digest(Path(record["path"]) / filename) == sha
+                          for record in report["lab_builds"].values()
+                          for filename, sha in record["artifact_sha256"].items())
         stable &= all(digest(build / "source" / name) == sha
                       for name, sha in report["driver_source_sha256"].items())
         report["inputs_unchanged"] = stable

@@ -22,7 +22,7 @@ diff --git a/arch/arm/Kconfig b/arch/arm/Kconfig
 diff --git a/arch/arm/mach-sunxi/Kconfig b/arch/arm/mach-sunxi/Kconfig
 --- a/arch/arm/mach-sunxi/Kconfig
 +++ b/arch/arm/mach-sunxi/Kconfig
-@@ -1,5 +1,17 @@
+@@ -1,5 +1,24 @@
  if ARCH_SUNXI
  
 +config BPI_SRAM_SUPERVISOR
@@ -36,6 +36,13 @@ diff --git a/arch/arm/mach-sunxi/Kconfig b/arch/arm/mach-sunxi/Kconfig
 +	depends on BPI_SRAM_SUPERVISOR
 +	help
 +	  保留舊 smoke，另接受第二版 DDR 封包；不自動執行或寫入媒體。
++
++config BPI_SRAM_LAB_V3
++	bool "啟用 SRAM 更新器與開機實驗契約"
++	depends on BPI_SRAM_SUPERVISOR
++	select BPI_SRAM_DDR_V2
++	help
++	  明確接收第三版更新器及開機負載，固定入口本身仍不可寫卡。
 +
  config IDENT_STRING
  	default " Allwinner Technology"
