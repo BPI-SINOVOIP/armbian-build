@@ -1,0 +1,26 @@
+{
+  "schema": 1,
+  "updated": "2026-09-15",
+  "branch": "bpi-h618-recovery-network-20260915",
+  "base_commit": "a8bdccdcee7c12e251677421ef0e8b2b4a73c87b",
+  "plan_commit": null,
+  "scope": "討論保存、分階段整合、主機離線工具與已知候選唯讀盤點",
+  "release_status": "實驗開發，不供客戶發布",
+  "device_observation": "尚未連線；已找到歷史 Berry 候選，仍須核對",
+  "device_reset_performed": false,
+  "media_written": false,
+  "sram_hardware_validated": false,
+  "pxe_hardware_validated": false,
+  "stages": [
+    {"id": "N0", "status": "文件完成，待推送核對", "work": "計劃、討論決策、來源查核及狀態表"},
+    {"id": "N1", "status": "未開始", "work": "已知候選唯讀盤點、離線產物清單與校驗工具"},
+    {"id": "N2", "status": "未開始", "work": "專用救援卡布局與 SRAM 實板驗證"},
+    {"id": "N3", "status": "未開始", "work": "HW_ID 採樣與多板選擇"},
+    {"id": "N4", "status": "未開始", "work": "更新交易、eMMC 槽與安全 Linux 下載"},
+    {"id": "N5", "status": "未開始", "work": "Berry U-Boot 固定 IP、TFTP、PXE"},
+    {"id": "N6", "status": "未開始", "work": "NFS、多板交付及 Zero EMAC"},
+    {"id": "N7", "status": "未開始", "work": "DDR、多 OS 與無人值守回歸"},
+    {"id": "N8", "status": "未開始", "work": "操作復原文檔與發布包"}
+  ],
+  "next_action": "先提交推送並核對遠端，再開始 N1；不操作 UART、電源或儲存寫入"
+}
