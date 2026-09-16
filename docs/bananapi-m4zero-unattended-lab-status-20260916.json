@@ -2,7 +2,7 @@
   "schema": 1,
   "board": "0845",
   "phase": "U5",
-  "status": "前五套基本循環已收集。第六套 Noble XFCE 第一次出現 RCU stall 未到登入；已強制斷電回救援並確認整個映像內容未變，正在不重刷的唯一冷啟動重試。其他失敗及缺測保留。",
+  "status": "六套曾完成基本循環；Noble XFCE 首次 RCU stall，唯讀核對原映像後冷啟動重試及基本短測通過，仍保留間歇失敗。第七套 Resolute minimal 部署中。",
   "active_plan": "docs/bananapi-m4zero-ten-image-no-mux-plan-20260916.md",
   "active_plan_stage": "T4",
   "uart": "/dev/ttyUSB0",
@@ -86,7 +86,7 @@
     "full_system_update_verified": false,
     "uart_released": true,
     "sd_location": "0845",
-    "state": "Noble XFCE 異常後已回 RAM 救援並唯讀核對映像，T4-matrix-005 進行唯一冷啟動重試及後續映像，即時階段以本機 summary.json 為準。",
+    "state": "第六套重試後已正常回 RAM 救援，T4-matrix-005 接續後四套；即時階段以本機 summary.json 為準。",
     "no_mux_evidence_directory": "output/evidence/bpi-h618-no-mux/T1-0845-20260916",
     "no_mux_report": "docs/bananapi-m4zero-ten-image-no-mux-worklog-20260916.md",
     "strict_ssh_verified": true,
@@ -101,11 +101,12 @@
     "emmc_overwrite_authorized": true,
     "emmc_overwrite_authorization_scope": "使用者於本輪明確同意備份核對後，可覆寫 CID 尾碼 e08c07 的 0845 eMMC userarea；SD 救援區、boot0、boot1、RPMB 保留不動",
     "independent_rescue_verified": true,
-    "customer_system_cycles_completed": 5,
-    "customer_basic_smoke_all_passed": 1,
+    "customer_system_cycles_completed": 6,
+    "customer_basic_smoke_all_passed": 2,
+    "customer_intermittent_boot_failure_images": ["noble-xfce_desktop"],
     "customer_images_all_tests_passed": 0,
     "customer_images_total": 10,
-    "customer_images_not_boot_tested": 5,
+    "customer_images_not_boot_tested": 4,
     "active_batch_summary": "output/evidence/bpi-h618-no-mux/T4-matrix-005/summary.json",
     "customer_cycle_report": "output/evidence/bpi-h618-no-mux/T3-bookworm-return-001/report.json",
     "customer_cycle_report_sha256": "dee441b8c0b900678820ca7b83aaca839482dab907a1a299cc2f094410221c51",
@@ -113,5 +114,5 @@
     "independent_rescue_ten_cold_boots_completed": false,
     "customer_memory_full_pass_completed": false
   },
-  "next_action": "收取 Noble XFCE 唯一冷啟動重試及後續四套；開機失敗須保存證據並回救援，不無限重試或覆寫失敗紀錄。"
+  "next_action": "收取後續四套；保留 Noble XFCE 間歇失敗。其他開機失敗須保存證據並回救援，不無限重試或覆寫失敗紀錄。"
 }
