@@ -2,7 +2,7 @@
   "schema": 1,
   "board": "0845",
   "phase": "U5",
-  "status": "Bookworm minimal／XFCE 共兩套已完成部署、開機、基本測試及回救援；CPU 與檔案測試通過，但 console-setup 服務失敗，完整功能與長測未完成。第二套重試成功不代表首次 LZMA 錯誤已定位；批次續作 Jammy minimal。",
+  "status": "Bookworm 兩套及 Jammy minimal 共三套已完成基本測試循環；三套 CPU 通過。Bookworm 有 console-setup 失敗，Jammy 檔案測試受未擴容空間限制。第四套 Jammy XFCE 部署中，完整功能與長測未完成。",
   "active_plan": "docs/bananapi-m4zero-ten-image-no-mux-plan-20260916.md",
   "active_plan_stage": "T4",
   "uart": "/dev/ttyUSB0",
@@ -85,7 +85,7 @@
     "full_system_update_verified": false,
     "uart_released": true,
     "sd_location": "0845",
-    "state": "第二套已正常回到獨立 RAM 救援；T4-matrix-003 正在依序部署餘下映像，即時階段以本機批次 summary.json 為準。",
+    "state": "第三套已正常回到獨立 RAM 救援；T4-matrix-004 正在依序部署餘下映像，即時階段以本機批次 summary.json 為準。",
     "no_mux_evidence_directory": "output/evidence/bpi-h618-no-mux/T1-0845-20260916",
     "no_mux_report": "docs/bananapi-m4zero-ten-image-no-mux-worklog-20260916.md",
     "strict_ssh_verified": true,
@@ -100,16 +100,16 @@
     "emmc_overwrite_authorized": true,
     "emmc_overwrite_authorization_scope": "使用者於本輪明確同意備份核對後，可覆寫 CID 尾碼 e08c07 的 0845 eMMC userarea；SD 救援區、boot0、boot1、RPMB 保留不動",
     "independent_rescue_verified": true,
-    "customer_system_cycles_completed": 2,
+    "customer_system_cycles_completed": 3,
     "customer_images_all_tests_passed": 0,
     "customer_images_total": 10,
-    "customer_images_not_boot_tested": 8,
-    "active_batch_summary": "output/evidence/bpi-h618-no-mux/T4-matrix-003/summary.json",
+    "customer_images_not_boot_tested": 7,
+    "active_batch_summary": "output/evidence/bpi-h618-no-mux/T4-matrix-004/summary.json",
     "customer_cycle_report": "output/evidence/bpi-h618-no-mux/T3-bookworm-return-001/report.json",
     "customer_cycle_report_sha256": "dee441b8c0b900678820ca7b83aaca839482dab907a1a299cc2f094410221c51",
     "original_sd_cpu_memory_hour_completed": true,
     "independent_rescue_ten_cold_boots_completed": false,
     "customer_memory_full_pass_completed": false
   },
-  "next_action": "持續收取餘下八套部署、開機、短測與回救援；保留失敗及缺測，從有證據的中斷階段續作，不重刷前兩套。"
+  "next_action": "持續收取餘下七套部署、開機、短測與回救援；保留失敗及缺測，從有證據的中斷階段續作，不重刷前三套。"
 }
