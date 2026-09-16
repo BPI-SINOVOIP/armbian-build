@@ -1,0 +1,73 @@
+"""經 UART 核對候選系統後追加受限公鑰，固定 SSH 身分。"""
+import json
+from pathlib import Path
+import re
+import shlex
+import subprocess
+import sys
+import time
+
+HERE=Path(__file__).resolve().parent
+ROOT=HERE.parents[3]
+sys.path.insert(0,str(ROOT/'tools'))
+from bpi_lab_console import ConsoleSession
+from bpi_lab_network import select_local_ipv4
+from bpi_sram_uart import open_serial
+
+output=Path(sys.argv[1]).absolute()
+output.mkdir(mode=0o700,exist_ok=False)
+record={'ok':False,'commands':[]}
+try:
+    with open_serial('/dev/ttyUSB0',115200,10) as port:
+        with ConsoleSession(port,log_path=output/'uart.bin') as console:
+            def run(command):
+                result=console.run_shell(command,timeout=20)
+                record['commands'].append({'command':command,'exitcode':result.exitcode,'output':result.output.decode(errors='replace')})
+                if result.exitcode: raise RuntimeError('候選設定失敗：'+command)
+                return result.output
+            if run('uname -r').strip()!=b'6.18.49-current-sunxi64':
+                raise RuntimeError('候選核心不符')
+            if run('cat /sys/class/block/mmcblk*/device/cid').strip()!=b'd629034339413535311299942ee08c07':
+                raise RuntimeError('媒體身分不符或救援 SD 尚可見')
+            deadline=time.monotonic()+60
+            while True:
+                ready=console.run_shell('case "$(systemctl show armbian-firstrun -p SubState --value)" in exited|dead) test -s /etc/ssh/ssh_host_ed25519_key.pub && systemctl is-active --quiet ssh;; *) false;; esac',timeout=10)
+                record['commands'].append({'command':'ssh_ready','exitcode':ready.exitcode,'output':ready.output.decode(errors='replace')})
+                if ready.exitcode==0:
+                    break
+                if time.monotonic()>=deadline:
+                    raise RuntimeError('首次啟動的 SSH 主機金鑰或服務未於期限內就緒')
+                time.sleep(2)
+            interface,address=select_local_ipv4(json.loads(run('ip -j address')),
+                json.loads(run('ip -j route get 192.168.50.188')),'192.168.50.188')
+            public=(HERE/'ssh/id_ed25519.pub').read_text().strip()
+            if not re.fullmatch(r'ssh-ed25519 [A-Za-z0-9+/=]+(?: [^\r\n]*)?',public):
+                raise RuntimeError('測試公鑰格式不符')
+            line='from="192.168.50.188",restrict '+public+'\n'
+            script="from pathlib import Path; import os; p=Path('/root/.ssh'); p.mkdir(mode=0o700,exist_ok=True); os.chmod(p,0o700); f=os.open(p/'authorized_keys',os.O_WRONLY|os.O_APPEND|os.O_CREAT|os.O_NOFOLLOW,0o600); os.write(f,"+repr(line.encode())+"); os.fsync(f); os.close(f)"
+            run('python3 -B -c '+shlex.quote(script))
+            fields=run('cat /etc/ssh/ssh_host_ed25519_key.pub').split()
+            if fields[0]!=b'ssh-ed25519' or not re.fullmatch(rb'[A-Za-z0-9+/=]+',fields[1]):
+                raise RuntimeError('候選 SSH 公鑰不符')
+            known=output/'known_hosts'
+            with known.open('x') as stream: stream.write(address+' '+b' '.join(fields[:2]).decode()+'\n')
+            known.chmod(0o600)
+            config=output/'ssh-config'
+            values={'HostName':address,'User':'root','IdentityFile':str(HERE/'ssh/id_ed25519'),
+                'UserKnownHostsFile':str(known),'GlobalKnownHostsFile':'/dev/null','StrictHostKeyChecking':'yes',
+                'IdentitiesOnly':'yes','BatchMode':'yes','HostKeyAlgorithms':'ssh-ed25519',
+                'ClearAllForwardings':'yes','ForwardAgent':'no','RequestTTY':'no','ControlMaster':'no',
+                'ControlPath':'none','ConnectTimeout':'10','ServerAliveInterval':'15','ServerAliveCountMax':'3'}
+            with config.open('x') as stream:
+                stream.write('Host bpi-customer-0845\n'+''.join('    '+k+' '+v+'\n' for k,v in values.items()))
+            config.chmod(0o600)
+    result=subprocess.run(['ssh','-F',str(config),'bpi-customer-0845','uname -r'],capture_output=True,timeout=20)
+    if result.returncode or result.stdout.strip()!=b'6.18.49-current-sunxi64':
+        raise RuntimeError('候選嚴格 SSH 核對失敗')
+    record.update(ok=True,interface=interface,address=address,ssh_config=str(config),strict_ssh_verified=True)
+except Exception as error:
+    record['error']=str(error)
+    raise
+finally:
+    with (output/'report.json').open('x') as stream: json.dump(record,stream,ensure_ascii=False,indent=2)
+    print(json.dumps({k:v for k,v in record.items() if k!='commands'},ensure_ascii=False))

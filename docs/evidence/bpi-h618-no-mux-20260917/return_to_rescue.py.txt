@@ -1,0 +1,77 @@
+"""結束已登入的客戶系統，正常關機後回到 SD 固定救援。"""
+import hashlib
+import argparse
+import json
+from pathlib import Path
+import shlex
+import subprocess
+import sys
+import time
+
+HERE=Path(__file__).resolve().parent
+ROOT=HERE.parents[3]
+sys.path.insert(0,str(ROOT/'tools'))
+from bpi_h618_rescue_boot import RecordedChannel, boot, input_manifest, BRIDGE_SHA
+from bpi_sram_uart import open_serial
+from rescue_cycles import power
+from rescue_network import connect
+
+parser=argparse.ArgumentParser(description='正常關機或依固定失敗證據回到救援')
+parser.add_argument('output',type=Path)
+parser.add_argument('--failed-boot-report',type=Path)
+parser.add_argument('--failed-boot-sha256')
+args=parser.parse_args()
+out=args.output.absolute()
+out.mkdir(mode=0o700,exist_ok=False)
+report={'ok':False,'started_unix':time.time(),'power':[],'commands':[]}
+if args.failed_boot_report:
+    blob=args.failed_boot_report.read_bytes()
+    failed=json.loads(blob)
+    if hashlib.sha256(blob).hexdigest()!=args.failed_boot_sha256 or failed.get('ok') is not False or not failed.get('finished_unix') or not failed.get('error'):
+        raise RuntimeError('未核對已結束的失敗開機證據，拒絕強制斷電')
+    report['failed_boot']={'path':str(args.failed_boot_report),'sha256':args.failed_boot_sha256}
+elif args.failed_boot_sha256:
+    raise RuntimeError('缺少失敗開機報告')
+bridge=(ROOT/'output/evidence/bpi-sram-a1-fit-2048-002/bridge/bridge-package.bin').read_bytes()
+if hashlib.sha256(bridge).hexdigest()!=BRIDGE_SHA: raise RuntimeError('橋接封包不符')
+inputs,prefix=input_manifest(HERE/'rescue-inputs-002.json')
+try:
+    with open_serial('/dev/ttyUSB0',115200,10) as port:
+        with RecordedChannel(port,log_path=out/'uart.bin') as console:
+            def checked(command,expected):
+                result=console.run_shell(command,timeout=15)
+                if result.exitcode or result.output.strip()!=expected: raise RuntimeError('關機前候選身分不符')
+            power('status',True,report['power'])
+            if args.failed_boot_report:
+                report.update(normal_shutdown_verified=False,forced_poweroff=True,
+                    filesystem_integrity_after_powerloss_verified=False)
+            else:
+                checked('uname -r',b'6.18.49-current-sunxi64')
+                checked('cat /sys/class/block/mmcblk*/device/cid',b'd629034339413535311299942ee08c07')
+                active=console.run_shell('pgrep -f "^/root/bpi-lab-memtester"',timeout=10)
+                if active.exitcode!=1: raise RuntimeError('記憶體測試仍在執行或狀態不明')
+                console.send('systemctl poweroff\n')
+                console.expect_literal('reboot: Power down',timeout=180)
+                report['normal_shutdown_verified']=True
+            power('off',False,report['power'])
+            off=time.monotonic()
+            power('status',False,report['power'])
+            time.sleep(max(0,10-(time.monotonic()-off)))
+            report['off_seconds']=time.monotonic()-off
+            power('on',True,report['power'])
+            console.expect_regex(rb'BPI-SUP1 [^\r\n]*event=ready[^\r\n]*\r?\n',timeout=20)
+            report.update(boot(console,bridge,inputs,report['commands']))
+            report.update(connect(console,out))
+    script="from pathlib import Path; import hashlib,json; b=Path('/sys/class/block/mmcblk0'); assert (b/'device/cid').read_text().strip()=='03534453523634478697bc8c0701846b'; f=open('/dev/mmcblk0','rb'); d=f.read(4194304); f.close(); print(json.dumps({'bytes':len(d),'sha256':hashlib.sha256(d).hexdigest()}))"
+    result=subprocess.run(['ssh','-F',report['ssh_config'],'bpi-rescue-0845','python3 -B -c '+shlex.quote(script)],capture_output=True,timeout=30)
+    if result.returncode: raise RuntimeError('回救援後 SD 前綴核對失敗')
+    actual=json.loads(result.stdout)
+    if actual!=prefix: raise RuntimeError('SD 前綴與客戶試跑前不同')
+    report.update(ok=True,sd_prefix_unchanged=True,sd_prefix=actual,recovery_verified=True)
+except Exception as error:
+    report['error']=str(error)
+    raise
+finally:
+    report['finished_unix']=time.time()
+    with (out/'report.json').open('x') as stream: json.dump(report,stream,ensure_ascii=False,indent=2)
+    print(json.dumps({k:report.get(k) for k in ('ok','error','recovery_verified','sd_prefix_unchanged','ssh_config')},ensure_ascii=False))

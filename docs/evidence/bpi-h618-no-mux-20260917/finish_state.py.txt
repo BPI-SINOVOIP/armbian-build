@@ -1,0 +1,47 @@
+"""唯讀記錄批次結束的電源、串口與救援狀態。"""
+import json
+from pathlib import Path
+import subprocess
+import time
+from rescue_cycles import power
+
+HERE=Path(__file__).resolve().parent
+BASE=HERE.parent
+record={'ok':False,'started_unix':time.time(),'power':[]}
+power('status',True,record['power'])
+assert Path('/dev/ttyUSB0').is_char_device()
+serial=subprocess.run(['sudo','-n','fuser','-v','/dev/ttyUSB0'],capture_output=True,timeout=10)
+assert serial.returncode==1 and not serial.stdout and not serial.stderr
+record['uart_released']=True
+config=BASE/'T4-matrix-005/trixie-xfce_desktop/return/ssh-config'
+program="""
+import json,os
+from pathlib import Path
+found=[]
+services=[]
+for entry in Path('/proc').iterdir():
+    if not entry.name.isdecimal() or int(entry.name)==os.getpid():
+        continue
+    try:
+        args=(entry/'cmdline').read_bytes().rstrip(b'\\0').split(b'\\0')
+    except (FileNotFoundError,ProcessLookupError):
+        continue
+    executable=Path(os.fsdecode(args[0])).name if args and args[0] else ''
+    if args==[b'/usr/bin/python3',b'-B',b'/usr/sbin/bpi-rescue',b'net-events']:
+        services.append({'pid':int(entry.name),'service':'bpi-rescue net-events'})
+        continue
+    if executable in ('python','python3','xz','dd','stress-ng','memtester','bpi-lab-memtester'):
+        found.append({'pid':int(entry.name),'executable':executable})
+print(json.dumps({'kernel':os.uname().release,'test_processes':found,'rescue_services':services}))
+"""
+result=subprocess.run(['ssh','-F',str(config),'bpi-rescue-0845','python3 -B -'],
+    input=program.encode(),capture_output=True,timeout=20)
+assert result.returncode==0
+remote=json.loads(result.stdout)
+with (BASE/'T6-first-pass-001/process-observation-001.json').open('x') as stream:
+    json.dump(remote,stream,ensure_ascii=False,indent=2)
+assert remote['kernel']=='6.6.75-current-sunxi64' and not remote['test_processes']
+record.update(ok=True,remote=remote,ssh_config=str(config),finished_unix=time.time())
+with (BASE/'T6-first-pass-001/state.json').open('x') as stream:
+    json.dump(record,stream,ensure_ascii=False,indent=2)
+print(json.dumps(record,ensure_ascii=False,indent=2))
