@@ -133,3 +133,31 @@ UART 初次 DTB 查詢因 U-Boot 不輸出分號而被工具拒絕，修正可�
 `T4-xfce-xz-probe-002` 改以普通 SSH stdin 傳至新建 RAM 檔案，再用板端標準 `lzma.open` 解碼，不寫 MMC。壓縮檔 `1016372620` 位元組，前後 SHA-256 均為 `05a1505dc3a7eb044afb12f84dbdc93fe1c4e576cee077ec0aeda7acd0a52748`；解壓 `5091885056` 位元組，SHA-256 為 `976d0c251f0effa2ef286f27809b39c6aee7ec9c16a6a72e986499b91e932e08`，全部符合，解碼約 304 秒。已刪除僅本次產生且核對相同的 RAM 副本，原 XZ 不動。
 
 此結果證明該次傳輸及獨立解碼正確，尚未定位原串流部署失敗原因。已補保留 LZMA 原始例外及失敗前壓縮資料「已讀」長度／SHA-256、已送出解碼資料摘要；「已讀」不等於解碼器已消耗全部輸入。另開 `T4-matrix-002`，第二套只重試一次，不回填或刪除原失敗；若再失敗即用摘要定位，不繼續盲目重試。
+
+## T4：第二套完成及原地續作
+
+Bookworm XFCE 的一次限定重試已完成：寫入全部 `5091885056` 位元組、完整回讀符合原始解壓摘要，部署共約 427 秒。這次成功不等於前次偶發 LZMA 錯誤已定位或修復。
+
+候選已進入原配套 `6.18.49-current-sunxi64`，首次 root 初始化完成。自動連線先遇到 `/etc/ssh/ssh_host_ed25519_key.pub` 尚未產生；後續 UART 唯讀查詢確認原 `armbian-firstrun` 正在重新產生主機金鑰並重啟 SSH，服務最終正常。沒有重設 SSH、放寬主機身分驗證或重刷映像。
+
+新增有期限的 SSH 就緒等待後，`T4-matrix-003` 核對既有部署與開機收據，直接從連線階段續作，沒有再次部署或重開這套 XFCE。實收根 UUID `5b0abf3b-e889-4cbb-8d70-96abd76024bd`、eMMC CID、CPU 雙工作者摘要與 16 MiB 檔案讀寫均符合；`console-setup.service` 仍失敗，保留原狀。
+
+第二套已正常關機並回到 RAM 救援，SD 前 4 MiB 摘要不變。已完成循環為 2／10，整套硬體測試通過仍為 0；普通使用者、桌面登入、GPU、周邊與記憶體長測不在此次短測內。批次已續至 Jammy minimal，不重做前兩套。
+
+| 證據 | SHA-256 |
+| --- | --- |
+| `T4-matrix-002/bookworm-xfce_desktop/deploy/receipt.json` | `8fc6eb51d8fcb1421865cf27f56cd0f694b00b0bfc64f0484fd6fd29bb9be101` |
+| `T4-matrix-002/bookworm-xfce_desktop/boot/report.json` | `4765f3c49659bc7250b1991ab892a98c9790359d5125fa1658b7f82690ef9bdb` |
+| `T4-matrix-003/bookworm-xfce_desktop/smoke/report.json.partial` | `8afb45a48ac6af3cc9cefbe1c6510fdd4fa734ed641878c8e73efc5749843ce4` |
+| `T4-matrix-003/bookworm-xfce_desktop/return/report.json` | `13d8c07b250d261cbc265281ff51eb8213622cf8acf5ddac2a3f9c13dc8e7106` |
+
+## 擴展數量與效率界線
+
+本機 `google-drive-upload/2026/2026.08` 的目錄盤點為 45 個板別、444 個 `.img.xz`；`bpi-cm6`、`bpi-f3`、`bpi-sm10` 各 8，其餘各 10。這是檔案數量，不是 444 套已完成硬體驗證，也不是重新讀取 444 份巨檔後的完整稽核。
+
+- 首次媒體備份每片做一次；每套仍保留身分守門、寫入摘要及完整回讀，不用省略安全檢查換速度。
+- 同一硬體的 OS 批次共用已驗證救援；已部署、已開機者從實際中斷階段續作，不重刷。
+- 主機以固定組件及映像雜湊保存離線核對結果；只重做來源或測試條件真正變更的項目。
+- 每套先完成基本系統測試；同一組核心／DTB／韌體的深入硬體測試另外分組，但不把代表組結果冒稱各套已逐一長測。
+- 同一 UART、電源與媒體只由一個操作流程控制；未來多板使用獨立配對的測試站並行，不在單片上並行改寫媒體。
+- 其他板型共用清單、傳輸、證據與續作格式；救援入口、電源配對、CID、DTB 及儲存控制器必須個別適配。H618 的位址與 MMC 編號不得直接套到其他 SoC。
