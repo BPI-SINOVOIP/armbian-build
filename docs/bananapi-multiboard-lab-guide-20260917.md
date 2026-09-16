@@ -1,0 +1,135 @@
+# 跨板映像測試工具操作說明
+
+## 目前可以做什麼
+
+`tools/bpi_lab.py` 提供映像盤點、站點登記、持久排程、分階段執行、續作、故障返回及結果彙整。執行環境為 Linux、Python 3.10 以上，僅使用標準函式庫；沒有新增服務或雲端 CI。本輪不操作任何實體板。
+
+已盤點 45 板、444 個壓縮映像，來源原檔不修改。依本工作樹的板型設定靜態分類為 arm32 16 板／160 套、arm64 26 板／260 套、riscv64 3 板／24 套；不是從映像內執行檔驗證的架構，也不是映像建置來源提交證明。
+
+- F2P／F2S 的 20 套檔名核心版號為 `0`，保持 `metadata_blocked`，不猜測版本、不啟動適配器。
+- CM6／F3／SM10 各有八套；目前目錄未提供各自的兩套 Bookworm，不列為已存在映像。
+- 424 筆已完成五階段**模擬**，有 2,120 份階段收據。沒有解壓或讀取這些映像內容，沒有硬體通過聲明。
+- 再次匯入新增零筆，再次執行模擬完成零筆，證明不重做相同工作。
+- 舊 0845 十套證據以固定摘要引用。相關停用硬體工作先列 `review_required`，不從頭重跑，也不當成目前 eMMC 仍有那些映像。
+
+## 本機位置
+
+專案：`/media/pi/SMCI/armbian/bpi-v26.2.1-m4zero-sram-supervisor-plan`。
+
+工作資料：`output/evidence/bpi-multiboard-lab-20260917/`。
+
+| 路徑 | 用途 |
+| --- | --- |
+| `catalog-001.json` | 444 筆唯讀盤點，含旁檔宣告與檔案身分 |
+| `hardware.sqlite3` | 真實工作準備清單；45 個站點全部停用 |
+| `stations/` | 各板待配對設定，不是可燒錄設定 |
+| `simulation.sqlite3` | 完全分開的模擬資料庫 |
+| `simulation-stations/` | 純模擬站點 |
+| `simulation-runs/` | 模擬請求、結果、收據與輸出 |
+
+所有命令在專案根目錄執行。以下 `python3` 亦可換成本機既有的 `output/evidence/bpi-sram-supervisor/model-venv/bin/python`。
+
+## 查看進度
+
+```bash
+python3 -B tools/bpi_lab.py status --db output/evidence/bpi-multiboard-lab-20260917/hardware.sqlite3
+python3 -B tools/bpi_lab.py jobs --db output/evidence/bpi-multiboard-lab-20260917/hardware.sqlite3 --state review_required
+python3 -B tools/bpi_lab.py status --db output/evidence/bpi-multiboard-lab-20260917/simulation.sqlite3
+```
+
+硬體準備清單初始為 414 筆 `queued`、20 筆 `metadata_blocked`、10 筆 `review_required`。`queued` 僅代表已排程，**不代表站點已配對、適配器存在或允許寫入**。
+
+`collected` 表示本次五階段契約報告通過，不代表桌面、GPIO、GPU 或長期穩定性全通過。`hardware` 與 `simulation` 分開統計；`all_hardware_tests_passed` 不會因短測或模擬變成真。歷史失敗與例外另列，不能只看最後成功數。
+
+`historical_nonpassing_reports` 與 `historical_execution_errors` 只統計新佇列的嘗試，不涵蓋引用進來的舊報告。舊 0845 的 RCU／LZMA、服務失敗及缺測仍在[第一輪總結](bananapi-m4zero-ten-image-first-pass-20260917.md)與原證據；新資料庫計數為零不表示舊失敗已消失。
+
+## 重新盤點與排程
+
+```bash
+python3 -B tools/bpi_lab.py catalog \
+  --root /media/pi/SMCI/bpi/google-drive-upload/2026/2026.08 \
+  --build-root /media/pi/SMCI/armbian/bpi-v26.2.1-m4zero-sram-supervisor-plan \
+  --output output/evidence/bpi-multiboard-lab-20260917/catalog-002.json
+
+python3 -B tools/bpi_lab.py prepare \
+  --catalog output/evidence/bpi-multiboard-lab-20260917/catalog-002.json \
+  --db output/evidence/bpi-multiboard-lab-20260917/hardware.sqlite3 \
+  --stations-dir output/evidence/bpi-multiboard-lab-20260917/stations
+```
+
+新輸出檔名不可覆寫既有檔案。清單按完整來源目錄快照匯入；已移除或條件更換的待跑工作改為 `superseded`，歷史紀錄仍保留。已配對站點請另存設定，用 `register` 更新，不修改產生用的 `pending-*` 範本。新資料庫若要避免重跑舊十套，須引用歷史：
+
+```bash
+python3 -B tools/bpi_lab.py history \
+  --db output/evidence/bpi-multiboard-lab-20260917/hardware.sqlite3 \
+  --report output/evidence/bpi-h618-no-mux/T6-first-pass-001/summary.json \
+  --sha256 d5dab342aec0bce1fae3bc7f22b53b9bdf6d6a823f1daaa7e84c8714a8f9577a
+```
+
+歷史引用只建立人工審查保留，不憑舊成功收據跳過目前媒體核對。原報告未明示的板號仍保持未知；不同實板不可承接另一片的通過結論。`release --work-key <工作鍵> --reason <補測原因>` 可釋出已審工作，但不會自動將缺測改成通過。
+
+## 純離線演練
+
+```bash
+python3 -B tools/bpi_lab.py prepare \
+  --catalog output/evidence/bpi-multiboard-lab-20260917/catalog-001.json \
+  --db output/evidence/bpi-multiboard-lab-20260917/simulation.sqlite3 \
+  --stations-dir output/evidence/bpi-multiboard-lab-20260917/simulation-stations \
+  --simulation
+
+python3 -B tools/bpi_lab.py simulate \
+  --db output/evidence/bpi-multiboard-lab-20260917/simulation.sqlite3 \
+  --evidence output/evidence/bpi-multiboard-lab-20260917/simulation-runs
+```
+
+`simulate` 只接受內建模擬器，拒絕外部程式及硬體站點。結束碼 `0` 表示所列工作無待處理問題；`2` 為輸入或契約錯誤；`3` 表示仍有失敗、阻擋或未收集工作。本輪因 20 筆 `metadata_blocked`，結束碼為 `3`，不是程序崩潰。再次執行不重跑已收集項目。
+
+## 實板加入流程
+
+1. 提供板型／硬體修訂、板號、DDR、UART 穩定身分、電源配對及可覆寫媒體。先確定正常救援與資料傳輸路徑。
+2. 複製相應停用範本到獨立站點檔，填入實際身分、引導配置 SHA-256、測試版本、適配器入口與摘要。不得保留 `pending-*` 身分或只把 `enabled` 改成真。
+3. 平台適配器實作 `preflight → deploy → boot → smoke → recovery`，有界返回結構化報告。`deploy` 必須核對媒體、來源及完整回讀；`boot` 必須證明是候選核心與根系統，不是救援核心。
+4. 每片媒體完成備份與核對，取得該片的 userarea 覆寫授權。其他片的備份或授權不可移用。
+5. 首次平台適配由工程流程受控驗證一套完整循環及返回救援；先前 H618 原型可參考，但不能自動核定新站點。產生綁定站點／硬體／媒體／引導／適配器／測試版本的資格 JSON，再啟用批次站點。
+
+```bash
+python3 -B tools/bpi_lab.py register --db <資料庫> --station <已核定站點.json>
+python3 -B tools/bpi_lab.py schedule --db <資料庫> --station-id <站點代號>
+python3 -B tools/bpi_lab.py run --db <資料庫> --station-id <站點代號> --evidence <新證據目錄> --limit 10
+```
+
+共用排程已有實作，**各 SoC 真正的引導／燒錄／返回救援適配器仍須逐平台完成及實測**。不能把建立 45 個範本說成 45 板已適配。沒有 eMMC 的板型，先決定已授權 USB 或網路測試區，不能直接套用 0845 的儲存路徑。
+
+## 中斷與失敗
+
+```bash
+python3 -B tools/bpi_lab.py resume --db <資料庫> --work-key <工作鍵> --evidence <證據目錄>
+python3 -B tools/bpi_lab.py recover --db <資料庫> --work-key <工作鍵> --evidence <證據目錄>
+python3 -B tools/bpi_lab.py retry --db <資料庫> --work-key <工作鍵> --reason <限定重試原因>
+```
+
+- 先核對執行意圖及已落盤收據；若收據已完成而資料庫尚未更新，恢復紀錄，不重送部署。
+- 沒有部署收據的未知寫入不自動重刷；先明示返回救援，再決定新嘗試。
+- 可以續作時仍先要求適配器核對目前板上狀態。適配器不支援現況核對就停止，不以歷史成功推定媒體仍正確。
+- 失敗階段不能推進為通過；故障返回失敗就隔離站點，連共用資源的其他站點也不能接手。
+- 同一主機共用 `/var/tmp/bpi-lab-locks/` 的程序鎖與持久占用，跨資料庫也維持占用。程序被殺死不會自動解除不明媒體狀態。不同主機沒有分散式鎖，不能共同控制同一實體站點。
+- 不手動刪鎖目錄來解決忙碌。若工作已安全結束、僅中斷於鎖清理，可用 `unlock --db <資料庫> --work-key <工作鍵>`；未安全結束者必須先救援。
+
+## 適配器與證據限制
+
+外部適配器經 stdin 接收 `bpi-lab-request-v1`，stdout 回傳 `bpi-lab-stage-v1`。必須回映工作鍵、嘗試、階段、站點／硬體身分、映像與引導摘要、測試版本及模式；任何錯配都拒絕。結果為 `passed`／`failed`／`blocked`。資格格式及各階段必要宣告見 `tests/test_bpi_lab_station.py` 的資格與報告 fixture。
+
+每階段保存 `request.json`、`stdout.log`、`stderr.log`、`response.json`；核對後再保存 `queue-receipt.json` 並更新資料庫。命令不使用 shell，限制執行時間、輸出大小，逾時終止程序群組。入口固定摘要與不可變副本不能代替整個執行環境核定；直譯器、相依套件及 argv 引用檔案仍由平台適配負責。這不是惡意程式沙箱。
+
+資格 JSON 與報告契約不是獨立實物鑑定器；操作人員仍須審查原始證據。不能自行填真值來宣稱測通。平台長測、桌面登入、GPU、GPIO／I2C／SPI、影音與周邊須有真正測項，不能由單一 `smoke` 標籤推定。
+
+## 本機回歸
+
+```bash
+python3 -B -m unittest discover -s tests -p 'test_bpi_lab*.py'
+python3 -B -m unittest discover -s tests -p 'test_bpi_h618*.py'
+```
+
+測試使用臨時目錄與假資料；不與實體 UART、電源或 eMMC 互動。進度及驗收範圍見[計畫](bananapi-multiboard-lab-plan-20260917.md)及[板型清單](evidence/bpi-multiboard-lab-20260917/board-registry.json)。
+
+本輪驗收為 168 項主控台／網路／跨板工具測試及 356 項 H618 回歸，共 524 項通過，Ruff 通過。424 筆模擬批次證明基本排程可運作；其後的中斷與競態修正由故障回歸、原收據重核對及零重做續作確認，沒有把模擬升格為實板測試。

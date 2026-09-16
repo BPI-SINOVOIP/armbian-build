@@ -1,0 +1,71 @@
+{
+  "schema": "bpi-lab-offline-delivery-v1",
+  "date": "2026-09-17",
+  "plan_commit": "4aa4a87c72c792e8037fe94211cdbb2bc90f8309",
+  "offline_software_completed": true,
+  "hardware_operated": false,
+  "images_rewritten": 0,
+  "hardware_backends_qualified_this_turn": 0,
+  "phases": {
+    "P0": "completed",
+    "P1": "completed_with_metadata_issues",
+    "P2": "completed",
+    "P3": "completed",
+    "P4": "completed_offline",
+    "P5": "completed_local_validation",
+    "H1": "awaiting_hardware_and_backend_qualification",
+    "H2": "awaiting_H1"
+  },
+  "evidence": {
+    "catalog": {
+      "path": "output/evidence/bpi-multiboard-lab-20260917/catalog-001.json",
+      "sha256": "7ec027496d0e9215ce673f41570875647df077b1766e6190cf6b0b5e41df0fe0"
+    },
+    "hardware_queue": {
+      "path": "output/evidence/bpi-multiboard-lab-20260917/hardware-status-001.json",
+      "sha256": "34f0f4388ac038fc2416c36d444c999adf7ca803e6eb429ac433645aa680c394"
+    },
+    "simulation": {
+      "path": "output/evidence/bpi-multiboard-lab-20260917/simulation-status-001.json",
+      "sha256": "f20223a7b8f92a66dbfd7d21e79fe6805600fdc9a7ab10a5e5f34902151ab545"
+    }
+  },
+  "inventory": {
+    "boards": 45,
+    "images": 444,
+    "architecture_boards": {"arm32": 16, "arm64": 26, "riscv64": 3},
+    "architecture_images": {"arm32": 160, "arm64": 260, "riscv64": 24},
+    "metadata_blocked": 20,
+    "metadata_blocked_boards": ["bpi-f2p", "bpi-f2s"],
+    "metadata_blocked_reason": "檔名核心版本為 0，未猜測或解壓核實",
+    "missing_bookworm_variants": ["bpi-cm6", "bpi-f3", "bpi-sm10"],
+    "missing_images_not_counted": 6
+  },
+  "hardware_queue": {
+    "disabled_stations": 45,
+    "queued": 414,
+    "historical_review_required": 10,
+    "metadata_blocked": 20,
+    "attempts_this_turn": 0
+  },
+  "simulation": {
+    "collected": 424,
+    "metadata_blocked": 20,
+    "stage_reports": 2120,
+    "repeat_new_jobs": 0,
+    "repeat_executed_jobs": 0,
+    "hardware_validated": false
+  },
+  "validation": {
+    "commands": [
+      {"command": "python3 -B -m unittest discover -s tests -p 'test_bpi_lab*.py'", "passed": 168},
+      {"command": "python3 -B -m unittest discover -s tests -p 'test_bpi_h618*.py'", "passed": 356}
+    ],
+    "tests_passed": 524,
+    "ruff_passed": true,
+    "limited_independent_review_blockers_remaining": 0,
+    "review_regressions": "tests/test_bpi_lab_queue_review.py",
+    "scope": "僅離線工具及模擬；不是實板、完整功能或長期穩定性認證"
+  },
+  "scope": "共用工具已完成；各 SoC 真正引導適配器、站點配對、備份授權與完整硬體功能仍待逐板施工與驗證"
+}
