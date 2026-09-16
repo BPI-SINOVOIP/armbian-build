@@ -2,7 +2,7 @@
   "schema": 1,
   "board": "0845",
   "phase": "U5",
-  "status": "五套已完成基本循環；Jammy XFCE 基本短測全通過。Bookworm 有服務失敗，Jammy／Noble minimal 有空間限制，第六套 Noble XFCE 部署中。完整功能與長測未完成。",
+  "status": "前五套基本循環已收集。第六套 Noble XFCE 第一次出現 RCU stall 未到登入；已強制斷電回救援並確認整個映像內容未變，正在不重刷的唯一冷啟動重試。其他失敗及缺測保留。",
   "active_plan": "docs/bananapi-m4zero-ten-image-no-mux-plan-20260916.md",
   "active_plan_stage": "T4",
   "uart": "/dev/ttyUSB0",
@@ -81,11 +81,12 @@
       "sha256": "8d42651cd48627c556e00fb08db489362ed5856359867c69526e888ceb4c3ffd"
     },
     "linux_boot_verified": true,
-    "recovery_after_hang_verified": false,
+    "recovery_after_hang_verified": true,
+    "recovery_after_hang_report": "output/evidence/bpi-h618-no-mux/T4-matrix-004/noble-xfce_desktop/return-after-hang-001/report.json",
     "full_system_update_verified": false,
     "uart_released": true,
     "sd_location": "0845",
-    "state": "第五套已正常回到獨立 RAM 救援；T4-matrix-004 正在依序部署餘下映像，即時階段以本機批次 summary.json 為準。",
+    "state": "Noble XFCE 異常後已回 RAM 救援並唯讀核對映像，T4-matrix-005 進行唯一冷啟動重試及後續映像，即時階段以本機 summary.json 為準。",
     "no_mux_evidence_directory": "output/evidence/bpi-h618-no-mux/T1-0845-20260916",
     "no_mux_report": "docs/bananapi-m4zero-ten-image-no-mux-worklog-20260916.md",
     "strict_ssh_verified": true,
@@ -105,12 +106,12 @@
     "customer_images_all_tests_passed": 0,
     "customer_images_total": 10,
     "customer_images_not_boot_tested": 5,
-    "active_batch_summary": "output/evidence/bpi-h618-no-mux/T4-matrix-004/summary.json",
+    "active_batch_summary": "output/evidence/bpi-h618-no-mux/T4-matrix-005/summary.json",
     "customer_cycle_report": "output/evidence/bpi-h618-no-mux/T3-bookworm-return-001/report.json",
     "customer_cycle_report_sha256": "dee441b8c0b900678820ca7b83aaca839482dab907a1a299cc2f094410221c51",
     "original_sd_cpu_memory_hour_completed": true,
     "independent_rescue_ten_cold_boots_completed": false,
     "customer_memory_full_pass_completed": false
   },
-  "next_action": "持續收取餘下五套部署、開機、短測與回救援；保留失敗及缺測，從有證據的中斷階段續作，不重刷前五套。"
+  "next_action": "收取 Noble XFCE 唯一冷啟動重試及後續四套；開機失敗須保存證據並回救援，不無限重試或覆寫失敗紀錄。"
 }
