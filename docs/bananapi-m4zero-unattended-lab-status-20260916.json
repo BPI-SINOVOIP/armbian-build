@@ -2,7 +2,9 @@
   "schema": 1,
   "board": "0845",
   "phase": "U5",
-  "status": "使用者授權後已恢復 root 管理密碼，6.6.75 正常系統登入與媒體核對通過；目前依使用者要求暫停測試，討論 eMMC／EMAC 架構",
+  "status": "既有 6.6.75 正常系統登入與媒體核對結果不變；使用者拒絕 SD 切換器，已修訂 SD 固定救援與 eMMC 逐套測試計畫，本次未操作硬體",
+  "active_plan": "docs/bananapi-m4zero-ten-image-no-mux-plan-20260916.md",
+  "active_plan_stage": "T0",
   "uart": "/dev/ttyUSB0",
   "power": {
     "name": "bpi-pw-1",
@@ -85,5 +87,5 @@
     "sd_location": "0845",
     "state": "已正常關機並受控斷電再上電，依既有固定入口行為停留 SRAM；尚未送入下一個候選，UART 已釋放"
   },
-  "next_action": "先完成使用者要求的 eMMC／EMAC 架構討論；恢復測試後從 SRAM 選擇已知正常候選，驗證一般冷開機登入及 Wi-Fi，再續作故障重入與系統更新／回退。帳密已恢復，不再以帳密為阻塞。"
+  "next_action": "先討論免 SD 切換器的十套映像計畫；實施時由 T0 固定來源清單，再驗證獨立救援與傳輸，eMMC 盤點備份並確認可覆寫後才部署。保留既有硬體狀態，本次不恢復實板測試。"
 }
