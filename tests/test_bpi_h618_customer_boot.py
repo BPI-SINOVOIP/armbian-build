@@ -190,8 +190,12 @@ class CustomerTests(unittest.TestCase):
         self.assertIn("usb-storage.quirks=1234:abcd:u,0123:4567:tu", customer.validate_metadata(self.components, self.receipt))
 
     def test_other_emac_batch_os_uses_same_contract(self):
-        self.components.update(os="trixie", desktop="xfce")
-        customer.validate_metadata(self.components, self.receipt)
+        self.components.update(os="trixie", desktop="xfce_desktop")
+        self.components["original_env"]["bootlogo"] = "true"
+        args = customer.validate_metadata(self.components, self.receipt).split()
+        self.assertIn("splash", args)
+        self.assertIn("plymouth.ignore-serial-consoles", args)
+        self.assertNotIn("splash=verbose", args)
 
     def test_bad_schema_board_kernel_or_uuid(self):
         for key, value in (("schema", "unknown"), ("board", "bananapim4zero"), ("kernel_release", "6.6;reset"),
@@ -214,7 +218,7 @@ class CustomerTests(unittest.TestCase):
     def test_unsupported_env_and_script_injection_rejected(self):
         for key, value in (("param_spidev_spi_bus", "0"), ("param_", ""), ("extraargs", "cma=256M; reset"),
                            ("user_overlays", "evil"), ("bootcmd", "reset"), ("rootdev", "/dev/mmcblk0p1"),
-                           ("overlays", "bananapi-m4-zero-emac-sdio-wifi-bt pwm34"), ("bootlogo", "true"),
+                           ("overlays", "bananapi-m4-zero-emac-sdio-wifi-bt pwm34"), ("bootlogo", "true; reset"),
                            ("console", "serial"), ("disp_mode", "different"), ("extraargs", None)):
             with self.subTest(key=key, value=value):
                 document = copy.deepcopy(self.components)

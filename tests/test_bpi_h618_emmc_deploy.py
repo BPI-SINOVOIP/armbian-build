@@ -378,6 +378,27 @@ class XzTests(unittest.TestCase):
     def setUp(self):
         self.core = deploy.remote_namespace()
 
+    def test_optional_diagnostics_on_success_truncation_and_read_limit(self):
+        compressed = lzma.compress(RAW)
+        for variant in ("success", "truncated", "read_limit"):
+            data = compressed[:-1] if variant == "truncated" else compressed
+            expected = source_summary(RAW, data)
+            if variant == "read_limit":
+                expected["compressed"]["bytes"] -= 1
+            diagnostics, output = {}, bytearray()
+            with self.subTest(variant=variant):
+                if variant == "success":
+                    result = self.core["process_xz"](io.BytesIO(data), expected, CAPACITY, lambda: None,
+                                                      output.extend, diagnostics=diagnostics)
+                    self.assertEqual(result, expected)
+                else:
+                    with self.assertRaises(ValueError):
+                        self.core["process_xz"](io.BytesIO(data), expected, CAPACITY, lambda: None,
+                                                output.extend, diagnostics=diagnostics)
+                self.assertEqual(diagnostics["compressed"], {"bytes_read": len(data), "sha256": sha(data)})
+                self.assertEqual(diagnostics["raw"], {"bytes_emitted": len(output), "sha256": sha(output)})
+                self.assertIsNone(diagnostics["lzma_error"])
+
     def test_concatenation_and_padding_cross_read_boundaries(self):
         compressed = lzma.compress(RAW[:512]) + bytes(8) + lzma.compress(RAW[512:]) + bytes(12)
         expected = source_summary(RAW, compressed)
@@ -534,6 +555,28 @@ class RemoteTests(unittest.TestCase):
         self.assertEqual(self.target[len(RAW):], b"\xaa" * (CAPACITY - len(RAW)))
         self.assertEqual([event for event, _ in self.events], ["ready", "verified"])
         self.assertTrue(all(path in (sd_identity()["device"], emmc_identity()["device"]) for path, _ in self.opens))
+
+    def test_lzma_failure_keeps_original_error_and_read_emitted_hashes_in_state(self):
+        # 模擬先輸出一段、仍有內部輸入時解碼失敗；read 不可誤稱 consumed。
+        for message in ("Corrupt input data", "Memory usage limit exceeded"):
+            self.events.clear()
+            original = lzma.LZMAError(message)
+            decoder = mock.Mock(needs_input=False, eof=False)
+            decoder.decompress.side_effect = [RAW[:128], original]
+            with self.subTest(message=message), self.rig(), \
+                    mock.patch.object(self.core["lzma"], "LZMADecompressor", return_value=decoder), \
+                    self.assertRaisesRegex(ValueError, "XZ 損壞或解碼記憶體超限") as raised:
+                self.run_remote()
+            self.assertIs(raised.exception.__cause__, original)
+            state = self.assert_no_verified()
+            self.assertEqual(state["bytes_written"], 128)
+            self.assertEqual(state["sd_before"], state["sd_after"])
+            compressed = lzma.compress(RAW)
+            self.assertEqual(state["xz_diagnostics"], {
+                "compressed": {"bytes_read": len(compressed), "sha256": sha(compressed)},
+                "raw": {"bytes_emitted": 128, "sha256": sha(RAW[:128])},
+                "lzma_error": {"type": "LZMAError", "message": message}})
+            self.assertEqual(decoder.decompress.call_args_list[1].args[0], b"")
 
     def test_short_writes_advance_offsets_without_duplication(self):
         self.write_size = 7

@@ -2,9 +2,9 @@
   "schema": 1,
   "board": "0845",
   "phase": "U5",
-  "status": "十套離線核對完成；Bookworm minimal 已實測部署、回讀、客戶系統開機、CPU／檔案系統／網路及回救援。存在 console-setup 失敗；256 MiB 記憶體完整輪次逾時未完成，不標整套通過。",
+  "status": "Bookworm minimal 已完成實測循環但有服務失敗及記憶體缺測。第二套 XFCE 初次串流部署失敗，RAM 獨立完整解碼已通過；保留失敗後進行一次帶診斷的重試，沒有啟動半寫入候選。",
   "active_plan": "docs/bananapi-m4zero-ten-image-no-mux-plan-20260916.md",
-  "active_plan_stage": "T3",
+  "active_plan_stage": "T4",
   "uart": "/dev/ttyUSB0",
   "power": {
     "name": "bpi-pw-1",
@@ -85,7 +85,7 @@
     "full_system_update_verified": false,
     "uart_released": true,
     "sd_location": "0845",
-    "state": "已由客戶 eMMC 6.18.49 正常關機並回到獨立 RAM 救援 6.6.75；Wi-Fi 與嚴格 SSH 可用，SD 前綴不變。",
+    "state": "獨立 RAM 救援 6.6.75 執行中，Wi-Fi 與 SSH 可用；第二套 XFCE 重新部署中。未有本次成功收據前，不選候選開機。",
     "no_mux_evidence_directory": "output/evidence/bpi-h618-no-mux/T1-0845-20260916",
     "no_mux_report": "docs/bananapi-m4zero-ten-image-no-mux-worklog-20260916.md",
     "strict_ssh_verified": true,
@@ -110,5 +110,5 @@
     "independent_rescue_ten_cold_boots_completed": false,
     "customer_memory_full_pass_completed": false
   },
-  "next_action": "依更新後的效率順序續測其餘九套基本系統；保留第一套已完成證據，不重編或重刷它。服務問題與長測另排，其他板型須先有自己的實測救援配置。"
+  "next_action": "收取 T4-matrix-002 第二套帶診斷重試結果；成功才進候選核心與後續 OS。再次失敗則比較接收摘要定位，不盲目重試；不重測已完成首套。"
 }

@@ -65,6 +65,8 @@ def bootargs_for(document):
     for key, value in selected.items():
         if key == "verbosity":
             require(matches(r"[0-7]", value), "原 verbosity 格式不符")
+        elif key == "bootlogo":
+            require(value in ("true", "false"), "原 bootlogo 格式不符")
         elif key == "fdtfile":
             require(value in (DTB, "allwinner/" + DTB), "原 fdtfile 不是 EMAC DTB")
         elif key == "usbstoragequirks":
@@ -73,8 +75,9 @@ def bootargs_for(document):
                     "USB quirk 格式未支援")
         else:
             require(value == defaults[key], "原設定值未支援：" + key)
+    splash = ("splash", "plymouth.ignore-serial-consoles") if selected["bootlogo"] == "true" else ("splash=verbose",)
     return " ".join(("root=UUID=" + document["root_uuid"], "rootwait", "rootfstype=ext4",
-                     "console=ttyS0,115200", "console=tty1", "consoleblank=0", "splash=verbose",
+                     "console=ttyS0,115200", "console=tty1", "consoleblank=0", *splash,
                      "cma=256M", "cgroup_enable=memory", "usb-storage.quirks=" + selected["usbstoragequirks"],
                      "ubootpart=" + document["partuuid"], "loglevel=6", "panic=0",
                      *("systemd.mask=" + service for service in MASKS)))
@@ -85,7 +88,7 @@ def validate_metadata(document, receipt):
     require(type(document) is dict and document.get("schema") == "bpi-h618-customer-components-v1"
             and document.get("board") == "bananapim4zeroemac", "組件 schema 或 EMAC 板型不符")
     require(matches(r"[a-z][a-z0-9-]{0,31}", document.get("os"))
-            and matches(r"[a-z][a-z0-9-]{0,31}", document.get("desktop")), "系統或桌面識別無效")
+            and document.get("desktop") in ("minimal", "xfce_desktop"), "系統或桌面識別無效")
     kernel = document.get("kernel_release")
     require(matches(r"[0-9]+\.[0-9]+\.[0-9]+-current-sunxi64", kernel), "核心版本未支援")
     require(matches(r"[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}", document.get("root_uuid"))

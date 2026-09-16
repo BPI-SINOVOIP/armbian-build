@@ -109,12 +109,13 @@ def inspect_sd(expected, sysroot="/sys/class/block", devroot="/dev"):
     require(size >= SD_PREFIX, "受保護 SD 小於前綴核對範圍")
     return {**expected, "type": "SD", "device": str(Path(devroot) / base.name), "devnum": number, "bytes": size}
 
-def process_xz(source, expected, capacity, check_deadline, write=None):
-    require(0 < expected["raw"]["bytes"] <= capacity, "來源長度超過 userarea 容量")
+def process_xz(source, expected, capacity, check_deadline, write=None, diagnostics=None):
     compressed_hash, raw_hash = hashlib.sha256(), hashlib.sha256()
     compressed_bytes = raw_bytes = streams = padding = 0
     decoder = None
+    lzma_error = None
     try:
+        require(0 < expected["raw"]["bytes"] <= capacity, "來源長度超過 userarea 容量")
         while True:
             check_deadline()
             chunk = source.read(CHUNK)
@@ -122,8 +123,8 @@ def process_xz(source, expected, capacity, check_deadline, write=None):
             if not chunk:
                 break
             compressed_bytes += len(chunk)
-            require(compressed_bytes <= expected["compressed"]["bytes"], "XZ 壓縮長度超出指定範圍")
             compressed_hash.update(chunk)
+            require(compressed_bytes <= expected["compressed"]["bytes"], "XZ 壓縮長度超出指定範圍")
             pending = chunk
             while pending or (decoder is not None and not decoder.needs_input):
                 check_deadline()
@@ -152,7 +153,14 @@ def process_xz(source, expected, capacity, check_deadline, write=None):
                     decoder = None
                     streams += 1
     except lzma.LZMAError as exc:
+        lzma_error = {"type": type(exc).__name__, "message": str(exc)}
         raise ValueError("XZ 損壞或解碼記憶體超限") from exc
+    finally:
+        if diagnostics is not None:
+            # read 包含解碼器尚未消耗的輸入；raw 不含 write 回呼失敗區塊中的部分短寫。
+            diagnostics.update(compressed={"bytes_read": compressed_bytes, "sha256": compressed_hash.hexdigest()},
+                               raw={"bytes_emitted": raw_bytes, "sha256": raw_hash.hexdigest()},
+                               lzma_error=lzma_error)
     require(streams > 0 and decoder is None and padding % 4 == 0, "XZ 截斷或填補不完整")
     result = {"compressed": {"bytes": compressed_bytes, "sha256": compressed_hash.hexdigest()},
               "raw": {"bytes": raw_bytes, "sha256": raw_hash.hexdigest()}}
@@ -231,7 +239,9 @@ def run(request, source, emit):
                     emit("progress", bytes_written=state["bytes_written"], attempted_end=state["attempted_end"])
                     checkpoint += 64 * CHUNK
             try:
-                state["source"] = process_xz(source, request["source"], target["bytes"], check_deadline, write)
+                state["xz_diagnostics"] = {}
+                state["source"] = process_xz(source, request["source"], target["bytes"], check_deadline, write,
+                                             diagnostics=state["xz_diagnostics"])
                 state["status"] = "readback"
                 os.fsync(fd)
                 # BLKFLSBUF 只刷新及丟棄目標快取；不重讀分割表，不修改任何 SD 狀態。

@@ -121,3 +121,15 @@ UART 初次 DTB 查詢因 U-Boot 不輸出分號而被工具拒絕，修正可�
 - CPU／檔案系統：`T3-bookworm-smoke-001/report.json.partial` 為完整收集但有失敗測項的報告；不是成功收據。
 - 未完成記憶體原始日誌：`T3-bookworm-memory-002/memtester.partial.log`，SHA-256 `9130adcb56179a894c9f91c8f9f6d84aeb43defc7a0314022493478311be8200`。
 - 回救援：`T3-bookworm-return-001/report.json`，SHA-256 `dee441b8c0b900678820ca7b83aaca839482dab907a1a299cc2f094410221c51`。
+
+## T4：批次與第二套部署中斷
+
+首套實測及工具已推送 `dcc312b18`。剩餘九套批次已啟動，先測 Bookworm XFCE；沒有重刷已完成的 Bookworm minimal。桌面版的 `xfce_desktop` 識別與 `bootlogo=true` 已依真實清單及原 `boot.cmd` 支援，保留 `splash plymouth.ignore-serial-consoles`，不更改來源 manifest。
+
+`T4-matrix-001/bookworm-xfce_desktop/deploy/` 在寫入 `2012710558` 位元組時收到板端 LZMA 錯誤，目標全長為 `5091885056`。沒有正式成功收據，不啟動半寫入候選；SD 前綴仍一致，救援及 SSH 保持可用。當時主機已完整解壓核對同一原檔，不能直接歸咎原檔、DDR、網路或 eMMC；先在 RAM 單獨核對傳輸及解碼。原始失敗及已完成的首套證據均保留。
+
+此批次的整體及目前案例狀態均為 `interrupted`，不是仍在背景燒錄。後續重試必須使用新的嘗試目錄，不能把半寫入進度當成可開機或略過的項目。
+
+`T4-xfce-xz-probe-002` 改以普通 SSH stdin 傳至新建 RAM 檔案，再用板端標準 `lzma.open` 解碼，不寫 MMC。壓縮檔 `1016372620` 位元組，前後 SHA-256 均為 `05a1505dc3a7eb044afb12f84dbdc93fe1c4e576cee077ec0aeda7acd0a52748`；解壓 `5091885056` 位元組，SHA-256 為 `976d0c251f0effa2ef286f27809b39c6aee7ec9c16a6a72e986499b91e932e08`，全部符合，解碼約 304 秒。已刪除僅本次產生且核對相同的 RAM 副本，原 XZ 不動。
+
+此結果證明該次傳輸及獨立解碼正確，尚未定位原串流部署失敗原因。已補保留 LZMA 原始例外及失敗前壓縮資料「已讀」長度／SHA-256、已送出解碼資料摘要；「已讀」不等於解碼器已消耗全部輸入。另開 `T4-matrix-002`，第二套只重試一次，不回填或刪除原失敗；若再失敗即用摘要定位，不繼續盲目重試。
