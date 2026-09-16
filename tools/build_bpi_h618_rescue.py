@@ -26,7 +26,7 @@ else:
 ASSETS = Path(__file__).resolve().with_name("bpi_h618_rescue")
 SCHEMA = "bpi-h618-rescue-v1"
 SEARCH_PATH = "/usr/sbin:/usr/bin:/sbin:/bin"
-MODULES = ("brcmfmac", "brcmutil", "cfg80211", "rfkill", "mmc_block", "sunxi_mmc")
+MODULES = ("brcmfmac", "brcmfmac_wcc", "brcmutil", "cfg80211", "rfkill", "mmc_block", "sunxi_mmc")
 APPLET_NAMES = ("sh", "mount", "mkdir", "chmod", "cat", "sleep", "uname", "setsid",
                 "cttyhack", "udhcpc", "sha256sum", "dmesg", "ls", "sync", "reboot",
                 "poweroff", "readlink", "stty", "rm", "ps", "kill", "df", "free", "false", "timeout")

@@ -47,7 +47,11 @@ def input_manifest(path):
     entries = document["inputs"]
     result = []
     for name, maximum in zip(PATHS, LIMITS):
-        candidates = [item for item in entries if item.get("path") == name]
+        if name == PATHS[3]:
+            candidates = [item for item in entries if re.fullmatch(
+                r"/root/bpi-lab/rescue-build-20260916-[0-9]{3}/rescue-initramfs\.img", item.get("path", ""))]
+        else:
+            candidates = [item for item in entries if item.get("path") == name]
         require(len(candidates) == 1, "必要救援輸入缺少或重複")
         item = candidates[0]
         require(type(item.get("bytes")) is int and 0 < item["bytes"] <= maximum, "輸入大小超界")
@@ -91,8 +95,9 @@ class UBoot:
         require(record["ok"], "U-Boot 指令失敗，未繼續交接")
         return record["output"]
 
-    def load(self, item, address):
-        output = self.command(f"load mmc 0:1 {address:x} {item['path']}")
+    def load(self, item, address, *, media="0:1"):
+        require(media in ("0:1", "1:1"), "本版只接受明確的 MMC 0／1 第一分割區")
+        output = self.command(f"load mmc {media} {address:x} {item['path']}")
         sizes = re.findall(r"(?:^|\r?\n)([0-9]+) bytes read\b", output)
         require(sizes == [str(item["bytes"])], "U-Boot 實收長度不符")
         output = self.command(f"crc32 {address:x} {item['bytes']:x}")
@@ -128,10 +133,7 @@ def boot(console, bridge, inputs, records):
     identity = json.loads(ready.groups[0])
     require(identity.get("schema") == "bpi-h618-rescue-v1" and identity.get("kernel") == KERNEL,
             "救援就緒身分不符")
-    # 只接受唯一完整 JSON 行；背景訊息保留在 UART 紀錄，不拼接破碎資料。
-    probe = console.run_shell("bpi-rescue inventory", timeout=30)
-    require(probe.exitcode == 0, "救援 shell 或盤點失敗")
-    inventory = parse_inventory(probe.output)
+    inventory = read_inventory(console, records)
     matching = [item for item in inventory["devices"] if item.get("device/cid") == SD_CID]
     require(len(matching) == 1 and matching[0]["device/type"] == "SD", "救援 SD 身分不符")
     rows = [line.split(" - ") for line in inventory["mountinfo"].splitlines()]
@@ -142,6 +144,24 @@ def boot(console, bridge, inputs, records):
     return {"identity": identity, "inventory": inventory, "shell_verified": True,
             "independent_root_ram_verified": True, "network_verified": False,
             "memory_stress_verified": False}
+
+
+def read_inventory(console, records):
+    # 開機背景訊息可能切斷 JSON；只重做唯讀盤點，絕不拼接破碎輸出或重啟板子。
+    for attempt in range(1, 4):
+        probe = console.run_shell("bpi-rescue inventory", timeout=30)
+        require(probe.exitcode == 0, "救援 shell 或盤點失敗")
+        try:
+            inventory = parse_inventory(probe.output)
+        except ValueError:
+            records.append({"inventory_attempt": attempt, "ok": False,
+                            "reason": "UART 未收到完整 JSON；原始輸出保留"})
+            if attempt == 3:
+                raise
+            time.sleep(1)
+        else:
+            records.append({"inventory_attempt": attempt, "ok": True})
+            return inventory
 
 
 def parse_inventory(output):

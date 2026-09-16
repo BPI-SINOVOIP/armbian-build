@@ -44,6 +44,9 @@ class RescueBootTests(unittest.TestCase):
         items, prefix = self.check_manifest(self.manifest())
         self.assertEqual(len(items), 4)
         self.assertEqual(prefix["bytes"], 4194304)
+        doc = self.manifest()
+        doc['inputs'][3]['path'] = '/root/bpi-lab/rescue-build-20260916-002/rescue-initramfs.img'
+        self.assertEqual(self.check_manifest(doc)[0][3]['path'],doc['inputs'][3]['path'])
 
     def test_missing_duplicate_oversize_hash_rejected(self):
         for mutate in (
@@ -101,6 +104,21 @@ class RescueBootTests(unittest.TestCase):
             boot.parse_inventory(wire+b"\n"+wire)
         with self.assertRaises(ValueError):
             boot.parse_inventory(wire[:10]+b"kernel message"+wire[10:])
+
+    def test_inventory_read_retry_is_readonly_bounded_and_recorded(self):
+        from unittest.mock import Mock
+        console = Mock()
+        item = {"schema":"bpi-h618-rescue-v1","devices":[]}
+        console.run_shell.side_effect = [SimpleNamespace(exitcode=0,output=b'{broken'),
+                                         SimpleNamespace(exitcode=0,output=json.dumps(item).encode())]
+        records=[]
+        with patch.object(boot.time,"sleep"):
+            self.assertEqual(boot.read_inventory(console,records),item)
+        self.assertEqual([entry['ok'] for entry in records],[False,True])
+        self.assertTrue(all(call.args==('bpi-rescue inventory',) for call in console.run_shell.call_args_list))
+        console.run_shell.side_effect = [SimpleNamespace(exitcode=0,output=b'{broken')]*3
+        with patch.object(boot.time,"sleep"),self.assertRaises(ValueError):
+            boot.read_inventory(console,[])
 
 
 if __name__ == "__main__":

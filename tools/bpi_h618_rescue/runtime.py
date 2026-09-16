@@ -66,7 +66,7 @@ def net_events():
     with socket.socket(socket.AF_NETLINK, socket.SOCK_DGRAM, 15) as events:
         events.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, 1024 * 1024)
         events.bind((os.getpid(), 1))
-        for module in ("rfkill", "cfg80211", "brcmutil", "brcmfmac", "sunxi_mmc", "mmc_block"):
+        for module in ("rfkill", "cfg80211", "brcmutil", "brcmfmac", "brcmfmac_wcc", "sunxi_mmc", "mmc_block"):
             load_module(module)
         for path in Path("/sys/devices").rglob("modalias"):
             try:
