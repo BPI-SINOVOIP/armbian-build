@@ -2,7 +2,7 @@
   "schema": 1,
   "board": "0845",
   "phase": "U5",
-  "status": "Bookworm 與 Jammy 共四套已完成基本循環；Jammy XFCE 基本短測全通過。Bookworm 有服務失敗、Jammy minimal 有空間限制，第五套 Noble minimal 部署中。完整功能與長測未完成。",
+  "status": "五套已完成基本循環；Jammy XFCE 基本短測全通過。Bookworm 有服務失敗，Jammy／Noble minimal 有空間限制，第六套 Noble XFCE 部署中。完整功能與長測未完成。",
   "active_plan": "docs/bananapi-m4zero-ten-image-no-mux-plan-20260916.md",
   "active_plan_stage": "T4",
   "uart": "/dev/ttyUSB0",
@@ -85,7 +85,7 @@
     "full_system_update_verified": false,
     "uart_released": true,
     "sd_location": "0845",
-    "state": "第四套已正常回到獨立 RAM 救援；T4-matrix-004 正在依序部署餘下映像，即時階段以本機批次 summary.json 為準。",
+    "state": "第五套已正常回到獨立 RAM 救援；T4-matrix-004 正在依序部署餘下映像，即時階段以本機批次 summary.json 為準。",
     "no_mux_evidence_directory": "output/evidence/bpi-h618-no-mux/T1-0845-20260916",
     "no_mux_report": "docs/bananapi-m4zero-ten-image-no-mux-worklog-20260916.md",
     "strict_ssh_verified": true,
@@ -100,11 +100,11 @@
     "emmc_overwrite_authorized": true,
     "emmc_overwrite_authorization_scope": "使用者於本輪明確同意備份核對後，可覆寫 CID 尾碼 e08c07 的 0845 eMMC userarea；SD 救援區、boot0、boot1、RPMB 保留不動",
     "independent_rescue_verified": true,
-    "customer_system_cycles_completed": 4,
+    "customer_system_cycles_completed": 5,
     "customer_basic_smoke_all_passed": 1,
     "customer_images_all_tests_passed": 0,
     "customer_images_total": 10,
-    "customer_images_not_boot_tested": 6,
+    "customer_images_not_boot_tested": 5,
     "active_batch_summary": "output/evidence/bpi-h618-no-mux/T4-matrix-004/summary.json",
     "customer_cycle_report": "output/evidence/bpi-h618-no-mux/T3-bookworm-return-001/report.json",
     "customer_cycle_report_sha256": "dee441b8c0b900678820ca7b83aaca839482dab907a1a299cc2f094410221c51",
@@ -112,5 +112,5 @@
     "independent_rescue_ten_cold_boots_completed": false,
     "customer_memory_full_pass_completed": false
   },
-  "next_action": "持續收取餘下六套部署、開機、短測與回救援；保留失敗及缺測，從有證據的中斷階段續作，不重刷前四套。"
+  "next_action": "持續收取餘下五套部署、開機、短測與回救援；保留失敗及缺測，從有證據的中斷階段續作，不重刷前五套。"
 }
