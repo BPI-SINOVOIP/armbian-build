@@ -59,6 +59,12 @@
     "boot_log_sha256": "d957ce493264d64562a72af7bedfc16ff924ed476ac0e097a360b0e94f5749c5",
     "linux_login_banner": "Armbian 25.2.2 Bookworm ttyS0",
     "linux_shell_verified": false,
+    "latest_login_attempt": {
+      "username": "pi",
+      "result": "依使用者指定嘗試一次，系統回報登入錯誤；未取得 shell，未修改密碼",
+      "evidence": "linux-pi-login-001.bin",
+      "sha256": "8d42651cd48627c556e00fb08db489362ed5856359867c69526e888ceb4c3ffd"
+    },
     "linux_boot_verified": false,
     "recovery_after_hang_verified": false,
     "full_system_update_verified": false,
