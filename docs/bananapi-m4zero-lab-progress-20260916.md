@@ -35,3 +35,25 @@ ruff check --no-cache tools/bpi_h618_lab_progress.py tests/test_bpi_h618_lab_pro
 ```
 
 19 項單元測試通過，涵蓋工作鍵、變更失效、450 個純記憶體工作鍵、分項缺測、服務失敗、重試歷史、固定雜湊、重送及序列化續作。沒有掃描 450 套映像或產生實驗通過聲明。文件及程式由主代理審查後整合，本代理不提交或推送。
+
+## 實際證據彙整（2026-09-17）
+
+新增 `tools/bpi_h618_lab_summary.py`，可直接讀取本輪固定十套組件索引與 T3／T4 歷次小型 JSON；不重讀 `.img.xz`，不操作 UART、網路、電源或媒體，也不改寫原始證據。
+
+在專案根目錄執行：
+
+```bash
+python3 -B tools/bpi_h618_lab_summary.py output/evidence/bpi-h618-no-mux
+```
+
+完整 JSON 包含各套部署、客戶核心觀察、短測及救援歷史，來源路徑、SHA-256、時間依據、失敗表與測試條件限制。可用 `jq '.counts'` 查看計數，但不能只看歷史成功數而忽略後續失敗。
+
+- 固定索引 SHA-256 預設綁定本輪十套；不同索引須由操作者提供可信 `--index-sha256`。
+- 核對跨嘗試的 `reused_stages` 路徑與雜湊；同位元組正式收據及 `.partial` 不重複計數。
+- T4 缺板號或混合不同板號一律拒絕合併。原 T3 報告未明示板號的欄位保持 `null`，不捏造為 T4 板號；本輪主代理另以實機操作紀錄確認 0845。
+- `failed_images` 是曾出現失敗紀錄的映像數，包含工具中斷，不等於目前映像故障數；原失敗不因續作成功而消失。
+- 空間不足且未執行檔案測試記為 `blocked` 條件不足，不推論 DDR／OS 故障。其他缺測保持待處理或未完成。
+- `historical_only=true`、`can_skip_current_media=false`、`all_tests_passed=false` 固定保留；此工具不是自動排程器，不能用歷史部署收據假定目前 eMMC 仍含該映像。
+- `original_boot_chain_verified=false`；短測成功不代表桌面、周邊或長測通過。
+
+主代理已重跑新增 26 項摘要回歸，並執行全部 356 項 H618 工具回歸及相關 Ruff，皆通過。另有 4 項跨 OS 網路資料解析測試通過；這些是工具回歸，不計入硬體測試數。
