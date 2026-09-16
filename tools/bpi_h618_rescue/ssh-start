@@ -1,0 +1,16 @@
+#!/bin/busybox sh
+set -eu
+if [ ! -s /etc/ssh/rescue_authorized_keys ]; then
+    echo '未納入專用公鑰，SSH 保持關閉。'
+    exit 0
+fi
+mkdir -p /run/ssh /run/sshd
+chmod 700 /run/ssh
+if [ ! -f /run/ssh/ssh_host_ed25519_key ]; then
+    ssh-keygen -q -t ed25519 -N '' -f /run/ssh/ssh_host_ed25519_key
+fi
+echo 'BPI_RESCUE_HOSTKEY'
+cat /run/ssh/ssh_host_ed25519_key.pub
+ssh-keygen -l -E sha256 -f /run/ssh/ssh_host_ed25519_key.pub
+/usr/sbin/sshd -t -f /etc/ssh/sshd_config
+exec /usr/sbin/sshd -f /etc/ssh/sshd_config -E /run/ssh/sshd.log

@@ -1,0 +1,29 @@
+#!/bin/busybox sh
+# 本 init 不解讀 root=，不掛載 SD／eMMC，不交接客戶系統。
+export PATH=/usr/sbin:/usr/bin:/sbin:/bin
+export HOME=/root
+export PYTHONDONTWRITEBYTECODE=1
+export LC_ALL=C
+umask 077
+rescue_shell() {
+    while :; do
+        /bin/busybox setsid /bin/busybox cttyhack /bin/busybox sh
+        /bin/busybox sleep 1
+    done
+}
+/bin/busybox mount -t proc -o nosuid,nodev,noexec proc /proc || rescue_shell
+/bin/busybox mount -t sysfs -o nosuid,nodev,noexec sysfs /sys || rescue_shell
+/bin/busybox mount -t devtmpfs -o nosuid devtmpfs /dev || rescue_shell
+exec </dev/console >/dev/console 2>&1
+/bin/busybox mount -t tmpfs -o mode=0755,nosuid,nodev tmpfs /run || rescue_shell
+/bin/busybox mkdir -p /dev/pts /run/sshd /run/ssh /run/tmp
+/bin/busybox mount -t devpts -o mode=0620,gid=5,nosuid,noexec devpts /dev/pts || rescue_shell
+/bin/busybox chmod 700 /run/ssh /run/tmp
+export TMPDIR=/run/tmp
+: > /run/resolv.conf
+/usr/sbin/bpi-rescue ready || rescue_shell
+/usr/sbin/bpi-rescue net-events > /run/net-events.log 2>&1 &
+# 亂數尚未就緒時 hostkey 產生可能等待，不得因此阻塞串口 shell。
+(/usr/sbin/bpi-rescue-ssh || echo 'SSH 尚未啟動，請從串口查閱 /run/ssh。') &
+echo '救援串口 root shell；儲存裝置未掛載，網路認證尚未注入。'
+rescue_shell

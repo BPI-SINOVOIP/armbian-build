@@ -1,0 +1,24 @@
+# 救援專用，不引用原系統設定；hostkey 每次於 RAM 產生。
+Port 22
+AddressFamily any
+HostKey /run/ssh/ssh_host_ed25519_key
+PidFile /run/ssh/sshd.pid
+AuthorizedKeysFile /etc/ssh/rescue_authorized_keys
+AuthenticationMethods publickey
+PubkeyAuthentication yes
+PasswordAuthentication no
+KbdInteractiveAuthentication no
+ChallengeResponseAuthentication no
+PermitEmptyPasswords no
+PermitRootLogin prohibit-password
+UsePAM no
+StrictModes yes
+AllowUsers root
+UseDNS no
+DisableForwarding yes
+PermitTunnel no
+PermitUserEnvironment no
+X11Forwarding no
+PrintMotd no
+LogLevel VERBOSE
+Subsystem sftp internal-sftp

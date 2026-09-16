@@ -1,0 +1,9 @@
+#!/bin/sh
+# 僅在 unshare 私有掛載命名空間內遮蔽共享 hook，不掛載任何區塊裝置。
+set -eu
+work=$1
+kernel=$2
+mkinitramfs=$3
+mount --bind "$work/share" /usr/share/initramfs-tools
+export BPI_RESCUE_WORK="$work"
+exec "$mkinitramfs" -d "$work/conf" -o "$work/rescue-initramfs.img" "$kernel"

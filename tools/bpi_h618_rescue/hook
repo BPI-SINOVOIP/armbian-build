@@ -1,0 +1,30 @@
+#!/bin/sh
+set -eu
+if [ "${1:-}" = prereqs ]; then
+    exit 0
+fi
+. /usr/share/initramfs-tools/hook-functions
+: "${BPI_RESCUE_WORK:?}"
+work=$BPI_RESCUE_WORK
+case "$DESTDIR" in
+    "$work"/tmp/mkinitramfs_*) ;;
+    *) echo '拒絕非私有暫存目錄' >&2; exit 1 ;;
+esac
+# 不保留原 Linux 的 modprobe 設定或任何根系統交接腳本。
+rm -rf "$DESTDIR/etc/modprobe.d" "$DESTDIR/lib/modprobe.d" "$DESTDIR/scripts" "$DESTDIR/lib/firmware"
+mkdir -p "$DESTDIR/scripts"
+while read -r source target; do
+    copy_exec "$source" "$target"
+done < "$work/copy-exec.list"
+cp -a "$work/seed/." "$DESTDIR/"
+while read -r applet; do
+    if [ ! -e "$DESTDIR/usr/bin/$applet" ]; then
+        ln -s busybox "$DESTDIR/usr/bin/$applet"
+    fi
+done < "$work/applets"
+copy_file config /etc/ssl/certs/ca-certificates.crt
+mkdir -p "$DESTDIR/run/sshd"
+# 在建置時驗證標準函式庫與擴充模組依賴，不執行救援 init。
+chroot "$DESTDIR" /usr/bin/python3 -I -S -B -c 'import ssl,lzma,hashlib,json,socket,subprocess,fcntl,ctypes'
+chroot "$DESTDIR" /usr/bin/curl --version
+chroot "$DESTDIR" /usr/bin/xz --version

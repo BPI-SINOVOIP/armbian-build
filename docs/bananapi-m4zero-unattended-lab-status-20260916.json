@@ -2,9 +2,9 @@
   "schema": 1,
   "board": "0845",
   "phase": "U5",
-  "status": "已開始免切換器計畫；0845 一般開機登入、Wi-Fi 與嚴格 SSH 及雙向資料傳輸通過，基線記憶體負載執行中；尚未寫入 eMMC",
+  "status": "EMAC 十套離線串流核對完成；0845 原系統網路通過、eMMC 完整唯讀備份完成，獨立救援已建置待開機；基線負載執行中，尚未寫入 eMMC",
   "active_plan": "docs/bananapi-m4zero-ten-image-no-mux-plan-20260916.md",
-  "active_plan_stage": "T0",
+  "active_plan_stage": "T1",
   "uart": "/dev/ttyUSB0",
   "power": {
     "name": "bpi-pw-1",
@@ -92,9 +92,13 @@
     "bidirectional_64mib_transfer_verified": true,
     "emmc_current_device": "/dev/mmcblk2",
     "emmc_current_bytes": 31289507840,
-    "emmc_backup_verified": false,
+    "emmc_backup_verified": true,
+    "emmc_backup_scope": "完整 userarea 唯讀串流與主機落盤解壓核對一致；非實際復原驗證",
+    "emmc_backup_manifest": "output/evidence/bpi-h618-no-mux/T2-0845-emmc-backup-001/manifest.json",
+    "emmc_backup_manifest_sha256": "82e090733e6a8eac9f180f5fe37a1f142084d32274fe97678658552f87418e78",
+    "emmc_restore_verified": false,
     "emmc_overwrite_authorized": false,
     "independent_rescue_verified": false
   },
-  "next_action": "完成 T0 十套候選串流核對及 T1 執行中的負載，建立獨立救援；驗證唯讀 eMMC 備份工具後備份核對，取得覆寫確認且救援門檻通過前不部署候選。"
+  "next_action": "收完基線負載，正常關機後啟動獨立救援並實測 UART、網路與冷重啟；取得 eMMC 覆寫確認且救援門檻通過前不部署候選。"
 }
