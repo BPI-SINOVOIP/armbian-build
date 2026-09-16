@@ -1,5 +1,19 @@
 # 0845 第三版救援入口實板紀錄
 
+## 追加管理權限恢復
+
+本節為後續 `hardware-002/` 的結果；以下第一批 `hardware-001/` 保留原始時間點，不回寫失敗證據。
+
+- 使用者明確允許更改帳密與測試系統。UART SysRq 未取得核心回應，故經受控斷電重啟進入 SPL1；此次不是已確認同步完成的正常重啟，不冒稱檔案系統檢查通過。
+- 從槽 3 啟動 A1 配套開機鏈，在 U-Boot 攔截自動開機，僅於 RAM 設定 `extraargs=init=/bin/bash console=ttyS0,115200 loglevel=7`。未執行 `saveenv`，未改固定入口。
+- root 救援 shell 實查核心為 `6.6.75-current-sunxi64`，SD 根分割區 UUID 為 `1e69af2b-2278-40d8-85b0-cc124a655a89`。原 `/etc/shadow` 已在板上受限目錄 `/root/bpi-lab/auth-backup-20260916/` 保存，未將密碼或雜湊發布至版本庫。
+- `passwd root` 成功後，主機等候函式因一次讀入包含後續提示而逾時，並非密碼更新失敗；接續核對 `passwd -S root` 後，以 `exec /sbin/init` 啟動正常 systemd，透過串口成功登入 root。原始紀錄 `normal-init-001.bin` 的 SHA-256 為 `aab93911924ffe2581626117c9d9d5276ca89d8db818eef92b46855e34ed8f2d`。
+- `uname -a`、SD CID、容量、分割區起點及長度均吻合；記憶體總計 3,927 MiB，根檔案系統約有 51 GiB 可用。可見約 29.1 GiB 的 eMMC `/dev/mmcblk1`，沒有寫入。`systemctl --failed` 為零；核心錯誤層級輸出有兩筆既有顯示 `debugfs` 重複目錄，不宣稱完全無錯誤。
+- 原系統只有 `lo`，但隨附 `sun50i-h616-bananapi-m4-sdio-wifi-bt.dtbo`。備份 `/boot/armbianEnv.txt` 後僅新增 `overlays=bananapi-m4-sdio-wifi-bt`，以暫存檔同步後替換、核對 SHA-256：`61ffde93c332e52657e4c5b75400df2428d9938f3f9f19147ee0d01c6371999af`。沒有將一次性救援參數寫入開機檔。
+- 已執行 `systemctl poweroff` 並取得卸載、同步及 `reboot: Power down`。受控斷電約十秒後重新上電，尚未從固定 SRAM 入口選擇下一候選；此時使用者改為討論 eMMC／EMAC，所有硬體測試暫停且 UART 已釋放。
+
+一般冷開機登入、Wi-Fi 啟用後連線、完整系統更新／回退及 EMAC 實體連線仍未完成。本次系統核對不代表 DDR 長時間壓力驗證。
+
 ## 範圍與結論
 
 使用者確認 SD 已插回 BPI-M4 Zero `0845`。本輪透過 `/dev/ttyUSB0` 與具名電源 `bpi-pw-1` 完成 UART 更新、卡上候選重載及正常開機至登入畫面，全程未拔卡、未重寫 SPL1、未操作 `ttyUSB1` 或其他插座。

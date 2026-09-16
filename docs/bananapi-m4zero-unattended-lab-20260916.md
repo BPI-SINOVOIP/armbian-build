@@ -90,3 +90,5 @@
 日常操作與實板驗收次序見 [操作交接](bananapi-m4zero-unattended-lab-runbook-20260916.md)。狀態與媒體識別見 [機器可讀狀態](bananapi-m4zero-unattended-lab-status-20260916.json)。
 
 第一批實板結果與尚未完成的界線見 [0845 實板紀錄](bananapi-m4zero-unattended-lab-hardware-20260916.md)。槽 3／4 現在是兩份開機橋接，共用同一份 FIT 及原根系統，不是兩套隔離的作業系統；不能用它們取代完整系統的更新／回退設計。
+
+追加：使用者授權更改帳密後，已恢復 root 管理密碼並進入正常 systemd 登入，實查核心為 `6.6.75-current-sunxi64`。Wi-Fi overlay 已設定，尚待一般冷開機驗證。使用者隨後要求先討論 eMMC／EMAC 及實驗映像封裝，測試暫停；最新狀態以機器可讀狀態與實板紀錄追加章節為準，不再重複等待舊帳密。

@@ -162,5 +162,5 @@
     "uart_released": true,
     "sd_location": "主機完成更新並已釋放，已通知插回0845"
   },
-  "next_action": "先讀 current_hardware_status：ABI3 槽 2／4 更新、槽 2 重載及原系統登入畫面已有實板證據；等待有效 Linux 登入資料續作，不再要求插拔卡或使用 ABI2 工具重複部署。"
+  "next_action": "先讀 current_hardware_status：ABI3 更新與重載、授權恢復 root 管理權限及 6.6.75 正常 shell 已有實板證據。使用者要求暫停測試討論 eMMC／EMAC 與實驗映像封裝；不再以帳密為阻塞，不要求拔卡或使用 ABI2 工具重複部署。"
 }

@@ -2,7 +2,7 @@
   "schema": 1,
   "board": "0845",
   "phase": "U5",
-  "status": "0845 實板槽位更新與重載通過，原系統已到登入畫面；等待有效登入資料完成 shell、故障重入與完整系統更新驗收",
+  "status": "使用者授權後已恢復 root 管理密碼，6.6.75 正常系統登入與媒體核對通過；目前依使用者要求暫停測試，討論 eMMC／EMAC 架構",
   "uart": "/dev/ttyUSB0",
   "power": {
     "name": "bpi-pw-1",
@@ -10,7 +10,7 @@
     "mac": "EC:B9:31:24:F7:D1",
     "on": true,
     "identity_verified": true,
-    "observed_timestamp_unix_ms": 1789511018064
+    "observed_timestamp_unix_ms": 1789519141948
   },
   "sd": {
     "cid": "03534453523634478697bc8c07018401",
@@ -58,7 +58,20 @@
     "slot4_to_linux_login_verified": true,
     "boot_log_sha256": "d957ce493264d64562a72af7bedfc16ff924ed476ac0e097a360b0e94f5749c5",
     "linux_login_banner": "Armbian 25.2.2 Bookworm ttyS0",
-    "linux_shell_verified": false,
+    "linux_shell_verified": true,
+    "admin_recovery_authorized": true,
+    "admin_password_reset": true,
+    "normal_login_after_reset_verified": true,
+    "kernel_release": "6.6.75-current-sunxi64",
+    "root_source": "/dev/mmcblk0p1",
+    "root_uuid": "1e69af2b-2278-40d8-85b0-cc124a655a89",
+    "emmc_observed_gib": 29.1,
+    "emmc_written": false,
+    "followup_evidence_directory": "output/evidence/bpi-h618-recovery-network/U0-0845-20260916/hardware-002",
+    "normal_login_log_sha256": "aab93911924ffe2581626117c9d9d5276ca89d8db818eef92b46855e34ed8f2d",
+    "wifi_overlay_configured": true,
+    "wifi_after_reboot_verified": false,
+    "cold_boot_after_password_reset_verified": false,
     "latest_login_attempt": {
       "username": "pi",
       "result": "依使用者指定嘗試一次，系統回報登入錯誤；未取得 shell，未修改密碼",
@@ -70,7 +83,7 @@
     "full_system_update_verified": false,
     "uart_released": true,
     "sd_location": "0845",
-    "state": "Linux 登入提示；未對執行中的 Linux 直接斷電"
+    "state": "已正常關機並受控斷電再上電，依既有固定入口行為停留 SRAM；尚未送入下一個候選，UART 已釋放"
   },
-  "next_action": "取得目前有效的 Linux 登入資料後，直接接回 ttyUSB0 核對系統並完成故障重入及版本化系統更新／回退；不要再要求拔卡，不重做已通過的槽 2／4 更新。"
+  "next_action": "先完成使用者要求的 eMMC／EMAC 架構討論；恢復測試後從 SRAM 選擇已知正常候選，驗證一般冷開機登入及 Wi-Fi，再續作故障重入與系統更新／回退。帳密已恢復，不再以帳密為阻塞。"
 }
