@@ -285,6 +285,68 @@ class ImageTests(unittest.TestCase):
         self.assertFalse(report["temporary_partition_removed"])
         self.assertFalse(report["ok"])
 
+    def snapshot(self):
+        with self.reader() as reader:
+            reader.read_file("/boot/Image")
+            reader.read_file("/boot/empty")
+            for path in ("/boot/fixup.scr", "/extlinux/extlinux.conf"):
+                with self.assertRaises(FileNotFoundError):
+                    reader.read_file(path)
+        document = self.base / "result/extraction.json"
+        return document, sha(document.read_bytes())
+
+    def test_snapshot_reuses_without_original(self):
+        document, digest = self.snapshot()
+        (self.base / "source.img.xz").unlink()
+        with image.SnapshotReader(document, digest, self.base / "replay") as reader:
+            self.assertEqual(reader.read_file("/boot/Image"), b"kernel-data")
+            self.assertEqual(reader.read_file("/boot/empty"), b"")
+            for path in ("/boot/fixup.scr", "/extlinux/extlinux.conf"):
+                with self.assertRaises(FileNotFoundError):
+                    reader.read_file(path)
+        report = json.loads((self.base / "replay/extraction.json").read_bytes())
+        self.assertTrue(report["ok"])
+        self.assertFalse(report["source_reread"])
+
+    def test_snapshot_unknown_not_absent(self):
+        document, digest = self.snapshot()
+        with image.SnapshotReader(document, digest, self.base / "replay") as reader:
+            with self.assertRaisesRegex(ValueError, "未擷取"):
+                reader.read_file("/etc/identity")
+
+    def test_snapshot_wrong_digest(self):
+        document, _ = self.snapshot()
+        with self.assertRaisesRegex(ValueError, "摘要不符"):
+            with image.SnapshotReader(document, "0" * 64, self.base / "replay"):
+                pass
+        self.assertFalse((self.base / "replay").exists())
+
+    def test_snapshot_modified_component(self):
+        document, digest = self.snapshot()
+        (self.base / "result/file-0000.bin").write_bytes(b"changed")
+        with self.assertRaisesRegex(ValueError, "已變動"):
+            with image.SnapshotReader(document, digest, self.base / "replay") as reader:
+                reader.read_file("/boot/Image")
+        self.assertFalse(json.loads((self.base / "replay/extraction.json").read_bytes())["ok"])
+
+    def test_snapshot_failed_extraction_refused(self):
+        document, _ = self.snapshot()
+        record = json.loads(document.read_bytes())
+        record["ok"] = False
+        document.write_text(json.dumps(record))
+        with self.assertRaisesRegex(ValueError, "未完整核對"):
+            with image.SnapshotReader(document, sha(document.read_bytes()), self.base / "replay"):
+                pass
+
+    def test_snapshot_modified_missing_evidence(self):
+        document, digest = self.snapshot()
+        record = json.loads(document.read_bytes())
+        missing = next(row for row in record["queries"] if row["command"] == "stat /boot/fixup.scr")
+        (self.base / "result" / missing["stderr_file"]).write_bytes(b"changed")
+        with self.assertRaisesRegex(ValueError, "診斷已變動"):
+            with image.SnapshotReader(document, digest, self.base / "replay"):
+                pass
+
 
 if __name__ == "__main__":
     unittest.main()

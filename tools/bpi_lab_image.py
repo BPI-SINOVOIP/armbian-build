@@ -370,6 +370,103 @@ class ImageReader:
             raise cleanup_error
 
 
+class SnapshotReader:
+    """以固定摘要重播已核對擷取；未曾讀過的路徑不是「不存在」。"""
+
+    def __init__(self, source, sha256, output, *, max_raw_bytes=32 * 1024**3, timeout=1800):
+        self.source, self.output = Path(source).absolute(), Path(output).absolute()
+        require(type(sha256) is str and re.fullmatch(r"[0-9a-f]{64}", sha256), "擷取證據 SHA-256 無效")
+        require(type(max_raw_bytes) is int and 1024**2 <= max_raw_bytes <= 128 * 1024**3,
+                "原映像大小限制無效")
+        require(type(timeout) in (int, float) and 1 <= timeout <= 86400, "重播期限無效")
+        self.expected, self.maximum = sha256, max_raw_bytes
+        self.deadline = time.monotonic() + timeout
+        self.stack, self.cache = ExitStack(), {}
+
+    check = ImageReader.check
+    _save = ImageReader._save
+
+    def __enter__(self):
+        try:
+            root = self.stack.enter_context(safe.open_root(self.source.parent))
+            actual, raw = safe.fingerprint(root, self.source.name, limit=65536, keep=True)
+            require(actual["sha256"] == self.expected, "擷取證據摘要不符")
+            original = safe.parse_manifest(raw)
+            require(type(original) is dict and original.get("schema") in ("bpi-lab-image-v1", "bpi-lab-image-replay-v1")
+                    and original.get("ok") is True and original.get("source_verified") is True
+                    and original.get("hardware_validated") is False, "來源擷取未完整核對，禁止重播")
+            require(type(original.get("files")) is dict and len(original["files"]) <= 256
+                    and type(original.get("queries")) is list and len(original["queries"]) <= 4096,
+                    "擷取證據索引超界或型別錯誤")
+            require(type(original.get("raw")) is dict
+                    and type(original["raw"].get("bytes")) is int
+                    and 0 < original["raw"]["bytes"] <= self.maximum, "原映像大小超界")
+            self.original, self.original_fd = original, root
+            self.filesystem_uuid = str(uuid.UUID(original["filesystem_uuid"]))
+            missing = []
+            for query in original["queries"]:
+                self.check()
+                command = query.get("command", "")
+                if not command.startswith("stat /") or query.get("returncode") != 0:
+                    continue
+                path = image_path(command[5:])
+                metadata, blob = safe.fingerprint(root, query["stderr_file"], limit=65536, keep=True)
+                require(metadata == query["stderr"], "擷取查詢診斷已變動")
+                diagnostic = re.sub(rb"\Adebugfs [^\n]*\n", b"", blob)
+                if re.fullmatch(rb"[^\n]*: File not found by ext2_lookup\s*", diagnostic):
+                    missing.append((path, query, blob))
+            create_directory(self.output)
+            self.output_fd = self.stack.enter_context(safe.open_root(self.output))
+            self.report = {key: original[key] for key in (
+                "source", "source_digest", "raw", "partition", "filesystem_uuid", "source_verified")}
+            self.report.update(schema="bpi-lab-image-replay-v1", hardware_validated=False,
+                               source_authenticated=False, source_reread=False, mounted=False,
+                               image_code_executed=False, queries=[],
+                               replay_of={"path": str(self.source), **actual})
+            self.missing = set()
+            for path, query, blob in missing:
+                self.missing.add(path)
+                name = f"query-{len(self.report['queries']):04d}.stderr"
+                self._save(name, blob)
+                self.report["queries"].append({**query, "stderr_file": name})
+            return self
+        except BaseException as exc:
+            self.stack.close()
+            if isinstance(exc, (KeyError, TypeError, AttributeError)):
+                raise safe.ArtifactError("擷取證據結構不完整或型別錯誤") from exc
+            raise
+
+    def read_file(self, path):
+        image_path(path)
+        self.check()
+        record = self.original["files"].get(path)
+        if record is None:
+            if any(path == prefix or path.startswith(prefix + "/") for prefix in self.missing):
+                raise FileNotFoundError(path)
+            raise safe.ArtifactError("舊證據未擷取此路徑，不能假定不存在：" + path)
+        require(type(record) is dict and isinstance(record.get("file"), str)
+                and type(record.get("digest")) is dict, "舊組件索引型別不符")
+        with safe.open_file(self.original_fd, record["file"]) as stream:
+            before = identity(stream)
+            require(before[2] <= MAX_FILE, "舊組件大小超界")
+            blob = stream.read(MAX_FILE + 1)
+            require(before == identity(stream) and digest(blob) == record["digest"], "舊組件已變動")
+        if path not in self.cache:
+            name = f"file-{len(self.cache):04d}.bin"
+            self._save(name, blob)
+            self.cache[path] = {**record, "file": name}
+        return blob
+
+    def __exit__(self, exc_type, exc, traceback):
+        try:
+            self.report.update(ok=exc_type is None, files=self.cache, temporary_partition_created=False)
+            if exc is not None:
+                self.report["error"] = str(exc)
+            self._save("extraction.json", (json.dumps(self.report, ensure_ascii=False, indent=2) + "\n").encode())
+        finally:
+            self.stack.close()
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description="唯讀核對映像並擷取原配組件，不操作實板")
     parser.add_argument("image", type=Path)

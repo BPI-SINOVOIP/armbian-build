@@ -2,6 +2,8 @@
 
 日期：2026-09-17。限定現有 45 板；本階段不操作硬體、電源、UART、網路設備或巨型映像。
 
+本文件及平台 JSON 是 A 階段的來源候選快照，不是完整後端交付清單。B 階段新增的 Allwinner／Amlogic 原配組件工具、H618 獨立生命週期及其限制，另見[最新計畫進度](bananapi-multiboard-lab-plan-20260917.md#b-階段交付及接續位置)與[組件準備入口](bananapi-lab-prepare-20260917.md)；任何來源候選仍不等同實板資格。
+
 ## 來源與資格
 
 [平台 JSON](../config/bpi-lab/platforms.json)綁定[registry](evidence/bpi-multiboard-lab-20260917/board-registry.json)的 SHA-256，另記錄 98 份來源：76 份原始 board／family／include、3 份架構預設、10 份 bootscript、2 份 extlinux 建置邏輯、2 份 K1 修補、2 份 K3 文字設定、3 個共用／階段工具。registry 不計入 98 份。
