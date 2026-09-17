@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """受限 eMMC userarea 部署；須另有實體覆寫授權，不選擇開機、不重啟或重試。
 
-主機先完整驗證備份及來源，遠端只接受 RAM 根系統的 bpi-h618-rescue-v1。
+主機先完整驗證備份及來源，遠端預設只接受 RAM 根系統的 bpi-h618-rescue-v1。
+其他救援 schema 必須另行明示核心及身分檔摘要；此參數不構成任何板級授權。
 成功只表示指定範圍寫入及回讀一致，不表示可開機、復原成功或量產驗證。
 只有 receipt.json 的 verified 收據可採信；receipt.json.partial 一律不作成功證據。
 """
@@ -61,7 +62,19 @@ def unique_object(pairs):
         result[key] = value
     return result
 
-def rescue_identity(path="/etc/bpi-rescue.json", mounts="/proc/self/mountinfo"):
+def rescue_identity(path="/etc/bpi-rescue.json", mounts="/proc/self/mountinfo", *,
+                    expected_schema="bpi-h618-rescue-v1", expected_identity=None):
+    require(type(expected_schema) is str and re.fullmatch(r"[a-z][a-z0-9-]{0,127}", expected_schema),
+            "救援 schema 須為明示且受限的識別符")
+    require(expected_schema == "bpi-h618-rescue-v1" or expected_identity is not None,
+            "非預設救援須固定核心及身分檔摘要")
+    if expected_identity is not None:
+        require(type(expected_identity) is dict and set(expected_identity) == {"kernel", "identity_sha256"}
+                and type(expected_identity["kernel"]) is str
+                and re.fullmatch(r"[A-Za-z0-9._+-]{1,128}", expected_identity["kernel"])
+                and type(expected_identity["identity_sha256"]) is str
+                and re.fullmatch(r"[0-9a-f]{64}", expected_identity["identity_sha256"]),
+                "救援核心或身分檔摘要格式不符")
     fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_CLOEXEC)
     try:
         require(stat.S_ISREG(os.fstat(fd).st_mode), "救援身分必須是一般檔案")
@@ -71,7 +84,7 @@ def rescue_identity(path="/etc/bpi-rescue.json", mounts="/proc/self/mountinfo"):
         identity = json.loads(blob, object_pairs_hook=unique_object)
     finally:
         os.close(fd)
-    require(type(identity) is dict and identity.get("schema") == "bpi-h618-rescue-v1"
+    require(type(identity) is dict and identity.get("schema") == expected_schema
             and identity.get("kernel") == os.uname().release, "救援 schema 或執行核心不符")
     roots = []
     for line in Path(mounts).read_text().splitlines():
@@ -86,8 +99,11 @@ def rescue_identity(path="/etc/bpi-rescue.json", mounts="/proc/self/mountinfo"):
     require(fs[0] in ("rootfs", "ramfs", "tmpfs") and fields[3] == "/"
             and os.major(device) == 0 and fields[2] == f"0:{os.minor(device)}",
             "根系統不是獨立 RAM；拒絕 overlay 或任何區塊裝置根系統")
-    return {"schema": identity["schema"], "kernel": identity["kernel"], "root_fs": fs[0],
-            "root_dev": fields[2], "root_ram": True, "identity_sha256": hashlib.sha256(blob).hexdigest()}
+    result = {"schema": identity["schema"], "kernel": identity["kernel"], "root_fs": fs[0],
+              "root_dev": fields[2], "root_ram": True, "identity_sha256": hashlib.sha256(blob).hexdigest()}
+    require(expected_identity is None or all(result[key] == value for key, value in expected_identity.items()),
+            "救援核心或身分檔與明示期望不同")
+    return result
 
 def inspect_sd(expected, sysroot="/sys/class/block", devroot="/dev"):
     matches = []
@@ -213,9 +229,14 @@ def run(request, source, emit):
     previous = signal.signal(signal.SIGALRM, check_deadline)
     signal.setitimer(signal.ITIMER_REAL, request["timeout"])
     sd_fd = None
+    def current_rescue():
+        if "rescue_schema" not in request and "rescue_expected" not in request:
+            return rescue_identity()
+        return rescue_identity(expected_schema=request.get("rescue_schema", "bpi-h618-rescue-v1"),
+                               expected_identity=request.get("rescue_expected"))
     try:
         with ExitStack() as stack:
-            rescue = rescue_identity()
+            rescue = current_rescue()
             target = checks["inspect"](request["expected"])
             sd = inspect_sd(request["protected_sd"])
             require(target["devnum"] != sd["devnum"], "禁止對受保護 SD 開啟寫入描述符")
@@ -223,7 +244,7 @@ def run(request, source, emit):
             stack.callback(os.close, sd_fd)
             state["sd_before"] = sd_evidence(sd_fd, request["protected_sd"], check_deadline)
             require(state["sd_before"]["identity"] == sd, "SD 在開啟時已變更")
-            require(checks["inspect"](request["expected"]) == target and rescue_identity() == rescue,
+            require(checks["inspect"](request["expected"]) == target and current_rescue() == rescue,
                     "寫入前媒體或救援身分變更")
             pins = request.get("pinned_preflight")
             if pins is not None:
@@ -255,7 +276,7 @@ def run(request, source, emit):
                 state["readback"] = hash_range(fd, state["bytes_written"], check_deadline)
                 require(state["readback"] == request["source"]["raw"], "eMMC 完整寫入範圍回讀 SHA-256 不符")
                 checks["check_fd"](fd, target)
-                require(checks["inspect"](request["expected"]) == target and rescue_identity() == rescue,
+                require(checks["inspect"](request["expected"]) == target and current_rescue() == rescue,
                         "部署後媒體或救援身分變更")
             finally:
                 try:
@@ -456,8 +477,11 @@ def validate_state(state, request, *, final=False):
     require(all(identity.get(key) == value for key, value in request["expected"].items())
             and identity.get("type") == "MMC" and re.fullmatch(r"/dev/mmcblk[0-9]+", identity.get("device", ""))
             and all(identity.get(key) is False for key in ("mounted", "swap", "holders")), "遠端 eMMC 身分不符")
-    require(rescue.get("schema") == "bpi-h618-rescue-v1" and rescue.get("root_ram") is True
+    require(rescue.get("schema") == request.get("rescue_schema", "bpi-h618-rescue-v1") and rescue.get("root_ram") is True
             and rescue.get("root_fs") in ("rootfs", "ramfs", "tmpfs"), "遠端未驗證 RAM 救援身分")
+    if request.get("rescue_expected") is not None:
+        require(all(rescue.get(key) == value for key, value in request["rescue_expected"].items()),
+                "遠端救援核心或身分檔摘要不符")
     sd = before.get("identity", {})
     require(type(sd) is dict and type(before.get("prefix")) is dict
             and sd.get("type") == "SD" and sd.get("devnum") != identity.get("devnum")
@@ -495,12 +519,24 @@ def validate_pins(pins):
             and hash_value(rescue["identity_sha256"]), "固定救援身分不符")
 
 
+def validate_rescue(schema, expected):
+    require(type(schema) is str and re.fullmatch(r"[a-z][a-z0-9-]{0,127}", schema), "救援 schema 格式不符")
+    require(schema == "bpi-h618-rescue-v1" or expected is not None, "非預設救援必須固定核心及身分檔摘要")
+    if expected is not None:
+        require(type(expected) is dict and set(expected) == {"kernel", "identity_sha256"}
+                and type(expected["kernel"]) is str and re.fullmatch(r"[A-Za-z0-9._+-]{1,128}", expected["kernel"])
+                and hash_value(expected["identity_sha256"]), "救援期望身分格式不符")
+
+
 def deploy(*, confirm_overwrite=False, backup_manifest, source, compressed_sha256, raw_sha256, raw_size,
            expected_cid, expected_size, expected_controller, protected_sd_cid, protected_sd_controller,
            ssh_config, alias, output_dir, timeout=21600, transport=upload_stream, monotonic=time.monotonic,
-           pinned_preflight=None):
+           pinned_preflight=None, rescue_schema="bpi-h618-rescue-v1", rescue_expected=None):
     require(confirm_overwrite is True, "缺少 --confirm-overwrite；未啟動 SSH 或任何媒體寫入")
     validate_pins(pinned_preflight)
+    validate_rescue(rescue_schema, rescue_expected)
+    if rescue_expected is not None and pinned_preflight is not None:
+        require(rescue_expected == pinned_preflight["rescue"], "救援期望與固定前置條件不同")
     expected = backup.validate_expected(expected_cid, expected_size, expected_controller)
     protected = backup.validate_expected(protected_sd_cid, 512, protected_sd_controller)
     del protected["bytes"]
@@ -539,6 +575,8 @@ def deploy(*, confirm_overwrite=False, backup_manifest, source, compressed_sha25
                    "nonce": secrets.token_hex(32), "timeout": check()}
         if pinned_preflight is not None:
             request["pinned_preflight"] = pinned_preflight
+        if rescue_schema != "bpi-h618-rescue-v1" or rescue_expected is not None:
+            request.update(rescue_schema=rescue_schema, rescue_expected=rescue_expected)
         program = remote_program()
         base_argv[-1] = shlex.join(["python3", "-B", "-c", program, json.dumps(request, separators=(",", ":"))])
         record = {"schema": "bpi-h618-emmc-deploy-v1", "status": "prepared", "ok": False, "bootable": False,

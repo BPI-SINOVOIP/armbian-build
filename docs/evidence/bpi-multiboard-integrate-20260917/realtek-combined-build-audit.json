@@ -1,0 +1,150 @@
+{
+  "schema": "bpi-lab-realtek-combined-build-audit-v1",
+  "date": "2026-09-18",
+  "scope": "客戶與固定 SD 救援命令一同編入真 BSP；主代理重算產物與生成來源，合成配對產物禁止部署。",
+  "rows": [
+    {
+      "board": "bpi-m4",
+      "status": "built",
+      "kernel_placement": "original",
+      "source_unchanged": true,
+      "combined_source_sha256": "f515d59e0c83858957397e1cb7142502816e21cc3f6cce9677ad1a65a3352697",
+      "fixture_only": true,
+      "hardware_validated": false,
+      "deployment_ready": false,
+      "artifacts": {
+        "u-boot": {
+          "bytes": 3421698,
+          "sha256": "b790357db9f76c69639aea729a81dda8fca58aede6f7433cdbd043274533e494"
+        },
+        "u-boot.bin": {
+          "bytes": 549712,
+          "sha256": "6f2d08684df353ec85a579d63fa56fb7f18ef486b5b59e63d793a28f12301fdf"
+        },
+        "u-boot.map": {
+          "bytes": 381139,
+          "sha256": "a1a9a3be3be4a9071bace3063a3f827f6d4913eb94d2b32e0c9cfb6d2fb0a364"
+        },
+        "System.map": {
+          "bytes": 81799,
+          "sha256": "7e1907d51179a231294bac09ed577cb83d18bc2cc1559474f766e53fe1cdf996"
+        },
+        "u-boot.cfg": {
+          "bytes": 20983,
+          "sha256": "8336de88d0b5c850e04b87dce6336048601e6dc9762a5ad70bd03cee7393b3c1"
+        },
+        ".config": {
+          "bytes": 11683,
+          "sha256": "2a45f8beb06da073a1f0bffd2fe6e7d34b844bd7803c56b0de57c957f61b33cd"
+        },
+        "include/generated/autoconf.h": {
+          "bytes": 2402,
+          "sha256": "e4283af03d5b628c2d725aa2889f087b8cca9a779888c25aed592eb501219d9a"
+        }
+      },
+      "generator_matches_build": true,
+      "evidence": {
+        "result.json": {
+          "path": "output/evidence/bpi-shared-rescue-m4-20260918-001/result.json",
+          "sha256": "c603d395eb4c6d5ad953d69c49c50aa8670084a642bc2942d5641a539a3f92b1"
+        },
+        "build.log": {
+          "path": "output/evidence/bpi-shared-rescue-m4-20260918-001/build.log",
+          "sha256": "a5911a289c8d8da6934af7345b4a8775c98e453dea718b706c87885ec685871f"
+        },
+        "build-driver.py": {
+          "path": "output/evidence/bpi-shared-rescue-m4-20260918-001/build-driver.py",
+          "sha256": "d993b1c0f6a817bd404e986562ac71da37e5373cd4ca8748fbd3dffc5479d92d"
+        },
+        "lab-source.json": {
+          "path": "output/evidence/bpi-shared-rescue-m4-20260918-001/lab-source.json",
+          "sha256": "f722a5be465bb2858bfcd508ddd5d17d01deb8e59002ee164673dc69d7b9965b"
+        },
+        "realtek-rescue.patch": {
+          "path": "output/evidence/bpi-shared-rescue-m4-20260918-001/realtek-rescue.patch",
+          "sha256": "2efe95b224b8808c2ecb332a3f16c4a371b12cca322c982ec073736e39390269"
+        },
+        "source-before.json": {
+          "path": "output/evidence/bpi-shared-rescue-m4-20260918-001/source-before.json",
+          "sha256": "1141a35894eebc54e7f64659ad7476d0238551f5aa9d67d2166f314755f94498"
+        },
+        "source-after.json": {
+          "path": "output/evidence/bpi-shared-rescue-m4-20260918-001/source-after.json",
+          "sha256": "1141a35894eebc54e7f64659ad7476d0238551f5aa9d67d2166f314755f94498"
+        }
+      }
+    },
+    {
+      "board": "bpi-w2",
+      "status": "built",
+      "kernel_placement": "direct-final",
+      "source_unchanged": true,
+      "combined_source_sha256": "fd6d47ff1cbd13a7e08b8ad4785681fdccbe5a9fcec51751d4bc83e5030aa3b0",
+      "fixture_only": true,
+      "hardware_validated": false,
+      "deployment_ready": false,
+      "artifacts": {
+        "u-boot": {
+          "bytes": 3315010,
+          "sha256": "9ef37a6cfa77958b7bd8c81f89f31bc860525404ae70cfeff0473c6729810047"
+        },
+        "u-boot.bin": {
+          "bytes": 535800,
+          "sha256": "35a57ab06d9e73fba20f2b3fb698d411592afb641992c4dbde111df9c51d4cbe"
+        },
+        "u-boot.map": {
+          "bytes": 377975,
+          "sha256": "6d9d4091c900b6675c1c87bb23a61caa4b76ad57137cfb296b8f654c63e26e78"
+        },
+        "System.map": {
+          "bytes": 82273,
+          "sha256": "690888cc668540e999227be4a0307bccaa68f07dd2a3e1ccacefd06a3f238d0e"
+        },
+        "u-boot.cfg": {
+          "bytes": 21776,
+          "sha256": "4ff31b362f0e7d0e88be05496b171f971d0eb77191260e0bac718eef0f8bd24b"
+        },
+        ".config": {
+          "bytes": 11662,
+          "sha256": "19b1b27fd8e3ce055f477351a819e077947b47acff3f889ad8307799178156c0"
+        },
+        "include/generated/autoconf.h": {
+          "bytes": 2409,
+          "sha256": "f8e1f0783be942a5ace7eb7e31822a857a53ea2870080ef99fc27d39e21b5ca1"
+        }
+      },
+      "generator_matches_build": true,
+      "evidence": {
+        "result.json": {
+          "path": "output/evidence/bpi-shared-rescue-w2-20260918-001/result.json",
+          "sha256": "587aa4a2d3091ab3dd184718ce6717acc7bea1c97119323d06ddfb88cb6339d1"
+        },
+        "build.log": {
+          "path": "output/evidence/bpi-shared-rescue-w2-20260918-001/build.log",
+          "sha256": "58d2f832169ff58565903e9ee8e6c4948fa46abc79b09b981774d3ff4dbddf19"
+        },
+        "build-driver.py": {
+          "path": "output/evidence/bpi-shared-rescue-w2-20260918-001/build-driver.py",
+          "sha256": "d993b1c0f6a817bd404e986562ac71da37e5373cd4ca8748fbd3dffc5479d92d"
+        },
+        "lab-source.json": {
+          "path": "output/evidence/bpi-shared-rescue-w2-20260918-001/lab-source.json",
+          "sha256": "df6f20d544f894d4375d0931339ec1ab915d0994fe883fdc12de93f3c68e03bb"
+        },
+        "realtek-rescue.patch": {
+          "path": "output/evidence/bpi-shared-rescue-w2-20260918-001/realtek-rescue.patch",
+          "sha256": "88c7c88314d4e217d83080c44c5fd4cdbcef1f2f739093485bb5a42b3b6c6a52"
+        },
+        "source-before.json": {
+          "path": "output/evidence/bpi-shared-rescue-w2-20260918-001/source-before.json",
+          "sha256": "0aa93bbe9ead646fb778a4aa211a72bdfeb74bdfaf6fc7de60f207d543ea4385"
+        },
+        "source-after.json": {
+          "path": "output/evidence/bpi-shared-rescue-w2-20260918-001/source-after.json",
+          "sha256": "0aa93bbe9ead646fb778a4aa211a72bdfeb74bdfaf6fc7de60f207d543ea4385"
+        }
+      }
+    }
+  ],
+  "limits": "沒有執行實板或原始映像；編譯使用原 BSP 靜態函式庫，不能聲稱全部前置 ROM 韌體已從原始碼重建。"
+}

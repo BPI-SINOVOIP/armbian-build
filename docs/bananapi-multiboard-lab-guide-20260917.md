@@ -1,5 +1,38 @@
 # 跨板映像測試工具操作說明
 
+## 最新整合入口
+
+本節記錄 2026-09-18 續作；下方盤點與模擬數字仍是原始 P 階段證據，不是新硬體結果。
+目前固定流程為「核對客戶原映像、準備原配組件、核定救援與媒體、單套首次循環、審閱、批次排程」。
+不要求為測試而重建全部客戶映像，也不以既有檔名或模擬通過跳過實板資格。
+
+| 工作 | 文件與工具 |
+| --- | --- |
+| XZ／原映像的 MBR／GPT、多分割與原配組件核對 | [準備入口](bananapi-lab-prepare-20260917.md)，`tools/bpi_lab_prepare.py` |
+| Allwinner 與 Amlogic 組件、DTB、CMA 核對 | [Allwinner](bananapi-lab-allwinner-20260917.md)、[Amlogic](bananapi-lab-amlogic-20260917.md) |
+| Rockchip、MediaTek、SpacemiT 原始引導設定 | [原入口](bananapi-lab-original-entry-20260917.md)、[extlinux](bananapi-lab-extlinux-20260917.md) |
+| Sunplus、Renesas、Realtek、Synaptics 差異 | [特殊平台](bananapi-lab-special-20260917.md) |
+| 在同架構原 Linux 建置獨立救援 | [跨架構救援](bananapi-lab-rescue-build-20260917.md)，`tools/build_bpi_lab_rescue.py` |
+| H618 的既有 0845 配對及五階段 | [H618 適配器](bananapi-lab-h618-adapter-20260917.md) |
+| 其他家族的固定配置、完整部署、登入及返回 | [共用後端](bananapi-lab-shared-backend-20260917.md)，`tools/bpi_lab_backend.py` |
+| 第一片板的單套授權、證據審閱與資格檔 | [首次核定](bananapi-lab-qualify-20260917.md)，`tools/bpi_lab_qualify.py` |
+
+首次核定與已核定佇列是兩個入口，避免「尚未測第一套卻先要求全部通過」的循環依賴。
+首次核定仍須有實際配對、備份、可覆寫範圍及引導資格，不能用它繞過媒體保護。
+各入口的格式、韌體 ABI 與儲存媒體限制以其文件為準；有程式入口不等於 45 板皆已可用。
+
+### 接板時一次準備的資料
+
+1. 板型、修訂、板號及 DDR；UART 的穩定裝置路徑和 baud。
+2. 電源設備名稱、IP、MAC 與實際插座配對，正常關機及故障切電分別授權。
+3. 固定救援 SD 與可覆寫 eMMC 的 CID、容量、控制器；完整備份、雜湊及該媒體授權。
+4. 已能開機的救援核心、initramfs、DTB、必要網路驅動，以及 U-Boot 版本、命令、RAM／保留區觀測。
+5. 同板的第一套客戶 XZ 及固定 SHA-256；專用 SSH 公鑰，私有帳密另存，不提交 Git。
+
+沒有 eMMC 的板型不能套用雙 MMC 後端；USB／NVMe／網路根需要各自儲存契約與引導核定。
+實板接入後先驗證一套的正常循環及失敗返回，再批次跑 OS；不要求使用者陪同每套操作。
+若遠端 writer 是否停止不明，保留隔離，不以自動斷電或重刷解決。
+
 ## 目前可以做什麼
 
 `tools/bpi_lab.py` 提供映像盤點、站點登記、持久排程、分階段執行、續作、故障返回及結果彙整。執行環境為 Linux、Python 3.10 以上，僅使用標準函式庫；沒有新增服務或雲端 CI。本輪不操作任何實體板。
