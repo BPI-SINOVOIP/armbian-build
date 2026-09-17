@@ -347,6 +347,19 @@ class GuardTests(unittest.TestCase):
                 guard._probe(entries, bundle, emulator, 60)
         execute.assert_called_once()
 
+    def test_explicit_qemu_guest_base_is_bounded_and_pinned(self):
+        emulator = self.ref("qemu-aarch64-static", b"fixture")
+        Path(emulator["path"]).chmod(0o755)
+        ref = {**emulator, "guest_base": 2**32}
+        self.assertEqual(guard._emulator_options(ref, "arm64"), [ref["path"], "-B", "0x100000000"])
+        for value in (True, 0, -65536, 123, 2**48, "0x100000000"):
+            with self.subTest(value=value), self.assertRaises(ValueError):
+                guard._emulator_options({**emulator, "guest_base": value}, "arm64")
+        with self.assertRaises(ValueError):
+            guard._emulator_options({**ref, "args": ["-strace"]}, "arm64")
+        with self.assertRaises(ValueError):
+            guard._emulator_options({**ref, "sha256": "0" * 64}, "arm64")
+
     def test_library_path_cannot_inject_order_shell_commands(self):
         _, _, bundle, _ = self.bundle_fixture()
         for path in ("/opt/bpi-libs;true", "/opt/$(true)", "/opt/lib:/host", "/opt/lib extra"):

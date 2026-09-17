@@ -80,6 +80,26 @@ blkid 必須成功且沒有錯誤輸出，並明確辨識 `TYPE` 或整碟分割
 
 既有救援 runtime 必須先提供固定摘要的 newc 封裝與以下 JSON 清單。路徑為 initramfs 內部路徑；雜湊由實際檔案計算，不能套用範例或猜測。
 
+`tools/bpi_lab_external_bundle.py` 已提供擷取入口，不必手工收集相依檔案。
+輸入為可信救援 initramfs 與客戶原 initrd 的固定參照；可使用先前原生建置的救援，
+不需要操作正在測試的 SD 或重建客戶映像。
+
+```sh
+python3 -B tools/bpi_lab_external_bundle.py \
+  --original-initrd "$INITRD" --original-initrd-sha256 "$INITRD_SHA256" \
+  --rescue-archive "$RESCUE" --rescue-archive-sha256 "$RESCUE_SHA256" \
+  --architecture arm64 --python /usr/bin/python3 --stdlib /usr/lib/python3.11 \
+  --library-dir /usr/lib/aarch64-linux-gnu --library-dir /usr/lib \
+  --emulator "$QEMU" --emulator-sha256 "$QEMU_SHA256" \
+  --emulator-guest-base 0x100000000 --output "$BUNDLE_OUTPUT"
+```
+
+上例為已驗證的 AArch64 組合，其他架構須指定對應來源與 ABI，不能照抄函式庫目錄。
+輸出 `runtime.cpio`、`runtime-bundle.json` 與 `bundle-build.json`；指定模擬器且探測通過後
+才另外產生 `runtime-probe.json`。來源救援的 init、金鑰、帳號、網路設定、核心模組不帶入。
+Python 同名內容衝突即拒絕；已有函式庫保留原配版本，相依摘要另記來源，
+最終仍須實際執行 Python、blkid 與原 shell，不能以檔案存在代替可執行證據。
+
 ```json
 {
   "schema": "bpi-lab-external-python-bundle-v1",
@@ -105,6 +125,14 @@ ELF 相依閉包使用 `pyelftools`，核對目標 ELF 類別、機器、載入�
 `library_dirs` 同時決定探測與實際 hook 的 `LD_LIBRARY_PATH`。固定 `ORDER` 在啟動 hook 前就指派該環境，涵蓋 hook 的 `/bin/sh`、Python 及其 blkid 子程序；探測只將同一組路徑加上暫存根前綴，不另加探測專用目錄。初始 init shell 另外以未設定 `LD_LIBRARY_PATH` 的環境探測，不能依賴尚未到達的 guard 設定。路徑只接受固定安全字元，不能插入 shell 指令。
 
 主機架構不同時，必須明示同架構的 `qemu-arm-static`、`qemu-aarch64-static` 或 `qemu-riscv64-static` 及其摘要；不以主機 x86 Python 取代目標 runtime。探測只執行固定程式，不執行原 init 或客戶命令；QEMU 並非安全沙箱，輸入 runtime 與模擬器仍必須是可信、已固定摘要的救援產物。
+
+模擬器參照可額外明示整數 `guest_base`，CLI 對應 `--emulator-guest-base`。
+僅接受 64 位元主機上的有界、64 KiB 對齊位址偏移，不接受任意 QEMU 參數。
+此欄位連同模擬器摘要保存在實際探測收據；不改變板級載入位址、DDR 參數或原始程式。
+本機 QEMU 6.2 的原 klibc shell 在預設映射崩潰，指定 `0x100000000` 後四項探測通過；
+這是本機實證，不推定所有 QEMU 版本有同一原因。
+[QEMU 官方說明](https://www.qemu.org/docs/master/user/main.html)將 `-B` 定義為訪客位址偏移，
+可用於訪客所需區域與主機保留區衝突的情況。
 
 可重現封裝入口：
 
@@ -150,7 +178,15 @@ Ruff 入口已實際核對：指定 venv 的 `python -m ruff --version` 與 `/ho
 早期分工驗證共 106 項通過；後續新增擴根、SSH 首次設定、發布中斷及硬連結回歸。
 最終主工作樹數量與退出碼以[交付紀錄](bananapi-multiboard-lab-handoff-20260918.md)為準。
 
-尚未取得指定板級的可信真實救援 Python bundle，因此尚未對該真 bundle 執行 QEMU 或原生探測；程式不會跳過這項必要入口。未上板、未讀寫原始 XZ、未更動固定 SD／外部實體媒體、未執行硬體資格循環。各平台軟體完成後才由主代理安排整體實板驗證。
+已從本機既有 AArch64 救援與 M4 Zero Bookworm 原配 initrd 產生真實 bundle，
+並完成原 shell、目標 Python 固定模組匯入、blkid 及注入函式庫路徑後 shell 的四項 QEMU 探測。
+紀錄位於 `output/evidence/bpi-external-runtime-arm64-20260918-003/`；
+其中 `bundle-build.json` 的 `runtime_executed=false` 只代表封裝步驟，
+真正執行結果另在 `runtime-probe.json`，不得混淆。
+
+ARM32、RISC-V 的封裝介面及 ELF 拒絕規則已實作，但本次沒有宣稱真實目標 runtime 探測通過。
+每個實站仍須使用自己的可信救援來源、對應核心驅動及固定摘要，不能借用 AArch64 證據。
+本輪未上板、未修改原始 XZ、未更動固定 SD／外部實體媒體、未執行硬體資格循環。
 
 ## 來源
 

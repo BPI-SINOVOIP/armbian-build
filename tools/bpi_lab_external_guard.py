@@ -422,17 +422,29 @@ def _put(entries, name, value):
     entries[name] = value
 
 
-def _probe(entries, bundle, emulator, timeout):
-    """執行指定目標 runtime 的固定匯入探測；不執行原 init 或客戶命令。"""
+def _emulator_options(emulator, architecture):
     if __package__:
         from . import bpi_lab_deploy as deploy
     else:
         import bpi_lab_deploy as deploy
+    fields(emulator, "path sha256" + (" guest_base" if "guest_base" in emulator else ""))
+    deploy.checked_bytes({key: emulator[key] for key in ("path", "sha256")}, 128 * 1024**2)
+    wanted = {"arm": "qemu-arm-static", "arm64": "qemu-aarch64-static", "riscv64": "qemu-riscv64-static"}[architecture]
+    require(Path(emulator["path"]).name == wanted and os.access(emulator["path"], os.X_OK), "模擬器名稱或執行權限不符")
+    args = [emulator["path"]]
+    if "guest_base" in emulator:
+        value = emulator["guest_base"]
+        require(type(value) is int and 65536 <= value < 2**47 and value % 65536 == 0 and struct.calcsize("P") == 8,
+                "QEMU 訪客位址偏移須為 64 位元主機上的明示對齊整數")
+        args.extend(("-B", hex(value)))
+    return args
+
+
+def _probe(entries, bundle, emulator, timeout):
+    """執行指定目標 runtime 的固定匯入探測；不執行原 init 或客戶命令。"""
     runner, deadline = [], time.monotonic() + timeout
     if emulator is not None:
-        deploy.checked_bytes(emulator, 128 * 1024**2)
-        wanted = {"arm": "qemu-arm-static", "arm64": "qemu-aarch64-static", "riscv64": "qemu-riscv64-static"}[bundle["architecture"]]
-        require(Path(emulator["path"]).name == wanted and os.access(emulator["path"], os.X_OK), "模擬器名稱或執行權限不符")
+        runner = _emulator_options(emulator, bundle["architecture"])
     else:
         require(platform.machine() in linux.ARCHITECTURES[bundle["architecture"]], "跨架構探測須指定固定摘要的 QEMU，不使用主機 Python")
     with tempfile.TemporaryDirectory(prefix="bpi-external-runtime-") as temporary:
@@ -458,7 +470,7 @@ def _probe(entries, bundle, emulator, timeout):
                     destination.parent.mkdir(parents=True, exist_ok=True)
                     destination.symlink_to(os.path.relpath(root / target, destination.parent))
         if emulator is not None:
-            runner = [emulator["path"], "-L", str(root)]
+            runner = [*runner, "-L", str(root)]
         code = ("import base64,contextlib,copy,fcntl,hashlib,json,math,os,pathlib,re,socket,stat,struct,subprocess,time,uuid,zlib,sys;"
                 "r=pathlib.Path(sys.argv[1]).resolve();"
                 "assert sys.version_info>=(3,9);"
@@ -542,6 +554,8 @@ def _validate_probe(probe, bundle):
             and probe["python"] == {"python_major": 3, "machine": linux.ARCHITECTURES[bundle["architecture"]][0], "imports": "complete"}
             and re.fullmatch(r"[0-9a-f]{64}", probe["blkid_stdout_sha256"])
             and probe["runtime_archive_sha256"] == bundle["archive"]["sha256"], "runtime 實際探測未綁定此 bundle 或缺少完整結果")
+    if probe["emulator"] is not None:
+        _emulator_options(probe["emulator"], bundle["architecture"])
 
 
 def build(original_initrd, expected, runtime_bundle, output, *, emulator=None, timeout=120):
@@ -628,6 +642,7 @@ def main(argv=None):
         parser.add_argument("--" + name + "-sha256", required=True)
     parser.add_argument("--emulator", type=Path)
     parser.add_argument("--emulator-sha256")
+    parser.add_argument("--emulator-guest-base", type=lambda value: int(value, 0))
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args(argv)
     if __package__:
@@ -637,8 +652,12 @@ def main(argv=None):
     def reference(name):
         return {"path": str(getattr(args, name).absolute()), "sha256": getattr(args, name + "_sha256")}
     try:
+        require(args.emulator is not None or args.emulator_guest_base is None, "沒有模擬器時不得指定訪客偏移")
+        emulator = reference("emulator") if args.emulator else None
+        if args.emulator_guest_base is not None:
+            emulator["guest_base"] = args.emulator_guest_base
         result = build(reference("original_initrd"), deploy.load(reference("expected")), reference("runtime_bundle"),
-                       args.output.absolute(), emulator=reference("emulator") if args.emulator else None)
+                       args.output.absolute(), emulator=emulator)
         print(json.dumps(result, ensure_ascii=False))
         return 0
     except (ValueError, OSError, KeyError, TypeError, subprocess.SubprocessError):

@@ -17,6 +17,9 @@
 | H618 的既有 0845 配對及五階段 | [H618 適配器](bananapi-lab-h618-adapter-20260917.md) |
 | 其他家族的固定配置、完整部署、登入及返回 | [共用後端](bananapi-lab-shared-backend-20260917.md)，`tools/bpi_lab_backend.py` |
 | 第一片板的單套授權、證據審閱與資格檔 | [首次核定](bananapi-lab-qualify-20260917.md)，`tools/bpi_lab_qualify.py` |
+| K3 原廠入口、獨立救援 U-Boot 與真實 SDK 編譯 | [K3 執行器](bananapi-lab-k3-runtime-20260918.md)，`tools/bpi_lab_k3_runtime.py` |
+| 固定 SD 加 USB／NVMe 測試區 | [外部媒體](bananapi-lab-external-media-20260918.md)、[五階段與核定](bananapi-lab-external-backend-20260918.md) |
+| 外部根保護與目標 Python 封裝 | [根保護](bananapi-lab-external-root-20260918.md)，`tools/bpi_lab_external_bundle.py`、`tools/bpi_lab_external_guard.py` |
 
 首次核定與已核定佇列是兩個入口，避免「尚未測第一套卻先要求全部通過」的循環依賴。
 首次核定仍須有實際配對、備份、可覆寫範圍及引導資格，不能用它繞過媒體保護。
@@ -30,11 +33,17 @@
 4. 已能開機的救援核心、initramfs、DTB、必要網路驅動，以及 U-Boot 版本、命令、RAM／保留區觀測。
 5. 同板的第一套客戶 XZ 及固定 SHA-256；專用 SSH 公鑰，私有帳密另存，不提交 Git。
 
-沒有 eMMC 的板型不能套用雙 MMC 後端；USB／NVMe／網路根需要各自儲存契約與引導核定。
+沒有 eMMC 的板型使用獨立 USB／NVMe 契約與外部後端，不能套用雙 MMC 身分。
+外部後端首版限 512-byte MBR 主分割、直接 ext 根與明示 mainline U-Boot 載入；
+網路只作固定組件傳輸，不將 NFS 根、未知原廠容器或 GPT 外部根視為已支援。
 實板接入後先驗證一套的正常循環及失敗返回，再批次跑 OS；不要求使用者陪同每套操作。
 若遠端 writer 是否停止不明，保留隔離，不以自動斷電或重刷解決。
 
 ## 目前可以做什麼
+
+以下保存 P 階段的盤點與模擬紀錄。現行軟體交付及限制請以上方入口、交付清單為準。
+`bpi_lab_platforms.py validate` 檢查的是 A 階段來源快照，45 板／98 項來源核對通過
+不會將歷史 `backend_complete`、`execution_ready` 或任何硬體資格欄位自動升格。
 
 `tools/bpi_lab.py` 提供映像盤點、站點登記、持久排程、分階段執行、續作、故障返回及結果彙整。執行環境為 Linux、Python 3.10 以上，僅使用標準函式庫；沒有新增服務或雲端 CI。本輪不操作任何實體板。
 
