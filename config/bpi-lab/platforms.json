@@ -1,0 +1,4905 @@
+{
+  "schema": "bpi-lab-platforms-v1",
+  "registry": {
+    "path": "docs/evidence/bpi-multiboard-lab-20260917/board-registry.json",
+    "sha256": "21ad0e97714d271b91766aa45238155427330267bec074c43c653cfa9abab9ab"
+  },
+  "board_count": 45,
+  "hardware_qualified": false,
+  "execution_ready": false,
+  "backend_complete": false,
+  "scope": "reviewed_local_build_inputs",
+  "sources": [
+    {
+      "path": "config/boards/armsom-sige5.csc",
+      "sha256": "dee4f776076c0addd2a7a8efa0a1c066601095a3d21445d126d370e6c4661ae1"
+    },
+    {
+      "path": "config/boards/armsom-sige7.csc",
+      "sha256": "e29827b6ad5b6aa2c445b3b6aa18de7c13d5d303e9fcd0b38100ebdd122e00f8"
+    },
+    {
+      "path": "config/boards/bananapi.conf",
+      "sha256": "07f0837cbba8f051a40542b06dae7f6015c06209020b524eb53ccd779e5b1caf"
+    },
+    {
+      "path": "config/boards/bananapi6204.wip",
+      "sha256": "6eef62a2ebb79d1f50b38e973e4d86662228f534b4621ad07425fe0fe198c1e8"
+    },
+    {
+      "path": "config/boards/bananapiaim7.wip",
+      "sha256": "8b7a639f5f74baf288d84ad210d889edd73359c606f142fe20dbcf2786f04c62"
+    },
+    {
+      "path": "config/boards/bananapicm4io.conf",
+      "sha256": "5974c6a89d06f8228049a4d944c3cce74e36c93375e4c8d7ab71a54a79158c0e"
+    },
+    {
+      "path": "config/boards/bananapicm5pro.wip",
+      "sha256": "23dd012ff74a4cf717fda86895b11066a85159c97072781bd059779181c04869"
+    },
+    {
+      "path": "config/boards/bananapicm6.wip",
+      "sha256": "11d57a034ae971971365b531881071fe07f7125f09f15b71199f12de13ddc092"
+    },
+    {
+      "path": "config/boards/bananapif2p.wip",
+      "sha256": "b6eb743e1dbba57161e3cbdbd9c340d9c5581ca23657f773c55818ad82aaffcd"
+    },
+    {
+      "path": "config/boards/bananapif2s.wip",
+      "sha256": "ab594cb890f3691909190956ebb1983922a6bc78da5c0657c35bb85e6fd3ff11"
+    },
+    {
+      "path": "config/boards/bananapif3.conf",
+      "sha256": "8c50e0cb590b8d07892cc4534a09a95a1f20fc9dcc3b82b5c68a2dac21bddd45"
+    },
+    {
+      "path": "config/boards/bananapiforge1.wip",
+      "sha256": "c88b31df21dd4388c3c140a39fc5c5682b32dc2387772c8a262c6135f20e8ba0"
+    },
+    {
+      "path": "config/boards/bananapim1plus.csc",
+      "sha256": "1d6d932d51ef23bdc3a4835734a92f508af8b4d100011c56c448b46c8b64886d"
+    },
+    {
+      "path": "config/boards/bananapim1super.wip",
+      "sha256": "2e518af9490b5418afb91496fc08b7d2344116f824b57027bf5f6da8af9f319c"
+    },
+    {
+      "path": "config/boards/bananapim2.csc",
+      "sha256": "9c0faaec5e91a9869b72486965fca457bc9630014052dcdee45861e1d37565c2"
+    },
+    {
+      "path": "config/boards/bananapim2berry.csc",
+      "sha256": "ed909f0bf9012a29d987b8b81daae01567c11bd8641571f1b25cc5eb1f1e5bee"
+    },
+    {
+      "path": "config/boards/bananapim2magic.csc",
+      "sha256": "d44a44dce4120135bebb90d7b1d8ac96c6256faad5f1275256d2ad9e9d959814"
+    },
+    {
+      "path": "config/boards/bananapim2plus.csc",
+      "sha256": "0f050f3da3ce3e86b6515bc6f918888278ecdc694f877c7352e95c87a4c99880"
+    },
+    {
+      "path": "config/boards/bananapim2pro.csc",
+      "sha256": "b0812390ddeadcdb1f968e5a295cf686b8cf6982f4dbc4cf854b9a069002d07e"
+    },
+    {
+      "path": "config/boards/bananapim2s.conf",
+      "sha256": "c77da4942fc0ebc81cad2f57a6afe0fa0ef0b445936e375e83a341826bc35938"
+    },
+    {
+      "path": "config/boards/bananapim2ultra.csc",
+      "sha256": "c888341c402a8d6725e36edae3e97b8cd39dd45ad787e44d96e302d3d9ffb0d6"
+    },
+    {
+      "path": "config/boards/bananapim2zero.csc",
+      "sha256": "2b1cc9be2ed8d151b8ab4d6c499bec761ede73f4a32a0a4a7045944acf9b1de4"
+    },
+    {
+      "path": "config/boards/bananapim3.csc",
+      "sha256": "b4a4dcc1c55f7e4eb2e93d45de9b205875c36260d30a5cb71b763da595f1560f"
+    },
+    {
+      "path": "config/boards/bananapim4.wip",
+      "sha256": "5b6400f7adb09e88613ee9645e76db3e5a4763a2e39931d66b4aad546521d225"
+    },
+    {
+      "path": "config/boards/bananapim4berry.conf",
+      "sha256": "a04a02386c362a22bcd55693ba8fa4f10253b149ab205d9c3bf07023a9086351"
+    },
+    {
+      "path": "config/boards/bananapim4zero.conf",
+      "sha256": "11bcc2269a9adf5070780fa151ca214f8161f050d369965a3d38b92fe780c641"
+    },
+    {
+      "path": "config/boards/bananapim4zeroemac.conf",
+      "sha256": "8dd5730528e7515d4e5dc6eb7463eefb58d6f3896f3bec508c7be9ea7b9b3969"
+    },
+    {
+      "path": "config/boards/bananapim5.conf",
+      "sha256": "f61f49681583dc60ac45ed58deb2797809829d0cd11a28ac36b814362686e36a"
+    },
+    {
+      "path": "config/boards/bananapim5pro.conf",
+      "sha256": "5e5f5f3ca797c50f569ed6c57952c6b8f10dde8bc31b6d8575210e236019059d"
+    },
+    {
+      "path": "config/boards/bananapim6.wip",
+      "sha256": "7fd66c8d06ada05dda495686f9b44f06e439853a4fb24e7e1761c6cff6e750c7"
+    },
+    {
+      "path": "config/boards/bananapim64.csc",
+      "sha256": "e1f367be08e6cf6be44e60ca5ab38d9338d011854724e1de9b41285115b3d093"
+    },
+    {
+      "path": "config/boards/bananapim7.conf",
+      "sha256": "f1b9723752d5488e6209f6bd4d10b0e31b14d9d7caf445882169405b18ca4308"
+    },
+    {
+      "path": "config/boards/bananapip2pro.wip",
+      "sha256": "ccbfe5c7834184f0c674b08585f713c29392e928894653b555e664f00952e593"
+    },
+    {
+      "path": "config/boards/bananapip2zero.csc",
+      "sha256": "d0743cb5668138c9e4d8a13a36dc6384f33b10e27f4a6de9c7d0129f9faf20eb"
+    },
+    {
+      "path": "config/boards/bananapipro.csc",
+      "sha256": "47407bbabec1d23702340036eeae6a041390f0166966b04bbc37583f814f6a70"
+    },
+    {
+      "path": "config/boards/bananapir2.csc",
+      "sha256": "b34acbe105070deeca34f9969c787a81ca6bb4961d47e0688d97307c20613d84"
+    },
+    {
+      "path": "config/boards/bananapir2pro.csc",
+      "sha256": "26ebaf2f8cc2e4e1dbc8ccbef2fd9ba9d177a95551efd2735918b85fb1a52558"
+    },
+    {
+      "path": "config/boards/bananapir3.wip",
+      "sha256": "086042ef62ff5d24c37c75688db7d7d2b3ff1ec23fcedb6d3a0d9e25f483991f"
+    },
+    {
+      "path": "config/boards/bananapir3mini.wip",
+      "sha256": "3863108b648bd26f825c70b104857af37e19f6f3dde4776f4cdda4b5577ee322"
+    },
+    {
+      "path": "config/boards/bananapir4.csc",
+      "sha256": "a8e90e8e96c7b812204fffc4783b6c05efdc08f4965010896414d4254a371965"
+    },
+    {
+      "path": "config/boards/bananapir4lite.wip",
+      "sha256": "82e6d272c0b8c0c6a2f288a5b347cc8f2a2ca86ecaf16006fa6a94ca7e981aa5"
+    },
+    {
+      "path": "config/boards/bananapir4pro.wip",
+      "sha256": "563317a0175e9940b40517dab1c743f6f4edb61d18f9d91e7588b6374e77af31"
+    },
+    {
+      "path": "config/boards/bananapir64.csc",
+      "sha256": "4c678320fdc3e011856d39bd73a86f3a3559e9d783f635e6eda9fc57dfb5fb4b"
+    },
+    {
+      "path": "config/boards/bananapism10.wip",
+      "sha256": "6d7c06c889fe81032453389d5c36f12e50afb9b0413e19797b95dcf37f193eb1"
+    },
+    {
+      "path": "config/boards/bananapiw2.wip",
+      "sha256": "3a51a771c3d15f77d04ddc47ec329fb5e7aefd2cf4291bdbbd35a1ae05252ed7"
+    },
+    {
+      "path": "config/boards/bananapiw3.wip",
+      "sha256": "853b3890068a5798b890835754013ff384482fb66ef6c9194bfef0e58d61fbb6"
+    },
+    {
+      "path": "config/boards/bpi-ai2n.conf",
+      "sha256": "145c4708abe4be6234e1784db3a745e6425d1802c055ca0f7eb91a9cd9e8b68c"
+    },
+    {
+      "path": "config/boards/include/bananapi-h618-common.inc",
+      "sha256": "76fb5dab58ed9dc668023414549daa881c3aec4344a83351aed9809d0219f1e8"
+    },
+    {
+      "path": "config/bootscripts/boot-meson64.cmd",
+      "sha256": "21498dc486ce85dd8264dd83ff315fc127b3ff9d37a53f286915c1de8c61bbc1"
+    },
+    {
+      "path": "config/bootscripts/boot-mt7623.cmd",
+      "sha256": "822a4afad456b46be41657860fb474a565d06f476ab60fe99fbd802216149c57"
+    },
+    {
+      "path": "config/bootscripts/boot-renesas-rzv2n-bpi.cmd",
+      "sha256": "6f4de62ebd99504dca14466694e2447e447aa24801344a1c693a009fa5c533b1"
+    },
+    {
+      "path": "config/bootscripts/boot-rk3506-forge1.cmd",
+      "sha256": "35ab3deca2bfb760ae5db5d7dd238501e89ff227ad0086a3a60b7626f521094b"
+    },
+    {
+      "path": "config/bootscripts/boot-rk3576.cmd",
+      "sha256": "9f4238e96863d03d413acf5a4146880ef3c11dad1d932eb05250d43d61a80e28"
+    },
+    {
+      "path": "config/bootscripts/boot-rk35xx.cmd",
+      "sha256": "877dbc09005b9e655392a05bb1d82aa9262b9e2915cb2590a4faa7e623dd1efb"
+    },
+    {
+      "path": "config/bootscripts/boot-rockchip64.cmd",
+      "sha256": "91b5e22d036bb2defcfeb1612d502510b6ebe9e19d2f1eeeebad4dc08a1fad37"
+    },
+    {
+      "path": "config/bootscripts/boot-sun50i-next.cmd",
+      "sha256": "9e51128954b04325ccbeb603a03b6f7246828c04de62f554fe4cfce673e23be1"
+    },
+    {
+      "path": "config/bootscripts/boot-sunxi.cmd",
+      "sha256": "6ba58d26367f8cf8cf70d8768727c3f297cc344c62a88a299c40cf2730862f4b"
+    },
+    {
+      "path": "config/bootscripts/boot-vs680.cmd",
+      "sha256": "9a82b02bd19e194eb82f7c0d8465ec987fcf270e326a3b156f6866e83c9c8ec1"
+    },
+    {
+      "path": "config/sources/arm64.conf",
+      "sha256": "75e57547360eb85dec405f6f5c4cf860fc7cf2cf2eb5f44b11fef12d6b628dff"
+    },
+    {
+      "path": "config/sources/armhf.conf",
+      "sha256": "a75af56188fea7d1f90125988e3181ebec73d34fa4869aab9e02248b0bc62e1f"
+    },
+    {
+      "path": "config/sources/families/filogic.conf",
+      "sha256": "02b075f1687330ad9c06217cc39b8123f90d3409420dc8e4c7fb1b7c3e91aa14"
+    },
+    {
+      "path": "config/sources/families/include/crust_firmware.inc",
+      "sha256": "deff38206671f9aa4ddb489f8fb373443bc801c5a9db4c62a8104285958b9fc9"
+    },
+    {
+      "path": "config/sources/families/include/meson64_common.inc",
+      "sha256": "1d432c533a5d2fd8129a3a7d54093f90c9097a601264bda50ecb3236f7f1b580"
+    },
+    {
+      "path": "config/sources/families/include/realtek_bpi_legacy_common.inc",
+      "sha256": "f145b30647b169ae4a5ee7efd83ff3c9f7cbb05b2e729a091c6664ef2a264095"
+    },
+    {
+      "path": "config/sources/families/include/renesas_common_bpi.inc",
+      "sha256": "4e1f99a619363ca5ca2fbd294e1c7ebd9b4ab3beb3763fe0e63ae0d26508df5a"
+    },
+    {
+      "path": "config/sources/families/include/rockchip64_common.inc",
+      "sha256": "fc960520a5506c639346b99086deccf1aefcf1faae90c7def10cff4d71eb069e"
+    },
+    {
+      "path": "config/sources/families/include/sunplus_sp7021_bpi_legacy_common.inc",
+      "sha256": "229e5268ead36b1ed42546e8d4077fc58cd17b85659f9d8ee8d7d4bb3800b0e2"
+    },
+    {
+      "path": "config/sources/families/include/sunxi_common.inc",
+      "sha256": "58ccdadf4bf55ae8ff64321fa3043a415208bc82d536fc2a304993f86e59cec0"
+    },
+    {
+      "path": "config/sources/families/include/sunxi64_common.inc",
+      "sha256": "9243fc47fd89882068b642579ce87ce5281956c49937e07593e0d906bc237074"
+    },
+    {
+      "path": "config/sources/families/meson-g12b.conf",
+      "sha256": "d7a1af777835af44add6ab32356fcf2e602735fbee1a08764882d3c9f55fc031"
+    },
+    {
+      "path": "config/sources/families/meson-sm1.conf",
+      "sha256": "7469dd45a53ce22b9f6a28dc83ffd66944a1068e8ac133207150c9e81fa781cd"
+    },
+    {
+      "path": "config/sources/families/mt7623.conf",
+      "sha256": "11b05546282ca6ba735097851b48d8679acabde718c658355b73119d45c7401b"
+    },
+    {
+      "path": "config/sources/families/realtek-rtd129x-bpi.conf",
+      "sha256": "184e2132d0672cef03238b56457afac867ec810050a33836a18f1a584d1da2bd"
+    },
+    {
+      "path": "config/sources/families/realtek-rtd139x-bpi.conf",
+      "sha256": "3353a33b9e98828eb007104c287e5c11177bacdebacbfaff648002911c9d1153"
+    },
+    {
+      "path": "config/sources/families/renesas-rzv2n-bpi.conf",
+      "sha256": "45a4c9f66b36ac1400dbb4e315e525a10feab10b6527cdad1cc7c09a7dae9982"
+    },
+    {
+      "path": "config/sources/families/rk35xx.conf",
+      "sha256": "7a8214446da9f82c026955a2386a8d7643d10386efa73de5b9ceafd8914c025f"
+    },
+    {
+      "path": "config/sources/families/rockchip-rk3588.conf",
+      "sha256": "bae28e72ee59b02f306a9a4a262f206ef0e0ae0fc65fa1e1f615d90288f6345c"
+    },
+    {
+      "path": "config/sources/families/rockchip.conf",
+      "sha256": "cea792dbe026a56a3b391b9d813317ba54c5561e561e6ba8e7e9b7309d1d36b0"
+    },
+    {
+      "path": "config/sources/families/rockchip64.conf",
+      "sha256": "c7ebf5d7ecd8f55ef5e13056aa06c139c903f23d522946be85dc8e345e438d91"
+    },
+    {
+      "path": "config/sources/families/spacemit-k3-bpi.conf",
+      "sha256": "88fd04b31eccc11c167eb8cff039167c751cd18b46c8e8e64b4023ce50a964a6"
+    },
+    {
+      "path": "config/sources/families/spacemit.conf",
+      "sha256": "a74753cf063f0c5d059852d1d9e6e9f07a422533e8d3003694e39e993d780ca9"
+    },
+    {
+      "path": "config/sources/families/sun50iw1.conf",
+      "sha256": "45839034adc33faa68f0ff459712ab661cab9efe4311d8e012e637740cc2e321"
+    },
+    {
+      "path": "config/sources/families/sun50iw9-bpi.conf",
+      "sha256": "f5c47198a6d5fa8830d8d38267ad0a63c56bf96ae9fb4581c7ada7c658d528c3"
+    },
+    {
+      "path": "config/sources/families/sun6i.conf",
+      "sha256": "d2aa9ee58e5e90a866d64387200a3881a31d764f105f1a6172e26b50a17298e2"
+    },
+    {
+      "path": "config/sources/families/sun7i.conf",
+      "sha256": "cb7ff1b95ab6fc7cbb31b16e8f955e9b1a42480d591417141fefed323816b390"
+    },
+    {
+      "path": "config/sources/families/sun8i.conf",
+      "sha256": "1df35a1b1a23cbb03a5a38163dfc42f912741ac2c134fbe5253b5fdb9def9257"
+    },
+    {
+      "path": "config/sources/families/sunplus-sp7021-bpi.conf",
+      "sha256": "43a4dd09d2f9a81e52bb398c04ac6b6e658c51820f1ae5cd10892d6319829c11"
+    },
+    {
+      "path": "config/sources/families/vs680.conf",
+      "sha256": "6ffd05533568fbd9d8a9ee1c33e3d899f351dd7d7865f7aea26c7b35fad7a421"
+    },
+    {
+      "path": "config/sources/riscv64.conf",
+      "sha256": "0f05fb882353f646af0d0a337ea57291e619e22b1f8f2960c73c64f34565c6b3"
+    },
+    {
+      "path": "lib/functions/bsp/armbian-bsp-cli-deb.sh",
+      "sha256": "06a61cd23e25b899985f82f939aa72253ecd1a6f3a5bfbbc7e853b58b49c747a"
+    },
+    {
+      "path": "lib/functions/rootfs/distro-agnostic.sh",
+      "sha256": "33b5e71c59c1be72feacf42e668bbd3935297aa1482a901f1c23ac50fe0e55cc"
+    },
+    {
+      "path": "packages/blobs/riscv64/spacemit-k3/bpi-sm10/env_k3.txt",
+      "sha256": "d6f073e147aae8f2f4bca4d711b64301dd98165a19b11ca76be637f695f94366"
+    },
+    {
+      "path": "packages/blobs/riscv64/spacemit-k3/bpi-sm10/uboot.config",
+      "sha256": "ffb244d91c6d9ce59f20eeabee15f0391e5d6417548856cacd4720d87cf69b9c"
+    },
+    {
+      "path": "patch/u-boot/legacy/u-boot-spacemit-k1-cm6/001-add-extlinux-boot.patch",
+      "sha256": "0145286af978bdff2c11384fdeec6f98fa2411f6c685c0532b44bbf3bac77124"
+    },
+    {
+      "path": "patch/u-boot/legacy/u-boot-spacemit-k1/004-Update-SpacemiT-K1-U-Boot-Environment.patch",
+      "sha256": "a71fdc57c6391e879138f6d45e6ff06238ddb1daedae96747f55970b2a0287a7"
+    },
+    {
+      "path": "tools/bpi_lab_h618.py",
+      "sha256": "d061cbbc45b1dd67642d9e4c54f2be5d326e58dfb9137f857060d04be3c19a03"
+    },
+    {
+      "path": "tools/bpi_lab_linux.py",
+      "sha256": "d48b729b525956177b7f44a130554bf26af080af42f18d61f111f6538da1ad10"
+    },
+    {
+      "path": "tools/bpi_lab_uboot.py",
+      "sha256": "6a54a1908d6f1264e0c8ce4757dcf10301daeb59a00f7f850e526b2d8029df12"
+    }
+  ],
+  "boot_profiles": {
+    "sunxi32": {
+      "command": "bootz",
+      "kernel_format": "zImage",
+      "kernel_file": "zImage",
+      "initrd_file": "uInitrd",
+      "dtb_required": true,
+      "status": "source_candidate",
+      "evidence": [
+        {
+          "path": "config/bootscripts/boot-sunxi.cmd",
+          "line": 132,
+          "token": "bootz ${kernel_addr_r} ${ramdisk_addr_r} ${fdt_addr_r}"
+        }
+      ],
+      "limitations": [
+        "僅為目前受控來源的候選；未核對既有映像內容、實際 U-Boot 命令、RAM 保留區或原配組件。",
+        "來源另有 script.bin 分支；本候選限原配 DTB，未支援舊式 FEX 引導。"
+      ]
+    },
+    "sunxi64": {
+      "command": "booti",
+      "kernel_format": "Image",
+      "kernel_file": "Image",
+      "initrd_file": "uInitrd",
+      "dtb_required": true,
+      "status": "source_candidate",
+      "evidence": [
+        {
+          "path": "config/bootscripts/boot-sun50i-next.cmd",
+          "line": 119,
+          "token": "booti ${kernel_addr_r}"
+        }
+      ],
+      "limitations": [
+        "僅為目前受控來源的候選；未核對既有映像內容、實際 U-Boot 命令、RAM 保留區或原配組件。",
+        "A64 與 H618 共享腳本不代表 SPL、TF-A、DDR 或救援入口相容。"
+      ]
+    },
+    "meson64": {
+      "command": "booti",
+      "kernel_format": "Image",
+      "kernel_file": "Image",
+      "initrd_file": "uInitrd",
+      "dtb_required": true,
+      "status": "source_candidate",
+      "evidence": [
+        {
+          "path": "config/bootscripts/boot-meson64.cmd",
+          "line": 180,
+          "token": "booti ${kernel_addr_r}"
+        }
+      ],
+      "limitations": [
+        "僅為目前受控來源的候選；未核對既有映像內容、實際 U-Boot 命令、RAM 保留區或原配組件。",
+        "限定 Image 分支；另有名稱為 zImage 的分支，不據檔名推斷 ARM32 格式。FIP 與原廠早期引導另核定。"
+      ]
+    },
+    "rk3506": {
+      "command": "bootz",
+      "kernel_format": "zImage",
+      "kernel_file": "zImage",
+      "initrd_file": "uInitrd",
+      "dtb_required": true,
+      "status": "source_candidate",
+      "evidence": [
+        {
+          "path": "config/bootscripts/boot-rk3506-forge1.cmd",
+          "line": 75,
+          "token": "bootz ${kernel_addr_r}"
+        }
+      ],
+      "limitations": [
+        "僅為目前受控來源的候選；未核對既有映像內容、實際 U-Boot 命令、RAM 保留區或原配組件。",
+        "Forge1 使用板型 hook 指定的 RK3506 腳本，不能套其他 Rockchip ARM32 腳本。"
+      ]
+    },
+    "rockchip64": {
+      "command": "booti",
+      "kernel_format": "Image",
+      "kernel_file": "Image",
+      "initrd_file": "uInitrd",
+      "dtb_required": true,
+      "status": "source_candidate",
+      "evidence": [
+        {
+          "path": "config/bootscripts/boot-rockchip64.cmd",
+          "line": 80,
+          "token": "booti ${kernel_addr_r}"
+        }
+      ],
+      "limitations": [
+        "僅為目前受控來源的候選；未核對既有映像內容、實際 U-Boot 命令、RAM 保留區或原配組件。",
+        "RK3308 與 RK3568 的早期引導組件、封裝及媒體配置分別核定。"
+      ]
+    },
+    "rk35xx": {
+      "command": "booti",
+      "kernel_format": "Image",
+      "kernel_file": "Image",
+      "initrd_file": "uInitrd",
+      "dtb_required": true,
+      "status": "source_candidate",
+      "evidence": [
+        {
+          "path": "config/bootscripts/boot-rk35xx.cmd",
+          "line": 83,
+          "token": "booti ${kernel_addr_r}"
+        }
+      ],
+      "limitations": [
+        "僅為目前受控來源的候選；未核對既有映像內容、實際 U-Boot 命令、RAM 保留區或原配組件。",
+        "RK3528 與 RK3588 的 DDR、BL31、SPL 和 FIT 不是可互換的 Linux 載荷。"
+      ]
+    },
+    "rk3576": {
+      "command": "booti",
+      "kernel_format": "Image",
+      "kernel_file": "Image",
+      "initrd_file": "uInitrd",
+      "dtb_required": true,
+      "status": "source_candidate",
+      "evidence": [
+        {
+          "path": "config/bootscripts/boot-rk3576.cmd",
+          "line": 83,
+          "token": "booti ${kernel_addr_r}"
+        }
+      ],
+      "limitations": [
+        "僅為目前受控來源的候選；未核對既有映像內容、實際 U-Boot 命令、RAM 保留區或原配組件。",
+        "需依 RK3576 分支核對 DDR、BL31、SPL 與原配 DTB。"
+      ]
+    },
+    "mt7623": {
+      "command": "bootz",
+      "kernel_format": "zImage",
+      "kernel_file": "zImage",
+      "initrd_file": "uInitrd",
+      "dtb_required": true,
+      "status": "source_candidate",
+      "evidence": [
+        {
+          "path": "config/bootscripts/boot-mt7623.cmd",
+          "line": 35,
+          "token": "bootz ${kernel_addr_r}"
+        }
+      ],
+      "limitations": [
+        "僅為目前受控來源的候選；未核對既有映像內容、實際 U-Boot 命令、RAM 保留區或原配組件。",
+        "MT7623 的前置載入器及 eMMC boot0 不能用 ARM64 Filogic 封裝替代。"
+      ]
+    },
+    "filogic-extlinux": {
+      "command": "bootflow",
+      "kernel_format": "Image",
+      "kernel_file": "Image",
+      "initrd_file": "uInitrd",
+      "dtb_required": true,
+      "status": "source_candidate",
+      "evidence": [
+        {
+          "path": "lib/functions/bsp/armbian-bsp-cli-deb.sh",
+          "line": 341,
+          "token": "elif [[ $SRC_EXTLINUX == yes ]]"
+        },
+        {
+          "path": "lib/functions/rootfs/distro-agnostic.sh",
+          "line": 208,
+          "token": "kernel ${bootpart_prefix}$NAME_KERNEL"
+        },
+        {
+          "path": "lib/functions/rootfs/distro-agnostic.sh",
+          "line": 209,
+          "token": "initrd ${bootpart_prefix}$NAME_INITRD"
+        }
+      ],
+      "limitations": [
+        "僅為目前受控來源的候選；未核對既有映像內容、實際 U-Boot 命令、RAM 保留區或原配組件。",
+        "bootflow 是板型設定啟用的候選命令，不代表共用工具已能執行 extlinux。",
+        "家族宣告的 boot-filogic.cmd 在本機不存在；這六板明示 SRC_EXTLINUX=yes，建置邏輯因此忽略一般 bootscript。"
+      ]
+    },
+    "k1-extlinux": {
+      "command": "sysboot",
+      "kernel_format": "Image",
+      "kernel_file": "Image",
+      "initrd_file": "uInitrd",
+      "dtb_required": true,
+      "status": "source_candidate",
+      "evidence": [
+        {
+          "path": "patch/u-boot/legacy/u-boot-spacemit-k1/004-Update-SpacemiT-K1-U-Boot-Environment.patch",
+          "line": 358,
+          "token": "sysboot ${devtype}"
+        },
+        {
+          "path": "lib/functions/rootfs/distro-agnostic.sh",
+          "line": 208,
+          "token": "kernel ${bootpart_prefix}$NAME_KERNEL"
+        },
+        {
+          "path": "lib/functions/bsp/armbian-bsp-cli-deb.sh",
+          "line": 341,
+          "token": "elif [[ $SRC_EXTLINUX == yes ]]"
+        }
+      ],
+      "limitations": [
+        "僅為目前受控來源的候選；未核對既有映像內容、實際 U-Boot 命令、RAM 保留區或原配組件。",
+        "只引用修補新增的 extlinux 入口；不把修補刪除行中的 bootm／booti 當有效證據。"
+      ]
+    },
+    "cm6-extlinux": {
+      "command": "sysboot",
+      "kernel_format": "Image",
+      "kernel_file": "Image",
+      "initrd_file": "uInitrd",
+      "dtb_required": true,
+      "status": "source_candidate",
+      "evidence": [
+        {
+          "path": "patch/u-boot/legacy/u-boot-spacemit-k1-cm6/001-add-extlinux-boot.patch",
+          "line": 38,
+          "token": "sysboot ${devtype}"
+        },
+        {
+          "path": "lib/functions/rootfs/distro-agnostic.sh",
+          "line": 208,
+          "token": "kernel ${bootpart_prefix}$NAME_KERNEL"
+        },
+        {
+          "path": "lib/functions/bsp/armbian-bsp-cli-deb.sh",
+          "line": 341,
+          "token": "elif [[ $SRC_EXTLINUX == yes ]]"
+        }
+      ],
+      "limitations": [
+        "僅為目前受控來源的候選；未核對既有映像內容、實際 U-Boot 命令、RAM 保留區或原配組件。",
+        "CM6 的專用修補與 F3 不同；須核對修補實際套用、SBI 及 FSBL 配套。"
+      ]
+    },
+    "k3-vendor": {
+      "command": "booti",
+      "kernel_format": "Image",
+      "kernel_file": "Image",
+      "initrd_file": "initramfs-generic.img",
+      "dtb_required": true,
+      "status": "vendor_review_required",
+      "evidence": [
+        {
+          "path": "packages/blobs/riscv64/spacemit-k3/bpi-sm10/uboot.config",
+          "line": 484,
+          "token": "CONFIG_CMD_BOOTI=y"
+        },
+        {
+          "path": "packages/blobs/riscv64/spacemit-k3/bpi-sm10/env_k3.txt",
+          "line": 3,
+          "token": "knl_name=Image"
+        },
+        {
+          "path": "packages/blobs/riscv64/spacemit-k3/bpi-sm10/env_k3.txt",
+          "line": 4,
+          "token": "ramdisk_name=initramfs-generic.img"
+        }
+      ],
+      "limitations": [
+        "僅為目前受控來源的候選；未核對既有映像內容、實際 U-Boot 命令、RAM 保留區或原配組件。",
+        "僅證明候選設定啟用 booti；CONFIG_BOOTCOMMAND 為空，未核對原廠完整環境、特殊封裝與安全鏈。",
+        "K3 的 FSBL、ESOS、OpenSBI、環境及授權限制不能套用 K1。"
+      ]
+    },
+    "sunplus-uenv": {
+      "command": "bootm",
+      "kernel_format": "uImage",
+      "kernel_file": "uImage",
+      "initrd_file": "uInitrd",
+      "dtb_required": true,
+      "status": "source_candidate",
+      "evidence": [
+        {
+          "path": "config/sources/families/include/sunplus_sp7021_bpi_legacy_common.inc",
+          "line": 230,
+          "token": "aboot=bootm"
+        }
+      ],
+      "limitations": [
+        "僅為目前受控來源的候選；未核對既有映像內容、實際 U-Boot 命令、RAM 保留區或原配組件。",
+        "uEnv.txt 由 family 產生；ISPBOOOT.BIN 與 xboot 屬前置鏈，不是可直接交給共用 bootm 工具的核心。"
+      ]
+    },
+    "renesas": {
+      "command": "booti",
+      "kernel_format": "Image",
+      "kernel_file": "Image",
+      "initrd_file": "uInitrd",
+      "dtb_required": true,
+      "status": "source_candidate",
+      "evidence": [
+        {
+          "path": "config/bootscripts/boot-renesas-rzv2n-bpi.cmd",
+          "line": 61,
+          "token": "booti ${kernel_addr_r}"
+        }
+      ],
+      "limitations": [
+        "僅為目前受控來源的候選；未核對既有映像內容、實際 U-Boot 命令、RAM 保留區或原配組件。",
+        "BL2 參數區塊、FIP、SPI／eMMC／SD 變體與額外載荷須分別核定。"
+      ]
+    },
+    "realtek-vendor": {
+      "command": null,
+      "kernel_format": "unknown",
+      "kernel_file": "uImage",
+      "initrd_file": "uInitrd",
+      "dtb_required": true,
+      "status": "vendor_review_required",
+      "evidence": [
+        {
+          "path": "config/sources/families/include/realtek_bpi_legacy_common.inc",
+          "line": 218,
+          "token": "${vendor_linux_dir}/uImage"
+        }
+      ],
+      "limitations": [
+        "僅為目前受控來源的候選；未核對既有映像內容、實際 U-Boot 命令、RAM 保留區或原配組件。",
+        "來源只把核心複製為 uImage；檔名不能證明標頭格式或 bootm 能力。原廠 uEnv.txt 由外部 BSP 取得，這裡不猜入口。"
+      ]
+    },
+    "vs680": {
+      "command": "booti",
+      "kernel_format": "Image",
+      "kernel_file": "Image",
+      "initrd_file": "uInitrd",
+      "dtb_required": true,
+      "status": "source_candidate",
+      "evidence": [
+        {
+          "path": "config/bootscripts/boot-vs680.cmd",
+          "line": 59,
+          "token": "booti 0x04a80000 0x0ca00000 0x15a00000"
+        }
+      ],
+      "limitations": [
+        "僅為目前受控來源的候選；未核對既有映像內容、實際 U-Boot 命令、RAM 保留區或原配組件。",
+        "腳本入口不等於完整 OEM／TZK 安全引導支援；TZK 載荷、配置與回復路徑另核定。"
+      ]
+    },
+    "r2pro-extlinux": {
+      "command": null,
+      "kernel_format": "Image",
+      "kernel_file": "Image",
+      "initrd_file": "uInitrd",
+      "dtb_required": true,
+      "status": "source_candidate",
+      "evidence": [
+        {
+          "path": "config/boards/bananapir2pro.csc",
+          "line": 15,
+          "token": "SRC_EXTLINUX=\"yes\""
+        },
+        {
+          "path": "lib/functions/bsp/armbian-bsp-cli-deb.sh",
+          "line": 341,
+          "token": "elif [[ $SRC_EXTLINUX == yes ]]"
+        },
+        {
+          "path": "lib/functions/rootfs/distro-agnostic.sh",
+          "line": 208,
+          "token": "kernel ${bootpart_prefix}$NAME_KERNEL"
+        },
+        {
+          "path": "lib/functions/rootfs/distro-agnostic.sh",
+          "line": 209,
+          "token": "initrd ${bootpart_prefix}$NAME_INITRD"
+        }
+      ],
+      "limitations": [
+        "R2 Pro 明示採用 extlinux；一般家族 bootscript 被建置邏輯忽略。",
+        "本輪來源足以確認組態入口與預設 Image／uInitrd，不足以核定實際 U-Boot 的 bootflow／sysboot 命令；保持未知。",
+        "不因同屬 Rockchip64 而借用其他板型的引導命令、RAM 配置或救援資格。"
+      ]
+    }
+  },
+  "boards": [
+    {
+      "board": "bpi-6204",
+      "artifact_board": "bananapi6204",
+      "architecture": "arm32",
+      "family": "sun8i",
+      "group": "allwinner32",
+      "soc": "R40",
+      "soc_evidence": [
+        {
+          "path": "config/boards/bananapi6204.wip",
+          "line": 1,
+          "token": "R40"
+        }
+      ],
+      "config_path": "config/boards/bananapi6204.wip",
+      "sources": [
+        "config/boards/bananapi6204.wip",
+        "config/bootscripts/boot-sunxi.cmd",
+        "config/sources/armhf.conf",
+        "config/sources/families/include/crust_firmware.inc",
+        "config/sources/families/include/sunxi_common.inc",
+        "config/sources/families/sun8i.conf"
+      ],
+      "boot_profile": "sunxi32",
+      "boot_chain": {
+        "artifacts": [
+          "u-boot-sunxi-with-spl.bin"
+        ],
+        "evidence": [
+          {
+            "path": "config/sources/families/include/sunxi_common.inc",
+            "line": 14,
+            "token": "u-boot-sunxi-with-spl.bin"
+          }
+        ],
+        "note": "SPL、DDR 與 ROM 媒體入口逐板核定；沒有安全引導啟用狀態證據。"
+      },
+      "storage": {
+        "spi": {
+          "status": "not_declared",
+          "evidence": [],
+          "note": "此受控來源未明示本板可用的 SPI 引導能力；不等同沒有 SPI 硬體。"
+        },
+        "emmc": {
+          "status": "not_declared",
+          "evidence": [],
+          "note": "此受控來源未明示本板 eMMC 候選；不推定硬體有無、容量或 MMC 編號。"
+        }
+      },
+      "special_boot": {
+        "status": "review_required",
+        "secure_boot_enabled": null,
+        "evidence": [
+          {
+            "path": "config/sources/families/include/sunxi_common.inc",
+            "line": 14,
+            "token": "u-boot-sunxi-with-spl.bin"
+          }
+        ],
+        "note": "SPL、DDR 與 ROM 媒體入口逐板核定；沒有安全引導啟用狀態證據。"
+      },
+      "software": {
+        "source_mapping": "static_reviewed",
+        "uboot_tool": "integration_pending",
+        "linux_tool": "integration_pending",
+        "deployment": "not_implemented",
+        "recovery": "not_implemented",
+        "end_to_end": "not_implemented"
+      },
+      "hardware_qualified": false,
+      "execution_ready": false,
+      "backend_complete": false,
+      "blockers": [
+        "尚未將共用 U-Boot／Linux 工具接入本板原配組件、RAM 與回應核對契約。",
+        "平台部署、救援返回及完整階段契約尚未實作／整合，不能稱只待板子。",
+        "實體板修訂、媒體身分、備份、授權及故障復原均未核定。"
+      ]
+    },
+    {
+      "board": "bpi-f2p",
+      "artifact_board": "bananapif2p",
+      "architecture": "arm32",
+      "family": "sunplus-sp7021-bpi",
+      "group": "sunplus",
+      "soc": "SP7021",
+      "soc_evidence": [
+        {
+          "path": "config/boards/bananapif2p.wip",
+          "line": 1,
+          "token": "SP7021"
+        }
+      ],
+      "config_path": "config/boards/bananapif2p.wip",
+      "sources": [
+        "config/boards/bananapif2p.wip",
+        "config/sources/armhf.conf",
+        "config/sources/families/include/sunplus_sp7021_bpi_legacy_common.inc",
+        "config/sources/families/sunplus-sp7021-bpi.conf"
+      ],
+      "boot_profile": "sunplus-uenv",
+      "boot_chain": {
+        "artifacts": [
+          "u-boot.img",
+          "ISPBOOOT.BIN"
+        ],
+        "evidence": [
+          {
+            "path": "config/sources/families/include/sunplus_sp7021_bpi_legacy_common.inc",
+            "line": 26,
+            "token": "UBOOT_TARGET_MAP="
+          }
+        ],
+        "note": "SP7021 的 xboot／ISPBOOOT.BIN 與板型配對待核定；F2P 不能沿用 F2S 的 eMMC 前置載荷。"
+      },
+      "storage": {
+        "spi": {
+          "status": "not_declared",
+          "evidence": [],
+          "note": "此受控來源未明示本板可用的 SPI 引導能力；不等同沒有 SPI 硬體。"
+        },
+        "emmc": {
+          "status": "candidate_excluded",
+          "evidence": [
+            {
+              "path": "config/boards/bananapif2p.wip",
+              "line": 30,
+              "token": "SUNPLUS_BPI_CANDIDATE_MEDIA=\"sd-only\""
+            },
+            {
+              "path": "config/boards/bananapif2p.wip",
+              "line": 28,
+              "token": "SUNPLUS_BPI_EMMC_XBOOT_ASSET=\"\""
+            }
+          ],
+          "note": "此候選明確排除 eMMC，並未宣稱板上沒有 eMMC。"
+        }
+      },
+      "special_boot": {
+        "status": "review_required",
+        "secure_boot_enabled": null,
+        "evidence": [
+          {
+            "path": "config/sources/families/include/sunplus_sp7021_bpi_legacy_common.inc",
+            "line": 26,
+            "token": "UBOOT_TARGET_MAP="
+          }
+        ],
+        "note": "SP7021 的 xboot／ISPBOOOT.BIN 與板型配對待核定；F2P 不能沿用 F2S 的 eMMC 前置載荷。"
+      },
+      "software": {
+        "source_mapping": "static_reviewed",
+        "uboot_tool": "integration_pending",
+        "linux_tool": "integration_pending",
+        "deployment": "not_implemented",
+        "recovery": "not_implemented",
+        "end_to_end": "not_implemented"
+      },
+      "hardware_qualified": false,
+      "execution_ready": false,
+      "backend_complete": false,
+      "blockers": [
+        "尚未將共用 U-Boot／Linux 工具接入本板原配組件、RAM 與回應核對契約。",
+        "平台部署、救援返回及完整階段契約尚未實作／整合，不能稱只待板子。",
+        "實體板修訂、媒體身分、備份、授權及故障復原均未核定。",
+        "registry 保留來源問題：unknown_kernel；不可因平台資料核對通過而清除。"
+      ]
+    },
+    {
+      "board": "bpi-f2s",
+      "artifact_board": "bananapif2s",
+      "architecture": "arm32",
+      "family": "sunplus-sp7021-bpi",
+      "group": "sunplus",
+      "soc": "SP7021",
+      "soc_evidence": [
+        {
+          "path": "config/boards/bananapif2s.wip",
+          "line": 1,
+          "token": "SP7021"
+        }
+      ],
+      "config_path": "config/boards/bananapif2s.wip",
+      "sources": [
+        "config/boards/bananapif2s.wip",
+        "config/sources/armhf.conf",
+        "config/sources/families/include/sunplus_sp7021_bpi_legacy_common.inc",
+        "config/sources/families/sunplus-sp7021-bpi.conf"
+      ],
+      "boot_profile": "sunplus-uenv",
+      "boot_chain": {
+        "artifacts": [
+          "u-boot.img",
+          "ISPBOOOT.BIN"
+        ],
+        "evidence": [
+          {
+            "path": "config/sources/families/include/sunplus_sp7021_bpi_legacy_common.inc",
+            "line": 26,
+            "token": "UBOOT_TARGET_MAP="
+          }
+        ],
+        "note": "SP7021 的 xboot／ISPBOOOT.BIN 與板型配對待核定；F2P 不能沿用 F2S 的 eMMC 前置載荷。"
+      },
+      "storage": {
+        "spi": {
+          "status": "not_declared",
+          "evidence": [],
+          "note": "此受控來源未明示本板可用的 SPI 引導能力；不等同沒有 SPI 硬體。"
+        },
+        "emmc": {
+          "status": "board_declared",
+          "evidence": [
+            {
+              "path": "config/boards/bananapif2s.wip",
+              "line": 26,
+              "token": "SUNPLUS_BPI_EMMC_XBOOT_ASSET="
+            }
+          ],
+          "note": "F2S 專用 eMMC xboot 有來源與摘要宣告；不能轉用 F2P，亦未核對實物。"
+        }
+      },
+      "special_boot": {
+        "status": "review_required",
+        "secure_boot_enabled": null,
+        "evidence": [
+          {
+            "path": "config/sources/families/include/sunplus_sp7021_bpi_legacy_common.inc",
+            "line": 26,
+            "token": "UBOOT_TARGET_MAP="
+          }
+        ],
+        "note": "SP7021 的 xboot／ISPBOOOT.BIN 與板型配對待核定；F2P 不能沿用 F2S 的 eMMC 前置載荷。"
+      },
+      "software": {
+        "source_mapping": "static_reviewed",
+        "uboot_tool": "integration_pending",
+        "linux_tool": "integration_pending",
+        "deployment": "not_implemented",
+        "recovery": "not_implemented",
+        "end_to_end": "not_implemented"
+      },
+      "hardware_qualified": false,
+      "execution_ready": false,
+      "backend_complete": false,
+      "blockers": [
+        "尚未將共用 U-Boot／Linux 工具接入本板原配組件、RAM 與回應核對契約。",
+        "平台部署、救援返回及完整階段契約尚未實作／整合，不能稱只待板子。",
+        "實體板修訂、媒體身分、備份、授權及故障復原均未核定。",
+        "registry 保留來源問題：unknown_kernel；不可因平台資料核對通過而清除。"
+      ]
+    },
+    {
+      "board": "bpi-forge1",
+      "artifact_board": "bananapiforge1",
+      "architecture": "arm32",
+      "family": "rockchip",
+      "group": "rockchip32",
+      "soc": "RK3506J",
+      "soc_evidence": [
+        {
+          "path": "config/boards/bananapiforge1.wip",
+          "line": 1,
+          "token": "RK3506J"
+        }
+      ],
+      "config_path": "config/boards/bananapiforge1.wip",
+      "sources": [
+        "config/boards/bananapiforge1.wip",
+        "config/bootscripts/boot-rk3506-forge1.cmd",
+        "config/sources/armhf.conf",
+        "config/sources/families/rockchip.conf"
+      ],
+      "boot_profile": "rk3506",
+      "boot_chain": {
+        "artifacts": [
+          "u-boot-rockchip.bin"
+        ],
+        "evidence": [
+          {
+            "path": "config/sources/families/rockchip.conf",
+            "line": 65,
+            "token": ";;u-boot-rockchip.bin"
+          }
+        ],
+        "note": "RK3506 DDR、TEE 與 SPL 的廠商組件需配套；SPI／eMMC 裝置與恢復方法另核定。"
+      },
+      "storage": {
+        "spi": {
+          "status": "not_declared",
+          "evidence": [],
+          "note": "此受控來源未明示本板可用的 SPI 引導能力；不等同沒有 SPI 硬體。"
+        },
+        "emmc": {
+          "status": "not_declared",
+          "evidence": [],
+          "note": "此受控來源未明示本板 eMMC 候選；不推定硬體有無、容量或 MMC 編號。"
+        }
+      },
+      "special_boot": {
+        "status": "review_required",
+        "secure_boot_enabled": null,
+        "evidence": [
+          {
+            "path": "config/sources/families/rockchip.conf",
+            "line": 65,
+            "token": ";;u-boot-rockchip.bin"
+          }
+        ],
+        "note": "RK3506 DDR、TEE 與 SPL 的廠商組件需配套；SPI／eMMC 裝置與恢復方法另核定。"
+      },
+      "software": {
+        "source_mapping": "static_reviewed",
+        "uboot_tool": "integration_pending",
+        "linux_tool": "integration_pending",
+        "deployment": "not_implemented",
+        "recovery": "not_implemented",
+        "end_to_end": "not_implemented"
+      },
+      "hardware_qualified": false,
+      "execution_ready": false,
+      "backend_complete": false,
+      "blockers": [
+        "尚未將共用 U-Boot／Linux 工具接入本板原配組件、RAM 與回應核對契約。",
+        "平台部署、救援返回及完整階段契約尚未實作／整合，不能稱只待板子。",
+        "實體板修訂、媒體身分、備份、授權及故障復原均未核定。"
+      ]
+    },
+    {
+      "board": "bpi-m1",
+      "artifact_board": "bananapi",
+      "architecture": "arm32",
+      "family": "sun7i",
+      "group": "allwinner32",
+      "soc": "A20",
+      "soc_evidence": [
+        {
+          "path": "config/boards/bananapi.conf",
+          "line": 1,
+          "token": "A20"
+        }
+      ],
+      "config_path": "config/boards/bananapi.conf",
+      "sources": [
+        "config/boards/bananapi.conf",
+        "config/bootscripts/boot-sunxi.cmd",
+        "config/sources/armhf.conf",
+        "config/sources/families/include/crust_firmware.inc",
+        "config/sources/families/include/sunxi_common.inc",
+        "config/sources/families/sun7i.conf"
+      ],
+      "boot_profile": "sunxi32",
+      "boot_chain": {
+        "artifacts": [
+          "u-boot-sunxi-with-spl.bin"
+        ],
+        "evidence": [
+          {
+            "path": "config/sources/families/include/sunxi_common.inc",
+            "line": 14,
+            "token": "u-boot-sunxi-with-spl.bin"
+          }
+        ],
+        "note": "SPL、DDR 與 ROM 媒體入口逐板核定；沒有安全引導啟用狀態證據。"
+      },
+      "storage": {
+        "spi": {
+          "status": "not_declared",
+          "evidence": [],
+          "note": "此受控來源未明示本板可用的 SPI 引導能力；不等同沒有 SPI 硬體。"
+        },
+        "emmc": {
+          "status": "not_declared",
+          "evidence": [],
+          "note": "此受控來源未明示本板 eMMC 候選；不推定硬體有無、容量或 MMC 編號。"
+        }
+      },
+      "special_boot": {
+        "status": "review_required",
+        "secure_boot_enabled": null,
+        "evidence": [
+          {
+            "path": "config/sources/families/include/sunxi_common.inc",
+            "line": 14,
+            "token": "u-boot-sunxi-with-spl.bin"
+          }
+        ],
+        "note": "SPL、DDR 與 ROM 媒體入口逐板核定；沒有安全引導啟用狀態證據。"
+      },
+      "software": {
+        "source_mapping": "static_reviewed",
+        "uboot_tool": "integration_pending",
+        "linux_tool": "integration_pending",
+        "deployment": "not_implemented",
+        "recovery": "not_implemented",
+        "end_to_end": "not_implemented"
+      },
+      "hardware_qualified": false,
+      "execution_ready": false,
+      "backend_complete": false,
+      "blockers": [
+        "尚未將共用 U-Boot／Linux 工具接入本板原配組件、RAM 與回應核對契約。",
+        "平台部署、救援返回及完整階段契約尚未實作／整合，不能稱只待板子。",
+        "實體板修訂、媒體身分、備份、授權及故障復原均未核定。"
+      ]
+    },
+    {
+      "board": "bpi-m1p",
+      "artifact_board": "bananapim1plus",
+      "architecture": "arm32",
+      "family": "sun7i",
+      "group": "allwinner32",
+      "soc": "A20",
+      "soc_evidence": [
+        {
+          "path": "config/boards/bananapim1plus.csc",
+          "line": 1,
+          "token": "A20"
+        }
+      ],
+      "config_path": "config/boards/bananapim1plus.csc",
+      "sources": [
+        "config/boards/bananapim1plus.csc",
+        "config/bootscripts/boot-sunxi.cmd",
+        "config/sources/armhf.conf",
+        "config/sources/families/include/crust_firmware.inc",
+        "config/sources/families/include/sunxi_common.inc",
+        "config/sources/families/sun7i.conf"
+      ],
+      "boot_profile": "sunxi32",
+      "boot_chain": {
+        "artifacts": [
+          "u-boot-sunxi-with-spl.bin"
+        ],
+        "evidence": [
+          {
+            "path": "config/sources/families/include/sunxi_common.inc",
+            "line": 14,
+            "token": "u-boot-sunxi-with-spl.bin"
+          }
+        ],
+        "note": "SPL、DDR 與 ROM 媒體入口逐板核定；沒有安全引導啟用狀態證據。"
+      },
+      "storage": {
+        "spi": {
+          "status": "not_declared",
+          "evidence": [],
+          "note": "此受控來源未明示本板可用的 SPI 引導能力；不等同沒有 SPI 硬體。"
+        },
+        "emmc": {
+          "status": "not_declared",
+          "evidence": [],
+          "note": "此受控來源未明示本板 eMMC 候選；不推定硬體有無、容量或 MMC 編號。"
+        }
+      },
+      "special_boot": {
+        "status": "review_required",
+        "secure_boot_enabled": null,
+        "evidence": [
+          {
+            "path": "config/sources/families/include/sunxi_common.inc",
+            "line": 14,
+            "token": "u-boot-sunxi-with-spl.bin"
+          }
+        ],
+        "note": "SPL、DDR 與 ROM 媒體入口逐板核定；沒有安全引導啟用狀態證據。"
+      },
+      "software": {
+        "source_mapping": "static_reviewed",
+        "uboot_tool": "integration_pending",
+        "linux_tool": "integration_pending",
+        "deployment": "not_implemented",
+        "recovery": "not_implemented",
+        "end_to_end": "not_implemented"
+      },
+      "hardware_qualified": false,
+      "execution_ready": false,
+      "backend_complete": false,
+      "blockers": [
+        "尚未將共用 U-Boot／Linux 工具接入本板原配組件、RAM 與回應核對契約。",
+        "平台部署、救援返回及完整階段契約尚未實作／整合，不能稱只待板子。",
+        "實體板修訂、媒體身分、備份、授權及故障復原均未核定。"
+      ]
+    },
+    {
+      "board": "bpi-m2",
+      "artifact_board": "bananapim2",
+      "architecture": "arm32",
+      "family": "sun6i",
+      "group": "allwinner32",
+      "soc": "A31s",
+      "soc_evidence": [
+        {
+          "path": "config/boards/bananapim2.csc",
+          "line": 1,
+          "token": "A31s"
+        }
+      ],
+      "config_path": "config/boards/bananapim2.csc",
+      "sources": [
+        "config/boards/bananapim2.csc",
+        "config/bootscripts/boot-sunxi.cmd",
+        "config/sources/armhf.conf",
+        "config/sources/families/include/crust_firmware.inc",
+        "config/sources/families/include/sunxi_common.inc",
+        "config/sources/families/sun6i.conf"
+      ],
+      "boot_profile": "sunxi32",
+      "boot_chain": {
+        "artifacts": [
+          "u-boot-sunxi-with-spl.bin"
+        ],
+        "evidence": [
+          {
+            "path": "config/sources/families/include/sunxi_common.inc",
+            "line": 14,
+            "token": "u-boot-sunxi-with-spl.bin"
+          }
+        ],
+        "note": "SPL、DDR 與 ROM 媒體入口逐板核定；沒有安全引導啟用狀態證據。"
+      },
+      "storage": {
+        "spi": {
+          "status": "not_declared",
+          "evidence": [],
+          "note": "此受控來源未明示本板可用的 SPI 引導能力；不等同沒有 SPI 硬體。"
+        },
+        "emmc": {
+          "status": "not_declared",
+          "evidence": [],
+          "note": "此受控來源未明示本板 eMMC 候選；不推定硬體有無、容量或 MMC 編號。"
+        }
+      },
+      "special_boot": {
+        "status": "review_required",
+        "secure_boot_enabled": null,
+        "evidence": [
+          {
+            "path": "config/sources/families/include/sunxi_common.inc",
+            "line": 14,
+            "token": "u-boot-sunxi-with-spl.bin"
+          }
+        ],
+        "note": "SPL、DDR 與 ROM 媒體入口逐板核定；沒有安全引導啟用狀態證據。"
+      },
+      "software": {
+        "source_mapping": "static_reviewed",
+        "uboot_tool": "integration_pending",
+        "linux_tool": "integration_pending",
+        "deployment": "not_implemented",
+        "recovery": "not_implemented",
+        "end_to_end": "not_implemented"
+      },
+      "hardware_qualified": false,
+      "execution_ready": false,
+      "backend_complete": false,
+      "blockers": [
+        "尚未將共用 U-Boot／Linux 工具接入本板原配組件、RAM 與回應核對契約。",
+        "平台部署、救援返回及完整階段契約尚未實作／整合，不能稱只待板子。",
+        "實體板修訂、媒體身分、備份、授權及故障復原均未核定。"
+      ]
+    },
+    {
+      "board": "bpi-m2b",
+      "artifact_board": "bananapim2berry",
+      "architecture": "arm32",
+      "family": "sun8i",
+      "group": "allwinner32",
+      "soc": "A40i/R40/V40",
+      "soc_evidence": [
+        {
+          "path": "config/boards/bananapim2berry.csc",
+          "line": 1,
+          "token": "A40i/R40/V40"
+        }
+      ],
+      "config_path": "config/boards/bananapim2berry.csc",
+      "sources": [
+        "config/boards/bananapim2berry.csc",
+        "config/bootscripts/boot-sunxi.cmd",
+        "config/sources/armhf.conf",
+        "config/sources/families/include/crust_firmware.inc",
+        "config/sources/families/include/sunxi_common.inc",
+        "config/sources/families/sun8i.conf"
+      ],
+      "boot_profile": "sunxi32",
+      "boot_chain": {
+        "artifacts": [
+          "u-boot-sunxi-with-spl.bin"
+        ],
+        "evidence": [
+          {
+            "path": "config/sources/families/include/sunxi_common.inc",
+            "line": 14,
+            "token": "u-boot-sunxi-with-spl.bin"
+          }
+        ],
+        "note": "SPL、DDR 與 ROM 媒體入口逐板核定；沒有安全引導啟用狀態證據。"
+      },
+      "storage": {
+        "spi": {
+          "status": "not_declared",
+          "evidence": [],
+          "note": "此受控來源未明示本板可用的 SPI 引導能力；不等同沒有 SPI 硬體。"
+        },
+        "emmc": {
+          "status": "not_declared",
+          "evidence": [],
+          "note": "此受控來源未明示本板 eMMC 候選；不推定硬體有無、容量或 MMC 編號。"
+        }
+      },
+      "special_boot": {
+        "status": "review_required",
+        "secure_boot_enabled": null,
+        "evidence": [
+          {
+            "path": "config/sources/families/include/sunxi_common.inc",
+            "line": 14,
+            "token": "u-boot-sunxi-with-spl.bin"
+          }
+        ],
+        "note": "SPL、DDR 與 ROM 媒體入口逐板核定；沒有安全引導啟用狀態證據。"
+      },
+      "software": {
+        "source_mapping": "static_reviewed",
+        "uboot_tool": "integration_pending",
+        "linux_tool": "integration_pending",
+        "deployment": "not_implemented",
+        "recovery": "not_implemented",
+        "end_to_end": "not_implemented"
+      },
+      "hardware_qualified": false,
+      "execution_ready": false,
+      "backend_complete": false,
+      "blockers": [
+        "尚未將共用 U-Boot／Linux 工具接入本板原配組件、RAM 與回應核對契約。",
+        "平台部署、救援返回及完整階段契約尚未實作／整合，不能稱只待板子。",
+        "實體板修訂、媒體身分、備份、授權及故障復原均未核定。"
+      ]
+    },
+    {
+      "board": "bpi-m2m",
+      "artifact_board": "bananapim2magic",
+      "architecture": "arm32",
+      "family": "sun8i",
+      "group": "allwinner32",
+      "soc": "R16",
+      "soc_evidence": [
+        {
+          "path": "config/boards/bananapim2magic.csc",
+          "line": 1,
+          "token": "R16"
+        }
+      ],
+      "config_path": "config/boards/bananapim2magic.csc",
+      "sources": [
+        "config/boards/bananapim2magic.csc",
+        "config/bootscripts/boot-sunxi.cmd",
+        "config/sources/armhf.conf",
+        "config/sources/families/include/crust_firmware.inc",
+        "config/sources/families/include/sunxi_common.inc",
+        "config/sources/families/sun8i.conf"
+      ],
+      "boot_profile": "sunxi32",
+      "boot_chain": {
+        "artifacts": [
+          "u-boot-sunxi-with-spl.bin"
+        ],
+        "evidence": [
+          {
+            "path": "config/sources/families/include/sunxi_common.inc",
+            "line": 14,
+            "token": "u-boot-sunxi-with-spl.bin"
+          }
+        ],
+        "note": "SPL、DDR 與 ROM 媒體入口逐板核定；沒有安全引導啟用狀態證據。"
+      },
+      "storage": {
+        "spi": {
+          "status": "not_declared",
+          "evidence": [],
+          "note": "此受控來源未明示本板可用的 SPI 引導能力；不等同沒有 SPI 硬體。"
+        },
+        "emmc": {
+          "status": "board_declared",
+          "evidence": [
+            {
+              "path": "config/boards/bananapim2magic.csc",
+              "line": 1,
+              "token": "eMMC"
+            }
+          ],
+          "note": "板型描述有 eMMC 宣告；不代表實體存在已核對、引導可用或已取得寫入授權。"
+        }
+      },
+      "special_boot": {
+        "status": "review_required",
+        "secure_boot_enabled": null,
+        "evidence": [
+          {
+            "path": "config/sources/families/include/sunxi_common.inc",
+            "line": 14,
+            "token": "u-boot-sunxi-with-spl.bin"
+          }
+        ],
+        "note": "SPL、DDR 與 ROM 媒體入口逐板核定；沒有安全引導啟用狀態證據。"
+      },
+      "software": {
+        "source_mapping": "static_reviewed",
+        "uboot_tool": "integration_pending",
+        "linux_tool": "integration_pending",
+        "deployment": "not_implemented",
+        "recovery": "not_implemented",
+        "end_to_end": "not_implemented"
+      },
+      "hardware_qualified": false,
+      "execution_ready": false,
+      "backend_complete": false,
+      "blockers": [
+        "尚未將共用 U-Boot／Linux 工具接入本板原配組件、RAM 與回應核對契約。",
+        "平台部署、救援返回及完整階段契約尚未實作／整合，不能稱只待板子。",
+        "實體板修訂、媒體身分、備份、授權及故障復原均未核定。"
+      ]
+    },
+    {
+      "board": "bpi-m2p",
+      "artifact_board": "bananapim2plus",
+      "architecture": "arm32",
+      "family": "sun8i",
+      "group": "allwinner32",
+      "soc": "H3",
+      "soc_evidence": [
+        {
+          "path": "config/boards/bananapim2plus.csc",
+          "line": 1,
+          "token": "H3"
+        }
+      ],
+      "config_path": "config/boards/bananapim2plus.csc",
+      "sources": [
+        "config/boards/bananapim2plus.csc",
+        "config/bootscripts/boot-sunxi.cmd",
+        "config/sources/armhf.conf",
+        "config/sources/families/include/crust_firmware.inc",
+        "config/sources/families/include/sunxi_common.inc",
+        "config/sources/families/sun8i.conf"
+      ],
+      "boot_profile": "sunxi32",
+      "boot_chain": {
+        "artifacts": [
+          "u-boot-sunxi-with-spl.bin"
+        ],
+        "evidence": [
+          {
+            "path": "config/sources/families/include/sunxi_common.inc",
+            "line": 14,
+            "token": "u-boot-sunxi-with-spl.bin"
+          }
+        ],
+        "note": "SPL、DDR 與 ROM 媒體入口逐板核定；沒有安全引導啟用狀態證據。"
+      },
+      "storage": {
+        "spi": {
+          "status": "not_declared",
+          "evidence": [],
+          "note": "此受控來源未明示本板可用的 SPI 引導能力；不等同沒有 SPI 硬體。"
+        },
+        "emmc": {
+          "status": "not_declared",
+          "evidence": [],
+          "note": "此受控來源未明示本板 eMMC 候選；不推定硬體有無、容量或 MMC 編號。"
+        }
+      },
+      "special_boot": {
+        "status": "review_required",
+        "secure_boot_enabled": null,
+        "evidence": [
+          {
+            "path": "config/sources/families/include/sunxi_common.inc",
+            "line": 14,
+            "token": "u-boot-sunxi-with-spl.bin"
+          }
+        ],
+        "note": "SPL、DDR 與 ROM 媒體入口逐板核定；沒有安全引導啟用狀態證據。"
+      },
+      "software": {
+        "source_mapping": "static_reviewed",
+        "uboot_tool": "integration_pending",
+        "linux_tool": "integration_pending",
+        "deployment": "not_implemented",
+        "recovery": "not_implemented",
+        "end_to_end": "not_implemented"
+      },
+      "hardware_qualified": false,
+      "execution_ready": false,
+      "backend_complete": false,
+      "blockers": [
+        "尚未將共用 U-Boot／Linux 工具接入本板原配組件、RAM 與回應核對契約。",
+        "平台部署、救援返回及完整階段契約尚未實作／整合，不能稱只待板子。",
+        "實體板修訂、媒體身分、備份、授權及故障復原均未核定。"
+      ]
+    },
+    {
+      "board": "bpi-m2u",
+      "artifact_board": "bananapim2ultra",
+      "architecture": "arm32",
+      "family": "sun8i",
+      "group": "allwinner32",
+      "soc": "R40",
+      "soc_evidence": [
+        {
+          "path": "config/boards/bananapim2ultra.csc",
+          "line": 1,
+          "token": "R40"
+        }
+      ],
+      "config_path": "config/boards/bananapim2ultra.csc",
+      "sources": [
+        "config/boards/bananapim2ultra.csc",
+        "config/bootscripts/boot-sunxi.cmd",
+        "config/sources/armhf.conf",
+        "config/sources/families/include/crust_firmware.inc",
+        "config/sources/families/include/sunxi_common.inc",
+        "config/sources/families/sun8i.conf"
+      ],
+      "boot_profile": "sunxi32",
+      "boot_chain": {
+        "artifacts": [
+          "u-boot-sunxi-with-spl.bin"
+        ],
+        "evidence": [
+          {
+            "path": "config/sources/families/include/sunxi_common.inc",
+            "line": 14,
+            "token": "u-boot-sunxi-with-spl.bin"
+          }
+        ],
+        "note": "SPL、DDR 與 ROM 媒體入口逐板核定；沒有安全引導啟用狀態證據。"
+      },
+      "storage": {
+        "spi": {
+          "status": "not_declared",
+          "evidence": [],
+          "note": "此受控來源未明示本板可用的 SPI 引導能力；不等同沒有 SPI 硬體。"
+        },
+        "emmc": {
+          "status": "board_declared",
+          "evidence": [
+            {
+              "path": "config/boards/bananapim2ultra.csc",
+              "line": 1,
+              "token": "eMMC"
+            }
+          ],
+          "note": "板型描述有 eMMC 宣告；不代表實體存在已核對、引導可用或已取得寫入授權。"
+        }
+      },
+      "special_boot": {
+        "status": "review_required",
+        "secure_boot_enabled": null,
+        "evidence": [
+          {
+            "path": "config/sources/families/include/sunxi_common.inc",
+            "line": 14,
+            "token": "u-boot-sunxi-with-spl.bin"
+          }
+        ],
+        "note": "SPL、DDR 與 ROM 媒體入口逐板核定；沒有安全引導啟用狀態證據。"
+      },
+      "software": {
+        "source_mapping": "static_reviewed",
+        "uboot_tool": "integration_pending",
+        "linux_tool": "integration_pending",
+        "deployment": "not_implemented",
+        "recovery": "not_implemented",
+        "end_to_end": "not_implemented"
+      },
+      "hardware_qualified": false,
+      "execution_ready": false,
+      "backend_complete": false,
+      "blockers": [
+        "尚未將共用 U-Boot／Linux 工具接入本板原配組件、RAM 與回應核對契約。",
+        "平台部署、救援返回及完整階段契約尚未實作／整合，不能稱只待板子。",
+        "實體板修訂、媒體身分、備份、授權及故障復原均未核定。"
+      ]
+    },
+    {
+      "board": "bpi-m2z",
+      "artifact_board": "bananapim2zero",
+      "architecture": "arm32",
+      "family": "sun8i",
+      "group": "allwinner32",
+      "soc": "H2+",
+      "soc_evidence": [
+        {
+          "path": "config/boards/bananapim2zero.csc",
+          "line": 1,
+          "token": "H2+"
+        }
+      ],
+      "config_path": "config/boards/bananapim2zero.csc",
+      "sources": [
+        "config/boards/bananapim2zero.csc",
+        "config/bootscripts/boot-sunxi.cmd",
+        "config/sources/armhf.conf",
+        "config/sources/families/include/crust_firmware.inc",
+        "config/sources/families/include/sunxi_common.inc",
+        "config/sources/families/sun8i.conf"
+      ],
+      "boot_profile": "sunxi32",
+      "boot_chain": {
+        "artifacts": [
+          "u-boot-sunxi-with-spl.bin"
+        ],
+        "evidence": [
+          {
+            "path": "config/sources/families/include/sunxi_common.inc",
+            "line": 14,
+            "token": "u-boot-sunxi-with-spl.bin"
+          }
+        ],
+        "note": "SPL、DDR 與 ROM 媒體入口逐板核定；沒有安全引導啟用狀態證據。"
+      },
+      "storage": {
+        "spi": {
+          "status": "not_declared",
+          "evidence": [],
+          "note": "此受控來源未明示本板可用的 SPI 引導能力；不等同沒有 SPI 硬體。"
+        },
+        "emmc": {
+          "status": "not_declared",
+          "evidence": [],
+          "note": "此受控來源未明示本板 eMMC 候選；不推定硬體有無、容量或 MMC 編號。"
+        }
+      },
+      "special_boot": {
+        "status": "review_required",
+        "secure_boot_enabled": null,
+        "evidence": [
+          {
+            "path": "config/sources/families/include/sunxi_common.inc",
+            "line": 14,
+            "token": "u-boot-sunxi-with-spl.bin"
+          }
+        ],
+        "note": "SPL、DDR 與 ROM 媒體入口逐板核定；沒有安全引導啟用狀態證據。"
+      },
+      "software": {
+        "source_mapping": "static_reviewed",
+        "uboot_tool": "integration_pending",
+        "linux_tool": "integration_pending",
+        "deployment": "not_implemented",
+        "recovery": "not_implemented",
+        "end_to_end": "not_implemented"
+      },
+      "hardware_qualified": false,
+      "execution_ready": false,
+      "backend_complete": false,
+      "blockers": [
+        "尚未將共用 U-Boot／Linux 工具接入本板原配組件、RAM 與回應核對契約。",
+        "平台部署、救援返回及完整階段契約尚未實作／整合，不能稱只待板子。",
+        "實體板修訂、媒體身分、備份、授權及故障復原均未核定。"
+      ]
+    },
+    {
+      "board": "bpi-m3",
+      "artifact_board": "bananapim3",
+      "architecture": "arm32",
+      "family": "sun8i",
+      "group": "allwinner32",
+      "soc": "A83T",
+      "soc_evidence": [
+        {
+          "path": "config/boards/bananapim3.csc",
+          "line": 1,
+          "token": "A83T"
+        }
+      ],
+      "config_path": "config/boards/bananapim3.csc",
+      "sources": [
+        "config/boards/bananapim3.csc",
+        "config/bootscripts/boot-sunxi.cmd",
+        "config/sources/armhf.conf",
+        "config/sources/families/include/crust_firmware.inc",
+        "config/sources/families/include/sunxi_common.inc",
+        "config/sources/families/sun8i.conf"
+      ],
+      "boot_profile": "sunxi32",
+      "boot_chain": {
+        "artifacts": [
+          "u-boot-sunxi-with-spl.bin"
+        ],
+        "evidence": [
+          {
+            "path": "config/sources/families/include/sunxi_common.inc",
+            "line": 14,
+            "token": "u-boot-sunxi-with-spl.bin"
+          }
+        ],
+        "note": "SPL、DDR 與 ROM 媒體入口逐板核定；沒有安全引導啟用狀態證據。"
+      },
+      "storage": {
+        "spi": {
+          "status": "not_declared",
+          "evidence": [],
+          "note": "此受控來源未明示本板可用的 SPI 引導能力；不等同沒有 SPI 硬體。"
+        },
+        "emmc": {
+          "status": "not_declared",
+          "evidence": [],
+          "note": "此受控來源未明示本板 eMMC 候選；不推定硬體有無、容量或 MMC 編號。"
+        }
+      },
+      "special_boot": {
+        "status": "review_required",
+        "secure_boot_enabled": null,
+        "evidence": [
+          {
+            "path": "config/sources/families/include/sunxi_common.inc",
+            "line": 14,
+            "token": "u-boot-sunxi-with-spl.bin"
+          }
+        ],
+        "note": "SPL、DDR 與 ROM 媒體入口逐板核定；沒有安全引導啟用狀態證據。"
+      },
+      "software": {
+        "source_mapping": "static_reviewed",
+        "uboot_tool": "integration_pending",
+        "linux_tool": "integration_pending",
+        "deployment": "not_implemented",
+        "recovery": "not_implemented",
+        "end_to_end": "not_implemented"
+      },
+      "hardware_qualified": false,
+      "execution_ready": false,
+      "backend_complete": false,
+      "blockers": [
+        "尚未將共用 U-Boot／Linux 工具接入本板原配組件、RAM 與回應核對契約。",
+        "平台部署、救援返回及完整階段契約尚未實作／整合，不能稱只待板子。",
+        "實體板修訂、媒體身分、備份、授權及故障復原均未核定。"
+      ]
+    },
+    {
+      "board": "bpi-p2z",
+      "artifact_board": "bananapip2zero",
+      "architecture": "arm32",
+      "family": "sun8i",
+      "group": "allwinner32",
+      "soc": "H2+",
+      "soc_evidence": [
+        {
+          "path": "config/boards/bananapip2zero.csc",
+          "line": 1,
+          "token": "H2+"
+        }
+      ],
+      "config_path": "config/boards/bananapip2zero.csc",
+      "sources": [
+        "config/boards/bananapip2zero.csc",
+        "config/bootscripts/boot-sunxi.cmd",
+        "config/sources/armhf.conf",
+        "config/sources/families/include/crust_firmware.inc",
+        "config/sources/families/include/sunxi_common.inc",
+        "config/sources/families/sun8i.conf"
+      ],
+      "boot_profile": "sunxi32",
+      "boot_chain": {
+        "artifacts": [
+          "u-boot-sunxi-with-spl.bin"
+        ],
+        "evidence": [
+          {
+            "path": "config/sources/families/include/sunxi_common.inc",
+            "line": 14,
+            "token": "u-boot-sunxi-with-spl.bin"
+          }
+        ],
+        "note": "SPL、DDR 與 ROM 媒體入口逐板核定；沒有安全引導啟用狀態證據。"
+      },
+      "storage": {
+        "spi": {
+          "status": "not_declared",
+          "evidence": [],
+          "note": "此受控來源未明示本板可用的 SPI 引導能力；不等同沒有 SPI 硬體。"
+        },
+        "emmc": {
+          "status": "board_declared",
+          "evidence": [
+            {
+              "path": "config/boards/bananapip2zero.csc",
+              "line": 1,
+              "token": "eMMC"
+            }
+          ],
+          "note": "板型描述有 eMMC 宣告；不代表實體存在已核對、引導可用或已取得寫入授權。"
+        }
+      },
+      "special_boot": {
+        "status": "review_required",
+        "secure_boot_enabled": null,
+        "evidence": [
+          {
+            "path": "config/sources/families/include/sunxi_common.inc",
+            "line": 14,
+            "token": "u-boot-sunxi-with-spl.bin"
+          }
+        ],
+        "note": "SPL、DDR 與 ROM 媒體入口逐板核定；沒有安全引導啟用狀態證據。"
+      },
+      "software": {
+        "source_mapping": "static_reviewed",
+        "uboot_tool": "integration_pending",
+        "linux_tool": "integration_pending",
+        "deployment": "not_implemented",
+        "recovery": "not_implemented",
+        "end_to_end": "not_implemented"
+      },
+      "hardware_qualified": false,
+      "execution_ready": false,
+      "backend_complete": false,
+      "blockers": [
+        "尚未將共用 U-Boot／Linux 工具接入本板原配組件、RAM 與回應核對契約。",
+        "平台部署、救援返回及完整階段契約尚未實作／整合，不能稱只待板子。",
+        "實體板修訂、媒體身分、備份、授權及故障復原均未核定。"
+      ]
+    },
+    {
+      "board": "bpi-pro",
+      "artifact_board": "bananapipro",
+      "architecture": "arm32",
+      "family": "sun7i",
+      "group": "allwinner32",
+      "soc": "A20",
+      "soc_evidence": [
+        {
+          "path": "config/boards/bananapipro.csc",
+          "line": 1,
+          "token": "A20"
+        }
+      ],
+      "config_path": "config/boards/bananapipro.csc",
+      "sources": [
+        "config/boards/bananapipro.csc",
+        "config/bootscripts/boot-sunxi.cmd",
+        "config/sources/armhf.conf",
+        "config/sources/families/include/crust_firmware.inc",
+        "config/sources/families/include/sunxi_common.inc",
+        "config/sources/families/sun7i.conf"
+      ],
+      "boot_profile": "sunxi32",
+      "boot_chain": {
+        "artifacts": [
+          "u-boot-sunxi-with-spl.bin"
+        ],
+        "evidence": [
+          {
+            "path": "config/sources/families/include/sunxi_common.inc",
+            "line": 14,
+            "token": "u-boot-sunxi-with-spl.bin"
+          }
+        ],
+        "note": "SPL、DDR 與 ROM 媒體入口逐板核定；沒有安全引導啟用狀態證據。"
+      },
+      "storage": {
+        "spi": {
+          "status": "not_declared",
+          "evidence": [],
+          "note": "此受控來源未明示本板可用的 SPI 引導能力；不等同沒有 SPI 硬體。"
+        },
+        "emmc": {
+          "status": "not_declared",
+          "evidence": [],
+          "note": "此受控來源未明示本板 eMMC 候選；不推定硬體有無、容量或 MMC 編號。"
+        }
+      },
+      "special_boot": {
+        "status": "review_required",
+        "secure_boot_enabled": null,
+        "evidence": [
+          {
+            "path": "config/sources/families/include/sunxi_common.inc",
+            "line": 14,
+            "token": "u-boot-sunxi-with-spl.bin"
+          }
+        ],
+        "note": "SPL、DDR 與 ROM 媒體入口逐板核定；沒有安全引導啟用狀態證據。"
+      },
+      "software": {
+        "source_mapping": "static_reviewed",
+        "uboot_tool": "integration_pending",
+        "linux_tool": "integration_pending",
+        "deployment": "not_implemented",
+        "recovery": "not_implemented",
+        "end_to_end": "not_implemented"
+      },
+      "hardware_qualified": false,
+      "execution_ready": false,
+      "backend_complete": false,
+      "blockers": [
+        "尚未將共用 U-Boot／Linux 工具接入本板原配組件、RAM 與回應核對契約。",
+        "平台部署、救援返回及完整階段契約尚未實作／整合，不能稱只待板子。",
+        "實體板修訂、媒體身分、備份、授權及故障復原均未核定。"
+      ]
+    },
+    {
+      "board": "bpi-r2",
+      "artifact_board": "bananapir2",
+      "architecture": "arm32",
+      "family": "mt7623",
+      "group": "mediatek32",
+      "soc": "MT7623n",
+      "soc_evidence": [
+        {
+          "path": "config/boards/bananapir2.csc",
+          "line": 1,
+          "token": "MT7623n"
+        }
+      ],
+      "config_path": "config/boards/bananapir2.csc",
+      "sources": [
+        "config/boards/bananapir2.csc",
+        "config/bootscripts/boot-mt7623.cmd",
+        "config/sources/armhf.conf",
+        "config/sources/families/mt7623.conf"
+      ],
+      "boot_profile": "mt7623",
+      "boot_chain": {
+        "artifacts": [
+          "u-boot.bin",
+          "BPI-R2-preloader-2k.img",
+          "BPI-R2-EMMC-boot0-0K-0905.img"
+        ],
+        "evidence": [
+          {
+            "path": "config/sources/families/mt7623.conf",
+            "line": 12,
+            "token": "UBOOT_TARGET_MAP"
+          }
+        ],
+        "note": "MT7623 前置載入器與 eMMC boot0 授權另核定；不得泛用 Filogic 的 BL2／FIP。"
+      },
+      "storage": {
+        "spi": {
+          "status": "not_declared",
+          "evidence": [],
+          "note": "此受控來源未明示本板可用的 SPI 引導能力；不等同沒有 SPI 硬體。"
+        },
+        "emmc": {
+          "status": "family_conditional",
+          "evidence": [
+            {
+              "path": "config/sources/families/mt7623.conf",
+              "line": 12,
+              "token": "BPI-R2-EMMC-boot0-0K-0905.img"
+            }
+          ],
+          "note": "來源列出 R2 專用 eMMC boot0 載荷；媒體配對及部署尚未核定。"
+        }
+      },
+      "special_boot": {
+        "status": "review_required",
+        "secure_boot_enabled": null,
+        "evidence": [
+          {
+            "path": "config/sources/families/mt7623.conf",
+            "line": 12,
+            "token": "UBOOT_TARGET_MAP"
+          }
+        ],
+        "note": "MT7623 前置載入器與 eMMC boot0 授權另核定；不得泛用 Filogic 的 BL2／FIP。"
+      },
+      "software": {
+        "source_mapping": "static_reviewed",
+        "uboot_tool": "integration_pending",
+        "linux_tool": "integration_pending",
+        "deployment": "not_implemented",
+        "recovery": "not_implemented",
+        "end_to_end": "not_implemented"
+      },
+      "hardware_qualified": false,
+      "execution_ready": false,
+      "backend_complete": false,
+      "blockers": [
+        "尚未將共用 U-Boot／Linux 工具接入本板原配組件、RAM 與回應核對契約。",
+        "平台部署、救援返回及完整階段契約尚未實作／整合，不能稱只待板子。",
+        "實體板修訂、媒體身分、備份、授權及故障復原均未核定。"
+      ]
+    },
+    {
+      "board": "bpi-ai2n",
+      "artifact_board": "bpi-ai2n",
+      "architecture": "arm64",
+      "family": "renesas-rzv2n-bpi",
+      "group": "renesas",
+      "soc": "RZ/V2N",
+      "soc_evidence": [
+        {
+          "path": "config/boards/bpi-ai2n.conf",
+          "line": 1,
+          "token": "RZ/V2N"
+        }
+      ],
+      "config_path": "config/boards/bpi-ai2n.conf",
+      "sources": [
+        "config/boards/bpi-ai2n.conf",
+        "config/bootscripts/boot-renesas-rzv2n-bpi.cmd",
+        "config/sources/arm64.conf",
+        "config/sources/families/include/renesas_common_bpi.inc",
+        "config/sources/families/renesas-rzv2n-bpi.conf"
+      ],
+      "boot_profile": "renesas",
+      "boot_chain": {
+        "artifacts": [
+          "u-boot.bin",
+          "bl2_bp_sd.bin",
+          "fip.bin"
+        ],
+        "evidence": [
+          {
+            "path": "config/sources/families/renesas-rzv2n-bpi.conf",
+            "line": 51,
+            "token": "UBOOT_TARGET_MAP="
+          }
+        ],
+        "note": "RZ/V2N 分別產生 SPI／eMMC／SD 的 BL2 參數區塊與 FIP；不代表任一媒體部署已核定。"
+      },
+      "storage": {
+        "spi": {
+          "status": "family_conditional",
+          "evidence": [
+            {
+              "path": "config/sources/families/renesas-rzv2n-bpi.conf",
+              "line": 92,
+              "token": "bl2_bp_spi"
+            }
+          ],
+          "note": "家族有 SPI 前置載荷封裝，未核定本板 SPI 部署及實體狀態。"
+        },
+        "emmc": {
+          "status": "family_conditional",
+          "evidence": [
+            {
+              "path": "config/sources/families/renesas-rzv2n-bpi.conf",
+              "line": 94,
+              "token": "bl2_bp_emmc"
+            }
+          ],
+          "note": "家族有 eMMC 前置載荷封裝，未核定本板 eMMC 部署及實體狀態。"
+        }
+      },
+      "special_boot": {
+        "status": "review_required",
+        "secure_boot_enabled": null,
+        "evidence": [
+          {
+            "path": "config/sources/families/renesas-rzv2n-bpi.conf",
+            "line": 51,
+            "token": "UBOOT_TARGET_MAP="
+          }
+        ],
+        "note": "RZ/V2N 分別產生 SPI／eMMC／SD 的 BL2 參數區塊與 FIP；不代表任一媒體部署已核定。"
+      },
+      "software": {
+        "source_mapping": "static_reviewed",
+        "uboot_tool": "integration_pending",
+        "linux_tool": "integration_pending",
+        "deployment": "not_implemented",
+        "recovery": "not_implemented",
+        "end_to_end": "not_implemented"
+      },
+      "hardware_qualified": false,
+      "execution_ready": false,
+      "backend_complete": false,
+      "blockers": [
+        "尚未將共用 U-Boot／Linux 工具接入本板原配組件、RAM 與回應核對契約。",
+        "平台部署、救援返回及完整階段契約尚未實作／整合，不能稱只待板子。",
+        "實體板修訂、媒體身分、備份、授權及故障復原均未核定。"
+      ]
+    },
+    {
+      "board": "bpi-aim7",
+      "artifact_board": "bananapiaim7",
+      "architecture": "arm64",
+      "family": "rockchip-rk3588",
+      "group": "rockchip64",
+      "soc": "RK3588",
+      "soc_evidence": [
+        {
+          "path": "config/boards/bananapiaim7.wip",
+          "line": 1,
+          "token": "RK3588"
+        }
+      ],
+      "config_path": "config/boards/bananapiaim7.wip",
+      "sources": [
+        "config/boards/bananapiaim7.wip",
+        "config/bootscripts/boot-rk35xx.cmd",
+        "config/sources/arm64.conf",
+        "config/sources/families/include/rockchip64_common.inc",
+        "config/sources/families/rockchip-rk3588.conf"
+      ],
+      "boot_profile": "rk35xx",
+      "boot_chain": {
+        "artifacts": [
+          "idbloader.img",
+          "u-boot.itb"
+        ],
+        "evidence": [
+          {
+            "path": "config/sources/families/include/rockchip64_common.inc",
+            "line": 200,
+            "token": "BL31=$RKBIN_DIR/$BL31_BLOB spl/u-boot-spl.bin"
+          }
+        ],
+        "note": "DDR、BL31、SPL 與 FIT 為建置前置鏈；不能從副檔名推論通用 FIT 執行能力。"
+      },
+      "storage": {
+        "spi": {
+          "status": "family_conditional",
+          "evidence": [
+            {
+              "path": "config/sources/families/include/rockchip64_common.inc",
+              "line": 227,
+              "token": "if [[ $BOOT_SUPPORT_SPI == yes ]]"
+            }
+          ],
+          "note": "僅有家族條件式 SPI 封裝路徑，沒有據此宣告本板支援。"
+        },
+        "emmc": {
+          "status": "not_declared",
+          "evidence": [],
+          "note": "此受控來源未明示本板 eMMC 候選；不推定硬體有無、容量或 MMC 編號。"
+        }
+      },
+      "special_boot": {
+        "status": "review_required",
+        "secure_boot_enabled": null,
+        "evidence": [
+          {
+            "path": "config/sources/families/include/rockchip64_common.inc",
+            "line": 200,
+            "token": "BL31=$RKBIN_DIR/$BL31_BLOB spl/u-boot-spl.bin"
+          }
+        ],
+        "note": "DDR、BL31、SPL 與 FIT 為建置前置鏈；不能從副檔名推論通用 FIT 執行能力。"
+      },
+      "software": {
+        "source_mapping": "static_reviewed",
+        "uboot_tool": "integration_pending",
+        "linux_tool": "integration_pending",
+        "deployment": "not_implemented",
+        "recovery": "not_implemented",
+        "end_to_end": "not_implemented"
+      },
+      "hardware_qualified": false,
+      "execution_ready": false,
+      "backend_complete": false,
+      "blockers": [
+        "尚未將共用 U-Boot／Linux 工具接入本板原配組件、RAM 與回應核對契約。",
+        "平台部署、救援返回及完整階段契約尚未實作／整合，不能稱只待板子。",
+        "實體板修訂、媒體身分、備份、授權及故障復原均未核定。"
+      ]
+    },
+    {
+      "board": "bpi-cm4io",
+      "artifact_board": "bananapicm4io",
+      "architecture": "arm64",
+      "family": "meson-g12b",
+      "group": "amlogic",
+      "soc": "A311D",
+      "soc_evidence": [
+        {
+          "path": "config/boards/bananapicm4io.conf",
+          "line": 1,
+          "token": "A311D"
+        }
+      ],
+      "config_path": "config/boards/bananapicm4io.conf",
+      "sources": [
+        "config/boards/bananapicm4io.conf",
+        "config/bootscripts/boot-meson64.cmd",
+        "config/sources/arm64.conf",
+        "config/sources/families/include/meson64_common.inc",
+        "config/sources/families/meson-g12b.conf"
+      ],
+      "boot_profile": "meson64",
+      "boot_chain": {
+        "artifacts": [
+          "u-boot.bin.sd.bin",
+          "u-boot-dtb.img"
+        ],
+        "evidence": [
+          {
+            "path": "config/sources/families/include/meson64_common.inc",
+            "line": 9,
+            "token": "UBOOT_TARGET_MAP"
+          },
+          {
+            "path": "config/sources/families/include/meson64_common.inc",
+            "line": 25,
+            "token": "\"amlogic-boot-fip\""
+          }
+        ],
+        "note": "原廠 FIP／早期載荷配套、安全引導與啟動順序待核定，不以 booti 推論可替換整條鏈。"
+      },
+      "storage": {
+        "spi": {
+          "status": "not_declared",
+          "evidence": [],
+          "note": "此受控來源未明示本板可用的 SPI 引導能力；不等同沒有 SPI 硬體。"
+        },
+        "emmc": {
+          "status": "board_declared",
+          "evidence": [
+            {
+              "path": "config/boards/bananapicm4io.conf",
+              "line": 1,
+              "token": "eMMC"
+            }
+          ],
+          "note": "板型描述有 eMMC 宣告；不代表實體存在已核對、引導可用或已取得寫入授權。"
+        }
+      },
+      "special_boot": {
+        "status": "review_required",
+        "secure_boot_enabled": null,
+        "evidence": [
+          {
+            "path": "config/sources/families/include/meson64_common.inc",
+            "line": 9,
+            "token": "UBOOT_TARGET_MAP"
+          },
+          {
+            "path": "config/sources/families/include/meson64_common.inc",
+            "line": 25,
+            "token": "\"amlogic-boot-fip\""
+          }
+        ],
+        "note": "原廠 FIP／早期載荷配套、安全引導與啟動順序待核定，不以 booti 推論可替換整條鏈。"
+      },
+      "software": {
+        "source_mapping": "static_reviewed",
+        "uboot_tool": "integration_pending",
+        "linux_tool": "integration_pending",
+        "deployment": "not_implemented",
+        "recovery": "not_implemented",
+        "end_to_end": "not_implemented"
+      },
+      "hardware_qualified": false,
+      "execution_ready": false,
+      "backend_complete": false,
+      "blockers": [
+        "尚未將共用 U-Boot／Linux 工具接入本板原配組件、RAM 與回應核對契約。",
+        "平台部署、救援返回及完整階段契約尚未實作／整合，不能稱只待板子。",
+        "實體板修訂、媒體身分、備份、授權及故障復原均未核定。"
+      ]
+    },
+    {
+      "board": "bpi-cm5pro",
+      "artifact_board": "bananapicm5pro",
+      "architecture": "arm64",
+      "family": "rk35xx",
+      "group": "rockchip64",
+      "soc": "RK3576",
+      "soc_evidence": [
+        {
+          "path": "config/boards/bananapicm5pro.wip",
+          "line": 1,
+          "token": "RK3576"
+        }
+      ],
+      "config_path": "config/boards/bananapicm5pro.wip",
+      "sources": [
+        "config/boards/bananapicm5pro.wip",
+        "config/bootscripts/boot-rk3576.cmd",
+        "config/sources/arm64.conf",
+        "config/sources/families/include/rockchip64_common.inc",
+        "config/sources/families/rk35xx.conf"
+      ],
+      "boot_profile": "rk3576",
+      "boot_chain": {
+        "artifacts": [
+          "idbloader.img",
+          "u-boot.itb"
+        ],
+        "evidence": [
+          {
+            "path": "config/sources/families/include/rockchip64_common.inc",
+            "line": 200,
+            "token": "BL31=$RKBIN_DIR/$BL31_BLOB spl/u-boot-spl.bin"
+          }
+        ],
+        "note": "DDR、BL31、SPL 與 FIT 為建置前置鏈；不能從副檔名推論通用 FIT 執行能力。"
+      },
+      "storage": {
+        "spi": {
+          "status": "family_conditional",
+          "evidence": [
+            {
+              "path": "config/sources/families/include/rockchip64_common.inc",
+              "line": 227,
+              "token": "if [[ $BOOT_SUPPORT_SPI == yes ]]"
+            }
+          ],
+          "note": "僅有家族條件式 SPI 封裝路徑，沒有據此宣告本板支援。"
+        },
+        "emmc": {
+          "status": "not_declared",
+          "evidence": [],
+          "note": "此受控來源未明示本板 eMMC 候選；不推定硬體有無、容量或 MMC 編號。"
+        }
+      },
+      "special_boot": {
+        "status": "review_required",
+        "secure_boot_enabled": null,
+        "evidence": [
+          {
+            "path": "config/sources/families/include/rockchip64_common.inc",
+            "line": 200,
+            "token": "BL31=$RKBIN_DIR/$BL31_BLOB spl/u-boot-spl.bin"
+          }
+        ],
+        "note": "DDR、BL31、SPL 與 FIT 為建置前置鏈；不能從副檔名推論通用 FIT 執行能力。"
+      },
+      "software": {
+        "source_mapping": "static_reviewed",
+        "uboot_tool": "integration_pending",
+        "linux_tool": "integration_pending",
+        "deployment": "not_implemented",
+        "recovery": "not_implemented",
+        "end_to_end": "not_implemented"
+      },
+      "hardware_qualified": false,
+      "execution_ready": false,
+      "backend_complete": false,
+      "blockers": [
+        "尚未將共用 U-Boot／Linux 工具接入本板原配組件、RAM 與回應核對契約。",
+        "平台部署、救援返回及完整階段契約尚未實作／整合，不能稱只待板子。",
+        "實體板修訂、媒體身分、備份、授權及故障復原均未核定。"
+      ]
+    },
+    {
+      "board": "bpi-m1super",
+      "artifact_board": "bananapim1super",
+      "architecture": "arm64",
+      "family": "rk35xx",
+      "group": "rockchip64",
+      "soc": "RK3528",
+      "soc_evidence": [
+        {
+          "path": "config/boards/bananapim1super.wip",
+          "line": 1,
+          "token": "RK3528"
+        }
+      ],
+      "config_path": "config/boards/bananapim1super.wip",
+      "sources": [
+        "config/boards/bananapim1super.wip",
+        "config/bootscripts/boot-rk35xx.cmd",
+        "config/sources/arm64.conf",
+        "config/sources/families/include/rockchip64_common.inc",
+        "config/sources/families/rk35xx.conf"
+      ],
+      "boot_profile": "rk35xx",
+      "boot_chain": {
+        "artifacts": [
+          "idbloader.img",
+          "u-boot.itb"
+        ],
+        "evidence": [
+          {
+            "path": "config/sources/families/include/rockchip64_common.inc",
+            "line": 200,
+            "token": "BL31=$RKBIN_DIR/$BL31_BLOB spl/u-boot-spl.bin"
+          }
+        ],
+        "note": "DDR、BL31、SPL 與 FIT 為建置前置鏈；不能從副檔名推論通用 FIT 執行能力。"
+      },
+      "storage": {
+        "spi": {
+          "status": "family_conditional",
+          "evidence": [
+            {
+              "path": "config/sources/families/include/rockchip64_common.inc",
+              "line": 227,
+              "token": "if [[ $BOOT_SUPPORT_SPI == yes ]]"
+            }
+          ],
+          "note": "僅有家族條件式 SPI 封裝路徑，沒有據此宣告本板支援。"
+        },
+        "emmc": {
+          "status": "not_declared",
+          "evidence": [],
+          "note": "此受控來源未明示本板 eMMC 候選；不推定硬體有無、容量或 MMC 編號。"
+        }
+      },
+      "special_boot": {
+        "status": "review_required",
+        "secure_boot_enabled": null,
+        "evidence": [
+          {
+            "path": "config/sources/families/include/rockchip64_common.inc",
+            "line": 200,
+            "token": "BL31=$RKBIN_DIR/$BL31_BLOB spl/u-boot-spl.bin"
+          }
+        ],
+        "note": "DDR、BL31、SPL 與 FIT 為建置前置鏈；不能從副檔名推論通用 FIT 執行能力。"
+      },
+      "software": {
+        "source_mapping": "static_reviewed",
+        "uboot_tool": "integration_pending",
+        "linux_tool": "integration_pending",
+        "deployment": "not_implemented",
+        "recovery": "not_implemented",
+        "end_to_end": "not_implemented"
+      },
+      "hardware_qualified": false,
+      "execution_ready": false,
+      "backend_complete": false,
+      "blockers": [
+        "尚未將共用 U-Boot／Linux 工具接入本板原配組件、RAM 與回應核對契約。",
+        "平台部署、救援返回及完整階段契約尚未實作／整合，不能稱只待板子。",
+        "實體板修訂、媒體身分、備份、授權及故障復原均未核定。"
+      ]
+    },
+    {
+      "board": "bpi-m2pro",
+      "artifact_board": "bananapim2pro",
+      "architecture": "arm64",
+      "family": "meson-sm1",
+      "group": "amlogic",
+      "soc": "S905X3",
+      "soc_evidence": [
+        {
+          "path": "config/boards/bananapim2pro.csc",
+          "line": 1,
+          "token": "S905X3"
+        }
+      ],
+      "config_path": "config/boards/bananapim2pro.csc",
+      "sources": [
+        "config/boards/bananapim2pro.csc",
+        "config/bootscripts/boot-meson64.cmd",
+        "config/sources/arm64.conf",
+        "config/sources/families/include/meson64_common.inc",
+        "config/sources/families/meson-sm1.conf"
+      ],
+      "boot_profile": "meson64",
+      "boot_chain": {
+        "artifacts": [
+          "u-boot.bin.sd.bin",
+          "u-boot-dtb.img"
+        ],
+        "evidence": [
+          {
+            "path": "config/sources/families/include/meson64_common.inc",
+            "line": 9,
+            "token": "UBOOT_TARGET_MAP"
+          },
+          {
+            "path": "config/sources/families/include/meson64_common.inc",
+            "line": 25,
+            "token": "\"amlogic-boot-fip\""
+          }
+        ],
+        "note": "原廠 FIP／早期載荷配套、安全引導與啟動順序待核定，不以 booti 推論可替換整條鏈。"
+      },
+      "storage": {
+        "spi": {
+          "status": "not_declared",
+          "evidence": [],
+          "note": "此受控來源未明示本板可用的 SPI 引導能力；不等同沒有 SPI 硬體。"
+        },
+        "emmc": {
+          "status": "board_declared",
+          "evidence": [
+            {
+              "path": "config/boards/bananapim2pro.csc",
+              "line": 1,
+              "token": "eMMC"
+            }
+          ],
+          "note": "板型描述有 eMMC 宣告；不代表實體存在已核對、引導可用或已取得寫入授權。"
+        }
+      },
+      "special_boot": {
+        "status": "review_required",
+        "secure_boot_enabled": null,
+        "evidence": [
+          {
+            "path": "config/sources/families/include/meson64_common.inc",
+            "line": 9,
+            "token": "UBOOT_TARGET_MAP"
+          },
+          {
+            "path": "config/sources/families/include/meson64_common.inc",
+            "line": 25,
+            "token": "\"amlogic-boot-fip\""
+          }
+        ],
+        "note": "原廠 FIP／早期載荷配套、安全引導與啟動順序待核定，不以 booti 推論可替換整條鏈。"
+      },
+      "software": {
+        "source_mapping": "static_reviewed",
+        "uboot_tool": "integration_pending",
+        "linux_tool": "integration_pending",
+        "deployment": "not_implemented",
+        "recovery": "not_implemented",
+        "end_to_end": "not_implemented"
+      },
+      "hardware_qualified": false,
+      "execution_ready": false,
+      "backend_complete": false,
+      "blockers": [
+        "尚未將共用 U-Boot／Linux 工具接入本板原配組件、RAM 與回應核對契約。",
+        "平台部署、救援返回及完整階段契約尚未實作／整合，不能稱只待板子。",
+        "實體板修訂、媒體身分、備份、授權及故障復原均未核定。"
+      ]
+    },
+    {
+      "board": "bpi-m2s",
+      "artifact_board": "bananapim2s",
+      "architecture": "arm64",
+      "family": "meson-g12b",
+      "group": "amlogic",
+      "soc": "A311D",
+      "soc_evidence": [
+        {
+          "path": "config/boards/bananapim2s.conf",
+          "line": 1,
+          "token": "A311D"
+        }
+      ],
+      "config_path": "config/boards/bananapim2s.conf",
+      "sources": [
+        "config/boards/bananapim2s.conf",
+        "config/bootscripts/boot-meson64.cmd",
+        "config/sources/arm64.conf",
+        "config/sources/families/include/meson64_common.inc",
+        "config/sources/families/meson-g12b.conf"
+      ],
+      "boot_profile": "meson64",
+      "boot_chain": {
+        "artifacts": [
+          "u-boot.bin.sd.bin",
+          "u-boot-dtb.img"
+        ],
+        "evidence": [
+          {
+            "path": "config/sources/families/include/meson64_common.inc",
+            "line": 9,
+            "token": "UBOOT_TARGET_MAP"
+          },
+          {
+            "path": "config/sources/families/include/meson64_common.inc",
+            "line": 25,
+            "token": "\"amlogic-boot-fip\""
+          }
+        ],
+        "note": "原廠 FIP／早期載荷配套、安全引導與啟動順序待核定，不以 booti 推論可替換整條鏈。"
+      },
+      "storage": {
+        "spi": {
+          "status": "not_declared",
+          "evidence": [],
+          "note": "此受控來源未明示本板可用的 SPI 引導能力；不等同沒有 SPI 硬體。"
+        },
+        "emmc": {
+          "status": "board_declared",
+          "evidence": [
+            {
+              "path": "config/boards/bananapim2s.conf",
+              "line": 1,
+              "token": "eMMC"
+            }
+          ],
+          "note": "板型描述有 eMMC 宣告；不代表實體存在已核對、引導可用或已取得寫入授權。"
+        }
+      },
+      "special_boot": {
+        "status": "review_required",
+        "secure_boot_enabled": null,
+        "evidence": [
+          {
+            "path": "config/sources/families/include/meson64_common.inc",
+            "line": 9,
+            "token": "UBOOT_TARGET_MAP"
+          },
+          {
+            "path": "config/sources/families/include/meson64_common.inc",
+            "line": 25,
+            "token": "\"amlogic-boot-fip\""
+          }
+        ],
+        "note": "原廠 FIP／早期載荷配套、安全引導與啟動順序待核定，不以 booti 推論可替換整條鏈。"
+      },
+      "software": {
+        "source_mapping": "static_reviewed",
+        "uboot_tool": "integration_pending",
+        "linux_tool": "integration_pending",
+        "deployment": "not_implemented",
+        "recovery": "not_implemented",
+        "end_to_end": "not_implemented"
+      },
+      "hardware_qualified": false,
+      "execution_ready": false,
+      "backend_complete": false,
+      "blockers": [
+        "尚未將共用 U-Boot／Linux 工具接入本板原配組件、RAM 與回應核對契約。",
+        "平台部署、救援返回及完整階段契約尚未實作／整合，不能稱只待板子。",
+        "實體板修訂、媒體身分、備份、授權及故障復原均未核定。"
+      ]
+    },
+    {
+      "board": "bpi-m4",
+      "artifact_board": "bananapim4",
+      "architecture": "arm64",
+      "family": "realtek-rtd139x-bpi",
+      "group": "realtek",
+      "soc": "RTD1395",
+      "soc_evidence": [
+        {
+          "path": "config/boards/bananapim4.wip",
+          "line": 1,
+          "token": "RTD1395"
+        }
+      ],
+      "config_path": "config/boards/bananapim4.wip",
+      "sources": [
+        "config/boards/bananapim4.wip",
+        "config/sources/arm64.conf",
+        "config/sources/families/include/realtek_bpi_legacy_common.inc",
+        "config/sources/families/realtek-rtd139x-bpi.conf"
+      ],
+      "boot_profile": "realtek-vendor",
+      "boot_chain": {
+        "artifacts": [
+          "u-boot.bin",
+          "uEnv.txt",
+          "bluecore.audio"
+        ],
+        "evidence": [
+          {
+            "path": "config/sources/families/include/realtek_bpi_legacy_common.inc",
+            "line": 16,
+            "token": "UBOOT_TARGET_MAP="
+          }
+        ],
+        "note": "RTD1296／RTD1395 原廠 BSP 的容器、環境、音訊韌體及安全鏈需專用核定；核心格式目前未知。"
+      },
+      "storage": {
+        "spi": {
+          "status": "not_declared",
+          "evidence": [],
+          "note": "此受控來源未明示本板可用的 SPI 引導能力；不等同沒有 SPI 硬體。"
+        },
+        "emmc": {
+          "status": "not_declared",
+          "evidence": [],
+          "note": "此受控來源未明示本板 eMMC 候選；不推定硬體有無、容量或 MMC 編號。"
+        }
+      },
+      "special_boot": {
+        "status": "review_required",
+        "secure_boot_enabled": null,
+        "evidence": [
+          {
+            "path": "config/sources/families/include/realtek_bpi_legacy_common.inc",
+            "line": 16,
+            "token": "UBOOT_TARGET_MAP="
+          }
+        ],
+        "note": "RTD1296／RTD1395 原廠 BSP 的容器、環境、音訊韌體及安全鏈需專用核定；核心格式目前未知。"
+      },
+      "software": {
+        "source_mapping": "static_reviewed",
+        "uboot_tool": "integration_pending",
+        "linux_tool": "integration_pending",
+        "deployment": "not_implemented",
+        "recovery": "not_implemented",
+        "end_to_end": "not_implemented"
+      },
+      "hardware_qualified": false,
+      "execution_ready": false,
+      "backend_complete": false,
+      "blockers": [
+        "尚未將共用 U-Boot／Linux 工具接入本板原配組件、RAM 與回應核對契約。",
+        "平台部署、救援返回及完整階段契約尚未實作／整合，不能稱只待板子。",
+        "實體板修訂、媒體身分、備份、授權及故障復原均未核定。",
+        "尚缺原廠環境與完整啟動鏈的靜態契約；不得把候選命令或檔名當成容器支援。"
+      ]
+    },
+    {
+      "board": "bpi-m4b",
+      "artifact_board": "bananapim4berry",
+      "architecture": "arm64",
+      "family": "sun50iw9-bpi",
+      "group": "allwinner-h618",
+      "soc": "H618",
+      "soc_evidence": [
+        {
+          "path": "config/boards/bananapim4berry.conf",
+          "line": 1,
+          "token": "H618"
+        }
+      ],
+      "config_path": "config/boards/bananapim4berry.conf",
+      "sources": [
+        "config/boards/bananapim4berry.conf",
+        "config/boards/include/bananapi-h618-common.inc",
+        "config/bootscripts/boot-sun50i-next.cmd",
+        "config/sources/arm64.conf",
+        "config/sources/families/include/crust_firmware.inc",
+        "config/sources/families/include/sunxi64_common.inc",
+        "config/sources/families/sun50iw9-bpi.conf"
+      ],
+      "boot_profile": "sunxi64",
+      "boot_chain": {
+        "artifacts": [
+          "u-boot-sunxi-with-spl.bin",
+          "bl31.bin"
+        ],
+        "evidence": [
+          {
+            "path": "config/sources/families/include/sunxi64_common.inc",
+            "line": 17,
+            "token": "u-boot-sunxi-with-spl.bin"
+          },
+          {
+            "path": "config/sources/families/include/sunxi64_common.inc",
+            "line": 11,
+            "token": "bl31.bin"
+          }
+        ],
+        "note": "H618 的板型與 DDR 修訂仍需個別配置；既有原型不代表這三個板型後端完成。"
+      },
+      "storage": {
+        "spi": {
+          "status": "not_declared",
+          "evidence": [],
+          "note": "此受控來源未明示本板可用的 SPI 引導能力；不等同沒有 SPI 硬體。"
+        },
+        "emmc": {
+          "status": "board_declared",
+          "evidence": [
+            {
+              "path": "config/boards/bananapim4berry.conf",
+              "line": 1,
+              "token": "eMMC"
+            }
+          ],
+          "note": "板型描述有 eMMC 宣告；不代表實體存在已核對、引導可用或已取得寫入授權。"
+        }
+      },
+      "special_boot": {
+        "status": "review_required",
+        "secure_boot_enabled": null,
+        "evidence": [
+          {
+            "path": "config/sources/families/include/sunxi64_common.inc",
+            "line": 17,
+            "token": "u-boot-sunxi-with-spl.bin"
+          },
+          {
+            "path": "config/sources/families/include/sunxi64_common.inc",
+            "line": 11,
+            "token": "bl31.bin"
+          }
+        ],
+        "note": "H618 的板型與 DDR 修訂仍需個別配置；既有原型不代表這三個板型後端完成。"
+      },
+      "software": {
+        "source_mapping": "static_reviewed",
+        "uboot_tool": "integration_pending",
+        "linux_tool": "integration_pending",
+        "deployment": "not_implemented",
+        "recovery": "not_implemented",
+        "end_to_end": "not_implemented"
+      },
+      "hardware_qualified": false,
+      "execution_ready": false,
+      "backend_complete": false,
+      "blockers": [
+        "尚未將共用 U-Boot／Linux 工具接入本板原配組件、RAM 與回應核對契約。",
+        "平台部署、救援返回及完整階段契約尚未實作／整合，不能稱只待板子。",
+        "實體板修訂、媒體身分、備份、授權及故障復原均未核定。"
+      ]
+    },
+    {
+      "board": "bpi-m4z",
+      "artifact_board": "bananapim4zero",
+      "architecture": "arm64",
+      "family": "sun50iw9-bpi",
+      "group": "allwinner-h618",
+      "soc": "H618",
+      "soc_evidence": [
+        {
+          "path": "config/boards/bananapim4zero.conf",
+          "line": 1,
+          "token": "H618"
+        }
+      ],
+      "config_path": "config/boards/bananapim4zero.conf",
+      "sources": [
+        "config/boards/bananapim4zero.conf",
+        "config/bootscripts/boot-sun50i-next.cmd",
+        "config/sources/arm64.conf",
+        "config/sources/families/include/crust_firmware.inc",
+        "config/sources/families/include/sunxi64_common.inc",
+        "config/sources/families/sun50iw9-bpi.conf"
+      ],
+      "boot_profile": "sunxi64",
+      "boot_chain": {
+        "artifacts": [
+          "u-boot-sunxi-with-spl.bin",
+          "bl31.bin"
+        ],
+        "evidence": [
+          {
+            "path": "config/sources/families/include/sunxi64_common.inc",
+            "line": 17,
+            "token": "u-boot-sunxi-with-spl.bin"
+          },
+          {
+            "path": "config/sources/families/include/sunxi64_common.inc",
+            "line": 11,
+            "token": "bl31.bin"
+          }
+        ],
+        "note": "H618 的板型與 DDR 修訂仍需個別配置；既有原型不代表這三個板型後端完成。"
+      },
+      "storage": {
+        "spi": {
+          "status": "not_declared",
+          "evidence": [],
+          "note": "此受控來源未明示本板可用的 SPI 引導能力；不等同沒有 SPI 硬體。"
+        },
+        "emmc": {
+          "status": "not_declared",
+          "evidence": [],
+          "note": "此受控來源未明示本板 eMMC 候選；不推定硬體有無、容量或 MMC 編號。"
+        }
+      },
+      "special_boot": {
+        "status": "review_required",
+        "secure_boot_enabled": null,
+        "evidence": [
+          {
+            "path": "config/sources/families/include/sunxi64_common.inc",
+            "line": 17,
+            "token": "u-boot-sunxi-with-spl.bin"
+          },
+          {
+            "path": "config/sources/families/include/sunxi64_common.inc",
+            "line": 11,
+            "token": "bl31.bin"
+          }
+        ],
+        "note": "H618 的板型與 DDR 修訂仍需個別配置；既有原型不代表這三個板型後端完成。"
+      },
+      "software": {
+        "source_mapping": "static_reviewed",
+        "uboot_tool": "integration_pending",
+        "linux_tool": "integration_pending",
+        "deployment": "not_implemented",
+        "recovery": "not_implemented",
+        "end_to_end": "not_implemented"
+      },
+      "hardware_qualified": false,
+      "execution_ready": false,
+      "backend_complete": false,
+      "blockers": [
+        "尚未將共用 U-Boot／Linux 工具接入本板原配組件、RAM 與回應核對契約。",
+        "平台部署、救援返回及完整階段契約尚未實作／整合，不能稱只待板子。",
+        "實體板修訂、媒體身分、備份、授權及故障復原均未核定。"
+      ]
+    },
+    {
+      "board": "bpi-m4z-emac",
+      "artifact_board": "bananapim4zeroemac",
+      "architecture": "arm64",
+      "family": "sun50iw9-bpi",
+      "group": "allwinner-h618",
+      "soc": "H618",
+      "soc_evidence": [
+        {
+          "path": "config/boards/bananapim4zeroemac.conf",
+          "line": 1,
+          "token": "H618"
+        }
+      ],
+      "config_path": "config/boards/bananapim4zeroemac.conf",
+      "sources": [
+        "config/boards/bananapim4zeroemac.conf",
+        "config/boards/include/bananapi-h618-common.inc",
+        "config/bootscripts/boot-sun50i-next.cmd",
+        "config/sources/arm64.conf",
+        "config/sources/families/include/crust_firmware.inc",
+        "config/sources/families/include/sunxi64_common.inc",
+        "config/sources/families/sun50iw9-bpi.conf"
+      ],
+      "boot_profile": "sunxi64",
+      "boot_chain": {
+        "artifacts": [
+          "u-boot-sunxi-with-spl.bin",
+          "bl31.bin"
+        ],
+        "evidence": [
+          {
+            "path": "config/sources/families/include/sunxi64_common.inc",
+            "line": 17,
+            "token": "u-boot-sunxi-with-spl.bin"
+          },
+          {
+            "path": "config/sources/families/include/sunxi64_common.inc",
+            "line": 11,
+            "token": "bl31.bin"
+          }
+        ],
+        "note": "H618 的板型與 DDR 修訂仍需個別配置；既有原型不代表這三個板型後端完成。"
+      },
+      "storage": {
+        "spi": {
+          "status": "not_declared",
+          "evidence": [],
+          "note": "此受控來源未明示本板可用的 SPI 引導能力；不等同沒有 SPI 硬體。"
+        },
+        "emmc": {
+          "status": "not_declared",
+          "evidence": [],
+          "note": "此受控來源未明示本板 eMMC 候選；不推定硬體有無、容量或 MMC 編號。"
+        }
+      },
+      "special_boot": {
+        "status": "review_required",
+        "secure_boot_enabled": null,
+        "evidence": [
+          {
+            "path": "config/sources/families/include/sunxi64_common.inc",
+            "line": 17,
+            "token": "u-boot-sunxi-with-spl.bin"
+          },
+          {
+            "path": "config/sources/families/include/sunxi64_common.inc",
+            "line": 11,
+            "token": "bl31.bin"
+          }
+        ],
+        "note": "H618 的板型與 DDR 修訂仍需個別配置；既有原型不代表這三個板型後端完成。"
+      },
+      "software": {
+        "source_mapping": "static_reviewed",
+        "uboot_tool": "integration_pending",
+        "linux_tool": "integration_pending",
+        "deployment": "not_implemented",
+        "recovery": "not_implemented",
+        "end_to_end": "not_implemented"
+      },
+      "hardware_qualified": false,
+      "execution_ready": false,
+      "backend_complete": false,
+      "blockers": [
+        "尚未將共用 U-Boot／Linux 工具接入本板原配組件、RAM 與回應核對契約。",
+        "平台部署、救援返回及完整階段契約尚未實作／整合，不能稱只待板子。",
+        "實體板修訂、媒體身分、備份、授權及故障復原均未核定。"
+      ]
+    },
+    {
+      "board": "bpi-m5",
+      "artifact_board": "bananapim5",
+      "architecture": "arm64",
+      "family": "meson-sm1",
+      "group": "amlogic",
+      "soc": "S905X3",
+      "soc_evidence": [
+        {
+          "path": "config/boards/bananapim5.conf",
+          "line": 1,
+          "token": "S905X3"
+        }
+      ],
+      "config_path": "config/boards/bananapim5.conf",
+      "sources": [
+        "config/boards/bananapim5.conf",
+        "config/bootscripts/boot-meson64.cmd",
+        "config/sources/arm64.conf",
+        "config/sources/families/include/meson64_common.inc",
+        "config/sources/families/meson-sm1.conf"
+      ],
+      "boot_profile": "meson64",
+      "boot_chain": {
+        "artifacts": [
+          "u-boot.bin.sd.bin",
+          "u-boot-dtb.img"
+        ],
+        "evidence": [
+          {
+            "path": "config/sources/families/include/meson64_common.inc",
+            "line": 9,
+            "token": "UBOOT_TARGET_MAP"
+          },
+          {
+            "path": "config/sources/families/include/meson64_common.inc",
+            "line": 25,
+            "token": "\"amlogic-boot-fip\""
+          }
+        ],
+        "note": "原廠 FIP／早期載荷配套、安全引導與啟動順序待核定，不以 booti 推論可替換整條鏈。"
+      },
+      "storage": {
+        "spi": {
+          "status": "not_declared",
+          "evidence": [],
+          "note": "此受控來源未明示本板可用的 SPI 引導能力；不等同沒有 SPI 硬體。"
+        },
+        "emmc": {
+          "status": "board_declared",
+          "evidence": [
+            {
+              "path": "config/boards/bananapim5.conf",
+              "line": 1,
+              "token": "eMMC"
+            }
+          ],
+          "note": "板型描述有 eMMC 宣告；不代表實體存在已核對、引導可用或已取得寫入授權。"
+        }
+      },
+      "special_boot": {
+        "status": "review_required",
+        "secure_boot_enabled": null,
+        "evidence": [
+          {
+            "path": "config/sources/families/include/meson64_common.inc",
+            "line": 9,
+            "token": "UBOOT_TARGET_MAP"
+          },
+          {
+            "path": "config/sources/families/include/meson64_common.inc",
+            "line": 25,
+            "token": "\"amlogic-boot-fip\""
+          }
+        ],
+        "note": "原廠 FIP／早期載荷配套、安全引導與啟動順序待核定，不以 booti 推論可替換整條鏈。"
+      },
+      "software": {
+        "source_mapping": "static_reviewed",
+        "uboot_tool": "integration_pending",
+        "linux_tool": "integration_pending",
+        "deployment": "not_implemented",
+        "recovery": "not_implemented",
+        "end_to_end": "not_implemented"
+      },
+      "hardware_qualified": false,
+      "execution_ready": false,
+      "backend_complete": false,
+      "blockers": [
+        "尚未將共用 U-Boot／Linux 工具接入本板原配組件、RAM 與回應核對契約。",
+        "平台部署、救援返回及完整階段契約尚未實作／整合，不能稱只待板子。",
+        "實體板修訂、媒體身分、備份、授權及故障復原均未核定。"
+      ]
+    },
+    {
+      "board": "bpi-m5pro",
+      "artifact_board": "bananapim5pro",
+      "architecture": "arm64",
+      "family": "rk35xx",
+      "group": "rockchip64",
+      "soc": "RK3576",
+      "soc_evidence": [
+        {
+          "path": "config/boards/bananapim5pro.conf",
+          "line": 1,
+          "token": "RK3576"
+        }
+      ],
+      "config_path": "config/boards/bananapim5pro.conf",
+      "sources": [
+        "config/boards/armsom-sige5.csc",
+        "config/boards/bananapim5pro.conf",
+        "config/bootscripts/boot-rk3576.cmd",
+        "config/sources/arm64.conf",
+        "config/sources/families/include/rockchip64_common.inc",
+        "config/sources/families/rk35xx.conf"
+      ],
+      "boot_profile": "rk3576",
+      "boot_chain": {
+        "artifacts": [
+          "idbloader.img",
+          "u-boot.itb"
+        ],
+        "evidence": [
+          {
+            "path": "config/sources/families/include/rockchip64_common.inc",
+            "line": 200,
+            "token": "BL31=$RKBIN_DIR/$BL31_BLOB spl/u-boot-spl.bin"
+          }
+        ],
+        "note": "DDR、BL31、SPL 與 FIT 為建置前置鏈；不能從副檔名推論通用 FIT 執行能力。"
+      },
+      "storage": {
+        "spi": {
+          "status": "family_conditional",
+          "evidence": [
+            {
+              "path": "config/sources/families/include/rockchip64_common.inc",
+              "line": 227,
+              "token": "if [[ $BOOT_SUPPORT_SPI == yes ]]"
+            }
+          ],
+          "note": "僅有家族條件式 SPI 封裝路徑，沒有據此宣告本板支援。"
+        },
+        "emmc": {
+          "status": "board_declared",
+          "evidence": [
+            {
+              "path": "config/boards/bananapim5pro.conf",
+              "line": 1,
+              "token": "eMMC"
+            }
+          ],
+          "note": "板型描述有 eMMC 宣告；不代表實體存在已核對、引導可用或已取得寫入授權。"
+        }
+      },
+      "special_boot": {
+        "status": "review_required",
+        "secure_boot_enabled": null,
+        "evidence": [
+          {
+            "path": "config/sources/families/include/rockchip64_common.inc",
+            "line": 200,
+            "token": "BL31=$RKBIN_DIR/$BL31_BLOB spl/u-boot-spl.bin"
+          }
+        ],
+        "note": "DDR、BL31、SPL 與 FIT 為建置前置鏈；不能從副檔名推論通用 FIT 執行能力。"
+      },
+      "software": {
+        "source_mapping": "static_reviewed",
+        "uboot_tool": "integration_pending",
+        "linux_tool": "integration_pending",
+        "deployment": "not_implemented",
+        "recovery": "not_implemented",
+        "end_to_end": "not_implemented"
+      },
+      "hardware_qualified": false,
+      "execution_ready": false,
+      "backend_complete": false,
+      "blockers": [
+        "尚未將共用 U-Boot／Linux 工具接入本板原配組件、RAM 與回應核對契約。",
+        "平台部署、救援返回及完整階段契約尚未實作／整合，不能稱只待板子。",
+        "實體板修訂、媒體身分、備份、授權及故障復原均未核定。"
+      ]
+    },
+    {
+      "board": "bpi-m6",
+      "artifact_board": "bananapim6",
+      "architecture": "arm64",
+      "family": "vs680",
+      "group": "synaptics",
+      "soc": "VS680",
+      "soc_evidence": [
+        {
+          "path": "config/boards/bananapim6.wip",
+          "line": 1,
+          "token": "VS680"
+        }
+      ],
+      "config_path": "config/boards/bananapim6.wip",
+      "sources": [
+        "config/boards/bananapim6.wip",
+        "config/bootscripts/boot-vs680.cmd",
+        "config/sources/arm64.conf",
+        "config/sources/families/vs680.conf"
+      ],
+      "boot_profile": "vs680",
+      "boot_chain": {
+        "artifacts": [
+          "u-boot.bin",
+          "bpi-m6-tzk-4MB.bin"
+        ],
+        "evidence": [
+          {
+            "path": "config/boards/bananapim6.wip",
+            "line": 60,
+            "token": "declare -g UBOOT_TARGET_MAP="
+          }
+        ],
+        "note": "OEM／TZK 載荷與安全引導需獨立核定；能看到 booti 腳本不代表安全鏈或復原後端完成。"
+      },
+      "storage": {
+        "spi": {
+          "status": "not_declared",
+          "evidence": [],
+          "note": "此受控來源未明示本板可用的 SPI 引導能力；不等同沒有 SPI 硬體。"
+        },
+        "emmc": {
+          "status": "board_declared",
+          "evidence": [
+            {
+              "path": "config/boards/bananapim6.wip",
+              "line": 1,
+              "token": "eMMC"
+            }
+          ],
+          "note": "板型描述有 eMMC 宣告；不代表實體存在已核對、引導可用或已取得寫入授權。"
+        }
+      },
+      "special_boot": {
+        "status": "review_required",
+        "secure_boot_enabled": null,
+        "evidence": [
+          {
+            "path": "config/boards/bananapim6.wip",
+            "line": 60,
+            "token": "declare -g UBOOT_TARGET_MAP="
+          }
+        ],
+        "note": "OEM／TZK 載荷與安全引導需獨立核定；能看到 booti 腳本不代表安全鏈或復原後端完成。"
+      },
+      "software": {
+        "source_mapping": "static_reviewed",
+        "uboot_tool": "integration_pending",
+        "linux_tool": "integration_pending",
+        "deployment": "not_implemented",
+        "recovery": "not_implemented",
+        "end_to_end": "not_implemented"
+      },
+      "hardware_qualified": false,
+      "execution_ready": false,
+      "backend_complete": false,
+      "blockers": [
+        "尚未將共用 U-Boot／Linux 工具接入本板原配組件、RAM 與回應核對契約。",
+        "平台部署、救援返回及完整階段契約尚未實作／整合，不能稱只待板子。",
+        "實體板修訂、媒體身分、備份、授權及故障復原均未核定。"
+      ]
+    },
+    {
+      "board": "bpi-m64",
+      "artifact_board": "bananapim64",
+      "architecture": "arm64",
+      "family": "sun50iw1",
+      "group": "allwinner64",
+      "soc": "A64",
+      "soc_evidence": [
+        {
+          "path": "config/boards/bananapim64.csc",
+          "line": 1,
+          "token": "A64"
+        }
+      ],
+      "config_path": "config/boards/bananapim64.csc",
+      "sources": [
+        "config/boards/bananapim64.csc",
+        "config/bootscripts/boot-sun50i-next.cmd",
+        "config/sources/arm64.conf",
+        "config/sources/families/include/crust_firmware.inc",
+        "config/sources/families/include/sunxi64_common.inc",
+        "config/sources/families/sun50iw1.conf"
+      ],
+      "boot_profile": "sunxi64",
+      "boot_chain": {
+        "artifacts": [
+          "u-boot-sunxi-with-spl.bin",
+          "bl31.bin"
+        ],
+        "evidence": [
+          {
+            "path": "config/sources/families/include/sunxi64_common.inc",
+            "line": 17,
+            "token": "u-boot-sunxi-with-spl.bin"
+          },
+          {
+            "path": "config/sources/families/include/sunxi64_common.inc",
+            "line": 11,
+            "token": "bl31.bin"
+          }
+        ],
+        "note": "A64 的 SPL、TF-A 與可選韌體需配套；不得移植 H618 位址或恢復方法。"
+      },
+      "storage": {
+        "spi": {
+          "status": "not_declared",
+          "evidence": [],
+          "note": "此受控來源未明示本板可用的 SPI 引導能力；不等同沒有 SPI 硬體。"
+        },
+        "emmc": {
+          "status": "board_declared",
+          "evidence": [
+            {
+              "path": "config/boards/bananapim64.csc",
+              "line": 1,
+              "token": "eMMC"
+            }
+          ],
+          "note": "板型描述有 eMMC 宣告；不代表實體存在已核對、引導可用或已取得寫入授權。"
+        }
+      },
+      "special_boot": {
+        "status": "review_required",
+        "secure_boot_enabled": null,
+        "evidence": [
+          {
+            "path": "config/sources/families/include/sunxi64_common.inc",
+            "line": 17,
+            "token": "u-boot-sunxi-with-spl.bin"
+          },
+          {
+            "path": "config/sources/families/include/sunxi64_common.inc",
+            "line": 11,
+            "token": "bl31.bin"
+          }
+        ],
+        "note": "A64 的 SPL、TF-A 與可選韌體需配套；不得移植 H618 位址或恢復方法。"
+      },
+      "software": {
+        "source_mapping": "static_reviewed",
+        "uboot_tool": "integration_pending",
+        "linux_tool": "integration_pending",
+        "deployment": "not_implemented",
+        "recovery": "not_implemented",
+        "end_to_end": "not_implemented"
+      },
+      "hardware_qualified": false,
+      "execution_ready": false,
+      "backend_complete": false,
+      "blockers": [
+        "尚未將共用 U-Boot／Linux 工具接入本板原配組件、RAM 與回應核對契約。",
+        "平台部署、救援返回及完整階段契約尚未實作／整合，不能稱只待板子。",
+        "實體板修訂、媒體身分、備份、授權及故障復原均未核定。"
+      ]
+    },
+    {
+      "board": "bpi-m7",
+      "artifact_board": "bananapim7",
+      "architecture": "arm64",
+      "family": "rockchip-rk3588",
+      "group": "rockchip64",
+      "soc": "RK3588",
+      "soc_evidence": [
+        {
+          "path": "config/boards/bananapim7.conf",
+          "line": 1,
+          "token": "RK3588"
+        }
+      ],
+      "config_path": "config/boards/bananapim7.conf",
+      "sources": [
+        "config/boards/armsom-sige7.csc",
+        "config/boards/bananapim7.conf",
+        "config/bootscripts/boot-rk35xx.cmd",
+        "config/sources/arm64.conf",
+        "config/sources/families/include/rockchip64_common.inc",
+        "config/sources/families/rockchip-rk3588.conf"
+      ],
+      "boot_profile": "rk35xx",
+      "boot_chain": {
+        "artifacts": [
+          "idbloader.img",
+          "u-boot.itb"
+        ],
+        "evidence": [
+          {
+            "path": "config/sources/families/include/rockchip64_common.inc",
+            "line": 200,
+            "token": "BL31=$RKBIN_DIR/$BL31_BLOB spl/u-boot-spl.bin"
+          }
+        ],
+        "note": "DDR、BL31、SPL 與 FIT 為建置前置鏈；不能從副檔名推論通用 FIT 執行能力。"
+      },
+      "storage": {
+        "spi": {
+          "status": "board_declared",
+          "evidence": [
+            {
+              "path": "config/boards/armsom-sige7.csc",
+              "line": 13,
+              "token": "BOOT_SUPPORT_SPI=\"yes\""
+            }
+          ],
+          "note": "板型來源宣告 SPI 封裝支援；晶片、接線、啟動優先序與寫入資格均未核定。"
+        },
+        "emmc": {
+          "status": "board_declared",
+          "evidence": [
+            {
+              "path": "config/boards/bananapim7.conf",
+              "line": 1,
+              "token": "eMMC"
+            }
+          ],
+          "note": "板型描述有 eMMC 宣告；不代表實體存在已核對、引導可用或已取得寫入授權。"
+        }
+      },
+      "special_boot": {
+        "status": "review_required",
+        "secure_boot_enabled": null,
+        "evidence": [
+          {
+            "path": "config/sources/families/include/rockchip64_common.inc",
+            "line": 200,
+            "token": "BL31=$RKBIN_DIR/$BL31_BLOB spl/u-boot-spl.bin"
+          }
+        ],
+        "note": "DDR、BL31、SPL 與 FIT 為建置前置鏈；不能從副檔名推論通用 FIT 執行能力。"
+      },
+      "software": {
+        "source_mapping": "static_reviewed",
+        "uboot_tool": "integration_pending",
+        "linux_tool": "integration_pending",
+        "deployment": "not_implemented",
+        "recovery": "not_implemented",
+        "end_to_end": "not_implemented"
+      },
+      "hardware_qualified": false,
+      "execution_ready": false,
+      "backend_complete": false,
+      "blockers": [
+        "尚未將共用 U-Boot／Linux 工具接入本板原配組件、RAM 與回應核對契約。",
+        "平台部署、救援返回及完整階段契約尚未實作／整合，不能稱只待板子。",
+        "實體板修訂、媒體身分、備份、授權及故障復原均未核定。"
+      ]
+    },
+    {
+      "board": "bpi-p2pro",
+      "artifact_board": "bananapip2pro",
+      "architecture": "arm64",
+      "family": "rockchip64",
+      "group": "rockchip64",
+      "soc": "RK3308B-S",
+      "soc_evidence": [
+        {
+          "path": "config/boards/bananapip2pro.wip",
+          "line": 1,
+          "token": "RK3308B-S"
+        }
+      ],
+      "config_path": "config/boards/bananapip2pro.wip",
+      "sources": [
+        "config/boards/bananapip2pro.wip",
+        "config/bootscripts/boot-rockchip64.cmd",
+        "config/sources/arm64.conf",
+        "config/sources/families/include/rockchip64_common.inc",
+        "config/sources/families/rockchip64.conf"
+      ],
+      "boot_profile": "rockchip64",
+      "boot_chain": {
+        "artifacts": [
+          "u-boot-rockchip.bin"
+        ],
+        "evidence": [
+          {
+            "path": "config/sources/families/include/rockchip64_common.inc",
+            "line": 192,
+            "token": "ROCKCHIP_TPL=$RKBIN_DIR/$DDR_BLOB;;u-boot-rockchip.bin"
+          }
+        ],
+        "note": "DDR、BL31、SPL 與 FIT 為建置前置鏈；不能從副檔名推論通用 FIT 執行能力。"
+      },
+      "storage": {
+        "spi": {
+          "status": "family_conditional",
+          "evidence": [
+            {
+              "path": "config/sources/families/include/rockchip64_common.inc",
+              "line": 227,
+              "token": "if [[ $BOOT_SUPPORT_SPI == yes ]]"
+            }
+          ],
+          "note": "僅有家族條件式 SPI 封裝路徑，沒有據此宣告本板支援。"
+        },
+        "emmc": {
+          "status": "board_declared",
+          "evidence": [
+            {
+              "path": "config/boards/bananapip2pro.wip",
+              "line": 1,
+              "token": "eMMC"
+            }
+          ],
+          "note": "板型描述有 eMMC 宣告；不代表實體存在已核對、引導可用或已取得寫入授權。"
+        }
+      },
+      "special_boot": {
+        "status": "review_required",
+        "secure_boot_enabled": null,
+        "evidence": [
+          {
+            "path": "config/sources/families/include/rockchip64_common.inc",
+            "line": 192,
+            "token": "ROCKCHIP_TPL=$RKBIN_DIR/$DDR_BLOB;;u-boot-rockchip.bin"
+          }
+        ],
+        "note": "DDR、BL31、SPL 與 FIT 為建置前置鏈；不能從副檔名推論通用 FIT 執行能力。"
+      },
+      "software": {
+        "source_mapping": "static_reviewed",
+        "uboot_tool": "integration_pending",
+        "linux_tool": "integration_pending",
+        "deployment": "not_implemented",
+        "recovery": "not_implemented",
+        "end_to_end": "not_implemented"
+      },
+      "hardware_qualified": false,
+      "execution_ready": false,
+      "backend_complete": false,
+      "blockers": [
+        "尚未將共用 U-Boot／Linux 工具接入本板原配組件、RAM 與回應核對契約。",
+        "平台部署、救援返回及完整階段契約尚未實作／整合，不能稱只待板子。",
+        "實體板修訂、媒體身分、備份、授權及故障復原均未核定。"
+      ]
+    },
+    {
+      "board": "bpi-r2pro",
+      "artifact_board": "bananapir2pro",
+      "architecture": "arm64",
+      "family": "rockchip64",
+      "group": "rockchip64",
+      "soc": "RK3568",
+      "soc_evidence": [
+        {
+          "path": "config/boards/bananapir2pro.csc",
+          "line": 1,
+          "token": "RK3568"
+        }
+      ],
+      "config_path": "config/boards/bananapir2pro.csc",
+      "sources": [
+        "config/boards/bananapir2pro.csc",
+        "config/sources/arm64.conf",
+        "config/sources/families/include/rockchip64_common.inc",
+        "config/sources/families/rockchip64.conf",
+        "lib/functions/bsp/armbian-bsp-cli-deb.sh",
+        "lib/functions/rootfs/distro-agnostic.sh"
+      ],
+      "boot_profile": "r2pro-extlinux",
+      "boot_chain": {
+        "artifacts": [
+          "idbloader.img",
+          "u-boot.itb"
+        ],
+        "evidence": [
+          {
+            "path": "config/boards/bananapir2pro.csc",
+            "line": 38,
+            "token": "declare -g UBOOT_TARGET_MAP="
+          }
+        ],
+        "note": "DDR、BL31、SPL 與 FIT 為建置前置鏈；不能從副檔名推論通用 FIT 執行能力。"
+      },
+      "storage": {
+        "spi": {
+          "status": "family_conditional",
+          "evidence": [
+            {
+              "path": "config/sources/families/include/rockchip64_common.inc",
+              "line": 227,
+              "token": "if [[ $BOOT_SUPPORT_SPI == yes ]]"
+            }
+          ],
+          "note": "僅有家族條件式 SPI 封裝路徑，沒有據此宣告本板支援。"
+        },
+        "emmc": {
+          "status": "board_declared",
+          "evidence": [
+            {
+              "path": "config/boards/bananapir2pro.csc",
+              "line": 1,
+              "token": "eMMC"
+            }
+          ],
+          "note": "板型描述有 eMMC 宣告；不代表實體存在已核對、引導可用或已取得寫入授權。"
+        }
+      },
+      "special_boot": {
+        "status": "review_required",
+        "secure_boot_enabled": null,
+        "evidence": [
+          {
+            "path": "config/boards/bananapir2pro.csc",
+            "line": 38,
+            "token": "declare -g UBOOT_TARGET_MAP="
+          }
+        ],
+        "note": "DDR、BL31、SPL 與 FIT 為建置前置鏈；不能從副檔名推論通用 FIT 執行能力。"
+      },
+      "software": {
+        "source_mapping": "static_reviewed",
+        "uboot_tool": "integration_pending",
+        "linux_tool": "integration_pending",
+        "deployment": "not_implemented",
+        "recovery": "not_implemented",
+        "end_to_end": "not_implemented"
+      },
+      "hardware_qualified": false,
+      "execution_ready": false,
+      "backend_complete": false,
+      "blockers": [
+        "尚未將共用 U-Boot／Linux 工具接入本板原配組件、RAM 與回應核對契約。",
+        "平台部署、救援返回及完整階段契約尚未實作／整合，不能稱只待板子。",
+        "實體板修訂、媒體身分、備份、授權及故障復原均未核定。"
+      ]
+    },
+    {
+      "board": "bpi-r3",
+      "artifact_board": "bananapir3",
+      "architecture": "arm64",
+      "family": "filogic",
+      "group": "mediatek64",
+      "soc": "MT7986A",
+      "soc_evidence": [
+        {
+          "path": "config/boards/bananapir3.wip",
+          "line": 1,
+          "token": "MT7986A"
+        }
+      ],
+      "config_path": "config/boards/bananapir3.wip",
+      "sources": [
+        "config/boards/bananapir3.wip",
+        "config/sources/arm64.conf",
+        "config/sources/families/filogic.conf",
+        "lib/functions/bsp/armbian-bsp-cli-deb.sh",
+        "lib/functions/rootfs/distro-agnostic.sh"
+      ],
+      "boot_profile": "filogic-extlinux",
+      "boot_chain": {
+        "artifacts": [
+          "bl2.img",
+          "u-boot.fip"
+        ],
+        "evidence": [
+          {
+            "path": "config/sources/families/filogic.conf",
+            "line": 22,
+            "token": "declare -g UBOOT_TARGET_MAP"
+          },
+          {
+            "path": "config/boards/bananapir3.wip",
+            "line": 11,
+            "token": "SRC_EXTLINUX="
+          },
+          {
+            "path": "config/boards/bananapir3.wip",
+            "line": 47,
+            "token": "--enable CONFIG_CMD_BOOTFLOW"
+          }
+        ],
+        "note": "BL2／TF-A／FIP 及各板 FILOGIC_BOOT_DEVICE 必須配套；未核對安全啟動狀態。"
+      },
+      "storage": {
+        "spi": {
+          "status": "not_declared",
+          "evidence": [],
+          "note": "此受控來源未明示本板可用的 SPI 引導能力；不等同沒有 SPI 硬體。"
+        },
+        "emmc": {
+          "status": "not_declared",
+          "evidence": [],
+          "note": "此受控來源未明示本板 eMMC 候選；不推定硬體有無、容量或 MMC 編號。"
+        }
+      },
+      "special_boot": {
+        "status": "review_required",
+        "secure_boot_enabled": null,
+        "evidence": [
+          {
+            "path": "config/sources/families/filogic.conf",
+            "line": 22,
+            "token": "declare -g UBOOT_TARGET_MAP"
+          },
+          {
+            "path": "config/boards/bananapir3.wip",
+            "line": 11,
+            "token": "SRC_EXTLINUX="
+          },
+          {
+            "path": "config/boards/bananapir3.wip",
+            "line": 47,
+            "token": "--enable CONFIG_CMD_BOOTFLOW"
+          }
+        ],
+        "note": "BL2／TF-A／FIP 及各板 FILOGIC_BOOT_DEVICE 必須配套；未核對安全啟動狀態。"
+      },
+      "software": {
+        "source_mapping": "static_reviewed",
+        "uboot_tool": "integration_pending",
+        "linux_tool": "integration_pending",
+        "deployment": "not_implemented",
+        "recovery": "not_implemented",
+        "end_to_end": "not_implemented"
+      },
+      "hardware_qualified": false,
+      "execution_ready": false,
+      "backend_complete": false,
+      "blockers": [
+        "尚未將共用 U-Boot／Linux 工具接入本板原配組件、RAM 與回應核對契約。",
+        "平台部署、救援返回及完整階段契約尚未實作／整合，不能稱只待板子。",
+        "實體板修訂、媒體身分、備份、授權及故障復原均未核定。"
+      ]
+    },
+    {
+      "board": "bpi-r3mini",
+      "artifact_board": "bananapir3mini",
+      "architecture": "arm64",
+      "family": "filogic",
+      "group": "mediatek64",
+      "soc": "MT7986A",
+      "soc_evidence": [
+        {
+          "path": "config/boards/bananapir3mini.wip",
+          "line": 1,
+          "token": "MT7986A"
+        }
+      ],
+      "config_path": "config/boards/bananapir3mini.wip",
+      "sources": [
+        "config/boards/bananapir3mini.wip",
+        "config/sources/arm64.conf",
+        "config/sources/families/filogic.conf",
+        "lib/functions/bsp/armbian-bsp-cli-deb.sh",
+        "lib/functions/rootfs/distro-agnostic.sh"
+      ],
+      "boot_profile": "filogic-extlinux",
+      "boot_chain": {
+        "artifacts": [
+          "bl2.img",
+          "u-boot.fip"
+        ],
+        "evidence": [
+          {
+            "path": "config/sources/families/filogic.conf",
+            "line": 22,
+            "token": "declare -g UBOOT_TARGET_MAP"
+          },
+          {
+            "path": "config/boards/bananapir3mini.wip",
+            "line": 11,
+            "token": "SRC_EXTLINUX="
+          },
+          {
+            "path": "config/boards/bananapir3mini.wip",
+            "line": 58,
+            "token": "--enable CONFIG_CMD_BOOTFLOW"
+          }
+        ],
+        "note": "BL2／TF-A／FIP 及各板 FILOGIC_BOOT_DEVICE 必須配套；未核對安全啟動狀態。"
+      },
+      "storage": {
+        "spi": {
+          "status": "not_declared",
+          "evidence": [],
+          "note": "此受控來源未明示本板可用的 SPI 引導能力；不等同沒有 SPI 硬體。"
+        },
+        "emmc": {
+          "status": "board_declared",
+          "evidence": [
+            {
+              "path": "config/boards/bananapir3mini.wip",
+              "line": 29,
+              "token": "FILOGIC_BOOT_DEVICE=\"emmc\""
+            }
+          ],
+          "note": "板型候選明示 eMMC 引導；不能套用其他 Filogic 板的 SD 候選。"
+        }
+      },
+      "special_boot": {
+        "status": "review_required",
+        "secure_boot_enabled": null,
+        "evidence": [
+          {
+            "path": "config/sources/families/filogic.conf",
+            "line": 22,
+            "token": "declare -g UBOOT_TARGET_MAP"
+          },
+          {
+            "path": "config/boards/bananapir3mini.wip",
+            "line": 11,
+            "token": "SRC_EXTLINUX="
+          },
+          {
+            "path": "config/boards/bananapir3mini.wip",
+            "line": 58,
+            "token": "--enable CONFIG_CMD_BOOTFLOW"
+          }
+        ],
+        "note": "BL2／TF-A／FIP 及各板 FILOGIC_BOOT_DEVICE 必須配套；未核對安全啟動狀態。"
+      },
+      "software": {
+        "source_mapping": "static_reviewed",
+        "uboot_tool": "integration_pending",
+        "linux_tool": "integration_pending",
+        "deployment": "not_implemented",
+        "recovery": "not_implemented",
+        "end_to_end": "not_implemented"
+      },
+      "hardware_qualified": false,
+      "execution_ready": false,
+      "backend_complete": false,
+      "blockers": [
+        "尚未將共用 U-Boot／Linux 工具接入本板原配組件、RAM 與回應核對契約。",
+        "平台部署、救援返回及完整階段契約尚未實作／整合，不能稱只待板子。",
+        "實體板修訂、媒體身分、備份、授權及故障復原均未核定。"
+      ]
+    },
+    {
+      "board": "bpi-r4",
+      "artifact_board": "bananapir4",
+      "architecture": "arm64",
+      "family": "filogic",
+      "group": "mediatek64",
+      "soc": "MT7988A",
+      "soc_evidence": [
+        {
+          "path": "config/boards/bananapir4.csc",
+          "line": 1,
+          "token": "MT7988A"
+        }
+      ],
+      "config_path": "config/boards/bananapir4.csc",
+      "sources": [
+        "config/boards/bananapir4.csc",
+        "config/sources/arm64.conf",
+        "config/sources/families/filogic.conf",
+        "lib/functions/bsp/armbian-bsp-cli-deb.sh",
+        "lib/functions/rootfs/distro-agnostic.sh"
+      ],
+      "boot_profile": "filogic-extlinux",
+      "boot_chain": {
+        "artifacts": [
+          "bl2.img",
+          "u-boot.fip"
+        ],
+        "evidence": [
+          {
+            "path": "config/sources/families/filogic.conf",
+            "line": 22,
+            "token": "declare -g UBOOT_TARGET_MAP"
+          },
+          {
+            "path": "config/boards/bananapir4.csc",
+            "line": 11,
+            "token": "SRC_EXTLINUX="
+          },
+          {
+            "path": "config/boards/bananapir4.csc",
+            "line": 45,
+            "token": "--enable CONFIG_CMD_BOOTFLOW"
+          }
+        ],
+        "note": "BL2／TF-A／FIP 及各板 FILOGIC_BOOT_DEVICE 必須配套；未核對安全啟動狀態。"
+      },
+      "storage": {
+        "spi": {
+          "status": "not_declared",
+          "evidence": [],
+          "note": "此受控來源未明示本板可用的 SPI 引導能力；不等同沒有 SPI 硬體。"
+        },
+        "emmc": {
+          "status": "not_declared",
+          "evidence": [],
+          "note": "此受控來源未明示本板 eMMC 候選；不推定硬體有無、容量或 MMC 編號。"
+        }
+      },
+      "special_boot": {
+        "status": "review_required",
+        "secure_boot_enabled": null,
+        "evidence": [
+          {
+            "path": "config/sources/families/filogic.conf",
+            "line": 22,
+            "token": "declare -g UBOOT_TARGET_MAP"
+          },
+          {
+            "path": "config/boards/bananapir4.csc",
+            "line": 11,
+            "token": "SRC_EXTLINUX="
+          },
+          {
+            "path": "config/boards/bananapir4.csc",
+            "line": 45,
+            "token": "--enable CONFIG_CMD_BOOTFLOW"
+          }
+        ],
+        "note": "BL2／TF-A／FIP 及各板 FILOGIC_BOOT_DEVICE 必須配套；未核對安全啟動狀態。"
+      },
+      "software": {
+        "source_mapping": "static_reviewed",
+        "uboot_tool": "integration_pending",
+        "linux_tool": "integration_pending",
+        "deployment": "not_implemented",
+        "recovery": "not_implemented",
+        "end_to_end": "not_implemented"
+      },
+      "hardware_qualified": false,
+      "execution_ready": false,
+      "backend_complete": false,
+      "blockers": [
+        "尚未將共用 U-Boot／Linux 工具接入本板原配組件、RAM 與回應核對契約。",
+        "平台部署、救援返回及完整階段契約尚未實作／整合，不能稱只待板子。",
+        "實體板修訂、媒體身分、備份、授權及故障復原均未核定。"
+      ]
+    },
+    {
+      "board": "bpi-r4lite",
+      "artifact_board": "bananapir4lite",
+      "architecture": "arm64",
+      "family": "filogic",
+      "group": "mediatek64",
+      "soc": "MT7987A",
+      "soc_evidence": [
+        {
+          "path": "config/boards/bananapir4lite.wip",
+          "line": 1,
+          "token": "MT7987A"
+        }
+      ],
+      "config_path": "config/boards/bananapir4lite.wip",
+      "sources": [
+        "config/boards/bananapir4lite.wip",
+        "config/sources/arm64.conf",
+        "config/sources/families/filogic.conf",
+        "lib/functions/bsp/armbian-bsp-cli-deb.sh",
+        "lib/functions/rootfs/distro-agnostic.sh"
+      ],
+      "boot_profile": "filogic-extlinux",
+      "boot_chain": {
+        "artifacts": [
+          "bl2.img",
+          "u-boot.fip"
+        ],
+        "evidence": [
+          {
+            "path": "config/sources/families/filogic.conf",
+            "line": 22,
+            "token": "declare -g UBOOT_TARGET_MAP"
+          },
+          {
+            "path": "config/boards/bananapir4lite.wip",
+            "line": 11,
+            "token": "SRC_EXTLINUX="
+          },
+          {
+            "path": "config/boards/bananapir4lite.wip",
+            "line": 50,
+            "token": "--enable CONFIG_CMD_BOOTFLOW"
+          }
+        ],
+        "note": "BL2／TF-A／FIP 及各板 FILOGIC_BOOT_DEVICE 必須配套；未核對安全啟動狀態。"
+      },
+      "storage": {
+        "spi": {
+          "status": "not_declared",
+          "evidence": [],
+          "note": "此受控來源未明示本板可用的 SPI 引導能力；不等同沒有 SPI 硬體。"
+        },
+        "emmc": {
+          "status": "not_declared",
+          "evidence": [],
+          "note": "此受控來源未明示本板 eMMC 候選；不推定硬體有無、容量或 MMC 編號。"
+        }
+      },
+      "special_boot": {
+        "status": "review_required",
+        "secure_boot_enabled": null,
+        "evidence": [
+          {
+            "path": "config/sources/families/filogic.conf",
+            "line": 22,
+            "token": "declare -g UBOOT_TARGET_MAP"
+          },
+          {
+            "path": "config/boards/bananapir4lite.wip",
+            "line": 11,
+            "token": "SRC_EXTLINUX="
+          },
+          {
+            "path": "config/boards/bananapir4lite.wip",
+            "line": 50,
+            "token": "--enable CONFIG_CMD_BOOTFLOW"
+          }
+        ],
+        "note": "BL2／TF-A／FIP 及各板 FILOGIC_BOOT_DEVICE 必須配套；未核對安全啟動狀態。"
+      },
+      "software": {
+        "source_mapping": "static_reviewed",
+        "uboot_tool": "integration_pending",
+        "linux_tool": "integration_pending",
+        "deployment": "not_implemented",
+        "recovery": "not_implemented",
+        "end_to_end": "not_implemented"
+      },
+      "hardware_qualified": false,
+      "execution_ready": false,
+      "backend_complete": false,
+      "blockers": [
+        "尚未將共用 U-Boot／Linux 工具接入本板原配組件、RAM 與回應核對契約。",
+        "平台部署、救援返回及完整階段契約尚未實作／整合，不能稱只待板子。",
+        "實體板修訂、媒體身分、備份、授權及故障復原均未核定。"
+      ]
+    },
+    {
+      "board": "bpi-r4pro",
+      "artifact_board": "bananapir4pro",
+      "architecture": "arm64",
+      "family": "filogic",
+      "group": "mediatek64",
+      "soc": "MT7988A",
+      "soc_evidence": [
+        {
+          "path": "config/boards/bananapir4pro.wip",
+          "line": 1,
+          "token": "MT7988A"
+        }
+      ],
+      "config_path": "config/boards/bananapir4pro.wip",
+      "sources": [
+        "config/boards/bananapir4pro.wip",
+        "config/sources/arm64.conf",
+        "config/sources/families/filogic.conf",
+        "lib/functions/bsp/armbian-bsp-cli-deb.sh",
+        "lib/functions/rootfs/distro-agnostic.sh"
+      ],
+      "boot_profile": "filogic-extlinux",
+      "boot_chain": {
+        "artifacts": [
+          "bl2.img",
+          "u-boot.fip"
+        ],
+        "evidence": [
+          {
+            "path": "config/sources/families/filogic.conf",
+            "line": 22,
+            "token": "declare -g UBOOT_TARGET_MAP"
+          },
+          {
+            "path": "config/boards/bananapir4pro.wip",
+            "line": 11,
+            "token": "SRC_EXTLINUX="
+          },
+          {
+            "path": "config/boards/bananapir4pro.wip",
+            "line": 54,
+            "token": "--enable CONFIG_CMD_BOOTFLOW"
+          }
+        ],
+        "note": "BL2／TF-A／FIP 及各板 FILOGIC_BOOT_DEVICE 必須配套；未核對安全啟動狀態。"
+      },
+      "storage": {
+        "spi": {
+          "status": "not_declared",
+          "evidence": [],
+          "note": "此受控來源未明示本板可用的 SPI 引導能力；不等同沒有 SPI 硬體。"
+        },
+        "emmc": {
+          "status": "candidate_excluded",
+          "evidence": [
+            {
+              "path": "config/boards/bananapir4pro.wip",
+              "line": 1,
+              "token": "SD-only"
+            }
+          ],
+          "note": "R4 Pro 8X 此候選限 SD；其他媒體路徑不得沿用。"
+        }
+      },
+      "special_boot": {
+        "status": "review_required",
+        "secure_boot_enabled": null,
+        "evidence": [
+          {
+            "path": "config/sources/families/filogic.conf",
+            "line": 22,
+            "token": "declare -g UBOOT_TARGET_MAP"
+          },
+          {
+            "path": "config/boards/bananapir4pro.wip",
+            "line": 11,
+            "token": "SRC_EXTLINUX="
+          },
+          {
+            "path": "config/boards/bananapir4pro.wip",
+            "line": 54,
+            "token": "--enable CONFIG_CMD_BOOTFLOW"
+          }
+        ],
+        "note": "BL2／TF-A／FIP 及各板 FILOGIC_BOOT_DEVICE 必須配套；未核對安全啟動狀態。"
+      },
+      "software": {
+        "source_mapping": "static_reviewed",
+        "uboot_tool": "integration_pending",
+        "linux_tool": "integration_pending",
+        "deployment": "not_implemented",
+        "recovery": "not_implemented",
+        "end_to_end": "not_implemented"
+      },
+      "hardware_qualified": false,
+      "execution_ready": false,
+      "backend_complete": false,
+      "blockers": [
+        "尚未將共用 U-Boot／Linux 工具接入本板原配組件、RAM 與回應核對契約。",
+        "平台部署、救援返回及完整階段契約尚未實作／整合，不能稱只待板子。",
+        "實體板修訂、媒體身分、備份、授權及故障復原均未核定。"
+      ]
+    },
+    {
+      "board": "bpi-r64",
+      "artifact_board": "bananapir64",
+      "architecture": "arm64",
+      "family": "filogic",
+      "group": "mediatek64",
+      "soc": "MT7622A",
+      "soc_evidence": [
+        {
+          "path": "config/boards/bananapir64.csc",
+          "line": 1,
+          "token": "MT7622A"
+        }
+      ],
+      "config_path": "config/boards/bananapir64.csc",
+      "sources": [
+        "config/boards/bananapir64.csc",
+        "config/sources/arm64.conf",
+        "config/sources/families/filogic.conf",
+        "lib/functions/bsp/armbian-bsp-cli-deb.sh",
+        "lib/functions/rootfs/distro-agnostic.sh"
+      ],
+      "boot_profile": "filogic-extlinux",
+      "boot_chain": {
+        "artifacts": [
+          "bl2.img",
+          "u-boot.fip"
+        ],
+        "evidence": [
+          {
+            "path": "config/sources/families/filogic.conf",
+            "line": 22,
+            "token": "declare -g UBOOT_TARGET_MAP"
+          },
+          {
+            "path": "config/boards/bananapir64.csc",
+            "line": 11,
+            "token": "SRC_EXTLINUX="
+          },
+          {
+            "path": "config/boards/bananapir64.csc",
+            "line": 47,
+            "token": "--enable CONFIG_CMD_BOOTFLOW"
+          }
+        ],
+        "note": "BL2／TF-A／FIP 及各板 FILOGIC_BOOT_DEVICE 必須配套；未核對安全啟動狀態。"
+      },
+      "storage": {
+        "spi": {
+          "status": "not_declared",
+          "evidence": [],
+          "note": "此受控來源未明示本板可用的 SPI 引導能力；不等同沒有 SPI 硬體。"
+        },
+        "emmc": {
+          "status": "not_declared",
+          "evidence": [],
+          "note": "此受控來源未明示本板 eMMC 候選；不推定硬體有無、容量或 MMC 編號。"
+        }
+      },
+      "special_boot": {
+        "status": "review_required",
+        "secure_boot_enabled": null,
+        "evidence": [
+          {
+            "path": "config/sources/families/filogic.conf",
+            "line": 22,
+            "token": "declare -g UBOOT_TARGET_MAP"
+          },
+          {
+            "path": "config/boards/bananapir64.csc",
+            "line": 11,
+            "token": "SRC_EXTLINUX="
+          },
+          {
+            "path": "config/boards/bananapir64.csc",
+            "line": 47,
+            "token": "--enable CONFIG_CMD_BOOTFLOW"
+          }
+        ],
+        "note": "BL2／TF-A／FIP 及各板 FILOGIC_BOOT_DEVICE 必須配套；未核對安全啟動狀態。"
+      },
+      "software": {
+        "source_mapping": "static_reviewed",
+        "uboot_tool": "integration_pending",
+        "linux_tool": "integration_pending",
+        "deployment": "not_implemented",
+        "recovery": "not_implemented",
+        "end_to_end": "not_implemented"
+      },
+      "hardware_qualified": false,
+      "execution_ready": false,
+      "backend_complete": false,
+      "blockers": [
+        "尚未將共用 U-Boot／Linux 工具接入本板原配組件、RAM 與回應核對契約。",
+        "平台部署、救援返回及完整階段契約尚未實作／整合，不能稱只待板子。",
+        "實體板修訂、媒體身分、備份、授權及故障復原均未核定。"
+      ]
+    },
+    {
+      "board": "bpi-w2",
+      "artifact_board": "bananapiw2",
+      "architecture": "arm64",
+      "family": "realtek-rtd129x-bpi",
+      "group": "realtek",
+      "soc": "RTD1296",
+      "soc_evidence": [
+        {
+          "path": "config/boards/bananapiw2.wip",
+          "line": 1,
+          "token": "RTD1296"
+        }
+      ],
+      "config_path": "config/boards/bananapiw2.wip",
+      "sources": [
+        "config/boards/bananapiw2.wip",
+        "config/sources/arm64.conf",
+        "config/sources/families/include/realtek_bpi_legacy_common.inc",
+        "config/sources/families/realtek-rtd129x-bpi.conf"
+      ],
+      "boot_profile": "realtek-vendor",
+      "boot_chain": {
+        "artifacts": [
+          "u-boot.bin",
+          "uEnv.txt",
+          "bluecore.audio"
+        ],
+        "evidence": [
+          {
+            "path": "config/sources/families/include/realtek_bpi_legacy_common.inc",
+            "line": 16,
+            "token": "UBOOT_TARGET_MAP="
+          }
+        ],
+        "note": "RTD1296／RTD1395 原廠 BSP 的容器、環境、音訊韌體及安全鏈需專用核定；核心格式目前未知。"
+      },
+      "storage": {
+        "spi": {
+          "status": "not_declared",
+          "evidence": [],
+          "note": "此受控來源未明示本板可用的 SPI 引導能力；不等同沒有 SPI 硬體。"
+        },
+        "emmc": {
+          "status": "not_declared",
+          "evidence": [],
+          "note": "此受控來源未明示本板 eMMC 候選；不推定硬體有無、容量或 MMC 編號。"
+        }
+      },
+      "special_boot": {
+        "status": "review_required",
+        "secure_boot_enabled": null,
+        "evidence": [
+          {
+            "path": "config/sources/families/include/realtek_bpi_legacy_common.inc",
+            "line": 16,
+            "token": "UBOOT_TARGET_MAP="
+          }
+        ],
+        "note": "RTD1296／RTD1395 原廠 BSP 的容器、環境、音訊韌體及安全鏈需專用核定；核心格式目前未知。"
+      },
+      "software": {
+        "source_mapping": "static_reviewed",
+        "uboot_tool": "integration_pending",
+        "linux_tool": "integration_pending",
+        "deployment": "not_implemented",
+        "recovery": "not_implemented",
+        "end_to_end": "not_implemented"
+      },
+      "hardware_qualified": false,
+      "execution_ready": false,
+      "backend_complete": false,
+      "blockers": [
+        "尚未將共用 U-Boot／Linux 工具接入本板原配組件、RAM 與回應核對契約。",
+        "平台部署、救援返回及完整階段契約尚未實作／整合，不能稱只待板子。",
+        "實體板修訂、媒體身分、備份、授權及故障復原均未核定。",
+        "尚缺原廠環境與完整啟動鏈的靜態契約；不得把候選命令或檔名當成容器支援。"
+      ]
+    },
+    {
+      "board": "bpi-w3",
+      "artifact_board": "bananapiw3",
+      "architecture": "arm64",
+      "family": "rockchip-rk3588",
+      "group": "rockchip64",
+      "soc": "RK3588",
+      "soc_evidence": [
+        {
+          "path": "config/boards/bananapiw3.wip",
+          "line": 1,
+          "token": "RK3588"
+        }
+      ],
+      "config_path": "config/boards/bananapiw3.wip",
+      "sources": [
+        "config/boards/bananapiw3.wip",
+        "config/bootscripts/boot-rk35xx.cmd",
+        "config/sources/arm64.conf",
+        "config/sources/families/include/rockchip64_common.inc",
+        "config/sources/families/rockchip-rk3588.conf"
+      ],
+      "boot_profile": "rk35xx",
+      "boot_chain": {
+        "artifacts": [
+          "idbloader.img",
+          "u-boot.itb"
+        ],
+        "evidence": [
+          {
+            "path": "config/sources/families/include/rockchip64_common.inc",
+            "line": 200,
+            "token": "BL31=$RKBIN_DIR/$BL31_BLOB spl/u-boot-spl.bin"
+          }
+        ],
+        "note": "DDR、BL31、SPL 與 FIT 為建置前置鏈；不能從副檔名推論通用 FIT 執行能力。"
+      },
+      "storage": {
+        "spi": {
+          "status": "board_declared",
+          "evidence": [
+            {
+              "path": "config/boards/bananapiw3.wip",
+              "line": 14,
+              "token": "BOOT_SUPPORT_SPI=\"yes\""
+            }
+          ],
+          "note": "板型來源宣告 SPI 封裝支援；晶片、接線、啟動優先序與寫入資格均未核定。"
+        },
+        "emmc": {
+          "status": "not_declared",
+          "evidence": [],
+          "note": "此受控來源未明示本板 eMMC 候選；不推定硬體有無、容量或 MMC 編號。"
+        }
+      },
+      "special_boot": {
+        "status": "review_required",
+        "secure_boot_enabled": null,
+        "evidence": [
+          {
+            "path": "config/sources/families/include/rockchip64_common.inc",
+            "line": 200,
+            "token": "BL31=$RKBIN_DIR/$BL31_BLOB spl/u-boot-spl.bin"
+          }
+        ],
+        "note": "DDR、BL31、SPL 與 FIT 為建置前置鏈；不能從副檔名推論通用 FIT 執行能力。"
+      },
+      "software": {
+        "source_mapping": "static_reviewed",
+        "uboot_tool": "integration_pending",
+        "linux_tool": "integration_pending",
+        "deployment": "not_implemented",
+        "recovery": "not_implemented",
+        "end_to_end": "not_implemented"
+      },
+      "hardware_qualified": false,
+      "execution_ready": false,
+      "backend_complete": false,
+      "blockers": [
+        "尚未將共用 U-Boot／Linux 工具接入本板原配組件、RAM 與回應核對契約。",
+        "平台部署、救援返回及完整階段契約尚未實作／整合，不能稱只待板子。",
+        "實體板修訂、媒體身分、備份、授權及故障復原均未核定。"
+      ]
+    },
+    {
+      "board": "bpi-cm6",
+      "artifact_board": "bananapicm6",
+      "architecture": "riscv64",
+      "family": "spacemit",
+      "group": "spacemit-k1",
+      "soc": "K1",
+      "soc_evidence": [
+        {
+          "path": "config/boards/bananapicm6.wip",
+          "line": 1,
+          "token": "K1"
+        }
+      ],
+      "config_path": "config/boards/bananapicm6.wip",
+      "sources": [
+        "config/boards/bananapicm6.wip",
+        "config/sources/families/spacemit.conf",
+        "config/sources/riscv64.conf",
+        "lib/functions/bsp/armbian-bsp-cli-deb.sh",
+        "lib/functions/rootfs/distro-agnostic.sh",
+        "patch/u-boot/legacy/u-boot-spacemit-k1-cm6/001-add-extlinux-boot.patch"
+      ],
+      "boot_profile": "cm6-extlinux",
+      "boot_chain": {
+        "artifacts": [
+          "bootinfo_emmc.bin",
+          "bootinfo_spinor.bin",
+          "FSBL.bin",
+          "fw_dynamic.itb",
+          "u-boot.itb",
+          "u-boot-env-default.bin"
+        ],
+        "evidence": [
+          {
+            "path": "config/sources/families/spacemit.conf",
+            "line": 29,
+            "token": "declare -g UBOOT_TARGET_MAP"
+          },
+          {
+            "path": "config/boards/bananapicm6.wip",
+            "line": 11,
+            "token": "SRC_EXTLINUX="
+          }
+        ],
+        "note": "K1 的 FSBL、OpenSBI、U-Boot 與環境需配套；有封裝宣告不代表 SPI／eMMC 救援可執行。"
+      },
+      "storage": {
+        "spi": {
+          "status": "family_conditional",
+          "evidence": [
+            {
+              "path": "config/sources/families/spacemit.conf",
+              "line": 29,
+              "token": "bootinfo_spinor.bin"
+            }
+          ],
+          "note": "家族列出 SPI 前置載荷；未證明本板配置或 SPI 部署路徑。"
+        },
+        "emmc": {
+          "status": "family_conditional",
+          "evidence": [
+            {
+              "path": "config/sources/families/spacemit.conf",
+              "line": 73,
+              "token": "if [[ -b \"${2}boot0\" ]]"
+            }
+          ],
+          "note": "家族有條件式 eMMC boot0 寫入路徑；本工具不執行，也不沿用其裝置探測。"
+        }
+      },
+      "special_boot": {
+        "status": "review_required",
+        "secure_boot_enabled": null,
+        "evidence": [
+          {
+            "path": "config/sources/families/spacemit.conf",
+            "line": 29,
+            "token": "declare -g UBOOT_TARGET_MAP"
+          },
+          {
+            "path": "config/boards/bananapicm6.wip",
+            "line": 11,
+            "token": "SRC_EXTLINUX="
+          }
+        ],
+        "note": "K1 的 FSBL、OpenSBI、U-Boot 與環境需配套；有封裝宣告不代表 SPI／eMMC 救援可執行。"
+      },
+      "software": {
+        "source_mapping": "static_reviewed",
+        "uboot_tool": "integration_pending",
+        "linux_tool": "integration_pending",
+        "deployment": "not_implemented",
+        "recovery": "not_implemented",
+        "end_to_end": "not_implemented"
+      },
+      "hardware_qualified": false,
+      "execution_ready": false,
+      "backend_complete": false,
+      "blockers": [
+        "尚未將共用 U-Boot／Linux 工具接入本板原配組件、RAM 與回應核對契約。",
+        "平台部署、救援返回及完整階段契約尚未實作／整合，不能稱只待板子。",
+        "實體板修訂、媒體身分、備份、授權及故障復原均未核定。",
+        "registry 的映像版本／角色缺項仍保留；本輪不補映像。"
+      ]
+    },
+    {
+      "board": "bpi-f3",
+      "artifact_board": "bananapif3",
+      "architecture": "riscv64",
+      "family": "spacemit",
+      "group": "spacemit-k1",
+      "soc": "K1",
+      "soc_evidence": [
+        {
+          "path": "config/boards/bananapif3.conf",
+          "line": 1,
+          "token": "K1"
+        }
+      ],
+      "config_path": "config/boards/bananapif3.conf",
+      "sources": [
+        "config/boards/bananapif3.conf",
+        "config/sources/families/spacemit.conf",
+        "config/sources/riscv64.conf",
+        "lib/functions/bsp/armbian-bsp-cli-deb.sh",
+        "lib/functions/rootfs/distro-agnostic.sh",
+        "patch/u-boot/legacy/u-boot-spacemit-k1/004-Update-SpacemiT-K1-U-Boot-Environment.patch"
+      ],
+      "boot_profile": "k1-extlinux",
+      "boot_chain": {
+        "artifacts": [
+          "bootinfo_emmc.bin",
+          "bootinfo_spinor.bin",
+          "FSBL.bin",
+          "fw_dynamic.itb",
+          "u-boot.itb",
+          "u-boot-env-default.bin"
+        ],
+        "evidence": [
+          {
+            "path": "config/sources/families/spacemit.conf",
+            "line": 29,
+            "token": "declare -g UBOOT_TARGET_MAP"
+          },
+          {
+            "path": "config/boards/bananapif3.conf",
+            "line": 11,
+            "token": "SRC_EXTLINUX="
+          }
+        ],
+        "note": "K1 的 FSBL、OpenSBI、U-Boot 與環境需配套；有封裝宣告不代表 SPI／eMMC 救援可執行。"
+      },
+      "storage": {
+        "spi": {
+          "status": "family_conditional",
+          "evidence": [
+            {
+              "path": "config/sources/families/spacemit.conf",
+              "line": 29,
+              "token": "bootinfo_spinor.bin"
+            }
+          ],
+          "note": "家族列出 SPI 前置載荷；未證明本板配置或 SPI 部署路徑。"
+        },
+        "emmc": {
+          "status": "family_conditional",
+          "evidence": [
+            {
+              "path": "config/sources/families/spacemit.conf",
+              "line": 73,
+              "token": "if [[ -b \"${2}boot0\" ]]"
+            }
+          ],
+          "note": "家族有條件式 eMMC boot0 寫入路徑；本工具不執行，也不沿用其裝置探測。"
+        }
+      },
+      "special_boot": {
+        "status": "review_required",
+        "secure_boot_enabled": null,
+        "evidence": [
+          {
+            "path": "config/sources/families/spacemit.conf",
+            "line": 29,
+            "token": "declare -g UBOOT_TARGET_MAP"
+          },
+          {
+            "path": "config/boards/bananapif3.conf",
+            "line": 11,
+            "token": "SRC_EXTLINUX="
+          }
+        ],
+        "note": "K1 的 FSBL、OpenSBI、U-Boot 與環境需配套；有封裝宣告不代表 SPI／eMMC 救援可執行。"
+      },
+      "software": {
+        "source_mapping": "static_reviewed",
+        "uboot_tool": "integration_pending",
+        "linux_tool": "integration_pending",
+        "deployment": "not_implemented",
+        "recovery": "not_implemented",
+        "end_to_end": "not_implemented"
+      },
+      "hardware_qualified": false,
+      "execution_ready": false,
+      "backend_complete": false,
+      "blockers": [
+        "尚未將共用 U-Boot／Linux 工具接入本板原配組件、RAM 與回應核對契約。",
+        "平台部署、救援返回及完整階段契約尚未實作／整合，不能稱只待板子。",
+        "實體板修訂、媒體身分、備份、授權及故障復原均未核定。",
+        "registry 的映像版本／角色缺項仍保留；本輪不補映像。"
+      ]
+    },
+    {
+      "board": "bpi-sm10",
+      "artifact_board": "bananapism10",
+      "architecture": "riscv64",
+      "family": "spacemit-k3-bpi",
+      "group": "spacemit-k3",
+      "soc": "K3",
+      "soc_evidence": [
+        {
+          "path": "config/boards/bananapism10.wip",
+          "line": 1,
+          "token": "K3"
+        }
+      ],
+      "config_path": "config/boards/bananapism10.wip",
+      "sources": [
+        "config/boards/bananapism10.wip",
+        "config/sources/families/spacemit-k3-bpi.conf",
+        "config/sources/riscv64.conf",
+        "packages/blobs/riscv64/spacemit-k3/bpi-sm10/env_k3.txt",
+        "packages/blobs/riscv64/spacemit-k3/bpi-sm10/uboot.config"
+      ],
+      "boot_profile": "k3-vendor",
+      "boot_chain": {
+        "artifacts": [
+          "env.bin",
+          "bootinfo_block.bin",
+          "FSBL.bin",
+          "esos.itb",
+          "fw_dynamic.itb",
+          "u-boot.itb",
+          "u-boot-env-default.bin"
+        ],
+        "evidence": [
+          {
+            "path": "config/sources/families/spacemit-k3-bpi.conf",
+            "line": 20,
+            "token": "declare -g UBOOT_TARGET_MAP"
+          }
+        ],
+        "note": "K3 是獨立原廠鏈；載荷及授權仍受限制，特殊容器、環境與安全狀態均需審核。"
+      },
+      "storage": {
+        "spi": {
+          "status": "not_declared",
+          "evidence": [],
+          "note": "此受控來源未明示本板可用的 SPI 引導能力；不等同沒有 SPI 硬體。"
+        },
+        "emmc": {
+          "status": "not_declared",
+          "evidence": [],
+          "note": "此受控來源未明示本板 eMMC 候選；不推定硬體有無、容量或 MMC 編號。"
+        }
+      },
+      "special_boot": {
+        "status": "review_required",
+        "secure_boot_enabled": null,
+        "evidence": [
+          {
+            "path": "config/sources/families/spacemit-k3-bpi.conf",
+            "line": 20,
+            "token": "declare -g UBOOT_TARGET_MAP"
+          }
+        ],
+        "note": "K3 是獨立原廠鏈；載荷及授權仍受限制，特殊容器、環境與安全狀態均需審核。"
+      },
+      "software": {
+        "source_mapping": "static_reviewed",
+        "uboot_tool": "integration_pending",
+        "linux_tool": "integration_pending",
+        "deployment": "not_implemented",
+        "recovery": "not_implemented",
+        "end_to_end": "not_implemented"
+      },
+      "hardware_qualified": false,
+      "execution_ready": false,
+      "backend_complete": false,
+      "blockers": [
+        "尚未將共用 U-Boot／Linux 工具接入本板原配組件、RAM 與回應核對契約。",
+        "平台部署、救援返回及完整階段契約尚未實作／整合，不能稱只待板子。",
+        "實體板修訂、媒體身分、備份、授權及故障復原均未核定。",
+        "registry 的映像版本／角色缺項仍保留；本輪不補映像。",
+        "尚缺原廠環境與完整啟動鏈的靜態契約；不得把候選命令或檔名當成容器支援。"
+      ]
+    }
+  ],
+  "dependencies": [
+    "tools/bpi_lab_uboot.py",
+    "tools/bpi_lab_linux.py",
+    "tools/bpi_lab_h618.py"
+  ],
+  "shared_tools": {
+    "tools/bpi_lab_uboot.py": {
+      "availability": "implemented",
+      "validation": "source_reviewed",
+      "board_integration": "pending",
+      "supported": [
+        "arm32:zImage:bootz",
+        "arm32:uImage:bootm",
+        "arm64:Image:booti",
+        "arm64:uImage:bootm",
+        "riscv64:Image:booti",
+        "riscv64:uImage:bootm"
+      ],
+      "unsupported": [
+        "FIT",
+        "compressed-uImage",
+        "vendor-container",
+        "extlinux",
+        "deployment",
+        "recovery"
+      ],
+      "hardware_ids": [],
+      "whole_adapter_ready": false,
+      "hardware_qualified": false,
+      "evidence": [
+        {
+          "path": "tools/bpi_lab_uboot.py",
+          "line": null,
+          "token": "def validate_config(config):"
+        },
+        {
+          "path": "tools/bpi_lab_uboot.py",
+          "line": null,
+          "token": "def render(config):"
+        },
+        {
+          "path": "tools/bpi_lab_uboot.py",
+          "line": null,
+          "token": "def boot(console, config, records=None,"
+        },
+        {
+          "path": "tools/bpi_lab_uboot.py",
+          "line": null,
+          "token": "compression == 0"
+        }
+      ],
+      "limitations": [
+        "共用候選工具已有配置驗證、離線展開與一次性引導實作；本輪僅核對其來源，逐板整合與實測仍待完成。",
+        "bootm 僅支援未壓縮 legacy uImage；不支援任意 FIT、原廠容器或完整前置載入鏈。",
+        "需要明確 RAM／保留區、原配組件長度與摘要、已配對 U-Boot；MMC 或靜態 TFTP 的存在不等於本板已核定。",
+        "僅觀察核心標記，不證明根媒體、短測、救援或完整後端。"
+      ]
+    },
+    "tools/bpi_lab_linux.py": {
+      "availability": "implemented",
+      "validation": "source_reviewed",
+      "board_integration": "pending",
+      "supported": [
+        "arm32",
+        "arm64",
+        "riscv64",
+        "direct-mmc-sd-root",
+        "read-only-preflight"
+      ],
+      "unsupported": [
+        "overlay",
+        "NFS",
+        "Btrfs",
+        "LVM",
+        "dm-crypt",
+        "NVMe-root",
+        "USB-root",
+        "smoke",
+        "stress"
+      ],
+      "hardware_ids": [],
+      "whole_adapter_ready": false,
+      "hardware_qualified": false,
+      "evidence": [
+        {
+          "path": "tools/bpi_lab_linux.py",
+          "line": null,
+          "token": "def validate(report, expected):"
+        },
+        {
+          "path": "tools/bpi_lab_linux.py",
+          "line": null,
+          "token": "def collect(*, ssh_config, alias, known_hosts, timeout=20):"
+        },
+        {
+          "path": "tools/bpi_lab_linux.py",
+          "line": null,
+          "token": "if not re.fullmatch(r\"mmcblk[0-9]+\", Path(parent).name):"
+        }
+      ],
+      "limitations": [
+        "Linux 唯讀預檢已有收集與驗證實作；本輪不執行 SSH 收集，也未逐板整合。",
+        "根掛載須能追到直接 MMC／SD、CID 與控制器；其他根儲存堆疊保持阻擋。",
+        "UUID 來自裝置管理器連結，並非直接讀取超級區塊；唯讀觀察不是完整短測或壓力測試。"
+      ]
+    },
+    "tools/bpi_lab_h618.py": {
+      "availability": "implemented",
+      "validation": "source_reviewed",
+      "board_integration": "pending",
+      "supported": [
+        "preflight",
+        "deploy",
+        "smoke"
+      ],
+      "unsupported": [
+        "boot",
+        "recovery",
+        "resume"
+      ],
+      "hardware_ids": [
+        "bpi-m4zero-0845"
+      ],
+      "whole_adapter_ready": false,
+      "hardware_qualified": false,
+      "evidence": [
+        {
+          "path": "tools/bpi_lab_h618.py",
+          "line": null,
+          "token": "IMPLEMENTED = (\"preflight\", \"deploy\", \"smoke\")"
+        },
+        {
+          "path": "tools/bpi_lab_h618.py",
+          "line": null,
+          "token": "config[\"hardware_id\"] == \"bpi-m4zero-0845\""
+        },
+        {
+          "path": "tools/bpi_lab_h618.py",
+          "line": null,
+          "token": "\"whole_adapter_ready\": False"
+        },
+        {
+          "path": "tools/bpi_lab_h618.py",
+          "line": null,
+          "token": "if request[\"stage\"] not in IMPLEMENTED or \"resume\" in request:"
+        }
+      ],
+      "limitations": [
+        "僅 0845 的 preflight／deploy／smoke 有階段接線；boot／recovery／resume 明確阻擋，whole_adapter_ready=false。",
+        "僅接入 0845 的 EMAC 映像格式；映像名稱不證明 EMAC 擴充硬體通過，0845 授權不可借用於其他板。",
+        "部署需要原有精確媒體配對、備份及覆寫授權；本輪不呼叫任何硬體階段。"
+      ]
+    }
+  }
+}
