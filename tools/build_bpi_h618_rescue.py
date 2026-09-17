@@ -19,8 +19,10 @@ sys.dont_write_bytecode = True
 
 if __package__:
     from .bpi_h618_rescue.bpi_rescue_cli import ChineseArgumentParser
+    from . import bpi_h618_artifacts as safe
 else:
     from bpi_h618_rescue.bpi_rescue_cli import ChineseArgumentParser
+    import bpi_h618_artifacts as safe
 
 
 ASSETS = Path(__file__).resolve().with_name("bpi_h618_rescue")
@@ -35,11 +37,45 @@ RUNTIME_BINARIES = ("curl", "xz", "python3", "wpa_supplicant", "ip", "rfkill",
 BUILD_BINARIES = ("mkinitramfs", "unshare", "mount", "modinfo", "ldd", "depmod",
                   "cpio", "gzip", "ldconfig", "chroot", "lsinitramfs")
 ENV = {"PATH": SEARCH_PATH, "LC_ALL": "C", "PYTHONDONTWRITEBYTECODE": "1"}
+MULTIARCH = {"arm32": "arm-linux-gnueabihf", "arm64": "aarch64-linux-gnu", "riscv64": "riscv64-linux-gnu"}
 
 
 def require(ok, message):
     if not ok:
         raise ValueError(message)
+
+
+def validate_profile(value):
+    require(type(value) is dict and set(value) == {
+        "schema", "board", "architecture", "multiarch", "dt_compatible", "modules", "firmware", "wireless"},
+        "救援板級配置欄位不完整或含未知欄位")
+    require(value["schema"] == "bpi-lab-rescue-build-profile-v1"
+            and type(value["board"]) is str and re.fullmatch(r"bpi-[a-z0-9-]{1,32}", value["board"]),
+            "救援板型或配置版本不符")
+    require(type(value["architecture"]) is str and value["architecture"] in MULTIARCH
+            and value["multiarch"] == MULTIARCH[value["architecture"]], "救援架構與函式庫 ABI 不符")
+    for key, pattern, minimum in (("modules", r"[A-Za-z0-9_+-]{1,128}", 1),
+                                 ("dt_compatible", r"[A-Za-z0-9,._+-]{1,128}", 1)):
+        items = value[key]
+        require(type(items) is list and minimum <= len(items) <= 128
+                and all(type(item) is str and re.fullmatch(pattern, item) for item in items)
+                and len(set(items)) == len(items), "救援模組或 DT 身分清單不明確")
+    firmware = value["firmware"]
+    require(type(firmware) is list and len(firmware) <= 256 and type(value["wireless"]) is bool,
+            "救援韌體清單或無線模式型別不符")
+    seen = set()
+    for item in firmware:
+        require(type(item) is dict and set(item) == {"path", "sha256"}
+                and type(item["path"]) is str and type(item["sha256"]) is str,
+                "韌體欄位無效")
+        path = item["path"]
+        require(re.fullmatch(r"[A-Za-z0-9_.+/-]{1,240}", path)
+                and all(part not in ("", ".", "..") for part in path.split("/")) and path not in seen
+                and re.fullmatch(r"[0-9a-f]{64}", item["sha256"]), "韌體路徑、摘要或唯一性不符")
+        seen.add(path)
+    require(not value["wireless"] or {"regulatory.db", "regulatory.db.p7s"} <= seen,
+            "無線救援必須固定法規資料及其簽章摘要")
+    return value
 
 
 def sha256(path):
@@ -56,22 +92,42 @@ def regular(path, label, executable=False):
     require(not executable or os.access(path, os.X_OK), f"{label}不可執行：{path}")
 
 
-def elf_aarch64(path, static=False):
+def verified_firmware(path, expected, target=None):
+    """以同一一般檔案描述元核對內容；複製只使用已核對的有界位元組。"""
+    with safe.open_root(path.parent) as root:
+        metadata, blob = safe.fingerprint(root, path.name, limit=64 * 1024**2, keep=target is not None)
+    require(metadata["sha256"] == expected, "板級韌體摘要不符或前檢後改變")
+    if target is not None:
+        with target.open("xb") as stream:
+            stream.write(blob)
+    return metadata
+
+
+def elf_native(path, architecture="arm64", static=False):
     regular(path, "執行檔", executable=True)
+    layouts = {"arm64": (2, 183, 64, 56, 32, 54, "<Q"),
+               "arm32": (1, 40, 52, 32, 28, 42, "<I"),
+               "riscv64": (2, 243, 64, 56, 32, 54, "<Q")}
+    require(architecture in layouts, "不支援此救援執行檔架構")
+    elf_class, machine, header_size, entry_size, offset_pos, count_pos, offset_fmt = layouts[architecture]
     with path.open("rb") as stream:
-        header = stream.read(64)
-        require(len(header) == 64 and header[:6] == b"\x7fELF\x02\x01"
-                and struct.unpack_from("<H", header, 18)[0] == 183,
-                f"必須是 AArch64 小端序 ELF64：{path}")
+        header = stream.read(header_size)
+        require(len(header) == header_size and header[:6] == b"\x7fELF" + bytes((elf_class, 1))
+                and struct.unpack_from("<H", header, 18)[0] == machine,
+                f"必須是 {architecture} 小端序 ELF：{path}")
         require(struct.unpack_from("<H", header, 16)[0] in (2, 3), f"ELF 型別不符：{path}")
-        offset = struct.unpack_from("<Q", header, 32)[0]
-        size, count = struct.unpack_from("<HH", header, 54)
-        require(size == 56 and 0 < count < 1024 and offset >= 64
+        offset = struct.unpack_from(offset_fmt, header, offset_pos)[0]
+        size, count = struct.unpack_from("<HH", header, count_pos)
+        require(size == entry_size and 0 < count < 1024 and offset >= header_size
                 and offset + size * count <= path.stat().st_size, f"ELF 標頭截斷：{path}")
         stream.seek(offset)
         kinds = [struct.unpack_from("<I", stream.read(size))[0] for _ in range(count)]
         require(not static or (2 not in kinds and 3 not in kinds),
                 "--busybox 必須靜態連結，不得含 PT_DYNAMIC 或 PT_INTERP")
+
+
+def elf_aarch64(path, static=False):
+    return elf_native(path, static=static)
 
 
 def checked(args, env=None, timeout=30, **kwargs):
@@ -131,10 +187,17 @@ def output_path(value):
     return resolved
 
 
-def preflight(args):
+def preflight(args, *, profile=None):
+    if profile is not None:
+        validate_profile(profile)
     output = output_path(args.output)
     require(os.geteuid() == 0, "須由 root 在板上原 Linux 建置")
-    require(platform.machine() == "aarch64", "只支援板上原生 AArch64，不支援交叉建置")
+    architecture = profile["architecture"] if profile is not None else "arm64"
+    machines = {"arm64": ("aarch64",), "arm32": ("armv7l", "armv8l"), "riscv64": ("riscv64",)}
+    require(platform.machine() in machines[architecture], "需要相同架構原生 Linux；預設 AArch64，不支援交叉建置")
+    if profile is not None:
+        compatible = Path("/sys/firmware/devicetree/base/compatible").read_bytes().rstrip(b"\0").decode("ascii").split("\0")
+        require(compatible == profile["dt_compatible"], "救援建置主機的 DT 身分與板級配置不同")
     kernel = args.kernel or platform.release()
     require(re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._+-]{0,127}", kernel), "核心版本格式不符")
     require(kernel == platform.release(), "核心版本必須等於目前 uname -r")
@@ -145,10 +208,10 @@ def preflight(args):
         binaries[name] = str(Path(found).absolute())
         regular(Path(found), name, executable=True)
         if name in RUNTIME_BINARIES:
-            elf_aarch64(Path(found))
+            elf_native(Path(found), architecture)
             require("not found" not in checked(["ldd", found]), f"{name} 缺少動態庫")
     busybox = Path(args.busybox).resolve(strict=True)
-    elf_aarch64(busybox, static=True)
+    elf_native(busybox, architecture, static=True)
     require(re.fullmatch(r"[0-9a-f]{64}", args.busybox_sha256), "BusyBox SHA-256 必須為 64 位小寫十六進位")
     require(sha256(busybox) == args.busybox_sha256, "BusyBox SHA-256 不符")
     applets = set(checked([busybox, "--list"]).splitlines())
@@ -165,7 +228,7 @@ def preflight(args):
         require(values.get("CONFIG_" + name) == "y", f"核心缺少必要 CONFIG_{name}=y")
     for name in ("modules.dep", "modules.alias", "modules.builtin", "modules.builtin.modinfo"):
         regular(module_root / name, "現成模組索引")
-    for name in MODULES:
+    for name in MODULES if profile is None else profile["modules"]:
         checked(["modinfo", "-k", kernel, name])
         filename = checked(["modinfo", "-k", kernel, "-F", "filename", name]).strip()
         require(filename == "(builtin)" or Path(filename).resolve().is_relative_to(module_root.resolve()),
@@ -173,12 +236,19 @@ def preflight(args):
         if filename != "(builtin)":
             vermagic = checked(["modinfo", "-k", kernel, "-F", "vermagic", name]).split()
             require(vermagic and vermagic[0] == kernel, f"{name} 的 vermagic 與核心不符")
-    firmware = sorted(Path("/lib/firmware/brcm").glob("brcmfmac43455-sdio.*"))
-    for suffix in (".bin", ".txt", ".clm_blob"):
-        require(any(path.name.endswith(suffix) for path in firmware), f"BCM4345/6 韌體缺少 {suffix}")
+    if profile is None:
+        firmware = sorted(Path("/lib/firmware/brcm").glob("brcmfmac43455-sdio.*"))
+        for suffix in (".bin", ".txt", ".clm_blob"):
+            require(any(path.name.endswith(suffix) for path in firmware), f"BCM4345/6 韌體缺少 {suffix}")
+    else:
+        firmware = [Path("/lib/firmware") / item["path"] for item in profile["firmware"]]
+        for item, path in zip(profile["firmware"], firmware):
+            resolved = path.resolve(strict=True)
+            require(resolved.is_relative_to(Path("/lib/firmware").resolve()), "韌體來源越界")
+            verified_firmware(resolved, item["sha256"])
     for path in firmware:
         regular(path, "韌體")
-    for name in ("regulatory.db", "regulatory.db.p7s"):
+    for name in ("regulatory.db", "regulatory.db.p7s") if profile is None else ():
         path = Path("/lib/firmware") / name
         regular(path, "無線法規資料")
         firmware.append(path)
@@ -199,7 +269,7 @@ def write(path, text, mode=0o644):
     path.chmod(mode)
 
 
-def prepare(output, kernel, binaries, busybox, key, firmware, stdlib):
+def prepare(output, kernel, binaries, busybox, key, firmware, stdlib, *, profile=None):
     conf = output / "conf"
     share = output / "share"
     seed = output / "seed"
@@ -212,7 +282,7 @@ def prepare(output, kernel, binaries, busybox, key, firmware, stdlib):
     shutil.copyfile(ASSETS / "init", share / "init")
     (share / "init").chmod(0o755)
     write(conf / "initramfs.conf", "MODULES=list\nBUSYBOX=n\nCOMPRESS=gzip\nDEVICE=\nNFSROOT=auto\nRESUME=none\nUMASK=0022\n")
-    write(conf / "modules", "\n".join(MODULES) + "\n")
+    write(conf / "modules", "\n".join(MODULES if profile is None else profile["modules"]) + "\n")
     shutil.copyfile(ASSETS / "hook", conf / "hooks/zz-bpi-rescue")
     (conf / "hooks/zz-bpi-rescue").chmod(0o755)
     for directory in ("usr/bin", "usr/sbin", "etc/ssh", "root", "proc", "sys", "dev", "run", "tmp", "var"):
@@ -246,7 +316,15 @@ def prepare(output, kernel, binaries, busybox, key, firmware, stdlib):
     for path in firmware:
         target = seed / "usr/lib/firmware" / path.relative_to("/lib/firmware")
         target.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copyfile(path, target)
+        if profile is None:
+            shutil.copyfile(path, target)
+        else:
+            name = path.relative_to("/lib/firmware").as_posix()
+            expected = {item["path"]: item["sha256"] for item in profile["firmware"]}
+            require(name in expected, "複製韌體不在板級配置")
+            resolved = path.resolve(strict=True)
+            require(resolved.is_relative_to(Path("/lib/firmware").resolve()), "複製韌體來源越界")
+            verified_firmware(resolved, expected[name], target)
     py_target = seed / stdlib.relative_to("/")
     shutil.copytree(stdlib, py_target, ignore=shutil.ignore_patterns(
         "__pycache__", "*.pyc", "test", "tests", "idlelib", "tkinter", "turtledemo",
@@ -258,22 +336,25 @@ def prepare(output, kernel, binaries, busybox, key, firmware, stdlib):
              for name, source in binaries.items() if name in RUNTIME_BINARIES]
     pairs += [(str(p), str(p)) for p in sorted(stdlib.rglob("*.so"))
               if (py_target / p.relative_to(stdlib)).is_file()]
+    multiarch = "aarch64-linux-gnu" if profile is None else profile["multiarch"]
     for pattern in ("libnss_files.so.*", "libnss_dns.so.*", "libresolv.so.*"):
-        pairs += [(str(p), str(p)) for p in sorted(Path("/lib/aarch64-linux-gnu").glob(pattern))]
+        pairs += [(str(p), str(p)) for p in sorted(Path("/lib").joinpath(multiarch).glob(pattern))]
     require(all(not any(c.isspace() for c in source + target) for source, target in pairs), "執行檔路徑不能含空白")
     write(output / "copy-exec.list", "".join(f"{source} {target}\n" for source, target in pairs))
     write(output / "applets", "\n".join(APPLET_NAMES) + "\n")
     return py_bytes
 
 
-def build(args):
-    output, kernel, binaries, busybox, key, firmware, stdlib = preflight(args)
+def build(args, *, profile=None):
+    output, kernel, binaries, busybox, key, firmware, stdlib = preflight(args, profile=profile)
     output.mkdir(mode=0o700, exist_ok=False)
     report = {"schema": SCHEMA, "kernel": kernel, "status": "未完成", "hardware_tested": False,
               "busybox_sha256": args.busybox_sha256, "authorized_key": bool(key)}
     report_path = output / "build-report.json"
+    if profile is not None:
+        report["board_profile"] = profile
     try:
-        report["python_stdlib_bytes"] = prepare(output, kernel, binaries, busybox, key, firmware, stdlib)
+        report["python_stdlib_bytes"] = prepare(output, kernel, binaries, busybox, key, firmware, stdlib, profile=profile)
         (output / "tmp").mkdir()
         image = output / "rescue-initramfs.img"
         command = [binaries["unshare"], "--mount", "--fork", "--propagation", "private",
@@ -295,7 +376,8 @@ def build(args):
         require(not any(re.search(r"(^|/)(boot|NetworkManager|machine-id)(/|$)|ssh_host_", p) for p in files),
                 "initramfs 含禁止內容")
         report.update(status="建置完成，尚未實板驗證", image_bytes=image.stat().st_size,
-                      image_sha256=sha256(image), firmware_bytes=sum(p.stat().st_size for p in firmware),
+                      image_sha256=sha256(image), firmware_bytes=sum(
+                          p.stat().st_size for p in (output / "seed/usr/lib/firmware").rglob("*") if p.is_file()),
                       sources={p.name: sha256(p) for p in ASSETS.iterdir() if p.is_file()})
         write(output / "SHA256SUMS", f"{report['image_sha256']}  {image.name}\n")
     except Exception as error:
