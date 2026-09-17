@@ -210,10 +210,14 @@ class ImageReader:
                         part_hash.update(selected)
                         written += len(selected)
                 total = end
+            out.flush()
+            self.completed_partition_identity = identity(out)
         require(part is not None and total % 512 == 0 and total >= start + length
                 and written == length, "原始映像截斷或分割長度不符")
         require(identity(source) == before, "來源在解壓期間改變")
         self.part_stream = self.stack.enter_context(safe.open_file(output_root, self.partition.name))
+        require(identity(self.part_stream) == self.completed_partition_identity,
+                "暫存分割在寫入完成後遭置換或變更")
         self.part_identity = identity(self.part_stream)
         self.part_stream.seek(1024)
         superblock = self.part_stream.read(1024)
@@ -307,6 +311,7 @@ class ImageReader:
                 raw = fast[1] if fast else self._query("cat", "<" + inode + ">", 1024)
                 require(len(raw) == size, "映像連結長度不符")
                 target = raw.decode("ascii")
+                self._symlink_target(prefix, target)
                 if target.startswith("/"):
                     resolved = []
                 pending = target.split("/") + pending
@@ -320,6 +325,9 @@ class ImageReader:
                 require(kind == b"regular" and size <= MAX_FILE, "只讀取有界一般檔案")
                 return prefix, inode, size, links
         raise safe.ArtifactError("映像路徑未指向一般檔案")
+
+    def _symlink_target(self, path, target):
+        """供多分割讀取器在解析目標前檢查掛載界線。"""
 
     def read_file(self, path):
         image_path(path)
@@ -407,18 +415,24 @@ class SnapshotReader:
             for query in original["queries"]:
                 self.check()
                 command = query.get("command", "")
-                if not command.startswith("stat /") or query.get("returncode") != 0:
+                ext_query = command.startswith("stat /") and query.get("returncode") == 0
+                fat_query = command.startswith("mtype /") and query.get("returncode") == 1
+                if not (ext_query or fat_query):
                     continue
-                path = image_path(command[5:])
+                path = image_path(query.get("lookup_path", command[5:] if ext_query else command[6:]))
                 metadata, blob = safe.fingerprint(root, query["stderr_file"], limit=65536, keep=True)
                 require(metadata == query["stderr"], "擷取查詢診斷已變動")
                 diagnostic = re.sub(rb"\Adebugfs [^\n]*\n", b"", blob)
-                if re.fullmatch(rb"[^\n]*: File not found by ext2_lookup\s*", diagnostic):
+                if ((ext_query and re.fullmatch(rb"[^\n]*: File not found by ext2_lookup\s*", diagnostic))
+                        or (fat_query and re.fullmatch(rb'(?:/usr/bin/)?mtype: File "[^"\r\n]+" not found\s*', diagnostic))):
                     missing.append((path, query, blob))
             create_directory(self.output)
             self.output_fd = self.stack.enter_context(safe.open_root(self.output))
             self.report = {key: original[key] for key in (
                 "source", "source_digest", "raw", "partition", "filesystem_uuid", "source_verified")}
+            for key in ("partitions", "boot_partition", "mounts", "layout_reader"):
+                if key in original:
+                    self.report[key] = original[key]
             self.report.update(schema="bpi-lab-image-replay-v1", hardware_validated=False,
                                source_authenticated=False, source_reread=False, mounted=False,
                                image_code_executed=False, queries=[],
@@ -474,14 +488,32 @@ def main(argv=None):
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--max-raw-bytes", type=int, default=32 * 1024**3)
     parser.add_argument("--timeout", type=int, default=1800)
+    parser.add_argument("--layout", choices=("single-ext", "disk"), default="single-ext",
+                        help="單一 MBR ext，或以 fstab 核對完整 MBR／GPT 多分割")
     parser.add_argument("--path", action="append", default=[])
+    parser.add_argument("--optional-path", action="append", default=[],
+                        help="另查詢可選路徑；只有確定不存在才繼續，解析錯誤仍失敗")
     args = parser.parse_args(argv)
     try:
-        require(1 <= len(args.path) <= 128, "須指定 1..128 個映像內檔案")
-        with ImageReader(args.image, args.sha256, args.output,
+        require(1 <= len(args.path) + len(args.optional_path) <= 128, "須指定 1..128 個映像內檔案")
+        reader_type = ImageReader
+        if args.layout == "disk":
+            if __package__:
+                from .bpi_lab_disk import DiskReader
+            else:
+                from bpi_lab_disk import DiskReader
+            reader_type = DiskReader
+        with reader_type(args.image, args.sha256, args.output,
                          max_raw_bytes=args.max_raw_bytes, timeout=args.timeout) as reader:
             for path in args.path:
                 reader.read_file(path)
+            missing = []
+            for path in args.optional_path:
+                try:
+                    reader.read_file(path)
+                except FileNotFoundError:
+                    missing.append(path)
+            reader.report["optional_missing"] = missing
         print(json.dumps({"ok": True, "evidence": str(reader.output / "extraction.json"),
                           "hardware_validated": False}, ensure_ascii=False))
         return 0
