@@ -142,6 +142,26 @@ backend.validate_result(request["stage"], result, request, contract, bundle,
 
 original-entry 的共同核對欄位透過 `original_entry.lifecycle_view(config)` 投影，支援其已核對的 CM6 FIT 路徑；實際執行仍保留 FIT 原配置與原 `sysboot`／`bootm`，不以投影中的 Image 欄位啟動共用 runner。
 
+### K3 專用接點
+
+`bpi-sm10` 固定分派至 `bpi_lab_k3_runtime` 的 `bpi-lab-k3-runtime-v1`／`spacemit-k3-lab-v1`。客戶配置只接受 `purpose="original"`，固定 SD RAM 救援只接受 `purpose="sd-rescue"`；不得交給 generic／original-entry，也不得把 `lifecycle_view` 的 RAM 投影當成原配置執行。
+
+原配仍先經 `extlinux.validate_template` 完整核對 manifest、原環境、DT／CMA 與前置韌體範本，再呼叫 `k3_runtime.build_uboot_config(config, artifact_root=...)`，並比對完整回傳配置。傳輸限原映像 MMC 路徑；原廠 `boot_mode`、MMC／GPT、efuse／LCS 與板級 DT fixup 由 K3 專用 runtime 核對、執行，共用層不重寫命令或推測環境。
+
+生命週期對兩個 purpose 核對相同板號、完整 pairing、SDK 的 `mmc={sd:0, emmc:2}` 與 ABI。兩份 qualification 必須分開，但其中 `firmware.binary`、`firmware.config` 參照必須完全相同且能重新讀取。救援 `components.manifest` 必須為 `bpi-lab-k3-ram-components-v1`，其 `rescue={schema,kernel,identity_sha256}` 與 `sd_prefix={bytes,sha256}` 須完整等於部署契約；K3 artifact validator 負責驗證固定 initrd 內的真正身分及原 SD 檔案。交接後仍沿用同次 UART／SSH、RAM 根及 SD 前綴預檢，沒有取代既有證據驗證。
+
+必要 API 為 `validate_config(config)`、`lifecycle_view(config)`、`build_uboot_config(config, artifact_root=...)`、`validate_artifacts(config, artifact_root=None)` 與 `boot(console, config, records=None, timeout=..., monotonic=...)`。缺少任一可呼叫入口時，共用後端在開 UART／電源前明確阻擋，不等待逾時或回退其他執行器。
+
+固定 dependencies 新增 `bpi_lab_spacemit.py`、`bpi_lab_k3_runtime.py`、`bpi_lab_k3/bpi_lab_k3.c` 及 `bpi_lab_k3/readonly-sdk.patch`，以及救援封裝來源 `bpi_h618_rescue/init`、`runtime.py`、`ssh-start`、`udhcpc-script`。清單仍須逐鍵完全相同、逐檔摘要核對；只有程式列出的固定子路徑被接受，不接受任意相對路徑、上層跳轉或額外 C 檔。既有設定須重新固定完整摘要與 scope，不能沿用舊核定。
+
+K3 接點現使用真正 SDK 建置證據、家族解析、artifact 守門及 K3 UART runner。
+八項整合回歸包含完整五階段與返回 SD 救援；只有電源、UART 傳輸、Linux／SSH 觀測及媒體 I/O
+使用離線模型，不替換 K3 API。實板資格仍待另行核定。
+
+救援介面已對齊：使用 `bpi-lab-rescue-v1` 身分，`sd_prefix` 綁定實讀前 4 MiB 的長度與摘要，
+SD 路徑另存 `media_prefix`。舊 H618 schema 或僅有路徑字串的開發產物會被拒絕，須重新建置核對。
+真 BSP 建置、命令及來源限制詳見 [K3 專用文件](bananapi-lab-k3-runtime-20260918.md)。
+
 `validate_result` 原有位置參數不變，新增可選 `config`、`current`。`selected_image` 在記憶體 bundle 保留 `_validation_config` 供既有呼叫使用；自行建立 bundle 的核定驅動器應明示傳入 `config`，續作必須傳入 `current`。核心驗證實作位於 `bpi_lab_evidence`，不匯入 backend／qualify，兩種入口可共用而無循環匯入。
 
 `load_inputs`、`scope_digest`、`NativeRuntime.execute` 與 `StateStore` 既有介面不變。`selected_image` 在記憶體 bundle 加入 `_root_binding`，原生後端傳給 `lifecycle.cycle(..., root_binding=...)` 的新增可選關鍵字；直接呼叫 LABEL 引導若省略綁定會拒絕。special dispatch 使用固定的 `validate_config(config)`、`validate_artifacts(config, artifact_root)`、`lifecycle_view(config)`、`boot(console, config, records, timeout=..., monotonic=...)`。
@@ -190,8 +210,8 @@ python3 -m unittest discover -s tests -p test_bpi_lab_realtek_rescue.py
 ## 未實作與實板界線
 
 - Realtek 客戶 LABEL 與同 vendor 固定 SD RAM 救援已接入五階段，合併來源亦完成兩板真 BSP 編譯、連結、大小檢查；尚無實板冷循環、救援 kernel／initrd 網路可用性及 RAM／ACPU 時序核定。W2 `direct-final` 不是保留區檢查豁免，不能以合成測資或編譯成功生成硬體資格。
-- 共用部署只支援 MMC/CID 媒體。無 eMMC 的板子若沒有獨立可寫 MMC 測試媒體，仍缺 USB／NVMe 等獨立適配器；不得改常數把 WWN／serial 冒充 CID，也不能覆寫受保護救援 SD。新適配範圍須涵蓋穩定媒體與控制器身分、完整備份、mount／swap／holders 排除、固定描述符、完整回讀、Linux 根身分與共用排他。僅 RAM 引導不是完整五階段映像資格。
-- 原入口目前包含已核對的 ARM32 zImage 與 CM6 單核心 FIT 分支；其他 FIT、TFTP、overlay 與 K3 vendor-env 限制沿用專用執行器，不能降級成共用 runner 來避開限制。
+- 本共用部署只支援 MMC/CID 媒體。USB／NVMe 另使用 [外部媒體後端](bananapi-lab-external-backend-20260918.md)，不可把 WWN／serial 冒充 CID，也不能覆寫固定救援 SD；外部根與測試用衍生 initrd 的限制另列。
+- 原入口包含已核對的 ARM32 zImage 與 CM6 單核心 FIT 分支；其他 FIT、TFTP、overlay 限制沿用專用執行器。K3 vendor-env 已接入真正專用 artifact／UART runtime，不得降級成共用 runner 來避開限制。
 - 沒有未知遠端 writer 的自動租約核對或自動解除隔離；未完整發布的 deploy 不允許故障切電。
 - smoke 是固定 Linux 唯讀預檢，不包含 CPU／記憶體壓力、周邊完整驗證或 ROM／SPL 原生開機鏈認證。
 - 上板前仍須由操作者取得真實 UART／電源、CID／控制器、MMC 編號、RAM／保留區、U-Boot 命令與版本、救援身分及受保護 SD 的配對證據，完成原 userarea 備份並明示寫入／首次帳戶變更授權。首次單映像循環須走獨立 qualify 入口，所有證據通過後再人工 review；程式與離線測試均不啟用站點。

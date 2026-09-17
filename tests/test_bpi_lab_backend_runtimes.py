@@ -13,6 +13,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import test_bpi_lab_backend as data
 import test_bpi_lab_allwinner as allwinner_data
+import test_bpi_lab_extlinux as extlinux_data
+import test_bpi_lab_k3_runtime as k3_data
 import test_bpi_lab_lifecycle as lifecycle_data
 import test_bpi_lab_original_entry as entry_data
 import test_bpi_lab_special_runtime as special_data
@@ -413,6 +415,201 @@ class RuntimeIntegrationTests(EvidenceFixture, data.BackendFixture):
         result = self.cycle(selected, channel, self.root / "cm6-fit-cycle")
         self.assertEqual(result["uboot"]["schema"], "bpi-lab-original-entry-result-v1")
         self.assertTrue(channel.commands[-1].startswith("sysboot "))
+
+
+@unittest.skipUnless(k3_data.BUILD.is_file(), "K3 整合需要真 BSP 建置證據，不能用 API 替身代替")
+class K3ContractTests(EvidenceFixture, data.BackendFixture):
+    """真 BSP 守門、K3 runner 與五階段；硬體觀測、傳輸及配對為離線模型。"""
+
+    def setUp(self):
+        popen = subprocess.Popen
+        super().setUp()
+        def local_only(argv, *args, **kwargs):
+            if argv[0] not in ("/usr/bin/dtc", "/usr/bin/fdtget", "riscv64-linux-gnu-nm", "riscv64-linux-gnu-objcopy") and list(argv) != ["/sbin/ldconfig", "-p"]:
+                raise AssertionError("K3 整合只允許本機 DTB 與暫存 ELF 產物核對")
+            return popen(argv, *args, **kwargs)
+        mock.patch.object(subprocess, "Popen", side_effect=local_only).start()
+        self.customer_helper = k3_data.make_fixture(self.root / "k3-original")
+        self.rescue_helper = k3_data.make_fixture(self.root / "k3-rescue", purpose="sd-rescue")
+        customer, rescue = self.customer_helper, self.rescue_helper
+        family, self.rescue_manifest = customer.m, rescue.m
+        artifact_root = Path(customer.c["components"]["artifact_root"])
+        self.firmware = customer.firmware
+        hardware = customer.c["hardware_id"]
+        self.contract.update(hardware_id=hardware, rescue=rescue.m["rescue"], sd_prefix=rescue.m["sd_prefix"])
+        self.contract["expected"].update(cid=k3_data.EMMC, bytes=1024**3)
+        self.contract["protected_sd"].update(cid=k3_data.SD, bytes=1024**3)
+        self.contract["authorization"].update(hardware_id=hardware, media_identity="cid:" + k3_data.EMMC)
+        self.resources["media"] = "cid:" + k3_data.EMMC
+        self.pairing.update(hardware_id=hardware, resources=self.resources, rescue=self.contract["rescue"],
+                            emmc=self.contract["expected"], protected_sd=self.contract["protected_sd"])
+        pairing = self.write_json("pairing.json", self.pairing)
+        customer.extraction.update(source_digest=self.source_record["compressed"], raw=self.source_record["raw"])
+        customer.c["components"]["extraction"] = customer.save("extraction.json", customer.extraction)
+        for helper in (customer, rescue):
+            helper.c["pairing"] = pairing
+            helper.c["uboot"]["pairing_sha256"] = pairing["sha256"]
+            helper.c = helper.qualify(helper.c)
+        self.boot, self.rescue = customer.c, rescue.c
+        q, rq = self.boot["qualification"], self.rescue["qualification"]
+        def child(ref):
+            return {"path": str(Path(ref["path"]).relative_to(customer.root)),
+                    "sha256": ref["sha256"], "bytes": Path(ref["path"]).stat().st_size}
+        preparation = {"schema": "bpi-lab-prepare-v1", "status": "prepared", "hardware_validated": False,
+                       "board": "bpi-sm10", "source": self.source_record["compressed"], "raw": self.source_record["raw"],
+                       "root_uuid_verified": True, "root_identity_verified": True, "root_uuid": family["root_uuid"],
+                       "root_binding": {"method": "uuid", "uuid": family["root_uuid"]},
+                       "kernel_release": family["kernel_release"], "components": child(self.boot["components"]["manifest"]),
+                       "extraction": child(self.boot["components"]["extraction"])}
+        self.expected.update(architecture="riscv64", kernel_release=family["kernel_release"],
+                             dt_compatible=family["checks"]["dtb"]["compatible"],
+                             root={**self.contract["expected"], "uuid": family["root_uuid"], "media_type": "MMC"})
+        self.lifecycle.update(hardware_id=hardware, pairing_sha256=pairing["sha256"], mmc=self.boot["mmc"],
+                              rescue_qualification=rq, rescue_artifact_root=self.rescue["components"]["artifact_root"],
+                              rescue_expected={"architecture": "riscv64", "dt_compatible": rescue.m["checks"]["dtb"]["compatible"]})
+        template = extlinux_data.template(family)
+        template.update(pairing_sha256=pairing["sha256"], firmware_review_sha256=q["sha256"])
+        self.bundle.update(board="bpi-sm10", preparation=customer.save("preparation.json", preparation),
+                           artifact_root=str(artifact_root), uboot_template=self.write_json("k3-template.json", template),
+                           transport={"kind": "mmc-original", "image_paths": {role: family["files"][role]["path"] for role in self.boot["files"]}},
+                           uboot_qualification=q, linux_expected=self.write_json("linux.json", self.expected))
+        self.config_document.update(hardware_id=hardware, pairing=pairing, deploy=self.write_json("deploy.json", self.contract))
+        self.request["hardware_id"] = hardware
+        self.request["image"]["board"] = "bpi-sm10"
+        self.sync_k3()
+
+    def sync_k3(self):
+        self.lifecycle["rescue_uboot"] = self.write_json("k3-rescue.json", self.rescue)
+        self.config_document["lifecycle"] = self.write_json("lifecycle.json", self.lifecycle)
+        self.bundle["uboot"] = self.write_json("k3-original.json", self.boot)
+        self.config_document["images"][self.request["image_sha256"]] = self.write_json("bundle.json", self.bundle)
+        self.sync_config()
+        self.request["boot_config_sha256"] = self.config_ref["sha256"]
+
+    def test_all_five_stages_require_full_vendor_configs_and_strict_evidence(self):
+        runtimes = {}
+        for mode, helper in (("customer", self.customer_helper), ("rescue", self.rescue_helper)):
+            channel = k3_data.K3Channel(helper.c, helper.media, helper.rows, k3_data.Clock())
+            runtimes[mode] = RuntimeIntegrationTests.console_runtime(self, helper.c, channel)
+        boot_id = lifecycle_data.BEFORE
+        observed = self.observed("rescue", self.request, boot_id)
+        def observe(*args, mode, previous_boot_id=None, **kwargs):
+            nonlocal observed
+            self.assertTrue(previous_boot_id is None or previous_boot_id == boot_id)
+            observed = self.observed(mode, args[6], boot_id)
+            return observed
+        def establish(*args, **kwargs):
+            nonlocal observed, boot_id
+            mode = args[1]
+            boot_id = lifecycle_data.AFTER if mode == "customer" else "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"
+            observed = self.observed(mode, args[7], boot_id)
+            return observed
+        with mock.patch.object(life.uboot, "boot", side_effect=AssertionError("禁止共用降級")), \
+                mock.patch.object(life.original_entry, "build_uboot_config", side_effect=AssertionError("禁止原入口降級")), \
+                mock.patch.object(life, "observe", side_effect=observe), \
+                mock.patch.object(life.session, "uart_identity", side_effect=lambda *a, **kw: observed["identity"]), \
+                mock.patch.object(life.session, "check_boot_root", return_value={}), \
+                mock.patch.object(life.session, "establish", side_effect=establish), \
+                mock.patch.object(backend.deploy, "preflight", side_effect=lambda *a, **kw: self.media_proof()), \
+                mock.patch.object(backend.deploy, "deploy", side_effect=lambda *a, **kw: self.media_proof(final=True)), \
+                mock.patch.object(life.linux, "collect", side_effect=lambda **kw: self.collection(observed)), \
+                mock.patch.object(life, "NativeRuntime") as port:
+            for stage in backend.station.STAGES:
+                port.return_value = runtimes["rescue" if stage == "recovery" else "customer"]
+                request = {**self.request, "stage": stage}
+                report = backend.run_stage(self.config_ref["path"], self.config_ref["sha256"], request)
+                self.assertEqual(report["status"], "passed", report)
+                self.assertIs(report["needs_recovery"], False)
+                backend.station.validate_report(report, request)
+        self.assertEqual(backend.StateStore(self.config_document).read()["phase"], "rescue")
+        self.assertIn("bpi_k3 boot original", runtimes["customer"].channel.commands)
+        self.assertIn("bpi_k3 boot sd-rescue", runtimes["rescue"].channel.commands)
+        for runtime in runtimes.values():
+            self.assertEqual(runtime.actions, ["status", "off", "status", "on"])
+
+    def test_cold_cycles_dispatch_both_purposes_without_projecting_config(self):
+        _, selected, _ = backend.selected_image(self.config_document, self.contract, self.request)
+        self.assertEqual(selected, self.boot)
+        for config in (selected, self.rescue):
+            self.assertIs(life.boot_driver(config), life.k3_runtime)
+            self.assertEqual(life.k3_runtime.validate_artifacts(config)["config"], config)
+
+    def test_different_binary_or_config_blocks_before_runtime(self):
+        original = backend.deploy.load(self.rescue["qualification"])
+        for key in ("binary", "config"):
+            qualification = copy.deepcopy(original)
+            qualification["firmware"][key] = self.write_json("other-firmware.json", {"different": key})
+            ref = self.write_json("other-rescue-q.json", qualification)
+            self.rescue["qualification"] = self.lifecycle["rescue_qualification"] = ref
+            self.rescue["uboot"]["qualification_sha256"] = ref["sha256"]
+            self.sync_k3()
+            report, execute = self.run_stage("preflight")
+            self.assertEqual(report["status"], "blocked", report)
+            self.assertIs(report["needs_recovery"], False)
+            execute.assert_not_called()
+
+    def test_customer_purpose_and_transport_cannot_be_replaced(self):
+        original = self.bundle["transport"]
+        self.bundle["transport"] = {"kind": "tftp-published", "root": str(self.root), "serverip": "192.0.2.1"}
+        self.sync_k3()
+        report, execute = self.run_stage("preflight")
+        self.assertEqual(report["status"], "blocked", report)
+        execute.assert_not_called()
+        self.bundle["transport"] = original
+        self.boot = self.rescue
+        self.sync_k3()
+        report, execute = self.run_stage("preflight")
+        self.assertEqual(report["status"], "blocked", report)
+        self.assertIs(report["needs_recovery"], False)
+        execute.assert_not_called()
+
+    def test_vendor_customer_cannot_be_projected_to_generic_schema(self):
+        self.boot = life.k3_runtime.lifecycle_view(self.boot)
+        self.boot["uboot"]["abi"] = "mainline-v2025.01"
+        self.sync_k3()
+        report, execute = self.run_stage("preflight")
+        self.assertEqual(report["status"], "blocked", report)
+        self.assertIn("K3", report["reason"])
+        self.assertIs(report["needs_recovery"], False)
+        execute.assert_not_called()
+
+    def test_reused_customer_qualification_and_wrong_ram_contract_are_rejected(self):
+        with self.subTest(case="qualification"):
+            self.rescue["qualification"] = self.lifecycle["rescue_qualification"] = self.boot["qualification"]
+            self.rescue["uboot"]["qualification_sha256"] = self.boot["qualification"]["sha256"]
+            with self.assertRaisesRegex(ValueError, "獨立資格"):
+                life.bind_k3_rescue(self.boot, self.rescue, self.lifecycle, self.pairing_sha(), self.contract)
+        self.rescue["qualification"] = self.write_json("separate.json", {"firmware": self.firmware})
+        self.lifecycle["rescue_qualification"] = self.rescue["qualification"]
+        for field in ("rescue", "sd_prefix"):
+            manifest = {**self.rescue_manifest, field: {}}
+            self.rescue["components"]["manifest"] = self.write_json("bad-rescue-manifest.json", manifest)
+            with self.subTest(field=field), self.assertRaisesRegex(ValueError, "部署身分及受保護前綴"):
+                life.bind_k3_rescue(self.boot, self.rescue, self.lifecycle, self.pairing_sha(), self.contract)
+
+    def pairing_sha(self):
+        return self.config_document["pairing"]["sha256"]
+
+    def test_wrong_pairing_or_mmc_binding_cannot_enter_rescue(self):
+        for field, value in (("pairing", self.write_json("wrong-pairing.json", {})), ("mmc", {"sd": 0, "emmc": 1}),
+                             ("purpose", "original"), ("hardware_id", "wrong-board")):
+            rescue = {**self.rescue, field: value}
+            with self.subTest(field=field), self.assertRaisesRegex(ValueError, "同配對、用途"):
+                life.bind_k3_rescue(self.boot, rescue, self.lifecycle, self.pairing_sha(), self.contract)
+
+    def test_missing_vendor_runtime_or_generic_rescue_never_operates(self):
+        with mock.patch.object(life.k3_runtime, "boot", None):
+            report, execute = self.run_stage("preflight")
+            self.assertEqual(report["status"], "blocked", report)
+            self.assertIs(report["needs_recovery"], False)
+            execute.assert_not_called()
+        self.rescue = life.k3_runtime.lifecycle_view(self.rescue)
+        self.rescue["uboot"]["abi"] = "mainline-v2025.01"
+        self.sync_k3()
+        report, execute = self.run_stage("preflight")
+        self.assertEqual(report["status"], "blocked", report)
+        self.assertIs(report["needs_recovery"], False)
+        execute.assert_not_called()
 
 
 if __name__ == "__main__":

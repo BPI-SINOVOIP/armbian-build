@@ -24,6 +24,7 @@ if __package__:
     from . import bpi_lab_original_entry as original_entry
     from . import bpi_lab_special_runtime as special_runtime
     from . import bpi_lab_realtek_rescue as realtek_rescue
+    from . import bpi_lab_k3_runtime as k3_runtime
 else:
     import bpi_lab_console as console_api
     import bpi_lab_deploy as deploy
@@ -34,6 +35,7 @@ else:
     import bpi_lab_original_entry as original_entry
     import bpi_lab_special_runtime as special_runtime
     import bpi_lab_realtek_rescue as realtek_rescue
+    import bpi_lab_k3_runtime as k3_runtime
 
 require = deploy.require
 ABI = "mainline-console-v2025.01"
@@ -42,7 +44,8 @@ ABI = "mainline-console-v2025.01"
 def boot_driver(config):
     """只按固定 schema 選擇已知執行器，不接受外部命令或可呼叫物件。"""
     drivers = {uboot.SCHEMA: uboot, original_entry.SCHEMA: original_entry,
-               special_runtime.SCHEMA: special_runtime, realtek_rescue.SCHEMA: realtek_rescue}
+               special_runtime.SCHEMA: special_runtime, realtek_rescue.SCHEMA: realtek_rescue,
+               k3_runtime.SCHEMA: k3_runtime}
     require(type(config) is dict and config.get("schema") in drivers, "未知客戶引導執行 ABI")
     return drivers[config["schema"]]
 
@@ -50,10 +53,39 @@ def boot_driver(config):
 def customer_view(config):
     """僅投影生命週期核對欄位；執行仍須保留原配置並分派原執行器。"""
     driver = boot_driver(config)
-    if driver in (special_runtime, realtek_rescue, original_entry):
+    if driver in (special_runtime, realtek_rescue, original_entry, k3_runtime):
         return copy.deepcopy(driver.lifecycle_view(config))
     checked = driver.validate_config(config)
     return checked
+
+
+def require_k3_api():
+    require(all(callable(getattr(k3_runtime, name, None)) for name in
+                ("validate_config", "lifecycle_view", "build_uboot_config", "validate_artifacts", "boot")),
+            "K3 專用執行 API 尚未完整落盤；不可降級為共用或 original-entry 指令")
+
+
+def bind_k3_rescue(original, rescue, config, pairing_sha256, contract):
+    """兩個用途共用已核定韌體，但救援來源、RAM 身分與資格不可借用客戶根。"""
+    require_k3_api()
+    require(original["purpose"] == "original" and rescue["purpose"] == "sd-rescue"
+            and original["board"] == rescue["board"] and original["board"] in k3_runtime.BOARDS
+            and original["hardware_id"] == rescue["hardware_id"] == config["hardware_id"]
+            and original["pairing"] == rescue["pairing"] and original["pairing"]["sha256"] == pairing_sha256
+            and original["mmc"] == rescue["mmc"] == config["mmc"]
+            and original["uboot"]["abi"] == rescue["uboot"]["abi"] == k3_runtime.ABI,
+            "K3 客戶與救援未綁定本板、同配對、用途及 SDK MMC 編號")
+    require(original["qualification"] != rescue["qualification"]
+            and rescue["qualification"] == config["rescue_qualification"], "K3 SD RAM 救援缺少獨立資格")
+    customer_q, rescue_q = (deploy.load(item["qualification"]) for item in (original, rescue))
+    for key in ("binary", "config"):
+        require(customer_q["firmware"][key] == rescue_q["firmware"][key],
+                "K3 客戶與 SD RAM 救援不是同份核定 U-Boot 建置")
+        deploy.checked_bytes(customer_q["firmware"][key], 64 * 1024**2)
+    manifest = deploy.load(rescue["components"]["manifest"])
+    require(manifest.get("schema") == k3_runtime.RESCUE_SCHEMA
+            and manifest.get("rescue") == contract["rescue"] and manifest.get("sd_prefix") == contract["sd_prefix"],
+            "K3 固定 SD／RAM 救援清單未綁定部署身分及受保護前綴")
 
 
 class Deadline:
@@ -144,9 +176,12 @@ def validate_config(config, pairing, pairing_sha256, contract, customer):
     original = customer
     customer = customer_view(original)
     require(customer["uboot"]["pairing_sha256"] == pairing_sha256, "客戶 U-Boot 未綁定本配對")
-    if boot_driver(original) is original_entry:
+    if boot_driver(original) in (original_entry, k3_runtime):
         require(original["mmc"] == config["mmc"] and original["hardware_id"] == config["hardware_id"],
                 "原入口雙媒體編號或板號與生命週期不同")
+    if boot_driver(original) is k3_runtime:
+        require_k3_api()
+        require(original["purpose"] == "original", "K3 客戶引導不得使用 SD RAM 救援用途")
     if boot_driver(original) is special_runtime:
         require(original["execution"]["transport"]["media"] == "emmc", "客戶原配載荷必須來自配對 eMMC")
     if customer["source"]["type"] == "mmc":
@@ -154,8 +189,12 @@ def validate_config(config, pairing, pairing_sha256, contract, customer):
     rescue_config = deploy.load(config["rescue_uboot"])
     rescue_driver = boot_driver(rescue_config)
     rescue = customer_view(rescue_config)
-    require(rescue_driver in (uboot, special_runtime, realtek_rescue), "固定 RAM 救援不接受客戶原入口腳本")
-    if customer["uboot"]["abi"] == special_runtime.VENDOR_ABI:
+    require(rescue_driver in (uboot, special_runtime, realtek_rescue, k3_runtime), "固定 RAM 救援不接受客戶原入口腳本")
+    if boot_driver(original) is k3_runtime:
+        require(rescue_driver is k3_runtime, "K3 救援必須沿用專用 vendor ABI，不可假定主線救援相容")
+        bind_k3_rescue(original, rescue_config, config, pairing_sha256, contract)
+        k3_runtime.validate_artifacts(original, deploy.path(original["components"]["artifact_root"]))
+    elif customer["uboot"]["abi"] == special_runtime.VENDOR_ABI:
         require(rescue_driver is realtek_rescue and rescue["uboot"]["abi"] == special_runtime.VENDOR_ABI,
                 "缺少已核定的 realtek-lab-v1 固定 SD RAM 救援入口；不能假定 mainline 救援 ABI 相容")
         require(deploy.load(rescue_config["platform"]) == original
@@ -166,7 +205,7 @@ def validate_config(config, pairing, pairing_sha256, contract, customer):
         require({**identity, "identity_sha256": rescue_config["identity"]["sha256"]} == contract["rescue"],
                 "Realtek 救援 RAM 身分與部署契約不符")
     else:
-        require(rescue_driver is not realtek_rescue and config["mmc"]["emmc"] != config["mmc"]["sd"]
+        require(rescue_driver not in (realtek_rescue, k3_runtime) and config["mmc"]["emmc"] != config["mmc"]["sd"]
                 and rescue["source"]["type"] == "mmc", "主線救援須使用不同的已配對 MMC 編號")
     deploy.checked_bytes(config["rescue_qualification"])
     require(rescue["source"]["device"] == config["mmc"]["sd"]

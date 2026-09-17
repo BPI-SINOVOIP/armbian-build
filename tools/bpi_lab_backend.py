@@ -59,6 +59,10 @@ DEPENDENCIES = (
     "bpi_lab_original_entry.py", "bpi_lab_special_runtime.py", "bpi_lab_image.py", "bpi_lab_rockchip.py",
     "bpi_lab_realtek_rescue.py",
     "bpi_lab_evidence.py",
+    "bpi_lab_spacemit.py", "bpi_lab_k3_runtime.py",
+    "bpi_lab_k3/bpi_lab_k3.c", "bpi_lab_k3/readonly-sdk.patch",
+    "bpi_h618_rescue/init", "bpi_h618_rescue/runtime.py", "bpi_h618_rescue/ssh-start", "bpi_h618_rescue/udhcpc-script",
+    "bpi_h618_rescue/bpi_rescue_cli.py",
 )
 
 
@@ -179,14 +183,20 @@ def render_family(family, template, artifact_root, *, runtime_config=None):
         return amlogic.validate_boot_config(artifact_root, template=template)["config"]
     if schema == extlinux.SCHEMA:
         extlinux.validate_template(family, template=template, artifact_root=artifact_root)
-        require(runtime_config is not None and runtime_config.get("schema") == life.original_entry.SCHEMA,
-                "原入口證據需要獨立 original-entry 執行配置，不能當作共用 U-Boot 配置")
+        require(runtime_config is not None and runtime_config.get("schema") in
+                (life.original_entry.SCHEMA, life.k3_runtime.SCHEMA),
+                "原入口證據需要獨立執行配置，不能當作共用 U-Boot 配置")
+        driver = life.boot_driver(runtime_config)
+        if family["board"] in life.k3_runtime.BOARDS or driver is life.k3_runtime:
+            require(driver is life.k3_runtime and family["board"] == runtime_config["board"]
+                    and runtime_config["purpose"] == "original", "K3 原配必須使用專用 original 用途，不能降級或借用救援")
+            life.require_k3_api()
         require(template["pairing_sha256"] == runtime_config["pairing"]["sha256"]
                 and template["firmware_review_sha256"] == runtime_config["qualification"]["sha256"],
                 "原入口範本未綁定本次配對與前置韌體審閱")
         require(deploy.load(runtime_config["components"]["manifest"]) == family,
                 "原入口執行器與 prepare 原配清單不同")
-        return life.original_entry.build_uboot_config(runtime_config, artifact_root=artifact_root)
+        return driver.build_uboot_config(runtime_config, artifact_root=artifact_root)
     elif schema == special.SCHEMA:
         placement = runtime_config["execution"].get("kernel_placement", "original") if runtime_config is not None else "original"
         result = life.special_runtime.bootconfig(artifact_root, template=template, kernel_placement=placement)
@@ -214,6 +224,8 @@ def bind_runtime(bundle, boot, extraction, extraction_ref, config):
         if boot["board"] in life.special_runtime.VENDOR_BOARDS:
             require(transport["root_preparation"] == bundle["preparation"], "Realtek 根識別不是本次 prepare 證據")
     else:
+        if life.boot_driver(boot) is life.k3_runtime:
+            require(boot["purpose"] == "original", "K3 客戶來源不能使用 SD 救援用途")
         require(boot["components"]["extraction"] == extraction_ref, "原入口不是本次原映像擷取")
         transport = bundle["transport"]
         deploy.fields(transport, "kind image_paths")
@@ -365,10 +377,14 @@ def selected_image(config, contract, request):
         require(station._json_loads(manifest) == family, "artifact_root 原配 manifest 與 prepare 家族結果不同")
     boot = deploy.load(bundle["uboot"])
     driver = life.boot_driver(boot)
+    if bundle["board"] in life.k3_runtime.BOARDS:
+        require(driver is life.k3_runtime and boot["purpose"] == "original"
+                and family.get("schema") == extlinux.SCHEMA and family.get("board") == bundle["board"],
+                "K3 必須保留原廠環境的專用執行配置；不可降級為其他家族或原入口")
     view = life.customer_view(boot)
     if driver is uboot:
         boot = view
-    elif driver is life.original_entry:
+    elif driver in (life.original_entry, life.k3_runtime):
         boot = driver.validate_config(boot)
     require(view["uboot"]["pairing_sha256"] == config["pairing"]["sha256"]
             and view["uboot"]["qualification_sha256"] == bundle["uboot_qualification"]["sha256"],

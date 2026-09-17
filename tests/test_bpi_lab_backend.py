@@ -287,6 +287,25 @@ class BackendTests(EvidenceFixture, BackendFixture):
         self.assertEqual(report["status"], "blocked")
         execute.assert_not_called()
 
+    def test_k3_python_c_and_patch_are_exact_pinned_dependencies(self):
+        names = ("bpi_lab_k3_runtime.py", "bpi_lab_spacemit.py",
+                 "bpi_lab_k3/bpi_lab_k3.c", "bpi_lab_k3/readonly-sdk.patch",
+                 "bpi_h618_rescue/init", "bpi_h618_rescue/runtime.py", "bpi_h618_rescue/ssh-start", "bpi_h618_rescue/udhcpc-script")
+        for name in names:
+            self.assertIn(name, backend.DEPENDENCIES)
+            changed = {**self.config_document["dependencies"], name: "0" * 64}
+            with self.subTest(name=name), self.assertRaises(ValueError):
+                backend.check_dependencies(changed)
+        for name in ("bpi_lab_k3/other.c", "../bpi_lab_k3_runtime.py", "bpi_lab_k3/../bpi_lab_backend.py"):
+            with self.subTest(name=name), self.assertRaises(ValueError):
+                backend.check_dependencies({**self.config_document["dependencies"], name: "a" * 64})
+
+    def test_incomplete_k3_runtime_is_explicitly_blocked(self):
+        self.assertIs(backend.life.boot_driver({"schema": backend.life.k3_runtime.SCHEMA}), backend.life.k3_runtime)
+        with mock.patch.object(backend.life.k3_runtime, "boot", None, create=True):
+            with self.assertRaisesRegex(ValueError, "API 尚未完整落盤"):
+                backend.life.require_k3_api()
+
     def test_no_skipping_or_duplicate_deploy(self):
         report, execute = self.run_stage("deploy")
         self.assertEqual(report["status"], "blocked")

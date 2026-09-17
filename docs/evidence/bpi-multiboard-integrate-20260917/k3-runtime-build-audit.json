@@ -1,0 +1,139 @@
+{
+  "schema": "bpi-lab-k3-build-v1",
+  "compiled": true,
+  "hardware_validated": false,
+  "sdk_commit": "1b10c8119e1a9b5451a4236f6b384f7c91eed1e2",
+  "container": "sha256:9531810450c5953c0675515ab7deee5d9634966e8abccfcd5ea60f8aee94e335",
+  "source_contract": {
+    "board/spacemit/k3/k3.c": {
+      "bytes": 50997,
+      "sha256": "a329a2aa305cb6a1294c86354e4660fdee122d16da2566f697d298bbddd7cee7"
+    },
+    "board/spacemit/k3/k3.env": {
+      "bytes": 13427,
+      "sha256": "5cbd9f9aaa57485e4910245b775d708534ec198cdf46af6b18ecb83b2ddc97ad"
+    },
+    "cmd/mmc.c": {
+      "bytes": 30973,
+      "sha256": "b9094628c3f68b8822ab128891976d6b5ff96dd9933ee0e3a978106df04022e2"
+    },
+    "cmd/bdinfo.c": {
+      "bytes": 3749,
+      "sha256": "2940905c39ed1b54777f3a48dbc6b2a0f13e949bd296f2826d9c1c0bf633aa89"
+    },
+    "lib/lmb.c": {
+      "bytes": 13704,
+      "sha256": "fcea81e58e2b499213766efd9992efdaa75839a136e56b142abdf516323cd0c5"
+    },
+    "drivers/misc/spacemit_k1x_efuse.c": {
+      "bytes": 13949,
+      "sha256": "0304ef7281946ec043852f24286be0183a6af341301b2fa34fc2d1b201f3c858"
+    },
+    "include/configs/k3.h": {
+      "bytes": 5626,
+      "sha256": "dc748514d44d95f3a141a7c322100cb24fd63ce0c9f1d3814f59a393c5920462"
+    },
+    "cmd/booti.c": {
+      "bytes": 4433,
+      "sha256": "dc430e68f3d362354ca5c1c0cf2e65dfba77c831fcccf68ab310f27a71fdcbfb"
+    },
+    "arch/riscv/lib/image.c": {
+      "bytes": 1576,
+      "sha256": "1e1ee60d443bb3299ad53f4382e579e5dde8bd6ddb4607870994fc7093efea0f"
+    },
+    "fs/fs.c": {
+      "bytes": 20903,
+      "sha256": "7bdb0375fa09ecf7932c1b634c96ea8a400a1666876023322376b88dc4c89728"
+    }
+  },
+  "artifacts": {
+    "binary": {
+      "bytes": 1398176,
+      "sha256": "5122ab8e6150f3ecc0a67092c139aedaa08c608061bd7bdf7eea5662e415f65f"
+    },
+    "elf": {
+      "bytes": 11327432,
+      "sha256": "04a5e681914ed8f19dac0a872ec7380c9a6714578a04575b1eb4b0ac47e7f882"
+    },
+    "config": {
+      "bytes": 56488,
+      "sha256": "9f9f74698df1bd48a914c491bd5a18a0979d33287c472542c6306c69c3e010e9"
+    },
+    "source": {
+      "bytes": 15851,
+      "sha256": "914675154dc8f7b48ca8ee13b344d390154ff1feb99d9b45fc9a80e11b0c2b58"
+    },
+    "patch": {
+      "bytes": 668,
+      "sha256": "ee08fd0baab094fa6b8eccb28092949cb16515712b7b0eddcbe779aaca6f1dd1"
+    },
+    "environment": {
+      "bytes": 10316,
+      "sha256": "6e3e05d32ad0967d168095ead73b281fc2532460144cab70c393c9a5962d9a5f"
+    },
+    "dtb": {
+      "bytes": 55568,
+      "sha256": "3e3b4a7f06d91387957f7e12d77de6b5022aea85e7525a21cdb97d5ac180c5a2"
+    }
+  },
+  "logs": [
+    {
+      "path": "/media/pi/SMCI/armbian/bpi-v26.2.1-m4zero-sram-supervisor-plan/output/evidence/bpi-k3-runtime-build-20260918-002/configure.log",
+      "sha256": "285246a953e50033595aa10afe569f28b711595643d08813e4dfb6ec83b2a907"
+    },
+    {
+      "path": "/media/pi/SMCI/armbian/bpi-v26.2.1-m4zero-sram-supervisor-plan/output/evidence/bpi-k3-runtime-build-20260918-002/olddefconfig.log",
+      "sha256": "a53c4c05f187cece6cb331d61191b0a6d4759e90e3242040bbba021eb3344770"
+    },
+    {
+      "path": "/media/pi/SMCI/armbian/bpi-v26.2.1-m4zero-sram-supervisor-plan/output/evidence/bpi-k3-runtime-build-20260918-002/build.log",
+      "sha256": "76ac213c064a97dcda890592baba6ec3a45426ca6c8c7127681acdfb1b2f609b"
+    }
+  ],
+  "firmware": {
+    "binary": {
+      "path": "/media/pi/SMCI/armbian/bpi-v26.2.1-m4zero-sram-supervisor-plan/output/evidence/bpi-k3-runtime-build-20260918-002/build/u-boot.bin",
+      "sha256": "5122ab8e6150f3ecc0a67092c139aedaa08c608061bd7bdf7eea5662e415f65f"
+    },
+    "elf": {
+      "path": "/media/pi/SMCI/armbian/bpi-v26.2.1-m4zero-sram-supervisor-plan/output/evidence/bpi-k3-runtime-build-20260918-002/build/u-boot",
+      "sha256": "04a5e681914ed8f19dac0a872ec7380c9a6714578a04575b1eb4b0ac47e7f882"
+    },
+    "config": {
+      "path": "/media/pi/SMCI/armbian/bpi-v26.2.1-m4zero-sram-supervisor-plan/output/evidence/bpi-k3-runtime-build-20260918-002/uboot.config",
+      "sha256": "9f9f74698df1bd48a914c491bd5a18a0979d33287c472542c6306c69c3e010e9"
+    },
+    "source": {
+      "path": "/media/pi/SMCI/armbian/bpi-v26.2.1-m4zero-sram-supervisor-plan/output/evidence/bpi-k3-runtime-build-20260918-002/source/cmd/bpi_lab_k3.c",
+      "sha256": "914675154dc8f7b48ca8ee13b344d390154ff1feb99d9b45fc9a80e11b0c2b58"
+    },
+    "patch": {
+      "path": "/media/pi/SMCI/armbian/bpi-v26.2.1-m4zero-sram-supervisor-plan/output/evidence/bpi-k3-runtime-build-20260918-002/readonly-sdk.patch",
+      "sha256": "ee08fd0baab094fa6b8eccb28092949cb16515712b7b0eddcbe779aaca6f1dd1"
+    },
+    "environment": {
+      "path": "/media/pi/SMCI/armbian/bpi-v26.2.1-m4zero-sram-supervisor-plan/output/evidence/bpi-k3-runtime-build-20260918-002/source/cmd/bpi_lab_k3.env",
+      "sha256": "6e3e05d32ad0967d168095ead73b281fc2532460144cab70c393c9a5962d9a5f"
+    },
+    "dtb": {
+      "path": "/media/pi/SMCI/armbian/bpi-v26.2.1-m4zero-sram-supervisor-plan/output/evidence/bpi-k3-runtime-build-20260918-002/build/fit-dtb.blob",
+      "sha256": "3e3b4a7f06d91387957f7e12d77de6b5022aea85e7525a21cdb97d5ac180c5a2"
+    }
+  },
+  "limitations": [
+    "真 BSP 編譯與連結通過不代表 SD 已可冷開機；FSBL、ESOS、SBI 及生命週期另行核定。",
+    "原 SDK 與宿主 glibc 未修改；不包含簽署、燒錄或實板操作。"
+  ],
+  "patched_board": {
+    "bytes": 50998,
+    "sha256": "96e2cb1b7981822063e5b110f2af9b43db992a753884d4f9d388ec8b14624ae8"
+  },
+  "audit": {
+    "date": "2026-09-18",
+    "records_verified": 21,
+    "elf_machine": "RISC-V",
+    "source_identical": true,
+    "hardware_validated": false,
+    "scope": "主代理另行讀取並核對原 SDK、產物及日誌；不代表實板安全鏈或開機通過。"
+  }
+}
