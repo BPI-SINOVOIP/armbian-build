@@ -103,9 +103,9 @@ SHARED_RULES = {
         "hardware_ids": [], "anchor": "def validate(report, expected):",
     },
     DEPENDENCIES[2]: {
-        "supported": ["preflight", "deploy", "smoke"],
-        "unsupported": ["boot", "recovery", "resume"],
-        "hardware_ids": ["bpi-m4zero-0845"], "anchor": 'IMPLEMENTED = ("preflight", "deploy", "smoke")',
+        "supported": ["preflight", "deploy", "boot", "smoke", "recovery", "resume"],
+        "unsupported": ["other-hardware", "original-boot-chain"],
+        "hardware_ids": ["bpi-m4zero-0845"], "anchor": 'IMPLEMENTED = station.STAGES',
     },
 }
 STORAGE_STATES = {"board_declared", "family_conditional", "not_declared", "candidate_excluded"}

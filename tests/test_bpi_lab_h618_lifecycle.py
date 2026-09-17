@@ -2,12 +2,15 @@
 
 from contextlib import ExitStack, contextmanager, redirect_stderr, redirect_stdout
 import copy
+import fcntl
 import hashlib
 import io
 import json
+import os
 from pathlib import Path
 import re
 import stat
+import sqlite3
 import sys
 import tempfile
 from types import SimpleNamespace
@@ -724,8 +727,8 @@ class LifecycleTests(unittest.TestCase):
 
     def test_total_deadline_includes_preflight_not_only_boot(self):
         original = life.load_config
-        def slow(*args):
-            result = original(*args)
+        def slow(*args, **kwargs):
+            result = original(*args, **kwargs)
             self.runtime.now += self.config["timeout_seconds"] + 1
             return result
         with patch.object(life, "load_config", side_effect=slow):
@@ -815,6 +818,96 @@ class LifecycleTests(unittest.TestCase):
             with patch.object(life, "run", return_value={"ok": False}) as run:
                 wrapper(session_id="unused")
                 run.assert_called_once_with(action=action, session_id="unused")
+
+
+class ParentLockTests(unittest.TestCase):
+    """以真實本機 flock 與子程序驗證借鎖；只存取暫存檔與 /proc。"""
+
+    def setUp(self):
+        temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(temporary.cleanup)
+        self.root = Path(temporary.name)
+        self.config = {"station_id": "offline", "hardware_id": life.HARDWARE,
+                       "uart": {"stable_path": "/dev/serial/by-id/offline"}}
+        self.binding = {"work_key": "f" * 64, "attempt_id": "attempt-1", "station_id": "offline",
+                        "hardware_id": life.HARDWARE, "image_sha256": "a" * 64,
+                        "boot_config_sha256": "b" * 64, "test_version": "offline", "mode": "hardware"}
+        self.keys = ["hardware:" + life.HARDWARE, "station:offline"]
+        owner = self.root / "queue.sqlite3"
+        with sqlite3.connect(owner) as db:
+            db.execute("CREATE TABLE jobs (work_key TEXT, attempt_id TEXT, station_id TEXT, state TEXT, body TEXT)")
+            db.execute("INSERT INTO jobs VALUES (?,?,?,?,?)", (self.binding["work_key"], "attempt-1", "offline",
+                                                              "running", json.dumps(self.binding)))
+        with sqlite3.connect(self.root / "reservations.sqlite3") as db:
+            db.execute("CREATE TABLE reservations (resource TEXT, owner TEXT, work_key TEXT)")
+            for key in self.keys:
+                db.execute("INSERT INTO reservations VALUES (?,?,?)", (key, str(owner), self.binding["work_key"]))
+        self.descriptors = []
+        self.addCleanup(self.close_locks)
+
+    def close_locks(self):
+        for fd in self.descriptors:
+            os.close(fd)
+        self.descriptors.clear()
+
+    def hold_parent_locks(self, execution=False):
+        for key in self.keys + (["h618:execution"] if execution else []):
+            fd = os.open(self.root / (sha(key.encode()) + ".lock"), os.O_RDWR | os.O_CREAT, 0o600)
+            fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            self.descriptors.append(fd)
+
+    def child_lock(self, binding):
+        read_fd, write_fd = os.pipe()
+        pid = os.fork()
+        if pid == 0:
+            os.close(read_fd)
+            for fd in self.descriptors:
+                os.close(fd)
+            try:
+                with life.resource_lock(self.config, self.root, binding) as guard:
+                    guard.check(self.config, self.root, binding)
+                result = b"ok"
+            except Exception:
+                result = b"blocked"
+            os.write(write_fd, result)
+            os.close(write_fd)
+            os._exit(0)
+        os.close(write_fd)
+        try:
+            result = os.read(read_fd, 64)
+        finally:
+            os.close(read_fd)
+            _, status = os.waitpid(pid, 0)
+        self.assertEqual(status, 0)
+        return result
+
+    def test_verified_parent_queue_locks_are_borrowed_without_reentrant_flock(self):
+        self.hold_parent_locks()
+        self.assertEqual(self.child_lock(self.binding), b"ok")
+
+    def test_parent_lock_without_matching_work_or_attempt_is_rejected(self):
+        self.hold_parent_locks()
+        for field, value in (("work_key", "0" * 64), ("attempt_id", "attempt-2"),
+                             ("image_sha256", "c" * 64), ("boot_config_sha256", "d" * 64)):
+            with self.subTest(field=field):
+                self.assertEqual(self.child_lock({**self.binding, field: value}), b"blocked")
+
+    def test_execution_mutex_is_never_borrowed_even_from_parent(self):
+        self.hold_parent_locks(execution=True)
+        self.assertEqual(self.child_lock(self.binding), b"blocked")
+
+    def test_expired_scope_cannot_be_reused(self):
+        with life.resource_lock(self.config, self.root, self.binding) as guard:
+            guard.check(self.config, self.root, self.binding)
+        with self.assertRaises(ValueError):
+            guard.check(self.config, self.root, self.binding)
+
+    def test_persistent_reservations_survive_released_flock(self):
+        with self.assertRaises(ValueError), life.resource_lock(self.config, self.root):
+            self.fail("獨立 runtime 不可繞過佇列租約")
+        with self.assertRaises(ValueError), life.resource_lock(
+                self.config, self.root, {**self.binding, "attempt_id": "attempt-2"}):
+            self.fail("相同工作鍵仍須核對 attempt")
 
 
 if __name__ == "__main__":

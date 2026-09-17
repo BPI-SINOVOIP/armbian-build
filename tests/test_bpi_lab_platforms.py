@@ -113,8 +113,8 @@ class PlatformTests(unittest.TestCase):
     def test_h618_stages_only_apply_to_0845_and_not_whole_adapter(self):
         h618 = self.validate()["shared_tools"]["tools/bpi_lab_h618.py"]
         self.assertEqual(h618["hardware_ids"], ["bpi-m4zero-0845"])
-        self.assertEqual(h618["supported"], ["preflight", "deploy", "smoke"])
-        self.assertEqual(h618["unsupported"], ["boot", "recovery", "resume"])
+        self.assertEqual(h618["supported"], ["preflight", "deploy", "boot", "smoke", "recovery", "resume"])
+        self.assertEqual(h618["unsupported"], ["other-hardware", "original-boot-chain"])
         for name in ("bpi-m4z", "bpi-m4b", "bpi-m4z-emac"):
             self.assertFalse(self.row(name)["execution_ready"])
 

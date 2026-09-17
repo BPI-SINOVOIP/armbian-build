@@ -62,11 +62,13 @@ class QueueTests(unittest.TestCase):
         self.assertIsNone(self.run_job())
         self.assertEqual(queue.summary(self.db)["attempts"], 1)
 
-    def failure_runner(self, failure_stage, status="failed"):
+    def failure_runner(self, failure_stage, status="failed", *, needs_recovery=None):
         def runner(station, request, directory):
             report = station_api.run_stage(station, request, directory)
             if request["stage"] == failure_stage:
                 report["status"] = status
+                if needs_recovery is not None:
+                    report["needs_recovery"] = needs_recovery
             return report
         return runner
 
@@ -80,6 +82,178 @@ class QueueTests(unittest.TestCase):
         result = self.run_job(runner=self.failure_runner("preflight", "blocked"))
         self.assertEqual(result["state"], "blocked")
         self.assertEqual(queue.summary(self.db)["reports"], 1)
+
+    def test_preflight_explicit_false_does_not_operate_recovery(self):
+        result = self.run_job(runner=self.failure_runner("preflight", "blocked", needs_recovery=False))
+        self.assertEqual(result["state"], "blocked")
+        self.assertEqual(queue.summary(self.db)["reports"], 1)
+        with queue.reservation_store(self.locks) as store:
+            self.assertEqual(store.execute("SELECT count(*) FROM reservations").fetchone()[0], 0)
+
+    def test_legacy_preflight_failure_does_not_operate_recovery(self):
+        result = self.run_job(runner=self.failure_runner("preflight"))
+        self.assertEqual(result["state"], "failed")
+        self.assertEqual(queue.summary(self.db)["reports"], 1)
+
+    def test_preflight_needs_recovery_keeps_same_attempt_and_failure(self):
+        requests = []
+        failure = self.failure_runner("preflight", needs_recovery=True)
+        def runner(station, request, directory):
+            requests.append(request)
+            return failure(station, request, directory)
+        result = self.run_job(runner=runner)
+        self.assertEqual(result["state"], "failed")
+        self.assertEqual([request["stage"] for request in requests], ["preflight", "recovery"])
+        for field in station_api.BINDINGS:
+            if field != "stage":
+                self.assertEqual(requests[0][field], requests[1][field])
+        self.assertEqual(queue.get_station(self.db, self.station["station_id"])[1], "ready")
+        self.assertFalse(queue.summary(self.db)["all_hardware_tests_passed"])
+
+    def test_preflight_recovery_failure_stays_quarantined_until_queue_recover(self):
+        def runner(station, request, directory):
+            report = station_api.run_stage(station, request, directory)
+            report.update(status="failed", needs_recovery=True)
+            return report
+        result = self.run_job(runner=runner)
+        attempt = result["attempt_id"]
+        self.assertEqual(result["state"], "recovery_failed")
+        self.db.close()
+        self.db = queue.connect(self.db_path)
+        self.assertEqual(queue.get_station(self.db, self.station["station_id"])[1], "quarantined")
+        with queue.reservation_store(self.locks) as store:
+            self.assertGreater(store.execute("SELECT count(*) FROM reservations WHERE work_key=?", (self.key,)).fetchone()[0], 0)
+        with self.assertRaises(ValueError):
+            queue.retry(self.db, self.key, "尚未完成救援，不可重試")
+        recovered = queue.recover(self.db, self.key, self.output, lock_root=self.locks)
+        self.assertEqual(recovered["state"], "interrupted_recovered")
+        self.assertEqual(recovered["attempt_id"], attempt)
+        with queue.reservation_store(self.locks) as store:
+            self.assertEqual(store.execute("SELECT count(*) FROM reservations").fetchone()[0], 0)
+
+    def test_preflight_recovery_decision_survives_missing_receipt_and_reopen(self):
+        original = queue.save_json
+        def interrupt(path, report):
+            if Path(path).name == "queue-receipt.json" and report["stage"] == "preflight":
+                raise KeyboardInterrupt()
+            return original(path, report)
+        with mock.patch.object(queue, "save_json", side_effect=interrupt), self.assertRaises(KeyboardInterrupt):
+            self.run_job(runner=self.failure_runner("preflight", needs_recovery=True))
+        self.db.close()
+        self.db = queue.connect(self.db_path)
+        calls = []
+        def runner(station, request, directory):
+            calls.append(request["stage"])
+            return station_api.run_stage(station, request, directory)
+        result = self.run_job(key=self.key, resume=True, runner=runner)
+        self.assertEqual(result["state"], "failed")
+        self.assertEqual(calls, ["recovery"])
+
+    def test_preflight_receipt_io_failure_still_requires_recovery(self):
+        original = queue.save_json
+        def fail(path, report):
+            if Path(path).name == "queue-receipt.json" and report["stage"] == "preflight":
+                raise OSError("合成收據發布失敗")
+            return original(path, report)
+        with mock.patch.object(queue, "save_json", side_effect=fail):
+            result = self.run_job(runner=self.failure_runner("preflight", needs_recovery=True))
+        self.assertEqual(result["state"], "failed")
+        self.assertEqual([row[0] for row in self.db.execute("SELECT stage FROM reports")], ["recovery"])
+
+    def publication_error_runner(self, status, needs_recovery=None):
+        def runner(station, request, directory):
+            report = station_api.run_stage(station, request, directory)
+            if request["stage"] == "preflight":
+                report["status"] = status
+                if needs_recovery is not None:
+                    report["needs_recovery"] = needs_recovery
+                raise station_api.StagePublicationError("合成 station 發布失敗", report, adapter_started=True)
+            return report
+        return runner
+
+    def test_station_publication_error_does_not_lose_recovery_flag(self):
+        result = self.run_job(runner=self.publication_error_runner("failed", True))
+        self.assertEqual(result["state"], "failed")
+        self.assertEqual([row[0] for row in self.db.execute("SELECT stage FROM reports")], ["recovery"])
+
+    def test_station_publication_error_after_passed_new_adapter_recovers(self):
+        result = self.run_job(runner=self.publication_error_runner("passed", False))
+        self.assertEqual(result["state"], "failed")
+        self.assertEqual([row[0] for row in self.db.execute("SELECT stage FROM reports")], ["recovery"])
+
+    def test_station_publication_error_keeps_legacy_behavior_without_flag(self):
+        result = self.run_job(runner=self.publication_error_runner("passed"))
+        self.assertEqual(result["state"], "failed")
+        self.assertEqual(queue.summary(self.db)["reports"], 0)
+
+    def test_station_publication_error_after_pure_blocked_false_never_recovers(self):
+        result = self.run_job(runner=self.publication_error_runner("blocked", False))
+        self.assertEqual(result["state"], "failed")
+        self.assertEqual(queue.summary(self.db)["reports"], 0)
+
+    def test_station_unknown_result_before_spawn_does_not_recover(self):
+        runner = mock.Mock(side_effect=station_api.StagePublicationError("合成啟動前發布失敗", None))
+        result = self.run_job(runner=runner)
+        self.assertEqual(result["state"], "failed")
+        self.assertEqual(runner.call_count, 1)
+        with queue.reservation_store(self.locks) as store:
+            self.assertEqual(store.execute("SELECT count(*) FROM reservations").fetchone()[0], 0)
+
+    def test_station_unknown_started_result_survives_reopen_before_recovery(self):
+        runner = mock.Mock(side_effect=station_api.StageExecutionError(
+            "合成啟動後結果未知", None, adapter_started=True))
+        with mock.patch.object(queue, "return_to_rescue", side_effect=KeyboardInterrupt), self.assertRaises(KeyboardInterrupt):
+            self.run_job(runner=runner)
+        attempt = queue.get_job(self.db, self.key)["attempt_id"]
+        self.db.close()
+        self.db = queue.connect(self.db_path)
+        runner = mock.Mock(wraps=station_api.run_stage)
+        result = self.run_job(key=self.key, resume=True, runner=runner)
+        self.assertEqual(result["state"], "failed")
+        self.assertEqual(result["attempt_id"], attempt)
+        self.assertEqual([call.args[1]["stage"] for call in runner.call_args_list], ["recovery"])
+
+    def test_queue_publication_error_after_passed_new_adapter_recovers(self):
+        original = queue.save_json
+        def runner(station, request, directory):
+            return {**station_api.run_stage(station, request, directory), "needs_recovery": False}
+        def fail(path, report):
+            if Path(path).name == "queue-receipt.json" and report["stage"] == "preflight":
+                raise OSError("合成成功收據發布失敗")
+            return original(path, report)
+        with mock.patch.object(queue, "save_json", side_effect=fail):
+            result = self.run_job(runner=runner)
+        self.assertEqual(result["state"], "failed")
+        self.assertEqual([row[0] for row in self.db.execute("SELECT stage FROM reports")], ["recovery"])
+
+    def test_preflight_recovery_decision_survives_interruption_before_recovery(self):
+        with mock.patch.object(queue, "return_to_rescue", side_effect=KeyboardInterrupt), self.assertRaises(KeyboardInterrupt):
+            self.run_job(runner=self.failure_runner("preflight", needs_recovery=True))
+        result = self.run_job(key=self.key, resume=True)
+        self.assertEqual(result["state"], "failed")
+        self.assertEqual([row[0] for row in self.db.execute("SELECT stage FROM reports ORDER BY report_id")],
+                         ["preflight", "recovery"])
+
+    def test_new_attempt_does_not_inherit_old_recovery_requirement(self):
+        self.run_job(runner=self.failure_runner("preflight", needs_recovery=True))
+        queue.retry(self.db, self.key, "已完成同次救援，重新核對設定")
+        result = self.run_job(runner=self.failure_runner("preflight", "blocked", needs_recovery=False))
+        self.assertEqual(result["state"], "blocked")
+        rows = self.db.execute("SELECT stage FROM reports WHERE attempt_id=?", (result["attempt_id"],)).fetchall()
+        self.assertEqual([row[0] for row in rows], ["preflight"])
+
+    def test_completed_failure_recovery_is_not_reexecuted_after_finish_crash(self):
+        original = queue.finish
+        def interrupt(db, key, state):
+            if state == "failed":
+                raise KeyboardInterrupt()
+            return original(db, key, state)
+        with mock.patch.object(queue, "finish", side_effect=interrupt), self.assertRaises(KeyboardInterrupt):
+            self.run_job(runner=self.failure_runner("preflight", needs_recovery=True))
+        runner = mock.Mock(side_effect=AssertionError("已完整發布救援，不可重做"))
+        result = self.run_job(key=self.key, resume=True, runner=runner)
+        self.assertEqual(result["state"], "failed")
+        runner.assert_not_called()
 
     def test_failed_deployment_never_boots(self):
         self.run_job(runner=self.failure_runner("deploy"))
@@ -134,8 +308,35 @@ class QueueTests(unittest.TestCase):
     def test_resume_guard_failure_does_not_boot(self):
         self.interrupt_before_boot()
         result = self.run_job(key=self.key, resume=True, runner=self.failure_runner("preflight", "blocked"))
-        self.assertEqual(result["state"], "interrupted")
+        self.assertEqual(result["state"], "blocked")
         self.assertEqual(self.db.execute("SELECT count(*) FROM reports WHERE stage='boot'").fetchone()[0], 0)
+        self.assertEqual(self.db.execute("SELECT count(*) FROM reports WHERE stage='recovery'").fetchone()[0], 1)
+
+    def test_resume_guard_false_does_not_suppress_recovery(self):
+        self.interrupt_before_boot()
+        result = self.run_job(key=self.key, resume=True,
+                              runner=self.failure_runner("preflight", "blocked", needs_recovery=False))
+        self.assertEqual(result["state"], "blocked")
+        self.assertEqual(self.db.execute("SELECT count(*) FROM reports WHERE stage='recovery'").fetchone()[0], 1)
+
+    def test_resume_guard_exception_returns_to_rescue(self):
+        self.interrupt_before_boot()
+        def runner(station, request, directory):
+            if "resume" in request:
+                raise OSError("合成續作核對失敗")
+            return station_api.run_stage(station, request, directory)
+        result = self.run_job(key=self.key, resume=True, runner=runner)
+        self.assertEqual(result["state"], "failed")
+        self.assertEqual(self.db.execute("SELECT count(*) FROM reports WHERE stage='recovery'").fetchone()[0], 1)
+
+    def test_failed_resume_guard_receipt_crash_cannot_resume_boot(self):
+        self.interrupt_before_boot()
+        with mock.patch.object(queue, "record_stage", side_effect=KeyboardInterrupt), self.assertRaises(KeyboardInterrupt):
+            self.run_job(key=self.key, resume=True, runner=self.failure_runner("preflight", "blocked", needs_recovery=False))
+        result = self.run_job(key=self.key, resume=True)
+        self.assertEqual(result["state"], "blocked")
+        self.assertEqual(self.db.execute("SELECT count(*) FROM reports WHERE stage='boot'").fetchone()[0], 0)
+        self.assertEqual(self.db.execute("SELECT count(*) FROM reports WHERE stage='recovery'").fetchone()[0], 1)
 
     def test_changed_receipt_refuses_resume(self):
         self.interrupt_before_boot()

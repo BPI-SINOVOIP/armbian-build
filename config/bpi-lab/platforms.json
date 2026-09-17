@@ -392,7 +392,7 @@
     },
     {
       "path": "tools/bpi_lab_h618.py",
-      "sha256": "d061cbbc45b1dd67642d9e4c54f2be5d326e58dfb9137f857060d04be3c19a03"
+      "sha256": "0815c6933e17cc219f14c05590237c12fa3504a5b246669ea8a4911dfc4a6d13"
     },
     {
       "path": "tools/bpi_lab_linux.py",
@@ -4861,12 +4861,14 @@
       "supported": [
         "preflight",
         "deploy",
-        "smoke"
-      ],
-      "unsupported": [
         "boot",
+        "smoke",
         "recovery",
         "resume"
+      ],
+      "unsupported": [
+        "other-hardware",
+        "original-boot-chain"
       ],
       "hardware_ids": [
         "bpi-m4zero-0845"
@@ -4877,7 +4879,7 @@
         {
           "path": "tools/bpi_lab_h618.py",
           "line": null,
-          "token": "IMPLEMENTED = (\"preflight\", \"deploy\", \"smoke\")"
+          "token": "IMPLEMENTED = station.STAGES"
         },
         {
           "path": "tools/bpi_lab_h618.py",
@@ -4892,11 +4894,11 @@
         {
           "path": "tools/bpi_lab_h618.py",
           "line": null,
-          "token": "if request[\"stage\"] not in IMPLEMENTED or \"resume\" in request:"
+          "token": "def _resume_references(state, request):"
         }
       ],
       "limitations": [
-        "僅 0845 的 preflight／deploy／smoke 有階段接線；boot／recovery／resume 明確阻擋，whole_adapter_ready=false。",
+        "0845 已有五階段與成功邊界續作的軟體接線；尚無本輪實板資格，whole_adapter_ready=false。",
         "僅接入 0845 的 EMAC 映像格式；映像名稱不證明 EMAC 擴充硬體通過，0845 授權不可借用於其他板。",
         "部署需要原有精確媒體配對、備份及覆寫授權；本輪不呼叫任何硬體階段。"
       ]

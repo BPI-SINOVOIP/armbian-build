@@ -1,11 +1,10 @@
 #!/usr/bin/env python3
-"""0845 的有界冷循環與引導；不部署、不登入、不讀取 secret、不建立 SSH。
+"""0845 的有界冷循環與引導；可由 stage 接入同次登入／SSH 核對。
 
-此為獨立 runtime，不是已接入佇列的完整適配器。客戶引導止於 login；
-救援止於 UART 核對的 RAM 根與 SD 前綴，不宣稱網路或整機就緒。
+獨立 v1 仍止於 login 或 RAM 救援；v2 不把有限成功當作實板資格。
 """
 
-from contextlib import closing, contextmanager
+from contextlib import closing, contextmanager, nullcontext
 import fcntl
 import hashlib
 import json
@@ -13,6 +12,7 @@ import os
 from pathlib import Path
 import re
 import shlex
+import sqlite3
 import stat
 import time
 
@@ -89,14 +89,16 @@ def _new_directory(path):
     return path
 
 
-def load_config(path, sha256):
+def load_config(path, sha256, *, components_reference=None, receipt_reference=None):
     """離線核對設定與固定輸入；不開 UART、不呼叫電源或 SSH。"""
     config = safe.parse_manifest(checked_bytes({"path": str(path), "sha256": sha256}))
-    _fields(config, ("schema", "station_id", "hardware_id", "uart", "power", "pairing",
+    version2 = config.get("schema") == "bpi-lab-h618-lifecycle-v2"
+    fields = {"schema", "station_id", "hardware_id", "uart", "power", "pairing",
                      "authorization", "bridge", "rescue_inputs", "rescue_identity_sha256",
-                     "components", "deploy_receipt", "dependencies", "timeout_seconds",
-                     "off_seconds", "ssh_policy"))
-    require(config["schema"] == "bpi-lab-h618-lifecycle-v1" and config["hardware_id"] == HARDWARE,
+                     "dependencies", "timeout_seconds", "off_seconds", "ssh_policy"}
+    _fields(config, fields if version2 else fields | {"components", "deploy_receipt"})
+    require(config["schema"] in ("bpi-lab-h618-lifecycle-v1", "bpi-lab-h618-lifecycle-v2")
+            and config["hardware_id"] == HARDWARE,
             "僅核定 0845 生命週期，不推論其他板")
     _identifier(config["station_id"])
     require(config["power"] == POWER, "電源必須明示 bpi-pw-1、.245 與核定 MAC")
@@ -136,7 +138,17 @@ def load_config(path, sha256):
     require(type(document) is dict and type(document.get("inputs")) is list
             and len(document["inputs"]) == 4, "救援清單須恰有四個固定組件")
     _sha(config["rescue_identity_sha256"])
+    if version2:
+        # v2 固定板級輸入；映像與部署收據由同次 stage 租約提供，不能預先借用舊收據。
+        if components_reference is None:
+            require(receipt_reference is None, "部署收據缺少同次組件")
+            return config, bridge, rescue_blob, None, None
+        config = {**config, "components": components_reference, "deploy_receipt": receipt_reference}
+    else:
+        require(components_reference is None and receipt_reference is None, "v1 不接受動態組件")
     components = safe.parse_manifest(checked_bytes(config["components"]))
+    if version2 and receipt_reference is None:
+        return config, bridge, rescue_blob, components, None
     require(Path(config["deploy_receipt"]["path"]).name == "receipt.json", "只接受正式部署 receipt.json")
     receipt = safe.parse_manifest(checked_bytes(config["deploy_receipt"]))
     customer.validate_metadata(components, receipt)
@@ -249,8 +261,73 @@ class Journal:
         self.report["last_step"] = step
 
 
+class ResourceGuard:
+    """僅由持鎖 context 產生的作用域憑證；不可用布林參數跳過排他。"""
+
+    def __init__(self, config, root, binding):
+        self.config, self.root, self.binding = config, root, binding
+        self.active = False
+
+    def check(self, config, root, binding):
+        require(self.active and self.root == root and self.binding == binding
+                and all(self.config[key] == config[key] for key in ("station_id", "hardware_id", "uart")),
+                "資源鎖作用域、站點或同次工作不符")
+
+
+def _parent_holds(info, key, root, binding):
+    """只借用直接父程序的實際 flock，並核對佇列持久占用；不信任環境旗標。"""
+    if binding is None:
+        return False
+    owner = os.getppid()
+    identifier = f"{os.major(info.st_dev):02x}:{os.minor(info.st_dev):02x}:{info.st_ino}"
+    rows = [line.split() for line in Path("/proc/locks").read_text().splitlines()]
+    if not any(len(row) == 8 and row[1:5] == ["FLOCK", "ADVISORY", "WRITE", str(owner)]
+               and row[5] == identifier and row[6:] == ["0", "EOF"] for row in rows):
+        return False
+    path = root / "reservations.sqlite3"
+    with safe.open_root(root) as directory, safe.open_file(directory, path.name) as stream:
+        require(os.fstat(stream.fileno()).st_uid == os.geteuid(), "持久占用資料庫擁有者不符")
+    with closing(sqlite3.connect(path.as_uri() + "?mode=ro", uri=True, timeout=1)) as db:
+        row = db.execute("SELECT owner,work_key FROM reservations WHERE resource=?", (key,)).fetchone()
+    if row is None or row[1] != binding["work_key"]:
+        return False
+    return _queue_binding(row[0], binding)
+
+
+def _queue_binding(owner, binding):
+    owner_path = _path(owner)
+    with safe.open_root(owner_path.parent) as directory, safe.open_file(directory, owner_path.name) as stream:
+        require(os.fstat(stream.fileno()).st_uid == os.geteuid(), "佇列資料庫擁有者不符")
+    with closing(sqlite3.connect(owner_path.as_uri() + "?mode=ro", uri=True, timeout=1)) as db:
+        job = db.execute("SELECT attempt_id,station_id,state,body FROM jobs WHERE work_key=?",
+                         (binding["work_key"],)).fetchone()
+    if job is None or job[:2] != (binding["attempt_id"], binding["station_id"]) or job[2] not in (
+            "running", "interrupted", "recovery_failed"):
+        return False
+    body = safe.parse_manifest(job[3].encode())
+    return all(body.get(field) == binding[field] for field in
+               ("hardware_id", "image_sha256", "boot_config_sha256", "test_version", "mode"))
+
+
+def _check_reservations(root, keys, binding):
+    """flock 因程序結束而釋放，不代表佇列持久租約也已解除。"""
+    path = root / "reservations.sqlite3"
+    with safe.open_root(root) as directory:
+        try:
+            with safe.open_file(directory, path.name) as stream:
+                require(os.fstat(stream.fileno()).st_uid == os.geteuid(), "占用資料庫擁有者不符")
+        except FileNotFoundError:
+            return
+    with closing(sqlite3.connect(path.as_uri() + "?mode=ro", uri=True, timeout=1)) as db:
+        rows = db.execute("SELECT owner,work_key FROM reservations WHERE resource IN ("
+                          + ",".join("?" for _ in keys) + ")", sorted(keys)).fetchall()
+    for owner, work_key in set(rows):
+        require(binding is not None and work_key == binding["work_key"] and _queue_binding(owner, binding),
+                "佇列仍有其他工作或嘗試的持久租約，不得繞過")
+
+
 @contextmanager
-def resource_lock(config, root=LOCK_ROOT):
+def resource_lock(config, root=LOCK_ROOT, binding=None):
     """沿用佇列的鎖目錄與 hardware 鍵；持有父佇列鎖時不可重入。"""
     try:
         _new_directory(root)
@@ -262,7 +339,9 @@ def resource_lock(config, root=LOCK_ROOT):
         require(info.st_uid == os.geteuid() and info.st_mode & 0o077 == 0, "鎖目錄必須為本使用者私有")
         keys = {"hardware:" + HARDWARE, "station:" + config["station_id"],
                 "resource:" + config["uart"]["stable_path"], "resource:uart:/dev/ttyUSB0",
-                "resource:power:bpi-pw-1", "resource:cid:" + customer.EXPECTED["cid"]}
+                "resource:power:bpi-pw-1", "resource:cid:" + customer.EXPECTED["cid"],
+                "h618:execution"}
+        guard = ResourceGuard(config, root, binding)
         try:
             for key in sorted(keys):
                 fd = os.open(hashlib.sha256(key.encode()).hexdigest() + ".lock",
@@ -271,9 +350,16 @@ def resource_lock(config, root=LOCK_ROOT):
                 info = os.fstat(fd)
                 require(stat.S_ISREG(info.st_mode) and info.st_uid == os.geteuid()
                         and info.st_mode & 0o077 == 0 and info.st_nlink == 1, "鎖檔型別或權限不符")
-                fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
-            yield
+                try:
+                    fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                except BlockingIOError:
+                    require(key != "h618:execution" and _parent_holds(info, key, root, binding),
+                            "資源已占用且不能驗證父佇列同次持鎖")
+            _check_reservations(root, keys, binding)
+            guard.active = True
+            yield guard
         finally:
+            guard.active = False
             for fd in reversed(descriptors):
                 os.close(fd)
 
@@ -418,14 +504,61 @@ def _fault_proof(reference, config_sha256, session_id, simulated, state):
             and record.get("ok") is False and record.get("status") == "failed"
             and record.get("hardware_id") == HARDWARE and record.get("session_id") == session_id
             and record.get("config_sha256") == config_sha256 and record.get("simulated") is simulated
-            and record.get("hardware_access_started") is True and record.get("finished_unix")
+            and (record.get("hardware_access_started") is True
+                 or record.get("hardware_state_unknown") is True and record.get("error_code") == "interrupted")
+            and record.get("binding") == state.get("binding") and record.get("finished_unix")
             and record.get("action") in ACTIONS and record.get("error_code")
             and state.get("status") == "failed" and state.get("report_path") == reference["path"]
             and state.get("report_sha256") == reference["sha256"], "失敗證據過期、錯配、未結束或未持久化")
 
 
+def reconcile_interrupted(config, config_sha256, binding, guard, output, deadline):
+    """已取得排他後，把未發布的同次 running 記為未知中斷；只供另行核定故障返回。"""
+    guard.check(config, LOCK_ROOT, binding)
+    require(config["authorization"]["fault_poweroff"] is True, "未核定中斷後故障斷電")
+    state = _read_state(LOCK_ROOT)
+    require(state is not None and state.get("status") == "running" and state.get("binding") == binding
+            and state.get("config_sha256") == config_sha256 and state.get("simulated") is False,
+            "中斷租約不屬於本次真實工作")
+    path = _path(state["report_path"])
+    with safe.open_root(path.parent) as parent:
+        try:
+            os.stat(path.name, dir_fd=parent, follow_symlinks=False)
+        except FileNotFoundError:
+            pass
+        else:
+            raise ValueError("中斷已有未核定報告，禁止覆蓋或猜測發布結果")
+    output = _new_directory(output)
+    report = {"schema": "bpi-lab-h618-lifecycle-result-v1", "ok": False, "status": "failed",
+              "hardware_id": HARDWARE, "session_id": state["session_id"], "config_sha256": config_sha256,
+              "binding": binding, "simulated": False, "action": state["action"],
+              "hardware_access_started": False, "hardware_state_unknown": True,
+              "hardware_validated": False, "error_code": "interrupted", "interrupted_report_path": str(path)}
+    lease = {**state, "report_path": str(output / "report.json")}
+    _publish_result(LOCK_ROOT, output, report, lease, deadline)
+    return {"path": lease["report_path"], "sha256": lease["report_sha256"]}
+
+
+def _check_standalone_stage(root):
+    with safe.open_root(root) as directory:
+        try:
+            os.stat("h618-0845-stage-publication.pending", dir_fd=directory, follow_symlinks=False)
+        except FileNotFoundError:
+            pass
+        else:
+            raise ValueError("stage 發布未確認，獨立生命週期不得繞過隔離")
+        try:
+            _, blob = safe.fingerprint(directory, "h618-0845-stage-state.json", limit=65536, keep=True)
+        except FileNotFoundError:
+            return
+    state = safe.parse_manifest(blob)
+    require(state.get("status") == "passed" and state.get("next_stage") is None,
+            "stage 工作尚未完整結束，必須由原工作恢復")
+
+
 def run(*, config_path, config_sha256, action, session_id, output, fault_evidence=None,
-        runtime=None, simulated=False):
+        runtime=None, simulated=False, components_reference=None, receipt_reference=None,
+        binding=None, guard=None, establish=None, deadline=None):
     """一次執行一個動作；替身只能配合 simulated=True，不提供自動重試或解鎖。
 
     cold-cycle／boot-customer 從已登入 RAM 救援開始；recover-normal 從已登入
@@ -456,9 +589,13 @@ def run(*, config_path, config_sha256, action, session_id, output, fault_evidenc
         lock_root = _path(runtime.lock_root) if simulated else LOCK_ROOT
         require(not simulated or lock_root.resolve() != LOCK_ROOT.resolve(), "模擬不可使用真實資源鎖目錄")
         journal.event("preflight", "started")
-        config, bridge, rescue_blob, components, receipt = load_config(config_path, config_sha256)
-        deadline = Deadline(config["timeout_seconds"], runtime.clock, runtime.sleep)
-        deadline.end = started + config["timeout_seconds"]
+        config, bridge, rescue_blob, components, receipt = load_config(
+            config_path, config_sha256, components_reference=components_reference,
+            receipt_reference=receipt_reference)
+        require(action != "boot-customer" or receipt is not None, "引導需要本次完整部署收據")
+        if deadline is None:
+            deadline = Deadline(config["timeout_seconds"], runtime.clock, runtime.sleep)
+        deadline.end = min(deadline.end, started + config["timeout_seconds"])
         deadline.remaining()
         if action != "recover-fault":
             require(fault_evidence is None, "正常動作不可附帶故障斷電證據")
@@ -472,16 +609,23 @@ def run(*, config_path, config_sha256, action, session_id, output, fault_evidenc
         _save(output, "rescue-inputs.json", snapshot)
         inputs, prefix = rescue.input_manifest(output / "rescue-inputs.json")
         report["inputs"] = {key: config[key]["sha256"] for key in
-                            ("bridge", "rescue_inputs", "components", "deploy_receipt")}
+                            ("bridge", "rescue_inputs", "components", "deploy_receipt") if config.get(key)}
         report["pairing_record"] = config["pairing"]["record"]
         report["authorization_record"] = config["authorization"]["record"]
-        report["image_sha256"] = components["image"]["compressed"]["sha256"]
-        with resource_lock(config, lock_root):
+        report["image_sha256"] = components["image"]["compressed"]["sha256"] if components else None
+        report["binding"] = binding
+        if guard is not None:
+            require(isinstance(guard, ResourceGuard), "未提供有效資源鎖作用域")
+            guard.check(config, lock_root, binding)
+        with nullcontext(guard) if guard is not None else resource_lock(config, lock_root, binding):
+            if guard is None:
+                _check_standalone_stage(lock_root)
             state = _read_state(lock_root)
             if state is not None and state.get("status") != "rescue":
                 require(state.get("session_id") == session_id
                         and state.get("config_sha256") == config_sha256
-                        and state.get("simulated") is simulated, "站點仍由其他工作占用，禁止接續")
+                        and state.get("simulated") is simulated and state.get("binding") == binding,
+                        "站點仍由其他工作占用，禁止接續")
                 require((action == "recover-normal" and state.get("status") == "customer")
                         or (action == "recover-fault" and state.get("status") == "failed"),
                         "前次未安全結束，需核定恢復；不能直接開始下一套")
@@ -489,7 +633,8 @@ def run(*, config_path, config_sha256, action, session_id, output, fault_evidenc
                 _fault_proof(fault_evidence, config_sha256, session_id, simulated, state)
                 report["fault_evidence"] = dict(fault_evidence)
             lease = {"session_id": session_id, "config_sha256": config_sha256,
-                     "simulated": simulated, "status": "running", "report_path": str(output / "report.json")}
+                     "simulated": simulated, "binding": binding, "action": action, "status": "running",
+                     "report_path": str(output / "report.json")}
             _write_state(lock_root, lease)
             try:
                 deadline.remaining()
@@ -532,6 +677,15 @@ def run(*, config_path, config_sha256, action, session_id, output, fault_evidenc
                             _rescue_identity(console, config)
                             _sd_prefix(console, prefix)
                             report.update(ram_rescue_verified=True, sd_prefix_unchanged=True)
+                        if establish is not None:
+                            result = establish(console, "customer" if action == "boot-customer" else "rescue",
+                                               output, deadline, action == "boot-customer")
+                            require(result.get("strict_ssh_verified") is True
+                                    and result.get("binding") == binding, "登入與 SSH 未核對同次工作")
+                            report.update(session=result, strict_ssh_verified=True, network_verified=True,
+                                          system_verified=action == "boot-customer",
+                                          recovery_verified=action != "boot-customer",
+                                          first_login_initialized=result.get("first_login_initialized", False))
                     finally:
                         # 不複製任意 RX；只保存由既有工具產生的命令及布林結果。
                         _save(output, "boot-trace.json", {"records": len(commands), "completed": bool(observed),

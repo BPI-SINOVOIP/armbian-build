@@ -66,6 +66,15 @@ class AdapterTests(unittest.TestCase):
         with mock.patch.object(adapter, "load_config", return_value=self.config):
             return adapter.run_stage(self.root / "config.json", "e" * 64, self.request, **kwargs)
 
+    def data_stage(self, stage):
+        self.request["stage"] = stage
+        output = self.root / "data-stage"
+        output.mkdir()
+        report = {}
+        adapter._data_stage(self.config, self.component, self.config["components"]["a" * 64],
+                            self.request, output, lambda: 120, report)
+        return report
+
     def test_config_dependencies_and_small_references(self):
         self.assertIs(adapter.check_config(self.config), self.config)
 
@@ -113,25 +122,17 @@ class AdapterTests(unittest.TestCase):
         self.request["boot_config_sha256"] = "0" * 64
         self.assertEqual(self.run_stage("deploy")["status"], "blocked")
 
-    def test_preflight_and_repeated_attempt_does_not_overwrite(self):
-        with mock.patch.object(adapter.deploy, "validate_backup", return_value=self.config["backup"]), \
-                mock.patch.object(adapter, "readonly_preflight", return_value={"remote": {}}):
-            result = self.run_stage("preflight")
-            self.assertEqual(result["status"], "passed")
-            path = Path(result["evidence_path"]) / "stage.json"
-            original = path.read_bytes()
-            self.assertEqual(self.run_stage("preflight")["status"], "blocked")
-            self.assertEqual(path.read_bytes(), original)
+    def test_legacy_static_ssh_configuration_is_inspection_only(self):
+        for stage in adapter.IMPLEMENTED:
+            self.assertEqual(self.run_stage(stage)["status"], "blocked")
 
     def test_preflight_failure_prevents_deploy(self):
         with mock.patch.object(adapter.deploy, "validate_backup", return_value=self.config["backup"]), \
                 mock.patch.object(adapter, "readonly_preflight", side_effect=ValueError("媒體不符")), \
                 mock.patch.object(adapter.deploy, "deploy") as writer:
-            result = self.run_stage("deploy")
-        self.assertEqual(result["status"], "failed")
+            with self.assertRaises(ValueError):
+                self.data_stage("deploy")
         writer.assert_not_called()
-        self.assertFalse(result["hardware_validated"])
-        self.assertTrue((Path(result["evidence_path"]) / "stage.json").exists())
 
     def test_real_deploy_api_arguments_and_success_receipt_validation(self):
         receipt = {"request": {"backup_manifest_sha256": self.config["backup"]["sha256"]},
@@ -139,9 +140,9 @@ class AdapterTests(unittest.TestCase):
         with mock.patch.object(adapter.deploy, "validate_backup", return_value=self.config["backup"]), \
                 mock.patch.object(adapter, "readonly_preflight", return_value={"remote": {}}), \
                 mock.patch.object(adapter.deploy, "deploy", return_value=receipt) as writer, \
-                mock.patch.object(adapter.boot, "validate_metadata") as validator:
-            result = self.run_stage("deploy")
-        self.assertEqual(result["status"], "passed")
+                mock.patch.object(adapter.boot, "validate_metadata") as validator, \
+                mock.patch.object(adapter.session, "reference", return_value={"path": "receipt.json", "sha256": "a" * 64}):
+            result = self.data_stage("deploy")
         self.assertTrue(result["full_readback_verified"])
         self.assertEqual(writer.call_args.kwargs["expected_cid"], adapter.boot.EXPECTED["cid"])
         self.assertEqual(writer.call_args.kwargs["source"], self.component["image"]["path"])
@@ -153,9 +154,8 @@ class AdapterTests(unittest.TestCase):
 
     def test_smoke_failure_is_not_passed(self):
         with mock.patch.object(adapter.smoke, "smoke", return_value={"ok": False}):
-            result = self.run_stage("smoke")
-        self.assertEqual(result["status"], "failed")
-        self.assertNotIn("checks", result)
+            with self.assertRaises(ValueError):
+                self.data_stage("smoke")
 
     def test_readonly_program_never_calls_deploy_entrypoint(self):
         program = adapter.readonly_program()

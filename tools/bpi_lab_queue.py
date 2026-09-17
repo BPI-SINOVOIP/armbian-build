@@ -445,6 +445,21 @@ def request_for(job, stage, station):
                "image": body["image"], "image_root": body["image_root"]}
 
 
+def _record_failure(db, key, request, status, needs_recovery=False):
+    """由呼叫端的交易保存失敗分支；救援決策必須早於收據發布。"""
+    db.execute("INSERT OR REPLACE INTO failure_branches VALUES (?,?,?)", (key, request["stage"], status))
+    if needs_recovery:
+        event(db, key, "recovery_required", {"attempt_id": request["attempt_id"], "stage": request["stage"]})
+
+
+def _needs_recovery(db, key, stage):
+    if stage != "preflight":
+        return True
+    attempt = get_job(db, key)["attempt_id"]
+    return any(decode(row[0]) == {"attempt_id": attempt, "stage": stage} for row in db.execute(
+        "SELECT body FROM events WHERE work_key=? AND kind='recovery_required'", (key,)))
+
+
 def record_stage(db, key, request, reference, report):
     stage = request["stage"]
     job = get_job(db, key)
@@ -459,9 +474,8 @@ def record_stage(db, key, request, reference, report):
                                                reference["path"], reference["sha256"], int(is_guard), time.time()))
         passed = report["status"] == "passed"
         cursor = job["cursor"] if is_guard or not passed else STAGES.index(stage) + 1
-        if not is_guard and not passed:
-            db.execute("INSERT OR REPLACE INTO failure_branches VALUES (?,?,?)",
-                       (key, stage, "blocked" if report["status"] == "blocked" else "failed"))
+        if not passed:
+            _record_failure(db, key, request, report["status"], is_guard or report.get("needs_recovery", False))
         db.execute("UPDATE jobs SET cursor=?,inflight=NULL,updated=? WHERE work_key=?", (cursor, time.time(), key))
         event(db, key, "stage_recorded", {"stage": stage, "status": report["status"], **reference})
 
@@ -512,10 +526,30 @@ def execute_stage(db, station, key, stage, output, runner, resume_stage=None):
         db.execute("UPDATE jobs SET inflight=?,updated=? WHERE work_key=?", (stage, time.time(), key))
         event(db, key, "stage_started", {"stage": stage, "request": request, "resume_guard": resume_stage is not None,
                                         "evidence_directory": str(directory)})
-    report = runner(station, request, directory)
+    try:
+        report = runner(station, request, directory)
+    except station_api.StageExecutionError as exc:
+        needs_recovery = resume_stage is not None or exc.adapter_started and exc.report is None
+        if exc.report is not None:
+            station_api.validate_report(exc.report, request)
+            needs_recovery |= (exc.report.get("needs_recovery", False)
+                               or exc.report["status"] == "passed" and "needs_recovery" in exc.report)
+        if needs_recovery:
+            with transaction(db):
+                _record_failure(db, key, request, "failed", needs_recovery=True)
+        raise
     station_api.validate_report(report, request)
-    reference = save_json(directory/"queue-receipt.json", report)
-    record_stage(db, key, request, reference, report)
+    if report["status"] != "passed" and (resume_stage is not None or report.get("needs_recovery", False)):
+        with transaction(db):
+            _record_failure(db, key, request, report["status"], needs_recovery=True)
+    try:
+        reference = save_json(directory/"queue-receipt.json", report)
+        record_stage(db, key, request, reference, report)
+    except BaseException:
+        if report["status"] == "passed" and "needs_recovery" in report:
+            with transaction(db):
+                _record_failure(db, key, request, "failed", needs_recovery=True)
+        raise
     return report
 
 
@@ -529,6 +563,17 @@ def note_error(db, key, stage, exc, failure=False):
 
 def return_to_rescue(db, station, key, output, runner):
     try:
+        job = get_job(db, key)
+        if job["inflight"] == "recovery":
+            reconcile_inflight(db, key)
+            job = get_job(db, key)
+        if job["cursor"] == len(STAGES) and job["inflight"] is None:
+            references = refs(db, job)
+            require(references and references[-1]["stage"] == "recovery", "缺少最終救援收據")
+            report = read_json(references[-1]["path"])
+            station_api.validate_report(report, request_for(job, "recovery", station))
+            require(report["status"] == "passed", "最終救援收據未通過")
+            return True
         report = execute_stage(db, station, key, "recovery", output, runner)
         require(report["status"] == "passed", "返回救援未通過")
         return True
@@ -562,8 +607,9 @@ def run_one(db, station_id, output, *, key=None, resume=False, runner=None, lock
         if resume:
             try:
                 recovery_only = db.execute("SELECT 1 FROM failure_branches WHERE work_key=? AND state='interrupted_recovered'", (key,)).fetchone()
-                if not recovery_only:
+                if not recovery_only or get_job(db, key)["inflight"] == "recovery":
                     reconcile_inflight(db, key)
+                refs(db, get_job(db, key))
             except Exception as exc:
                 note_error(db, key, "reconcile", exc)
                 with transaction(db):
@@ -572,7 +618,7 @@ def run_one(db, station_id, output, *, key=None, resume=False, runner=None, lock
             job = get_job(db, key)
             failure = db.execute("SELECT stage,state FROM failure_branches WHERE work_key=?", (key,)).fetchone()
             if failure:
-                if failure["stage"] == "preflight" or return_to_rescue(db, station, key, output, runner):
+                if not _needs_recovery(db, key, failure["stage"]) or return_to_rescue(db, station, key, output, runner):
                     finish(db, key, failure["state"])
                     release_resources(db, key, lock_root)
                 return get_job(db, key)
@@ -582,14 +628,19 @@ def run_one(db, station_id, output, *, key=None, resume=False, runner=None, lock
                 release_resources(db, key, lock_root)
                 return get_job(db, key)
             wanted = STAGES[job["cursor"]]
+            guard = None
             try:
                 guard = execute_stage(db, station, key, "preflight", output, runner, wanted)
                 require(guard["status"] == "passed" and guard.get("resume_state_verified") is True and
                         guard.get("resume_next_stage") == wanted, "現況無法支持續作，未執行後續階段")
             except Exception as exc:
                 note_error(db, key, "resume", exc)
+                failure_state = "blocked" if guard is not None and guard["status"] == "blocked" else "failed"
                 with transaction(db):
-                    db.execute("UPDATE jobs SET state='interrupted' WHERE work_key=?", (key,))
+                    _record_failure(db, key, request_for(job, "preflight", station), failure_state, needs_recovery=True)
+                if return_to_rescue(db, station, key, output, runner):
+                    finish(db, key, failure_state)
+                    release_resources(db, key, lock_root)
                 return get_job(db, key)
         for index in range(job["cursor"], len(STAGES)):
             stage = STAGES[index]
@@ -605,7 +656,7 @@ def run_one(db, station_id, output, *, key=None, resume=False, runner=None, lock
                     with transaction(db):
                         db.execute("UPDATE stations SET health='quarantined' WHERE station_id=?", (station_id,))
                     finish(db, key, "recovery_failed")
-                elif stage == "preflight" or return_to_rescue(db, station, key, output, runner):
+                elif not _needs_recovery(db, key, stage) or return_to_rescue(db, station, key, output, runner):
                     finish(db, key, failure_state)
                     release_resources(db, key, lock_root)
                 return get_job(db, key)

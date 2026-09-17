@@ -54,6 +54,19 @@ class StationError(ValueError):
     """設定、證據或適配器契約未通過；呼叫端不可當成階段成功。"""
 
 
+class StageExecutionError(StationError):
+    """保留程序啟動事實及已驗證回報，供佇列隔離／救援。"""
+
+    def __init__(self, message, report, *, adapter_started=False):
+        super().__init__(message)
+        self.report = report
+        self.adapter_started = adapter_started
+
+
+class StagePublicationError(StageExecutionError):
+    """證據發布未完成；攜帶的回報不得當成成功收據。"""
+
+
 def _mapping(value, field):
     if type(value) is not dict or any(type(key) is not str for key in value):
         raise StationError(f"{field} 必須是字串鍵值的物件")
@@ -320,6 +333,10 @@ def validate_report(report: dict, request: dict) -> dict:
         raise StationError("報告 status 或 hardware_validated 無效")
     if "synthetic" in report and type(report["synthetic"]) is not bool:
         raise StationError("synthetic 必須是布林值")
+    if "needs_recovery" in report and type(report["needs_recovery"]) is not bool:
+        raise StationError("needs_recovery 必須是布林值")
+    if report["status"] == "passed" and report.get("needs_recovery", False):
+        raise StationError("通過報告不得同時要求失敗救援")
     hardware = request["mode"] == "hardware"
     if not hardware and report["hardware_validated"]:
         raise StationError("模擬報告不得宣稱硬體驗證")
@@ -473,7 +490,7 @@ def _snapshot_executable(adapter):
             raise
 
 
-def _external(adapter, request_bytes, timeout, capture=None):
+def _external(adapter, request_bytes, timeout, capture=None, on_started=None):
     fd = _snapshot_executable(adapter)
     proc = None
     selector = selectors.DefaultSelector()
@@ -485,6 +502,8 @@ def _external(adapter, request_bytes, timeout, capture=None):
                                 stdin=subprocess.PIPE, stdout=subprocess.PIPE,
                                 stderr=subprocess.PIPE, start_new_session=True,
                                 close_fds=True, pass_fds=(fd,), shell=False)
+        if on_started is not None:
+            on_started()
         for stream, name, event in ((proc.stdin, "stdin", selectors.EVENT_WRITE),
                                     (proc.stdout, "stdout", selectors.EVENT_READ),
                                     (proc.stderr, "stderr", selectors.EVENT_READ)):
@@ -599,6 +618,12 @@ def run_stage(station: dict, request: dict, evidence_dir) -> dict:
         raise StationError("無法排他建立證據檔案") from exc
     stdout, stderr = b"", b""
     response = {"schema": "bpi-lab-adapter-error-v1", "error": "執行未完成"}
+    validated = None
+    adapter_started = False
+
+    def on_started():
+        nonlocal adapter_started
+        adapter_started = True
 
     def capture(name, chunk):
         output = files[name + ".log"]
@@ -626,18 +651,24 @@ def run_stage(station: dict, request: dict, evidence_dir) -> dict:
             stdout = _json_bytes(response) + b"\n"
         else:
             stdout, stderr, problem = _external(adapter, _json_bytes(request),
-                                                station["timeout_seconds"], capture=capture)
+                                                station["timeout_seconds"], capture=capture,
+                                                on_started=on_started)
             if problem:
                 raise StationError(problem)
             response = _json_loads(stdout.decode("utf-8"))
-        return validate_report(response, request)
+        validated = validate_report(response, request)
+        return validated
     except (OSError, ValueError, RecursionError) as exc:
         if type(response) is dict and response.get("schema") == "bpi-lab-adapter-error-v1":
             response["error"] = str(exc)
+        if adapter_started:
+            raise StageExecutionError(f"適配器啟動後未取得可信結果：{exc}", validated,
+                                      adapter_started=True) from exc
         if isinstance(exc, StationError):
             raise
         raise StationError(f"階段執行或證據處理失敗：{exc}") from exc
     finally:
+        publication_error = None
         try:
             if files["stdout.log"].tell() == 0:
                 files["stdout.log"].write(stdout)
@@ -654,8 +685,17 @@ def run_stage(station: dict, request: dict, evidence_dir) -> dict:
                 os.fsync(output.fileno())
             os.fsync(directory)
         except OSError as exc:
-            raise StationError("證據未能完整持久保存") from exc
+            publication_error = exc
         finally:
             for output in files.values():
-                output.close()
-            os.close(directory)
+                try:
+                    output.close()
+                except OSError as exc:
+                    publication_error = publication_error or exc
+            try:
+                os.close(directory)
+            except OSError as exc:
+                publication_error = publication_error or exc
+        if publication_error is not None:
+            raise StagePublicationError("證據未能完整持久保存", validated,
+                                        adapter_started=adapter_started) from publication_error

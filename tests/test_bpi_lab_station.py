@@ -247,6 +247,23 @@ class ReportContractTests(unittest.TestCase):
                           "status": status, "hardware_validated": False}
                 self.assertIs(lab.validate_report(result, req), result)
 
+    def test_needs_recovery_is_optional_boolean_and_never_passed_true(self):
+        for data in (station(), hardware()):
+            req = request(data)
+            for status in ("passed", "failed", "blocked"):
+                valid = report(req, status)
+                self.assertIs(lab.validate_report(valid, req), valid)
+                for value in (False, True):
+                    candidate = {**valid, "needs_recovery": value}
+                    if status == "passed" and value:
+                        with self.assertRaises(ValueError):
+                            lab.validate_report(candidate, req)
+                    else:
+                        self.assertIs(lab.validate_report(candidate, req), candidate)
+                for value in (0, 1, "false", "true", None, [], {}):
+                    with self.subTest(status=status, value=value), self.assertRaises(ValueError):
+                        lab.validate_report({**valid, "needs_recovery": value}, req)
+
     def test_resume_requires_current_state_and_next_stage(self):
         for data in (station(), hardware()):
             req = add_resume(request(data))
@@ -404,11 +421,74 @@ class StageExecutionTests(unittest.TestCase):
         for index, body in enumerate(bodies):
             data = self.external(body)
             target = self.root / str(index)
-            with self.subTest(index=index), self.assertRaises(ValueError):
+            with self.subTest(index=index), self.assertRaises(lab.StageExecutionError) as caught:
                 lab.run_stage(data, request(data), target)
+            self.assertIs(caught.exception.adapter_started, True)
+            self.assertIsNone(caught.exception.report)
             self.assertTrue((target / "stdout.log").read_bytes())
             self.assertEqual(json.loads((target / "response.json").read_text())["schema"],
                              "bpi-lab-adapter-error-v1")
+
+    def test_publication_failure_keeps_only_validated_recovery_report(self):
+        original = os.fsync
+        def fail(fd):
+            if Path(os.readlink(f"/proc/self/fd/{fd}")).name == "response.json":
+                raise OSError("合成回應同步失敗")
+            return original(fd)
+        for valid in (False, True):
+            data = self.external()
+            req = request(data)
+            response = {**report(req, "failed"), "needs_recovery": True}
+            if not valid:
+                response["attempt_id"] = "other-attempt"
+            with self.subTest(valid=valid), mock.patch.object(lab, "_external", return_value=(
+                    lab._json_bytes(response), b"", None)), mock.patch.object(lab.os, "fsync", side_effect=fail):
+                with self.assertRaises(lab.StagePublicationError) as caught:
+                    lab.run_stage(data, req, self.root / str(valid))
+            self.assertEqual(caught.exception.report, response if valid else None)
+
+    def test_stdout_write_failure_keeps_started_fact_without_trusting_response(self):
+        original = lab._reserve_evidence
+        for persistent in (False, True):
+            data = self.external("out.update(status='failed', needs_recovery=True)\nprint(json.dumps(out))\n")
+            def reserve(directory):
+                fd, files = original(directory)
+                stream = files["stdout.log"]
+                wrapper = mock.Mock(wraps=stream)
+                def write(chunk):
+                    if persistent or chunk:
+                        raise OSError("合成 stdout 寫入失敗")
+                    return stream.write(chunk)
+                wrapper.write.side_effect = write
+                files["stdout.log"] = wrapper
+                return fd, files
+            error = lab.StagePublicationError if persistent else lab.StageExecutionError
+            with self.subTest(persistent=persistent), mock.patch.object(lab, "_reserve_evidence", side_effect=reserve):
+                with self.assertRaises(error) as caught:
+                    lab.run_stage(data, request(data), self.root / str(persistent))
+            self.assertIs(caught.exception.adapter_started, True)
+            self.assertIsNone(caught.exception.report)
+
+    def test_spawn_failure_is_not_marked_as_started(self):
+        data = self.external()
+        with mock.patch.object(lab.subprocess, "Popen", side_effect=OSError("合成啟動失敗")):
+            with self.assertRaises(lab.StationError) as caught:
+                lab.run_stage(data, request(data), self.evidence)
+        self.assertNotIsInstance(caught.exception, lab.StageExecutionError)
+
+    def test_publication_failure_before_spawn_does_not_claim_started(self):
+        data = self.external()
+        original = os.fsync
+        def fail(fd):
+            if Path(os.readlink(f"/proc/self/fd/{fd}")).name == "response.json":
+                raise OSError("合成發布失敗")
+            return original(fd)
+        with mock.patch.object(lab.subprocess, "Popen", side_effect=OSError("合成啟動失敗")), \
+                mock.patch.object(lab.os, "fsync", side_effect=fail):
+            with self.assertRaises(lab.StagePublicationError) as caught:
+                lab.run_stage(data, request(data), self.evidence)
+        self.assertIs(caught.exception.adapter_started, False)
+        self.assertIsNone(caught.exception.report)
 
     def test_stdout_and_stderr_limits(self):
         for stream in ("stdout", "stderr"):
