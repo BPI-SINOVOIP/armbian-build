@@ -104,7 +104,7 @@ class DiskTests(unittest.TestCase):
             ext = root / (label + ".ext")
             with ext.open("wb") as out:
                 out.truncate(16 * 1024**2)
-            cls.run_tool(["/usr/sbin/mke2fs", "-q", "-F", "-t", "ext4", "-U", UUID, "-d", str(files), str(ext)])
+            cls.run_tool(["/usr/sbin/mke2fs", "-q", "-F", "-t", "ext4", "-U", UUID, "-L", "BPI-ROOT", "-d", str(files), str(ext)])
             raw = root / (label + ".img")
             with raw.open("wb") as out:
                 out.truncate(32 * 1024**2)
@@ -159,6 +159,8 @@ class DiskTests(unittest.TestCase):
             self.assertEqual(reader.read_file("/boot/Image"), b"correct-boot-kernel")
             self.assertEqual(reader.read_file("/etc/armbian-release"), b"BOARD=bananapim7\n")
             self.assertEqual(reader.filesystem_uuid, UUID)
+            self.assertEqual(reader.filesystem_label, "BPI-ROOT")
+            self.assertTrue(reader.report["filesystem_label_unique"])
             self.assertEqual(reader.report["boot_partition"]["index"], 1)
             self.assertEqual(reader.report["partition"]["index"], 2)
         report = json.loads((reader.output / "extraction.json").read_bytes())
@@ -182,6 +184,8 @@ class DiskTests(unittest.TestCase):
                     reader.read_file(path)
         evidence = self.root / "evidence/extraction.json"
         with image.SnapshotReader(evidence, sha(evidence.read_bytes()), self.root / "replay") as replay:
+            self.assertEqual(replay.filesystem_label, "BPI-ROOT")
+            self.assertTrue(replay.report["filesystem_label_unique"])
             self.assertEqual(replay.read_file("/boot/Image"), b"correct-boot-kernel")
             for path in ("/boot/no-such-file", "/etc/no-such-file"):
                 with self.assertRaises(FileNotFoundError):

@@ -136,10 +136,12 @@ class PartitionView(image.ImageReader):
         require(values.get("TYPE") in ("ext2", "ext3", "ext4", "vfat")
                 and values["TYPE"].startswith(self.filesystem), "分割檔案系統類型不符")
         self.filesystem_uuid = values.get("UUID", "")
+        self.filesystem_label = values.get("LABEL", "")
         require(re.fullmatch(r"[0-9A-Fa-f-]{9,36}", self.filesystem_uuid), "分割缺少 UUID")
         self.report.update(source_verified=True, partition={**self.metadata, "sha256": checksum.hexdigest(),
                                                            "bytes": length},
-                           filesystem_uuid=self.filesystem_uuid, filesystem=values["TYPE"])
+                           filesystem_uuid=self.filesystem_uuid, filesystem_label=self.filesystem_label,
+                           filesystem=values["TYPE"])
 
     def read_file(self, path):
         if self.filesystem != "vfat":
@@ -273,12 +275,15 @@ class DiskReader(image.ImageReader):
             require(mounts["/boot"]["filesystem"].startswith(self.boot_volume.filesystem),
                     "fstab 開機檔案系統與分割不符")
         self.filesystem_uuid = self.root_volume.filesystem_uuid
+        self.filesystem_label = self.root_volume.filesystem_label
         self.report.update(source_verified=True, source_kind="xz" if compressed else "raw",
             source_digest={"bytes": before[2], "sha256": self.expected},
             raw={"bytes": total, "sha256": raw_hash.hexdigest()},
             partition=self.root_volume.report["partition"], partitions=rows,
             boot_partition=self.boot_volume.report["partition"], mounts=mounts,
-            filesystem_uuid=self.filesystem_uuid, layout_reader="multi-partition-v1")
+            filesystem_uuid=self.filesystem_uuid, filesystem_label=self.filesystem_label,
+            filesystem_label_unique=sum(volume.filesystem_label == self.filesystem_label for volume in volumes) == 1,
+            layout_reader="multi-partition-v1")
         require(image.identity(self.part_stream) == self.part_identity, "暫存原映像在解析期間改變")
 
     def read_file(self, path):

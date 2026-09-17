@@ -39,6 +39,8 @@ python3 tools/bpi_lab_image.py /絕對路徑/映像.img.xz \
 
 `--optional-path` 可記錄已確認不存在的可選路徑。它只接受檔案系統解析器明確回報缺檔，其他解析錯誤仍阻擋；未查詢路徑不能在重播時假設不存在。
 
+根檔案系統另保存 `filesystem_label` 與 `filesystem_label_unique`，供使用根標籤的原廠引導鏈核對。多分割模式從每個已辨識的 ext／FAT 分割取得標籤後比較；唯一性只涵蓋此映像，不代表實板其他 SD、eMMC 或 USB 沒有同名標籤。舊擷取未記錄的標籤不補猜值，重播不能據此放行標籤型根配置。
+
 ## 驗證
 
 ```sh

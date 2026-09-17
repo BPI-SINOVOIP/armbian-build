@@ -224,11 +224,13 @@ class ImageReader:
         require(len(superblock) == 1024 and superblock[56:58] == b"\x53\xef",
                 "Linux 分割不是已支援的 ext 檔案系統")
         self.filesystem_uuid = str(uuid.UUID(bytes=superblock[104:120]))
+        self.filesystem_label = superblock[120:136].split(b"\0", 1)[0].decode("utf-8")
         self.report.update(source_verified=True, source_kind="xz" if is_xz else "raw",
                            source_digest={"bytes": count, "sha256": self.expected},
                            raw={"bytes": total, "sha256": raw_hash.hexdigest()},
                            partition={**part, "bytes": written, "sha256": part_hash.hexdigest()},
-                           filesystem_uuid=self.filesystem_uuid)
+                           filesystem_uuid=self.filesystem_uuid, filesystem_label=self.filesystem_label,
+                           filesystem_label_unique=True)
         self._save("mbr.bin", bytes(prefix))
 
     def _raw(self, source):
@@ -411,6 +413,7 @@ class SnapshotReader:
                     and 0 < original["raw"]["bytes"] <= self.maximum, "原映像大小超界")
             self.original, self.original_fd = original, root
             self.filesystem_uuid = str(uuid.UUID(original["filesystem_uuid"]))
+            self.filesystem_label = original.get("filesystem_label")
             missing = []
             for query in original["queries"]:
                 self.check()
@@ -430,7 +433,8 @@ class SnapshotReader:
             self.output_fd = self.stack.enter_context(safe.open_root(self.output))
             self.report = {key: original[key] for key in (
                 "source", "source_digest", "raw", "partition", "filesystem_uuid", "source_verified")}
-            for key in ("partitions", "boot_partition", "mounts", "layout_reader"):
+            for key in ("partitions", "boot_partition", "mounts", "layout_reader", "filesystem_label",
+                        "filesystem_label_unique"):
                 if key in original:
                     self.report[key] = original[key]
             self.report.update(schema="bpi-lab-image-replay-v1", hardware_validated=False,
