@@ -96,6 +96,10 @@ build_uboot_config(manifest, *, template, artifact_root) -> dict
 
 目前只放行已審閱 Linux `6.18.46`／`6.18.49` 語意、4 KiB 頁面、未啟用大頁與 NUMA、內建 `CONFIG_CMDLINE=""` 的配置。必要旗標為 `CONFIG_CMA=y`、`CONFIG_DMA_CMA=y`、`CONFIG_OF_RESERVED_MEM=y`，頁面區塊階數必須有原配設定依據；未知版本或未覆蓋分支保持阻擋。
 
+M4 Zero 的既有 `sun50i-h616-bananapi-m4-sdio-wifi-bt.dtbo` 會把有效 DTB 的 `model` 改為 `BananaPi BPI-M4-Zero v2`。只對 `bpi-m4z`、指定 overlay 路徑、固定 DTBO 摘要 `6fba3c974e814542628b815350bf5c2be94664e082f9cf27d06bd5f357b96086` 及已審閱 DTSO 摘要啟用此規則；不放寬原 DTB 的 model、compatible，也不套到 Berry 或 EMAC。綁定時重讀原始環境，核對啟用的 overlay 路徑及次序，再以已核對的原 DTB／DTBO 位元組重跑 `fdtoverlay`，要求與有效 DTB 逐位元組一致，不能靠改 manifest 欄位放行。真實重播在 `bpi-multiboard-integrate-20260917-allboard-bpi-m4z-004-replay`；原始 `-003` 的阻擋紀錄保留。
+
+此項補強完成 85 項 Allwinner 回歸，包含未啟用 overlay 的偽造宣告、已啟用但未套用、順序／路徑／環境不符及有效 DTB 額外改動等負例。真 M4 Zero 的原始環境、overlay 重算與有效 DTB 一致；證據為 `output/evidence/bpi-multiboard-integrate-20260917/m4z-model-binding-reviewed.log`。這是唯讀證據驗證，不是開機或無線功能實測。
+
 2026-09-18 全板抽樣發現 M1 Plus 使用 `6.18.46-current-sunxi`。由 Linux 穩定分支取得兩個固定 tag 的 `include/linux/cma.h`、`include/linux/pageblock-flags.h`、`include/linux/mmzone.h`、`kernel/dma/contiguous.c`、`drivers/of/of_reserved_mem.c`、`mm/cma.c`，六份逐檔比較完全相同，因此只新增 `6.18.46`，不放行整個 6.18 系列。原證據的 `linux-6.18.49-pageblock` 是沿用的語意識別，不代表把實際核心版號改成 6.18.49。下載與比較證據在 `output/evidence/bpi-multiboard-integrate-20260917/cma-source/`，對照來源為 [6.18.46 保留記憶體](https://github.com/gregkh/linux/blob/v6.18.46/drivers/of/of_reserved_mem.c)及 [6.18.46 CMA](https://github.com/gregkh/linux/blob/v6.18.46/mm/cma.c)。
 
 - [保留記憶體來源](https://github.com/gregkh/linux/blob/v6.18.49/drivers/of/of_reserved_mem.c)確認：根與保留節點的 cells 必須一致；`size` 用 size cells，`alignment` 用 address cells；CMA 對齊取 DT 指定值與核心最小對齊的較大者。`alloc-ranges` 是依次嘗試的搜尋窗口，不是整段固定占用。

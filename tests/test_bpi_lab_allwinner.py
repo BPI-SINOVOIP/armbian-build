@@ -993,6 +993,55 @@ class AllwinnerTests(unittest.TestCase):
                     lab.build_uboot_config(manifest, template=cma_template(manifest), artifact_root=self.output)
                 self.assertEqual(caught.exception.code, "memory_evidence")
 
+    def test_overlay_metadata_cannot_enable_inactive_overlay(self):
+        manifest = self.prepare()
+        name = "files/inactive.dtbo"
+        blob = overlay()
+        (self.output / name).write_bytes(blob)
+        manifest["files"]["overlay_00"] = {
+            "path": "/boot/dtb/allwinner/overlay/sun7i-a20-inactive.dtbo",
+            "evidence_path": name, **lab.digest(blob)}
+        manifest["overlay_order"] = ["overlay_00"]
+        (self.output / "manifest.json").write_bytes(lab._json(manifest))
+        with self.assertRaisesRegex(lab.AllwinnerError, "啟用項目不同"):
+            lab.build_uboot_config(manifest, template=external_template(manifest), artifact_root=self.output)
+
+    def test_effective_dtb_is_rebuilt_not_just_identity_checked(self):
+        for active in (False, True):
+            with self.subTest(active=active):
+                if active:
+                    self.env(overlays="lab")
+                    path = f'/boot/dtb/allwinner/overlay/{self.policy["overlay_prefix"]}-lab.dtbo'
+                    self.files[path] = overlay()
+                manifest = self.prepare()
+                record = manifest["files"]["effective_dtb"]
+                blob = self.files["/boot/dtb/" + self.policy["dtb"]] if active else tree(
+                    self.policy, children='unrelated { status = "okay"; };')
+                (self.output / record["evidence_path"]).write_bytes(blob)
+                record.update(lab.digest(blob))
+                (self.output / "manifest.json").write_bytes(lab._json(manifest))
+                with self.assertRaisesRegex(lab.AllwinnerError, "套用 overlay 的結果不同"):
+                    lab.build_uboot_config(manifest, template=external_template(manifest), artifact_root=self.output)
+
+    def test_overlay_order_and_path_replayed_from_original_env(self):
+        self.env(overlays="one two")
+        for name in ("one", "two"):
+            self.files[f'/boot/dtb/allwinner/overlay/{self.policy["overlay_prefix"]}-{name}.dtbo'] = overlay()
+        original = self.prepare()
+        for mode in ("order", "path", "env"):
+            with self.subTest(mode=mode):
+                manifest = copy.deepcopy(original)
+                if mode == "order":
+                    manifest["overlay_order"].reverse()
+                elif mode == "path":
+                    manifest["files"]["overlay_00"]["path"] = "/boot/overlay-user/one.dtbo"
+                else:
+                    manifest["original_env"]["overlays"] = "two one"
+                (self.output / "manifest.json").write_bytes(lab._json(manifest))
+                with self.assertRaises(lab.AllwinnerError) as caught:
+                    lab.build_uboot_config(manifest, template=external_template(manifest), artifact_root=self.output)
+                self.assertEqual(caught.exception.code, "overlay_evidence")
+
     def test_old_manifest_missing_memory_fields_requires_replay(self):
         original = self.prepare()
         for key in ("memreserve", "reserved_memory", "dynamic_cma"):
@@ -1002,6 +1051,41 @@ class AllwinnerTests(unittest.TestCase):
                 (self.output / "manifest.json").write_bytes(lab._json(manifest))
                 with self.assertRaises(lab.AllwinnerError):
                     lab.build_uboot_config(manifest, template=external_template(manifest), artifact_root=self.output)
+
+
+class ModelOverlayTests(unittest.TestCase):
+    def evidence(self, **changes):
+        reviewed = lab.M4ZERO_MODEL_OVERLAY
+        record = {"path": reviewed["path"], "sha256": reviewed["sha256"], **changes}
+        return mock.Mock(manifest={"overlay_order": ["overlay_00"], "files": {"overlay_00": record}},
+                         source=mock.Mock(return_value=(lab.ROOT / reviewed["source"]).read_bytes()))
+
+    def test_reviewed_m4zero_wireless_model_only(self):
+        profile = {"board": "bpi-m4z", "model": "BananaPi BPI-M4-Zero",
+                   "compatible": lab.H618_PROFILES["bpi-m4z"]["compatible"]}
+        result = lab._effective_profile(self.evidence(), profile)
+        self.assertEqual(result, {**profile, "model": "BananaPi BPI-M4-Zero v2"})
+        self.assertEqual(profile["model"], "BananaPi BPI-M4-Zero")
+
+    def test_other_board_path_hash_or_inactive_overlay_not_relaxed(self):
+        profile = {"board": "bpi-m4z", "model": "original"}
+        for changes in ({"sha256": "0" * 64}, {"path": "/boot/overlay-user/other.dtbo"}):
+            with self.subTest(changes=changes):
+                evidence = self.evidence(**changes)
+                self.assertEqual(lab._effective_profile(evidence, profile), profile)
+                evidence.source.assert_not_called()
+        evidence = self.evidence()
+        evidence.manifest["overlay_order"] = []
+        self.assertEqual(lab._effective_profile(evidence, profile), profile)
+        for board in ("bpi-m4b", "bpi-m4z-emac"):
+            other = {**profile, "board": board}
+            self.assertEqual(lab._effective_profile(self.evidence(), other), other)
+
+    def test_changed_model_overlay_source_rejected(self):
+        evidence = self.evidence()
+        evidence.source.return_value = b"changed"
+        with self.assertRaisesRegex(lab.AllwinnerError, "來源已改變"):
+            lab._effective_profile(evidence, {"board": "bpi-m4z"})
 
 
 if __name__ == "__main__":

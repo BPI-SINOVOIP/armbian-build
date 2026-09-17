@@ -57,6 +57,13 @@ H618_PROFILES = {
                       "sha256": "e2c1f74af1560feab34188bef54113d08f44513615e3ba622c9dac836f6a1e68"},
 }
 H618_FAMILY_STRUCTURE_SHA256 = "3f505c34149fb4352bdbccf3968adbffe575eb266b8532a4bf4adff8ec7a50b6"
+M4ZERO_MODEL_OVERLAY = {
+    "path": "/boot/dtb/allwinner/overlay/sun50i-h616-bananapi-m4-sdio-wifi-bt.dtbo",
+    "sha256": "6fba3c974e814542628b815350bf5c2be94664e082f9cf27d06bd5f357b96086",
+    "source": "patch/kernel/archive/sunxi-6.18/overlay_64/sun50i-h616-bananapi-m4-sdio-wifi-bt.dtso",
+    "source_sha256": "d7140eab49d76675d98a1f20226aced08b379d82a203e29936378e30e194bfb5",
+    "model": "BananaPi BPI-M4-Zero v2",
+}
 # 只有已逐項審閱的 fixup 可在無參數時視為 DTB 無操作；會改寫 console 的 PWM 分支另行阻擋。
 FIXUPS = {
     "sun7i-a20": ("overlay_32", "2f59c731905cef8af8ff5299335a81cdf361e698a1d177b05ffbdb60e520cf13"),
@@ -453,7 +460,33 @@ def _overlay_names(env, key):
     return names
 
 
+def _overlay_paths(env, dtb_path):
+    directory = str(Path(dtb_path).parent)
+    prefix = env.get("overlay_prefix", "")
+    require(re.fullmatch(NAME, prefix), "overlay_prefix", "overlay_prefix 不是安全名稱")
+    return [_path(f"{directory}/overlay/{prefix}-{name}.dtbo" if key == "overlays"
+                  else f"/boot/overlay-user/{name}.dtbo")
+            for key in ("overlays", "user_overlays") for name in _overlay_names(env, key)]
+
+
+def _effective_profile(evidence, profile):
+    """只接受已審閱的 M4 Zero 無線 overlay 所宣告的型號字串變更。"""
+    if profile["board"] != "bpi-m4z":
+        return profile
+    reviewed = M4ZERO_MODEL_OVERLAY
+    for role in evidence.manifest.get("overlay_order", []):
+        record = evidence.manifest["files"].get(role, {})
+        if record.get("path") == reviewed["path"] and record.get("sha256") == reviewed["sha256"]:
+            source = evidence.source(reviewed["source"])
+            require(digest(source)["sha256"] == reviewed["source_sha256"],
+                    "overlay_source", "M4 Zero 型號變更 overlay 來源已改變，須重新審閱")
+            return {**profile, "model": reviewed["model"]}
+    return profile
+
+
 def _dtb(evidence, role, profile):
+    if role == "effective_dtb":
+        profile = _effective_profile(evidence, profile)
     record = evidence.manifest["files"][role]
     path = evidence.output / record["evidence_path"]
     # libfdt 解析實際結構，不能以二進位搜尋 compatible 字串取代根節點核對。
@@ -633,6 +666,7 @@ def _prepare(e, board, release):
         e.check("fixup", check_fixup)
     if legacy or not dtb_valid or any(role is None for role in overlays):
         return
+    m["overlay_order"] = overlays
     def apply_overlays():
         effective = "files/effective.dtb"
         if overlays:
@@ -705,10 +739,30 @@ def _empty_marker(path):
 def _verify_memory_evidence(manifest, artifact_root):
     """重驗核心、原配配置與兩份 DTB，防止修改摘要與核對欄位繞過 CMA。"""
     with safe.open_root(artifact_root) as root, tempfile.TemporaryDirectory(prefix="bpi-memory-") as temporary:
-        checked = {"files": {}, "commands": [], "checks": {}, "kernel_release": manifest["kernel_release"]}
+        checked = {"files": {}, "commands": [], "checks": {}, "sources": {},
+                   "overlay_order": manifest.get("overlay_order", []), "kernel_release": manifest["kernel_release"]}
         evidence = _Evidence(Path(temporary) / "verify", None, checked)
         kernel_config = None
         try:
+            env_record = manifest["files"]["env"]
+            actual, blob = safe.fingerprint(root, env_record["evidence_path"], limit=MAX_TEXT, keep=True)
+            require(actual == {key: env_record[key] for key in ("bytes", "sha256")},
+                    "evidence_changed", "原始 overlay 環境證據已變動")
+            env = _env(blob)
+            _check_env(env, manifest["profile"])
+            require(env == manifest["original_env"], "overlay_evidence", "overlay 環境核對結果與原始內容不同")
+            paths = _overlay_paths(env, manifest["files"]["dtb"]["path"])
+            require(checked["overlay_order"] == [f"overlay_{i:02d}" for i in range(len(paths))],
+                    "overlay_evidence", "overlay 次序與原始環境啟用項目不同")
+            for role, path in zip(checked["overlay_order"], paths):
+                record = manifest["files"][role]
+                require(record.get("path") == path, "overlay_evidence", "overlay 路徑與原始環境不同")
+                actual, blob = safe.fingerprint(root, record["evidence_path"], limit=MAX_FILE, keep=True)
+                require(actual == {key: record[key] for key in ("bytes", "sha256")},
+                        "evidence_changed", "型號核對使用的 overlay 已變動")
+                name = f"files/{role}.dtbo"
+                evidence.save(name, blob)
+                checked["files"][role] = {**record, "evidence_path": name}
             for role in ("kernel_config", "kernel", "dtb", "effective_dtb"):
                 require(role in manifest["files"], "memory_evidence", "記憶體核對缺少必要原配證據，須重新擷取")
                 record = manifest["files"][role]
@@ -725,6 +779,17 @@ def _verify_memory_evidence(manifest, artifact_root):
                     require(result == manifest["checks"].get(role), "memory_evidence", "核心格式／版本／內嵌配置核對結果已變動")
                 else:
                     name = "files/" + role + ".dtb"
+                    if role == "effective_dtb":
+                        base = evidence.output / checked["files"]["dtb"]["evidence_path"]
+                        rebuilt = evidence.output / "files/rebuilt.dtb"
+                        if paths:
+                            evidence.run(["/usr/bin/fdtoverlay", "-i", base, "-o", rebuilt,
+                                          *[evidence.output / checked["files"][key]["evidence_path"]
+                                            for key in checked["overlay_order"]]])
+                        else:
+                            rebuilt = base
+                        require(rebuilt.read_bytes() == blob, "overlay_evidence",
+                                "有效 DTB 與原始 DTB 按原環境套用 overlay 的結果不同")
                     evidence.save(name, blob)
                     checked["files"][role] = {"evidence_path": name}
                     result = _dtb(evidence, role, manifest["profile"])
