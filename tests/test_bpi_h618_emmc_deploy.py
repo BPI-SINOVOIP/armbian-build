@@ -165,6 +165,86 @@ class HostTests(unittest.TestCase):
         self.assertFalse(record["restore_verified"])
         return record
 
+    def pins(self):
+        return {"backup_manifest_sha256": sha(self.backup_path.read_bytes()),
+                "ssh_config_sha256": sha(self.config.read_bytes()),
+                "sd_prefix": {"bytes": 4 * deploy.CHUNK, "sha256": sha(b"SD")},
+                "rescue": {key: rescue_identity()[key] for key in ("kernel", "identity_sha256")}}
+
+    def test_pinned_preflight_uses_fixed_ssh_snapshot(self):
+        result = self.run_deploy(pinned_preflight=self.pins())
+        snapshot = self.output / "ssh-config.snapshot"
+        self.assertEqual(snapshot.read_bytes(), self.config.read_bytes())
+        self.assertEqual(snapshot.stat().st_mode & 0o777, 0o400)
+        self.assertEqual(self.fake.calls[0][self.fake.calls[0].index("-F") + 1], str(snapshot))
+        self.assertEqual(result["request"]["pinned_preflight"], self.pins())
+
+    def test_pinned_changed_backup_or_config_never_starts_transport(self):
+        for field in ("backup_manifest_sha256", "ssh_config_sha256"):
+            with self.subTest(field=field):
+                pins = self.pins()
+                pins[field] = "0" * 64
+                with self.assertRaises(deploy.DeployError):
+                    self.run_deploy(pinned_preflight=pins)
+                self.assertEqual(self.fake.calls, [])
+
+    def test_pinned_config_change_during_source_check_prevents_transport(self):
+        pins = self.pins()
+        original = deploy.remote_namespace
+        def namespace():
+            result = original()
+            process = result["process_xz"]
+            def changed(*args, **kwargs):
+                output = process(*args, **kwargs)
+                self.config.write_text("Host changed\n")
+                return output
+            result["process_xz"] = changed
+            return result
+        with mock.patch.object(deploy, "remote_namespace", side_effect=namespace), \
+                self.assertRaises(deploy.DeployError):
+            self.run_deploy(pinned_preflight=pins)
+        self.assertEqual(self.fake.calls, [])
+        self.assert_failed()
+
+    def test_pinned_response_rejects_wrong_rescue_or_prefix(self):
+        for field in ("rescue", "sd_before"):
+            with self.subTest(field=field):
+                pins = self.pins()
+                request = {"source": source_summary(RAW, self.xz), "expected": EXPECTED,
+                           "protected_sd": PROTECTED, "pinned_preflight": pins,
+                           "backup_manifest_sha256": pins["backup_manifest_sha256"]}
+                state = remote_state(request)
+                if field == "rescue":
+                    state[field]["kernel"] = "OTHER_KERNEL"
+                else:
+                    state[field]["prefix"]["sha256"] = "0" * 64
+                with self.assertRaises(deploy.DeployError):
+                    deploy.validate_state(state, request)
+
+    def test_pinned_backup_change_during_source_check_prevents_transport(self):
+        original = deploy.remote_namespace
+        for filename in ("manifest.json", "emmc-userarea.img.gz"):
+            with self.subTest(filename=filename):
+                pins = self.pins()
+                target = self.backup_dir / filename
+                before = target.read_bytes()
+                def namespace():
+                    result = original()
+                    process = result["process_xz"]
+                    def changed(*args, **kwargs):
+                        output = process(*args, **kwargs)
+                        target.write_bytes(b"corrupted")
+                        return output
+                    result["process_xz"] = changed
+                    return result
+                self.output = self.root / ("attempt-" + filename)
+                with mock.patch.object(deploy, "remote_namespace", side_effect=namespace), \
+                        self.assertRaises(deploy.DeployError):
+                    self.run_deploy(pinned_preflight=pins)
+                self.assertEqual(self.fake.calls, [])
+                self.assert_failed()
+                target.write_bytes(before)
+
     def test_success_produces_only_verified_deploy_not_boot_or_restore_success(self):
         report = self.run_deploy()
         self.assertTrue(report["ok"])
@@ -555,6 +635,28 @@ class RemoteTests(unittest.TestCase):
         self.assertEqual(self.target[len(RAW):], b"\xaa" * (CAPACITY - len(RAW)))
         self.assertEqual([event for event, _ in self.events], ["ready", "verified"])
         self.assertTrue(all(path in (sd_identity()["device"], emmc_identity()["device"]) for path, _ in self.opens))
+
+    def test_pins_mismatch_never_opens_target_or_writes(self):
+        for field in ("kernel", "identity_sha256", "sd_prefix", "backup_manifest_sha256"):
+            with self.subTest(field=field):
+                self.opens.clear()
+                self.events.clear()
+                self.request["backup_manifest_sha256"] = "a" * 64
+                pins = {"backup_manifest_sha256": "a" * 64, "ssh_config_sha256": "b" * 64,
+                        "sd_prefix": {"bytes": len(self.sd), "sha256": sha(self.sd)},
+                        "rescue": {key: rescue_identity()[key] for key in ("kernel", "identity_sha256")}}
+                if field in ("kernel", "identity_sha256"):
+                    pins["rescue"][field] = "OTHER_KERNEL" if field == "kernel" else "0" * 64
+                elif field == "sd_prefix":
+                    pins[field]["sha256"] = "0" * 64
+                else:
+                    pins[field] = "0" * 64
+                self.request["pinned_preflight"] = pins
+                with self.rig(), self.assertRaises(ValueError):
+                    self.run_remote()
+                self.assertEqual(self.writes, [])
+                self.assertTrue(all(path == sd_identity()["device"] for path, flags in self.opens))
+                self.assertEqual(self.assert_no_verified()["bytes_written"], 0)
 
     def test_lzma_failure_keeps_original_error_and_read_emitted_hashes_in_state(self):
         # 模擬先輸出一段、仍有內部輸入時解碼失敗；read 不可誤稱 consumed。

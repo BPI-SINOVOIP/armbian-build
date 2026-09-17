@@ -225,6 +225,12 @@ def run(request, source, emit):
             require(state["sd_before"]["identity"] == sd, "SD 在開啟時已變更")
             require(checks["inspect"](request["expected"]) == target and rescue_identity() == rescue,
                     "寫入前媒體或救援身分變更")
+            pins = request.get("pinned_preflight")
+            if pins is not None:
+                require(state["sd_before"]["prefix"] == pins["sd_prefix"]
+                        and all(rescue.get(key) == value for key, value in pins["rescue"].items())
+                        and request["backup_manifest_sha256"] == pins["backup_manifest_sha256"],
+                        "寫入前的固定 SD、救援或備份身分不符")
             fd = os.open(target["device"], os.O_RDWR | os.O_EXCL | os.O_NOFOLLOW | os.O_CLOEXEC)
             stack.callback(os.close, fd)
             checks["check_fd"](fd, target)
@@ -358,7 +364,18 @@ def validate_backup(path, expected, check):
             require(hash_stream(stream, compressed["bytes"], check) == compressed, "備份 gzip 不存在完整對應內容或摘要不符")
             unchanged(directory, artifact, stream, original)
     return {"path": str(path), **meta, "raw": raw, "compressed": compressed,
+            "artifact_identity": original,
             "restore_verified": False, "trust": "操作者明確指定的可信備份；已重新核對 gzip 壓縮摘要"}
+
+
+def revalidate_backup(proof):
+    """完整驗證來源後再次檢查備份；不因長時間來源驗證沿用已失效的檔案身分。"""
+    path = Path(proof["path"])
+    with safe.open_root(path.parent) as directory:
+        meta, _ = safe.fingerprint(directory, path.name, limit=safe.MAX_MANIFEST_BYTES)
+        require(meta == {key: proof[key] for key in ("bytes", "sha256")}, "來源驗證期間備份清單已變更")
+        with safe.open_file(directory, "emmc-userarea.img.gz") as stream:
+            unchanged(directory, "emmc-userarea.img.gz", stream, proof["artifact_identity"])
 
 
 def upload_stream(argv, chunks, deadline, clock):
@@ -450,16 +467,40 @@ def validate_state(state, request, *, final=False):
     require(type(state.get("bytes_written")) is int and type(state.get("attempted_end")) is int
             and 0 <= state["bytes_written"] <= state["attempted_end"] <= request["source"]["raw"]["bytes"],
             "遠端寫入計數越界")
+    if request.get("pinned_preflight") is not None:
+        pins = request["pinned_preflight"]
+        require(before["prefix"] == pins["sd_prefix"]
+                and all(rescue.get(key) == value for key, value in pins["rescue"].items())
+                and request["backup_manifest_sha256"] == pins["backup_manifest_sha256"],
+                "遠端收據與外部固定的 SD、救援或備份身分不符")
     if final:
         require(state.get("status") == "verified" and state["bytes_written"] == request["source"]["raw"]["bytes"]
                 and state.get("source") == request["source"] and state.get("readback") == request["source"]["raw"]
                 and state.get("sd_after") == before, "遠端完整回讀、來源或 SD 後置證據不符")
 
 
+def validate_pins(pins):
+    if pins is None:
+        return
+    require(type(pins) is dict and set(pins) == {
+        "backup_manifest_sha256", "ssh_config_sha256", "sd_prefix", "rescue"}, "固定前置條件欄位不符")
+    require(all(hash_value(pins[key]) for key in ("backup_manifest_sha256", "ssh_config_sha256")),
+            "固定備份或 SSH 摘要不符")
+    prefix, rescue = pins["sd_prefix"], pins["rescue"]
+    require(type(prefix) is dict and set(prefix) == {"bytes", "sha256"}
+            and type(prefix["bytes"]) is int and prefix["bytes"] == 4 * CHUNK
+            and hash_value(prefix["sha256"]), "固定 SD 前綴不符")
+    require(type(rescue) is dict and set(rescue) == {"kernel", "identity_sha256"}
+            and isinstance(rescue["kernel"], str) and re.fullmatch(r"[A-Za-z0-9._+-]{1,128}", rescue["kernel"])
+            and hash_value(rescue["identity_sha256"]), "固定救援身分不符")
+
+
 def deploy(*, confirm_overwrite=False, backup_manifest, source, compressed_sha256, raw_sha256, raw_size,
            expected_cid, expected_size, expected_controller, protected_sd_cid, protected_sd_controller,
-           ssh_config, alias, output_dir, timeout=21600, transport=upload_stream, monotonic=time.monotonic):
+           ssh_config, alias, output_dir, timeout=21600, transport=upload_stream, monotonic=time.monotonic,
+           pinned_preflight=None):
     require(confirm_overwrite is True, "缺少 --confirm-overwrite；未啟動 SSH 或任何媒體寫入")
+    validate_pins(pinned_preflight)
     expected = backup.validate_expected(expected_cid, expected_size, expected_controller)
     protected = backup.validate_expected(protected_sd_cid, 512, protected_sd_controller)
     del protected["bytes"]
@@ -475,6 +516,10 @@ def deploy(*, confirm_overwrite=False, backup_manifest, source, compressed_sha25
     base_argv = backup.ssh_command(ssh_config, alias, {})
     config_digest = backup.config_fingerprint(ssh_config)
     backup_proof = validate_backup(backup_manifest, expected, check)
+    if pinned_preflight is not None:
+        require(config_digest["sha256"] == pinned_preflight["ssh_config_sha256"]
+                and backup_proof["sha256"] == pinned_preflight["backup_manifest_sha256"],
+                "部署前的固定備份或 SSH 設定已變更")
     source_path = Path(source).absolute()
     require(source_path.suffix.lower() == ".xz", "來源必須是明確的普通 XZ 檔")
     with safe.open_root(source_path.parent) as source_dir, safe.open_file(source_dir, source_path.name) as stream:
@@ -492,6 +537,8 @@ def deploy(*, confirm_overwrite=False, backup_manifest, source, compressed_sha25
         request = {"confirm_overwrite": True, "backup_verified": True, "backup_manifest_sha256": backup_proof["sha256"],
                    "expected": expected, "protected_sd": protected, "source": expected_source,
                    "nonce": secrets.token_hex(32), "timeout": check()}
+        if pinned_preflight is not None:
+            request["pinned_preflight"] = pinned_preflight
         program = remote_program()
         base_argv[-1] = shlex.join(["python3", "-B", "-c", program, json.dumps(request, separators=(",", ":"))])
         record = {"schema": "bpi-h618-emmc-deploy-v1", "status": "prepared", "ok": False, "bootable": False,
@@ -517,6 +564,21 @@ def deploy(*, confirm_overwrite=False, backup_manifest, source, compressed_sha25
                                  0o600, dir_fd=directory)
                     fds[name] = fd
                     os.fchmod(fd, 0o600)
+                if pinned_preflight is not None:
+                    revalidate_backup(backup_proof)
+                    config_path = Path(ssh_config).absolute()
+                    with safe.open_root(config_path.parent) as config_dir:
+                        actual, blob = safe.fingerprint(config_dir, config_path.name,
+                                                       limit=safe.MAX_MANIFEST_BYTES, keep=True)
+                    require(actual == config_digest, "建立 SSH 固定副本前設定已變更")
+                    with safe.open_file(directory, "ssh-config.snapshot", create=True) as snapshot:
+                        snapshot.write(blob)
+                        snapshot.flush()
+                        os.fsync(snapshot.fileno())
+                        os.fchmod(snapshot.fileno(), 0o400)
+                    # SSH 只讀本次固定副本；外部金鑰及 Include 等相依仍屬操作者核定範圍。
+                    base_argv[base_argv.index("-F") + 1] = str(out / "ssh-config.snapshot")
+                    record["ssh_config_snapshot"] = actual
                 receipt = fds["receipt.json.partial"]
                 save_receipt(receipt, record)
                 os.fsync(directory)
