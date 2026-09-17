@@ -27,6 +27,7 @@ else:
 
 ASSETS = Path(__file__).resolve().with_name("bpi_h618_rescue")
 SCHEMA = "bpi-h618-rescue-v1"
+LAB_SCHEMA = "bpi-lab-rescue-v1"
 SEARCH_PATH = "/usr/sbin:/usr/bin:/sbin:/bin"
 MODULES = ("brcmfmac", "brcmfmac_wcc", "brcmutil", "cfg80211", "rfkill", "mmc_block", "sunxi_mmc")
 APPLET_NAMES = ("sh", "mount", "mkdir", "chmod", "cat", "sleep", "uname", "setsid",
@@ -269,6 +270,29 @@ def write(path, text, mode=0o644):
     path.chmod(mode)
 
 
+def prepare_runtime(seed, kernel, *, profile=None):
+    """舊入口保留原識別；明示板級配置使用獨立識別，沿用同份唯讀執行程式。"""
+    if profile is not None:
+        validate_profile(profile)
+    schema = SCHEMA if profile is None else LAB_SCHEMA
+    write(seed / "etc/bpi-rescue.json", json.dumps({"schema": schema, "kernel": kernel}, sort_keys=True) + "\n")
+    entry = seed / "usr/sbin/bpi-rescue"
+    entry.parent.mkdir(parents=True, exist_ok=True)
+    if profile is None:
+        shutil.copyfile(ASSETS / "runtime.py", entry)
+        entry.chmod(0o755)
+    else:
+        module = entry.with_name("bpi_rescue_runtime.py")
+        shutil.copyfile(ASSETS / "runtime.py", module)
+        module.chmod(0o644)
+        write(entry, "#!/usr/bin/python3 -B\n"
+              '"""使用獨立板級救援識別，不繼承舊 H618 配對。"""\n'
+              "import bpi_rescue_runtime as runtime\n"
+              f"runtime.SCHEMA = {LAB_SCHEMA!r}\n"
+              "if __name__ == '__main__':\n"
+              "    raise SystemExit(runtime.main())\n", 0o755)
+
+
 def prepare(output, kernel, binaries, busybox, key, firmware, stdlib, *, profile=None):
     conf = output / "conf"
     share = output / "share"
@@ -293,10 +317,10 @@ def prepare(output, kernel, binaries, busybox, key, firmware, stdlib, *, profile
     shutil.copyfile(busybox, seed / "usr/bin/busybox")
     (seed / "usr/bin/busybox").chmod(0o755)
     require(sha256(seed / "usr/bin/busybox") == sha256(busybox), "BusyBox 複製核對失敗")
-    write(seed / "etc/bpi-rescue.json", json.dumps({"schema": SCHEMA, "kernel": kernel}, sort_keys=True) + "\n")
+    prepare_runtime(seed, kernel, profile=profile)
     write(seed / "etc/ssh/rescue_authorized_keys", key, 0o600)
     shutil.copyfile(ASSETS / "sshd_config", seed / "etc/ssh/sshd_config")
-    for name, target in (("runtime.py", "usr/sbin/bpi-rescue"), ("ssh-start", "usr/sbin/bpi-rescue-ssh"),
+    for name, target in (("ssh-start", "usr/sbin/bpi-rescue-ssh"),
                          ("udhcpc-script", "usr/sbin/bpi-rescue-udhcpc"),
                          ("bpi_rescue_cli.py", "usr/sbin/bpi_rescue_cli.py")):
         shutil.copyfile(ASSETS / name, seed / target)
@@ -348,13 +372,16 @@ def prepare(output, kernel, binaries, busybox, key, firmware, stdlib, *, profile
 def build(args, *, profile=None):
     output, kernel, binaries, busybox, key, firmware, stdlib = preflight(args, profile=profile)
     output.mkdir(mode=0o700, exist_ok=False)
-    report = {"schema": SCHEMA, "kernel": kernel, "status": "未完成", "hardware_tested": False,
+    report = {"schema": SCHEMA if profile is None else LAB_SCHEMA, "kernel": kernel, "status": "未完成", "hardware_tested": False,
               "busybox_sha256": args.busybox_sha256, "authorized_key": bool(key)}
     report_path = output / "build-report.json"
     if profile is not None:
         report["board_profile"] = profile
     try:
         report["python_stdlib_bytes"] = prepare(output, kernel, binaries, busybox, key, firmware, stdlib, profile=profile)
+        identity = output / "seed/etc/bpi-rescue.json"
+        report["rescue_identity"] = {"schema": report["schema"], "kernel": kernel, "identity_sha256": sha256(identity)}
+        report["runtime_entry_sha256"] = sha256(output / "seed/usr/sbin/bpi-rescue")
         (output / "tmp").mkdir()
         image = output / "rescue-initramfs.img"
         command = [binaries["unshare"], "--mount", "--fork", "--propagation", "private",
@@ -373,6 +400,8 @@ def build(args, *, profile=None):
         files = {line.removeprefix("./") for line in listing.splitlines()}
         require({"init", "usr/bin/busybox", "usr/bin/curl", "usr/bin/python3", "usr/sbin/sshd",
                  "usr/sbin/bpi-rescue", "etc/bpi-rescue.json"} <= files, "initramfs 缺少必要內容")
+        if profile is not None:
+            require("usr/sbin/bpi_rescue_runtime.py" in files, "板級救援缺少共用執行模組")
         require(not any(re.search(r"(^|/)(boot|NetworkManager|machine-id)(/|$)|ssh_host_", p) for p in files),
                 "initramfs 含禁止內容")
         report.update(status="建置完成，尚未實板驗證", image_bytes=image.stat().st_size,

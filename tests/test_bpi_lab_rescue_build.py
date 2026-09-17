@@ -2,9 +2,11 @@
 
 import copy
 import hashlib
+import io
 import json
 import os
 from pathlib import Path
+import runpy
 import struct
 import sys
 import unittest
@@ -41,6 +43,68 @@ class ProfileTests(unittest.TestCase):
     setUp = original.RescueTests.setUp
     put = original.RescueTests.put
     environment = original.RescueTests.environment
+
+    def test_profile_runtime_identity_reaches_actual_ready_function(self):
+        for architecture in builder.MULTIARCH:
+            with self.subTest(architecture=architecture):
+                seed = self.base / architecture
+                builder.prepare_runtime(seed, original.KERNEL, profile=profile(architecture))
+                identity = seed / "etc/bpi-rescue.json"
+                self.assertEqual(json.loads(identity.read_text()), {"schema": builder.LAB_SCHEMA, "kernel": original.KERNEL})
+                directory = seed / "usr/sbin"
+                self.put(str(directory.relative_to(self.base) / "bpi_rescue_cli.py"),
+                         (builder.ASSETS / "bpi_rescue_cli.py").read_bytes())
+                self.assertEqual((directory / "bpi_rescue_runtime.py").read_bytes(),
+                                 (builder.ASSETS / "runtime.py").read_bytes())
+                ready = seed / "ready.json"
+                with mock.patch.dict(sys.modules), mock.patch.object(sys, "path", [str(directory), *sys.path]):
+                    sys.modules.pop("bpi_rescue_runtime", None)
+                    value = runpy.run_path(str(directory / "bpi-rescue"), run_name="bpi_runtime_test")
+                    runtime = value["runtime"]
+                    with mock.patch.object(runtime, "Path", side_effect=lambda name: identity if name == "/etc/bpi-rescue.json" else ready), \
+                            mock.patch.object(runtime.os, "uname", return_value=mock.Mock(release=original.KERNEL)), \
+                            mock.patch.object(sys, "stdout", new=io.StringIO()):
+                        runtime.ready()
+                        self.assertEqual(json.loads(ready.read_text())["schema"], builder.LAB_SCHEMA)
+                        identity.write_text(json.dumps({"schema": builder.SCHEMA, "kernel": original.KERNEL}))
+                        with self.assertRaisesRegex(ValueError, "schema"):
+                            runtime.ready()
+                self.assertEqual(original.runtime.SCHEMA, builder.SCHEMA)
+
+    def test_legacy_runtime_and_identity_remain_identical(self):
+        seed = self.base / "legacy"
+        builder.prepare_runtime(seed, original.KERNEL)
+        self.assertEqual((seed / "usr/sbin/bpi-rescue").read_bytes(), (builder.ASSETS / "runtime.py").read_bytes())
+        self.assertEqual(json.loads((seed / "etc/bpi-rescue.json").read_text()),
+                         {"schema": builder.SCHEMA, "kernel": original.KERNEL})
+        self.assertFalse((seed / "usr/sbin/bpi_rescue_runtime.py").exists())
+
+    def test_profile_build_binds_identity_and_requires_runtime_module(self):
+        stdlib = self.put("stdlib/os.py", "# 測試\n").parent
+        bins = {name: "/usr/bin/" + name for name in builder.RUNTIME_BINARIES + builder.BUILD_BINARIES}
+        files = ["init", "usr/bin/busybox", "usr/bin/curl", "usr/bin/python3", "usr/sbin/sshd",
+                 "usr/sbin/bpi-rescue", "etc/bpi-rescue.json"]
+        def build(command, output, log):
+            (output / "rescue-initramfs.img").write_bytes(b"fixture-only")
+            return 0
+        for include in (True, False):
+            with self.subTest(include=include):
+                output = self.base / ("with-module" if include else "without-module")
+                preflight = (output, original.KERNEL, bins, self.busybox, "", [], stdlib)
+                listing = "\n".join(files + (["usr/sbin/bpi_rescue_runtime.py"] if include else []))
+                with mock.patch.object(builder, "preflight", return_value=preflight), \
+                        mock.patch.object(builder, "run_build", side_effect=build), \
+                        mock.patch.object(builder, "checked", return_value=listing):
+                    if include:
+                        report = builder.build(self.args, profile=profile())
+                        self.assertEqual(report["schema"], builder.LAB_SCHEMA)
+                        self.assertFalse(report["hardware_tested"])
+                        self.assertEqual(report["rescue_identity"], {"schema": builder.LAB_SCHEMA, "kernel": original.KERNEL,
+                            "identity_sha256": builder.sha256(output / "seed/etc/bpi-rescue.json")})
+                        self.assertEqual(report["runtime_entry_sha256"], builder.sha256(output / "seed/usr/sbin/bpi-rescue"))
+                    else:
+                        with self.assertRaisesRegex(ValueError, "共用執行模組"):
+                            builder.build(self.args, profile=profile())
 
     def test_three_explicit_architectures(self):
         for architecture in builder.MULTIARCH:

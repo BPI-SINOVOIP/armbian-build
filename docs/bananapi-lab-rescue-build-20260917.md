@@ -11,9 +11,18 @@
 Python／SSH 複製與封裝核對。舊 H618 入口及預設模組清單保持原行為；
 新入口須指定配置，不會使用 H618 的 Wi-Fi／MMC 預設值。
 
-救援身分檔沿用歷史格式 `bpi-h618-rescue-v1`，此字串不表示板子是 H618。
-正式部署仍須綁定這份身分檔實際摘要、核心版本、initramfs 摘要、實板 DT、UART 及兩個媒體。
-不能因 schema 名稱相同而套用 0845 的媒體或覆寫授權。
+指定板級配置的新建置使用 `bpi-lab-rescue-v1` 身分及建置報告，避免被共用後端的
+舊 0845 隔離規則拒絕。無板級配置的舊 H618 入口仍使用 `bpi-h618-rescue-v1`，
+其執行程式及身分內容維持原樣。
+
+一般板型的 `/usr/sbin/bpi-rescue` 為固定薄包裝，設定獨立 schema 後呼叫
+`/usr/sbin/bpi_rescue_runtime.py`；後者逐位元保留既有唯讀執行程式，不以文字取代方式改寫原來源。
+`ready` 真正核對的新身分檔、盤點結果及執行程式 schema 一致，不只是修改報告名稱。
+建置報告新增 `rescue_identity` 與 `runtime_entry_sha256`，封裝必須包含共用執行模組。
+
+正式部署仍須綁定身分檔實際摘要、核心版本、initramfs 摘要、實板 DT、UART 及兩個媒體。
+早期使用歷史 schema 的跨架構產物須重新建置及核定，不能只改 JSON 就套用新身分，
+更不能套用 0845 的媒體或覆寫授權。
 
 ## 板級配置
 
@@ -76,3 +85,8 @@ output/evidence/bpi-sram-supervisor/model-venv/bin/python -B -m unittest discove
 
 涵蓋三種 ELF 架構、動態／錯配拒絕、DT 身分、模組隔離、韌體路徑及摘要、
 跨架構拒絕、唯讀前檢入口與舊 H618 行為。測試未執行真實建置、掛載、UART 或媒體寫入。
+
+本次身分整合修正後，共 33 項回歸通過；紀錄為
+`output/evidence/bpi-multiboard-integrate-20260917/native-rescue-identity-main-reviewed.log`，Ruff 通過。
+三種架構配置均生成真 Python 包裝，再載入共用程式執行 `ready`；只有核心與檔案路徑觀測為替身。
+測試確認新舊 schema 不能混用、舊執行程式逐位元不變，以及封裝缺少新模組時不得宣告成功。
