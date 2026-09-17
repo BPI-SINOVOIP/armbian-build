@@ -78,6 +78,49 @@ class PrepareTests(unittest.TestCase):
         del self.manifest["root_uuid"]
         self.assertEqual(self.run_prepare()["status"], "blocked")
 
+    def test_root_label_requires_verified_superblock(self):
+        self.manifest.update(root_uuid=None, root_label="BPI-ROOT", root_target="LABEL=BPI-ROOT",
+                             root_fstab_target="UUID=" + Reader.filesystem_uuid)
+        class LabelReader(Reader):
+            filesystem_label = "BPI-ROOT"
+
+            def __enter__(self):
+                self.report["filesystem_label_unique"] = True
+                self.report["filesystem_labels_complete"] = True
+                return super().__enter__()
+        with mock.patch.object(prepare.disk, "DiskReader", LabelReader):
+            result = self.run_prepare(layout="disk")
+        self.assertEqual(result["status"], "prepared")
+        self.assertTrue(result["root_identity_verified"])
+        self.assertFalse(result["root_uuid_verified"])
+        self.assertFalse(result["root_binding"]["unique_on_hardware"])
+
+    def test_root_label_unknown_or_duplicate_rejected(self):
+        self.manifest.update(root_uuid=None, root_label="BPI-ROOT", root_target="LABEL=BPI-ROOT",
+                             root_fstab_target="UUID=" + Reader.filesystem_uuid)
+        for label, unique in ((None, True), ("OTHER", True), ("BPI-ROOT", False), ("BPI-ROOT", None)):
+            reader = mock.Mock(filesystem_uuid=Reader.filesystem_uuid, filesystem_label=label,
+                               report={"filesystem_label_unique": unique, "filesystem_labels_complete": True})
+            with self.subTest(label=label, unique=unique), self.assertRaises(ValueError):
+                prepare.root_binding(self.manifest, reader)
+
+    def test_root_label_fstab_mismatch_rejected(self):
+        self.manifest.update(root_uuid=None, root_label="BPI-ROOT", root_target="LABEL=BPI-ROOT",
+                             root_fstab_target="UUID=other")
+        reader = mock.Mock(filesystem_uuid=Reader.filesystem_uuid, filesystem_label="BPI-ROOT",
+                           report={"filesystem_label_unique": True, "filesystem_labels_complete": True})
+        with self.assertRaisesRegex(ValueError, "fstab"):
+            prepare.root_binding(self.manifest, reader)
+
+    def test_old_label_evidence_without_full_partition_coverage_rejected(self):
+        self.manifest.update(root_uuid=None, root_label="BPI-ROOT", root_target="LABEL=BPI-ROOT",
+                             root_fstab_target="UUID=" + Reader.filesystem_uuid)
+        for coverage in (None, False):
+            reader = mock.Mock(filesystem_uuid=Reader.filesystem_uuid, filesystem_label="BPI-ROOT",
+                               report={"filesystem_label_unique": True, "filesystem_labels_complete": coverage})
+            with self.subTest(coverage=coverage), self.assertRaises(ValueError):
+                prepare.root_binding(self.manifest, reader)
+
     def test_hardware_claim_rejected(self):
         self.manifest["hardware_validated"] = True
         result = self.run_prepare()
@@ -115,6 +158,14 @@ class PrepareTests(unittest.TestCase):
         self.assertFalse((self.output / "extraction").exists())
         self.assertIn("無法載入", result["error"])
 
+    def test_parser_bug_retains_diagnostic(self):
+        with mock.patch.object(prepare, "prepare_family", side_effect=TypeError("家族資料不能序列化")):
+            result = prepare.prepare(self.root / "image", "a" * 64, family="amlogic", board="bpi-m5",
+                                     kernel_release="6.18.49-current-meson64", output=self.output)
+        self.assertEqual(result["status"], "blocked")
+        self.assertEqual(result["error_type"], "TypeError")
+        self.assertEqual(result["error"], "家族資料不能序列化")
+
     def test_wrong_family_board_before_decompression(self):
         result = self.run_prepare(family="amlogic", board="bpi-m1")
         self.assertEqual(result["status"], "blocked")
@@ -127,6 +178,32 @@ class PrepareTests(unittest.TestCase):
             prepare.prepare_family("amlogic", lambda path: b"", board="bpi-m5",
                                    kernel_release="6.18.49-current-meson64", output=self.output)
         self.assertEqual(module.prepare.call_args.kwargs["board"], "bananapim5")
+
+    def test_disk_layout_reader(self):
+        with mock.patch.object(prepare.disk, "DiskReader", Reader), mock.patch.object(prepare.image, "ImageReader") as old:
+            result = self.run_prepare(layout="disk")
+        self.assertEqual(result["status"], "prepared")
+        self.assertEqual(result["layout"], "disk")
+        old.assert_not_called()
+
+    def test_invalid_layout(self):
+        with self.assertRaises(ValueError):
+            self.run_prepare(layout="auto-ignore-errors")
+        self.assertFalse(self.output.exists())
+
+    def test_new_family_mapping_before_read(self):
+        for family, boards in prepare.BOARD_FAMILIES.items():
+            for board in boards:
+                with self.subTest(family=family, board=board):
+                    result = self.run_prepare(family=family, board=board, output=self.root / board)
+                    self.assertEqual(result["status"], "prepared")
+
+    def test_family_mismatch_no_decompression(self):
+        for family in prepare.BOARD_FAMILIES:
+            with self.subTest(family=family):
+                result = self.run_prepare(family=family, board="bpi-m1", output=self.root / family)
+                self.assertEqual(result["status"], "blocked")
+                self.assertFalse((self.root / family / "extraction").exists())
 
 
 if __name__ == "__main__":

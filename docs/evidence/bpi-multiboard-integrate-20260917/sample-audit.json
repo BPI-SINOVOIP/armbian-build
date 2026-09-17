@@ -1,0 +1,1099 @@
+{
+  "schema": "bpi-lab-readonly-sample-audit-v1",
+  "date": "2026-09-18",
+  "scope": "每板一份原映像的唯讀組件抽樣；不代表全部映像或完整硬體後端通過。",
+  "boards": 45,
+  "images": 45,
+  "prepared": 44,
+  "blocked": 1,
+  "hardware_operations": 0,
+  "hardware_validated": false,
+  "source_images_modified": false,
+  "rows": [
+    {
+      "board": "bpi-6204",
+      "family": "allwinner",
+      "architecture": "arm32",
+      "release": "bookworm",
+      "variant": "minimal",
+      "kernel_release": "6.12.90-legacy-sunxi",
+      "status": "prepared",
+      "blockers": [],
+      "source": {
+        "relative_path": "bpi-6204/Armbian-unofficial_26.11.0-trunk_Bananapi6204_bookworm_legacy_6.12.90_minimal.img.xz",
+        "bytes": 337472628,
+        "sha256": "f4cb0250e1860f8a93b34f8d57b1220e5fd3dc47d031ecde8d79685b409ad4f1"
+      },
+      "preparation": {
+        "path": "output/evidence/bpi-multiboard-integrate-20260917-allboard-bpi-6204-003/preparation.json",
+        "sha256": "d6dc01bdb7e39ff1562c6290227d8ed6b5144f7826f323965fb6607c71ca212c"
+      },
+      "extraction": {
+        "path": "output/evidence/bpi-multiboard-integrate-20260917-allboard-bpi-6204-003/extraction/extraction.json",
+        "sha256": "151c806a24115e9dfa3f036c27fb2c45f3dc73b1f07e3849ef4c2bb3c41fe9bd"
+      },
+      "hardware_validated": false
+    },
+    {
+      "board": "bpi-ai2n",
+      "family": "renesas",
+      "architecture": "arm64",
+      "release": "bookworm",
+      "variant": "minimal",
+      "kernel_release": "6.1.107-legacy-renesas",
+      "status": "prepared",
+      "blockers": [],
+      "source": {
+        "relative_path": "bpi-ai2n/Bananapi-Armbian_26.11.0-trunk_Bpi-ai2n_bookworm_legacy_6.1.107_minimal.img.xz",
+        "bytes": 323782764,
+        "sha256": "bcabca28ecb81f4e46a038f15d4fe154263d54edb8595eb653a4aed7d4ff4a50"
+      },
+      "preparation": {
+        "path": "output/evidence/bpi-multiboard-integrate-20260917-ai2n-001/preparation.json",
+        "sha256": "259c1756601c1756721f6aa4ec5435e63c07ce2502ce1c4905fe9619d9bf5043"
+      },
+      "extraction": {
+        "path": "output/evidence/bpi-multiboard-integrate-20260917-ai2n-001/extraction/extraction.json",
+        "sha256": "954d9ff8d6e492599ee20a2a8f40064429e09bf682c8d82cb19ea8bb9fd1cdb4"
+      },
+      "hardware_validated": false
+    },
+    {
+      "board": "bpi-aim7",
+      "family": "rockchip",
+      "architecture": "arm64",
+      "release": "bookworm",
+      "variant": "minimal",
+      "kernel_release": "6.1.115-vendor-rk35xx",
+      "status": "prepared",
+      "blockers": [],
+      "source": {
+        "relative_path": "bpi-aim7/Armbian-unofficial_26.11.0-trunk_Bananapiaim7_bookworm_vendor_6.1.115_minimal.img.xz",
+        "bytes": 493549740,
+        "sha256": "a87b370375747c52bcfe9c54558fd3303c5a9d6dc861c000be891e755c90bb2c"
+      },
+      "preparation": {
+        "path": "output/evidence/bpi-multiboard-integrate-20260917-allboard-bpi-aim7-003/preparation.json",
+        "sha256": "de5fbfcb7bcb97fc93146f8fce4a9c3171598f742c008d5cc863bb1161165bd9"
+      },
+      "extraction": {
+        "path": "output/evidence/bpi-multiboard-integrate-20260917-allboard-bpi-aim7-003/extraction/extraction.json",
+        "sha256": "9fdef9aff78ae0ac356bf2ea13b6e11d894606a786073e020f716e1358d06eec"
+      },
+      "hardware_validated": false
+    },
+    {
+      "board": "bpi-cm4io",
+      "family": "amlogic",
+      "architecture": "arm64",
+      "release": "bookworm",
+      "variant": "minimal",
+      "kernel_release": "6.18.49-current-meson64",
+      "status": "prepared",
+      "blockers": [],
+      "source": {
+        "relative_path": "bpi-cm4io/Armbian-unofficial_26.11.0-trunk_Bananapicm4io_bookworm_current_6.18.49_minimal.img.xz",
+        "bytes": 368742992,
+        "sha256": "0f7529bc7a9358c60a5da6592956f0ec425b3aab29c299f211df9078b68ec2f5"
+      },
+      "preparation": {
+        "path": "output/evidence/bpi-multiboard-integrate-20260917-allboard-bpi-cm4io-003/preparation.json",
+        "sha256": "fa45c065169bc55c2ef64c27bed3a8c4fd0de66a01af5874d97c2910d1af53c3"
+      },
+      "extraction": {
+        "path": "output/evidence/bpi-multiboard-integrate-20260917-allboard-bpi-cm4io-003/extraction/extraction.json",
+        "sha256": "455b18b581a53277948a710e4ed1276534a68aed35083288e19610882e8c2282"
+      },
+      "hardware_validated": false
+    },
+    {
+      "board": "bpi-cm5pro",
+      "family": "rockchip",
+      "architecture": "arm64",
+      "release": "bookworm",
+      "variant": "minimal",
+      "kernel_release": "6.1.115-vendor-rk35xx",
+      "status": "prepared",
+      "blockers": [],
+      "source": {
+        "relative_path": "bpi-cm5pro/Armbian-unofficial_26.11.0-trunk_Bananapicm5pro_bookworm_vendor_6.1.115_minimal.img.xz",
+        "bytes": 460400608,
+        "sha256": "3d56c8304e643e5e29bf84c52e662c9fd441df3ca28cae9ee2f9073090e66157"
+      },
+      "preparation": {
+        "path": "output/evidence/bpi-multiboard-integrate-20260917-allboard-bpi-cm5pro-003/preparation.json",
+        "sha256": "a08f77f558fbd8ae2cfffca1307c804239dde08cda1808b56914a4390191f81a"
+      },
+      "extraction": {
+        "path": "output/evidence/bpi-multiboard-integrate-20260917-allboard-bpi-cm5pro-003/extraction/extraction.json",
+        "sha256": "002f8d9dad1386392f0684fd40792a81f57a4ba9157e96bcab368b77f77b3f5f"
+      },
+      "hardware_validated": false
+    },
+    {
+      "board": "bpi-cm6",
+      "family": "spacemit",
+      "architecture": "riscv64",
+      "release": "jammy",
+      "variant": "minimal",
+      "kernel_release": "6.6.36-legacy-spacemit",
+      "status": "prepared",
+      "blockers": [],
+      "source": {
+        "relative_path": "bpi-cm6/Armbian-unofficial_26.11.0-trunk_Bananapicm6_jammy_legacy_6.6.36_minimal.img.xz",
+        "bytes": 319444420,
+        "sha256": "963a12b12f4721d1d453237f1fe826cb011f2b526f4a6adc684d7b9ccc2a5e60"
+      },
+      "preparation": {
+        "path": "output/evidence/bpi-c3-cm6-fit-replay-20260918-001/preparation.json",
+        "sha256": "0a49ddf053b62f9fca165a34face2d812361946694c48d4ec70c7222e47cd8cb"
+      },
+      "extraction": {
+        "path": "output/evidence/bpi-c3-cm6-fit-replay-20260918-001/extraction/extraction.json",
+        "sha256": "fcf34e9c0550251f048ad47712508fce37820140c8301536336b65c3b30de96e"
+      },
+      "hardware_validated": false
+    },
+    {
+      "board": "bpi-f2p",
+      "family": "sunplus",
+      "architecture": "arm32",
+      "release": "bookworm",
+      "variant": "minimal",
+      "kernel_release": "5.4.35-legacy-sunplus-sp7021-bpi",
+      "status": "prepared",
+      "blockers": [],
+      "source": {
+        "relative_path": "bpi-f2p/Armbian-unofficial_26.11.0-trunk_Bananapif2p_bookworm_legacy_0_minimal.img.xz",
+        "bytes": 297781496,
+        "sha256": "c356051db7fda66dfe5e811c5afe3421dd50f3f2b2653c2c1023488dab704953"
+      },
+      "preparation": {
+        "path": "output/evidence/bpi-multiboard-integrate-20260917-f2p-002/preparation.json",
+        "sha256": "3f71f516b891bd444b1ca18b17489399e16680f14e848bf2cbc35510e2b6f3ce"
+      },
+      "extraction": {
+        "path": "output/evidence/bpi-multiboard-integrate-20260917-f2p-002/extraction/extraction.json",
+        "sha256": "7cfcdd55d63076946e32c6cd113ee36aca918e5e1d9c003bfe136da7335dc426"
+      },
+      "hardware_validated": false
+    },
+    {
+      "board": "bpi-f2s",
+      "family": "sunplus",
+      "architecture": "arm32",
+      "release": "bookworm",
+      "variant": "minimal",
+      "kernel_release": "5.4.35-legacy-sunplus-sp7021-bpi",
+      "status": "prepared",
+      "blockers": [],
+      "source": {
+        "relative_path": "bpi-f2s/Armbian-unofficial_26.11.0-trunk_Bananapif2s_bookworm_legacy_0_minimal.img.xz",
+        "bytes": 325757392,
+        "sha256": "24a43b034d26e99800e5401a2c737c945fd90690f2435db0d015f32e7f5f1949"
+      },
+      "preparation": {
+        "path": "output/evidence/bpi-multiboard-integrate-20260917-allboard-bpi-f2s-002/preparation.json",
+        "sha256": "7543673a5a297c3b0d6ab687133f2a9732944ead5c6f27773cd62d4dd347b46a"
+      },
+      "extraction": {
+        "path": "output/evidence/bpi-multiboard-integrate-20260917-allboard-bpi-f2s-002/extraction/extraction.json",
+        "sha256": "60fa03280ba17cd1d78c33720ce4565fc0d9bba45eb4bc08cbb0db09267b86e8"
+      },
+      "hardware_validated": false
+    },
+    {
+      "board": "bpi-f3",
+      "family": "spacemit",
+      "architecture": "riscv64",
+      "release": "jammy",
+      "variant": "minimal",
+      "kernel_release": "6.18.37-current-spacemit",
+      "status": "prepared",
+      "blockers": [],
+      "source": {
+        "relative_path": "bpi-f3/Armbian-unofficial_26.11.0-trunk_Bananapif3_jammy_current_6.18.37_minimal.img.xz",
+        "bytes": 331455228,
+        "sha256": "150c5afd114ba9c3a1e2f2789339606524b6bbe4091bf7be82542f01e83b2206"
+      },
+      "preparation": {
+        "path": "output/evidence/bpi-multiboard-integrate-20260917-f3-002-replay/preparation.json",
+        "sha256": "011e35c47889fa048481c8302f58719785ffc5c7a55a300ce14543abf1cd45bb"
+      },
+      "extraction": {
+        "path": "output/evidence/bpi-multiboard-integrate-20260917-f3-002-replay/extraction/extraction.json",
+        "sha256": "e4ec4ba57465230e8892df59d91fbd359f919126f7b8710ef00bf406fd19250e"
+      },
+      "hardware_validated": false
+    },
+    {
+      "board": "bpi-forge1",
+      "family": "rockchip",
+      "architecture": "arm32",
+      "release": "bookworm",
+      "variant": "minimal",
+      "kernel_release": "6.1.115-vendor-rockchip",
+      "status": "prepared",
+      "blockers": [],
+      "source": {
+        "relative_path": "bpi-forge1/Armbian-unofficial_26.11.0-trunk_Bananapiforge1_bookworm_vendor_6.1.115_minimal.img.xz",
+        "bytes": 295106660,
+        "sha256": "e62e76a8c1cf5beb81e6c1ca64b4b5566eda934d5626fb50541c7294783bb777"
+      },
+      "preparation": {
+        "path": "output/evidence/bpi-c3-forge1-lz4-replay-20260918-001/preparation.json",
+        "sha256": "81ce5d19076eb1a2eb98a46160796b2912f0450041f255af057398f444a14254"
+      },
+      "extraction": {
+        "path": "output/evidence/bpi-c3-forge1-lz4-replay-20260918-001/extraction/extraction.json",
+        "sha256": "78d7d88884c6e8ece9b43cbf57b070a3edfd6b9f8dd8d66362cf732457f41d73"
+      },
+      "hardware_validated": false
+    },
+    {
+      "board": "bpi-m1",
+      "family": "allwinner",
+      "architecture": "arm32",
+      "release": "bookworm",
+      "variant": "minimal",
+      "kernel_release": "6.18.49-current-sunxi",
+      "status": "prepared",
+      "blockers": [],
+      "source": {
+        "relative_path": "bpi-m1/Armbian-unofficial_26.11.0-trunk_Bananapi_bookworm_current_6.18.49_minimal.img.xz",
+        "bytes": 339631408,
+        "sha256": "8500126b4055d95e1c14083cbe7ff451bfed8e508491d3f21d93ddbe99f213c9"
+      },
+      "preparation": {
+        "path": "output/evidence/bpi-multiboard-integrate-20260917-m1-002-replay/preparation.json",
+        "sha256": "81bcd5cc419e4a96978c113f63485d6af4e01673d9e1e304a0e26d56320292e8"
+      },
+      "extraction": {
+        "path": "output/evidence/bpi-multiboard-integrate-20260917-m1-002-replay/extraction/extraction.json",
+        "sha256": "12ce7017bb230dd07742767c93c5d4b25b771366fe612715b132d6c150905fde"
+      },
+      "hardware_validated": false
+    },
+    {
+      "board": "bpi-m1p",
+      "family": "allwinner",
+      "architecture": "arm32",
+      "release": "bookworm",
+      "variant": "minimal",
+      "kernel_release": "6.18.46-current-sunxi",
+      "status": "prepared",
+      "blockers": [],
+      "source": {
+        "relative_path": "bpi-m1p/Armbian-unofficial_26.11.0-trunk_Bananapim1plus_bookworm_current_6.18.46_minimal.img.xz",
+        "bytes": 336386192,
+        "sha256": "759d00fc465ee576a75b5c30db06012e899c18f6737d3d676f4f8fda6e3fda0e"
+      },
+      "preparation": {
+        "path": "output/evidence/bpi-multiboard-integrate-20260917-allboard-bpi-m1p-004-replay/preparation.json",
+        "sha256": "c5aa48b43e862ca449b3ed042a6f57c2daad73aef8bd437adf4db080691ff8ca"
+      },
+      "extraction": {
+        "path": "output/evidence/bpi-multiboard-integrate-20260917-allboard-bpi-m1p-004-replay/extraction/extraction.json",
+        "sha256": "8330208a88f1b5d634bda7830fa22f664ef1bdccd900d2863cfe6915def57af2"
+      },
+      "hardware_validated": false
+    },
+    {
+      "board": "bpi-m1super",
+      "family": "rockchip",
+      "architecture": "arm64",
+      "release": "bookworm",
+      "variant": "minimal",
+      "kernel_release": "6.1.115-vendor-rk35xx",
+      "status": "prepared",
+      "blockers": [],
+      "source": {
+        "relative_path": "bpi-m1super/Armbian-unofficial_26.11.0-trunk_Bananapim1super_bookworm_vendor_6.1.115_minimal.img.xz",
+        "bytes": 454243152,
+        "sha256": "4495989c942e700318ee8996f0bafe28ca1430df83f17b1d96d3ffebbc248119"
+      },
+      "preparation": {
+        "path": "output/evidence/bpi-multiboard-integrate-20260917-allboard-bpi-m1super-003/preparation.json",
+        "sha256": "102bfd4f8212b9dce2700453d53cacccb88b4db20944bf2dcc2afe5fdd9c8256"
+      },
+      "extraction": {
+        "path": "output/evidence/bpi-multiboard-integrate-20260917-allboard-bpi-m1super-003/extraction/extraction.json",
+        "sha256": "85e208331335aa70781949a59a902890e8304583b0effc802436479bd16cc645"
+      },
+      "hardware_validated": false
+    },
+    {
+      "board": "bpi-m2",
+      "family": "allwinner",
+      "architecture": "arm32",
+      "release": "bookworm",
+      "variant": "minimal",
+      "kernel_release": "6.18.46-current-sunxi",
+      "status": "prepared",
+      "blockers": [],
+      "source": {
+        "relative_path": "bpi-m2/Armbian-unofficial_26.11.0-trunk_Bananapim2_bookworm_current_6.18.46_minimal.img.xz",
+        "bytes": 340180540,
+        "sha256": "f2c4d4618cf983985ea74cc0552642752e7a2400db796835f195cf5ff5bfbd97"
+      },
+      "preparation": {
+        "path": "output/evidence/bpi-multiboard-integrate-20260917-allboard-bpi-m2-003/preparation.json",
+        "sha256": "a229be48d40ee539e6d7430d9862c5fab495a9f8d7df2a3138ef7d0e4e1c4c67"
+      },
+      "extraction": {
+        "path": "output/evidence/bpi-multiboard-integrate-20260917-allboard-bpi-m2-003/extraction/extraction.json",
+        "sha256": "fa93018e07e8ba74b1e141d84d67e1eaccab6b77b49fa521392651b0b2d724c8"
+      },
+      "hardware_validated": false
+    },
+    {
+      "board": "bpi-m2b",
+      "family": "allwinner",
+      "architecture": "arm32",
+      "release": "bookworm",
+      "variant": "minimal",
+      "kernel_release": "6.18.46-current-sunxi",
+      "status": "prepared",
+      "blockers": [],
+      "source": {
+        "relative_path": "bpi-m2b/Armbian-unofficial_26.11.0-trunk_Bananapim2berry_bookworm_current_6.18.46_minimal.img.xz",
+        "bytes": 341247064,
+        "sha256": "e7df3efb693e09fc95aae4e1fb2365c215a5a2a86cdabf94c3b612ea3f7e896d"
+      },
+      "preparation": {
+        "path": "output/evidence/bpi-multiboard-integrate-20260917-allboard-bpi-m2b-003/preparation.json",
+        "sha256": "d180ef1cfbf98bbc2706b2e385640e06fff7c192764ccfb5ddb80f1dc57b6dc3"
+      },
+      "extraction": {
+        "path": "output/evidence/bpi-multiboard-integrate-20260917-allboard-bpi-m2b-003/extraction/extraction.json",
+        "sha256": "002f45c8cb9083644e529482ee1e360ee5bd43e70dedede6422d1941c45e5533"
+      },
+      "hardware_validated": false
+    },
+    {
+      "board": "bpi-m2m",
+      "family": "allwinner",
+      "architecture": "arm32",
+      "release": "bookworm",
+      "variant": "minimal",
+      "kernel_release": "6.18.46-current-sunxi",
+      "status": "prepared",
+      "blockers": [],
+      "source": {
+        "relative_path": "bpi-m2m/Armbian-unofficial_26.11.0-trunk_Bananapim2magic_bookworm_current_6.18.46_minimal.img.xz",
+        "bytes": 339231240,
+        "sha256": "7e43772652edd713fb0ebb2295fa73d7b2b0366dd4f57cad17b429bd3a786a71"
+      },
+      "preparation": {
+        "path": "output/evidence/bpi-multiboard-integrate-20260917-allboard-bpi-m2m-003/preparation.json",
+        "sha256": "b4e736dc2738e422699606486cb4291ddb16378bae3f20a01301c96a1b036ed3"
+      },
+      "extraction": {
+        "path": "output/evidence/bpi-multiboard-integrate-20260917-allboard-bpi-m2m-003/extraction/extraction.json",
+        "sha256": "843d21d310d14e7d3cc15e8e56b64a099d560276fc0687a2412d86e44fbc0895"
+      },
+      "hardware_validated": false
+    },
+    {
+      "board": "bpi-m2p",
+      "family": "allwinner",
+      "architecture": "arm32",
+      "release": "bookworm",
+      "variant": "minimal",
+      "kernel_release": "6.18.49-current-sunxi",
+      "status": "prepared",
+      "blockers": [],
+      "source": {
+        "relative_path": "bpi-m2p/Armbian-unofficial_26.11.0-trunk_Bananapim2plus_bookworm_current_6.18.49_minimal.img.xz",
+        "bytes": 337816668,
+        "sha256": "caece4a763e03b5e72171af3131e90f1cf7a75424c9ab45c9177907bf1a7e069"
+      },
+      "preparation": {
+        "path": "output/evidence/bpi-multiboard-integrate-20260917-allboard-bpi-m2p-003/preparation.json",
+        "sha256": "68df62810049edfd9d12988d91edf777ca624d81afe55aa8e6d4e801a262faef"
+      },
+      "extraction": {
+        "path": "output/evidence/bpi-multiboard-integrate-20260917-allboard-bpi-m2p-003/extraction/extraction.json",
+        "sha256": "1eb30af1c957b84da853727dd2d0166188db57c31ae71327af0564f734f6644d"
+      },
+      "hardware_validated": false
+    },
+    {
+      "board": "bpi-m2pro",
+      "family": "amlogic",
+      "architecture": "arm64",
+      "release": "bookworm",
+      "variant": "minimal",
+      "kernel_release": "6.18.49-current-meson64",
+      "status": "prepared",
+      "blockers": [],
+      "source": {
+        "relative_path": "bpi-m2pro/Armbian-unofficial_26.11.0-trunk_Bananapim2pro_bookworm_current_6.18.49_minimal.img.xz",
+        "bytes": 368586312,
+        "sha256": "1f49d83b8500b915aeb7ca39dac1b90f60618d7c3adb3eb30b43b1572dfe6f66"
+      },
+      "preparation": {
+        "path": "output/evidence/bpi-multiboard-integrate-20260917-allboard-bpi-m2pro-003/preparation.json",
+        "sha256": "ab8864ee2405931f1d2f14d7eaaec2d726bea3fa63d5591f49cfb20e2846b7db"
+      },
+      "extraction": {
+        "path": "output/evidence/bpi-multiboard-integrate-20260917-allboard-bpi-m2pro-003/extraction/extraction.json",
+        "sha256": "83ebf941a2a0bcc575400fa8d0418af3aa55b9df47e9fafbd948240167036da4"
+      },
+      "hardware_validated": false
+    },
+    {
+      "board": "bpi-m2s",
+      "family": "amlogic",
+      "architecture": "arm64",
+      "release": "bookworm",
+      "variant": "minimal",
+      "kernel_release": "6.18.49-current-meson64",
+      "status": "prepared",
+      "blockers": [],
+      "source": {
+        "relative_path": "bpi-m2s/Armbian-unofficial_26.11.0-trunk_Bananapim2s_bookworm_current_6.18.49_minimal.img.xz",
+        "bytes": 368397972,
+        "sha256": "b51c7b8adb16dcda6ecc8dcf84ac8a9d10a4a6ac113aa5442f1f984f27da55bd"
+      },
+      "preparation": {
+        "path": "output/evidence/bpi-multiboard-integrate-20260917-allboard-bpi-m2s-003/preparation.json",
+        "sha256": "c5de3d6deb8c10eecf97666b4ff29eda5a80dd99f498d1a970225438f28a1beb"
+      },
+      "extraction": {
+        "path": "output/evidence/bpi-multiboard-integrate-20260917-allboard-bpi-m2s-003/extraction/extraction.json",
+        "sha256": "226324f66fb69188bf6f2dd5f5306168c0dec72b76026521d3635848809b9024"
+      },
+      "hardware_validated": false
+    },
+    {
+      "board": "bpi-m2u",
+      "family": "allwinner",
+      "architecture": "arm32",
+      "release": "bookworm",
+      "variant": "minimal",
+      "kernel_release": "6.18.46-current-sunxi",
+      "status": "prepared",
+      "blockers": [],
+      "source": {
+        "relative_path": "bpi-m2u/Armbian-unofficial_26.11.0-trunk_Bananapim2ultra_bookworm_current_6.18.46_minimal.img.xz",
+        "bytes": 339122580,
+        "sha256": "5636ac087b4fae304a35544418f28ff30fe9c55e876add6dbd6f1fdddaea0fbd"
+      },
+      "preparation": {
+        "path": "output/evidence/bpi-multiboard-integrate-20260917-allboard-bpi-m2u-003/preparation.json",
+        "sha256": "61dc1d11b48bad70e624f49512d78043e44ce8dd2a1bb452db39d94ed1a00dd8"
+      },
+      "extraction": {
+        "path": "output/evidence/bpi-multiboard-integrate-20260917-allboard-bpi-m2u-003/extraction/extraction.json",
+        "sha256": "292bf1555565046b7747350f32b04099dabe565c8a1a5b2e9f316fe199793c25"
+      },
+      "hardware_validated": false
+    },
+    {
+      "board": "bpi-m2z",
+      "family": "allwinner",
+      "architecture": "arm32",
+      "release": "bookworm",
+      "variant": "minimal",
+      "kernel_release": "6.18.49-current-sunxi",
+      "status": "prepared",
+      "blockers": [],
+      "source": {
+        "relative_path": "bpi-m2z/Armbian-unofficial_26.11.0-trunk_Bananapim2zero_bookworm_current_6.18.49_minimal.img.xz",
+        "bytes": 336837776,
+        "sha256": "fc9b1e1a574d9506aa0baca67ae77afef8c84ddf46c8641b7721b9d8b9f877b1"
+      },
+      "preparation": {
+        "path": "output/evidence/bpi-multiboard-integrate-20260917-allboard-bpi-m2z-003/preparation.json",
+        "sha256": "276b8a7b01bdeaa24a30ec7f56c36021ae13ce44870e639b10cba9aa564634f6"
+      },
+      "extraction": {
+        "path": "output/evidence/bpi-multiboard-integrate-20260917-allboard-bpi-m2z-003/extraction/extraction.json",
+        "sha256": "558da7131690109f0a703f7c7414dd45dee14d20925704117ff0fd7b606a3cca"
+      },
+      "hardware_validated": false
+    },
+    {
+      "board": "bpi-m3",
+      "family": "allwinner",
+      "architecture": "arm32",
+      "release": "bookworm",
+      "variant": "minimal",
+      "kernel_release": "6.18.46-current-sunxi",
+      "status": "prepared",
+      "blockers": [],
+      "source": {
+        "relative_path": "bpi-m3/Armbian-unofficial_26.11.0-trunk_Bananapim3_bookworm_current_6.18.46_minimal.img.xz",
+        "bytes": 339637168,
+        "sha256": "8f362d96543a7ac897a757ad9bec11e1930e4b996eeec61783f60853be3019f1"
+      },
+      "preparation": {
+        "path": "output/evidence/bpi-multiboard-integrate-20260917-allboard-bpi-m3-003/preparation.json",
+        "sha256": "5973d7a8d232c56fccd1c26d101206161faa178061e83aedb082f3fd5836b2c1"
+      },
+      "extraction": {
+        "path": "output/evidence/bpi-multiboard-integrate-20260917-allboard-bpi-m3-003/extraction/extraction.json",
+        "sha256": "fb9098adf4b50ee1b8982d6a87458887ea31ced28444b97ae0ba48cc7ce14365"
+      },
+      "hardware_validated": false
+    },
+    {
+      "board": "bpi-m4",
+      "family": "realtek",
+      "architecture": "arm64",
+      "release": "bookworm",
+      "variant": "minimal",
+      "kernel_release": "4.9.119-legacy-realtek-rtd139x-bpi",
+      "status": "prepared",
+      "blockers": [],
+      "source": {
+        "relative_path": "bpi-m4/Armbian-unofficial_26.11.0-trunk_Bananapim4_bookworm_legacy_4.9.119_minimal.img.xz",
+        "bytes": 348147420,
+        "sha256": "627d34c8cb8cbde8cbb1a166480541d86e23cd0ec9a00f9f0c47c5a7d0c38c06"
+      },
+      "preparation": {
+        "path": "output/evidence/bpi-multiboard-integrate-20260917-allboard-bpi-m4-003/preparation.json",
+        "sha256": "5b4cbdc3ba9bdd36b88048ecd6e0c293c00863526aa9aae6d9379d7daa905507"
+      },
+      "extraction": {
+        "path": "output/evidence/bpi-multiboard-integrate-20260917-allboard-bpi-m4-003/extraction/extraction.json",
+        "sha256": "0d5c049eee0f6a2b106796ce641c35127fbf0c74806054c7a2aa7f96ee0c2a38"
+      },
+      "hardware_validated": false
+    },
+    {
+      "board": "bpi-m4b",
+      "family": "allwinner",
+      "architecture": "arm64",
+      "release": "bookworm",
+      "variant": "minimal",
+      "kernel_release": "6.18.49-current-sunxi64",
+      "status": "prepared",
+      "blockers": [],
+      "source": {
+        "relative_path": "bpi-m4b/Armbian-unofficial_26.11.0-trunk_Bananapim4berry_bookworm_current_6.18.49_minimal.img.xz",
+        "bytes": 326546032,
+        "sha256": "17a9d30537ecb9d51716745d278b3d2b2289442d602f54f22fb3029e2dc76496"
+      },
+      "preparation": {
+        "path": "output/evidence/bpi-multiboard-integrate-20260917-allboard-bpi-m4b-003/preparation.json",
+        "sha256": "503c2e24757e3261d7e5de38d46d7ea21bb88767437e926a867666ec3aae45ae"
+      },
+      "extraction": {
+        "path": "output/evidence/bpi-multiboard-integrate-20260917-allboard-bpi-m4b-003/extraction/extraction.json",
+        "sha256": "4f757a17ebc17e37cb860e5c4b348c7c0cc79291d110a91f6f1bd3da63b33318"
+      },
+      "hardware_validated": false
+    },
+    {
+      "board": "bpi-m4z",
+      "family": "allwinner",
+      "architecture": "arm64",
+      "release": "bookworm",
+      "variant": "minimal",
+      "kernel_release": "6.18.49-current-sunxi64",
+      "status": "prepared",
+      "blockers": [],
+      "source": {
+        "relative_path": "bpi-m4z/Armbian-unofficial_26.11.0-trunk_Bananapim4zero_bookworm_current_6.18.49_minimal.img.xz",
+        "bytes": 326782720,
+        "sha256": "65c3ee13095d2f0bf006f0478d5605b2f95fb4d3277756e3064c872db1904cb3"
+      },
+      "preparation": {
+        "path": "output/evidence/bpi-multiboard-integrate-20260917-allboard-bpi-m4z-004-replay/preparation.json",
+        "sha256": "d47150021cf640186754a3e47a88bc470c74f54d98077613036982369e14b653"
+      },
+      "extraction": {
+        "path": "output/evidence/bpi-multiboard-integrate-20260917-allboard-bpi-m4z-004-replay/extraction/extraction.json",
+        "sha256": "6cf1b712f2c82aa77e3c4325b90ae81f21271ff6add3d1e3d25ee0fe8b58f06d"
+      },
+      "hardware_validated": false
+    },
+    {
+      "board": "bpi-m4z-emac",
+      "family": "allwinner",
+      "architecture": "arm64",
+      "release": "bookworm",
+      "variant": "minimal",
+      "kernel_release": "6.18.49-current-sunxi64",
+      "status": "prepared",
+      "blockers": [],
+      "source": {
+        "relative_path": "bpi-m4z-emac/Armbian-unofficial_26.11.0-trunk_Bananapim4zeroemac_bookworm_current_6.18.49_minimal.img.xz",
+        "bytes": 328413172,
+        "sha256": "caea951ce80664ddb30802b4ece66ea0c2d01402695da455d854cfff73dbcfdc"
+      },
+      "preparation": {
+        "path": "output/evidence/bpi-multiboard-integrate-20260917-m4z-emac-002-replay/preparation.json",
+        "sha256": "f1dc649ac72d870f1695539fc39839a76a0fed35da78058eac151269b97f9a84"
+      },
+      "extraction": {
+        "path": "output/evidence/bpi-multiboard-integrate-20260917-m4z-emac-002-replay/extraction/extraction.json",
+        "sha256": "f449d56566c93147e24eb13e8bba4cbcbaedd829a13bf61e0a0c293c16c8a56d"
+      },
+      "hardware_validated": false
+    },
+    {
+      "board": "bpi-m5",
+      "family": "amlogic",
+      "architecture": "arm64",
+      "release": "bookworm",
+      "variant": "minimal",
+      "kernel_release": "6.18.49-current-meson64",
+      "status": "prepared",
+      "blockers": [],
+      "source": {
+        "relative_path": "bpi-m5/Armbian-unofficial_26.11.0-trunk_Bananapim5_bookworm_current_6.18.49_minimal.img.xz",
+        "bytes": 369869968,
+        "sha256": "8c7b5a0c0c99566444207a7a3ecb49d9f43f17d27398bef7285cf554f270c9a6"
+      },
+      "preparation": {
+        "path": "output/evidence/bpi-multiboard-integrate-20260917-m5-001-replay/preparation.json",
+        "sha256": "3c073f1c4429014679ea7ccbdbeef987b24407aef99f445bcece77b21c9425a6"
+      },
+      "extraction": {
+        "path": "output/evidence/bpi-multiboard-integrate-20260917-m5-001-replay/extraction/extraction.json",
+        "sha256": "ae6c360746cabfbe8c186996b26692fd54ee639615fce1c40478c7155995a4a1"
+      },
+      "hardware_validated": false
+    },
+    {
+      "board": "bpi-m5pro",
+      "family": "rockchip",
+      "architecture": "arm64",
+      "release": "bookworm",
+      "variant": "minimal",
+      "kernel_release": "7.0.14-edge-rockchip64",
+      "status": "prepared",
+      "blockers": [],
+      "source": {
+        "relative_path": "bpi-m5pro/Armbian-unofficial_26.11.0-trunk_Bananapim5pro_bookworm_edge_7.0.14_minimal.img.xz",
+        "bytes": 370021428,
+        "sha256": "7f91656f4cbe13a4940e6e2f22cce98e4f0b39f5c7b2592b334905ded2d63675"
+      },
+      "preparation": {
+        "path": "output/evidence/bpi-multiboard-integrate-20260917-allboard-bpi-m5pro-003/preparation.json",
+        "sha256": "23a1312ba054b78cc2a3134739b8658ded855b1db5c7b7602a50dd1be94c6423"
+      },
+      "extraction": {
+        "path": "output/evidence/bpi-multiboard-integrate-20260917-allboard-bpi-m5pro-003/extraction/extraction.json",
+        "sha256": "87af2098d4ebfce0932616b00c5edd996a1a6fd68b962d377627b7ea637dbaeb"
+      },
+      "hardware_validated": false
+    },
+    {
+      "board": "bpi-m6",
+      "family": "synaptics",
+      "architecture": "arm64",
+      "release": "bookworm",
+      "variant": "minimal",
+      "kernel_release": "5.4.195-legacy-vs680",
+      "status": "prepared",
+      "blockers": [],
+      "source": {
+        "relative_path": "bpi-m6/Armbian-unofficial_26.11.0-trunk_Bananapim6_bookworm_legacy_5.4.195_minimal.img.xz",
+        "bytes": 294392032,
+        "sha256": "1c8c351f6d060bb85615378a533c8537c358280bed966337af2d3740b8f04657"
+      },
+      "preparation": {
+        "path": "output/evidence/bpi-multiboard-integrate-20260917-m6-001/preparation.json",
+        "sha256": "e3e6e44bf9cc0c74dd757f93dc57a971ff7b7959a3d9e84e5692bca0d021cbc1"
+      },
+      "extraction": {
+        "path": "output/evidence/bpi-multiboard-integrate-20260917-m6-001/extraction/extraction.json",
+        "sha256": "47e5e76a72d19c5910455d0ede9ed901efc2b90957effa581968619b5ab99550"
+      },
+      "hardware_validated": false
+    },
+    {
+      "board": "bpi-m64",
+      "family": "allwinner",
+      "architecture": "arm64",
+      "release": "bookworm",
+      "variant": "minimal",
+      "kernel_release": "6.18.46-current-sunxi64",
+      "status": "prepared",
+      "blockers": [],
+      "source": {
+        "relative_path": "bpi-m64/Armbian-unofficial_26.11.0-trunk_Bananapim64_bookworm_current_6.18.46_minimal.img.xz",
+        "bytes": 328551440,
+        "sha256": "2bf9430183acab08ba35baa3d0870e60b9f35026579e41875acc5646cae3c008"
+      },
+      "preparation": {
+        "path": "output/evidence/bpi-multiboard-integrate-20260917-m64-002/preparation.json",
+        "sha256": "05d6077fd25dcf98f233020287d7e828d00ba19a652321ae76330b2639fa8207"
+      },
+      "extraction": {
+        "path": "output/evidence/bpi-multiboard-integrate-20260917-m64-002/extraction/extraction.json",
+        "sha256": "59537b5507adb853a0b36c4102c15440dcf51597994ed7e51c00576f9da30e95"
+      },
+      "hardware_validated": false
+    },
+    {
+      "board": "bpi-m7",
+      "family": "rockchip",
+      "architecture": "arm64",
+      "release": "bookworm",
+      "variant": "minimal",
+      "kernel_release": "6.18.49-current-rockchip64",
+      "status": "prepared",
+      "blockers": [],
+      "source": {
+        "relative_path": "bpi-m7/Armbian-unofficial_26.11.0-trunk_Bananapim7_bookworm_current_6.18.49_minimal.img.xz",
+        "bytes": 368336344,
+        "sha256": "8b9b00358b789d4a8efbe0fc4949238b4da6a4817b568f8d36ff9abcc5453ac5"
+      },
+      "preparation": {
+        "path": "output/evidence/bpi-multiboard-integrate-20260917-m7-002/preparation.json",
+        "sha256": "5faab1359f62da37f17f767c50685accb516a88322df13e7af2cdea01c1ae43c"
+      },
+      "extraction": {
+        "path": "output/evidence/bpi-multiboard-integrate-20260917-m7-002/extraction/extraction.json",
+        "sha256": "e364a6c9db115c6aa03309e9612b786a5a9a9027946a67c1b2635ac29186beb0"
+      },
+      "hardware_validated": false
+    },
+    {
+      "board": "bpi-p2pro",
+      "family": "rockchip",
+      "architecture": "arm64",
+      "release": "bookworm",
+      "variant": "minimal",
+      "kernel_release": "6.18.49-current-rockchip64",
+      "status": "prepared",
+      "blockers": [],
+      "source": {
+        "relative_path": "bpi-p2pro/Armbian-unofficial_26.11.0-trunk_Bananapip2pro_bookworm_current_6.18.49_minimal.img.xz",
+        "bytes": 367594352,
+        "sha256": "03dd63588f650765e1fc00f7d216300ffec11eaff05b85572b14f07b4364eaaa"
+      },
+      "preparation": {
+        "path": "output/evidence/bpi-multiboard-integrate-20260917-allboard-bpi-p2pro-003/preparation.json",
+        "sha256": "8b01bd8664162c29aa9bc2221b69fc76bb587399618b5363c8c8bd4214118715"
+      },
+      "extraction": {
+        "path": "output/evidence/bpi-multiboard-integrate-20260917-allboard-bpi-p2pro-003/extraction/extraction.json",
+        "sha256": "85b680faf84d4574a7f7cf70a184459532d02226615f3366d73d0d561ca3fa89"
+      },
+      "hardware_validated": false
+    },
+    {
+      "board": "bpi-p2z",
+      "family": "allwinner",
+      "architecture": "arm32",
+      "release": "bookworm",
+      "variant": "minimal",
+      "kernel_release": "6.18.49-current-sunxi",
+      "status": "prepared",
+      "blockers": [],
+      "source": {
+        "relative_path": "bpi-p2z/Armbian-unofficial_26.11.0-trunk_Bananapip2zero_bookworm_current_6.18.49_minimal.img.xz",
+        "bytes": 340223396,
+        "sha256": "12fb5f5f072a19d7d3902a76e947d20407354211ad1dc0352b189fc7e0a6dd46"
+      },
+      "preparation": {
+        "path": "output/evidence/bpi-multiboard-integrate-20260917-allboard-bpi-p2z-003/preparation.json",
+        "sha256": "77acba5d9a3b73bc27e63449cc4b0ebc460e79cf51e0637d8fafff617e1cea71"
+      },
+      "extraction": {
+        "path": "output/evidence/bpi-multiboard-integrate-20260917-allboard-bpi-p2z-003/extraction/extraction.json",
+        "sha256": "246884fa3bed9db2034c6e73cef4621015a19e1c37a428b9b005d10d585a2c64"
+      },
+      "hardware_validated": false
+    },
+    {
+      "board": "bpi-pro",
+      "family": "allwinner",
+      "architecture": "arm32",
+      "release": "bookworm",
+      "variant": "minimal",
+      "kernel_release": "6.18.49-current-sunxi",
+      "status": "prepared",
+      "blockers": [],
+      "source": {
+        "relative_path": "bpi-pro/Armbian-unofficial_26.11.0-trunk_Bananapipro_bookworm_current_6.18.49_minimal.img.xz",
+        "bytes": 340810684,
+        "sha256": "f8220e9ddd8c88cbb7467c4bf010e7466335a0b9b3f038c72635b9d0e1f17937"
+      },
+      "preparation": {
+        "path": "output/evidence/bpi-multiboard-integrate-20260917-allboard-bpi-pro-003/preparation.json",
+        "sha256": "67c2faa918ffe7518d09e5c0575736b8d4cced2e306b57e3fc0470ac67920a80"
+      },
+      "extraction": {
+        "path": "output/evidence/bpi-multiboard-integrate-20260917-allboard-bpi-pro-003/extraction/extraction.json",
+        "sha256": "f41fd37ede92a55e1b562e957a4d957fcd2f4dd57850f3f0d71049f108355689"
+      },
+      "hardware_validated": false
+    },
+    {
+      "board": "bpi-r2",
+      "family": "mediatek",
+      "architecture": "arm32",
+      "release": "bookworm",
+      "variant": "minimal",
+      "kernel_release": "6.6.153-current-mt7623",
+      "status": "blocked",
+      "blockers": [
+        {
+          "code": "missing_file",
+          "message": "缺少原配檔案：/boot/dtb/mediatek/mt7623n-bananapi-bpi-r2"
+        }
+      ],
+      "source": {
+        "relative_path": "bpi-r2/Armbian-unofficial_26.11.0-trunk_Bananapir2_bookworm_current_6.6.153_minimal.img.xz",
+        "bytes": 323820384,
+        "sha256": "38a736cbc41c21cb7969e18d0f7954a5ea217af70f347beadb0883ef6e2d58e5"
+      },
+      "preparation": {
+        "path": "output/evidence/bpi-multiboard-integrate-20260917-allboard-bpi-r2-004/preparation.json",
+        "sha256": "8ef32695142c5ca80595f5490ab20bed03cec539c7b3b56e33fadba60807f9a9"
+      },
+      "extraction": {
+        "path": "output/evidence/bpi-multiboard-integrate-20260917-allboard-bpi-r2-004/extraction/extraction.json",
+        "sha256": "aa5f8b065ee20e178bfed723f85e589b283ba984feb94bdb57b309fcae30c274"
+      },
+      "hardware_validated": false
+    },
+    {
+      "board": "bpi-r2pro",
+      "family": "rockchip",
+      "architecture": "arm64",
+      "release": "bookworm",
+      "variant": "minimal",
+      "kernel_release": "6.18.46-current-rockchip64",
+      "status": "prepared",
+      "blockers": [],
+      "source": {
+        "relative_path": "bpi-r2pro/Armbian-unofficial_26.11.0-trunk_Bananapir2pro_bookworm_current_6.18.46_minimal.img.xz",
+        "bytes": 366517660,
+        "sha256": "f35fd32fa1a461092219bffaecdb5ae95eeb1a7a852168b6bafcda0e6a06da0f"
+      },
+      "preparation": {
+        "path": "output/evidence/bpi-multiboard-integrate-20260917-allboard-bpi-r2pro-003/preparation.json",
+        "sha256": "97f4583219a4faa5338c0ba117380b903c62dbf317846d7c4e013d2fe184a983"
+      },
+      "extraction": {
+        "path": "output/evidence/bpi-multiboard-integrate-20260917-allboard-bpi-r2pro-003/extraction/extraction.json",
+        "sha256": "7d34b665490e46863a19e5eb70635d232d9d4474df315afa09ff6ed2f7371d16"
+      },
+      "hardware_validated": false
+    },
+    {
+      "board": "bpi-r3",
+      "family": "mediatek",
+      "architecture": "arm64",
+      "release": "bookworm",
+      "variant": "minimal",
+      "kernel_release": "6.12.82-current-filogic",
+      "status": "prepared",
+      "blockers": [],
+      "source": {
+        "relative_path": "bpi-r3/Armbian-unofficial_26.11.0-trunk_Bananapir3_bookworm_current_6.12.82_minimal.img.xz",
+        "bytes": 317565680,
+        "sha256": "8efefcb67820685a106a96bc48b6f492ff57d27ca8c7582620853b28a2079443"
+      },
+      "preparation": {
+        "path": "output/evidence/bpi-multiboard-integrate-20260917-r3-001/preparation.json",
+        "sha256": "1191a7884fc96cc252f6222cee7332d561c6384b2212be9e0566ed8b026b1d4b"
+      },
+      "extraction": {
+        "path": "output/evidence/bpi-multiboard-integrate-20260917-r3-001/extraction/extraction.json",
+        "sha256": "01ee91bca56aa5408b03c1ddf0e6880bb100425e6a88cbdbb69b4437f91f991a"
+      },
+      "hardware_validated": false
+    },
+    {
+      "board": "bpi-r3mini",
+      "family": "mediatek",
+      "architecture": "arm64",
+      "release": "bookworm",
+      "variant": "minimal",
+      "kernel_release": "6.12.82-current-filogic",
+      "status": "prepared",
+      "blockers": [],
+      "source": {
+        "relative_path": "bpi-r3mini/Armbian-unofficial_26.11.0-trunk_Bananapir3mini_bookworm_current_6.12.82_minimal.img.xz",
+        "bytes": 318190500,
+        "sha256": "ca9f109bb168b42281107ef5752d25f7e936ecd501c96b3c879c173411a72c7a"
+      },
+      "preparation": {
+        "path": "output/evidence/bpi-multiboard-integrate-20260917-allboard-bpi-r3mini-003/preparation.json",
+        "sha256": "2bcdecfb486d5caa2d2485ce8dffdba7b6ce0cf60f9db3a285b038c515d7a088"
+      },
+      "extraction": {
+        "path": "output/evidence/bpi-multiboard-integrate-20260917-allboard-bpi-r3mini-003/extraction/extraction.json",
+        "sha256": "9f3c9453d335b4b9890e661d1536613c762b5bd7e27a34a0c4be9448021fd658"
+      },
+      "hardware_validated": false
+    },
+    {
+      "board": "bpi-r4",
+      "family": "mediatek",
+      "architecture": "arm64",
+      "release": "bookworm",
+      "variant": "minimal",
+      "kernel_release": "6.12.82-current-filogic",
+      "status": "prepared",
+      "blockers": [],
+      "source": {
+        "relative_path": "bpi-r4/Armbian-unofficial_26.11.0-trunk_Bananapir4_bookworm_current_6.12.82_minimal.img.xz",
+        "bytes": 324558980,
+        "sha256": "cec59b5a17d3007e5ce0f2d7e3409da9ed3ffb33fc3f254a12af902ef8c1c30d"
+      },
+      "preparation": {
+        "path": "output/evidence/bpi-multiboard-integrate-20260917-allboard-bpi-r4-003/preparation.json",
+        "sha256": "46eb13399a151ddfbfe61edd868f59d2574645b68a25ac3a425c1b260e05fa7c"
+      },
+      "extraction": {
+        "path": "output/evidence/bpi-multiboard-integrate-20260917-allboard-bpi-r4-003/extraction/extraction.json",
+        "sha256": "af2e55c97e5c0b1d3b08872319a4078b9ffae03bfb9b5ebe77bfd3964a30ad6d"
+      },
+      "hardware_validated": false
+    },
+    {
+      "board": "bpi-r4lite",
+      "family": "mediatek",
+      "architecture": "arm64",
+      "release": "bookworm",
+      "variant": "minimal",
+      "kernel_release": "6.17.0-rc1-current-filogic",
+      "status": "prepared",
+      "blockers": [],
+      "source": {
+        "relative_path": "bpi-r4lite/Armbian-unofficial_26.11.0-trunk_Bananapir4lite_bookworm_current_6.17.0-rc1_minimal.img.xz",
+        "bytes": 313425916,
+        "sha256": "c98822c7c7c571b8a590f1c2ed8f00592e1881a0d0c92fdc1c648302140a5d06"
+      },
+      "preparation": {
+        "path": "output/evidence/bpi-multiboard-integrate-20260917-allboard-bpi-r4lite-003/preparation.json",
+        "sha256": "ee45f943b641adf253b2c596bbc273d84e62690abdf3a964449f03566be946d7"
+      },
+      "extraction": {
+        "path": "output/evidence/bpi-multiboard-integrate-20260917-allboard-bpi-r4lite-003/extraction/extraction.json",
+        "sha256": "758ae19da279af5d652c865d4c8450cf0e94c0a5737833d6c2ffc653d9448e8e"
+      },
+      "hardware_validated": false
+    },
+    {
+      "board": "bpi-r4pro",
+      "family": "mediatek",
+      "architecture": "arm64",
+      "release": "bookworm",
+      "variant": "minimal",
+      "kernel_release": "6.19.0-rc1-current-filogic",
+      "status": "prepared",
+      "blockers": [],
+      "source": {
+        "relative_path": "bpi-r4pro/Armbian-unofficial_26.11.0-trunk_Bananapir4pro_bookworm_current_6.19.0-rc1_minimal.img.xz",
+        "bytes": 321414820,
+        "sha256": "d999d64e774b07684889a186e6fff5fd3a46cddcc38d4b4ccbec8b4083e503fb"
+      },
+      "preparation": {
+        "path": "output/evidence/bpi-multiboard-integrate-20260917-allboard-bpi-r4pro-003/preparation.json",
+        "sha256": "52a85162aed922c3ed94f5a19b9da00051a7e8ddb4d3bf489506b83be97c9ee8"
+      },
+      "extraction": {
+        "path": "output/evidence/bpi-multiboard-integrate-20260917-allboard-bpi-r4pro-003/extraction/extraction.json",
+        "sha256": "3ffbd3232ad217684828ae2217d23840a8b9868a9cf43e929f754655de955b2d"
+      },
+      "hardware_validated": false
+    },
+    {
+      "board": "bpi-r64",
+      "family": "mediatek",
+      "architecture": "arm64",
+      "release": "bookworm",
+      "variant": "minimal",
+      "kernel_release": "6.12.82-current-filogic",
+      "status": "prepared",
+      "blockers": [],
+      "source": {
+        "relative_path": "bpi-r64/Armbian-unofficial_26.11.0-trunk_Bananapir64_bookworm_current_6.12.82_minimal.img.xz",
+        "bytes": 318521064,
+        "sha256": "e196d5d710f86254866344f9505a2e4403734b2414474ff38e2c83a7705183f8"
+      },
+      "preparation": {
+        "path": "output/evidence/bpi-multiboard-integrate-20260917-allboard-bpi-r64-003/preparation.json",
+        "sha256": "2797e6b7e85c1092c36bca00a56eeea08b178bb2ef58e3dbab17bf9fc0aec6d4"
+      },
+      "extraction": {
+        "path": "output/evidence/bpi-multiboard-integrate-20260917-allboard-bpi-r64-003/extraction/extraction.json",
+        "sha256": "bd69783eb01e0459a017c86aa4b127d719112669a16217e0a2e413b02f8bfb41"
+      },
+      "hardware_validated": false
+    },
+    {
+      "board": "bpi-sm10",
+      "family": "spacemit",
+      "architecture": "riscv64",
+      "release": "jammy",
+      "variant": "minimal",
+      "kernel_release": "6.18.3-current-spacemit-k3-bpi",
+      "status": "prepared",
+      "blockers": [],
+      "source": {
+        "relative_path": "bpi-sm10/Armbian-unofficial_26.11.0-trunk_Bananapism10_jammy_current_6.18.3_minimal.img.xz",
+        "bytes": 458719600,
+        "sha256": "f4bc5f902997f2e8229d101267f8fd15b32a140b757727d0865d529f01972525"
+      },
+      "preparation": {
+        "path": "output/evidence/bpi-multiboard-integrate-20260917-sm10-002-replay/preparation.json",
+        "sha256": "e177e263f93c83a3056a20b7f19942d1198dd3f389728f14622f55014f29f2e1"
+      },
+      "extraction": {
+        "path": "output/evidence/bpi-multiboard-integrate-20260917-sm10-002-replay/extraction/extraction.json",
+        "sha256": "90c9b1ac05c83a988849190b1d8fbeff3f0bde47ede9b902c8b6797dab0bcb59"
+      },
+      "hardware_validated": false
+    },
+    {
+      "board": "bpi-w2",
+      "family": "realtek",
+      "architecture": "arm64",
+      "release": "bookworm",
+      "variant": "minimal",
+      "kernel_release": "4.9.119-legacy-realtek-rtd129x-bpi",
+      "status": "prepared",
+      "blockers": [],
+      "source": {
+        "relative_path": "bpi-w2/Armbian-unofficial_26.11.0-trunk_Bananapiw2_bookworm_legacy_4.9.119_minimal.img.xz",
+        "bytes": 343973504,
+        "sha256": "62f28cf07dba460ff08392a1ed1a3a8806f68d70d68806c6a033410c92c2f4b0"
+      },
+      "preparation": {
+        "path": "output/evidence/bpi-multiboard-integrate-20260917-w2-003/preparation.json",
+        "sha256": "13546118f18d5908b16d8bdc64649339d7a0e2c99eb054d3bbb9b4eed4ba38c3"
+      },
+      "extraction": {
+        "path": "output/evidence/bpi-multiboard-integrate-20260917-w2-003/extraction/extraction.json",
+        "sha256": "f8b931854e2d120f4df0ba60fb0bb7b877018717ceada5470c73ee3675306f0e"
+      },
+      "hardware_validated": false
+    },
+    {
+      "board": "bpi-w3",
+      "family": "rockchip",
+      "architecture": "arm64",
+      "release": "bookworm",
+      "variant": "minimal",
+      "kernel_release": "6.1.115-vendor-rk35xx",
+      "status": "prepared",
+      "blockers": [],
+      "source": {
+        "relative_path": "bpi-w3/Armbian-unofficial_26.11.0-trunk_Bananapiw3_bookworm_vendor_6.1.115_minimal.img.xz",
+        "bytes": 339391712,
+        "sha256": "bb2820c6ee8a607c58cc740fe5d07c08d062a1d449c53b45e1c6bf10e0aa23b4"
+      },
+      "preparation": {
+        "path": "output/evidence/bpi-multiboard-integrate-20260917-allboard-bpi-w3-003/preparation.json",
+        "sha256": "9cfa59a7cd0664f39ce2ae67236102948eaa00e4bbf50cf1e61cfae647bc87eb"
+      },
+      "extraction": {
+        "path": "output/evidence/bpi-multiboard-integrate-20260917-allboard-bpi-w3-003/extraction/extraction.json",
+        "sha256": "945314ba001f6e10f5989140ec9dda0bfff34127e3f3e5338a54365956fd61ce"
+      },
+      "hardware_validated": false
+    }
+  ]
+}
