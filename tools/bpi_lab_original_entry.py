@@ -471,8 +471,11 @@ def _dtb_memory(checked, c):
             width = 4 * (ac + sc)
             require(data and len(data) % width == 0, "DTB reg cells 長度不符")
             for offset in range(0, len(data), width):
-                regions.append({"start": int.from_bytes(data[offset:offset + ac * 4], "big"),
-                                "size": int.from_bytes(data[offset + ac * 4:offset + width], "big")})
+                start = int.from_bytes(data[offset:offset + ac * 4], "big")
+                size = int.from_bytes(data[offset + ac * 4:offset + width], "big")
+                # 原廠顯示節點可用零長度 reg 佔位；核心不為它保留實體範圍，原 DTB 仍完整保留。
+                if size:
+                    regions.append({"start": start, "size": size})
     for region in regions:
         require(region["size"] > 0 and region["start"] + region["size"] <= 2**64, "DTB 固定保留區無效")
         for bank in c["ram"]["banks"]:

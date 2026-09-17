@@ -444,6 +444,28 @@ class OriginalEntryTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "ram.reserved"):
             entry._dtb_memory(checked, c)
 
+    def test_zero_length_reg_keeps_nonzero_and_dynamic_guards(self):
+        c = self.make()
+        def cells(start, size):
+            return (start.to_bytes(8, "big") + size.to_bytes(8, "big")).hex(" ")
+        nodes = {"/reserved-memory": {"#address-cells": "0 0 0 2", "#size-cells": "0 0 0 2", "ranges": ""},
+                 "/reserved-memory/drm-logo": {"reg": cells(0, 0)},
+                 "/reserved-memory/drm-cubic-lut": {"reg": cells(0x80000, 0)},
+                 "/reserved-memory/fixed": {"reg": cells(0, 0) + " " + cells(0x1f000000, 0x1000)}}
+        checked = {"memreserve": [], "reserved_memory": nodes}
+        before = copy.deepcopy(checked)
+        entry._dtb_memory(checked, c)
+        self.assertEqual(checked, before)
+        nodes["/reserved-memory/fixed"]["reg"] = cells(0, 0) + " " + cells(0x80000, 0x1000)
+        with self.assertRaisesRegex(ValueError, "ram.reserved"):
+            entry._dtb_memory(checked, c)
+        del nodes["/reserved-memory/fixed"]
+        for props, error in (({"reg": ""}, "reg cells"), ({"size": bytes(8).hex(" ")}, "動態保留區")):
+            with self.subTest(props=props):
+                nodes["/reserved-memory/drm-logo"] = props
+                with self.assertRaisesRegex(ValueError, error):
+                    entry._dtb_memory(checked, c)
+
     def test_deadline_includes_offline_gate(self):
         self.make()
         c = self.config

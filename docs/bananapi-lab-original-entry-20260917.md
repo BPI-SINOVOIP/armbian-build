@@ -181,6 +181,22 @@ runner 僅在本輪長度與 SHA-256 成功後記錄其精確區間，後續 `bd
 其精確 DTB 屬性、核心 config 與參數已綁定核定範圍，最終 Linux 分配及可用空間仍屬 `memory_layout`
 人工／板級核定與後續 Linux 檢查，不宣稱此模組已模擬 CMA 或證明記憶體充足。
 
+原 Rockchip DTB 的 `drm-logo`／`drm-cubic-lut` 可能含零長度 `reg` 佔位。
+解析器只把這些零長度 tuple 當作空範圍，不刪除節點或改寫原 DTB；同一屬性中的非零 tuple
+仍逐一核對，空白／錯長度 reg、動態 `size=0` 及非零 RAM 碰撞仍拒絕。
+依據為本機 `6.1__rk35xx__arm64/drivers/of/fdt.c` 的 `__reserved_mem_reserve_reg`，
+只有 size 非零才呼叫實體記憶體保留；該來源 SHA-256 為
+`4bbf9f038d9aec5d7af0cf421dcc0d77e65548e731f4c0f031f50a1e91fbf159`。
+這不推定韌體後續顯示修正的位址，也不放寬 UART 的即時 LMB 或板級 RAM 核定。
+
+修正後原入口回歸 39 項通過，包含兩項本機真組件模型，紀錄為
+`output/evidence/bpi-multiboard-integrate-20260917/original-entry-zero-reg-reviewed.log`。
+限定獨立複審以 AIM7、CM5Pro、Forge1、M1Super、W3 的既有抽樣重播，五板均通過；
+35 項非法／非零碰撞反例均拒絕。五份結構化 DTB 採樣不變，十份原始／effective DTB
+及共 26 份讀取證據前後逐位元一致。抽樣參照仍沿用
+[45 板固定清單](evidence/bpi-multiboard-integrate-20260917/sample-audit.json)，沒有重新解壓 XZ。
+這只解除保留區解析阻擋，不代表五板已完成 backend 或實板測試。
+
 ## 執行及證據
 
 先核對 U-Boot 版本、完整 `bdinfo`、必要命令與 SHA-256 零長度已知向量。
