@@ -230,7 +230,7 @@ class ImageReader:
                            raw={"bytes": total, "sha256": raw_hash.hexdigest()},
                            partition={**part, "bytes": written, "sha256": part_hash.hexdigest()},
                            filesystem_uuid=self.filesystem_uuid, filesystem_label=self.filesystem_label,
-                           filesystem_label_unique=True)
+                           filesystem_labels_complete=True, filesystem_label_unique=True)
         self._save("mbr.bin", bytes(prefix))
 
     def _raw(self, source):
@@ -434,7 +434,7 @@ class SnapshotReader:
             self.report = {key: original[key] for key in (
                 "source", "source_digest", "raw", "partition", "filesystem_uuid", "source_verified")}
             for key in ("partitions", "boot_partition", "mounts", "layout_reader", "filesystem_label",
-                        "filesystem_label_unique"):
+                        "filesystem_label_unique", "filesystem_labels_complete"):
                 if key in original:
                     self.report[key] = original[key]
             self.report.update(schema="bpi-lab-image-replay-v1", hardware_validated=False,

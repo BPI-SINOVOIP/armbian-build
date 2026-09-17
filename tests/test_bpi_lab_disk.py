@@ -172,6 +172,17 @@ class DiskTests(unittest.TestCase):
         with self.reader("dos") as reader:
             self.assertEqual(reader.read_file("/boot/Image"), b"correct-boot-kernel")
 
+    def test_unknown_partition_does_not_prove_label_uniqueness(self):
+        source = self.root / "unknown.img"
+        source.write_bytes(self.raws["dos"])
+        self.run_tool(["/usr/sbin/sfdisk", "--append", str(source)],
+                      b"start=55296,size=4096,type=83\n")
+        with self.reader(raw=source.read_bytes()) as reader:
+            self.assertEqual(reader.filesystem_label, "BPI-ROOT")
+            self.assertFalse(reader.report["filesystem_labels_complete"])
+            self.assertFalse(reader.report["filesystem_label_unique"])
+            self.assertEqual(reader.read_file("/boot/Image"), b"correct-boot-kernel")
+
     def test_xz_gpt(self):
         with self.reader(compress=True) as reader:
             self.assertEqual(reader.read_file("/boot/Image"), b"correct-boot-kernel")

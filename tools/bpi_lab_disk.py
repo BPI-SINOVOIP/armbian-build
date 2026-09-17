@@ -282,7 +282,9 @@ class DiskReader(image.ImageReader):
             partition=self.root_volume.report["partition"], partitions=rows,
             boot_partition=self.boot_volume.report["partition"], mounts=mounts,
             filesystem_uuid=self.filesystem_uuid, filesystem_label=self.filesystem_label,
-            filesystem_label_unique=sum(volume.filesystem_label == self.filesystem_label for volume in volumes) == 1,
+            filesystem_labels_complete=len(volumes) == len(rows),
+            filesystem_label_unique=len(volumes) == len(rows) and sum(
+                volume.filesystem_label == self.filesystem_label for volume in volumes) == 1,
             layout_reader="multi-partition-v1")
         require(image.identity(self.part_stream) == self.part_identity, "暫存原映像在解析期間改變")
 
