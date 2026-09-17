@@ -1,0 +1,38 @@
+{
+  "schema": "bpi-lab-original-entry-build-summary-v1",
+  "date": "2026-09-18",
+  "upstream_tag": "v2025.01",
+  "upstream_commit": "6d41f0a39d6423c8e57e92ebbe9f8c0333a63f72",
+  "source_method": "git archive v2025.01",
+  "source_repository_modified": false,
+  "verified_records": 22,
+  "generator_matches_compiled_source": true,
+  "sd_cid_source_sha256": "8f6b541f58111b8292cdbaa74acfa432d9269b166233bfd2fbb6ef315275642d",
+  "builds": [
+    {
+      "target": "mt7623n_bpir2_defconfig",
+      "status": "compiled-and-linked",
+      "elf_machine": "ARM",
+      "binary_bytes": 460348,
+      "binary_sha256": "ec27e40be9c49de87fea7070f81921e0c90d24dc8a817b23485fd1944a3d4783",
+      "config_sha256": "7cc365db75bce7b2b3ddd54212cbc3fe779638dce164f01c308e071ae045d803"
+    },
+    {
+      "target": "qemu-riscv64_defconfig",
+      "status": "compiled-and-linked",
+      "elf_machine": "RISC-V",
+      "binary_bytes": 893520,
+      "binary_sha256": "fe7f1519e834e8af5a37d7206773557b67222a1a9eed0b4cf27daf858ee0d64f",
+      "config_sha256": "55d9c0e587fbdb1d09cec6a178914a4f42ebd254ac163c2db92294761fa2523a"
+    }
+  ],
+  "local_evidence": {
+    "path": "output/evidence/bpi-original-entry-uboot-build-20260918-001/build-audit.json",
+    "sha256": "d34e9be837bd9b01edb3bbd38c1ad7d1418dea1dbc729047e4014a7521447a2e"
+  },
+  "boot_executed": false,
+  "media_written": false,
+  "hardware_validated": false,
+  "deployment_ready": false,
+  "limits": "主代理重新核對 ELF 架構、產物長度、SHA-256、來源提交與生成命令的逐位元一致性。RISC-V 是 QEMU 編譯目標，不是 CM6 板級韌體；沒有執行模擬器或實板。K3 的獨立續作不包含在這兩個成功目標中。"
+}
