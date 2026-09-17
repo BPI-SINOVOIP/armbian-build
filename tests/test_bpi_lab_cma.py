@@ -34,9 +34,13 @@ class KernelPolicyTests(unittest.TestCase):
         self.assertEqual(self.policy(CONFIG.replace(b"PAGE_BLOCK_MAX_ORDER=11", b"PAGE_BLOCK_MAX_ORDER=9"))["minimum_alignment"], 0x200000)
 
     def test_unknown_source_version_rejected(self):
-        for version in ("6.12.49-current-sunxi", "6.18.50-current-sunxi", "7.1.0", "6.18.490"):
+        for version in ("6.12.49-current-sunxi", "6.18.47-current-sunxi", "6.18.48-current-sunxi",
+                        "6.18.50-current-sunxi", "7.1.0", "6.18.490", "6.18.460"):
             with self.subTest(version=version), self.assertRaisesRegex(cma.CMAError, "尚未審閱"):
                 self.policy(release=version)
+
+    def test_reviewed_61846_matches_61849_semantics(self):
+        self.assertEqual(self.policy(release="6.18.46-current-sunxi"), self.policy())
 
     def test_unknown_hugepage_numa_and_cmdline_branches(self):
         for key in ("HUGETLB_PAGE", "TRANSPARENT_HUGEPAGE", "HUGETLB_PAGE_SIZE_VARIABLE", "NUMA", "DMA_NUMA_CMA", "CMDLINE_FORCE"):

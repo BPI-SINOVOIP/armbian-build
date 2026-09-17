@@ -94,7 +94,9 @@ build_uboot_config(manifest, *, template, artifact_root) -> dict
 
 ## 動態 CMA
 
-目前只放行已審閱 Linux `6.18.49` 語意、4 KiB 頁面、未啟用大頁與 NUMA、內建 `CONFIG_CMDLINE=""` 的配置。必要旗標為 `CONFIG_CMA=y`、`CONFIG_DMA_CMA=y`、`CONFIG_OF_RESERVED_MEM=y`，頁面區塊階數必須有原配設定依據；未知版本或未覆蓋分支保持阻擋。
+目前只放行已審閱 Linux `6.18.46`／`6.18.49` 語意、4 KiB 頁面、未啟用大頁與 NUMA、內建 `CONFIG_CMDLINE=""` 的配置。必要旗標為 `CONFIG_CMA=y`、`CONFIG_DMA_CMA=y`、`CONFIG_OF_RESERVED_MEM=y`，頁面區塊階數必須有原配設定依據；未知版本或未覆蓋分支保持阻擋。
+
+2026-09-18 全板抽樣發現 M1 Plus 使用 `6.18.46-current-sunxi`。由 Linux 穩定分支取得兩個固定 tag 的 `include/linux/cma.h`、`include/linux/pageblock-flags.h`、`include/linux/mmzone.h`、`kernel/dma/contiguous.c`、`drivers/of/of_reserved_mem.c`、`mm/cma.c`，六份逐檔比較完全相同，因此只新增 `6.18.46`，不放行整個 6.18 系列。原證據的 `linux-6.18.49-pageblock` 是沿用的語意識別，不代表把實際核心版號改成 6.18.49。下載與比較證據在 `output/evidence/bpi-multiboard-integrate-20260917/cma-source/`，對照來源為 [6.18.46 保留記憶體](https://github.com/gregkh/linux/blob/v6.18.46/drivers/of/of_reserved_mem.c)及 [6.18.46 CMA](https://github.com/gregkh/linux/blob/v6.18.46/mm/cma.c)。
 
 - [保留記憶體來源](https://github.com/gregkh/linux/blob/v6.18.49/drivers/of/of_reserved_mem.c)確認：根與保留節點的 cells 必須一致；`size` 用 size cells，`alignment` 用 address cells；CMA 對齊取 DT 指定值與核心最小對齊的較大者。`alloc-ranges` 是依次嘗試的搜尋窗口，不是整段固定占用。
 - [CMA 對齊定義](https://github.com/gregkh/linux/blob/v6.18.49/include/linux/cma.h)、[頁面區塊分支](https://github.com/gregkh/linux/blob/v6.18.49/include/linux/pageblock-flags.h)及[階數定義](https://github.com/gregkh/linux/blob/v6.18.49/include/linux/mmzone.h)確認：本次支援分支的最小對齊為 `1 << (CONFIG_PAGE_SHIFT + CONFIG_PAGE_BLOCK_MAX_ORDER)`，不是直接套 `CONFIG_CMA_ALIGNMENT` 或舊版最大 buddy order 公式。

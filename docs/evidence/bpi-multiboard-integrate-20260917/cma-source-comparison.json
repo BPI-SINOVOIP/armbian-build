@@ -1,0 +1,85 @@
+{
+  "schema": "bpi-lab-cma-source-review-v1",
+  "date": "2026-09-18",
+  "versions": [
+    "6.18.46",
+    "6.18.49"
+  ],
+  "identical": true,
+  "scope": "六份原始碼位元組相同；僅沿用已核對的四 KiB、無大頁、無 NUMA、空內建命令列分支，不代表實板通過。",
+  "hardware_validated": false,
+  "files": [
+    {
+      "tag": "v6.18.49",
+      "path": "drivers/of/of_reserved_mem.c",
+      "sha256": "1aa359ffc417c3fe7f172bc94ea32d535ba2dea093225c01a2b3b798d326ea66",
+      "url": "https://raw.githubusercontent.com/gregkh/linux/v6.18.49/drivers/of/of_reserved_mem.c"
+    },
+    {
+      "tag": "v6.18.49",
+      "path": "kernel/dma/contiguous.c",
+      "sha256": "22d80f10f4df80233d27a2404a24ab7f3f6a29af2a2479a4eef23eda3f39385a",
+      "url": "https://raw.githubusercontent.com/gregkh/linux/v6.18.49/kernel/dma/contiguous.c"
+    },
+    {
+      "tag": "v6.18.49",
+      "path": "include/linux/cma.h",
+      "sha256": "29fa2543f5f96f867407206e8433d9aef3431a999011102e97c937cb3fb4785d",
+      "url": "https://raw.githubusercontent.com/gregkh/linux/v6.18.49/include/linux/cma.h"
+    },
+    {
+      "tag": "v6.18.49",
+      "path": "include/linux/mmzone.h",
+      "sha256": "8653d8ee6b0ebd419f5e553952a8db29f9ee85d2d902d651a2936ed256f1bebd",
+      "url": "https://raw.githubusercontent.com/gregkh/linux/v6.18.49/include/linux/mmzone.h"
+    },
+    {
+      "tag": "v6.18.49",
+      "path": "include/linux/pageblock-flags.h",
+      "sha256": "8a6f37f60046e3c63bc02619546313d8b5da334116286fbfe5426f5c8d74c4e6",
+      "url": "https://raw.githubusercontent.com/gregkh/linux/v6.18.49/include/linux/pageblock-flags.h"
+    },
+    {
+      "tag": "v6.18.49",
+      "path": "mm/cma.c",
+      "sha256": "b16905084b53fa823dc57578beed74f12b6957016fcf23d996e055c69b6c5e9d",
+      "url": "https://raw.githubusercontent.com/gregkh/linux/v6.18.49/mm/cma.c"
+    },
+    {
+      "tag": "v6.18.46",
+      "path": "drivers/of/of_reserved_mem.c",
+      "sha256": "1aa359ffc417c3fe7f172bc94ea32d535ba2dea093225c01a2b3b798d326ea66",
+      "url": "https://raw.githubusercontent.com/gregkh/linux/v6.18.46/drivers/of/of_reserved_mem.c"
+    },
+    {
+      "tag": "v6.18.46",
+      "path": "kernel/dma/contiguous.c",
+      "sha256": "22d80f10f4df80233d27a2404a24ab7f3f6a29af2a2479a4eef23eda3f39385a",
+      "url": "https://raw.githubusercontent.com/gregkh/linux/v6.18.46/kernel/dma/contiguous.c"
+    },
+    {
+      "tag": "v6.18.46",
+      "path": "include/linux/cma.h",
+      "sha256": "29fa2543f5f96f867407206e8433d9aef3431a999011102e97c937cb3fb4785d",
+      "url": "https://raw.githubusercontent.com/gregkh/linux/v6.18.46/include/linux/cma.h"
+    },
+    {
+      "tag": "v6.18.46",
+      "path": "include/linux/mmzone.h",
+      "sha256": "8653d8ee6b0ebd419f5e553952a8db29f9ee85d2d902d651a2936ed256f1bebd",
+      "url": "https://raw.githubusercontent.com/gregkh/linux/v6.18.46/include/linux/mmzone.h"
+    },
+    {
+      "tag": "v6.18.46",
+      "path": "include/linux/pageblock-flags.h",
+      "sha256": "8a6f37f60046e3c63bc02619546313d8b5da334116286fbfe5426f5c8d74c4e6",
+      "url": "https://raw.githubusercontent.com/gregkh/linux/v6.18.46/include/linux/pageblock-flags.h"
+    },
+    {
+      "tag": "v6.18.46",
+      "path": "mm/cma.c",
+      "sha256": "b16905084b53fa823dc57578beed74f12b6957016fcf23d996e055c69b6c5e9d",
+      "url": "https://raw.githubusercontent.com/gregkh/linux/v6.18.46/mm/cma.c"
+    }
+  ]
+}

@@ -44,8 +44,8 @@ def parse_config(blob, arch):
 
 
 def kernel_policy(values, release, config_sha256):
-    """採已審閱的 6.18.49 頁面區塊語意；未知版本與大頁分支保持阻擋。"""
-    require(re.fullmatch(r"6\.18\.49(?:-[A-Za-z0-9_.+~-]+)?", release),
+    """採已比對的 6.18.46／6.18.49 頁面區塊語意；其他版本仍須審閱。"""
+    require(re.fullmatch(r"6\.18\.(?:46|49)(?:-[A-Za-z0-9_.+~-]+)?", release),
             "cma_kernel", "此核心版本的 CMA 來源尚未審閱")
     require(all(values.get(key) == "y" for key in ("CONFIG_CMA", "CONFIG_DMA_CMA", "CONFIG_OF_RESERVED_MEM")),
             "cma_kernel", "原配核心未啟用 CMA／DMA_CMA／OF_RESERVED_MEM")
