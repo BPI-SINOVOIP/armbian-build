@@ -1,0 +1,151 @@
+{
+  "schema": "bpi-lab-realtek-build-audit-v1",
+  "date": "2026-09-18",
+  "scope": "真 BSP 交叉編譯、連結與大小檢查；二進位含合成配對，禁止部署。",
+  "rows": [
+    {
+      "board": "bpi-m4",
+      "status": "built",
+      "kernel_placement": "original",
+      "source_unchanged": true,
+      "source_files_checked": 12271,
+      "generator_matches_build": true,
+      "source_sha256": "d4a6858bc7161b2f1e4a24a1d92becfbe9132b035a2a07ed616a18dcb6a49609",
+      "fixture_only": true,
+      "deployment_ready": false,
+      "hardware_validated": false,
+      "artifacts": {
+        "u-boot": {
+          "bytes": 3411391,
+          "sha256": "bb6978be98e3ea4a196ddb2e22af8569350f41bb8ad07b694bc39a9a2da1ea84"
+        },
+        "u-boot.bin": {
+          "bytes": 546720,
+          "sha256": "e3a38009bae59c34cd506a30f5755b60c4760570b9819669daf9102fafeccddf"
+        },
+        "u-boot.map": {
+          "bytes": 379918,
+          "sha256": "8835de395eb71a10641364445bfa6855c68aa3d608a3fec2f816116fff134912"
+        },
+        "System.map": {
+          "bytes": 81387,
+          "sha256": "770e4a3c89701085427d2f9bea392739141433649993aaf5b5729b14604552be"
+        },
+        "u-boot.cfg": {
+          "bytes": 20983,
+          "sha256": "8336de88d0b5c850e04b87dce6336048601e6dc9762a5ad70bd03cee7393b3c1"
+        },
+        ".config": {
+          "bytes": 11683,
+          "sha256": "2a45f8beb06da073a1f0bffd2fe6e7d34b844bd7803c56b0de57c957f61b33cd"
+        },
+        "include/generated/autoconf.h": {
+          "bytes": 2402,
+          "sha256": "e4283af03d5b628c2d725aa2889f087b8cca9a779888c25aed592eb501219d9a"
+        }
+      },
+      "evidence": {
+        "result.json": {
+          "path": "output/evidence/bpi-special-bsp-m4-20260918-002/result.json",
+          "sha256": "53bfdf87acfaed45fb04a8ebec658911524ff20ddbddb4d91e9f1e279858a1a3"
+        },
+        "build.log": {
+          "path": "output/evidence/bpi-special-bsp-m4-20260918-002/build.log",
+          "sha256": "cbf17dc0a25c49411f1ef9a6df91c6d169ba775de44819880fc50e64b1625953"
+        },
+        "build-driver.py": {
+          "path": "output/evidence/bpi-special-bsp-m4-20260918-002/build-driver.py",
+          "sha256": "6ad61eb410fe24afa3427d885e2f6eddc17a3242bc3525044fc64a37419e3fd0"
+        },
+        "realtek-lab.patch": {
+          "path": "output/evidence/bpi-special-bsp-m4-20260918-002/realtek-lab.patch",
+          "sha256": "af1321aa4e444e5a3873976bf540df36d36ef853b7e686947368f24977a7e75f"
+        },
+        "lab-source.json": {
+          "path": "output/evidence/bpi-special-bsp-m4-20260918-002/lab-source.json",
+          "sha256": "10c41a4d64c4554818b9ede85d053fe92af0a4a225789fa2c4f8d6ec031302fc"
+        },
+        "source-before.json": {
+          "path": "output/evidence/bpi-special-bsp-m4-20260918-002/source-before.json",
+          "sha256": "1141a35894eebc54e7f64659ad7476d0238551f5aa9d67d2166f314755f94498"
+        },
+        "source-after.json": {
+          "path": "output/evidence/bpi-special-bsp-m4-20260918-002/source-after.json",
+          "sha256": "1141a35894eebc54e7f64659ad7476d0238551f5aa9d67d2166f314755f94498"
+        }
+      }
+    },
+    {
+      "board": "bpi-w2",
+      "status": "built",
+      "kernel_placement": "direct-final",
+      "source_unchanged": true,
+      "source_files_checked": 11685,
+      "generator_matches_build": true,
+      "source_sha256": "73a642c7eabeb35479a786bfc20a12fabb53770dc4ead5cc7a435517e3e66216",
+      "fixture_only": true,
+      "deployment_ready": false,
+      "hardware_validated": false,
+      "artifacts": {
+        "u-boot": {
+          "bytes": 3304719,
+          "sha256": "fe8d0a0ca2479be400fab3a9bc97dfc36ad8d91173500d6ae0e33138cb66638d"
+        },
+        "u-boot.bin": {
+          "bytes": 532808,
+          "sha256": "fff180e86245c2c7c1a0af8253fe62f767746ea66394c762af66ccd37e0c374f"
+        },
+        "u-boot.map": {
+          "bytes": 376707,
+          "sha256": "bcce4304c60e828689a29176d0be4f12df36cd88403754b96e72610d3f728592"
+        },
+        "System.map": {
+          "bytes": 81861,
+          "sha256": "2f0f1d019984ac7b9ae553ce419053974b99bff8b2decf78832321bde0af8fb3"
+        },
+        "u-boot.cfg": {
+          "bytes": 21776,
+          "sha256": "4ff31b362f0e7d0e88be05496b171f971d0eb77191260e0bac718eef0f8bd24b"
+        },
+        ".config": {
+          "bytes": 11662,
+          "sha256": "19b1b27fd8e3ce055f477351a819e077947b47acff3f889ad8307799178156c0"
+        },
+        "include/generated/autoconf.h": {
+          "bytes": 2409,
+          "sha256": "f8e1f0783be942a5ace7eb7e31822a857a53ea2870080ef99fc27d39e21b5ca1"
+        }
+      },
+      "evidence": {
+        "result.json": {
+          "path": "output/evidence/bpi-special-bsp-w2-20260918-006/result.json",
+          "sha256": "38893361cc69aea7c3ec8676e72d47256c68a715c389da9f339a1454ef81a0d1"
+        },
+        "build.log": {
+          "path": "output/evidence/bpi-special-bsp-w2-20260918-006/build.log",
+          "sha256": "a20e48a71ac8b733b29bf425d33bfe179cb7b979142f6705c777724f06272b11"
+        },
+        "build-driver.py": {
+          "path": "output/evidence/bpi-special-bsp-w2-20260918-006/build-driver.py",
+          "sha256": "6ad61eb410fe24afa3427d885e2f6eddc17a3242bc3525044fc64a37419e3fd0"
+        },
+        "realtek-lab.patch": {
+          "path": "output/evidence/bpi-special-bsp-w2-20260918-006/realtek-lab.patch",
+          "sha256": "e5e32592e9cb91c7d54d0e21aeb2271336e613143270eb8e79af108b87ca68c2"
+        },
+        "lab-source.json": {
+          "path": "output/evidence/bpi-special-bsp-w2-20260918-006/lab-source.json",
+          "sha256": "f016f76168cb675f77dd7a7bee632a65faa2a593ad107af2090245275f21923e"
+        },
+        "source-before.json": {
+          "path": "output/evidence/bpi-special-bsp-w2-20260918-006/source-before.json",
+          "sha256": "0aa93bbe9ead646fb778a4aa211a72bdfeb74bdfaf6fc7de60f207d543ea4385"
+        },
+        "source-after.json": {
+          "path": "output/evidence/bpi-special-bsp-w2-20260918-006/source-after.json",
+          "sha256": "0aa93bbe9ead646fb778a4aa211a72bdfeb74bdfaf6fc7de60f207d543ea4385"
+        }
+      }
+    }
+  ]
+}
