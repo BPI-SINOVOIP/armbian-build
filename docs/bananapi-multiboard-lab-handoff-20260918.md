@@ -1,7 +1,13 @@
 # 跨板測試交付與接板清單
 
 本頁彙整軟體交付與後續集中實板驗證，不取代各模組的受控格式、媒體授權或引導資格。
-目前 K3 及外部測試媒體仍在整合，尚未宣告本輪最終完成。
+本輪計畫 C／D 所列、能離線完成的受控軟體實作與整合已完成，包含 K3 與 USB／NVMe。
+這不是「45 款板子已實測可用」或「444 套映像已通過」的宣告。
+下方明列軟體交付、來源阻擋與接板後工作；沒有把未驗證項目算成完成。
+
+分支為 `bpi-h618-recovery-network-20260915`，不是 `main`。
+主要交付提交為 `a3c642601`（外部媒體）、`46dca7afe`（K3）、
+`c28488ef5`（外部根與五階段）、`6c8042e50`（真實目標執行環境）。
 
 ## 範圍
 
@@ -25,6 +31,52 @@ ARM32 為 16 款、ARM64 為 26 款、RISC-V 為 3 款。
 記錄每板一份實際來源，共 44 份組件準備通過、一份阻擋。
 有些使用已核對擷取的重播，不代表本輪重新讀取 444 份 XZ。
 `prepared` 只表示原配組件已準備，不表示實板或完整原生開機鏈已通過。
+
+## 已完成軟體
+
+| 範圍 | 已交付內容 | 不能外推的範圍 |
+| --- | --- | --- |
+| 排程及來源 | 45 板／444 筆持久工作、已做與未做分列、去重、續作、失敗隔離 | 不代表全部映像內容或硬體通過 |
+| Allwinner、Amlogic | 原配組件、DT／CMA、固定引導配置、eMMC 五階段與救援 | 逐板 RAM、控制器、DDR 及冷啟動仍須觀測 |
+| Rockchip、MediaTek、SpacemiT K1 | 原入口／extlinux／受限 FIT、原環境與檔案摘要、專用執行路由 | 不接受未知腳本、未核定 overlay 或前置韌體 |
+| Sunplus、Renesas、Realtek、Synaptics | 各家族原格式與執行器；Realtek M4／W2 合併救援命令真 BSP 編譯 | 合成配對產物不能直接燒錄 |
+| SpacemiT K3 | SM10 原廠 SDK 真編譯、原入口與 SD RAM 救援、正式五階段接線 | FSBL／ESOS／SBI、簽署及安全鏈仍需實體資格 |
+| 無 eMMC 板 | 固定 SD 加 USB／NVMe、完整備份、明示重用及歸零、回讀、首次核定 | 首版限 512-byte MBR 主分割／ext 根／已核定 mainline U-Boot |
+| 客戶系統交接 | 固定 SD 暫時唯讀、根身分、有限末分割增長、同次 UART／SSH、授權公鑰安裝 | 不抵抗任意 root 程式，非整個原生開機鏈證明 |
+| 執行環境 | ARM32／ARM64／RISC-V 封裝介面、原生救援建置、真 AArch64 QEMU 探測 | 本輪未做真 ARM32／RISC-V 使用者空間探測或板級啟動 |
+
+外部媒體操作文件為[媒體契約](bananapi-lab-external-media-20260918.md)、
+[根保護及 Python 封裝](bananapi-lab-external-root-20260918.md)、
+[五階段與首次核定](bananapi-lab-external-backend-20260918.md)。
+一般原入口與特殊韌體的支援範圍以各模組文件為準；不能用同家族名稱取代格式核對。
+
+## 最終離線驗證
+
+以下日誌均在 `output/evidence/bpi-multiboard-integrate-20260917/`，互有重複的測試組不相加。
+
+| 驗證 | 結果 | 日誌或證據 |
+| --- | --- | --- |
+| 跨板完整整合 | 執行 1,289 項，1,287 項通過、2 項依環境開關跳過，零失敗 | `lab-delivery-final.log` |
+| 上列跳過的真組件組另行啟用 | `BPI_LAB_REAL_C3=1`，39 項全部通過，零跳過；包含 CM6 FIT 與跨板原組件重播 | `original-entry-delivery-final.log` |
+| 舊 H618 回歸 | 362 項全部通過 | `h618-delivery-final.log` |
+| SRAM 分版本回歸 | V1 為 249 項、V2 為 428 項、V3 為 188 項，全部通過、零跳過，輸入快照未變更 | `sram-v1-final/`、`sram-v2-final/`、`sram-v3-final/` 的 `validation-report.json` |
+| 五個發行版真封裝 | Bookworm／Jammy／Noble／Trixie／Resolute 的唯讀擷取、入口摘要及硬連結保留通過 | [來源證據](evidence/bpi-multiboard-integrate-20260917/external-init-profiles.json) |
+| 真 AArch64 使用者空間 | 原 shell、Python 固定模組、blkid、注入相依後 shell 四項通過；120 項相依，14 項保留原配 | [執行證據](evidence/bpi-multiboard-integrate-20260917/external-runtime-audit.json) |
+| K3 真 SDK 建置 | 實際 ELF／binary 連結及主代理 21 筆來源／產物核對通過 | [建置證據](evidence/bpi-multiboard-integrate-20260917/k3-runtime-build-audit.json) |
+| 靜態與入口 | 所有 `bpi_lab*.py` 工具與測試的 Ruff、差異空白檢查、七個主要 CLI `--help` 通過 | 最終交付摘要另存固定雜湊 |
+| 來源快照 | 45 板、98 項本機來源一致性通過 | `bpi_lab_platforms.py validate --json` |
+
+本輪另補查 SRAM 舊模型。第一次泛用 discovery 未指定各版本建置，產生六個設定錯誤及
+三個跳過，保留在 `sram-delivery-final.log`，**不列為通過**。
+後續改用既有 `validate_bpi_sram.py`，分別指定 V1／V2／V3 及其 DDR／更新器／橋接產物，
+各次新證據獨立保存，不以混用快照或刪掉失敗日誌消除錯誤。
+
+測試命令、結果、日誌路徑與 SHA-256 彙整於
+[最終機器可讀交付紀錄](evidence/bpi-multiboard-integrate-20260917/delivery-final.json)。
+該紀錄也保留首次 SRAM 設定失敗與硬體佇列快照，便於中斷後核對續作。
+
+分工期間已有限定獨立審查；本次收尾修正與整合由主代理核對，沒有宣稱最後每一筆變更
+都另經第二位審查者複審。單元模型、真組件重播、使用者空間模擬器與實板證據分開保存。
 
 ## 固定測試流程
 
@@ -61,6 +113,14 @@ Linux 暫時唯讀也不是 SD 的硬體防寫，不能承諾抵抗任意具有 
 
 這些資料可在接板時一次採集；使用者不必陪同每套映像逐次操作。
 沒有先取得上述核定的站點仍保持停用。
+
+接板後由工具完成各板原生救援建置／runtime 探測、首次備份及第一套完整循環；
+使用者需提供實際板子、連線與媒體覆寫授權，不需要逐套陪同操作。
+本輪未產生逐板可直接部署的真實配對與簽署套件，不能拿合成測試 JSON 代用。
+
+最後唯讀盤點仍為：45 個停用站、414 筆 `queued`、20 筆 `metadata_blocked`、
+10 筆 `review_required`；新硬體嘗試與新硬體報告均為零。
+既有 0845 十套歷史證據仍保留待審，不算本輪重新測試。
 
 ## 已知來源問題
 
