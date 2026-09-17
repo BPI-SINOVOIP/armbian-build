@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Allwinner ARM32／A64 原配組件準備；不執行映像腳本、不操作硬體。"""
+"""Allwinner ARM32／ARM64 原配組件準備；不執行映像腳本、不操作硬體。"""
 
 from __future__ import annotations
 
@@ -14,11 +14,16 @@ import shlex
 import stat
 import struct
 import subprocess
+import tempfile
 import zlib
 
 try:
+    from . import bpi_h618_artifacts as safe
+    from . import bpi_lab_cma as cma
     from . import bpi_lab_uboot as uboot
 except ImportError:
+    import bpi_h618_artifacts as safe
+    import bpi_lab_cma as cma
     import bpi_lab_uboot as uboot
 
 
@@ -34,12 +39,30 @@ POLICIES = {
     "bpi-m2u": "r40-current", "bpi-m2m": "a33-current",
     "bpi-m2p": "h3-current", "bpi-m2z": "h2plus-current",
     "bpi-p2z": "h2plus-current", "bpi-m3": "a83t-current", "bpi-m64": "a64-current",
+    "bpi-m4b": "h618-m4berry", "bpi-m4z": "h618-m4zero", "bpi-m4z-emac": "h618-m4zero-emac",
 }
-# 僅這三份已逐項審閱的 fixup 可在沒有參數時視為 DTB 無操作；H3 PWM 另行阻擋。
+# H618 沒有獨立驗證 JSON；以已審閱且摘要固定的本倉 DTS 綁定根節點身分。
+H618_PROFILES = {
+    "bpi-m4b": {"dtb": "sun50i-h618-bananapi-m4-berry.dtb", "model": "BananaPi M4 Berry",
+                 "source_structure_sha256": "962df0097208fd4b1324f7f3e54043a6272da438b666bd08bb95a2d731d361e0",
+                 "compatible": ["BiPai,bananapi-m4berry", "allwinner,sun50i-h616"],
+                 "sha256": "f13f2f4dde98c6a710db30485f8f766e37759755afffee243c50406a2c093a10"},
+    "bpi-m4z": {"dtb": "sun50i-h618-bananapi-m4-zero.dtb", "model": "BananaPi BPI-M4-Zero",
+                 "source_structure_sha256": "c62aa1b70240312c7a9aed20394f7602f6016a27df075cc75dd8909dae4666f1",
+                 "compatible": ["sinovoip,bpi-m4-zero", "allwinner,sun50i-h618"],
+                 "sha256": "53970883320c770cef902da3d2bbbcc1c420ff911e4b7f675ee162a6633ecfc1"},
+    "bpi-m4z-emac": {"dtb": "sun50i-h618-bananapi-m4-zero-emac.dtb", "model": "BananaPi BPI-M4-Zero EMAC",
+                      "source_structure_sha256": "8960e0bf172e54dc8681cfaad829a2934d94a5a4d7ca217f533d93e3a8ba751c",
+                      "compatible": ["sinovoip,bpi-m4-zero-emac", "sinovoip,bpi-m4-zero", "allwinner,sun50i-h618"],
+                      "sha256": "e2c1f74af1560feab34188bef54113d08f44513615e3ba622c9dac836f6a1e68"},
+}
+H618_FAMILY_STRUCTURE_SHA256 = "3f505c34149fb4352bdbccf3968adbffe575eb266b8532a4bf4adff8ec7a50b6"
+# 只有已逐項審閱的 fixup 可在無參數時視為 DTB 無操作；會改寫 console 的 PWM 分支另行阻擋。
 FIXUPS = {
     "sun7i-a20": ("overlay_32", "2f59c731905cef8af8ff5299335a81cdf361e698a1d177b05ffbdb60e520cf13"),
     "sun8i-h3": ("overlay_32", "dfd30fed731644cb902da750629b67a5a1b03fb23355eccd16f07710f910a161"),
     "sun50i-a64": ("overlay_64", "6a501ffce8fea1ec4b0581d58ccdbe17b6b3e05e9bfbfd744a419d5f2149d9a0"),
+    "sun50i-h616": ("overlay_64", "31bfcd6f3d63c39b3587b8456ce02943b8aa18f0ef8f68ecbdcce6bf82afbdae"),
 }
 ENV_KEYS = set("fdtfile fdtdir overlay_prefix overlays user_overlays rootdev rootfstype verbosity "
                "console bootlogo docker_optimizations disp_mem_reserves disp_mode earlycon "
@@ -130,7 +153,8 @@ def _decompress(blob):
     return data, decoder.unused_data
 
 
-def _kernel(blob, arch, release):
+def _kernel(blob, arch, release, kernel_config=None):
+    """未提供 config 的共用呼叫只核對格式／版本，不宣告核心配置已驗證。"""
     require(len(blob) >= 64, "kernel_format", "核心標頭截斷")
     if arch == "arm64":
         offset, size, flags = struct.unpack_from("<3Q", blob, 8)
@@ -159,6 +183,15 @@ def _kernel(blob, arch, release):
         detail = {"format": "zImage", "compressed_offset": index, "expanded_bytes": len(expanded)}
     versions = set(re.findall(rb"Linux version ([^\s\x00]+)", expanded))
     require(versions == {release.encode()}, "kernel_version", "核心內嵌版本與指定版本不符或不唯一")
+    detail["kernel_config_verified"] = False
+    markers = [match.end() for match in re.finditer(b"IKCFG_ST", expanded)] if kernel_config is not None else []
+    if markers:
+        require(len(markers) == 1, "kernel_config", "核心內嵌配置入口不唯一")
+        embedded, tail = _decompress(expanded[markers[0]:])
+        require(tail.startswith(b"IKCFG_ED") and embedded == kernel_config,
+                "kernel_config", "原配 config 缺失或與核心內嵌配置不同")
+        detail["embedded_config"] = digest(embedded)
+        detail["kernel_config_verified"] = True
     return {**detail, "kernel_release": release}
 
 
@@ -211,6 +244,7 @@ class _Evidence:
     def __init__(self, output, read_file, manifest):
         self.output = Path(output).absolute()
         self.read_file, self.manifest, self.cache = read_file, manifest, {}
+        self.read_status = {}
         require(".." not in self.output.parts, "output", "證據目錄不得含上層跳轉")
         fd = os.open(self.output.anchor, os.O_RDONLY | os.O_DIRECTORY | os.O_CLOEXEC)
         try:
@@ -242,7 +276,7 @@ class _Evidence:
             value = function()
             self.manifest["checks"][label] = value if value is not None else True
             return value
-        except AllwinnerError as exc:
+        except (AllwinnerError, cma.CMAError) as exc:
             self.block(exc.code, f"{label}：{exc}")
         except (ValueError, struct.error, zlib.error, lzma.LZMAError):
             self.block("invalid_data", f"{label}：資料格式無效或解析失敗")
@@ -262,9 +296,11 @@ class _Evidence:
                 blob = self.read_file(path)
             except FileNotFoundError:
                 self.manifest["reads"].append({"path": path, "status": "missing"})
+                self.read_status[path] = "missing"
                 self.cache[path] = None
             except Exception:
                 self.manifest["reads"].append({"path": path, "status": "failed"})
+                self.read_status[path] = "failed"
                 self.block("reader_failed", f"唯讀介面讀取失敗：{path}")
                 self.cache[path] = None
             else:
@@ -276,7 +312,7 @@ class _Evidence:
                 self.manifest["reads"].append({"path": path, "status": "saved"})
         item = self.cache[path]
         if item is None:
-            if required:
+            if required and self.read_status[path] == "missing":
                 self.block("missing_file", f"缺少原配檔案：{path}")
             return None
         blob, record = item
@@ -307,23 +343,67 @@ class _Evidence:
         return stdout
 
 
+def _source_literals(blob, fields):
+    """只辨識單行常值賦值；另回傳結構摘要，讓呼叫端核定生效範圍。"""
+    values, structure = {}, []
+    names = "|".join(re.escape(field) for field in fields)
+    literal = r'''(?:'[A-Za-z0-9_./,:+\-]+'|"[A-Za-z0-9_./,:+\-]+"|[A-Za-z0-9_./,:+\-]+)'''
+    for line in blob.decode().splitlines(keepends=True):
+        if line.lstrip().startswith("#") or not re.search(r"\b(?:" + names + r")\b", line):
+            structure.append(line)
+            continue
+        match = re.fullmatch(r"[ \t]*(?:declare[ \t]+-g[ \t]+)?(" + names + r")=(" + literal
+                             + r")(?:[ \t]+#[^\n]*)?[ \t]*\n?", line)
+        require(match is not None, "source_mapping", "來源設定不是已實作的單行常值，須重新審閱")
+        key, value = match.groups()
+        require(key not in values, "source_mapping", "來源設定重複或可能遭覆寫：" + key)
+        values[key] = shlex.split(value, comments=False, posix=True)[0]
+        structure.append(key + "=<literal>\n")
+    return values, digest("".join(structure).encode())["sha256"]
+
+
 def _profile(evidence, board):
     registry = json.loads(evidence.source("docs/evidence/bpi-multiboard-lab-20260917/board-registry.json"))
     rows = [row for row in registry["boards"] if row["board"] in POLICIES]
     matches = [row for row in rows if board in (row["board"], row["artifact_board"])]
-    require(len(rows) == 13 and len(matches) == 1, "board", "板型不在已核對的 13 板範圍")
+    require(len(rows) == len(POLICIES) and len(matches) == 1, "board", "板型不在已核對的 16 板範圍")
     row = matches[0]
-    policy_path = f"config/validation/bananapi-sunxi-{POLICIES[row['board']]}.json"
-    policy = json.loads(evidence.source(policy_path))["boards"][row["artifact_board"]]
-    board_source = evidence.source(row["config_path"]).decode()
-    require(f'BOARDFAMILY="{row["family"]}"' in board_source
+    if row["board"] in H618_PROFILES:
+        policy = {**H618_PROFILES[row["board"]], "family": "sun50iw9-bpi", "overlay_prefix": "sun50i-h616"}
+        source = "patch/kernel/archive/sunxi-6.18/dt_64/" + policy["dtb"].removesuffix(".dtb") + ".dts"
+        require(digest(evidence.source(source))["sha256"] == policy["sha256"],
+                "source_mapping", "H618 DTS 身分來源已改動，須重新審閱")
+        family = evidence.source("config/sources/families/sun50iw9-bpi.conf")
+        settings, structure = _source_literals(family, ("BOOTSCRIPT",))
+        # 固定其餘 shell 結構，證明設定仍位於已審閱的 current／edge 分支；不執行 shell。
+        require(settings == {"BOOTSCRIPT": "boot-sun50i-next.cmd:boot.cmd"}
+                and structure == H618_FAMILY_STRUCTURE_SHA256
+                and row["architecture"] == "arm64", "source_mapping", "H618 腳本來源或架構錯配")
+    else:
+        policy_path = f"config/validation/bananapi-sunxi-{POLICIES[row['board']]}.json"
+        policy = json.loads(evidence.source(policy_path))["boards"][row["artifact_board"]]
+    board_source = evidence.source(row["config_path"])
+    settings, structure = _source_literals(board_source, ("BOARDFAMILY", "BOOT_FDT_FILE", "OVERLAY_PREFIX"))
+    require(settings.get("BOARDFAMILY") == row["family"]
             and policy["family"] == row["family"] and row["architecture"] in ("arm32", "arm64"),
             "source_mapping", "板型、家族及驗證來源錯配")
+    if row["board"] in H618_PROFILES:
+        require(structure == policy["source_structure_sha256"]
+                and set(settings) == {"BOARDFAMILY", "BOOT_FDT_FILE", "OVERLAY_PREFIX"},
+                "source_mapping", "H618 來源有效設定缺漏或 shell 結構未知，須重新審閱")
+        targets, _ = _source_literals(board_source, ("KERNEL_TARGET",))
+        branch = re.fullmatch(r"[A-Za-z0-9_.+~]+-(current|edge)-sunxi64", evidence.manifest["kernel_release"])
+        require(branch is not None and branch[1] in targets.get("KERNEL_TARGET", "").split(","),
+                "source_mapping", "H618 核心分支不在已核對的有效 BOOTSCRIPT 與板型範圍")
     for field, expected in (("BOOT_FDT_FILE", policy["dtb"]), ("OVERLAY_PREFIX", policy["overlay_prefix"])):
-        values = re.findall(rf'^{field}="([^"]+)"$', board_source, re.M)
-        require(not values or values == [expected], "source_mapping", f"板型來源 {field} 與驗證設定不同")
+        require(field not in settings or settings[field] == expected,
+                "source_mapping", f"板型來源 {field} 與驗證設定不同")
     for source in row["config_sources"]:
-        evidence.source(source["path"])
+        blob = evidence.source(source["path"])
+        if row["board"] in H618_PROFILES and source["path"] not in (
+                row["config_path"], "config/sources/families/sun50iw9-bpi.conf"):
+            require(digest(blob)["sha256"] == source["sha256"],
+                    "source_mapping", "H618 引用來源已改動，不能推定設定仍有效")
     script = "boot-sunxi.cmd" if row["architecture"] == "arm32" else "boot-sun50i-next.cmd"
     script_path = "config/bootscripts/" + script
     original = evidence.source(script_path)
@@ -402,12 +482,22 @@ def _dtb(evidence, role, profile):
         require(size > 0 and start + size <= 1 << 64 and len(memreserve) < 1024,
                 "dtb_memreserve", "DTB 保留區長度無效、位址溢位或項目過多")
         memreserve.append({"start": start, "size": size})
-    children = evidence.run(["/usr/bin/fdtget", "-l", path, "/"]).decode().split()
-    for child in children:
-        if child.split("@", 1)[0] == "reserved-memory":
-            nested = evidence.run(["/usr/bin/fdtget", "-l", path, "/" + child]).decode().split()
-            require(not nested, "reserved_memory", "尚未實作 /reserved-memory 子節點，禁止忽略固定保留區或動態 CMA")
-    return {"model": model, "compatible": compatible, "memreserve": memreserve}
+    def get(node, prop=None, *, mode=None):
+        argv = ["/usr/bin/fdtget", "-" + mode] if mode else ["/usr/bin/fdtget", "-t", "bx"]
+        raw = evidence.run([*argv, path, node, *([] if prop is None else [prop])]).decode().split()
+        return raw if mode else bytes(int(value, 16) for value in raw)
+
+    def policy():
+        kernel_config = evidence.manifest["checks"].get("kernel_config")
+        require(kernel_config is not None, "kernel_config", "動態 CMA 缺少原配核心配置核對證據")
+        kernel = evidence.manifest["checks"].get("kernel", {})
+        require(kernel.get("kernel_config_verified") is True
+                and kernel.get("embedded_config", {}).get("sha256") == kernel_config["sha256"],
+                "kernel_config", "動態 CMA 必須由核心內嵌配置核對原配 config；僅版本相同不足以放行")
+        return cma.kernel_policy(kernel_config["values"], evidence.manifest["kernel_release"], kernel_config["sha256"])
+
+    reservations = cma.reserved_memory(get, get("/", mode="l"), policy)
+    return {"model": model, "compatible": compatible, "memreserve": memreserve, **reservations}
 
 
 def _bootargs(env, arch):
@@ -443,8 +533,12 @@ def _prepare(e, board, release):
                        ("boot_cmd", "/boot/boot.cmd"), ("boot_scr", "/boot/boot.scr"),
                        ("kernel", "/boot/" + ("zImage" if profile["arch"] == "arm32" else "Image")),
                        ("initrd", "/boot/uInitrd"), ("initrd_raw", f"/boot/initrd.img-{release}"),
+                       ("kernel_config", f"/boot/config-{release}"),
                        ("kernel_versioned", f"/boot/vmlinuz-{release}")):
-        blobs[role] = e.get(path, role, required=True, maximum=MAX_TEXT if role in ("release", "env", "boot_cmd", "boot_scr") else MAX_FILE)
+        maximum = 1024**2 if role == "kernel_config" else MAX_TEXT if role in ("release", "env", "boot_cmd", "boot_scr") else MAX_FILE
+        blobs[role] = e.get(path, role, required=True, maximum=maximum)
+    if blobs["kernel_config"] is not None:
+        e.check("kernel_config", lambda: cma.config_evidence(blobs["kernel_config"], profile["arch"]))
     custom = e.get("/boot/fixup.scr", "user_fixup", maximum=MAX_TEXT)
     if custom is not None:
         e.block("custom_fixup", "存在自訂 /boot/fixup.scr；保留證據但不執行、不省略")
@@ -468,7 +562,7 @@ def _prepare(e, board, release):
             e.check("release_identity", lambda: require(all(metadata.get(k) == v for k, v in expected.items()),
                                                         "release_identity", "armbian-release 板型、家族或組件架構不符"))
     if blobs["kernel"] is not None:
-        e.check("kernel", lambda: _kernel(blobs["kernel"], profile["arch"], release))
+        e.check("kernel", lambda: _kernel(blobs["kernel"], profile["arch"], release, blobs["kernel_config"]))
         e.check("kernel_alias", lambda: require(blobs["kernel"] == blobs["kernel_versioned"],
                                                "kernel_alias", "實際載入核心與指定版本檔案不同"))
     if blobs["initrd"] is not None:
@@ -532,8 +626,9 @@ def _prepare(e, board, release):
             require(hashlib.sha256(source).hexdigest() == sha and payload == source,
                     "fixup_unknown", "fixup 不符合已審閱來源，不執行任意腳本")
             require(not any(key.startswith("param_") for key in env), "fixup_parameter", "fixup 參數尚未實作")
-            require(prefix != "sun8i-h3" or "pwm" not in env.get("overlays", "").split(),
-                    "fixup_pwm", "H3 pwm fixup 會改寫 console，尚未實作此分支")
+            pwm = {"sun8i-h3": "pwm", "sun50i-h616": "pwm34"}.get(prefix)
+            require(pwm not in env.get("overlays", "").split(),
+                    "fixup_pwm", "此 PWM fixup 會改寫 console，尚未實作此分支")
             return {"mode": "verified_no_dtb_change", "source_sha256": sha, "executed": False}
         e.check("fixup", check_fixup)
     if legacy or not dtb_valid or any(role is None for role in overlays):
@@ -560,6 +655,7 @@ def prepare(read_file, *, board, kernel_release, output):
             "arguments", "必須提供唯讀介面、明確板型及完整核心版本")
     manifest = {"schema": SCHEMA, "board": board, "kernel_release": kernel_release,
                 "status": "blocked", "ready": False, "root_uuid": None, "hardware_validated": False,
+                "ddr_validated": False, "boot_chain_validated": False,
                 "source_image_verified": False, "files": {}, "sources": {}, "checks": {},
                 "reads": [], "commands": [], "blockers": [],
                 "scope": "僅原配組件離線準備；整張映像摘要與 symlink 安全由主代理核對，未授予部署、救援或實板資格"}
@@ -567,11 +663,11 @@ def prepare(read_file, *, board, kernel_release, output):
     try:
         try:
             _prepare(evidence, board, kernel_release)
-        except AllwinnerError as exc:
+        except (AllwinnerError, cma.CMAError) as exc:
             evidence.block(exc.code, str(exc))
         except Exception:
             evidence.block("preparation_failed", "準備遇到未完成的來源、讀取或解析條件；已擷取證據保留")
-        required = ("environment", "release_identity", "boot_source", "boot_scr", "kernel", "kernel_alias",
+        required = ("environment", "release_identity", "boot_source", "boot_scr", "kernel", "kernel_alias", "kernel_config",
                     "initrd_crc", "initrd_alias", "initramfs", "dtb", "overlay_application")
         if not all(key in manifest["checks"] for key in required):
             evidence.block("incomplete", "必要核對未完整通過，禁止產生可引導配置")
@@ -606,6 +702,40 @@ def _empty_marker(path):
     return digest(b"")
 
 
+def _verify_memory_evidence(manifest, artifact_root):
+    """重驗核心、原配配置與兩份 DTB，防止修改摘要與核對欄位繞過 CMA。"""
+    with safe.open_root(artifact_root) as root, tempfile.TemporaryDirectory(prefix="bpi-memory-") as temporary:
+        checked = {"files": {}, "commands": [], "checks": {}, "kernel_release": manifest["kernel_release"]}
+        evidence = _Evidence(Path(temporary) / "verify", None, checked)
+        kernel_config = None
+        try:
+            for role in ("kernel_config", "kernel", "dtb", "effective_dtb"):
+                require(role in manifest["files"], "memory_evidence", "記憶體核對缺少必要原配證據，須重新擷取")
+                record = manifest["files"][role]
+                actual, blob = safe.fingerprint(root, record["evidence_path"], limit=1024**2 if role == "kernel_config" else MAX_FILE, keep=True)
+                require(actual == {key: record[key] for key in ("bytes", "sha256")}, "evidence_changed", "記憶體來源證據已變動")
+                if role == "kernel_config":
+                    kernel_config = blob
+                    result = cma.config_evidence(blob, manifest["arch"])
+                    checked["checks"][role] = result
+                    require(result == manifest["checks"].get(role), "memory_evidence", "原配核心配置核對結果已變動")
+                elif role == "kernel":
+                    result = _kernel(blob, manifest["arch"], manifest["kernel_release"], kernel_config)
+                    checked["checks"][role] = result
+                    require(result == manifest["checks"].get(role), "memory_evidence", "核心格式／版本／內嵌配置核對結果已變動")
+                else:
+                    name = "files/" + role + ".dtb"
+                    evidence.save(name, blob)
+                    checked["files"][role] = {"evidence_path": name}
+                    result = _dtb(evidence, role, manifest["profile"])
+                    stage = "dtb" if role == "dtb" else "overlay_application"
+                    require(result == manifest["checks"].get(stage), "memory_evidence", "DTB 保留區／CMA 核對結果與原配證據不同")
+        except cma.CMAError as exc:
+            raise AllwinnerError(exc.code, str(exc)) from exc
+        finally:
+            os.close(evidence.fd)
+
+
 def build_uboot_config(manifest, *, template, artifact_root):
     """綁定外部已核定範本並執行共用雙重核對；只回傳配置，不接 UART。"""
     require(manifest.get("schema") == SCHEMA and manifest.get("status") == "prepared"
@@ -620,7 +750,9 @@ def build_uboot_config(manifest, *, template, artifact_root):
         else:
             actual, _ = uboot._read_regular(path, MAX_FILE)
         require(actual == {key: record[key] for key in ("bytes", "sha256")}, "evidence_changed", "原配組件證據已變動")
+    _verify_memory_evidence(manifest, artifact_root)
     config = copy.deepcopy(template)
+    cma_approval = config.pop("allwinner_cma", None)
     require(config.get("arch") == manifest["arch"] and config.get("kernel_release") == manifest["kernel_release"],
             "template_identity", "外部範本的架構或核心版本與組件不同")
     args = config.get("bootargs", [])
@@ -641,8 +773,10 @@ def build_uboot_config(manifest, *, template, artifact_root):
                                     bytes=record["bytes"], sha256=record["sha256"])
     config = uboot.validate_config(config)
     for stage in ("dtb", "overlay_application"):
-        reservations = manifest.get("checks", {}).get(stage, {}).get("memreserve")
-        require(type(reservations) is list, "dtb_memreserve", "缺少 DTB 保留區核對證據，須重新執行 snapshot replay")
+        checked = manifest.get("checks", {}).get(stage, {})
+        require(all(type(checked.get(key)) is list for key in ("memreserve", "reserved_memory", "dynamic_cma")),
+                "dtb_memreserve", "缺少 DTB 保留區／CMA 核對證據，須重新執行 snapshot replay")
+        reservations = checked["memreserve"] + checked["reserved_memory"]
         for span in reservations:
             require(type(span) is dict and set(span) == {"start", "size"}
                     and type(span["start"]) is int and type(span["size"]) is int
@@ -652,5 +786,14 @@ def build_uboot_config(manifest, *, template, artifact_root):
                         and span["start"] + span["size"] <= area["start"] + area["size"]
                         for area in config["ram"]["reserved"]),
                     "dtb_memreserve", f"{stage}：DTB 保留區未完整包含於外部已核定 ram.reserved")
+    requirements = manifest["checks"]["overlay_application"]["dynamic_cma"]
+    require("kernel_config" in manifest["files"] and "kernel_config" in manifest["checks"],
+            "kernel_config", "缺少原配核心配置證據，須重新擷取並重播")
+    try:
+        cma.validate(config, requirements, cma_approval,
+                     config_sha256=manifest["files"]["kernel_config"]["sha256"],
+                     dtb_sha256=manifest["files"]["effective_dtb"]["sha256"])
+    except cma.CMAError as exc:
+        raise AllwinnerError(exc.code, str(exc)) from exc
     uboot.validate_artifacts(config, artifact_root)
     return config

@@ -16,11 +16,41 @@ import zlib
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from tools import bpi_lab_allwinner as lab
+from tools import bpi_lab_image as image
 from tools import bpi_lab_uboot as uboot
 
 
 UUID = "12345678-1234-1234-1234-123456789abc"
 RELEASE = "6.18.49-current-sunxi"
+
+
+def kernel_config(arch="arm32"):
+    return (("CONFIG_ARM=y\n" if arch == "arm32" else "CONFIG_ARM64=y\n")
+            + 'CONFIG_CMA=y\nCONFIG_DMA_CMA=y\nCONFIG_OF_RESERVED_MEM=y\nCONFIG_CMDLINE=""\n'
+            + 'CONFIG_PAGE_SHIFT=12\nCONFIG_PAGE_BLOCK_MAX_ORDER=11\nCONFIG_ARCH_FORCE_MAX_ORDER=11\n'
+            + 'CONFIG_CMA_AREAS=7\nCONFIG_CMA_ALIGNMENT=8\n').encode()
+
+
+def kernel_image(arch, release, config, compression="gzip"):
+    kernel = bytearray(4096)
+    body = b"Linux version " + release.encode() + b" (BPI)\x00"
+    if config is not None:
+        body += b"IKCFG_ST" + gzip.compress(config, mtime=0) + b"IKCFG_ED"
+    if arch == "arm32":
+        body += bytes(4096)
+        kernel += gzip.compress(body, mtime=0) if compression == "gzip" else lzma.compress(body)
+        struct.pack_into("<3I", kernel, 36, 0x016f2818, 0, len(kernel))
+    else:
+        struct.pack_into("<3Q", kernel, 8, 0x80000, len(kernel), 8)
+        kernel[56:60] = b"ARM\x64"
+        kernel[128:128 + len(body)] = body
+    return bytes(kernel)
+
+
+def reserved_pool(*, size="0x6000000", extra="", ranges="alloc-ranges = <0x40000000 0x10000000>;", fixed=""):
+    return ('reserved-memory { #address-cells = <1>; #size-cells = <1>; ranges; '
+            + 'default-pool { compatible = "shared-dma-pool"; reusable; linux,cma-default; '
+            + f'size = <{size}>; {ranges} {extra}' + ' }; ' + fixed + ' };')
 
 
 def legacy(payload, *, script=False, arch="arm32", compression=None):
@@ -55,7 +85,7 @@ def dtc(source):
 def tree(policy, *, reservations="", children=""):
     compatible = ", ".join(json.dumps(v) for v in policy["compatible"])
     return dtc('/dts-v1/; ' + reservations + ' / { model = ' + json.dumps(policy["model"]) + "; compatible = " + compatible
-               + '; lab: lab-node { status = "disabled"; }; ' + children + ' };')
+               + '; #address-cells = <1>; #size-cells = <1>; lab: lab-node { status = "disabled"; }; ' + children + ' };')
 
 
 def overlay(value="okay"):
@@ -63,23 +93,19 @@ def overlay(value="okay"):
                + value + '"; }; }; };')
 
 
-def image_fixture(board="bpi-m1", compression="gzip"):
+def image_fixture(board="bpi-m1", compression="gzip", *, embedded_config=True):
     registry = json.loads((lab.ROOT / "docs/evidence/bpi-multiboard-lab-20260917/board-registry.json").read_text())
     row = next(row for row in registry["boards"] if row["board"] == board)
-    policy = json.loads((lab.ROOT / f"config/validation/bananapi-sunxi-{lab.POLICIES[board]}.json").read_text())["boards"][row["artifact_board"]]
+    if board in lab.H618_PROFILES:
+        policy = {**lab.H618_PROFILES[board], "overlay_prefix": "sun50i-h616",
+                  "dtb": "allwinner/" + lab.H618_PROFILES[board]["dtb"]}
+    else:
+        policy = json.loads((lab.ROOT / f"config/validation/bananapi-sunxi-{lab.POLICIES[board]}.json").read_text())["boards"][row["artifact_board"]]
     arch = row["architecture"]
     release = RELEASE + ("64" if arch == "arm64" else "")
     script = "boot-sunxi.cmd" if arch == "arm32" else "boot-sun50i-next.cmd"
     cmd = (lab.ROOT / "config/bootscripts" / script).read_bytes()
-    kernel = bytearray(4096)
-    body = b"Linux version " + release.encode() + b" (BPI)\x00" + bytes(4096)
-    if arch == "arm32":
-        kernel += gzip.compress(body, mtime=0) if compression == "gzip" else lzma.compress(body)
-        struct.pack_into("<3I", kernel, 36, 0x016f2818, 0, len(kernel))
-    else:
-        struct.pack_into("<3Q", kernel, 8, 0x80000, len(kernel), 8)
-        kernel[56:60] = b"ARM\x64"
-        kernel[128:128 + len(body[:128])] = body[:128]
+    kernel = kernel_image(arch, release, kernel_config(arch) if embedded_config else None, compression)
     archive = cpio([("init", b"BPI"), (f"usr/lib/modules/{release}/kernel/test.ko", b"BPI")])
     raw = gzip.compress(archive, mtime=0)
     env = {"rootdev": "UUID=" + UUID, "rootfstype": "ext4", "fdtfile": policy["dtb"],
@@ -93,6 +119,7 @@ def image_fixture(board="bpi-m1", compression="gzip"):
              "/boot/" + ("zImage" if arch == "arm32" else "Image"): bytes(kernel),
              f"/boot/vmlinuz-{release}": bytes(kernel), "/boot/uInitrd": legacy(raw, arch=arch),
              f"/boot/initrd.img-{release}": raw, "/boot/.next": b"",
+             f"/boot/config-{release}": kernel_config(arch),
              "/boot/dtb/" + policy["dtb"]: tree(policy)}
     if policy["overlay_prefix"] in lab.FIXUPS:
         folder = lab.FIXUPS[policy["overlay_prefix"]][0]
@@ -122,6 +149,23 @@ def external_template(manifest):
             "files": files, "fdt_extra": 65536,
             "bootargs": [s.replace("${partuuid}", "12345678-01").replace("${devtype}", "mmc")
                          for s in manifest["bootargs_template"]]}
+
+
+def cma_template(manifest):
+    """純合成空間配置；位於 M1 DT 的搜尋範圍，但不是實板核定值。"""
+    template = external_template(manifest)
+    for area in template["ram"]["banks"] + template["ram"]["reserved"] + [template["ram"]["kernel_work"], template["ram"]["boot"]]:
+        area["start"] -= 0x40000000
+    for item in template["files"].values():
+        item["address"] -= 0x40000000
+        if "entry" in item:
+            item["entry"] -= 0x40000000
+    template["allwinner_cma"] = {
+        "requirements": copy.deepcopy(manifest["checks"]["overlay_application"]["dynamic_cma"]),
+        "qualification_sha256": "c" * 64,
+        "kernel_config_sha256": manifest["files"]["kernel_config"]["sha256"],
+        "effective_dtb_sha256": manifest["files"]["effective_dtb"]["sha256"]}
+    return template
 
 
 class AllwinnerTests(unittest.TestCase):
@@ -162,7 +206,7 @@ class AllwinnerTests(unittest.TestCase):
         self.assertIn(code, [item["code"] for item in result["blockers"]], result["blockers"])
         return result
 
-    def test_all_thirteen_boards(self):
+    def test_all_sixteen_boards(self):
         for board in lab.POLICIES:
             with self.subTest(board=board):
                 self.files, self.row, self.policy, self.release = image_fixture(board)
@@ -175,10 +219,117 @@ class AllwinnerTests(unittest.TestCase):
     def test_source_artifact_board_alias(self):
         self.assertEqual(self.prepare("bananapi")["status"], "prepared")
 
-    def test_h618_and_unknown_board_rejected(self):
-        for board in ("bpi-m4z", "bananapim4zero", "bpi-r1", "m1"):
+    def test_unknown_board_rejected(self):
+        for board in ("bpi-r1", "m1", "bpi-m4", "0845"):
             with self.subTest(board=board):
                 self.blocked("board", board)
+
+    def test_h618_profiles_are_components_only_and_accept_artifact_alias(self):
+        for board in lab.H618_PROFILES:
+            with self.subTest(board=board):
+                self.files, self.row, self.policy, self.release = image_fixture(board)
+                manifest = self.prepare(self.row["artifact_board"])
+                self.assertEqual(manifest["status"], "prepared", manifest["blockers"])
+                self.assertEqual(manifest["profile"]["script"], "config/bootscripts/boot-sun50i-next.cmd")
+                self.assertEqual(manifest["profile"]["family"], "sun50iw9-bpi")
+                self.assertFalse(manifest["hardware_validated"])
+                self.assertFalse(manifest["ddr_validated"])
+                self.assertFalse(manifest["boot_chain_validated"])
+                self.assertNotIn("qualification_sha256", manifest)
+                self.assertEqual(manifest["checks"]["kernel"]["format"], "Image")
+                self.assertFalse(manifest["checks"]["fixup"]["executed"])
+
+    def test_h618_wrong_dtb_identity_and_fixup_pwm_rejected(self):
+        self.files, self.row, self.policy, self.release = image_fixture("bpi-m4z-emac")
+        path = "/boot/dtb/" + self.policy["dtb"]
+        original = self.files[path]
+        self.files[path] = tree(lab.H618_PROFILES["bpi-m4z"])
+        self.blocked("dtb_identity")
+        self.files[path] = original
+        self.env(overlays="pwm34")
+        self.files["/boot/dtb/allwinner/overlay/sun50i-h616-pwm34.dtbo"] = overlay()
+        self.blocked("fixup_pwm")
+
+    def test_h618_dts_source_change_is_not_silently_accepted(self):
+        self.files, self.row, self.policy, self.release = image_fixture("bpi-m4b")
+        source = lab._Evidence.source
+
+        def changed(evidence, path):
+            data = source(evidence, path)
+            return data + b"\n" if path.endswith("sun50i-h618-bananapi-m4-berry.dts") else data
+
+        with mock.patch.object(lab._Evidence, "source", new=changed):
+            self.blocked("source_mapping")
+
+    def test_h618_active_literals_accept_quote_forms(self):
+        for board in lab.H618_PROFILES:
+            for quote in ("'", '"', ""):
+                with self.subTest(board=board, quote=quote):
+                    evidence = mock.Mock()
+                    evidence.manifest = {"kernel_release": RELEASE + "64"}
+
+                    def source(path):
+                        blob = (lab.ROOT / path).read_bytes()
+                        if path.startswith("config/boards/") or path.endswith("sun50iw9-bpi.conf"):
+                            for field in ("BOARDFAMILY", "BOOT_FDT_FILE", "OVERLAY_PREFIX", "BOOTSCRIPT"):
+                                values, _ = lab._source_literals(blob, (field,))
+                                if field in values:
+                                    value = values[field].encode()
+                                    replacement = field.encode() + b"=" + quote.encode() + value + quote.encode()
+                                    for original in (b"'" + value + b"'", b'"' + value + b'"'):
+                                        blob = blob.replace(field.encode() + b"=" + original, replacement)
+                        return blob
+
+                    evidence.source.side_effect = source
+                    profile, _ = lab._profile(evidence, board)
+                    self.assertEqual(profile["board"], board)
+
+    def test_h618_inactive_ambiguous_and_wrong_board_sources_rejected(self):
+        family_path = "config/sources/families/sun50iw9-bpi.conf"
+        family = (lab.ROOT / family_path).read_bytes()
+        assignment = b"declare -g BOOTSCRIPT='boot-sun50i-next.cmd:boot.cmd'"
+        cases = [
+            (family_path, family.replace(assignment, b"# " + assignment)),
+            (family_path, family.replace(assignment, b"# " + assignment + b"\n\t\tBOOTSCRIPT='other.cmd:boot.cmd'")),
+            (family_path, family.replace(b"current | edge)", b"legacy)")),
+            (family_path, family.replace(assignment, b"if false; then\n" + assignment + b"\nfi")),
+            (family_path, family + b"\nBOOTSCRIPT='other.cmd:boot.cmd'\n"),
+            (family_path, family.replace(assignment, b"declare -g BOOTSCRIPT=\"${OTHER_SCRIPT}\"")),
+        ]
+        board_path = "config/boards/bananapim4zero.conf"
+        original = (lab.ROOT / board_path).read_bytes()
+        for field, value in (("BOOT_FDT_FILE", "sun50i-h618-bananapi-m4-zero.dtb"),
+                             ("BOARDFAMILY", "sun50iw9-bpi"), ("OVERLAY_PREFIX", "sun50i-h616")):
+            assignment = f'{field}="{value}"'.encode()
+            for changed in (f"{field}='wrong'", f"{field}=wrong", f"# {field}=\"{value}\"", "",
+                            f'{field}="${{OTHER}}"', f'{field}="{value}"; true',
+                            f"{field}='{value}'#wrong", f"{field}={value}#wrong",
+                            f'{field}="{value}"\n{field}=wrong',
+                            f'if false; then\n{field}="{value}"\nfi',
+                            f'function deferred() {{\n{field}="{value}"\n}}'):
+                cases.append((board_path, original.replace(assignment, changed.encode())))
+        for path, changed in cases:
+            with self.subTest(path=path, changed=changed):
+                evidence = mock.Mock()
+                evidence.manifest = {"kernel_release": RELEASE + "64"}
+                evidence.source.side_effect = lambda name: changed if name == path else (lab.ROOT / name).read_bytes()
+                with self.assertRaises(lab.AllwinnerError) as caught:
+                    lab._profile(evidence, "bpi-m4z")
+                self.assertEqual(caught.exception.code, "source_mapping")
+
+    def test_h618_only_accepts_active_supported_source_branches(self):
+        for board, branch, accepted in (("bpi-m4z", "edge", True), ("bpi-m4z", "legacy", False),
+                                        ("bpi-m4z", "vendor", False), ("bpi-m4z-emac", "edge", False)):
+            with self.subTest(board=board, branch=branch):
+                evidence = mock.Mock()
+                evidence.source.side_effect = lambda path: (lab.ROOT / path).read_bytes()
+                evidence.manifest = {"kernel_release": "6.18.49-" + branch + "-sunxi64"}
+                if accepted:
+                    self.assertEqual(lab._profile(evidence, board)[0]["board"], board)
+                else:
+                    with self.assertRaises(lab.AllwinnerError) as caught:
+                        lab._profile(evidence, board)
+                    self.assertEqual(caught.exception.code, "source_mapping")
 
     def test_xz_kernel_version(self):
         self.files, self.row, self.policy, self.release = image_fixture(compression="xz")
@@ -586,6 +737,271 @@ class AllwinnerTests(unittest.TestCase):
         result = self.blocked("reserved_memory")
         self.assertIn("effective_dtb", result["files"])
         self.assertTrue(any(c["argv"][0] == "/usr/bin/fdtoverlay" and c["returncode"] == 0 for c in result["commands"]))
+
+    def test_original_kernel_config_is_required_and_preserved(self):
+        path = f"/boot/config-{self.release}"
+        manifest = self.prepare()
+        self.assertIn(path, self.calls)
+        self.assertEqual(manifest["files"]["kernel_config"]["sha256"], lab.digest(self.files[path])["sha256"])
+        del self.files[path]
+        result = self.blocked("missing_file")
+        self.assertIn({"path": path, "status": "missing"}, result["reads"])
+
+    def test_snapshot_unqueried_config_is_failed_not_missing(self):
+        reader = object.__new__(image.SnapshotReader)
+        reader.original = {"files": {}}
+        reader.missing = set()
+        reader.check = lambda: None
+        path = f"/boot/config-{self.release}"
+        original = self.reader
+
+        def replay(name):
+            return reader.read_file(name) if name == path else original(name)
+
+        with mock.patch.object(self, "reader", side_effect=replay):
+            result = self.blocked("reader_failed")
+        self.assertIn({"path": path, "status": "failed"}, result["reads"])
+        self.assertNotIn({"path": path, "status": "missing"}, result["reads"])
+        self.assertNotIn("missing_file", [item["code"] for item in result["blockers"]])
+
+    def test_kernel_embedded_config_must_match_original_file(self):
+        config = kernel_config()
+        body = b"Linux version " + self.release.encode() + b"\0IKCFG_ST" + gzip.compress(config, mtime=0) + b"IKCFG_ED"
+        kernel = bytearray(4096) + gzip.compress(body, mtime=0)
+        struct.pack_into("<3I", kernel, 36, 0x016f2818, 0, len(kernel))
+        self.files["/boot/zImage"] = self.files[f"/boot/vmlinuz-{self.release}"] = bytes(kernel)
+        self.assertEqual(self.prepare()["checks"]["kernel"]["embedded_config"], lab.digest(config))
+        self.files[f"/boot/config-{self.release}"] += b"CONFIG_HIGHMEM=y\n"
+        self.blocked("kernel_config")
+
+    def test_shared_kernel_helper_without_config_is_explicitly_unverified(self):
+        config = kernel_config()
+        body = b"Linux version " + self.release.encode() + b"\0IKCFG_ST" + gzip.compress(config, mtime=0) + b"IKCFG_ED"
+        kernel = bytearray(4096) + gzip.compress(body, mtime=0)
+        struct.pack_into("<3I", kernel, 36, 0x016f2818, 0, len(kernel))
+        checked = lab._kernel(bytes(kernel), "arm32", self.release)
+        self.assertFalse(checked["kernel_config_verified"])
+        self.assertNotIn("embedded_config", checked)
+        self.assertTrue(lab._kernel(bytes(kernel), "arm32", self.release, config)["kernel_config_verified"])
+        raw = bytearray(4096)
+        struct.pack_into("<3Q", raw, 8, 0x80000, len(raw), 8)
+        raw[56:60] = b"ARM\x64"
+        raw[128:128 + len(body)] = body
+        self.assertFalse(lab._kernel(bytes(raw), "arm64", self.release)["kernel_config_verified"])
+        self.files["/boot/zImage"] = self.files[f"/boot/vmlinuz-{self.release}"] = bytes(kernel)
+        del self.files[f"/boot/config-{self.release}"]
+        self.blocked("missing_file")
+
+    def test_m1_dynamic_cma_without_alignment(self):
+        path = "/boot/dtb/" + self.policy["dtb"]
+        self.files[path] = tree(self.policy, children=reserved_pool())
+        manifest = self.prepare()
+        self.assertEqual(manifest["status"], "prepared", manifest["blockers"])
+        checked = manifest["checks"]["overlay_application"]
+        self.assertEqual(checked["reserved_memory"], [])
+        self.assertEqual(checked["memreserve"], [])
+        requirement, = checked["dynamic_cma"]
+        self.assertEqual(requirement["node"], "/reserved-memory/default-pool")
+        self.assertEqual(requirement["size"], 96 * 1024**2)
+        self.assertEqual(requirement["alignment"], 8 * 1024**2)
+        self.assertIsNone(requirement["declared_alignment"])
+        self.assertEqual(requirement["alloc_ranges"], [{"start": 0x40000000, "size": 0x10000000}])
+        template = cma_template(manifest)
+        before = copy.deepcopy(template)
+        config = lab.build_uboot_config(manifest, template=template, artifact_root=self.output)
+        self.assertEqual(template, before)
+        self.assertNotIn("allwinner_cma", config)
+        self.assertEqual(config["ram"], template["ram"])
+        self.assertEqual((self.output / "files/effective.dtb").read_bytes(), self.files[path])
+
+    def test_cma_approval_missing_stale_or_extra(self):
+        self.files["/boot/dtb/" + self.policy["dtb"]] = tree(self.policy, children=reserved_pool())
+        manifest = self.prepare()
+        template = cma_template(manifest)
+        for field in (None, "requirements", "qualification_sha256", "kernel_config_sha256", "effective_dtb_sha256"):
+            with self.subTest(field=field):
+                bad = copy.deepcopy(template)
+                if field is None:
+                    del bad["allwinner_cma"]
+                else:
+                    bad["allwinner_cma"][field] = [] if field == "requirements" else "x" * 64
+                with self.assertRaises(lab.AllwinnerError) as caught:
+                    lab.build_uboot_config(manifest, template=bad, artifact_root=self.output)
+                self.assertEqual(caught.exception.code, "cma_approval")
+        self.files["/boot/dtb/" + self.policy["dtb"]] = tree(self.policy)
+        manifest = self.prepare()
+        with self.assertRaises(lab.AllwinnerError) as caught:
+            lab.build_uboot_config(manifest, template=cma_template(manifest), artifact_root=self.output)
+        self.assertEqual(caught.exception.code, "cma_approval")
+
+    def test_cma_wrong_ram_family_and_full_range_reservation_rejected(self):
+        self.files["/boot/dtb/" + self.policy["dtb"]] = tree(self.policy, children=reserved_pool())
+        manifest = self.prepare()
+        bad = external_template(manifest)
+        bad["allwinner_cma"] = cma_template(manifest)["allwinner_cma"]
+        with self.assertRaises(lab.AllwinnerError) as caught:
+            lab.build_uboot_config(manifest, template=bad, artifact_root=self.output)
+        self.assertEqual(caught.exception.code, "cma_space")
+        bad = cma_template(manifest)
+        bad["ram"]["reserved"] = [{"start": 0x40000000, "size": 0x10000000}]
+        with self.assertRaises(uboot.UBootError):
+            lab.build_uboot_config(manifest, template=bad, artifact_root=self.output)
+
+    def test_cma_fixed_reservation_requires_full_coverage(self):
+        fixed = 'firmware@48000000 { reg = <0x48000000 0x2000>; no-map; };'
+        self.files["/boot/dtb/" + self.policy["dtb"]] = tree(self.policy, children=reserved_pool(fixed=fixed))
+        manifest = self.prepare()
+        self.assertEqual(manifest["status"], "prepared", manifest["blockers"])
+        template = cma_template(manifest)
+        lab.build_uboot_config(manifest, template=template, artifact_root=self.output)
+        template["ram"]["reserved"][0]["size"] = 0x1000
+        with self.assertRaisesRegex(lab.AllwinnerError, "ram.reserved"):
+            lab.build_uboot_config(manifest, template=template, artifact_root=self.output)
+
+    def test_cma_bootargs_cannot_override_kernel_semantics(self):
+        self.files["/boot/dtb/" + self.policy["dtb"]] = tree(self.policy, children=reserved_pool())
+        for arg in ("cma=0", "mem=256M", "memmap=16M@0x40000000", "crashkernel=64M", "movablecore=128M"):
+            with self.subTest(arg=arg):
+                self.env(extraargs=arg)
+                manifest = self.prepare()
+                self.assertEqual(manifest["status"], "prepared", manifest["blockers"])
+                with self.assertRaises(lab.AllwinnerError) as caught:
+                    lab.build_uboot_config(manifest, template=cma_template(manifest), artifact_root=self.output)
+                self.assertEqual(caught.exception.code, "cma_bootargs")
+
+    def test_cma_overlay_requirements_are_effective_not_original(self):
+        self.files["/boot/dtb/" + self.policy["dtb"]] = tree(self.policy, children=reserved_pool())
+        self.env(overlays="resize")
+        self.files["/boot/dtb/allwinner/overlay/sun7i-a20-resize.dtbo"] = dtc(
+            '/dts-v1/; /plugin/; / { fragment@0 { target-path = "/reserved-memory/default-pool"; '
+            '__overlay__ { size = <0x4000000>; }; }; };')
+        manifest = self.prepare()
+        self.assertEqual(manifest["status"], "prepared", manifest["blockers"])
+        template = cma_template(manifest)
+        lab.build_uboot_config(manifest, template=template, artifact_root=self.output)
+        template["allwinner_cma"]["requirements"] = manifest["checks"]["dtb"]["dynamic_cma"]
+        with self.assertRaises(lab.AllwinnerError) as caught:
+            lab.build_uboot_config(manifest, template=template, artifact_root=self.output)
+        self.assertEqual(caught.exception.code, "cma_approval")
+
+    def test_cma_unknown_kernel_features_and_missing_original_config_block(self):
+        self.files["/boot/dtb/" + self.policy["dtb"]] = tree(self.policy, children=reserved_pool())
+        path = f"/boot/config-{self.release}"
+        for before, after in ((b"CONFIG_CMA=y", b"CONFIG_CMA=n"),
+                              (b"CONFIG_DMA_CMA=y", b"CONFIG_DMA_CMA=n"),
+                              (b"CONFIG_PAGE_BLOCK_MAX_ORDER=11\n", b""),
+                              (b"CONFIG_CMDLINE=\"\"", b"CONFIG_CMDLINE=\"cma=0\"")):
+            with self.subTest(before=before):
+                self.files[path] = kernel_config().replace(before, after)
+                self.files["/boot/zImage"] = self.files[f"/boot/vmlinuz-{self.release}"] = kernel_image(
+                    "arm32", self.release, self.files[path])
+                self.blocked("cma_bootargs" if b"CMDLINE" in before else "cma_kernel")
+        del self.files[path]
+        self.blocked("kernel_config")
+
+    def test_cma_malformed_nodes_rejected(self):
+        path = "/boot/dtb/" + self.policy["dtb"]
+        cases = [(reserved_pool(extra="no-map;"), "reserved_memory"),
+                 (reserved_pool(extra="alignment = <3>;"), "cma_alignment"),
+                 (reserved_pool(size="0x6000001"), "cma_alignment"),
+                 (reserved_pool(extra="alignment = <0 0x800000>;"), "reserved_memory"),
+                 (reserved_pool(ranges="alloc-ranges = <0xf0000000 0x20000000>;"), "reserved_memory"),
+                 (reserved_pool(ranges="alloc-ranges;"), "reserved_memory"),
+                 (reserved_pool().replace("reusable;", "reusable = <1>;"), "reserved_memory"),
+                 (reserved_pool().replace("linux,cma-default;", ""), "reserved_memory"),
+                 (reserved_pool(extra='status = "disabled";'), "reserved_memory"),
+                 (reserved_pool(extra="reg = <0x40000000 0x6000000>;"), "reserved_memory"),
+                 (reserved_pool().replace("#address-cells = <1>", "#address-cells = <2>"), "reserved_memory")]
+        for children, code in cases:
+            with self.subTest(children=children):
+                self.files[path] = tree(self.policy, children=children)
+                self.blocked(code)
+
+    def test_cma_kernel_config_tamper_rejected(self):
+        self.files["/boot/dtb/" + self.policy["dtb"]] = tree(self.policy, children=reserved_pool())
+        manifest = self.prepare()
+        path = self.output / manifest["files"]["kernel_config"]["evidence_path"]
+        path.write_bytes(path.read_bytes().replace(b"ORDER=11", b"ORDER=10"))
+        with self.assertRaisesRegex(lab.AllwinnerError, "變動"):
+            lab.build_uboot_config(manifest, template=cma_template(manifest), artifact_root=self.output)
+
+    def test_cma_requires_embedded_config_for_prepare(self):
+        for board in ("bpi-m1", "bpi-m64"):
+            with self.subTest(board=board):
+                self.files, self.row, self.policy, self.release = image_fixture(board, embedded_config=False)
+                ordinary = self.prepare()
+                self.assertEqual(ordinary["status"], "prepared", ordinary["blockers"])
+                self.assertFalse(ordinary["checks"]["kernel"]["kernel_config_verified"])
+                lab.build_uboot_config(ordinary, template=external_template(ordinary), artifact_root=self.output)
+                self.files["/boot/dtb/" + self.policy["dtb"]] = tree(self.policy, children=reserved_pool())
+                result = self.blocked("kernel_config")
+                self.assertFalse(result["checks"]["kernel"]["kernel_config_verified"])
+
+    def test_cma_coordinated_config_and_manifest_forgery_rejected(self):
+        self.files["/boot/dtb/" + self.policy["dtb"]] = tree(self.policy, children=reserved_pool())
+        manifest = self.prepare()
+        original_kernel = manifest["files"]["kernel"]["sha256"]
+        config = kernel_config().replace(b"CONFIG_PAGE_BLOCK_MAX_ORDER=11", b"CONFIG_PAGE_BLOCK_MAX_ORDER=9")
+        record = manifest["files"]["kernel_config"]
+        (self.output / record["evidence_path"]).write_bytes(config)
+        record.update(lab.digest(config))
+        manifest["checks"]["kernel_config"] = lab.cma.config_evidence(config, "arm32")
+        manifest["checks"]["kernel"]["embedded_config"] = lab.digest(config)
+        for stage in ("dtb", "overlay_application"):
+            requirement = manifest["checks"][stage]["dynamic_cma"][0]
+            requirement["alignment"] = 2 * 1024**2
+            requirement["kernel"] = lab.cma.kernel_policy(
+                manifest["checks"]["kernel_config"]["values"], self.release, record["sha256"])
+        (self.output / "manifest.json").write_bytes(lab._json(manifest))
+        with self.assertRaises(lab.AllwinnerError) as caught:
+            lab.build_uboot_config(manifest, template=cma_template(manifest), artifact_root=self.output)
+        self.assertEqual(caught.exception.code, "kernel_config")
+        self.assertEqual(manifest["files"]["kernel"]["sha256"], original_kernel)
+
+    def test_cma_binding_rechecks_config_verification_and_kernel_version(self):
+        self.files["/boot/dtb/" + self.policy["dtb"]] = tree(self.policy, children=reserved_pool())
+        for release, embedded, forged_verified in ((self.release, None, True), (self.release, None, False),
+                                                   ("6.18.48-current-sunxi", kernel_config(), True)):
+            with self.subTest(release=release, embedded=embedded, forged_verified=forged_verified):
+                manifest = self.prepare()
+                kernel = kernel_image("arm32", release, embedded)
+                for role in ("kernel", "kernel_versioned"):
+                    record = manifest["files"][role]
+                    (self.output / record["evidence_path"]).write_bytes(kernel)
+                    record.update(lab.digest(kernel))
+                manifest["checks"]["kernel"] = lab._kernel(kernel, "arm32", release, kernel_config())
+                manifest["checks"]["kernel"]["kernel_release"] = self.release
+                manifest["checks"]["kernel"]["kernel_config_verified"] = forged_verified
+                (self.output / "manifest.json").write_bytes(lab._json(manifest))
+                with self.assertRaises(lab.AllwinnerError) as caught:
+                    lab.build_uboot_config(manifest, template=cma_template(manifest), artifact_root=self.output)
+                expected = "kernel_version" if release != self.release else "memory_evidence" if forged_verified else "kernel_config"
+                self.assertEqual(caught.exception.code, expected)
+
+    def test_cma_manifest_claims_are_reparsed_before_binding(self):
+        self.files["/boot/dtb/" + self.policy["dtb"]] = tree(self.policy, children=reserved_pool())
+        original = self.prepare()
+        for stage in ("dtb", "overlay_application", "kernel_config"):
+            with self.subTest(stage=stage):
+                manifest = copy.deepcopy(original)
+                if stage == "kernel_config":
+                    manifest["checks"][stage]["values"]["CONFIG_CMA"] = "n"
+                else:
+                    manifest["checks"][stage]["dynamic_cma"][0]["size"] = 0x800000
+                (self.output / "manifest.json").write_bytes(lab._json(manifest))
+                with self.assertRaises(lab.AllwinnerError) as caught:
+                    lab.build_uboot_config(manifest, template=cma_template(manifest), artifact_root=self.output)
+                self.assertEqual(caught.exception.code, "memory_evidence")
+
+    def test_old_manifest_missing_memory_fields_requires_replay(self):
+        original = self.prepare()
+        for key in ("memreserve", "reserved_memory", "dynamic_cma"):
+            with self.subTest(key=key):
+                manifest = copy.deepcopy(original)
+                del manifest["checks"]["dtb"][key]
+                (self.output / "manifest.json").write_bytes(lab._json(manifest))
+                with self.assertRaises(lab.AllwinnerError):
+                    lab.build_uboot_config(manifest, template=external_template(manifest), artifact_root=self.output)
 
 
 if __name__ == "__main__":
