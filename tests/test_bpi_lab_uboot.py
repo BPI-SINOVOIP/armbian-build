@@ -83,6 +83,26 @@ def fixture(arch="arm64", fmt=None, initrd="raw", source="mmc"):
     return config, blobs
 
 
+def memory_output(config, allocations=()):
+    lines = []
+    for index, span in enumerate(config["ram"]["banks"]):
+        lines.extend([f"DRAM bank = 0x{index:x}", f"-> start = 0x{span['start']:x}", f"-> size = 0x{span['size']:x}"])
+    lines.extend(["relocaddr = 0x43f00000", "sp start = 0x43e00000", "lmb_dump_all:"])
+    spans = [{**span, "flags": "no-overwrite"} for span in config["ram"]["reserved"]]
+    spans.extend({"start": address, "size": size, "flags": "none"} for address, size in allocations)
+    merged = []
+    for span in sorted(spans, key=lambda item: item["start"]):
+        if merged and merged[-1]["start"] + merged[-1]["size"] == span["start"] and merged[-1]["flags"] == span["flags"]:
+            merged[-1]["size"] += span["size"]
+        else:
+            merged.append(dict(span))
+    lines.append(f" reserved.count = 0x{len(merged):x}")
+    for index, span in enumerate(merged):
+        lines.append(f" reserved[{index}] [0x{span['start']:x}-0x{span['start'] + span['size'] - 1:x}], "
+                     f"0x{span['size']:x} bytes, flags: {span['flags']}")
+    return "\r\n".join(lines).encode() + b"\r\n"
+
+
 class Clock:
     def __init__(self):
         self.value = 0.0
@@ -100,6 +120,7 @@ class Channel:
         self.prompt = config["uboot"]["prompt"].encode()
         self.queue = deque([self.prompt])
         self.commands, self.writes, self.memory, self.env = [], [], {}, {}
+        self.allocations = {}
         self.overrides, self.failures = {}, set()
         self.echo_only, self.fragment, self.closed = False, False, False
         self.kernel_response = b"\r\nStarting kernel ...\r\n[ 0.000000] Linux version 6.6.1-test (test)\r\nlogin: "
@@ -142,15 +163,7 @@ class Channel:
         if command == "version":
             return self.config["uboot"]["version"].encode() + b"\r\n"
         if command == "bdinfo":
-            lines = []
-            for index, span in enumerate(self.config["ram"]["banks"]):
-                lines.extend([f"DRAM bank   = 0x{index:x}", f"-> start    = 0x{span['start']:x}", f"-> size     = 0x{span['size']:x}"])
-            lines.extend(["relocaddr = 0x43f00000", "sp start = 0x43e00000", "lmb_dump_all:",
-                          f" reserved.count = 0x{len(self.config['ram']['reserved']):x}"])
-            for index, span in enumerate(self.config["ram"]["reserved"]):
-                lines.append(f" reserved[{index}] [0x{span['start']:x}-0x{span['start'] + span['size'] - 1:x}], "
-                             f"0x{span['size']:x} bytes, flags: no-overwrite")
-            return "\r\n".join(lines).encode() + b"\r\n"
+            return memory_output(self.config, self.allocations.items())
         if parts[0] == "setenv":
             if len(parts) == 2:
                 self.env.pop(parts[1], None)
@@ -169,6 +182,7 @@ class Channel:
             if parts[0] == "load":
                 data = data[:int(parts[5], 16)]
             self.memory[address] = data
+            self.allocations[address] = len(data)
             self.env["filesize"] = f"{len(data):x}"
             return (f"{len(data)} bytes read in 10 ms (1 MiB/s)\r\n" if parts[0] == "load"
                     else f"Bytes transferred = {len(data)} ({len(data):x} hex)\r\n").encode()
@@ -247,8 +261,8 @@ class UBootTests(unittest.TestCase):
                         self.assertEqual(session.buffered, b"login: ")
                         self.assertFalse(channel.closed)
                         self.assertTrue(all(record["status"] == "verified" for record in records[:-1]))
-                        self.assertLess(max(i for i, cmd in enumerate(channel.commands) if cmd.startswith("load ")),
-                                        min(i for i, cmd in enumerate(channel.commands) if cmd.startswith("hash sha256") and not cmd.endswith(" 0")))
+                        self.assertLess(max(i for i, record in enumerate(records) if record["check"] == "length"),
+                                        min(i for i, record in enumerate(records) if record["check"] == "sha256"))
 
     def test_fragmented_rx_and_nondefault_prompt(self):
         config, blobs = fixture()
@@ -300,17 +314,168 @@ class UBootTests(unittest.TestCase):
 
     def test_tftp_allows_only_previous_loaded_nonprotected_lmb_spans(self):
         config, blobs = fixture(source="tftp")
-        def prepare(channel):
-            original = channel.response("bdinfo")
-            def reply():
-                count, lines = len(config["ram"]["reserved"]), []
-                for address, data in channel.memory.items():
-                    lines.append(f" reserved[{count}] [0x{address:x}-0x{address + len(data) - 1:x}], 0x{len(data):x} bytes, flags: none\r\n")
-                    count += 1
-                return original.replace(b"reserved.count = 0x4", f"reserved.count = 0x{count:x}".encode()) + "".join(lines).encode()
-            channel.overrides["bdinfo"] = reply
-        result, _, _, _ = self.run_fixture(config, blobs, prepare)
+        result, records, channel, _ = self.run_fixture(config, blobs)
         self.assertEqual(result["status"], "kernel-marker-observed")
+        self.assertEqual(channel.allocations, {item["address"]: item["bytes"] for item in config["files"].values()})
+        for index, record in enumerate(records):
+            if record["check"] == "memory":
+                hashed = {r["component"] for r in records[:index] if r["check"] == "load-sha256" and r["status"] == "verified"}
+                self.assertEqual(set(record.get("loaded", [])), hashed)
+
+    def test_all_sources_reject_incomplete_lmb_before_loading(self):
+        for source in ("mmc", "tftp"):
+            config, blobs = fixture(source=source)
+            original = memory_output(config)
+            count = len(config["ram"]["reserved"])
+            variants = [original.replace(f"reserved.count = 0x{count:x}".encode(), f"reserved.count = 0x{count + 1:x}".encode()),
+                        original.replace(b"reserved.count", b"unknown.count"),
+                        original + f" reserved.count = 0x{count:x}\r\n".encode(),
+                        original.replace(b"reserved[0]", b"reserved[1]"),
+                        original + b" reserved[99] truncated\r\n"]
+            for raw in variants:
+                with self.subTest(source=source, raw=raw):
+                    channel, records = self.assert_stopped(config, blobs, lambda ch: ch.overrides.update(bdinfo=raw))
+                    self.assertFalse(channel.memory)
+                    self.assertEqual(records[-1]["check"], "memory")
+
+    def test_lmb_strict_flags_indices_intervals_and_zero_format(self):
+        valid = b" reserved.count = 0x1\n reserved[0] [0-0xfff], 0x1000 bytes, flags: none\n"
+        self.assertEqual(uboot._lmb(valid, 32), [{"start": 0, "size": 4096, "flags": 0}])
+        self.assertEqual(uboot._lmb(b" reserved.count = 0\n", 64), [])
+        self.assertEqual(uboot._lmb(valid.replace(b"none", b"no-notify, no-overwrite, no-map"), 64)[0]["flags"], 14)
+        for flags in (b"no-overwrite, no-overwrite", b"none, no-map", b"unknown", b"0x4", b"invalid 0x1"):
+            with self.subTest(flags=flags), self.assertRaises(uboot.UBootError):
+                uboot._lmb(valid.replace(b"none", flags), 64)
+        for raw in (valid.replace(b"0xfff", b"0xffe"), valid.replace(b"0x1000 bytes", b"0 bytes"),
+                    valid.replace(b"reserved[0]", b"reserved[1]"),
+                    valid.replace(b"reserved.count = 0x1", b"reserved.count = 0x101"),
+                    valid.replace(b"0-0xfff", b"0xfffff000-0x100000fff").replace(b"0x1000 bytes", b"0x2000 bytes"),
+                    b"reserved.count = 0x2\nreserved[0] [0x1000-0x1fff], 0x1000 bytes, flags: none\n"
+                    b"reserved[1] [0x800-0x17ff], 0x1000 bytes, flags: none\n"):
+            with self.subTest(raw=raw), self.assertRaises(uboot.UBootError):
+                uboot._lmb(raw, 32)
+
+    def test_loaded_lmb_requires_exact_bytes_not_capacity(self):
+        for source in ("mmc", "tftp"):
+            for mode in ("missing", "extra-byte", "capacity", "partial", "shifted", "guard", "no-map"):
+                config, blobs = fixture(source=source)
+                kernel = config["files"]["kernel"]
+                def prepare(channel):
+                    def reply():
+                        rows = list(channel.allocations.items())
+                        if rows:
+                            if mode == "missing":
+                                rows.pop(0)
+                            elif mode == "extra-byte":
+                                rows[0] = (kernel["address"], kernel["bytes"] + 1)
+                            elif mode == "capacity":
+                                rows[0] = (kernel["address"], kernel["capacity"])
+                            elif mode == "partial":
+                                rows[0] = (kernel["address"], kernel["bytes"] - 1)
+                            elif mode == "shifted":
+                                rows[0] = (kernel["address"] + 1, kernel["bytes"])
+                        raw = memory_output(config, rows)
+                        if rows and mode in ("guard", "no-map"):
+                            raw = raw.replace(b"flags: none", b"flags: no-overwrite" if mode == "guard" else b"flags: no-map")
+                        return raw
+                    channel.overrides["bdinfo"] = reply
+                with self.subTest(source=source, mode=mode):
+                    channel, records = self.assert_stopped(config, blobs, prepare)
+                    self.assertEqual(len(channel.memory), 1)
+                    self.assertEqual(records[-1]["check"], "memory")
+                    self.assertTrue(any(r["check"] == "load-sha256" and r["status"] == "verified" for r in records))
+
+    def test_lmb_baseline_regions_cannot_disappear_change_or_grow(self):
+        for mode in ("missing", "flags", "grow", "new-region"):
+            config, blobs = fixture()
+            def prepare(channel):
+                def reply():
+                    changed = copy.deepcopy(config)
+                    if channel.allocations:
+                        if mode == "missing":
+                            changed["ram"]["reserved"] = []
+                        elif mode == "grow":
+                            changed["ram"]["reserved"][0]["size"] += 1
+                        elif mode == "new-region":
+                            changed["ram"]["reserved"].append({"start": 0x40000000, "size": 4096})
+                    raw = memory_output(changed, channel.allocations.items())
+                    return raw.replace(b"flags: no-overwrite", b"flags: none") if channel.allocations and mode == "flags" else raw
+                channel.overrides["bdinfo"] = reply
+            with self.subTest(mode=mode):
+                channel, records = self.assert_stopped(config, blobs, prepare)
+                self.assertEqual(len(channel.memory), 1)
+                self.assertEqual(records[-1]["check"], "memory")
+
+    def test_adjacent_same_flag_lmb_merges_without_gaps_or_mutation(self):
+        config, _ = fixture()
+        baseline = uboot._memory(memory_output(config), config)
+        original = copy.deepcopy(baseline)
+        kernel, initrd = (config["files"][role] for role in ("kernel", "initrd"))
+        initrd["address"] = kernel["address"] + kernel["bytes"]
+        merged = [(kernel["address"], kernel["bytes"] + initrd["bytes"])]
+        uboot._memory(memory_output(config, merged), config, ["kernel", "initrd"], initial_lmb=baseline)
+        self.assertEqual(baseline, original)
+        for extra in (-1, 1):
+            with self.subTest(extra=extra), self.assertRaises(uboot.UBootError):
+                uboot._memory(memory_output(config, [(merged[0][0], merged[0][1] + extra)]), config,
+                              ["kernel", "initrd"], initial_lmb=baseline)
+        initrd["address"] += 1
+        with self.assertRaises(uboot.UBootError):
+            uboot._memory(memory_output(config, [(merged[0][0], merged[0][1] + 1)]), config,
+                          ["kernel", "initrd"], initial_lmb=baseline)
+
+    def test_memory_step_metadata_cannot_replace_actual_sha_verification(self):
+        for skip in ("length", "filesize", "load-sha256"):
+            config, blobs = fixture()
+            session, channel, clock = self.session(config, blobs)
+            runner = uboot._Runner(session, config, [], 30, clock)
+            runner.at_prompt()
+            with self.subTest(skip=skip), self.assertRaises(uboot.UBootError):
+                for step in uboot._steps(config):
+                    if step["check"] != skip:
+                        runner.execute(step)
+            self.assertNotIn("kernel", runner.hashed)
+            self.assertFalse(any(cmd.startswith("booti ") for cmd in channel.commands))
+
+    def test_lmb_without_baseline_or_with_forged_loaded_names_is_rejected(self):
+        config, _ = fixture()
+        raw = memory_output(config)
+        for names in (["kernel"], ["kernel", "kernel"], ["unknown"], [None]):
+            with self.subTest(names=names), self.assertRaises(uboot.UBootError):
+                uboot._memory(raw, config, names)
+
+    def test_all_loads_still_precede_final_hashes_and_late_corruption_stops(self):
+        config, blobs = fixture()
+        def prepare(channel):
+            response = channel.response
+            def reply(command):
+                raw = response(command)
+                if command.startswith("load ") and len(channel.allocations) == 3:
+                    address = config["files"]["kernel"]["address"]
+                    channel.memory[address] = bytes(len(blobs["kernel"]))
+                return raw
+            channel.response = reply
+        _, records = self.assert_stopped(config, blobs, prepare)
+        self.assertEqual(records[-1]["check"], "sha256")
+        self.assertEqual(sum(r["check"] == "load-sha256" and r["status"] == "verified" for r in records), 3)
+
+    def test_last_memory_check_rejects_late_change_after_fdt_resize(self):
+        config, blobs = fixture()
+        def prepare(channel):
+            def reply():
+                raw = memory_output(config, channel.allocations.items())
+                return raw.replace(b"flags: no-overwrite", b"flags: none") if "bootargs" in channel.env else raw
+            channel.overrides["bdinfo"] = reply
+        channel, records = self.assert_stopped(config, blobs, prepare)
+        self.assertIn("bootargs", channel.env)
+        self.assertEqual(records[-1]["check"], "memory")
+
+    def test_gd_only_adapter_helper_does_not_claim_lmb_validation(self):
+        config, _ = fixture()
+        raw = b"\n".join(line for line in memory_output(config).splitlines() if not line.lstrip().startswith(b"reserved"))
+        uboot._memory_gd(raw, config)
+        with self.assertRaises(uboot.UBootError):
+            uboot._memory(raw, config)
 
     def test_decimal_mmc_dev_and_hex_partition_rendering(self):
         config, _ = fixture()

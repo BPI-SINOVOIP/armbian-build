@@ -252,8 +252,10 @@ class RuntimeTests(unittest.TestCase):
                 self.assertEqual(commands[-1], context["recipe"]["boot_command"])
                 self.assertIn("mmc dev 0 0", commands)
                 self.assertEqual(sum(cmd.startswith("mmc reg read cid") for cmd in commands), 8)
-                self.assertLess(max(i for i, cmd in enumerate(commands) if cmd.startswith("load ")),
-                                min(i for i, cmd in enumerate(commands) if cmd.startswith("hash sha256") and not cmd.endswith(" 0")))
+                self.assertLess(max(i for i, item in enumerate(records) if item["check"] == "length"),
+                                min(i for i, item in enumerate(records) if item["check"] == "sha256"))
+                self.assertEqual({item["component"] for item in records if item["check"] == "load-sha256"}, set(blobs))
+                self.assertEqual(sum(item["check"] == "length" for item in records), len(blobs))
                 self.assertTrue(all(record["status"] == "verified" for record in records[:-1]))
                 for command in commands:
                     self.assertNotRegex(command, r"saveenv|env save|bootcmd|boot_targets|mmc (write|erase|partconf)|sf |reset|fatwrite|ext4write")
@@ -323,7 +325,7 @@ class RuntimeTests(unittest.TestCase):
         config, context, blobs = self.configuration("bpi-ai2n")
         damaged = dict(blobs, codec=b"\x03" * len(blobs["codec"]))
         _, records = self.stopped(config, context, damaged, lambda _: None)
-        self.assertEqual(records[-1]["check"], "sha256")
+        self.assertEqual(records[-1]["check"], "load-sha256")
         self.assertEqual(records[-1]["component"], "codec")
         for data in (blobs["codec"][:-1], blobs["codec"] + b"\x00"):
             _, records = self.stopped(config, context, dict(blobs, codec=data), lambda _: None)

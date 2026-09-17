@@ -400,7 +400,7 @@
     },
     {
       "path": "tools/bpi_lab_uboot.py",
-      "sha256": "6a54a1908d6f1264e0c8ce4757dcf10301daeb59a00f7f850e526b2d8029df12"
+      "sha256": "c8f40fd8c41e98aa3cc09d7c1b590268a8e1d35e9f04d25b57f6d483900adb3e"
     }
   ],
   "boot_profiles": {

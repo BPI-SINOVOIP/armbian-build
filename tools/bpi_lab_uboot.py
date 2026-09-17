@@ -245,8 +245,10 @@ def _steps(config):
             command = f"tftpboot {address:x} {source['serverip']}:{item['path']}"
         add(command, "length", component=name)
         add("printenv filesize", "filesize", component=name)
+        add(f"hash sha256 {address:x} {item['bytes']:x}", "load-sha256", component=name)
         loaded.append(name)
-    # 最後一次載入之後才逐一核對，避免後續載入破壞先前已核對的內容。
+        add("bdinfo", "memory", loaded=list(loaded))
+    # 全部載入後再核對，避免後續載入破壞先前已核對的內容。
     for name, item in _items(config):
         add(f"hash sha256 {item['address']:x} {item['bytes']:x}", "sha256", component=name)
         add(f"md.b {item['address']:x} 40", "header", component=name)
@@ -264,6 +266,7 @@ def _steps(config):
     for key, value in settings.items():
         add(f"setenv {key} {value}")
         add(f"printenv {key}", "env", variable=key, value=value)
+    add("bdinfo", "memory", loaded=list(loaded))
     add(_boot_command(config), "kernel-marker")
     return steps
 
@@ -301,9 +304,10 @@ def _check_hash(output, address, size, digest):
             and found[3].lower() == digest, "RAM SHA-256 或雜湊範圍不符；不得改用 CRC")
 
 
-def _memory(output, config, loaded=()):
+def _memory_gd(output, config):
+    """只核對 DRAM／gd；專用適配器須另行完成完整 LMB 核對。"""
     lines = _lines(output)
-    banks, reserved, guards = [], [], []
+    banks = []
     bits = config["uboot"]["address_bits"]
     for index, line in enumerate(lines):
         if re.match(r"DRAM bank\s*=", line):
@@ -313,16 +317,6 @@ def _memory(output, config, loaded=()):
             size = re.fullmatch(r"-> size\s*=\s*(0x[0-9a-fA-F]+)", lines[index + 2])
             require(start is not None and size is not None, "bdinfo 缺少明確 RAM 起點／大小")
             banks.append(_span({"start": int(start[1], 16), "size": int(size[1], 16)}, bits))
-        if re.match(r"\s*reserved\[", line):
-            match = re.fullmatch(r"\s*reserved\[\d+\]\s+\[(0x[0-9a-fA-F]+)-(0x[0-9a-fA-F]+)\],\s*"
-                                 r"(0x[0-9a-fA-F]+) bytes,? flags: ([a-z0-9x, -]+)", line)
-            require(match is not None, "bdinfo 保留區格式未知")
-            span = _span({"start": int(match[1], 16), "size": int(match[3], 16)}, bits)
-            require(span["start"] + span["size"] - 1 == int(match[2], 16), "bdinfo 保留區長度矛盾")
-            reserved.append(span)
-            flags = match[4].split(", ")
-            if "no-overwrite" in flags or (_match(r"(?:0x)?[0-9a-f]+", match[4]) and int(match[4], 16) & 4):
-                guards.append(span)
     require(banks == config["ram"]["banks"], "bdinfo 與明示 RAM banks 不符；不推測地址")
     require(len([line for line in lines if re.match(r"\s*-> (start|size)\s*=", line)]) == 2 * len(banks),
             "bdinfo 有無法配對的 RAM 欄位")
@@ -339,17 +333,71 @@ def _memory(output, config, loaded=()):
                     size = int(_one(r"fdt_size\s*=\s*(0x[0-9a-fA-F]+)", output, "U-Boot DTB 大小")[1], 16)
                     require(size > 0, "U-Boot DTB 大小不得為零")
                 require(any(_contains(span, {"start": value, "size": size}) for span in declared), "U-Boot 動態工作區未受保留區保護")
-    footprints = [config["ram"]["kernel_work"]] + [_slot(item) for name, item in _items(config) if name != "kernel"]
-    # TFTP 會把已下載範圍記為可覆寫 LMB 配置；僅允許它完全落在明示載入區。
-    for span in reserved:
-        is_loaded = any(_contains(_slot(config["files"][name]), span) for name in loaded) and span not in guards
-        require(is_loaded or not any(_overlap(span, region) for region in footprints), "bdinfo 動態保留區與工作區重疊")
+
+
+def _lmb(output, bits):
+    """解析主線完整保留表；零值遵循 printf 的 %#x／%#llx 格式。"""
+    number = r"(?:0x[0-9a-fA-F]+|0)"
+    lines = _lines(output)
+    counts = [line for line in lines if re.match(r"\s*reserved\.", line)]
+    require(len(counts) == 1, "LMB 保留區數量缺少或重複")
+    count = re.fullmatch(r"\s*reserved\.(?:cnt|count)\s*=\s*(" + number + ")", counts[0])
+    require(count is not None and int(count[1], 16) <= 256, "LMB 保留區數量格式未知或超限")
+    result = []
+    flag_bits = {"none": 0, "no-map": 2, "no-overwrite": 4, "no-notify": 8}
+    for line in lines:
+        if not re.match(r"\s*reserved\b", line) or line == counts[0]:
+            continue
+        match = re.fullmatch(r"\s*reserved\[(\d+)\]\s+\[(" + number + ")-(" + number + r")\],\s*("
+                             + number + r") bytes,? flags: ([a-z, -]+)", line)
+        require(match is not None and int(match[1]) == len(result), "LMB 保留區索引或格式未知")
+        span = _span({"start": int(match[2], 16), "size": int(match[4], 16)}, bits)
+        require(span["start"] + span["size"] - 1 == int(match[3], 16), "LMB 保留區長度矛盾")
+        flags = match[5].split(", ")
+        require(len(set(flags)) == len(flags) and all(flag in flag_bits for flag in flags)
+                and ("none" not in flags or flags == ["none"]), "LMB 保留區旗標未知或矛盾")
+        require(not result or result[-1]["start"] + result[-1]["size"] <= span["start"],
+                "LMB 保留區未排序或重疊")
+        result.append({**span, "flags": sum(flag_bits[flag] for flag in flags)})
+    require(int(count[1], 16) == len(result), "LMB 保留區輸出不完整")
+    return result
+
+
+def _merge_lmb(spans):
+    """只合併同旗標且恰好相鄰的區間，不吞入間隙或重疊。"""
+    result = []
+    for span in sorted(spans, key=lambda item: item["start"]):
+        end = result[-1]["start"] + result[-1]["size"] if result else None
+        require(end is None or end <= span["start"], "LMB 預期區間重疊")
+        if end == span["start"] and result[-1]["flags"] == span["flags"]:
+            result[-1]["size"] += span["size"]
+        else:
+            result.append(dict(span))
+    return result
+
+
+def _memory(output, config, loaded=(), *, initial_lmb=None):
+    """核對完整 LMB；loaded 僅能由本次長度、filesize、SHA 核對後提供。"""
+    _memory_gd(output, config)
+    actual = _merge_lmb(_lmb(output, config["uboot"]["address_bits"]))
+    require(isinstance(loaded, (list, tuple)) and all(isinstance(name, str) for name in loaded)
+            and len(set(loaded)) == len(loaded)
+            and all(config["files"].get(name) is not None for name in loaded), "LMB 已核對載荷清單無效")
+    if initial_lmb is None:
+        require(not loaded, "LMB 載入核對缺少本次初始保留表")
+        footprints = [config["ram"]["kernel_work"]] + [_slot(item) for name, item in _items(config) if name != "kernel"]
+        require(not any(_overlap(span, region) for span in actual for region in footprints),
+                "bdinfo 動態保留區與工作區重疊")
+    else:
+        expected = initial_lmb + [{"start": config["files"][name]["address"],
+                                   "size": config["files"][name]["bytes"], "flags": 0} for name in loaded]
+        require(actual == _merge_lmb(expected), "LMB 與初始保留表及已核對實收範圍不同")
     if config["source"]["type"] == "tftp":
-        count = int(_one(r"\s*reserved\.(?:cnt|count)\s*=\s*(0x[0-9a-fA-F]+)", output, "LMB 保留區數量")[1], 16)
-        require(count == len(reserved), "LMB 保留區輸出不完整")
+        guards = [span for span in actual if span["flags"] & 4]
         for _, item in _items(config):
             guard = {"start": item["address"] + item["capacity"], "size": 65536}
             require(any(_contains(span, guard) for span in guards), "TFTP 防護區未以 LMB no-overwrite 實際保留")
+    return actual
 
 
 def _memory_bytes(output, address):
@@ -426,7 +474,7 @@ def _check(step, output, config):
         require(int(_one(r"Base Address: 0x([0-9a-fA-F]+)", output, "記憶體基址")[1], 16) == 0, "md.b 基址非零")
     elif check == "sha256-probe":
         _check_hash(output, config["files"]["kernel"]["address"], 0, hashlib.sha256(b"").hexdigest())
-    elif check == "sha256":
+    elif check in ("sha256", "load-sha256"):
         _check_hash(output, item["address"], item["bytes"], item["sha256"])
     elif check == "length":
         pattern = (r"([0-9]+) bytes read(?: in .*)?" if config["source"]["type"] == "mmc"
@@ -463,6 +511,8 @@ class _Runner:
         self.console, self.config, self.records = console, config, records
         self.clock, self.deadline = monotonic, monotonic() + timeout
         self.prompt = re.escape(config["uboot"]["prompt"].encode("ascii"))
+        self.initial_lmb = None
+        self.received, self.sized, self.hashed = set(), set(), set()
 
     def remaining(self):
         remaining = self.deadline - self.clock()
@@ -504,7 +554,23 @@ class _Runner:
                 record["output"] = found.before.decode("ascii", errors="replace")
                 require(found.groups == (b"OK",), "U-Boot 命令失敗，停止交接")
                 self.at_prompt()
-                _check(step, found.before, self.config)
+                check, name = step["check"], step.get("component")
+                if check == "memory":
+                    require(self.received == self.hashed, "LMB 核對前仍有未通過 SHA-256 的載荷")
+                    actual = _memory(found.before, self.config, sorted(self.hashed), initial_lmb=self.initial_lmb)
+                    if self.initial_lmb is None:
+                        self.initial_lmb = actual
+                else:
+                    _check(step, found.before, self.config)
+                    if check == "length":
+                        require(name not in self.received, "同次執行不得重載已核對組件")
+                        self.received.add(name)
+                    elif check == "filesize":
+                        require(name in self.received, "filesize 缺少本次實收長度核對")
+                        self.sized.add(name)
+                    elif check in ("sha256", "load-sha256"):
+                        require(name in self.sized, "SHA-256 缺少本次長度及 filesize 核對")
+                        self.hashed.add(name)
                 record["status"] = "verified"
         except (ValueError, OSError, TimeoutError) as exc:
             record["status"] = "failed"

@@ -45,9 +45,11 @@ runtime 最終只回傳 `status: kernel-marker-observed`、配置摘要、預期
 - `boot` 是已核定引導記憶體窗口，用來明確設定暫存 `bootm_low`、`bootm_size`、`bootm_mapsize`；所有組件與核心工作區須位於其中。
 - 檔案載入容量彼此及核心工作區不得重疊，也不能碰到保留區；位址加長度超過架構位寬即拒絕。
 
-runtime 核對 `relocaddr`、`sp start`；若 `bdinfo` 列出 `irq_sp`、`TLB addr`、`fdt_blob`、`new_fdt`，亦核對它們被明示保留區涵蓋。U-Boot DTB 須同時提供可解析的 `fdt_size`。遇到不明保留區與載入區重疊即停止。只有本次已核對完成的 TFTP 載入範圍，才可接受對應可覆寫 LMB 紀錄。
+runtime 核對 `relocaddr`、`sp start`；若 `bdinfo` 列出 `irq_sp`、`TLB addr`、`fdt_blob`、`new_fdt`，亦核對它們被明示保留區涵蓋。U-Boot DTB 須同時提供可解析的 `fdt_size`。MMC 與 TFTP 均要求完整 LMB 保留表：唯一 `reserved.count`（亦接受 `reserved.cnt`）、從零連續索引、明確起訖與長度、遞增且不重疊的區間；最多 256 列。缺列、重複、未知格式或位址溢位均阻擋。
 
-MMC 的 `source` 欄位固定為 `type: mmc`、`device`、`partition`、`partuuid`。裝置是明確整數，分割區必須大於零；`partuuid` 接受 DOS 或 GPT 形式。選擇 MMC 後，先獨立執行 `part uuid mmc 裝置:分割區` 並核對唯一完整行；失配、缺少或重複回應均不得載入。這綁定引導組件來源分割區，**不是根媒體 CID 證明**；克隆 PARTUUID 仍需上層站點身分防護。
+旗標只接受主線具名的 `none`、`no-map`、`no-overwrite`、`no-notify`；可組合非零旗標，但不得重複、混入 `none` 或使用未知數字旗標。初始表不得碰到工作區。之後每次核對都須等於本次初始表加上已通過實收長度、`filesize` 與完整 SHA-256 核對的載荷，且自身配置必須為 `LMB_NONE`。只使用原檔 `bytes`，不接受 `capacity`、部分範圍或額外位元組；同旗標且恰好相鄰的區間可合併，不跨越間隙。原始區間及旗標不得消失、增加或改變。每次載入核對後及最終交接前均重讀 `bdinfo`，不刪除或釋放 LMB。
+
+MMC 的 `source` 欄位固定為 `type: mmc`、`device`、`partition`、`partuuid`。裝置是明確整數，分割區必須大於零；`partuuid` 接受 DOS 或 GPT 形式。選擇 MMC 後，先獨立執行 `part uuid mmc 裝置:分割區` 並核對唯一完整行；失配、缺少或重複回應均不得載入。**本工具不提供 U-Boot 載入來源 CID 證明，也不是根媒體 CID 證明**：完整載荷 SHA-256 證明核對內容相同，不能辨識持有相同內容與克隆 PARTUUID 的卡片。上層 Linux 的雙媒體 CID 核對亦不等於載入前 CID 核對。本輪不擴增 CID ABI，不假定主線 `mmc reg read cid` 支援 SD。
 
 每次 MMC `load` 都顯式指定裝置、分割區、地址、路徑、最多 `bytes + 1` 位元組及零偏移。多讀一個位元組可辨識過長檔案，且仍受已核定容量保護。`mmc dev` 裝置數使用十進位，檔案系統來源的裝置及分割區使用十六進位，不混用。
 
@@ -85,7 +87,7 @@ DTB 格式固定為 `dtb`，地址須八位元組對齊。檔案 SHA-256 通過�
 
 先等待精確 prompt，再以新隨機標記包住每條內部生成命令；開始及結果標記皆須為完整行，原命令回顯不包含完整標記。每一步都等待回應核對與下一個 prompt，不能一次送完整清單。
 
-載入前以 SHA-256 空字串已知向量測試真正 `hash sha256` 支援。全部組件載入完成後才逐一核對精確起訖地址與 SHA-256、再讀標頭；不以 CRC32 替代。legacy 格式自身的標頭 CRC 檢查只是額外格式檢查，不是檔案 SHA-256 的替代品。
+載入前以 SHA-256 空字串已知向量測試真正 `hash sha256` 支援。每份組件先核對實收長度、`filesize` 及精確起訖範圍的 SHA-256，才納入自身 LMB 配置；runner 使用本次已驗證狀態，不把計畫中的 `loaded` 陣列當成證據。全部組件載入完成後，仍逐一重算 SHA-256 並讀標頭，避免後續載入破壞先前內容；不以 CRC32 替代。legacy 格式自身的標頭 CRC 檢查只是額外格式檢查，不是檔案 SHA-256 的替代品。
 
 最後才設定並讀回 bootargs 與引導窗口，送出一次 `bootz`／`booti`／`bootm`。`Starting kernel ...` 不算完成；須觀察到行首 Linux 版本標記且版本吻合。回到 U-Boot、錯誤版本、只有回顯、缺少標記或總期限到期都失敗，不登入 root，也不執行 smoke。
 
@@ -105,7 +107,17 @@ $PY -B -m unittest tests.test_bpi_lab_uboot tests.test_bpi_lab_console -q
 
 不指定 `--artifact-root` 時只驗證配置，輸出 `artifacts_verified: false`，不假裝重讀了組件。兩種 CLI 模式都輸出 `hardware_verified: false` 與 `executed: false`。機器可讀的 `config_sha256` 綁定正規化後的完整配置。
 
-本機回歸：新工具 35 項，加上既有 console 共 64 項通過。使用合成映像、受控時鐘與傳輸替身，runner／解析器／`ConsoleSession` 均為真正程式；涵蓋格式矩陣、MMC 身分、TFTP 防護、摘要、記憶體、分段 RX、失敗／期限及離線 CLI。合成地址不是板型建議值。
+初版回歸記錄：新工具 35 項，加上既有 console 共 64 項通過。使用合成映像、受控時鐘與傳輸替身，runner／解析器／`ConsoleSession` 均為真正程式；涵蓋格式矩陣、MMC 身分、TFTP 防護、摘要、記憶體、分段 RX、失敗／期限及離線 CLI。合成地址不是板型建議值。
+
+2026-09-18 限定修正的同組回歸共 74 項通過，新增完整 LMB、精確實收範圍、基準表變動、相鄰合併、略過 SHA、後續載入破壞內容與最終交接檢查。原反例「MMC 宣告兩列但只提供一列」及「TFTP 實收 4096 位元組卻宣告 4097 位元組／整個容量」均在核心交接前阻擋；沒有新增實板資格。
+
+### 專用適配器整合
+
+公開函式簽章與配置 schema 不變。內部 `_memory(output, config, loaded=(), *, initial_lmb=None)` 改為要求完整保留表，並回傳已正規化的 `{start, size, flags}` 陣列，`flags` 為主線位元遮罩。非空 `loaded` 必須有本次初始表且已核對長度及 SHA；獨立呼叫此純核對函式本身不會取得 UART 證據。
+
+自行解析 LMB 的原入口／special 適配器可使用 `_memory_gd(output, config)` 保留 DRAM 與 gd 檢查；此函式明確不核對 LMB，不能單獨作為載入安全證明。不得再將刪列後的殘缺保留表傳給嚴格 `_memory`。若保留剩餘 LMB 檢查，必須同步更新數量及索引，或將完整表與已驗證載荷交給共用核對。原入口若只檢查額外腳本／解壓區，不能逕改 gd-only 而遺漏剩餘 LMB 與核心工作區、initrd、DTB 容量的重疊檢查。
+
+`_steps` 新增 `load-sha256` 作為每份載荷的前置 LMB 證據；原本全部載入後的 `sha256` 步驟保留。衍生 runner／步驟轉換器不可把新增步驟當成最終韌體插入時點，也不可略過它後宣稱自身載荷已通過 LMB 核對。
 
 ## 依據與限制
 
@@ -114,3 +126,5 @@ $PY -B -m unittest tests.test_bpi_lab_uboot tests.test_bpi_lab_console -q
 命令及格式語意查核限官方來源：[load](https://docs.u-boot.org/en/latest/usage/cmd/load.html)、[bootz](https://docs.u-boot.org/en/latest/usage/cmd/bootz.html)、[booti](https://docs.u-boot.org/en/latest/usage/cmd/booti.html)、[bootm](https://docs.u-boot.org/en/latest/usage/cmd/bootm.html)、[bdinfo](https://docs.u-boot.org/en/latest/usage/cmd/bdinfo.html)。
 
 搬移與 TFTP 安全契約依固定版本原始碼核對：[ARM Image](https://github.com/u-boot/u-boot/blob/v2025.01/arch/arm/lib/image.c)、[RISC-V Image](https://github.com/u-boot/u-boot/blob/v2025.01/arch/riscv/lib/image.c)、[TFTP 接收](https://github.com/u-boot/u-boot/blob/v2025.01/net/tftp.c)、[LMB](https://github.com/u-boot/u-boot/blob/v2025.01/lib/lmb.c)、[LMB 屬性](https://github.com/u-boot/u-boot/blob/v2025.01/include/lmb.h)。這些上游語意不證明任何現場 vendor 建置已相容，資格缺失仍須阻擋。
+
+本輪 LMB 依據：[檔案載入依實際讀取長度配置](https://github.com/u-boot/u-boot/blob/v2025.01/fs/fs.c#L514)、[TFTP 逐區塊核對](https://github.com/u-boot/u-boot/blob/v2025.01/net/tftp.c#L143)、[`lmb_read_check` 呼叫配置函式](https://github.com/u-boot/u-boot/blob/v2025.01/include/lmb.h#L143)、[具名旗標與完整表輸出](https://github.com/u-boot/u-boot/blob/v2025.01/lib/lmb.c#L445)、[同旗標相鄰合併](https://github.com/u-boot/u-boot/blob/v2025.01/lib/lmb.c#L163)。CID 限制依據：[主線在 CID 分支之前拒絕 SD](https://github.com/u-boot/u-boot/blob/v2025.01/cmd/mmc.c#L1077)。

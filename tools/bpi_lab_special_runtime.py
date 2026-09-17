@@ -132,8 +132,7 @@ def _memory(output, context):
             for item in context["firmware"].values():
                 require(not uboot._overlap(span, uboot._slot(item)), "韌體載入區與即時 LMB 保留區重疊")
     # LMB 由上方逐項核對；共用解析只核對即時 gd／DRAM，避免把合法 load 配置誤認保護區。
-    gd_output = "\n".join(line for line in uboot._lines(output) if not re.match(r"\s*reserved\[", line)).encode()
-    uboot._memory(gd_output, core)
+    uboot._memory_gd(output, core)
     return actual
 
 
@@ -391,7 +390,7 @@ def bootconfig(artifact_root, *, template, kernel_placement="original"):
 def _vendor_memory(output, context):
     # 原 bdinfo 隱藏 Realtek relocation／stack；lab memory 直接輸出 gd 與 heap 原始值。
     core = context["core"]
-    uboot._memory(output, core)
+    uboot._memory_gd(output, core)
     for key in ("relocaddr", "sp start", "irq_sp", "TLB addr"):
         uboot._one(re.escape(key) + r"\s*=\s*(0x[0-9a-fA-F]+)", output, "原廠 bdinfo " + key)
     values = {key: int(uboot._one(key + r"\s*=\s*(0x[0-9a-fA-F]+)", output, key)[1], 16)
@@ -757,6 +756,8 @@ def _steps(context):
                                 f"{item['address']:x} {item['path']} {item['bytes'] + 1:x} 0",
                      "check": "length", "component": role},
                     {"command": "printenv filesize", "check": "filesize", "component": role},
+                    {"command": f"hash sha256 {item['address']:x} {item['bytes']:x}",
+                     "check": "load-sha256", "component": role},
                 ])
             steps.append({"command": "bdinfo", "check": "special-memory"})
             for role, item in firmware.items():
@@ -791,10 +792,10 @@ class _Runner(uboot._Runner):
         try:
             super().execute(wire_step)
             if not custom:
-                if step["check"] == "length" and not self.context.get("vendor_lab"):
+                if step["check"] in ("sha256", "load-sha256") and not self.context.get("vendor_lab"):
                     loaded = self.context.setdefault("loaded", [])
-                    require(step["component"] not in loaded, "同次執行不得重載已核對組件")
-                    loaded.append(step["component"])
+                    if step["component"] not in loaded:
+                        loaded.append(step["component"])
                 return
             record = self.records[-1]
             record["check"] = step["check"]

@@ -146,6 +146,12 @@ Realtek 額外要求 `root_label_scope_approved`，以及 `vendor_build` 中的
 多一個位元組、漏項、未知區域、變成 `no-overwrite` 或初始保護區變更均拒絕。
 此行為依已讀主線 `fs/fs.c:fs_read_lmb_check` 與 `lib/lmb.c`，假 UART 亦實際新增載入項目。
 vendor 的舊 `fs_read` 不走這套主線全域 LMB；其假回應不再捏造 LMB 表，改核對實際 gd／heap。
+
+共用 runner 補強後，每次載入另有 `load-sha256`，成功後才將精確範圍加入自身 LMB 清單；
+AI2N 額外韌體也遵守此順序。全部載入後的 `sha256` 仍保留，不能以早期摘要取代最終核對，
+也不因新增步驟重複載入韌體。專用模組自行完整核對 LMB，再呼叫 `_memory_gd` 核對 DRAM／gd；
+Realtek 無主線 LMB 的路徑只使用 gd helper，保留自身完整 monitor／heap 保護。
+本次 U-Boot、console 與 special runtime 整合 103 項通過，沒有操作實板。
 FDT 只宣稱擴充前原檔摘要相等；不宣稱擴充後或核心修補後的 DTB 全內容仍相同。
 
 `observed_ram_hashes` 只來自同次 UART 成功回報，核對起訖位址、完整長度及 SHA-256，
