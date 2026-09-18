@@ -43,7 +43,7 @@ ARM32 為 16 款、ARM64 為 26 款、RISC-V 為 3 款。
 | SpacemiT K3 | SM10 原廠 SDK 真編譯、原入口與 SD RAM 救援、正式五階段接線 | FSBL／ESOS／SBI、簽署及安全鏈仍需實體資格 |
 | 無 eMMC 板 | 固定 SD 加 USB／NVMe、完整備份、明示重用及歸零、回讀、首次核定 | 首版限 512-byte MBR 主分割／ext 根／已核定 mainline U-Boot |
 | 客戶系統交接 | 固定 SD 暫時唯讀、根身分、有限末分割增長、同次 UART／SSH、授權公鑰安裝 | 不抵抗任意 root 程式，非整個原生開機鏈證明 |
-| 執行環境 | ARM32／ARM64／RISC-V 封裝介面、原生救援建置、真 AArch64 QEMU 探測 | 本輪未做真 ARM32／RISC-V 使用者空間探測或板級啟動 |
+| 執行環境 | ARM32／ARM64／RISC-V 封裝介面、原生救援建置，三架構均有真 QEMU 使用者空間探測 | 僅覆蓋明列來源組合，未做板級啟動，不等同各 OS 均通過 |
 
 外部媒體操作文件為[媒體契約](bananapi-lab-external-media-20260918.md)、
 [根保護及 Python 封裝](bananapi-lab-external-root-20260918.md)、
@@ -77,6 +77,11 @@ ARM32 為 16 款、ARM64 為 26 款、RISC-V 為 3 款。
 
 分工期間已有限定獨立審查；本次收尾修正與整合由主代理核對，沒有宣稱最後每一筆變更
 都另經第二位審查者複審。單元模型、真組件重播、使用者空間模擬器與實板證據分開保存。
+
+續作 E1／E2 已補上 ARM32 與 RISC-V 各四項真實 QEMU 探測，快取擷取新增 14 項回歸。
+詳見[跨架構實證及使用方法](bananapi-lab-runtime-cache-20260918.md)。上表及
+`delivery-final.json` 保留 C／D 完成時的快照；新證據不覆蓋前輪失敗或冒充實板通過。
+E3 的 20 筆資料阻擋逐份核對仍在進行，完成後另附重審與續作結果。
 
 ## 固定測試流程
 

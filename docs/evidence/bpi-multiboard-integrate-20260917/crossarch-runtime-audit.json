@@ -1,0 +1,158 @@
+{
+  "schema": "bpi-lab-crossarch-runtime-audit-v1",
+  "date": "2026-09-18",
+  "scope": "計畫 E1／E2 的真使用者空間執行；不是核心或實板驗證。",
+  "hardware_validated": false,
+  "source_images_modified": false,
+  "rows": [
+    {
+      "architecture": "arm",
+      "cache_extraction": {
+        "path": "output/evidence/bpi-crossarch-runtime-20260918/arm-source-004/cache-extraction.json",
+        "sha256": "258e9b7c359c3bf12c121c1fad879842f0d7881bb5a7f2c90360dc827b405e48"
+      },
+      "bundle_build": {
+        "path": "output/evidence/bpi-crossarch-runtime-20260918/arm-bundle-004/bundle-build.json",
+        "sha256": "2ddc08591d7d6297531cb1b68734a0570e8c465125015b9c44b044dbcb3b7c4c"
+      },
+      "runtime_probe": {
+        "path": "output/evidence/bpi-crossarch-runtime-20260918/arm-bundle-004/runtime-probe.json",
+        "sha256": "3552801af13061f1a8b733ac54313a7a165c47188e9766018fc03b35e299b52e"
+      },
+      "cache_source": {
+        "path": "/media/pi/SMCI/armbian/bpi-v26.2.1-bananapi-optimize/cache/rootfs/rootfs-armhf-bookworm-xfce-desktop-mid_202609-3d086b0dff78-H6eccde-B2ce65e.tar.zst",
+        "sha256": "66e353d717ebb505c30a1272f71119a3eeb7b5be0a84264926979be766acc71d"
+      },
+      "original_initrd": {
+        "path": "/media/pi/SMCI/armbian/bpi-v26.2.1-m4zero-sram-supervisor-plan/output/evidence/bpi-multiboard-integrate-20260917-m1-002-replay/extraction/file-0006.bin",
+        "sha256": "55eeeafc03d7497362a0ec913bbed1ac27572c81032a14ca8b55444231c2e8ca"
+      },
+      "runtime_source": {
+        "path": "/media/pi/SMCI/armbian/bpi-v26.2.1-m4zero-sram-supervisor-plan/output/evidence/bpi-crossarch-runtime-20260918/arm-source-004/runtime-source.cpio",
+        "sha256": "4e3621b6f4120840dbbbd0b32b99fec9882553e72431e26aeb5e90f70a7ec0ce"
+      },
+      "runtime_archive": {
+        "path": "/media/pi/SMCI/armbian/bpi-v26.2.1-m4zero-sram-supervisor-plan/output/evidence/bpi-crossarch-runtime-20260918/arm-bundle-004/runtime.cpio",
+        "sha256": "7dc38ca96542d04dfc08b59fc6e837f8c068ae6c7ff77f7640ffb0f380aad2da"
+      },
+      "source_dependency_count": 75,
+      "merged_dependency_count": 79,
+      "retained_original_dependency_count": 12,
+      "python": {
+        "imports": "complete",
+        "machine": "armv7l",
+        "python_major": 3
+      },
+      "emulator": {
+        "path": "/media/pi/SMCI/armbian/bpi-v26.2.1-m4zero-sram-supervisor-plan/output/evidence/bpi-crossarch-runtime-20260918/emulators/qemu-arm-static",
+        "sha256": "0d9404b1fcb9a68a3ad313773b8347207b6a0014233297eb449294917c1f7f6b"
+      },
+      "runtime_executed": true,
+      "hardware_validated": false
+    },
+    {
+      "architecture": "riscv64",
+      "cache_extraction": {
+        "path": "output/evidence/bpi-crossarch-runtime-20260918/riscv64-source-003/cache-extraction.json",
+        "sha256": "a13f1a778c35e4efd65499d590c4ac3ecd8e49759320e0ed8ca1ae0b368687c5"
+      },
+      "bundle_build": {
+        "path": "output/evidence/bpi-crossarch-runtime-20260918/riscv64-bundle-001/bundle-build.json",
+        "sha256": "f6e4c33f32c9a92c3f2759516d427c1c256a3c50608f1d423a042e88916104a8"
+      },
+      "runtime_probe": {
+        "path": "output/evidence/bpi-crossarch-runtime-20260918/riscv64-bundle-001/runtime-probe.json",
+        "sha256": "7dcb47e1796cfb9ebcb509d70ee67a0d0b4caed6747dd611a4c5dfe122f3fd87"
+      },
+      "cache_source": {
+        "path": "/media/pi/SMCI/armbian/bpi-v26.2.1-bananapi-optimize/cache/rootfs/rootfs-riscv64-jammy-xfce-desktop-mid_202609-2960c290b912-H6eccde-B2ce65e.tar.zst",
+        "sha256": "a8ff6dbab4dce5b9a6daf6909cfe2c9e50772b069e1e74b8a24e1656dd4d2252"
+      },
+      "original_initrd": {
+        "path": "/media/pi/SMCI/armbian/bpi-v26.2.1-m4zero-sram-supervisor-plan/output/evidence/bpi-multiboard-integrate-20260917-f3-002-replay/extraction/file-0005.bin",
+        "sha256": "b9cb584c7b94ff92f1988f837a818bd55b3efa69d60492a6ec966c3fc5fad20e"
+      },
+      "runtime_source": {
+        "path": "/media/pi/SMCI/armbian/bpi-v26.2.1-m4zero-sram-supervisor-plan/output/evidence/bpi-crossarch-runtime-20260918/riscv64-source-003/runtime-source.cpio",
+        "sha256": "98b0027cad9302203d65e2e11b7bd35969debccfa5a296facd32997a1016d5f1"
+      },
+      "runtime_archive": {
+        "path": "/media/pi/SMCI/armbian/bpi-v26.2.1-m4zero-sram-supervisor-plan/output/evidence/bpi-crossarch-runtime-20260918/riscv64-bundle-001/runtime.cpio",
+        "sha256": "f552a3984d3ff731e6a7107ea5fa7b2a171dd31345c6054c196728c7e11d443a"
+      },
+      "source_dependency_count": 77,
+      "merged_dependency_count": 80,
+      "retained_original_dependency_count": 11,
+      "python": {
+        "imports": "complete",
+        "machine": "riscv64",
+        "python_major": 3
+      },
+      "emulator": {
+        "path": "/media/pi/SMCI/armbian/bpi-v26.2.1-m4zero-sram-supervisor-plan/output/evidence/bpi-crossarch-runtime-20260918/emulators/qemu-riscv64-static",
+        "sha256": "22b27d588f877089b5992af0c8a87251250656157d7df3695a2b92f7b621260a"
+      },
+      "runtime_executed": true,
+      "hardware_validated": false
+    }
+  ],
+  "builder": {
+    "path": "tools/bpi_lab_runtime_cache.py",
+    "sha256": "03dd735d703b0584759ab865f31fc0625ac3ba44f27c4e099425fb16dffd5457"
+  },
+  "unit_tests": {
+    "tests": 14,
+    "exit_code": 0,
+    "log": {
+      "path": "output/evidence/bpi-crossarch-runtime-20260918/cache-tests.log",
+      "sha256": "be4089726286c7ca36d1d1279bff50f768fe1c6fcf19e003bf98e5f7017414d8"
+    }
+  },
+  "previous_arm64": {
+    "path": "docs/evidence/bpi-multiboard-integrate-20260917/external-runtime-audit.json",
+    "sha256": "9b372e4038e2a30d324e26c6086dd39d292ac119c7085329f80c2b183438ed61"
+  },
+  "retained_failures": [
+    {
+      "log": {
+        "path": "output/evidence/bpi-crossarch-runtime-20260918/arm-cache-001.log",
+        "sha256": "01ecde6ea8156090af45e662028d7998d38158c73d8990fb72e08ae7ea1f8a3f"
+      },
+      "reason": "最初快取擷取拒絕超出範圍的連結；後續明示排除 sitecustomize 等主機自訂項。"
+    },
+    {
+      "log": {
+        "path": "output/evidence/bpi-crossarch-runtime-20260918/riscv64-cache-001.log",
+        "sha256": "9bbab35de7f0f69c41ce83cf619c7af3774486ca562e6bad92609b03aa57d6d8"
+      },
+      "reason": "開發用 config 目錄含未支援的上層連結；後續明示排除此非執行用途的建置資料。"
+    },
+    {
+      "log": {
+        "path": "output/evidence/bpi-crossarch-runtime-20260918/arm-probe-001.log",
+        "sha256": "cf8edb1c686336db93a6ba493cb02f87ab110670a4bc1a5fd6359185dd8afdbb"
+      },
+      "reason": "QEMU 6.2 初始 shell 失敗，不產生成功收據。"
+    },
+    {
+      "log": {
+        "path": "output/evidence/bpi-crossarch-runtime-20260918/arm-probe-002.log",
+        "sha256": "cf8edb1c686336db93a6ba493cb02f87ab110670a4bc1a5fd6359185dd8afdbb"
+      },
+      "reason": "QEMU 6.2 指定位址偏移仍失敗，不產生成功收據。"
+    },
+    {
+      "log": {
+        "path": "output/evidence/bpi-crossarch-runtime-20260918/arm-diagnostic-001.log",
+        "sha256": "1032c0f4b8dbc5b045bf56bb4c51970efb64101fc385e0902f0db90d84d111b0"
+      },
+      "reason": "診斷保留真 subprocess 的 SIGSEGV；不是正式通過收據。"
+    }
+  ],
+  "review": "兩輪限定審查發現的 tar 延伸標頭、稀疏映射及連結閉包問題已修正；最終只讀複審無新高訊號問題。",
+  "limits": [
+    "僅驗證所列原配 initrd、可信快取及固定 QEMU 組合；不代表全部 OS 或 444 套映像。",
+    "擷取產物不包含核心、DTB、模組、網路或可冷啟動救援入口。",
+    "ARM32 與 RISC-V 使用本機既有 QEMU 8.2.2 的位元組相同副本，未安裝或更換系統模擬器。"
+  ]
+}

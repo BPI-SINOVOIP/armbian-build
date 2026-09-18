@@ -184,7 +184,8 @@ Ruff 入口已實際核對：指定 venv 的 `python -m ruff --version` 與 `/ho
 其中 `bundle-build.json` 的 `runtime_executed=false` 只代表封裝步驟，
 真正執行結果另在 `runtime-probe.json`，不得混淆。
 
-ARM32、RISC-V 的封裝介面及 ELF 拒絕規則已實作，但本次沒有宣稱真實目標 runtime 探測通過。
+續作 E 已完成 ARM32 與 RISC-V 的真實目標 runtime 探測，使用本機固定快取與原配 initrd，
+四項探測均通過；來源、命令與受限擷取規則見[跨架構實證](bananapi-lab-runtime-cache-20260918.md)。
 每個實站仍須使用自己的可信救援來源、對應核心驅動及固定摘要，不能借用 AArch64 證據。
 本輪未上板、未修改原始 XZ、未更動固定 SD／外部實體媒體、未執行硬體資格循環。
 
