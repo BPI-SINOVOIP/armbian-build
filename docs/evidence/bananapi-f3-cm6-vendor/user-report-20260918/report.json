@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "report_date": "2026-09-18",
+  "status": "reported_real_tool_failure",
+  "board_reported": "bpi-cm6",
+  "tool": "SpacemiT Titan",
+  "tool_version": null,
+  "exact_tested_zip_sha256": null,
+  "evidence": [
+    {
+      "file": "titan-flash-error-code-20014.jpg",
+      "role": "失敗畫面",
+      "sha256": "b6cf53f148213e92d5674a9706341108276fb28df7a86be731b6d1aa887e2b56",
+      "size": 110637
+    },
+    {
+      "file": "titan-selected-package.jpg",
+      "role": "正確操作與選檔參考畫面",
+      "sha256": "7ddb3da347ab2d5b0deed4cc8c9f4379977e3fdbad6b6137aa4f7b05c53247f7",
+      "size": 99660
+    }
+  ],
+  "observed": {
+    "code": 20014,
+    "partition_candidates": [
+      "partition_universal.json"
+    ],
+    "matched_partition": null,
+    "flashing_result": "failed"
+  },
+  "reference_image_is_failure": false,
+  "reference_image_is_successful_flash_proof": false,
+  "unknown": [
+    "Titan 確切版本",
+    "完整燒錄日誌",
+    "實際選取 ZIP 的完整檔名與雜湊",
+    "F3 是否已實測"
+  ],
+  "scope": "CM6 有使用者實際失敗回報；F3 共用同一封裝設定，先撤回待查；SD 未取得此失敗或成功證據。"
+}

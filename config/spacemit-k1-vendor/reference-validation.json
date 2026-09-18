@@ -1,0 +1,77 @@
+{
+  "schema_version": 1,
+  "status": "通過唯讀結構與內容檢查，尚未進行燒錄或實機開機",
+  "reference_image": "/media/pi/SMCI/bpi/f3-cm6-vendor-20260916/reference/cm6-bianbu-v2.3.img",
+  "checks": [
+    {
+      "component": "factory/bootinfo_sd.bin",
+      "offset_bytes": 0,
+      "size_bytes": 80,
+      "partition_limit_bytes": 80,
+      "sd_image_content_match": true,
+      "sha256": "f339e3e576ce94d7812c2887622c5882ae12ac3c9a98059aef37741850a43cb6"
+    },
+    {
+      "component": "factory/FSBL.bin",
+      "offset_bytes": 131072,
+      "size_bytes": 191808,
+      "partition_limit_bytes": 262144,
+      "sd_image_content_match": true,
+      "sha256": "896e236da5c5208bda9d75e2927ddeff814cbe504d96f529fcc27f1c30c360a6"
+    },
+    {
+      "component": "env.bin",
+      "offset_bytes": 393216,
+      "size_bytes": 16384,
+      "partition_limit_bytes": 65536,
+      "sd_image_content_match": true,
+      "sha256": "3a10ea4c85c6457cc2680b6db6378c67e16b209b8e474cec7a09c72d4af5f1fc"
+    },
+    {
+      "component": "fw_dynamic.itb",
+      "offset_bytes": 1048576,
+      "size_bytes": 136583,
+      "partition_limit_bytes": 1048576,
+      "sd_image_content_match": true,
+      "sha256": "2c83066613458867db59d428102db99030ae3cf1a4c4b8092dc9a2d1b2730715"
+    },
+    {
+      "component": "u-boot.itb",
+      "offset_bytes": 2097152,
+      "size_bytes": 1959546,
+      "partition_limit_bytes": 2097152,
+      "sd_image_content_match": true,
+      "sha256": "f734681e00ae0ca7ca4418ff33d37870b988eb3908f49fbac4f6c047b91ed06a"
+    },
+    {
+      "component": "factory/bootinfo_sd.bin",
+      "length": 80,
+      "flash_type": "SDC",
+      "magic": "0xb00714f0",
+      "version": "0x10001",
+      "spl0_offset_bytes": 131072,
+      "spl1_offset_bytes": 524288,
+      "spl_size_limit_bytes": 221184,
+      "crc32": "36ccf84d",
+      "crc32_valid": true
+    },
+    {
+      "component": "factory/bootinfo_emmc.bin",
+      "length": 80,
+      "flash_type": "eMMC",
+      "magic": "0xb00714f0",
+      "version": "0x10001",
+      "spl0_offset_bytes": 512,
+      "spl1_offset_bytes": 0,
+      "spl_size_limit_bytes": 221184,
+      "crc32": "43acdc67",
+      "crc32_valid": true
+    },
+    {
+      "component": "env.bin",
+      "length": 16384,
+      "crc32": "f50d9618",
+      "crc32_valid": true
+    }
+  ]
+}

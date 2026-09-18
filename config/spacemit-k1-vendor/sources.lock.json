@@ -1,0 +1,183 @@
+{
+  "url": "https://archive.spacemit.com/image/k1/version/bianbu/v2.3/Bianbu-LXQt-K1-V2.3.0-20251212104943.zip",
+  "archive_bytes": 2008730989,
+  "files": [
+    {
+      "path": "env.bin",
+      "size": 16384,
+      "sha256": "3a10ea4c85c6457cc2680b6db6378c67e16b209b8e474cec7a09c72d4af5f1fc",
+      "crc32": "06ecbe2b",
+      "header_offset": 31073011,
+      "compressed_size": 2824
+    },
+    {
+      "path": "factory/bootinfo_emmc.bin",
+      "size": 80,
+      "sha256": "5433619a573ec7935450f303168b87c97dc5511905291328df40a2ff081b3d07",
+      "crc32": "ecbb4b55",
+      "header_offset": 31075966,
+      "compressed_size": 37
+    },
+    {
+      "path": "factory/FSBL.bin",
+      "size": 191808,
+      "sha256": "896e236da5c5208bda9d75e2927ddeff814cbe504d96f529fcc27f1c30c360a6",
+      "crc32": "79742168",
+      "header_offset": 31076086,
+      "compressed_size": 107620
+    },
+    {
+      "path": "factory/bootinfo_spinor.bin",
+      "size": 80,
+      "sha256": "49b63bcbcdcf2e0bbcaabbc1f2a01959ab56ed70c16a3594b25bc1183d92efae",
+      "crc32": "ecbb4b55",
+      "header_offset": 31183780,
+      "compressed_size": 39
+    },
+    {
+      "path": "factory/bootinfo_spinand.bin",
+      "size": 80,
+      "sha256": "ff681a4a120f8b9288c8401ce309bc13ff3ed994280dd750662bcc51806c96d6",
+      "crc32": "ecbb4b55",
+      "header_offset": 31183904,
+      "compressed_size": 39
+    },
+    {
+      "path": "factory/bootinfo_sd.bin",
+      "size": 80,
+      "sha256": "f339e3e576ce94d7812c2887622c5882ae12ac3c9a98059aef37741850a43cb6",
+      "crc32": "ecbb4b55",
+      "header_offset": 31184029,
+      "compressed_size": 37
+    },
+    {
+      "path": "fastboot.yaml",
+      "size": 1028,
+      "sha256": "95642b765cff5b7c6e2439e44b1b7ea70a77fd79ced3e37a907185f383545278",
+      "crc32": "c4b68d3f",
+      "header_offset": 31184147,
+      "compressed_size": 374
+    },
+    {
+      "path": "fw_dynamic.itb",
+      "size": 136583,
+      "sha256": "2c83066613458867db59d428102db99030ae3cf1a4c4b8092dc9a2d1b2730715",
+      "crc32": "20935081",
+      "header_offset": 31184592,
+      "compressed_size": 66987
+    },
+    {
+      "path": "genimage.cfg",
+      "size": 1511,
+      "sha256": "8fc8372ed3cd5a831f12e4a05d1ad3e8505395b9f1584301cae5b3b5b0768343",
+      "crc32": "b498b6a1",
+      "header_offset": 31251651,
+      "compressed_size": 351
+    },
+    {
+      "path": "partition_2M.json",
+      "size": 696,
+      "sha256": "a14ca12559299f6fbf750465fcc87727b38445e5c0a45516394e6326396a8feb",
+      "crc32": "eed5c6df",
+      "header_offset": 31252072,
+      "compressed_size": 251
+    },
+    {
+      "path": "partition_flash.json",
+      "size": 1296,
+      "sha256": "5f1e483082de5586dcae2b8f979b89a2f0f090cc93bd2f26b80689b654a755b4",
+      "crc32": "758a357e",
+      "header_offset": 31252398,
+      "compressed_size": 316
+    },
+    {
+      "path": "partition_universal.json",
+      "size": 1210,
+      "sha256": "568d9848097c72ba01ded40534022d35be7dda57ece13863194dd3a442d9568e",
+      "crc32": "3507daf0",
+      "header_offset": 31252792,
+      "compressed_size": 307
+    },
+    {
+      "path": "u-boot.itb",
+      "size": 1959546,
+      "sha256": "f734681e00ae0ca7ca4418ff33d37870b988eb3908f49fbac4f6c047b91ed06a",
+      "crc32": "069fe006",
+      "header_offset": 2007947662,
+      "compressed_size": 781763
+    }
+  ],
+  "schema_version": 1,
+  "reference_version": "Bianbu-LXQt-K1-V2.3.0-20251212104943",
+  "archive_full_sha256": null,
+  "retrieval_method": "HTTP Range，ZIP 中央目錄與所取成員的 CRC32 均經檢查；未下載整份封裝，不宣稱整包 SHA-256。",
+  "local_binary_directory": "/media/pi/SMCI/bpi/f3-cm6-vendor-20260916/reference/vendor-v2.3",
+  "scope": "官方參考載荷與格式來源；仍須完成 Titan 匯入、媒體選擇、燒錄及實機開機。",
+  "source_references": [
+    {
+      "component": "U-Boot 與 FSBL",
+      "repository": "https://github.com/spacemit-com/uboot-2022.10",
+      "commit": "db67f9dc4d26a45a29e3be085eb5b783aae8e965",
+      "binary_build_identifier": "U-Boot 2022.10spacemit-gdb67f9dc4-dirty",
+      "license": "GPL-2.0+",
+      "license_url": "https://github.com/spacemit-com/uboot-2022.10/blob/db67f9dc4d26a45a29e3be085eb5b783aae8e965/Licenses/README",
+      "limitation": "官方二進位標示 dirty，尚缺建置時未提交的差異；固定提交可核對行為，不能視為完整對應原始碼。"
+    },
+    {
+      "component": "CM6 既有 U-Boot 對照",
+      "repository": "https://github.com/BPI-SINOVOIP/pi-u-boot",
+      "commit": "066cccd77f35e57d13363fea524a439759196dca",
+      "license": "GPL-2.0+"
+    },
+    {
+      "component": "OpenSBI",
+      "repository": "https://github.com/spacemit-com/opensbi",
+      "commit": "05479f5228f3fab2a4221fe0745f3703171ace58",
+      "license": "BSD-2-Clause",
+      "limitation": "官方載荷版本與原始碼標籤吻合，尚未完成由原始碼重建逐位元比對。",
+      "binary_build_identifier": "k1-bl-v2.2.7",
+      "tag": "k1-bl-v2.2.7-release"
+    }
+  ],
+  "local_templates": [
+    {
+      "path": "partition_universal.json",
+      "sha256": "568d9848097c72ba01ded40534022d35be7dda57ece13863194dd3a442d9568e",
+      "upstream_sha256": "568d9848097c72ba01ded40534022d35be7dda57ece13863194dd3a442d9568e",
+      "adaptation": "與官方原檔完全相同。"
+    },
+    {
+      "path": "partition_2M.json",
+      "sha256": "aac8159da9a46186c8fcf8937eda70b661546d54f7b5eb9134b29192a80ba0f6",
+      "upstream_sha256": "a14ca12559299f6fbf750465fcc87727b38445e5c0a45516394e6326396a8feb",
+      "adaptation": "僅將 comment 欄位翻成繁體中文並統一 JSON 排版。"
+    },
+    {
+      "path": "partition_flash.json",
+      "sha256": "5f1e483082de5586dcae2b8f979b89a2f0f090cc93bd2f26b80689b654a755b4",
+      "upstream_sha256": "5f1e483082de5586dcae2b8f979b89a2f0f090cc93bd2f26b80689b654a755b4",
+      "adaptation": "與官方原檔完全相同。"
+    },
+    {
+      "path": "fastboot.yaml",
+      "sha256": "1faa7a8a7084dfcb27946839021a305ae4ce4dc0b432d272db9630241807a09f",
+      "upstream_sha256": "95642b765cff5b7c6e2439e44b1b7ea70a77fd79ced3e37a907185f383545278",
+      "adaptation": "僅將註解翻譯成繁體中文並統一換行。"
+    },
+    {
+      "path": "genimage.cfg",
+      "sha256": "180d79d26052b52bafb9628c4dd96f1f2dd23326b030fbbfd04658b266d9eb77",
+      "upstream_sha256": "8fc8372ed3cd5a831f12e4a05d1ad3e8505395b9f1584301cae5b3b5b0768343",
+      "adaptation": "僅將註解翻成繁體中文、統一換行並清除行尾空白。"
+    }
+  ],
+  "v2_1_crosscheck": {
+    "url": "https://archive.spacemit.com/image/k1/version/bianbu/v2.1/bianbu-24.04-minimal-k1-v2.1-release-20250124140410.zip",
+    "format_identical_files": [
+      "fastboot.yaml",
+      "genimage.cfg",
+      "partition_universal.json"
+    ],
+    "result": "三個格式檔與 v2.3 逐位元相同；載荷版本不同，不能混合。"
+  }
+}

@@ -1,0 +1,59 @@
+{
+  "schema_version": 1,
+  "release": "20260916",
+  "os": "Ubuntu 24.04 Noble",
+  "desktop": "GNOME Wayland",
+  "base_git_commit": "5f2788df426cc01773dcaf7e60c752ea513ebaf3",
+  "source_worktree": "/media/pi/SMCI/armbian/bpi-v26.2.1-f3-cm6-vendor-format",
+  "acceleration_lock_sha256": "5318fc9fd4fbb6073c1a5b631136e3442f1a35efb9243f2ba4d76339cf1a9df6",
+  "offline_status": "passed",
+  "regression_tests": 108,
+  "hardware_validation": "pending",
+  "candidates": [
+    {
+      "candidate": "bpi-f3-sd",
+      "artifact": "bpi-f3-sd/Armbian_Noble_bpi-f3_gnome_vendor-sd_20260916.img.zip",
+      "bytes": 1741946102,
+      "sha256": "200ba36411924d058773dddb82484b2e287de64a0e90b71079bd996b3a39f110",
+      "minimum_media_bytes": 6716129280,
+      "root_uuid": "4e8610f1-daa7-5c23-9f24-07288b9987a3",
+      "boot_uuid": "5250b9ea-6a99-5d5a-b66c-18fe909fe952",
+      "hardware_validation": "pending"
+    },
+    {
+      "candidate": "bpi-f3-emmc",
+      "artifact": "bpi-f3-emmc/Armbian_Noble_bpi-f3_gnome_titan-emmc_20260916.zip",
+      "bytes": 1741939593,
+      "sha256": "6b8bc83b08d24f8e39b8a77ee0c7872d65d6c853504be96b5faec92c0d71890c",
+      "minimum_media_bytes": 6716129280,
+      "root_uuid": "00609f0f-691a-5240-9003-510fa9e1f7a8",
+      "boot_uuid": "ecd9565c-14df-50ed-8d53-be96595fb3d5",
+      "hardware_validation": "pending"
+    },
+    {
+      "candidate": "bpi-cm6-sd",
+      "artifact": "bpi-cm6-sd/Armbian_Noble_bpi-cm6_gnome_vendor-sd_20260916.img.zip",
+      "bytes": 1720652432,
+      "sha256": "ad047b9df0ce3081172826052faef8833b36767f8f32a252d029eabe9c84d4ce",
+      "minimum_media_bytes": 6716129280,
+      "root_uuid": "a4865166-cbb3-5f3f-94b0-914ef2170442",
+      "boot_uuid": "4d113046-7a63-52f0-8f02-150aa074e819",
+      "hardware_validation": "pending"
+    },
+    {
+      "candidate": "bpi-cm6-emmc",
+      "artifact": "bpi-cm6-emmc/Armbian_Noble_bpi-cm6_gnome_titan-emmc_20260916.zip",
+      "bytes": 1720610123,
+      "sha256": "c9595521e0e448e0e49eae4a528f21a91038051b5eb0bedcb260e7f20d58213a",
+      "minimum_media_bytes": 6716129280,
+      "root_uuid": "534a7a01-868d-5b7b-a727-725884a3bb9a",
+      "boot_uuid": "a45c16c8-eb47-57ad-9888-22f12adbd3e5",
+      "hardware_validation": "pending"
+    }
+  ],
+  "completed_date": "2026-09-17",
+  "source_archive": {
+    "name": "bpi-k1-vendor-source-20260916.tar.gz",
+    "sha256": "0d108958d23069ba5aaa8e5706198bd6331e0e5e542f4e59b82fe632e7b7542c"
+  }
+}

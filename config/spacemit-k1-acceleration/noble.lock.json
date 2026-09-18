@@ -1,0 +1,695 @@
+{
+  "schema_version": 1,
+  "created": "2026-09-16",
+  "target": {
+    "id": "ubuntu",
+    "codename": "noble",
+    "architecture": "riscv64",
+    "python_abi": "3.12"
+  },
+  "repository": "https://archive.spacemit.com/bianbu/",
+  "keyring": "bianbu-archive-keyring-noble.gpg",
+  "keyring_sha256": "b7724569967465b320af924a1399fa6e204f47dc055af70c4cf9d5f06a2363b5",
+  "signing_fingerprint": "7E4C0796F8ACEF3DBA91315E14ABAB347F260659",
+  "sources": {
+    "v2.0-main": {
+      "suite": "noble-porting/snapshots/v2.0",
+      "component": "main",
+      "inrelease_sha256": "e94a03b3801f087f250e374f61db6321aaf923d3c903ee407ed8df26d074f77b",
+      "release_sha256": "82eaffa05ab45d08f6d5ea1ee88d4693f7e563a6ae3cda5b604578f5f8cfd550",
+      "packages_gz_sha256": "a2fde0763d383157cb3ab924b6df6570050923a9e0440e29bf3f96853a2a1cbd",
+      "packages_sha256": "15e70891153dd60080d36c35a84b76afca5ec8f3887cbab0f4077c5e51458856"
+    },
+    "v2.3-main": {
+      "suite": "noble-porting/snapshots/v2.3",
+      "component": "main",
+      "inrelease_sha256": "db9c34cfbdf4fc419c2d6ae782c64d8bb94cf37e1734155d0840db4082248ce5",
+      "release_sha256": "335e4b9c8db74da71a98347256f49278b9c445cde8cedb82b7b4882c1276eae0",
+      "packages_gz_sha256": "fd703a2cf6a1bef1e544820e6cc656a4dfa06915c7c6d3685edbd718d2136416",
+      "packages_sha256": "6a2e4f14b294e158cf3cfb4e36e950cfada109e6005c603e64565f92ef40f1bb"
+    },
+    "v2.3-universe": {
+      "suite": "noble-porting/snapshots/v2.3",
+      "component": "universe",
+      "inrelease_sha256": "db9c34cfbdf4fc419c2d6ae782c64d8bb94cf37e1734155d0840db4082248ce5",
+      "release_sha256": "335e4b9c8db74da71a98347256f49278b9c445cde8cedb82b7b4882c1276eae0",
+      "packages_gz_sha256": "cf46da73eeb7f89d2e58d900845f23bd0fb944071dd1f52bf355c2ddec3d4467",
+      "packages_sha256": "ee7b1acb849b330746a22f049db7cb7f942f1b10a44a650e3dee6ee1db5703cc"
+    }
+  },
+  "profiles": {
+    "bpi-f3": {
+      "kernel_revision": "3e8e7fd730721aee3926a365cef6635221705b61",
+      "kernel_release": "6.18.37-current-spacemit",
+      "kernel_pvr": "24.2@6603887",
+      "kernel_pvr_header_url": "https://raw.githubusercontent.com/jasonmontleon/linux-spacemit/3e8e7fd730721aee3926a365cef6635221705b61/drivers/gpu/drm/img-rogue/pvrversion.h",
+      "kernel_pvr_header_sha256": "76acaaea04a9ddfffed858fedc82ad882b7496a6c2058dfa7d7c91f9461703c7",
+      "desktop_protocol": "wayland",
+      "packages": [
+        "img-gpu-powervr=24.2-6603887bb8",
+        "k1-udev-rules=1.2.2",
+        "k1x-gpu-test=0.1.4",
+        "k1x-vpu-firmware=0.1.0",
+        "k1x-vpu-test=0.1.0",
+        "libegl-mesa0=24.01-bb3",
+        "libgbm-dev=24.01-bb3",
+        "libgbm1=24.01-bb3",
+        "libgl1-mesa-dri=24.01-bb3",
+        "libglapi-mesa=24.01-bb3",
+        "libglx-mesa0=24.01-bb3",
+        "libv4l-stmpp=0.1.3",
+        "mpp=0.1.6~bpo2+1",
+        "onnxruntime=1.2.2",
+        "python3-spacemit-ort=1.2.2",
+        "ffmpeg=7:6.1.1-3ubuntu5bb8",
+        "libavcodec60=7:6.1.1-3ubuntu5bb8",
+        "libavdevice60=7:6.1.1-3ubuntu5bb8",
+        "libavfilter9=7:6.1.1-3ubuntu5bb8",
+        "libavformat60=7:6.1.1-3ubuntu5bb8",
+        "libavutil58=7:6.1.1-3ubuntu5bb8",
+        "libpostproc57=7:6.1.1-3ubuntu5bb8",
+        "libswresample4=7:6.1.1-3ubuntu5bb8",
+        "libswscale7=7:6.1.1-3ubuntu5bb8",
+        "gir1.2-mutter-14=46.0-1ubuntu9bb14",
+        "libmutter-14-0=46.0-1ubuntu9bb14",
+        "mutter-common=46.0-1ubuntu9bb14",
+        "mutter-common-bin=46.0-1ubuntu9bb14",
+        "libxau6=1:1.0.11-1",
+        "libxtst6=2:1.2.5-1"
+      ]
+    },
+    "bpi-cm6": {
+      "kernel_revision": "0d0af0d895251383baee939d44e523699e31889f",
+      "kernel_release": "6.6.36-legacy-spacemit",
+      "kernel_pvr": "23.2@6460340",
+      "kernel_pvr_header_url": "https://raw.githubusercontent.com/BPI-SINOVOIP/pi-linux/0d0af0d895251383baee939d44e523699e31889f/drivers/gpu/drm/img-rogue/pvrversion.h",
+      "kernel_pvr_header_sha256": "3bef100fd37f3dc3e3a8e77954db47e3405c87d7d83244446b0aab1ae65909ce",
+      "desktop_protocol": "wayland",
+      "packages": [
+        "img-gpu-powervr=23.2-6460340bb2",
+        "libegl-mesa0=22.3.5-bb2",
+        "libgbm-dev=22.3.5-bb2",
+        "libgbm1=22.3.5-bb2",
+        "libgl1-mesa-dri=22.3.5-bb2",
+        "libglapi-mesa=22.3.5-bb2",
+        "libglx-mesa0=22.3.5-bb2",
+        "k1-udev-rules=1.2.2",
+        "k1x-gpu-test=0.1.4",
+        "k1x-vpu-firmware=0.1.0",
+        "k1x-vpu-test=0.1.0",
+        "libv4l-stmpp=0.1.3",
+        "mpp=0.1.6~bpo2+1",
+        "onnxruntime=1.2.2",
+        "python3-spacemit-ort=1.2.2",
+        "ffmpeg=7:6.1.1-3ubuntu5bb8",
+        "libavcodec60=7:6.1.1-3ubuntu5bb8",
+        "libavdevice60=7:6.1.1-3ubuntu5bb8",
+        "libavfilter9=7:6.1.1-3ubuntu5bb8",
+        "libavformat60=7:6.1.1-3ubuntu5bb8",
+        "libavutil58=7:6.1.1-3ubuntu5bb8",
+        "libpostproc57=7:6.1.1-3ubuntu5bb8",
+        "libswresample4=7:6.1.1-3ubuntu5bb8",
+        "libswscale7=7:6.1.1-3ubuntu5bb8",
+        "gir1.2-mutter-14=46.0-1ubuntu9bb14",
+        "libmutter-14-0=46.0-1ubuntu9bb14",
+        "mutter-common=46.0-1ubuntu9bb14",
+        "mutter-common-bin=46.0-1ubuntu9bb14",
+        "libxau6=1:1.0.11-1",
+        "libxtst6=2:1.2.5-1"
+      ]
+    }
+  },
+  "packages": {
+    "img-gpu-powervr=23.2-6460340bb2": {
+      "Package": "img-gpu-powervr",
+      "Version": "23.2-6460340bb2",
+      "Architecture": "all",
+      "Filename": "pool/main/i/img-gpu-powervr/img-gpu-powervr_23.2-6460340bb2_all.deb",
+      "SHA256": "588fb50a9f503a7a12545fe4199d5378c7da92fcce36d6d0c79822a803b11ff0",
+      "Size": 21209522,
+      "index": "v2.0-main",
+      "copyright": {
+        "path": "/usr/share/doc/img-gpu-powervr/copyright",
+        "sha256": "bfe7262a8de4fbdc32f6014dda89ac58bfede0f14e7c4af749b26c0e1fee2940"
+      }
+    },
+    "libegl-mesa0=22.3.5-bb2": {
+      "Package": "libegl-mesa0",
+      "Source": "mesa",
+      "Version": "22.3.5-bb2",
+      "Architecture": "riscv64",
+      "Depends": "libc6 (>= 2.38), libdrm2 (>= 2.4.109), libexpat1 (>= 2.0.1), libgbm1 (= 22.3.5-bb2), libgcc-s1 (>= 3.4), libglapi-mesa (= 22.3.5-bb2), libwayland-client0 (>= 1.20.0), libwayland-server0 (>= 1.15.0), libx11-xcb1 (>= 2:1.8.6), libxcb-dri2-0 (>= 1.8), libxcb-dri3-0 (>= 1.13), libxcb-present0, libxcb-randr0 (>= 1.3), libxcb-sync1, libxcb-xfixes0, libxcb1 (>= 1.9.2), libxshmfence1",
+      "Provides": "libegl-vendor",
+      "Filename": "pool/main/m/mesa/libegl-mesa0_22.3.5-bb2_riscv64.deb",
+      "SHA256": "b6cf659f033495e08d67cbb119b6a68e87b93eb354bb73790dbdf48f025c1c84",
+      "Size": 137492,
+      "index": "v2.0-main",
+      "copyright": {
+        "path": "/usr/share/doc/libegl-mesa0/copyright",
+        "sha256": "30c36421275bf40e318d5d3e8662db6e332f97f047fa963bdb44e28ef9112232"
+      }
+    },
+    "libgbm-dev=22.3.5-bb2": {
+      "Package": "libgbm-dev",
+      "Source": "mesa",
+      "Version": "22.3.5-bb2",
+      "Architecture": "riscv64",
+      "Depends": "libgbm1 (= 22.3.5-bb2)",
+      "Filename": "pool/main/m/mesa/libgbm-dev_22.3.5-bb2_riscv64.deb",
+      "SHA256": "4b7f5c27e455ef1a2d9dbad9dee8da45f175fa732a66c19f176347f37cee9fc9",
+      "Size": 17040,
+      "index": "v2.0-main",
+      "copyright": {
+        "path": "/usr/share/doc/libgbm-dev/copyright",
+        "sha256": "30c36421275bf40e318d5d3e8662db6e332f97f047fa963bdb44e28ef9112232"
+      }
+    },
+    "libgbm1=22.3.5-bb2": {
+      "Package": "libgbm1",
+      "Source": "mesa",
+      "Version": "22.3.5-bb2",
+      "Architecture": "riscv64",
+      "Depends": "libc6 (>= 2.38), libdrm2 (>= 2.4.75), libexpat1 (>= 2.0.1), libwayland-server0 (>= 1.15.0)",
+      "Filename": "pool/main/m/mesa/libgbm1_22.3.5-bb2_riscv64.deb",
+      "SHA256": "632924dbbb230283798fb1e752e2960e2c92b4e7b8db8653378fe8ecd33da1fe",
+      "Size": 43406,
+      "index": "v2.0-main",
+      "copyright": {
+        "path": "/usr/share/doc/libgbm1/copyright",
+        "sha256": "30c36421275bf40e318d5d3e8662db6e332f97f047fa963bdb44e28ef9112232"
+      }
+    },
+    "libgl1-mesa-dri=22.3.5-bb2": {
+      "Package": "libgl1-mesa-dri",
+      "Source": "mesa",
+      "Version": "22.3.5-bb2",
+      "Architecture": "riscv64",
+      "Depends": "libc6 (>= 2.38), libdrm2 (>= 2.4.38), libexpat1 (>= 2.0.1), libgcc-s1 (>= 3.4), libglapi-mesa (= 22.3.5-bb2), libstdc++6 (>= 5), libzstd1 (>= 1.5.5), zlib1g (>= 1:1.1.4)",
+      "Filename": "pool/main/m/mesa/libgl1-mesa-dri_22.3.5-bb2_riscv64.deb",
+      "SHA256": "16a2cd16ec5fee8b11a39bbc19d4f2219b88e25e6e7bcb02a9267070a2fd2b7b",
+      "Size": 3396476,
+      "index": "v2.0-main",
+      "copyright": {
+        "path": "/usr/share/doc/libgl1-mesa-dri/copyright",
+        "sha256": "30c36421275bf40e318d5d3e8662db6e332f97f047fa963bdb44e28ef9112232"
+      }
+    },
+    "libglapi-mesa=22.3.5-bb2": {
+      "Package": "libglapi-mesa",
+      "Source": "mesa",
+      "Version": "22.3.5-bb2",
+      "Architecture": "riscv64",
+      "Depends": "libc6 (>= 2.34)",
+      "Filename": "pool/main/m/mesa/libglapi-mesa_22.3.5-bb2_riscv64.deb",
+      "SHA256": "ca79173cf94d3d5a1a8bca335b47c067d5f0b462117b48a5ee0b34847d32a080",
+      "Size": 60138,
+      "index": "v2.0-main",
+      "copyright": {
+        "path": "/usr/share/doc/libglapi-mesa/copyright",
+        "sha256": "30c36421275bf40e318d5d3e8662db6e332f97f047fa963bdb44e28ef9112232"
+      }
+    },
+    "libglx-mesa0=22.3.5-bb2": {
+      "Package": "libglx-mesa0",
+      "Source": "mesa",
+      "Version": "22.3.5-bb2",
+      "Architecture": "riscv64",
+      "Depends": "libc6 (>= 2.38), libdrm2 (>= 2.4.75), libexpat1 (>= 2.0.1), libglapi-mesa (= 22.3.5-bb2), libx11-6 (>= 2:1.4.99.1), libx11-xcb1 (>= 2:1.8.6), libxcb-dri2-0 (>= 1.8), libxcb-dri3-0 (>= 1.13), libxcb-glx0 (>= 1.8), libxcb-present0, libxcb-randr0, libxcb-shm0, libxcb-sync1, libxcb-xfixes0, libxcb1 (>= 1.9.2), libxext6, libxfixes3, libxshmfence1, libxxf86vm1, libgl1-mesa-dri",
+      "Provides": "libglx-vendor",
+      "Breaks": "glx-diversions (<< 0.8.4~), libopengl-perl (<< 0.6704+dfsg-2)",
+      "Filename": "pool/main/m/mesa/libglx-mesa0_22.3.5-bb2_riscv64.deb",
+      "SHA256": "21984dad14c7c916c80cdc842be04b501cb5236e831e7a6c9dbbf5c3b34ef56d",
+      "Size": 192752,
+      "index": "v2.0-main",
+      "copyright": {
+        "path": "/usr/share/doc/libglx-mesa0/copyright",
+        "sha256": "30c36421275bf40e318d5d3e8662db6e332f97f047fa963bdb44e28ef9112232"
+      }
+    },
+    "img-gpu-powervr=24.2-6603887bb8": {
+      "Package": "img-gpu-powervr",
+      "Version": "24.2-6603887bb8",
+      "Architecture": "all",
+      "Filename": "pool/main/i/img-gpu-powervr/img-gpu-powervr_24.2-6603887bb8_all.deb",
+      "SHA256": "02eb8e344eb9c7e1b6eb68f9650a2bf944c06ba09ed311f465a1316a59a35ada",
+      "Size": 24294788,
+      "index": "v2.3-main",
+      "copyright": {
+        "path": "/usr/share/doc/img-gpu-powervr/copyright",
+        "sha256": "bfe7262a8de4fbdc32f6014dda89ac58bfede0f14e7c4af749b26c0e1fee2940"
+      }
+    },
+    "k1-udev-rules=1.2.2": {
+      "Package": "k1-udev-rules",
+      "Source": "onnxruntime",
+      "Version": "1.2.2",
+      "Architecture": "riscv64",
+      "Filename": "pool/main/o/onnxruntime/k1-udev-rules_1.2.2_riscv64.deb",
+      "SHA256": "c1cfc279efc6987ddd3840628ed61744158dbc97d6e17b4ddd2d19ed6c01ddb9",
+      "Size": 1824,
+      "index": "v2.3-main",
+      "copyright": {
+        "path": "/usr/share/doc/k1-udev-rules/copyright",
+        "sha256": "57c2aacba651c8cdb83f4be26b2a8e2e3d88a56e0ca7538b2af31703b29033c1"
+      }
+    },
+    "k1x-gpu-test=0.1.4": {
+      "Package": "k1x-gpu-test",
+      "Version": "0.1.4",
+      "Architecture": "riscv64",
+      "Depends": "libc6 (>= 2.34), libegl1, libgbm1 (>= 12.0.0~0), libgles2, libwayland-client0 (>= 1.20.0), libwayland-cursor0 (>= 1.0.2), libwayland-egl1 (>= 1.15.0), ocl-icd-libopencl1 | libopencl1, ocl-icd-libopencl1 (>= 2.2.0) | libopencl-2.0-1, img-gpu-powervr, libgbm-dev",
+      "Filename": "pool/main/k/k1x-gpu-test/k1x-gpu-test_0.1.4_riscv64.deb",
+      "SHA256": "f64100baeb043b581050d57dd73ec0426cb8ab79c13dc46cff1b6ac351f9c491",
+      "Size": 142244,
+      "index": "v2.3-main",
+      "copyright": {
+        "path": "/usr/share/doc/k1x-gpu-test/copyright",
+        "sha256": "5c4353e025b772a60892bd8f1c1897716479f84aae6007080feb38a5423a3c90"
+      }
+    },
+    "k1x-vpu-firmware=0.1.0": {
+      "Package": "k1x-vpu-firmware",
+      "Version": "0.1.0",
+      "Architecture": "riscv64",
+      "Filename": "pool/main/k/k1x-vpu-firmware/k1x-vpu-firmware_0.1.0_riscv64.deb",
+      "SHA256": "19db65f6e52a702f828f2ad910c0bd1d30e4ea72e933fd3d6af800c25937681d",
+      "Size": 742766,
+      "index": "v2.3-main",
+      "copyright": {
+        "path": "/usr/share/doc/k1x-vpu-firmware/copyright",
+        "sha256": "ca48d7ee489dea4284d7eab830432918882d52e51ab5eb648ba4c9c116c3f872"
+      }
+    },
+    "k1x-vpu-test=0.1.0": {
+      "Package": "k1x-vpu-test",
+      "Version": "0.1.0",
+      "Architecture": "riscv64",
+      "Depends": "libc6 (>= 2.38), libgcc-s1 (>= 3.0), libstdc++6 (>= 13.1)",
+      "Filename": "pool/main/k/k1x-vpu-test/k1x-vpu-test_0.1.0_riscv64.deb",
+      "SHA256": "df2c21cf57ef132a64760dd331baa18aa27dd107ff1402242d6207c6144d69bd",
+      "Size": 157212,
+      "index": "v2.3-main",
+      "copyright": {
+        "path": "/usr/share/doc/k1x-vpu-test/copyright",
+        "sha256": "3a7a062761654317896fb153d54f9566236530db553153493566f8a1b9f29de0"
+      }
+    },
+    "libegl-mesa0=24.01-bb3": {
+      "Package": "libegl-mesa0",
+      "Source": "mesa",
+      "Version": "24.01-bb3",
+      "Architecture": "riscv64",
+      "Depends": "libc6 (>= 2.38), libdrm2 (>= 2.4.109), libexpat1 (>= 2.0.1), libgbm1 (= 24.01-bb3), libgcc-s1 (>= 3.4), libglapi-mesa (= 24.01-bb3), libwayland-client0 (>= 1.20.0), libwayland-server0 (>= 1.15.0), libx11-xcb1 (>= 2:1.8.7), libxcb-dri2-0 (>= 1.8), libxcb-dri3-0 (>= 1.13), libxcb-present0, libxcb-randr0 (>= 1.3), libxcb-sync1, libxcb-xfixes0, libxcb1 (>= 1.9.2), libxshmfence1",
+      "Provides": "libegl-vendor",
+      "Filename": "pool/main/m/mesa/libegl-mesa0_24.01-bb3_riscv64.deb",
+      "SHA256": "c2e7e9e6a6e1439e688862db68005f90e4c571ba18ab84e572310c40048393e4",
+      "Size": 135040,
+      "index": "v2.3-main",
+      "copyright": {
+        "path": "/usr/share/doc/libegl-mesa0/copyright",
+        "sha256": "30c36421275bf40e318d5d3e8662db6e332f97f047fa963bdb44e28ef9112232"
+      }
+    },
+    "libgbm-dev=24.01-bb3": {
+      "Package": "libgbm-dev",
+      "Source": "mesa",
+      "Version": "24.01-bb3",
+      "Architecture": "riscv64",
+      "Depends": "libgbm1 (= 24.01-bb3)",
+      "Filename": "pool/main/m/mesa/libgbm-dev_24.01-bb3_riscv64.deb",
+      "SHA256": "aa39aa88c82c45c802d80673552b81b6abe9713c74056ce40788a7e5db08e705",
+      "Size": 17328,
+      "index": "v2.3-main",
+      "copyright": {
+        "path": "/usr/share/doc/libgbm-dev/copyright",
+        "sha256": "30c36421275bf40e318d5d3e8662db6e332f97f047fa963bdb44e28ef9112232"
+      }
+    },
+    "libgbm1=24.01-bb3": {
+      "Package": "libgbm1",
+      "Source": "mesa",
+      "Version": "24.01-bb3",
+      "Architecture": "riscv64",
+      "Depends": "libc6 (>= 2.38), libdrm2 (>= 2.4.107-4), libexpat1 (>= 2.0.1), libwayland-server0 (>= 1.15.0), libxcb-randr0",
+      "Filename": "pool/main/m/mesa/libgbm1_24.01-bb3_riscv64.deb",
+      "SHA256": "f2c95917e788b596317296b69f804ba22ee4d72f181f3352eaafe796b57185be",
+      "Size": 43932,
+      "index": "v2.3-main",
+      "copyright": {
+        "path": "/usr/share/doc/libgbm1/copyright",
+        "sha256": "30c36421275bf40e318d5d3e8662db6e332f97f047fa963bdb44e28ef9112232"
+      }
+    },
+    "libgl1-mesa-dri=24.01-bb3": {
+      "Package": "libgl1-mesa-dri",
+      "Source": "mesa",
+      "Version": "24.01-bb3",
+      "Architecture": "riscv64",
+      "Depends": "libc6 (>= 2.38), libdrm-radeon1 (>= 2.4.107-4), libdrm2 (>= 2.4.107-4), libexpat1 (>= 2.0.1), libgcc-s1 (>= 4.3), libglapi-mesa (= 24.01-bb3), libstdc++6 (>= 11), libxcb-dri3-0 (>= 1.13), libzstd1 (>= 1.5.5), zlib1g (>= 1:1.1.4)",
+      "Filename": "pool/main/m/mesa/libgl1-mesa-dri_24.01-bb3_riscv64.deb",
+      "SHA256": "340f23888c79afadc02f4d99a8485263062e418c59633d2a4ba37692205047f2",
+      "Size": 4129160,
+      "index": "v2.3-main",
+      "copyright": {
+        "path": "/usr/share/doc/libgl1-mesa-dri/copyright",
+        "sha256": "30c36421275bf40e318d5d3e8662db6e332f97f047fa963bdb44e28ef9112232"
+      }
+    },
+    "libglapi-mesa=24.01-bb3": {
+      "Package": "libglapi-mesa",
+      "Source": "mesa",
+      "Version": "24.01-bb3",
+      "Architecture": "riscv64",
+      "Depends": "libc6 (>= 2.34)",
+      "Filename": "pool/main/m/mesa/libglapi-mesa_24.01-bb3_riscv64.deb",
+      "SHA256": "a872c33a6c06a86747b85195bbf0273e6c3368d851b322dd0c9525d7740de7bb",
+      "Size": 54372,
+      "index": "v2.3-main",
+      "copyright": {
+        "path": "/usr/share/doc/libglapi-mesa/copyright",
+        "sha256": "30c36421275bf40e318d5d3e8662db6e332f97f047fa963bdb44e28ef9112232"
+      }
+    },
+    "libglx-mesa0=24.01-bb3": {
+      "Package": "libglx-mesa0",
+      "Source": "mesa",
+      "Version": "24.01-bb3",
+      "Architecture": "riscv64",
+      "Depends": "libc6 (>= 2.38), libdrm2 (>= 2.4.107-4), libexpat1 (>= 2.0.1), libglapi-mesa (= 24.01-bb3), libx11-6 (>= 2:1.4.99.1), libx11-xcb1 (>= 2:1.8.7), libxcb-dri2-0 (>= 1.8), libxcb-dri3-0 (>= 1.13), libxcb-glx0 (>= 1.8), libxcb-present0, libxcb-randr0, libxcb-shm0, libxcb-sync1, libxcb-xfixes0, libxcb1 (>= 1.9.2), libxext6, libxfixes3, libxshmfence1, libxxf86vm1, libgl1-mesa-dri",
+      "Provides": "libglx-vendor",
+      "Breaks": "glx-diversions (<< 0.8.4~), libopengl-perl (<< 0.6704+dfsg-2)",
+      "Filename": "pool/main/m/mesa/libglx-mesa0_24.01-bb3_riscv64.deb",
+      "SHA256": "dcfb82d4364aa30f0bdbda519b2a693b364824e17dba6ff1778397f8919ddd9d",
+      "Size": 193500,
+      "index": "v2.3-main",
+      "copyright": {
+        "path": "/usr/share/doc/libglx-mesa0/copyright",
+        "sha256": "30c36421275bf40e318d5d3e8662db6e332f97f047fa963bdb44e28ef9112232"
+      }
+    },
+    "libv4l-stmpp=0.1.3": {
+      "Package": "libv4l-stmpp",
+      "Version": "0.1.3",
+      "Architecture": "riscv64",
+      "Depends": "libc6 (>= 2.34), mpp",
+      "Filename": "pool/main/libv/libv4l-stmpp/libv4l-stmpp_0.1.3_riscv64.deb",
+      "SHA256": "dfc31a91f595ccf1e53a5f871b8bf86779c502a8940e5b608f54db67c2756431",
+      "Size": 32464,
+      "index": "v2.3-main",
+      "copyright": {
+        "path": "/usr/share/doc/libv4l-stmpp/copyright",
+        "sha256": "7c627a4bf16be33cb26196caabb4851adde8da7db6b165888bba0adf19a375dc"
+      }
+    },
+    "mpp=0.1.6~bpo2+1": {
+      "Package": "mpp",
+      "Version": "0.1.6~bpo2+1",
+      "Architecture": "riscv64",
+      "Depends": "libc6 (>= 2.34), libsdl2-2.0-0 (>= 2.0.16)",
+      "Filename": "pool/main/m/mpp/mpp_0.1.6~bpo2+1_riscv64.deb",
+      "SHA256": "8ae5c0942521120403ee19155f44e7205cb647e00c3df8a054709e47932babee",
+      "Size": 175576,
+      "index": "v2.3-main",
+      "copyright": {
+        "path": "/usr/share/doc/mpp/copyright",
+        "sha256": "ca02c1103bff762c4ba2bc893723231d987e008c61eb9eac069bfc6101cc9881"
+      }
+    },
+    "onnxruntime=1.2.2": {
+      "Package": "onnxruntime",
+      "Version": "1.2.2",
+      "Architecture": "riscv64",
+      "Depends": "libatomic1 (>= 4.8), libc6 (>= 2.34), libgcc-s1 (>= 4.3), libstdc++6 (>= 13.1), k1-udev-rules",
+      "Filename": "pool/main/o/onnxruntime/onnxruntime_1.2.2_riscv64.deb",
+      "SHA256": "a710fd526c9f2234aa168090f803c1fd965acffa6650c6ef93e2e96ccd7df070",
+      "Size": 7813620,
+      "index": "v2.3-main",
+      "copyright": {
+        "path": "/usr/share/doc/onnxruntime/copyright",
+        "sha256": "57c2aacba651c8cdb83f4be26b2a8e2e3d88a56e0ca7538b2af31703b29033c1"
+      }
+    },
+    "python3-spacemit-ort=1.2.2": {
+      "Package": "python3-spacemit-ort",
+      "Source": "onnxruntime",
+      "Version": "1.2.2",
+      "Architecture": "riscv64",
+      "Depends": "libc6 (>= 2.38), libgcc-s1 (>= 4.3), libstdc++6 (>= 13.1), onnxruntime (>= 1.2.2), k1-udev-rules, python3-numpy, python3 (<< 3.13), python3 (>= 3.12~), python3.12:any",
+      "Filename": "pool/main/o/onnxruntime/python3-spacemit-ort_1.2.2_riscv64.deb",
+      "SHA256": "e2390153ceeb8280974b4348239f25af2bbb9f75b7d5a89c87d5661b8a41695d",
+      "Size": 6982742,
+      "index": "v2.3-main",
+      "copyright": {
+        "path": "/usr/share/doc/python3-spacemit-ort/copyright",
+        "sha256": "57c2aacba651c8cdb83f4be26b2a8e2e3d88a56e0ca7538b2af31703b29033c1"
+      }
+    },
+    "ffmpeg=7:6.1.1-3ubuntu5bb8": {
+      "Package": "ffmpeg",
+      "Version": "7:6.1.1-3ubuntu5bb8",
+      "Architecture": "riscv64",
+      "Depends": "libavcodec60 (>= 7:6.1), libavdevice60 (>= 7:6.0), libavfilter9 (>= 7:6.0), libavformat60 (>= 7:6.0), libavutil58 (>= 7:6.0), libc6 (>= 2.34), libpostproc57 (>= 7:6.0), libsdl2-2.0-0 (>= 2.0.12), libswresample4 (>= 7:6.0), libswscale7 (>= 7:6.0)",
+      "Filename": "pool/universe/f/ffmpeg/ffmpeg_6.1.1-3ubuntu5bb8_riscv64.deb",
+      "SHA256": "2fc22c34da3794afd01eccd726d39eb9dd4e2f5c91eeff6e692c9f46d143c629",
+      "Size": 1896496,
+      "index": "v2.3-universe",
+      "copyright": {
+        "path": "/usr/share/doc/ffmpeg/copyright",
+        "sha256": "2be0250f940dc7137c2fb48abdfa3aa09c5900c7e3614127306f0774309d182f"
+      }
+    },
+    "libavcodec60=7:6.1.1-3ubuntu5bb8": {
+      "Package": "libavcodec60",
+      "Source": "ffmpeg",
+      "Version": "7:6.1.1-3ubuntu5bb8",
+      "Architecture": "riscv64",
+      "Depends": "libaom3 (>= 3.2.0), libavutil58 (= 7:6.1.1-3ubuntu5bb8), libc6 (>= 2.34), libcairo2 (>= 1.2.4), libcodec2-1.2 (>= 1.2.0), libdav1d7 (>= 1.1.0), libglib2.0-0t64 (>= 2.12.0), libgsm1 (>= 1.0.18), libjxl0.7 (>= 0.7.0), liblzma5 (>= 5.1.1alpha+20120614), libmp3lame0 (>= 3.100), libopenjp2-7 (>= 2.0.0), libopus0 (>= 1.1), librav1e0 (>= 0.5.1), librsvg2-2 (>= 2.52.5), libshine3 (>= 3.1.0), libsnappy1v5 (>= 1.1.10), libspeex1 (>= 1.2~), libsvtav1enc1d1 (>= 1.7.0+dfsg), libswresample4 (>= 7:6.0), libtheora0 (>= 1.0), libtwolame0 (>= 0.3.10), libva2 (>= 2.9.0), libvorbis0a (>= 1.1.2), libvorbisenc2 (>= 1.1.2), libvpx9 (>= 1.12.0), libwebp7 (>= 1.3.2), libwebpmux3 (>= 1.3.2), libx264-164 (>= 2:0.164.3108+git31e19f9), libx265-199 (>= 3.5), libxavs2-13 (>= 1.3), libxvidcore4 (>= 1.2.2), libzvbi0t64 (>= 0.2.35), mpp, zlib1g (>= 1:1.2.0)",
+      "Filename": "pool/universe/f/ffmpeg/libavcodec60_6.1.1-3ubuntu5bb8_riscv64.deb",
+      "SHA256": "d2d9926c5061f36825d96c528c97c5b13446c3686cefe6a5604fcbbb43175b89",
+      "Size": 6182012,
+      "index": "v2.3-universe",
+      "copyright": {
+        "path": "/usr/share/doc/libavcodec60/copyright",
+        "sha256": "2be0250f940dc7137c2fb48abdfa3aa09c5900c7e3614127306f0774309d182f"
+      }
+    },
+    "libavdevice60=7:6.1.1-3ubuntu5bb8": {
+      "Package": "libavdevice60",
+      "Source": "ffmpeg",
+      "Version": "7:6.1.1-3ubuntu5bb8",
+      "Architecture": "riscv64",
+      "Depends": "libasound2t64 (>= 1.0.16), libavc1394-0 (>= 0.5.3), libavcodec60 (>= 7:6.0), libavfilter9 (>= 7:6.0), libavformat60 (= 7:6.1.1-3ubuntu5bb8), libavutil58 (= 7:6.1.1-3ubuntu5bb8), libc6 (>= 2.34), libcaca0 (>= 0.99.beta20), libcdio-cdda2t64 (>= 10.2+2.0.0), libcdio-paranoia2t64 (>= 10.2+2.0.0), libdc1394-25 (>= 2.2.6), libdrm2 (>= 2.4.101), libgl1, libiec61883-0 (>= 1.2.0), libjack-jackd2-0 (>= 1.9.10+20150825) | libjack-0.125, libopenal1 (>= 1.14), libpulse0 (>= 0.99.1), libraw1394-11 (>= 2.1.2), libsdl2-2.0-0 (>= 2.0.12), libx11-6, libxcb-shape0, libxcb-shm0, libxcb-xfixes0, libxcb1, libxext6, libxv1",
+      "Filename": "pool/universe/f/ffmpeg/libavdevice60_6.1.1-3ubuntu5bb8_riscv64.deb",
+      "SHA256": "9fce8c5619e2d5fd1b6147900c02b2a7ad03e0bc1d4aef2048f7db49310a5e51",
+      "Size": 90032,
+      "index": "v2.3-universe",
+      "copyright": {
+        "path": "/usr/share/doc/libavdevice60/copyright",
+        "sha256": "2be0250f940dc7137c2fb48abdfa3aa09c5900c7e3614127306f0774309d182f"
+      }
+    },
+    "libavfilter9=7:6.1.1-3ubuntu5bb8": {
+      "Package": "libavfilter9",
+      "Source": "ffmpeg",
+      "Version": "7:6.1.1-3ubuntu5bb8",
+      "Architecture": "riscv64",
+      "Depends": "libass9 (>= 1:0.15.0), libavcodec60 (= 7:6.1.1-3ubuntu5bb8), libavformat60 (>= 7:6.0), libavutil58 (= 7:6.1.1-3ubuntu5bb8), libbs2b0 (>= 3.1.0+dfsg), libc6 (>= 2.38), libflite1 (>= 1.4-release-9~), libfontconfig1 (>= 2.12.6), libfreetype6 (>= 2.2.1), libfribidi0 (>= 0.19.2), libharfbuzz0b (>= 0.9.9), liblilv-0-0 (>= 0.14.2~dfsg0), libmysofa1 (>= 0.7~), libplacebo338 (>= 6.338.1), libpocketsphinx3 (>= 0.8.0+real5prealpha+1), libpostproc57 (>= 7:6.0), librubberband2 (>= 3.3.0+dfsg), libsphinxbase3t64 (>= 0.8+5prealpha), libstdc++6 (>= 13.1), libswresample4 (>= 7:6.0), libswscale7 (>= 7:6.0), libva2 (>= 1.7.3), libvidstab1.1, libzimg2 (>= 0.3.1), libzmq5 (>= 3.2.3+dfsg), ocl-icd-libopencl1 | libopencl1, ocl-icd-libopencl1 (>= 1.0) | libopencl-1.2-1",
+      "Filename": "pool/universe/f/ffmpeg/libavfilter9_6.1.1-3ubuntu5bb8_riscv64.deb",
+      "SHA256": "ea3f0afdbb2139bd72cba443e8308512545d419f612805a9e53434fe27be87c6",
+      "Size": 4296974,
+      "index": "v2.3-universe",
+      "copyright": {
+        "path": "/usr/share/doc/libavfilter9/copyright",
+        "sha256": "2be0250f940dc7137c2fb48abdfa3aa09c5900c7e3614127306f0774309d182f"
+      }
+    },
+    "libavformat60=7:6.1.1-3ubuntu5bb8": {
+      "Package": "libavformat60",
+      "Source": "ffmpeg",
+      "Version": "7:6.1.1-3ubuntu5bb8",
+      "Architecture": "riscv64",
+      "Depends": "libavcodec60 (= 7:6.1.1-3ubuntu5bb8), libavutil58 (= 7:6.1.1-3ubuntu5bb8), libbluray2 (>= 1:0.2.2), libbz2-1.0, libc6 (>= 2.34), libchromaprint1 (>= 1.3.2), libgme0 (>= 0.5.5), libgnutls30t64 (>= 3.8.1), libopenmpt0t64 (>= 0.3.0), librabbitmq4 (>= 0.6.0), librist4 (>= 0.2.6+dfsg), libsrt1.5-gnutls (>= 1.5.3), libssh-gcrypt-4 (>= 0.8.0), libxml2 (>= 2.7.4), libzmq5 (>= 4.0.1+dfsg), zlib1g (>= 1:1.2.0.2)",
+      "Filename": "pool/universe/f/ffmpeg/libavformat60_6.1.1-3ubuntu5bb8_riscv64.deb",
+      "SHA256": "9642ff1373694f715f1cc865c46c6c9d702c447f976fc9ea0e739f98ff49a955",
+      "Size": 1254542,
+      "index": "v2.3-universe",
+      "copyright": {
+        "path": "/usr/share/doc/libavformat60/copyright",
+        "sha256": "2be0250f940dc7137c2fb48abdfa3aa09c5900c7e3614127306f0774309d182f"
+      }
+    },
+    "libavutil58=7:6.1.1-3ubuntu5bb8": {
+      "Package": "libavutil58",
+      "Source": "ffmpeg",
+      "Version": "7:6.1.1-3ubuntu5bb8",
+      "Architecture": "riscv64",
+      "Depends": "libc6 (>= 2.34), libdrm2 (>= 2.4.66), libva-drm2 (>= 1.3), libva-x11-2 (>= 1.3), libva2 (>= 2.1.0), libvdpau1 (>= 0.2), libx11-6, ocl-icd-libopencl1 | libopencl1, ocl-icd-libopencl1 (>= 1.0) | libopencl-1.2-1",
+      "Filename": "pool/universe/f/ffmpeg/libavutil58_6.1.1-3ubuntu5bb8_riscv64.deb",
+      "SHA256": "7cd227c6d84bd2402da5c811ae5041f045b36ffca6b10e399a422a0da741be0f",
+      "Size": 415036,
+      "index": "v2.3-universe",
+      "copyright": {
+        "path": "/usr/share/doc/libavutil58/copyright",
+        "sha256": "2be0250f940dc7137c2fb48abdfa3aa09c5900c7e3614127306f0774309d182f"
+      }
+    },
+    "libpostproc57=7:6.1.1-3ubuntu5bb8": {
+      "Package": "libpostproc57",
+      "Source": "ffmpeg",
+      "Version": "7:6.1.1-3ubuntu5bb8",
+      "Architecture": "riscv64",
+      "Depends": "libavutil58 (>= 7:6.0), libc6 (>= 2.27)",
+      "Filename": "pool/universe/f/ffmpeg/libpostproc57_6.1.1-3ubuntu5bb8_riscv64.deb",
+      "SHA256": "0adf623e250202494d0dfb48955ce09c70f7aca89540a9c4a9f19e5eab6fe968",
+      "Size": 50262,
+      "index": "v2.3-universe",
+      "copyright": {
+        "path": "/usr/share/doc/libpostproc57/copyright",
+        "sha256": "2be0250f940dc7137c2fb48abdfa3aa09c5900c7e3614127306f0774309d182f"
+      }
+    },
+    "libswresample4=7:6.1.1-3ubuntu5bb8": {
+      "Package": "libswresample4",
+      "Source": "ffmpeg",
+      "Version": "7:6.1.1-3ubuntu5bb8",
+      "Architecture": "riscv64",
+      "Depends": "libavutil58 (>= 7:6.1), libc6 (>= 2.27), libsoxr0 (>= 0.1.0)",
+      "Filename": "pool/universe/f/ffmpeg/libswresample4_6.1.1-3ubuntu5bb8_riscv64.deb",
+      "SHA256": "adbf34531d9342710a3e236b6936807535297f12bd844a5c931bab73886e86a0",
+      "Size": 69250,
+      "index": "v2.3-universe",
+      "copyright": {
+        "path": "/usr/share/doc/libswresample4/copyright",
+        "sha256": "2be0250f940dc7137c2fb48abdfa3aa09c5900c7e3614127306f0774309d182f"
+      }
+    },
+    "libswscale7=7:6.1.1-3ubuntu5bb8": {
+      "Package": "libswscale7",
+      "Source": "ffmpeg",
+      "Version": "7:6.1.1-3ubuntu5bb8",
+      "Architecture": "riscv64",
+      "Depends": "libavutil58 (= 7:6.1.1-3ubuntu5bb8), libc6 (>= 2.34)",
+      "Filename": "pool/universe/f/ffmpeg/libswscale7_6.1.1-3ubuntu5bb8_riscv64.deb",
+      "SHA256": "26c1c78649f63a6561c20d3fe8f517a61033bf0350accb558e21f600bec6e631",
+      "Size": 206966,
+      "index": "v2.3-universe",
+      "copyright": {
+        "path": "/usr/share/doc/libswscale7/copyright",
+        "sha256": "2be0250f940dc7137c2fb48abdfa3aa09c5900c7e3614127306f0774309d182f"
+      }
+    },
+    "gir1.2-mutter-14=46.0-1ubuntu9bb14": {
+      "Package": "gir1.2-mutter-14",
+      "Source": "mutter",
+      "Version": "46.0-1ubuntu9bb14",
+      "Architecture": "riscv64",
+      "Depends": "libmutter-14-0 (= 46.0-1ubuntu9bb14), gir1.2-atk-1.0, gir1.2-cairo-1.0, gir1.2-gdesktopenums-3.0 (>= 40~alpha), gir1.2-gio-2.0, gir1.2-gl-1.0, gir1.2-gobject-2.0, gir1.2-graphene-1.0 (>= 1.10.2), gir1.2-pango-1.0 (>= 1.46.0), gir1.2-pangocairo-1.0 (>= 1.46.0), gir1.2-xfixes-4.0, gir1.2-xlib-2.0",
+      "Filename": "pool/main/m/mutter/gir1.2-mutter-14_46.0-1ubuntu9bb14_riscv64.deb",
+      "SHA256": "cb5bc6e43f3105d3e233b0d1d3514e5a5e0a8998f1ac2e76d891e991aa445616",
+      "Size": 167792,
+      "index": "v2.3-main",
+      "copyright": {
+        "path": "/usr/share/doc/gir1.2-mutter-14/copyright",
+        "sha256": "7e305d7d395dce86364fd1bcc7a4b248c8d54697a3137fee7105f1de407302a4"
+      }
+    },
+    "libmutter-14-0=46.0-1ubuntu9bb14": {
+      "Package": "libmutter-14-0",
+      "Source": "mutter",
+      "Version": "46.0-1ubuntu9bb14",
+      "Architecture": "riscv64",
+      "Depends": "adwaita-icon-theme, gsettings-desktop-schemas (>= 40~alpha), mutter-common (>= 46.0-1ubuntu9bb14), mutter-common-bin (= 46.0-1ubuntu9bb14), libatk1.0-0t64 (>= 2.2.0), libc6 (>= 2.38), libcairo2 (>= 1.10.0), libcanberra0t64 (>= 0.2), libcolord2 (>= 1.4.5), libdrm2 (>= 2.4.119), libegl1, libeis1 (>= 1.0.901), libfontconfig1 (>= 2.12.6), libfribidi0 (>= 1.0.0), libgbm1 (>= 21.3.0~rc1), libgdk-pixbuf-2.0-0 (>= 2.22.0), libgl1, libglib2.0-0t64 (>= 2.79.0), libgnome-desktop-4-2t64 (>= 3.17.92), libgraphene-1.0-0 (>= 1.10.0), libgudev-1.0-0 (>= 232), libharfbuzz0b (>= 0.6.0), libice6 (>= 1:1.0.0), libinput10 (>= 1.19.1), liblcms2-2 (>= 2.6), libpango-1.0-0 (>= 1.46.0), libpangocairo-1.0-0 (>= 1.46.0), libpangoft2-1.0-0 (>= 1.46.0), libpipewire-0.3-0t64 (>= 0.3.33), libpixman-1-0 (>= 0.11.2), libsm6, libstartup-notification0 (>= 0.11), libsystemd0 (>= 226), libudev1 (>= 183), libwayland-server0 (>= 1.21.0), libx11-6 (>= 2:1.7.0), libx11-xcb1 (>= 2:1.8.7), libxau6 (>= 1:1.0.11), libxcb-randr0 (>= 1.3), libxcb-res0 (>= 1.10), libxcb1, libxcomposite1 (>= 1:0.4.5), libxcursor1 (>> 1.1.2), libxdamage1 (>= 1:1.1), libxext6 (>= 2:1.3.0), libxfixes3 (>= 1:6.0.0), libxi6 (>= 2:1.6.99.1), libxinerama1 (>= 2:1.1.4), libxkbcommon-x11-0 (>= 0.5.0), libxkbcommon0 (>= 0.5.0), libxkbfile1 (>= 1:1.1.0), libxrandr2 (>= 2:1.5.0), libxtst6 (>= 2:1.2.5)",
+      "Breaks": "gnome-shell (<< 46.0), xwayland (<< 2:23.1.0)",
+      "Filename": "pool/main/m/mutter/libmutter-14-0_46.0-1ubuntu9bb14_riscv64.deb",
+      "SHA256": "769c3d9f5338b753d4fa5e85ff2a53658d45471d0275811f4f7fd90964b2f7d8",
+      "Size": 1548538,
+      "index": "v2.3-main",
+      "copyright": {
+        "path": "/usr/share/doc/libmutter-14-0/copyright",
+        "sha256": "7e305d7d395dce86364fd1bcc7a4b248c8d54697a3137fee7105f1de407302a4"
+      }
+    },
+    "mutter-common=46.0-1ubuntu9bb14": {
+      "Package": "mutter-common",
+      "Source": "mutter",
+      "Version": "46.0-1ubuntu9bb14",
+      "Architecture": "all",
+      "Depends": "dconf-gsettings-backend | gsettings-backend",
+      "Breaks": "magpie-common (<< 0.9.3-0ubuntu8~)",
+      "Replaces": "magpie-common (<< 0.9.3-0ubuntu8~)",
+      "Filename": "pool/main/m/mutter/mutter-common_46.0-1ubuntu9bb14_all.deb",
+      "SHA256": "98b309f407c685ee8ed0e9fddd64720e97721d3e3fdc3c8b2f57827d4cc30afa",
+      "Size": 542436,
+      "index": "v2.3-main",
+      "copyright": {
+        "path": "/usr/share/doc/mutter-common/copyright",
+        "sha256": "7e305d7d395dce86364fd1bcc7a4b248c8d54697a3137fee7105f1de407302a4"
+      }
+    },
+    "mutter-common-bin=46.0-1ubuntu9bb14": {
+      "Package": "mutter-common-bin",
+      "Source": "mutter",
+      "Version": "46.0-1ubuntu9bb14",
+      "Architecture": "riscv64",
+      "Depends": "libc6 (>= 2.34), libglib2.0-0t64 (>= 2.79.0), libgtk-4-1 (>= 4.0.0), libx11-6, libxcomposite1 (>= 1:0.4.5), libxfixes3 (>= 1:6.0.0), libxi6 (>= 2:1.2.99.4)",
+      "Breaks": "mutter (<< 44~)",
+      "Replaces": "mutter (<< 44~)",
+      "Filename": "pool/main/m/mutter/mutter-common-bin_46.0-1ubuntu9bb14_riscv64.deb",
+      "SHA256": "fdac1659ac0111e6adf26003bc382babb173743be53d5f31647d0abe07924f8b",
+      "Size": 51738,
+      "index": "v2.3-main",
+      "copyright": {
+        "path": "/usr/share/doc/mutter-common-bin/copyright",
+        "sha256": "7e305d7d395dce86364fd1bcc7a4b248c8d54697a3137fee7105f1de407302a4"
+      }
+    },
+    "libxau6=1:1.0.11-1": {
+      "Package": "libxau6",
+      "Source": "libxau",
+      "Version": "1:1.0.11-1",
+      "Architecture": "riscv64",
+      "Depends": "libc6 (>= 2.33)",
+      "Filename": "pool/main/libx/libxau/libxau6_1.0.11-1_riscv64.deb",
+      "SHA256": "ef4c3b074d423138e108f95a12bfe8dcb25f80d1cf67625e78bbf6caafa41c55",
+      "Size": 7522,
+      "index": "v2.3-main",
+      "copyright": {
+        "path": "/usr/share/doc/libxau6/copyright",
+        "sha256": "118dd263a7b91c8f21c489f949bf13281dff9e766deea92b829dac4dce66601a"
+      }
+    },
+    "libxtst6=2:1.2.5-1": {
+      "Package": "libxtst6",
+      "Source": "libxtst",
+      "Version": "2:1.2.5-1",
+      "Architecture": "riscv64",
+      "Depends": "libc6 (>= 2.27), libx11-6 (>= 2:1.6.0), libxext6, x11-common",
+      "Filename": "pool/main/libx/libxtst/libxtst6_1.2.5-1_riscv64.deb",
+      "SHA256": "17119508bc73884ac8275e4a4e2283b505ffad5345f94f58add7bb22ab4f7a9b",
+      "Size": 26376,
+      "index": "v2.3-main",
+      "copyright": {
+        "path": "/usr/share/doc/libxtst6/copyright",
+        "sha256": "304f78731e1e0e78132fbba4e1909c8642878a3b8c4837b36cb2d38891bf2204"
+      }
+    }
+  },
+  "required_kernel_options": [
+    "CONFIG_POWERVR_ROGUE",
+    "CONFIG_DRM_SPACEMIT",
+    "CONFIG_VIDEO_LINLON_K1X",
+    "CONFIG_SPACEMIT_TCM"
+  ],
+  "runtime_status": {
+    "gpu": "待實機驗證",
+    "ai": "待實機驗證",
+    "vpu": "待實機驗證"
+  },
+  "notes": [
+    "僅下載鎖定的加速套件；不新增 Bianbu 套件來源，不更換 Ubuntu 基礎系統。",
+    "GPU 23.2 與 24.2 使用不同核心介面，兩板套件清單不得互換。",
+    "GPU 套件會指定 Wayland 並停用 Xorg glamor；桌面合成與各 API 仍待實機驗證。",
+    "GPU 套件的授權檔含未填完的模板欄位，原始庫聲明僅提供二進位；本鎖保留來源與授權檔供追溯，不把模板當成已確認的完整授權結論。",
+    "GNOME 使用官方 Mutter 配套，保留 SpacemiT KMS RDMA_ID、觸控映射與游標裁切修補；GNOME Shell 與基礎系統繼續使用 Ubuntu Noble 套件。"
+  ]
+}
