@@ -1,13 +1,15 @@
 # 跨板測試交付與接板清單
 
 本頁彙整軟體交付與後續集中實板驗證，不取代各模組的受控格式、媒體授權或引導資格。
-本輪計畫 C／D 所列、能離線完成的受控軟體實作與整合已完成，包含 K3 與 USB／NVMe。
+本輪計畫 C／D／E 所列、能離線完成的受控軟體實作與整合已完成，包含 K3 與 USB／NVMe。
 這不是「45 款板子已實測可用」或「444 套映像已通過」的宣告。
 下方明列軟體交付、來源阻擋與接板後工作；沒有把未驗證項目算成完成。
 
 分支為 `bpi-h618-recovery-network-20260915`，不是 `main`。
 主要交付提交為 `a3c642601`（外部媒體）、`46dca7afe`（K3）、
 `c28488ef5`（外部根與五階段）、`6c8042e50`（真實目標執行環境）。
+續作提交為 `c2b023490`（ARM32／RISC-V 真實探測）、`4fa51404b`（唯讀查詢）、
+`cfbc9652f`（Sunplus 20 份逐筆重審及副本續作）。
 
 ## 範圍
 
@@ -52,7 +54,21 @@ ARM32 為 16 款、ARM64 為 26 款、RISC-V 為 3 款。
 
 ## 最終離線驗證
 
-以下日誌均在 `output/evidence/bpi-multiboard-integrate-20260917/`，互有重複的測試組不相加。
+**最新 E 階段：1,355 項全部通過，零失敗、零跳過。** 命令如下：
+
+```bash
+BPI_LAB_REAL_C3=1 output/evidence/bpi-sram-supervisor/model-venv/bin/python \
+  -B -m unittest discover -s tests -p 'test_bpi_lab*.py'
+```
+
+日誌為 `output/evidence/bpi-crossarch-runtime-20260918/lab-final-E4-mode-fixed.log`。
+此結果已包含快取 14 項、metadata 46 項及唯讀查詢六項新增回歸，不能再相加。
+所有 `bpi_lab*.py` 工具與測試的 Ruff 亦通過。
+[E 階段最終摘要](evidence/bpi-multiboard-integrate-20260917/delivery-E-final.json)
+固定命令、日誌與程式摘要，另保存來源重審及未變更的原硬體佇列。
+
+以下保留 C／D 歷史驗證，日誌均在 `output/evidence/bpi-multiboard-integrate-20260917/`，
+互有重複的測試組不相加；未修改的 H618／SRAM 產物沿用明列證據，不冒稱本輪重跑。
 
 | 驗證 | 結果 | 日誌或證據 |
 | --- | --- | --- |
@@ -81,7 +97,11 @@ ARM32 為 16 款、ARM64 為 26 款、RISC-V 為 3 款。
 續作 E1／E2 已補上 ARM32 與 RISC-V 各四項真實 QEMU 探測，快取擷取新增 14 項回歸。
 詳見[跨架構實證及使用方法](bananapi-lab-runtime-cache-20260918.md)。上表及
 `delivery-final.json` 保留 C／D 完成時的快照；新證據不覆蓋前輪失敗或冒充實板通過。
-E3 的 20 筆資料阻擋逐份核對仍在進行，完成後另附重審與續作結果。
+E3 的 20 份來源已逐筆準備及重審通過，18 份完整重讀、兩份使用固定擷取重播。
+[重審文件](bananapi-lab-metadata-review-20260918.md)及
+[主代理核對紀錄](evidence/bpi-multiboard-integrate-20260917/metadata-review-audit.json)
+保存完整候選、獨立副本示範與 46 項專用回歸，不自動修改原硬體資料庫。
+最後的模式契約補強另有原 444 筆工作唯讀核對；沒有將此前真來源示範冒稱為修正後重跑。
 
 ## 固定測試流程
 
@@ -123,19 +143,24 @@ Linux 暫時唯讀也不是 SD 的硬體防寫，不能承諾抵抗任意具有 
 使用者需提供實際板子、連線與媒體覆寫授權，不需要逐套陪同操作。
 本輪未產生逐板可直接部署的真實配對與簽署套件，不能拿合成測試 JSON 代用。
 
-最後唯讀盤點仍為：45 個停用站、414 筆 `queued`、20 筆 `metadata_blocked`、
+原硬體資料庫最後唯讀盤點仍為：45 個停用站、414 筆 `queued`、20 筆 `metadata_blocked`、
 10 筆 `review_required`；新硬體嘗試與新硬體報告均為零。
 既有 0845 十套歷史證據仍保留待審，不算本輪重新測試。
+E3 獨立示範副本則為 434 筆 `queued`、10 筆 `review_required`、20 筆 `superseded`；
+舊 20 筆工作內容保留、其餘 424 筆及 45 個站點不變。副本不是正式執行佇列。
 
 ## 已知來源問題
 
 R2 抽樣的 `6.6.153-current-mt7623` 原始環境指定
 `/boot/dtb/mediatek/mt7623n-bananapi-bpi-r2`，但缺少該無副檔名檔案。
-新的完整擷取再次確認，不是解析器找錯分割區。
+新的完整擷取再次確認，連 `mediatek` 子目錄也不存在，不是解析器找錯分割區或單純副檔名差異。
 原始檔不修改、不自動改選 `.dtb`，也不將此筆標成通過；需另提供修正且固定摘要的來源。
 
-F2P／F2S 已能從原核心內容解析版本，但舊佇列 20 筆 metadata 阻擋不因單板抽樣自動解除。
-只有逐筆來源及 metadata 修正審閱後才能另行更新佇列；本輪保留原有工作狀態。
+F2P／F2S 原檔名的版號 `0` 已有全部 20 份原核心證據，實際均為
+`5.4.35-legacy-sunplus-sp7021-bpi`。完整候選及副本續作驗證已完成，
+不再列為「尚未逐筆核對」；原佇列因本輪明示不改寫而保留舊狀態。
+接板前另經整合審閱才可採用候選；候選的 `integration_approved=false` 與
+`hardware_validated=false` 保留，不藉資料修正授予實板或發布資格。
 
 ## 證據界線
 
