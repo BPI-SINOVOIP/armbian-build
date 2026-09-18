@@ -46,10 +46,13 @@ H1／H2 的實板配對、備份、首次核定與硬體測試仍需接板後完
 - I3：2026-09-19 的 `batch-002` 已完成 Bookworm CLI 重用及 XFCE 新候選。
   限定審查發現驗收與續作缺口，該工作完整收尾後以中斷退出，沒有假造全矩陣成功摘要。
   補強後兩套皆重新核對通過；新計畫固定前批收據，重用完整候選，不複製或重新壓縮。
-- I3 續作：`batch-003` 已固定新工具並重用兩套 Bookworm，正在依 OS 完成其餘八套。
+- I3 續作：`batch-003` 已固定新工具並重用兩套 Bookworm，目前七套已有完成收據：
+  Bookworm、Jammy、Noble 各兩套，加上 Resolute CLI；剩餘 Resolute XFCE、Trixie 兩套持續處理。
   計畫 SHA-256 為 `53b7394fb0182ee58c212bc679b25f5b23697b7e57cba8b937632d6921352cb4`。
 - I4：完整回歸 1,535 項全部通過，零失敗零跳過，173.278 秒；所有 `bpi_lab*.py` 的
   Ruff 通過，45 板／98 來源一致性通過。待矩陣完成後更新最終交付，不重做其他 434 套原映像。
+  `docs/evidence/bpi-r2-matrix-I-20260918/final-audit.py` 已備妥；十套完成後才執行，
+  重新核對完整候選收據、跨批次來源鏈、原來源身分與原硬體資料庫摘要。
 
 完整回歸日誌：`output/evidence/bpi-r2-matrix-I-20260918/lab-final-I-001.log`，
 SHA-256：`d02c874cc17d865fbda36638c2f1a15abdcf5639704eaea9958234adb2719622`。
