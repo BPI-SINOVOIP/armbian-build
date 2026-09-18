@@ -13,6 +13,11 @@ G1 盤點有 62 個原來源曾準備成功、1 個原始 R2 阻擋；另 4 個�
 [階段進度快照](evidence/bpi-lab-matrix-G-20260918/progress.json)會隨里程碑推送，
 以其記錄時間為準；執行中的最新數字請讀本機收據，不能將舊快照當成即時狀態。
 
+本次已完成 444 套檢查，434 套準備通過、10 套 R2 原來源阻擋，無待重試項目。
+[最終逐板與 OS 報告](bananapi-lab-matrix-G-results-20260918.md)與
+[逐筆固定索引](evidence/bpi-lab-matrix-G-20260918/final-audit.json)是本次交付入口。
+下方通用命令供新批次或同版續跑使用，不表示需要重做本次已完成來源。
+
 ## 固定批次
 
 在本工作樹根目錄執行；輸出目錄必須不存在。第一次建立會固定來源清單、
@@ -20,7 +25,7 @@ G1 盤點有 62 個原來源曾準備成功、1 個原始 R2 阻擋；另 4 個�
 
 ```bash
 PY=output/evidence/bpi-sram-supervisor/model-venv/bin/python
-OUT=output/evidence/bpi-lab-matrix-G-20260918/batch-003
+OUT=output/evidence/bpi-lab-matrix-G-20260918/batch-new
 
 "$PY" -B tools/bpi_lab_matrix.py init \
   --catalog output/evidence/bpi-multiboard-lab-20260917/catalog-001.json \
@@ -31,11 +36,16 @@ OUT=output/evidence/bpi-lab-matrix-G-20260918/batch-003
   --workers 4 --output "$OUT"
 ```
 
-保存命令回報的 `plan.json` 絕對路徑與 `sha256`，再執行：
+保存命令回報的 `plan.json` 絕對路徑與 `sha256`，再於 Bash 執行；
+每次續跑使用新的日誌，不覆蓋既有嘗試。`PIPESTATUS[0]` 保存執行器而非 `tee` 的退出碼：
 
 ```bash
+LOG=$(mktemp "$OUT/run-XXXXXXXX.log")
 "$PY" -B tools/bpi_lab_matrix.py run \
-  --plan "$OUT/plan.json" --plan-sha256 <固定計畫摘要>
+  --plan "$OUT/plan.json" --plan-sha256 <固定計畫摘要> 2>&1 | tee "$LOG"
+rc=${PIPESTATUS[0]}
+printf '%s\n' "$rc" > "$LOG.exit-code"
+test "$rc" -eq 0
 ```
 
 順序固定為 ARM32、ARM64、RISC-V；各架構依 OS、板子、角色排序。
@@ -47,8 +57,12 @@ OUT=output/evidence/bpi-lab-matrix-G-20260918/batch-003
 
 本次正式執行使用 `batch-002`，固定計畫摘要為
 `42cd1da5a5e664e6fab3b35f25101dcf12fb641a567c73cf4008281ce12b11fd`。
+該初始執行退出碼為 2：416 套準備通過、20 套阻擋、8 套 SM10 待重試，
+其 `incomplete-0a910242eaa644fa9439bfdfa2706b5d.json` 原樣保留，不產生假成功摘要。
+修正後另建 `selected-recheck-001`，只重播 AI2N／M6／SM10 共 28 套，全部通過。
+最終採用結果須讀上述索引，而非只統計初始批次；不直接以新版工具續跑舊凍結計畫。
 `batch-001` 只建立計畫，未執行映像；啟動前補上最後一項守門後改用新批次。
-上方 `batch-003` 僅為未來新批次的範例，不表示需要重做已完成來源。
+上方 `batch-new` 僅為未來新批次的範例，不表示需要重做已完成來源。
 
 - 同一計畫重跑上述 `run`，來源身分、旁檔、工具和產物摘要相符才跳過完成項目。
 - 單一批次使用 `flock`，拒絕同時啟動第二個執行者；不要刪除鎖檔繞過限制。
@@ -72,11 +86,14 @@ OUT=output/evidence/bpi-lab-matrix-G-20260918/batch-003
 只有無可重試項目才產生 `summary.json`；仍有問題則產生獨立 `incomplete-*.json`。
 即使 444 筆都檢查完，仍須分列 `prepared` 與 `blocked`，不能說全部可用。
 
-已有收據後，可用下列唯讀命令查詢目前完成數；尚無收據時不會回報完成：
+已有收據後，可用下列唯讀命令查詢收據帳面數。這不是重新驗證：
+若後續核對發現來源或產物漂移，歷史收據仍保留，不能只數檔案便宣告完成。
+最終須核對指定執行的退出碼、日誌、固定計畫及摘要；`incomplete-*.json` 的可重試
+項目不能被舊 `summary.json` 掩蓋。下例 `run.log` 是本輪正式批次的已保存日誌：
 
 ```bash
 OUT=output/evidence/bpi-lab-matrix-G-20260918/batch-002
-jq -s '{completed: length, status: (group_by(.status) |
+jq -s '{receipt_count: length, status: (group_by(.status) |
   map({key: .[0].status, value: length}) | from_entries)}' \
   "$OUT"/jobs/*/receipt.json
 tail -n 10 "$OUT/run.log"
@@ -97,3 +114,8 @@ Sunplus 原始版本欄位仍保持 `0`，只記錄二進位實際解析版本�
 紀錄 `output/evidence/bpi-lab-matrix-G-20260918/lab-final-G.log` 的 SHA-256 為
 `b54ade14067e0b0f650a3d0cd113551dd59780461b186ccef070abe6d732bbe4`。
 Ruff 通過；實際映像結果獨立記錄，不以軟體回歸代替映像或實板測試。
+
+以上是初版歷史驗證。最新修正提交 `a1b67dc3a` 的矩陣專用回歸為 74 項，
+完整回歸 1,461 項、183.945 秒、零失敗零跳過。
+新日誌為 `output/evidence/bpi-lab-matrix-G-20260918/lab-final-G-fixes.log`，SHA-256
+`7cc9fb8a64b51ac8773a3a817dc65fba6bc5ecf7572110e796a650ef45e31a76`；初版日誌未覆寫。

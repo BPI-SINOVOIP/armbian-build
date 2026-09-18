@@ -15,7 +15,10 @@ F 階段新增 `c88c949c7`（共用 eMMC 首輪到站點匯出）、`e8980a0ac`�
 不以先前 C／D／E 回歸通過宣稱當時已驗證這些新增流程。
 
 G 階段 `1da0d6399` 新增[完整映像離線續跑](bananapi-lab-matrix-20260918.md)。
-正式 444 筆批次正在執行；既有 45 板抽樣仍保留歷史範圍，不提前改稱全部完成。
+全部 444 套已逐筆處理；`a1b67dc3a` 補齊 AI2N／M6 桌面參數及 SM10 SDK 來源核對，
+只重播受影響三板的 28 套。合併結果為 **434 套準備通過、10 套 R2 原來源阻擋**，
+沒有尚未處理或待重試項目。這是離線準備完成，不是 444 套全部可用。
+逐筆來源、採用批次及證據摘要見[G 最終索引](evidence/bpi-lab-matrix-G-20260918/final-audit.json)。
 
 ## 範圍
 
@@ -37,8 +40,8 @@ ARM32 為 16 款、ARM64 為 26 款、RISC-V 為 3 款。
 | Synaptics，1 款 | `bpi-m6` |
 
 [逐板抽樣及來源摘要](evidence/bpi-multiboard-integrate-20260917/sample-audit.json)
-記錄每板一份實際來源，共 44 份組件準備通過、一份阻擋。
-有些使用已核對擷取的重播，不代表本輪重新讀取 444 份 XZ。
+保留先前每板一份的歷史紀錄，共 44 份組件準備通過、一份阻擋，不改寫成 G 全量結果。
+G 的完整清單另有逐筆結果；重播與整份 XZ 讀取分列，不冒稱全部來源都再次重讀。
 `prepared` 只表示原配組件已準備，不表示實板或完整原生開機鏈已通過。
 
 ## 已完成軟體
@@ -61,17 +64,20 @@ ARM32 為 16 款、ARM64 為 26 款、RISC-V 為 3 款。
 
 ## 最終離線驗證
 
-**最新 G 階段：1,443 項全部通過，零失敗、零跳過。**
-包含新增 62 項批次守門；F 的 1,381 項紀錄保留為歷史證據。命令如下：
+**最新 G 階段：1,461 項全部通過，零失敗、零跳過，183.945 秒。**
+新增 18 項方法涵蓋桌面參數及 K3 來源白名單，含多組正反向子案例；
+G 初版 1,443 項及 F 的 1,381 項均保留為歷史證據，不將重疊測試相加。命令如下：
 
 ```bash
 BPI_LAB_REAL_C3=1 output/evidence/bpi-sram-supervisor/model-venv/bin/python \
   -B -m unittest discover -s tests -p 'test_bpi_lab*.py'
 ```
 
-日誌為 `output/evidence/bpi-lab-handoff-F-20260918/lab-final-F.log`。
-此結果包含首輪 83 項、候選守門六項及 R2 重封裝九項，不能再相加。
-另啟用 `BPI_R2_DTB_REAL=1`，R2 板級與同版套件 13 項全部通過、零跳過。
+最新日誌為 `output/evidence/bpi-lab-matrix-G-20260918/lab-final-G-fixes.log`，SHA-256 為
+`7cc9fb8a64b51ac8773a3a817dc65fba6bc5ecf7572110e796a650ef45e31a76`。
+F 歷史日誌仍為 `output/evidence/bpi-lab-handoff-F-20260918/lab-final-F.log`；
+當時另啟用 `BPI_R2_DTB_REAL=1` 的 13 項板級與同版套件測試全部通過、零跳過，
+G 沿用該獨立證據，不冒稱本輪重跑。
 所有 `bpi_lab*.py` 工具與測試，以及 R2 板級測試的 Ruff 亦通過；45 板／98 來源核對通過。
 [F 階段最終摘要](evidence/bpi-lab-handoff-F-20260918/delivery-F-final.json)
 保存固定命令、來源、候選及原庫摘要。原 registry 保留，新 registry 只更新 R2 板級來源。
@@ -165,10 +171,11 @@ E3 獨立示範副本則為 434 筆 `queued`、10 筆 `review_required`、20 筆
 
 ## 已知來源問題
 
-R2 抽樣的 `6.6.153-current-mt7623` 原始環境指定
+R2 五個 OS／CLI 與 XFCE 共十套的 `6.6.153-current-mt7623` 原始環境均指定
 `/boot/dtb/mediatek/mt7623n-bananapi-bpi-r2`，但缺少該無副檔名檔案。
 新的完整擷取再次確認，連 `mediatek` 子目錄也不存在，不是解析器找錯分割區或單純副檔名差異。
-原始檔不修改、不自動改選 `.dtb`，也不將此筆標成通過；需另提供修正且固定摘要的來源。
+G 已逐筆確認，並非由一份抽樣推論其餘九套。
+原始檔不修改、不自動改選 `.dtb`，十套均不標成通過；需另提供修正且固定摘要的來源。
 
 F 階段已完成來源修正及一份內部衍生候選：`current` 改為平鋪的
 `mt7623n-bananapi-bpi-r2.dtb`，`edge` 不變。已確認原映像本來含該 DTB，
