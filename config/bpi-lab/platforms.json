@@ -1,8 +1,8 @@
 {
   "schema": "bpi-lab-platforms-v1",
   "registry": {
-    "path": "docs/evidence/bpi-multiboard-lab-20260917/board-registry.json",
-    "sha256": "21ad0e97714d271b91766aa45238155427330267bec074c43c653cfa9abab9ab"
+    "path": "docs/evidence/bpi-lab-handoff-F-20260918/board-registry.json",
+    "sha256": "f3396b70bbc75603d028b1c868ce5269d9100273df452b3ab1b400168bf8830a"
   },
   "board_count": 45,
   "hardware_qualified": false,
@@ -152,7 +152,7 @@
     },
     {
       "path": "config/boards/bananapir2.csc",
-      "sha256": "b34acbe105070deeca34f9969c787a81ca6bb4961d47e0688d97307c20613d84"
+      "sha256": "1300075172a9738650a7f2e9de89076c0274cb4cd23bed5e63bfd166eee06a84"
     },
     {
       "path": "config/boards/bananapir2pro.csc",

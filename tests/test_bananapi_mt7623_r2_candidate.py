@@ -5,7 +5,9 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import subprocess
+import tarfile
 import unittest
 from pathlib import Path
 
@@ -30,6 +32,120 @@ class BananaPiMT7623R2CandidateTests(unittest.TestCase):
     def setUpClass(cls) -> None:
         cls.config = json.loads(CONFIG_PATH.read_text())
         cls.policy = cls.config["boards"]["bananapir2"]
+
+    def shell_config(self, branch: str) -> dict[str, str]:
+        harness = r'''
+set -eu
+SRC=$1
+BRANCH=$2
+source "$SRC/config/boards/bananapir2.csc"
+source "$SRC/config/sources/families/mt7623.conf"
+before_fdt=$BOOT_FDT_FILE
+before_kernel=$KERNEL_MAJOR_MINOR
+for hook in $(compgen -A function "post_family_config_branch_${BRANCH}__"); do
+    "$hook"
+done
+printf '%s\0' "$before_fdt" "$before_kernel" "$BOOT_FDT_FILE" \
+    "$KERNEL_MAJOR_MINOR" "${KERNELSOURCE-}" "${KERNELBRANCH-}" \
+    "$BOOTBRANCH" "${ARMBIAN_FIRMWARE_GIT_REF-}" "$BOOTSCRIPT"
+'''
+        result = subprocess.run(
+            ["bash", "--noprofile", "--norc", "-c", harness, "r2", str(ROOT), branch],
+            env={"PATH": os.defpath, "LC_ALL": "C"},
+            capture_output=True, text=True, check=True, timeout=10,
+        )
+        fields = (
+            "before_fdt", "before_kernel", "fdtfile", "kernel", "source",
+            "branch", "uboot", "firmware", "bootscript",
+        )
+        values = result.stdout.split("\0")
+        self.assertEqual(values.pop(), "")
+        self.assertEqual(len(values), len(fields))
+        return dict(zip(fields, values))
+
+    def boot_loads(self, fdtfile: str) -> list[str]:
+        # 僅執行已知腳本的控制流程；載入、環境匯入與引導命令均為無硬體副作用的替身。
+        harness = r'''
+set -eu
+bootenv=$(printf 'rootdev=UUID=48136f54-b977-4c35-a2a9-25267664570a\nfdtfile=%s' "$1")
+devnum=1
+mmcpart=1
+kernel_addr_r=0x82000000
+fdt_addr_r=0x86000000
+ramdisk_addr_r=0x86080000
+loaded=no
+loads=()
+setenv() { local key=$1; shift; printf -v "$key" '%s' "$*"; }
+part() {
+    [[ "$*" == 'uuid mmc 1:1 rootuuid' ]] || exit 90
+    rootuuid=6f9b5821-01
+}
+test() {
+    if [[ "$1" == -e ]]; then
+        [[ "$*" == '-e mmc 1:1 boot/armbianEnv.txt' ]]
+    else
+        builtin test "$@"
+    fi
+}
+load() {
+    [[ "$*" == 'mmc 1:1 0x82000000 boot/armbianEnv.txt' ]] || exit 91
+    loaded=yes
+    filesize=${#bootenv}
+}
+env() {
+    [[ "$loaded" == yes && "$*" == "import -t 0x82000000 $filesize" ]] || exit 92
+    local key value
+    while IFS='=' read -r key value; do setenv "$key" "$value"; done <<< "$bootenv"
+}
+ext4load() {
+    [[ "$#" == 4 && "$1 $2" == 'mmc 1:1' ]] || exit 93
+    loads+=("$3 $4")
+}
+bootz() {
+    [[ "$*" == '0x82000000 0x86080000 0x86000000' ]] || exit 94
+    printf 'loaded:%s\n' "${loads[@]}"
+}
+source "$2"
+'''
+        result = subprocess.run(
+            ["bash", "--noprofile", "--norc", "-c", harness, "r2", fdtfile, str(BOOT_SCRIPT)],
+            env={"PATH": os.defpath, "LC_ALL": "C"},
+            capture_output=True, text=True, check=True, timeout=10,
+        )
+        return [line.removeprefix("loaded:") for line in result.stdout.splitlines()
+                if line.startswith("loaded:")]
+
+    def test_current_effective_shell_config_and_boot_path(self) -> None:
+        config = self.shell_config("current")
+        self.assertEqual(config["before_fdt"], "mediatek/mt7623n-bananapi-bpi-r2")
+        self.assertEqual(config["fdtfile"], self.policy["dtb"])
+        self.assertEqual(config["kernel"], "6.6")
+        self.assertEqual(config["source"], self.config["linux_source"])
+        self.assertEqual(config["branch"], self.config["linux_ref"])
+        self.assertEqual(config["uboot"], self.policy["uboot_git_ref"])
+        self.assertEqual(config["firmware"], "commit:" + self.config["firmware_commit"])
+        self.assertEqual(config["bootscript"], "boot-mt7623.cmd:boot.cmd")
+        self.assertEqual(self.boot_loads(config["fdtfile"]), [
+            "0x86000000 boot/dtb/mt7623n-bananapi-bpi-r2.dtb",
+            "0x86080000 boot/uInitrd", "0x82000000 boot/zImage",
+        ])
+
+    def test_edge_effective_shell_config_is_unchanged(self) -> None:
+        config = self.shell_config("edge")
+        self.assertEqual(config["fdtfile"], "mediatek/mt7623n-bananapi-bpi-r2")
+        self.assertEqual(config["fdtfile"], config["before_fdt"])
+        self.assertEqual(config["kernel"], config["before_kernel"])
+        self.assertEqual(config["branch"], "")
+        self.assertEqual(config["firmware"], "")
+
+    def test_boot_script_does_not_repair_environment_paths(self) -> None:
+        for name in ("mediatek/mt7623n-bananapi-bpi-r2",
+                     "mediatek/mt7623n-bananapi-bpi-r2.dtb"):
+            with self.subTest(fdtfile=name):
+                self.assertEqual(self.boot_loads(name), [
+                    "0x86000000 boot/dtb/" + name,
+                    "0x86080000 boot/uInitrd", "0x82000000 boot/zImage",
+                ])
 
     def test_sources_and_media_contract_are_fixed(self) -> None:
         self.assertEqual(self.config["candidate_branch"], "current")
@@ -136,7 +252,6 @@ class BananaPiMT7623R2CandidateTests(unittest.TestCase):
         ):
             self.assertIn(symbol, text)
         self.assertIn(self.config["firmware_commit"], text)
-        self.assertIn('BOOT_FDT_FILE="mediatek/mt7623n-bananapi-bpi-r2"', text)
         self.assertIn(f'BOOTBRANCH_BOARD="commit:{self.policy["uboot_revision"]}"', text)
         self.assertEqual(self.policy["dtb"], "mt7623n-bananapi-bpi-r2.dtb")
         package_line = next(
@@ -189,6 +304,92 @@ class BananaPiMT7623R2CandidateTests(unittest.TestCase):
                 ["bash", "-n", str(ROOT / "tools" / name)],
                 check=True,
             )
+
+    def deb_files(self, package: Path, paths: tuple[str, ...]) -> dict[str, bytes]:
+        files = {}
+        with subprocess.Popen(
+            ["dpkg-deb", "--fsys-tarfile", str(package)],
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+        ) as process:
+            with tarfile.open(fileobj=process.stdout, mode="r|") as archive:
+                for member in archive:
+                    if member.name in paths:
+                        self.assertNotIn(member.name, files)
+                        self.assertTrue(member.isfile())
+                        self.assertLessEqual(member.size, 32 * 1024**2)
+                        files[member.name] = archive.extractfile(member).read()
+            process.stdout.read()
+            error = process.stderr.read().decode()
+            self.assertEqual(process.wait(timeout=60), 0, error)
+        self.assertEqual(set(files), set(paths))
+        return files
+
+    @unittest.skipUnless(os.environ.get("BPI_R2_DTB_REAL") == "1", "須明示啟用本機原證據與套件核對")
+    def test_real_snapshot_and_matching_kernel_dtb_packages(self) -> None:
+        from tools.bpi_lab_allwinner import _env, _legacy
+
+        evidence = ROOT / "output/evidence/bpi-multiboard-integrate-20260917-allboard-bpi-r2-004/extraction"
+        manifest = (evidence / "extraction.json").read_bytes()
+        self.assertEqual(hashlib.sha256(manifest).hexdigest(),
+                         "aa5f8b065ee20e178bfed723f85e589b283ba984feb94bdb57b309fcae30c274")
+        extraction = json.loads(manifest)
+        self.assertEqual(extraction["source_digest"]["sha256"],
+                         "38a736cbc41c21cb7969e18d0f7954a5ea217af70f347beadb0883ef6e2d58e5")
+        release = "6.6.153-current-mt7623"
+        blobs = {}
+        for path in ("/boot/boot.cmd", "/boot/boot.scr", "/boot/armbianEnv.txt",
+                     "/boot/zImage", "/boot/config-" + release):
+            record = extraction["files"][path]
+            blob = (evidence / record["file"]).read_bytes()
+            self.assertEqual(len(blob), record["digest"]["bytes"])
+            self.assertEqual(hashlib.sha256(blob).hexdigest(), record["digest"]["sha256"])
+            blobs[path] = blob
+        self.assertEqual(_legacy(blobs["/boot/boot.scr"], script=True), blobs["/boot/boot.cmd"])
+        self.assertEqual(blobs["/boot/boot.cmd"], BOOT_SCRIPT.read_bytes())
+        old_name = _env(blobs["/boot/armbianEnv.txt"])["fdtfile"]
+        self.assertEqual(old_name, "mediatek/mt7623n-bananapi-bpi-r2")
+        self.assertEqual(self.boot_loads(old_name)[0], "0x86000000 boot/dtb/" + old_name)
+        query = next(q for q in extraction["queries"] if q["lookup_path"] == "/boot/dtb/" + old_name)
+        self.assertEqual(query["command"], "stat /boot/dtb-" + release + "/mediatek")
+        error = (evidence / query["stderr_file"]).read_bytes()
+        self.assertEqual(hashlib.sha256(error).hexdigest(), query["stderr"]["sha256"])
+        self.assertEqual(query["stdout"]["bytes"], 0)
+        self.assertIn(b"File not found by ext2_lookup", error)
+
+        debs = ROOT.parent / "bpi-v26.2.1-bananapi-parallel/output/debs"
+        suffix = "_26.11.0-trunk_armhf__6.6.153-Sdc61-D0000-P0000-Cdcf3-H8075-HK01ba-V014b-Bf00c-R448a.deb"
+        packages = {}
+        for kind, expected in (
+            ("image", "b6ee041c3854a2a151411c25c5acccd5d7fdca80da5737ecfeaca2e9dfc1988e"),
+            ("dtb", "ce5280141c393fddb7251102085b745ab41696ec47d94ff10d1ee98174f23a9c"),
+        ):
+            package = debs / ("linux-" + kind + "-current-mt7623" + suffix)
+            digest = hashlib.sha256()
+            with package.open("rb") as stream:
+                for block in iter(lambda: stream.read(1024**2), b""):
+                    digest.update(block)
+            self.assertEqual(digest.hexdigest(), expected)
+            packages[kind] = package
+        name = self.shell_config("current")["fdtfile"]
+        dtb_path = "./boot/dtb-" + release + "/" + name
+        dtb = self.deb_files(packages["dtb"], (dtb_path,))[dtb_path]
+        self.assertEqual(len(dtb), 34525)
+        self.assertEqual(hashlib.sha256(dtb).hexdigest(), self.policy["dtb_sha256"])
+        identity = subprocess.run(
+            ["fdtget", "-t", "s", "/dev/stdin", "/", "model", "/", "compatible"],
+            input=dtb, capture_output=True, check=True, timeout=10,
+        )
+        self.assertEqual(identity.stdout.decode().splitlines(), [
+            self.policy["model"], " ".join(self.policy["compatible"]),
+        ])
+        kernel_path = "./boot/vmlinuz-" + release
+        config_path = "./boot/config-" + release
+        embedded_dtb = "./usr/lib/linux-image-" + release + "/" + name
+        files = self.deb_files(packages["image"], (kernel_path, config_path, embedded_dtb))
+        self.assertEqual(files[kernel_path], blobs["/boot/zImage"])
+        self.assertEqual(files[config_path], blobs["/boot/config-" + release])
+        self.assertEqual(files[embedded_dtb], dtb)
+        self.assertIn(b"CONFIG_ARCH_WANT_FLAT_DTB_INSTALL=y\n", files[config_path])
 
 
 if __name__ == "__main__":

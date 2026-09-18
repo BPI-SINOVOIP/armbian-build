@@ -18,7 +18,7 @@ except ImportError:
 
 SCHEMA = "bpi-lab-platforms-v1"
 ROOT = Path(__file__).resolve().parents[1]
-REGISTRY = "docs/evidence/bpi-multiboard-lab-20260917/board-registry.json"
+REGISTRY = "docs/evidence/bpi-lab-handoff-F-20260918/board-registry.json"
 PLATFORMS = "config/bpi-lab/platforms.json"
 MAX_JSON_BYTES = 2 * 1024 * 1024
 MAX_SOURCE_BYTES = 256 * 1024

@@ -15,6 +15,8 @@ ARMBIAN_FIRMWARE_GIT_REF_BOARD="commit:f50a2a21bcdb77a562b3976930c5c6b521a1df08"
 BOOTBRANCH_BOARD="commit:ece349ade2973e220f524ce59e59711cc919263f"
 
 function post_family_config_branch_current__bananapir2_pin_sources() {
+	# 此版核心平鋪安裝 DTB；環境匯入會覆寫 boot.cmd 的預設檔名。
+	declare -g BOOT_FDT_FILE="mt7623n-bananapi-bpi-r2.dtb"
 	declare -g KERNELSOURCE="https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git"
 	declare -g KERNELBRANCH="commit:dc6160265ffc795a1832bc1424f58291d152c7bb"
 	declare -g KERNEL_MAJOR_MINOR="6.6"
