@@ -99,15 +99,21 @@ def save_json(path, data):
     return {"path": str(path), "sha256": hashlib.sha256(blob).hexdigest()}
 
 
-def connect(path):
+def connect(path, *, readonly=False):
+    require(type(readonly) is bool, "唯讀連線旗標須為布林值")
     path = Path(path).absolute()
-    safe_directory(path.parent, create=True)
-    if path.exists() or path.is_symlink():
+    safe_directory(path.parent, create=not readonly)
+    if readonly or path.exists() or path.is_symlink():
         require(stat.S_ISREG(path.lstat().st_mode), "資料庫必須為一般檔案")
-    db = sqlite3.connect(path, timeout=10, isolation_level=None)
+    db = sqlite3.connect(path.as_uri() + "?mode=ro" if readonly else path, uri=readonly,
+                         timeout=10, isolation_level=None)
     db.row_factory = sqlite3.Row
     try:
         version = db.execute("PRAGMA user_version").fetchone()[0]
+        if readonly:
+            require(version == 1, "唯讀查詢只接受已初始化的版本 1 資料庫")
+            db.execute("PRAGMA query_only=ON")
+            return db
         require(version in (0, 1), "佇列資料庫版本不支援")
         if version == 0:
             require(not db.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall(),

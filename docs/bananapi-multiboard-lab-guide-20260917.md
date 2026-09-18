@@ -80,6 +80,11 @@ python3 -B tools/bpi_lab.py jobs --db output/evidence/bpi-multiboard-lab-2026091
 python3 -B tools/bpi_lab.py status --db output/evidence/bpi-multiboard-lab-20260917/simulation.sqlite3
 ```
 
+`status`／`jobs` 使用 `mode=ro` 與 `query_only`，不建立資料庫、不初始化表格或改寫
+`journal_mode`／`user_version`；未知或未初始化版本直接拒絕。
+查詢保留 SQLite 對有效 WAL 的讀取，不以 `immutable=1` 略過尚未 checkpoint 的進度。
+這是資料庫唯讀語意，SQLite 仍可能使用讀取協調旁檔，不宣稱檔案系統零操作。
+
 硬體準備清單初始為 414 筆 `queued`、20 筆 `metadata_blocked`、10 筆 `review_required`。`queued` 僅代表已排程，**不代表站點已配對、適配器存在或允許寫入**。
 
 `collected` 表示本次五階段契約報告通過，不代表桌面、GPIO、GPU 或長期穩定性全通過。`hardware` 與 `simulation` 分開統計；`all_hardware_tests_passed` 不會因短測或模擬變成真。歷史失敗與例外另列，不能只看最後成功數。

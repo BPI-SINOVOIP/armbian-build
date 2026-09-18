@@ -104,7 +104,7 @@ def dispatch(args):
                 "issues": data["issues"], "hardware_validated": False}
     if args.command != "prepare":
         queue.require(Path(args.db).is_file(), "資料庫不存在；先執行 prepare，不建立空白進度")
-    db = queue.connect(args.db)
+    db = queue.connect(args.db, readonly=args.command in ("status", "jobs"))
     try:
         if args.command == "prepare":
             return prepare(db, queue.read_json(args.catalog), args.stations_dir, args.simulation)
