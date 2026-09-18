@@ -1,0 +1,19 @@
+{
+  "passed": true,
+  "tests_run": 115,
+  "failures": 0,
+  "errors": 0,
+  "skipped": 0,
+  "patterns": [
+    "test_bpi_k1_acceleration.py",
+    "test_bpi_k1_grow_rootfs.py",
+    "test_collect_bpi_k1_runtime.py",
+    "test_prepare_bpi_k1_vendor_rootfs.py",
+    "test_package_bpi_k1_vendor.py",
+    "test_bananapi_spacemit_candidate_tools.py",
+    "test_bananapi_spacemit_cm6_candidate.py",
+    "test_bananapi_spacemit_source_policy.py"
+  ],
+  "hardware_verified": false,
+  "titan_runtime_replay_report": "另附官方程式重播報告，不以本機單元測試代替"
+}

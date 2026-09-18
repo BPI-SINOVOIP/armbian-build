@@ -8,6 +8,7 @@ import hashlib
 import json
 import os
 from pathlib import Path
+import re
 import shutil
 import stat
 import struct
@@ -16,6 +17,8 @@ import sys
 import uuid
 import zipfile
 import zlib
+
+import yaml
 
 REPO = Path(__file__).resolve().parents[1]
 MIB = 1024 * 1024
@@ -26,6 +29,12 @@ PARTS = [("fsbl", 128*1024, 256*1024, "factory/FSBL.bin"),
          ("uboot", 2*MIB, 2*MIB, "u-boot.itb"),
          ("bootfs", 4*MIB, 256*MIB, "bootfs.ext4"),
          ("rootfs", 260*MIB, None, "rootfs.ext4")]
+
+
+def release_id(value):
+    if not re.fullmatch(r"[0-9]{8}-rc[1-9][0-9]*", value):
+        raise ValueError("候選版本須為 YYYYMMDD-rcN，不可包含路徑或沿用舊正式檔名")
+    return value
 
 
 def digest(path):
@@ -95,9 +104,39 @@ def layout(root_size, emmc=False):
     if root_size <= 0 or root_size % 4096:
         raise ValueError("根分區大小必須為正數且按 4096 位元組對齊")
     result = json.loads((REPO / "config/spacemit-k1-vendor/partition_universal.json").read_text())
-    result["partitions"][0]["image"] = (
-        "factory/bootinfo_emmc.bin" if emmc else "factory/bootinfo_sd.bin")
+    # Titan 的 flash bootinfo 會重建 eMMC 開機區標頭，保留原廠通用表的來源欄位。
     return result
+
+
+def fastboot_config():
+    source = (REPO / "config/spacemit-k1-vendor/fastboot.yaml").read_text()
+    official = "relate_partition: ['partition_{size0}.json', 'partition_{size1}.json']"
+    if source.count(official) != 1:
+        raise ValueError("官方燒錄範本結構已變更，需重新驗證 Titan 契約")
+    # 一般 GUI 模式必須經變數匹配；固定檔名只適用明確指定分區表的另一條路徑。
+    return source.replace(official, "relate_partition: ['partition_{size1}.json']")
+
+
+def verify_titan_contract(archive):
+    required = {"factory/FSBL.bin", "factory/bootinfo_sd.bin", "fw_dynamic.itb",
+                "u-boot.itb", "env.bin", "bootfs.ext4", "rootfs.ext4",
+                "fastboot.yaml", "partition_universal.json"}
+    names = set(archive.namelist())
+    if not required <= names:
+        raise ValueError("Titan 套件缺少必要元件：" + ", ".join(sorted(required - names)))
+    tables = {name for name in names if name.startswith("partition_") and name.endswith(".json")}
+    if tables != {"partition_universal.json"}:
+        raise ValueError("eMMC 候選不可包含未核對的額外分區表")
+    actual = yaml.safe_load(archive.read("fastboot.yaml"))
+    expected = yaml.safe_load(fastboot_config())
+    if actual != expected:
+        raise ValueError("Titan 控制流程不符合已核對的變數匹配契約；不可使用固定分區檔名")
+    root_size = archive.getinfo("rootfs.ext4").file_size
+    partition = json.loads(archive.read("partition_universal.json"))
+    if partition != layout(root_size, emmc=True):
+        raise ValueError("Titan 分區描述與官方通用表不符")
+    return {"status": "passed", "scope": "required-members-and-official-control-contract",
+            "hardware_validation": "pending"}
 
 
 def check_payloads(directory):
@@ -289,6 +328,7 @@ def verify(manifest_path):
         expected = m["archive_members"]
         if len(names) != len(set(names)) or set(names) != set(expected):
             raise ValueError("壓縮套件有重複、缺少或多餘檔案")
+        contract = verify_titan_contract(z) if m["storage"] == "emmc" else None
         for name in names:
             if not name or "\\" in name or Path(name).is_absolute() or ".." in Path(name).parts:
                 raise ValueError("不安全的壓縮套件路徑")
@@ -307,11 +347,24 @@ def verify(manifest_path):
                     actual = filesystem_uuid(stream, offset if m["storage"] == "sd" else 0)
                 if actual != m[part + "_uuid"]:
                     raise ValueError(f"封裝內檔案系統 UUID 不符：{part}")
-    return {"status": "passed", "scope": "offline-archive-integrity",
-            "board": m["board"], "storage": m["storage"], "hardware_validation": "pending"}
+    status = {"status": "passed", "scope": "offline-archive-integrity",
+              "board": m["board"], "storage": m["storage"],
+              "release_status": m.get("release_status", "candidate_unverified"),
+              "hardware_validation": m.get("hardware_validation", "pending")}
+    if contract is not None:
+        status["titan_control_contract"] = contract
+    advisory_path = base / "release-status.json"
+    if advisory_path.exists():
+        advisory = json.loads(regular(advisory_path).read_text())
+        if advisory.get("historical_artifact_sha256") != m["artifact"]["sha256"]:
+            raise ValueError("撤回公告與套件雜湊不符")
+        status.update(release_status=advisory["release_status"],
+                      hardware_validation=advisory["hardware_validation"])
+    return status
 
 
 def build(args):
+    candidate_release = release_id(args.release_id)
     if os.geteuid() != 0:
         raise ValueError("需要 sudo，在隔離掛載中產生媒體專屬檔案系統")
     if not args.inside:
@@ -345,6 +398,7 @@ def build(args):
     reference_hashes = {name: digest(reference / name) for name in files}
     run(["cp", "--sparse=always", "--reflink=auto", prepared / "rootfs.ext4", payload / "rootfs.ext4"])
     identity = {**prep["identity"], "storage": args.storage, "layout_version": "bianbu-v2.3",
+                "release_id": candidate_release,
                 "reference_payloads": reference_hashes,
                 "sources_lock_sha256": reference_record["sources_lock_sha256"]}
     root_uuid = str(uuid.uuid5(uuid.NAMESPACE_URL, json.dumps(identity, sort_keys=True) + ":root"))
@@ -426,19 +480,12 @@ def build(args):
     check_payloads(payload)
     layout_obj = layout((payload / "rootfs.ext4").stat().st_size, args.storage == "emmc")
     write(payload / "partition_universal.json", json.dumps(layout_obj, indent=2) + "\n")
-    # 官方格式只提供區塊裝置表；eMMC 作業仍須依說明設定開機腳位並移除其他媒體。
-    fastboot = (REPO / "config/spacemit-k1-vendor/fastboot.yaml").read_text()
-    lines = []
-    for line in fastboot.splitlines():
-        line = line.split(" #", 1)[0]
-        if "relate_partition:" in line:
-            line = "      relate_partition: ['partition_universal.json']"
-        if not line.lstrip().startswith("#"):
-            lines.append(line)
-    write(payload / "fastboot.yaml", "\n".join(lines) + "\n")
-    stem = f"Armbian_Noble_{args.board}_gnome_{'vendor-sd' if args.storage == 'sd' else 'titan-emmc'}_20260916"
+    write(payload / "fastboot.yaml", fastboot_config())
+    stem = f"Armbian_Noble_{args.board}_gnome_{'vendor-sd' if args.storage == 'sd' else 'titan-emmc'}_{candidate_release}"
     manifest = {"schema_version": 1, "board": args.board, "release": "noble", "desktop": "gnome-wayland",
                 "storage": args.storage, "identity": identity, "root_uuid": root_uuid, "boot_uuid": boot_uuid,
+                "release_id": candidate_release, "release_status": "candidate_unverified",
+                "producer_sha256": digest(Path(__file__)),
                 "kernel": prep["kernel"], "hardware_validation": "pending", "archive_members": {},
                 "boot_kernel": kernel_record,
                 "boot_contract": boot_contract, "acceleration_preflight": preflight,
@@ -462,18 +509,19 @@ def build(args):
     write(out / "manifest.json", json.dumps(manifest, ensure_ascii=False, indent=2) + "\n")
     result = verify(out / "manifest.json")
     write(out / "verification.json", json.dumps(result, ensure_ascii=False, indent=2) + "\n")
-    print(f"已產生並通過離線完整性驗證：{target}；實機驗證待回填。")
+    print(f"已建立候選並通過封裝完整性檢查：{target}；尚未取得實際 Titan 燒錄與開機證據。")
 
 
 def main():
     p = argparse.ArgumentParser(description=__doc__)
     sub = p.add_subparsers(dest="command", required=True)
-    b = sub.add_parser("build", help="建立單一媒體成品")
+    b = sub.add_parser("build", help="建立單一媒體候選")
     b.add_argument("--board", choices=DTBS, required=True)
     b.add_argument("--storage", choices=("sd", "emmc"), required=True)
     b.add_argument("--prepared", type=Path, required=True)
     b.add_argument("--reference", type=Path, required=True)
     b.add_argument("--output", type=Path, required=True)
+    b.add_argument("--release-id", required=True, help="明確候選版本，例如 20260918-rc2")
     b.add_argument("--inside", action="store_true", help=argparse.SUPPRESS)
     v = sub.add_parser("verify", help="重新核對發布套件與內部元件")
     v.add_argument("manifest", type=Path)

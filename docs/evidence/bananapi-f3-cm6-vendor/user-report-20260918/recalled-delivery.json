@@ -30,7 +30,7 @@
       "root_uuid": "00609f0f-691a-5240-9003-510fa9e1f7a8",
       "boot_uuid": "ecd9565c-14df-50ed-8d53-be96595fb3d5",
       "hardware_validation": "pending",
-      "release_status": "recalled"
+      "release_status": "recalled_unusable"
     },
     {
       "candidate": "bpi-cm6-sd",
@@ -52,7 +52,7 @@
       "root_uuid": "534a7a01-868d-5b7b-a727-725884a3bb9a",
       "boot_uuid": "a45c16c8-eb47-57ad-9888-22f12adbd3e5",
       "hardware_validation": "reported_failed",
-      "release_status": "recalled"
+      "release_status": "recalled_unusable"
     }
   ],
   "completed_date": "2026-09-17",

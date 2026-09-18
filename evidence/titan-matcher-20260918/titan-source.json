@@ -1,0 +1,51 @@
+{
+  "schema_version": 1,
+  "retrieved_on": "2026-09-18",
+  "download_url": "https://cloud.spacemit.com/prod-api/release/download/tools?token=titantools_for_linux_64BIT_APPIMAGE",
+  "official_guide": "https://www.spacemit.com/community/document/info?lang=zh&nodepath=tools/user_guide/flasher_user_guide.md",
+  "appimage": {
+    "filename": "titantools_for_linux-2.2.0-Rc.AppImage",
+    "bytes": 95987984,
+    "sha256": "0bcd63c138813fbeb3234358efd01eb50c3b91c93cc47a52addee53b76eba5e6"
+  },
+  "package_metadata": {
+    "name": "titanflasher",
+    "productName": "titantools",
+    "appId": "com.spacemit.com",
+    "version": "2.2.0-Rc",
+    "buildVersion": "0001",
+    "private": false,
+    "main": "dist/main/main.js",
+    "author": "sim",
+    "license": "MIT",
+    "repository": {
+      "type": "git",
+      "url": ""
+    },
+    "bugs": {
+      "url": ""
+    },
+    "homepage": "",
+    "dependencies": {
+      "stream-progressbar": "^1.4.0",
+      "xlsx": "^0.18.5"
+    }
+  },
+  "squashfs_offset": 188392,
+  "backend": {
+    "filename": "flashserver",
+    "bytes": 8790592,
+    "sha256": "adde4756c863c9575170c36555bd501c694e241d3d385d9e8c98e9adcd417716"
+  },
+  "local_backend": {
+    "filename": "flashserver",
+    "bytes": 8598200,
+    "sha256": "01b510fc2601d064ea1653a7620639363609d1d2c90208cb4474cd6f5f77833a",
+    "original_path": "/home/pi/.flash_temp/flashserver",
+    "version": null,
+    "provenance": "本機既有快取；無法據此確定使用者本次失敗的 Titan 版本"
+  },
+  "user_report_version": null,
+  "storage": "原廠二進位、解包內容與完整反組譯只保留於外部 reference 目錄，不納入 Git",
+  "external_reference": "/media/pi/SMCI/bpi/f3-cm6-vendor-20260916/reference/titan-20260918"
+}

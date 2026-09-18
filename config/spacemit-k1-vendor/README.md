@@ -44,6 +44,8 @@
 
 ## eMMC 專用候選的媒體限制
 
+2026-09-18 更正：一般 Titan 流程必須保留 `partition_{size1}.json` 的變數匹配式；固定 `partition_universal.json` 會觸發 Code 20014。原 JSON 檔名保持 `partition_universal.json`，不需要改副檔名。已直接執行官方匹配程式重現錯誤及候選控制流程，仍未完成實際 USB 燒錄。
+
 原廠 `multi_flash` 同時參考 `partition_{size0}.json` 與 `partition_{size1}.json`，前者來自 `mtd-size`，後者來自 `blk-size`。eMMC 專用包應移除 MTD 分區描述與 MTD 流程參考，僅保留區塊裝置分區描述；實際 Titan 版本仍須驗證匯入與執行行為。
 
 **僅移除 MTD 描述不能把原廠 U-Boot 硬鎖在 eMMC。** [燒錄分派](https://github.com/spacemit-com/uboot-2022.10/blob/db67f9dc4d26a45a29e3be085eb5b783aae8e965/drivers/fastboot/fb_command.c) 與 [GPT 寫入](https://github.com/spacemit-com/uboot-2022.10/blob/db67f9dc4d26a45a29e3be085eb5b783aae8e965/drivers/fastboot/fb_spacemit.c) 依硬體開機選擇腳位決定媒體：

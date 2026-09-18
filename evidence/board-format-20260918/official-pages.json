@@ -1,0 +1,274 @@
+{
+  "retrieved_on": "2026-09-18",
+  "scope": "記錄官網入口、HTML 雜湊及必要下載技術連結；未把教學頁視為各板套件位元組證明。",
+  "pages": [
+    {
+      "board": "F3",
+      "kind": "BananaPi",
+      "url": "https://docs.banana-pi.org/en/BPI-F3/BananaPi_BPI-F3",
+      "html_sha256": "442aa97a7af3d350b3668899011c5385d4c0db6b356abd57c256e2e83f998741",
+      "html_bytes": 73191,
+      "links": [
+        {
+          "text": "",
+          "href": "#_bianbu_linux"
+        },
+        {
+          "text": "",
+          "href": "https://gitee.com/bianbu-linux/linux-6.1"
+        },
+        {
+          "text": "",
+          "href": "https://gitee.com/bianbu-linux/uboot-2022.10"
+        },
+        {
+          "text": "",
+          "href": "https://gitee.com/bianbu-linux/opensbi"
+        },
+        {
+          "text": "",
+          "href": "https://bianbu-linux.spacemit.com/en/"
+        },
+        {
+          "text": "",
+          "href": "https://archive.spacemit.com/openwrt/releases/23.05.2/"
+        },
+        {
+          "text": "",
+          "href": "https://drive.google.com/file/d/19iLJ5xnCB_oK8VeQjkPGjzAn39WYyylv/view?usp=sharing"
+        },
+        {
+          "text": "",
+          "href": "https://drive.google.com/file/d/1Y29kMCUNRPPsj4ELMnQTls74owiXcPKx/view?usp=sharing"
+        },
+        {
+          "text": "",
+          "href": "https://drive.google.com/file/d/1V2MddvrolsHbTCeDxKAStaJqUH_YNSkp/view?usp=sharing"
+        },
+        {
+          "text": "",
+          "href": "#_system_image"
+        },
+        {
+          "text": "",
+          "href": "https://download.banana-pi.dev/d/ca025d76afd448aabc63/files/?p=%2FTools%2Fimage_download_tools%2Ftitantools_for_windows-1.0.35-beta.zip"
+        },
+        {
+          "text": "",
+          "href": "https://download.banana-pi.dev/d/ca025d76afd448aabc63/files/?p=%2FTools%2Fimage_download_tools%2Ftitantools_for_linux-1.0.35-beta.zip"
+        },
+        {
+          "text": "",
+          "href": "https://drive.google.com/drive/folders/1UE2Afn3XccRJna2VXtkDu5ckp05j1lZ9"
+        },
+        {
+          "text": "",
+          "href": "#_bianbu"
+        },
+        {
+          "text": "",
+          "href": "http://archive.spacemit.com/image/k1/version/bianbu/"
+        },
+        {
+          "text": "",
+          "href": "https://drive.google.com/drive/folders/1U9kma2_2UK4MTvuVA2TPKY72N6n8r8Xa?usp=sharing"
+        },
+        {
+          "text": "",
+          "href": "https://drive.google.com/drive/folders/1eEfMkzNzHyDwz3_Ox8i2acvU4W5CowiW?usp=sharing"
+        },
+        {
+          "text": "",
+          "href": "https://drive.google.com/drive/folders/1LQoioz6N5YQpSOxY47OmetnPX4yggtT0?usp=sharing"
+        },
+        {
+          "text": "",
+          "href": "https://drive.google.com/drive/folders/1kCHiMwjnhvZaRBy5vkj6UlPeAlpRQ14P?usp=sharing"
+        },
+        {
+          "text": "",
+          "href": "https://drive.google.com/drive/folders/1UQHHIu6MnOFvrqAhE5PR-fHMnH8RyAf6?usp=sharing"
+        },
+        {
+          "text": "",
+          "href": "https://drive.google.com/drive/folders/1IfRSpXBn9TXcyNzAxJvBASZE-PBHVeaQ?usp=sharing"
+        },
+        {
+          "text": "",
+          "href": "https://drive.google.com/drive/folders/1zhekapKF8TBiV7_LwDh9CK0qPLS_wooq?usp=sharing"
+        },
+        {
+          "text": "",
+          "href": "https://drive.google.com/drive/folders/1UnhLVWZ88HlRnqfsL1OcIbh1MG211H6M?usp=sharing"
+        },
+        {
+          "text": "",
+          "href": "https://drive.google.com/drive/folders/1QBrEqFsYz_BQ4NO8nHKaxWnq8M94htbC?usp=sharing"
+        },
+        {
+          "text": "",
+          "href": "https://drive.google.com/drive/folders/1Tp-5eCww0D5bnHldC3Bb9jFN1rZEc77X?usp=sharing"
+        },
+        {
+          "text": "",
+          "href": "https://drive.google.com/drive/folders/1HKLg7Y7DUK1RCOhG4QDgrfk0Sh3XhjIQ?usp=sharing"
+        },
+        {
+          "text": "",
+          "href": "https://drive.google.com/file/d/1el5O9Jt8Cdx6h2jnzksXp5ia6FR9kI24/view?usp=sharing"
+        },
+        {
+          "text": "",
+          "href": "https://drive.google.com/file/d/1k6pfYq9i1C0ydbfREr4uFMUp8v_TSxyv/view?usp=sharing"
+        },
+        {
+          "text": "",
+          "href": "https://drive.google.com/file/d/1D7H5MlAvMVF7T1ksLlTxne2MAdIEAlkm/view?usp=sharing"
+        },
+        {
+          "text": "",
+          "href": "https://drive.google.com/file/d/1X-fCCKn-lBOg3bKhXinHHhrLHQsQLKFY/view?usp=sharing"
+        },
+        {
+          "text": "",
+          "href": "https://drive.google.com/drive/folders/1i7gZ9xRXaRkzNLxV0wFgIQmsrdhSlOnD?usp=sharing"
+        },
+        {
+          "text": "",
+          "href": "https://drive.google.com/drive/folders/1QBrEqFsYz_BQ4NO8nHKaxWnq8M94htbC?usp=sharing"
+        },
+        {
+          "text": "",
+          "href": "https://drive.google.com/file/d/1v-nHZA3AyFLaLRs6bt22XjIh7OVczI9d/view?usp=sharing"
+        }
+      ]
+    },
+    {
+      "board": "F3",
+      "kind": "GettingStarted",
+      "url": "https://docs.banana-pi.org/en/BPI-F3/GettingStarted_BPI-F3",
+      "html_sha256": "88061858acbdbd0beb781efaccd2a43304193905eb6b27b2edda4efb55548594",
+      "html_bytes": 34239,
+      "links": [
+        {
+          "text": "",
+          "href": "/en/BPI-F3/BananaPi_BPI-F3#_system_image"
+        },
+        {
+          "text": "",
+          "href": "/en/BPI-F3/BananaPi_BPI-F3#_tools"
+        },
+        {
+          "text": "",
+          "href": "https://download.banana-pi.dev/d/ca025d76afd448aabc63/files/?p=%2FTools%2Fimage_download_tools%2Ftitantools_for_windows-1.0.35-beta.zip"
+        },
+        {
+          "text": "",
+          "href": "https://download.banana-pi.dev/d/ca025d76afd448aabc63/files/?p=%2FTools%2Fimage_download_tools%2Ftitantools_for_linux-1.0.35-beta.zip"
+        }
+      ]
+    },
+    {
+      "board": "CM6",
+      "kind": "BananaPi",
+      "url": "https://docs.banana-pi.org/en/BPI-CM6/BananaPi_BPI-CM6",
+      "html_sha256": "3439b9723a6a911eb9504fce5f07500b37a672dc177179bd2a0fd214af0bc7c8",
+      "html_bytes": 110645,
+      "links": [
+        {
+          "text": "",
+          "href": "#_bianbu_linux"
+        },
+        {
+          "text": "",
+          "href": "https://gitee.com/bianbu-linux/linux-6.1"
+        },
+        {
+          "text": "",
+          "href": "https://gitee.com/bianbu-linux/uboot-2022.10"
+        },
+        {
+          "text": "",
+          "href": "https://gitee.com/bianbu-linux/opensbi"
+        },
+        {
+          "text": "",
+          "href": "https://bianbu-linux.spacemit.com/en/"
+        },
+        {
+          "text": "",
+          "href": "https://drive.google.com/drive/folders/15j8saZSu0cWAiBQciM-7Lhg6B-hrK5KW?usp=sharing"
+        },
+        {
+          "text": "",
+          "href": "https://drive.google.com/file/d/1yDPR4kPHx8h1SmNCS2hjaT6iuehXXKTQ/view?usp=sharing"
+        },
+        {
+          "text": "",
+          "href": "https://drive.google.com/drive/folders/1VwRMNDRAgObni_CIwOuLQ8c1SViLPSwy?usp=sharing"
+        },
+        {
+          "text": "",
+          "href": "#_system_image"
+        },
+        {
+          "text": "",
+          "href": "https://download.banana-pi.dev/d/ca025d76afd448aabc63/files/?p=%2FTools%2Fimage_download_tools%2Ftitantools_for_windows-1.0.35-beta.zip"
+        },
+        {
+          "text": "",
+          "href": "https://download.banana-pi.dev/d/ca025d76afd448aabc63/files/?p=%2FTools%2Fimage_download_tools%2Ftitantools_for_linux-1.0.35-beta.zip"
+        },
+        {
+          "text": "",
+          "href": "#_system_image_2"
+        },
+        {
+          "text": "",
+          "href": "https://drive.google.com/drive/folders/1uGfWHybLDUH67r18GbvQ9RKwAsxD9HzN?usp=sharing"
+        },
+        {
+          "text": "",
+          "href": "https://drive.google.com/file/d/1sTMJ-w0yiEhBmE0SCuB5CYsxTw63GUr1/view?usp=sharing"
+        },
+        {
+          "text": "",
+          "href": "https://drive.google.com/drive/folders/1LjbfuzcKjpNV55ryXHVRiHthc9I-Wn3l?usp=sharing"
+        },
+        {
+          "text": "",
+          "href": "#_bianbu"
+        },
+        {
+          "text": "",
+          "href": "https://drive.google.com/file/d/1e_FEqCNwOYHuUwE1HZ3IPP221RSoVMXv/view?usp=sharing"
+        }
+      ]
+    },
+    {
+      "board": "CM6",
+      "kind": "GettingStarted",
+      "url": "https://docs.banana-pi.org/en/BPI-CM6/GettingStarted_BPI-CM6",
+      "html_sha256": "f460e5dfcd21f3966114617a26dfbc8d94cf4509a9553e84ed1e0bce503bacc5",
+      "html_bytes": 26120,
+      "links": [
+        {
+          "text": "",
+          "href": "/en/BPI-F3/BananaPi_BPI-F3#_system_image"
+        },
+        {
+          "text": "",
+          "href": "/en/BPI-F3/BananaPi_BPI-F3#_tools"
+        },
+        {
+          "text": "",
+          "href": "https://download.banana-pi.dev/d/ca025d76afd448aabc63/files/?p=%2FTools%2Fimage_download_tools%2Ftitantools_for_windows-1.0.35-beta.zip"
+        },
+        {
+          "text": "",
+          "href": "https://download.banana-pi.dev/d/ca025d76afd448aabc63/files/?p=%2FTools%2Fimage_download_tools%2Ftitantools_for_linux-1.0.35-beta.zip"
+        }
+      ]
+    }
+  ]
+}

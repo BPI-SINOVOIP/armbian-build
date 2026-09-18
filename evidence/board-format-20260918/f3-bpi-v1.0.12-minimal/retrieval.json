@@ -1,0 +1,387 @@
+{
+  "url": "https://drive.usercontent.google.com/download?id=1SpzGQbNZDDkCnwbrGXz5BzEA670uPF8i&export=download&confirm=t",
+  "archive_bytes": 212736667,
+  "archive_sha256": null,
+  "scope": "僅擷取 ZIP 中央目錄與小型控制檔；未下載或驗證完整映像雜湊。zipfile 已驗解壓後 CRC32。",
+  "entries": [
+    {
+      "path": "bootfs.ext4",
+      "size": 268435456,
+      "compressed_size": 21208152,
+      "compress_type": 8,
+      "crc32": "d0868f72",
+      "header_offset": 0,
+      "zip_version": 20,
+      "flag_bits": 0
+    },
+    {
+      "path": "env.bin",
+      "size": 16384,
+      "compressed_size": 1904,
+      "compress_type": 8,
+      "crc32": "e1886ced",
+      "header_offset": 21208221,
+      "zip_version": 20,
+      "flag_bits": 0
+    },
+    {
+      "path": "factory/",
+      "size": 0,
+      "compressed_size": 0,
+      "compress_type": 0,
+      "crc32": "00000000",
+      "header_offset": 21210190,
+      "zip_version": 10,
+      "flag_bits": 0
+    },
+    {
+      "path": "factory/bootinfo_emmc.bin",
+      "size": 80,
+      "compressed_size": 37,
+      "compress_type": 8,
+      "crc32": "ecbb4b55",
+      "header_offset": 21210256,
+      "zip_version": 20,
+      "flag_bits": 0
+    },
+    {
+      "path": "factory/FSBL.bin",
+      "size": 187552,
+      "compressed_size": 104494,
+      "compress_type": 8,
+      "crc32": "c6ae5699",
+      "header_offset": 21210376,
+      "zip_version": 20,
+      "flag_bits": 0
+    },
+    {
+      "path": "factory/bootinfo_spinor.bin",
+      "size": 80,
+      "compressed_size": 39,
+      "compress_type": 8,
+      "crc32": "ecbb4b55",
+      "header_offset": 21314944,
+      "zip_version": 20,
+      "flag_bits": 0
+    },
+    {
+      "path": "factory/bootinfo_spinand.bin",
+      "size": 80,
+      "compressed_size": 39,
+      "compress_type": 8,
+      "crc32": "ecbb4b55",
+      "header_offset": 21315068,
+      "zip_version": 20,
+      "flag_bits": 0
+    },
+    {
+      "path": "factory/bootinfo_sd.bin",
+      "size": 80,
+      "compressed_size": 37,
+      "compress_type": 8,
+      "crc32": "ecbb4b55",
+      "header_offset": 21315193,
+      "zip_version": 20,
+      "flag_bits": 0
+    },
+    {
+      "path": "fastboot.yaml",
+      "size": 1028,
+      "compressed_size": 374,
+      "compress_type": 8,
+      "crc32": "c4b68d3f",
+      "header_offset": 21315311,
+      "zip_version": 20,
+      "flag_bits": 0
+    },
+    {
+      "path": "fw_dynamic.itb",
+      "size": 136583,
+      "compressed_size": 66827,
+      "compress_type": 8,
+      "crc32": "b97c0474",
+      "header_offset": 21315756,
+      "zip_version": 20,
+      "flag_bits": 0
+    },
+    {
+      "path": "genimage.cfg",
+      "size": 1511,
+      "compressed_size": 351,
+      "compress_type": 8,
+      "crc32": "b498b6a1",
+      "header_offset": 21382655,
+      "zip_version": 20,
+      "flag_bits": 0
+    },
+    {
+      "path": "partition_2M.json",
+      "size": 696,
+      "compressed_size": 251,
+      "compress_type": 8,
+      "crc32": "eed5c6df",
+      "header_offset": 21383076,
+      "zip_version": 20,
+      "flag_bits": 0
+    },
+    {
+      "path": "partition_flash.json",
+      "size": 1296,
+      "compressed_size": 316,
+      "compress_type": 8,
+      "crc32": "758a357e",
+      "header_offset": 21383402,
+      "zip_version": 20,
+      "flag_bits": 0
+    },
+    {
+      "path": "partition_universal.json",
+      "size": 1210,
+      "compressed_size": 307,
+      "compress_type": 8,
+      "crc32": "3507daf0",
+      "header_offset": 21383796,
+      "zip_version": 20,
+      "flag_bits": 0
+    },
+    {
+      "path": "rootfs.ext4",
+      "size": 2147483648,
+      "compressed_size": 190616872,
+      "compress_type": 8,
+      "crc32": "cc987e4a",
+      "header_offset": 21384185,
+      "zip_version": 20,
+      "flag_bits": 0
+    },
+    {
+      "path": "u-boot.itb",
+      "size": 1741226,
+      "compressed_size": 734065,
+      "compress_type": 8,
+      "crc32": "8cd909bf",
+      "header_offset": 212001126,
+      "zip_version": 20,
+      "flag_bits": 0
+    }
+  ],
+  "files": [
+    {
+      "path": "fastboot.yaml",
+      "bytes": 1028,
+      "sha256": "95642b765cff5b7c6e2439e44b1b7ea70a77fd79ced3e37a907185f383545278",
+      "crc32": "c4b68d3f"
+    },
+    {
+      "path": "partition_2M.json",
+      "bytes": 696,
+      "sha256": "a14ca12559299f6fbf750465fcc87727b38445e5c0a45516394e6326396a8feb",
+      "crc32": "eed5c6df"
+    },
+    {
+      "path": "partition_flash.json",
+      "bytes": 1296,
+      "sha256": "5f1e483082de5586dcae2b8f979b89a2f0f090cc93bd2f26b80689b654a755b4",
+      "crc32": "758a357e"
+    },
+    {
+      "path": "partition_universal.json",
+      "bytes": 1210,
+      "sha256": "568d9848097c72ba01ded40534022d35be7dda57ece13863194dd3a442d9568e",
+      "crc32": "3507daf0"
+    }
+  ],
+  "requests": [
+    {
+      "start": 212736645,
+      "end": 212736666,
+      "status": 206,
+      "content_range": "bytes 212736645-212736666/212736667",
+      "bytes": 22,
+      "sha256": "c7ae7efb68746ad7fe79ae5a258547187af44508b2dbafd7af9759223236fee7",
+      "etag": null,
+      "last_modified": "Mon, 12 Aug 2024 03:40:55 GMT"
+    },
+    {
+      "start": 212736625,
+      "end": 212736644,
+      "status": 206,
+      "content_range": "bytes 212736625-212736644/212736667",
+      "bytes": 20,
+      "sha256": "00709fca1ae0d10e6032cd52763055061163ae5ad7e12ec4332ada8a549eb573",
+      "etag": null,
+      "last_modified": "Mon, 12 Aug 2024 03:40:55 GMT"
+    },
+    {
+      "start": 212735259,
+      "end": 212736644,
+      "status": 206,
+      "content_range": "bytes 212735259-212736644/212736667",
+      "bytes": 1386,
+      "sha256": "19fca6f1a9105f9e56d402ffd994aec02778f74ec513c79b3f36a9328c0943a3",
+      "etag": null,
+      "last_modified": "Mon, 12 Aug 2024 03:40:55 GMT"
+    },
+    {
+      "start": 21315311,
+      "end": 21315340,
+      "status": 206,
+      "content_range": "bytes 21315311-21315340/212736667",
+      "bytes": 30,
+      "sha256": "f309d69073308582eeaabe7bd40bb050b67e08b68ff77d421f38e939c574b2ae",
+      "etag": null,
+      "last_modified": "Mon, 12 Aug 2024 03:40:55 GMT"
+    },
+    {
+      "start": 21315341,
+      "end": 21315353,
+      "status": 206,
+      "content_range": "bytes 21315341-21315353/212736667",
+      "bytes": 13,
+      "sha256": "5a9daa7c45aa7a3a2aa13f015c5e0f23cf1ce7f778dbc2ac1c8dc93b24f59ba8",
+      "etag": null,
+      "last_modified": "Mon, 12 Aug 2024 03:40:55 GMT"
+    },
+    {
+      "start": 21315354,
+      "end": 21315381,
+      "status": 206,
+      "content_range": "bytes 21315354-21315381/212736667",
+      "bytes": 28,
+      "sha256": "d39794e4f3d603bb62334ae54029982163da98e99b2eb59e4cb061ac5f9bef77",
+      "etag": null,
+      "last_modified": "Mon, 12 Aug 2024 03:40:55 GMT"
+    },
+    {
+      "start": 21315382,
+      "end": 21315755,
+      "status": 206,
+      "content_range": "bytes 21315382-21315755/212736667",
+      "bytes": 374,
+      "sha256": "dd48b4844132f3db18d1e48f89a63652726f60ddb0a8cd0664925e2de6c36a4b",
+      "etag": null,
+      "last_modified": "Mon, 12 Aug 2024 03:40:55 GMT"
+    },
+    {
+      "start": 21383076,
+      "end": 21383105,
+      "status": 206,
+      "content_range": "bytes 21383076-21383105/212736667",
+      "bytes": 30,
+      "sha256": "2d33a7995b207406e7cf372d6b5fc1550fc0880496380590978a2918a2472ad2",
+      "etag": null,
+      "last_modified": "Mon, 12 Aug 2024 03:40:55 GMT"
+    },
+    {
+      "start": 21383106,
+      "end": 21383122,
+      "status": 206,
+      "content_range": "bytes 21383106-21383122/212736667",
+      "bytes": 17,
+      "sha256": "367762f2f369f4678e1aeaf2f35ec037ce9defc329f423b765a2d12b0f195903",
+      "etag": null,
+      "last_modified": "Mon, 12 Aug 2024 03:40:55 GMT"
+    },
+    {
+      "start": 21383123,
+      "end": 21383150,
+      "status": 206,
+      "content_range": "bytes 21383123-21383150/212736667",
+      "bytes": 28,
+      "sha256": "d39794e4f3d603bb62334ae54029982163da98e99b2eb59e4cb061ac5f9bef77",
+      "etag": null,
+      "last_modified": "Mon, 12 Aug 2024 03:40:55 GMT"
+    },
+    {
+      "start": 21383151,
+      "end": 21383401,
+      "status": 206,
+      "content_range": "bytes 21383151-21383401/212736667",
+      "bytes": 251,
+      "sha256": "edd72c1e09fce3af29245dae36771462b627911ba555a0e5c3194f8a3e503807",
+      "etag": null,
+      "last_modified": "Mon, 12 Aug 2024 03:40:55 GMT"
+    },
+    {
+      "start": 21383402,
+      "end": 21383431,
+      "status": 206,
+      "content_range": "bytes 21383402-21383431/212736667",
+      "bytes": 30,
+      "sha256": "6584ee0cf35df2667f6aa536a4d034dc96d06faf18e7ae5d9104cf3abcac549f",
+      "etag": null,
+      "last_modified": "Mon, 12 Aug 2024 03:40:55 GMT"
+    },
+    {
+      "start": 21383432,
+      "end": 21383451,
+      "status": 206,
+      "content_range": "bytes 21383432-21383451/212736667",
+      "bytes": 20,
+      "sha256": "dee0c2cde19e9ab415e01429015989eee79829910c9ef68e243e8e174f42bb8d",
+      "etag": null,
+      "last_modified": "Mon, 12 Aug 2024 03:40:55 GMT"
+    },
+    {
+      "start": 21383452,
+      "end": 21383479,
+      "status": 206,
+      "content_range": "bytes 21383452-21383479/212736667",
+      "bytes": 28,
+      "sha256": "d39794e4f3d603bb62334ae54029982163da98e99b2eb59e4cb061ac5f9bef77",
+      "etag": null,
+      "last_modified": "Mon, 12 Aug 2024 03:40:55 GMT"
+    },
+    {
+      "start": 21383480,
+      "end": 21383795,
+      "status": 206,
+      "content_range": "bytes 21383480-21383795/212736667",
+      "bytes": 316,
+      "sha256": "ed059487f8794c1da3db8db03a02761fb126a2f906922c62b620fed9fc03d563",
+      "etag": null,
+      "last_modified": "Mon, 12 Aug 2024 03:40:55 GMT"
+    },
+    {
+      "start": 21383796,
+      "end": 21383825,
+      "status": 206,
+      "content_range": "bytes 21383796-21383825/212736667",
+      "bytes": 30,
+      "sha256": "c28475899f6f973256f0be39d6912563d49519c3d1b9c82a65d91768bac5451a",
+      "etag": null,
+      "last_modified": "Mon, 12 Aug 2024 03:40:55 GMT"
+    },
+    {
+      "start": 21383826,
+      "end": 21383849,
+      "status": 206,
+      "content_range": "bytes 21383826-21383849/212736667",
+      "bytes": 24,
+      "sha256": "1198eeae737cd6ee93d75c2e936907fcd9e123900fdd1ca1318175b08c4b982f",
+      "etag": null,
+      "last_modified": "Mon, 12 Aug 2024 03:40:55 GMT"
+    },
+    {
+      "start": 21383850,
+      "end": 21383877,
+      "status": 206,
+      "content_range": "bytes 21383850-21383877/212736667",
+      "bytes": 28,
+      "sha256": "d39794e4f3d603bb62334ae54029982163da98e99b2eb59e4cb061ac5f9bef77",
+      "etag": null,
+      "last_modified": "Mon, 12 Aug 2024 03:40:55 GMT"
+    },
+    {
+      "start": 21383878,
+      "end": 21384184,
+      "status": 206,
+      "content_range": "bytes 21383878-21384184/212736667",
+      "bytes": 307,
+      "sha256": "ed60a80fd5bd2949fc127098132caa7f22768be9a095c53bd598b37bbd21a041",
+      "etag": null,
+      "last_modified": "Mon, 12 Aug 2024 03:40:55 GMT"
+    }
+  ],
+  "transferred_bytes": 2982
+}

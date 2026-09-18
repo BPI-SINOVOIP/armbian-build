@@ -1,0 +1,92 @@
+{
+  "retrieved_on": "2026-09-18",
+  "f3_folder": {
+    "url": "https://drive.google.com/drive/folders/1U9kma2_2UK4MTvuVA2TPKY72N6n8r8Xa",
+    "title": "bpi-f3-bianbu-v1.0.12-23.10-20240802",
+    "files": [
+      {
+        "id": "1SpzGQbNZDDkCnwbrGXz5BzEA670uPF8i",
+        "title": "bianbu-23.10-minimal-k1-v1.0.12-release-20240802210530.zip",
+        "size": "212736667",
+        "mime_type": "application/x-zip-compressed",
+        "modified_time": "2024-08-12T02:51:12.000Z",
+        "url": "https://drive.google.com/file/d/1SpzGQbNZDDkCnwbrGXz5BzEA670uPF8i/view?usp=drivesdk"
+      },
+      {
+        "id": "1qSDg6krMZaet4fDyDJL87wb5IwFi3Be6",
+        "title": "bianbu-23.10-minimal-k1-v1.0.12-release-20240802210530.img.zip",
+        "size": "212747725",
+        "mime_type": "application/x-zip-compressed",
+        "modified_time": "2024-08-12T02:48:50.000Z",
+        "url": "https://drive.google.com/file/d/1qSDg6krMZaet4fDyDJL87wb5IwFi3Be6/view?usp=drivesdk"
+      },
+      {
+        "id": "1IAbgaWX6t_Hhl0hfzsyTmHf2da4g5tAF",
+        "title": "bianbu-23.10-minimal-k1-v1.0.12-release-20240802210530.zip.md5",
+        "size": "33",
+        "mime_type": "application/octet-stream",
+        "modified_time": "2024-08-12T02:39:37.000Z",
+        "url": "https://drive.google.com/file/d/1IAbgaWX6t_Hhl0hfzsyTmHf2da4g5tAF/view?usp=drivesdk"
+      },
+      {
+        "id": "1h9tLUmzZvCTHdFMtQvF5C6nRDzxBEiVB",
+        "title": "bianbu-23.10-minimal-k1-v1.0.12-release-20240802210530.img.zip.md5",
+        "size": "33",
+        "mime_type": "application/octet-stream",
+        "modified_time": "2024-08-12T02:38:25.000Z",
+        "url": "https://drive.google.com/file/d/1h9tLUmzZvCTHdFMtQvF5C6nRDzxBEiVB/view?usp=drivesdk"
+      },
+      {
+        "id": "1yXuzBlRMnyKgAi3NhRWPnCwxKxFwlidS",
+        "title": "bianbu-23.10-desktop-k1-v1.0.12-release-20240802214818.zip",
+        "size": "2711973542",
+        "mime_type": "application/x-zip-compressed",
+        "modified_time": "2024-08-09T08:30:00.000Z",
+        "url": "https://drive.google.com/file/d/1yXuzBlRMnyKgAi3NhRWPnCwxKxFwlidS/view?usp=drivesdk"
+      },
+      {
+        "id": "1oFlis2DLmm9IwLAmArWT7ULnZ50JbP7u",
+        "title": "bianbu-23.10-desktop-k1-v1.0.12-release-20240802214818.zip.md5",
+        "size": "33",
+        "mime_type": "application/octet-stream",
+        "modified_time": "2024-08-09T07:01:50.000Z",
+        "url": "https://drive.google.com/file/d/1oFlis2DLmm9IwLAmArWT7ULnZ50JbP7u/view?usp=drivesdk"
+      },
+      {
+        "id": "1HCuU2leDGVJ0pWC5Fnz3hts5mKyxYF1j",
+        "title": "bianbu-23.10-desktop-k1-v1.0.12-release-20240802214818.img.zip",
+        "size": "2711986814",
+        "mime_type": "application/x-zip-compressed",
+        "modified_time": "2024-08-09T05:31:17.000Z",
+        "url": "https://drive.google.com/file/d/1HCuU2leDGVJ0pWC5Fnz3hts5mKyxYF1j/view?usp=drivesdk"
+      },
+      {
+        "id": "1Pkea_VANJmJuhzoNMkiLhYKWUcF-k0rD",
+        "title": "bianbu-23.10-desktop-k1-v1.0.12-release-20240802214818.img.zip.md5",
+        "size": "33",
+        "mime_type": "application/octet-stream",
+        "modified_time": "2024-08-09T03:53:01.000Z",
+        "url": "https://drive.google.com/file/d/1Pkea_VANJmJuhzoNMkiLhYKWUcF-k0rD/view?usp=drivesdk"
+      }
+    ]
+  },
+  "cm6_image": {
+    "id": "1e_FEqCNwOYHuUwE1HZ3IPP221RSoVMXv",
+    "title": "20260109-bianbu-lxqt-v2.3-bpi-cm6.img.xz",
+    "mime_type": "application/x-compressed",
+    "size": "1424722976",
+    "url": "https://drive.google.com/file/d/1e_FEqCNwOYHuUwE1HZ3IPP221RSoVMXv/view?usp=drivesdk",
+    "display_url": "https://drive.google.com/file/d/1e_FEqCNwOYHuUwE1HZ3IPP221RSoVMXv/view?usp=drivesdk",
+    "file_or_folder": "file",
+    "created_time": "2026-01-14T01:37:03.288Z",
+    "modified_time": "2026-01-14T00:48:32.000Z",
+    "parent_ids": null,
+    "drive_id": null,
+    "current_user_can_share": false,
+    "has_augmented_permissions": null,
+    "shared": true,
+    "permissions": null,
+    "source_visibility_status": "access_not_verified"
+  },
+  "scope": "Google Drive 連接器提供檔名、大小與檔案識別；F3 ZIP 控制檔另經公開 HTTP Range 取回。CM6 本次未下載整份磁碟映像。"
+}

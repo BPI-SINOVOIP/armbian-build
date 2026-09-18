@@ -166,9 +166,9 @@
     },
     {
       "path": "genimage.cfg",
-      "sha256": "180d79d26052b52bafb9628c4dd96f1f2dd23326b030fbbfd04658b266d9eb77",
+      "sha256": "103edc873bc8971ddf197b48fa4b29f06e41d90e69668622ef71ef6497cdedbf",
       "upstream_sha256": "8fc8372ed3cd5a831f12e4a05d1ad3e8505395b9f1584301cae5b3b5b0768343",
-      "adaptation": "僅將註解翻成繁體中文、統一換行並清除行尾空白。"
+      "adaptation": "保留原廠技術欄位；說明改為繁體中文，移除檔案末端多餘空行。"
     }
   ],
   "v2_1_crosscheck": {

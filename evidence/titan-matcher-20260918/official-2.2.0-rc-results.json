@@ -1,0 +1,155 @@
+{
+  "scope": "直接執行官方匹配函式與官方例外類型；未執行 GUI、USB、燒錄動作或核心啟動",
+  "backend_sha256": "adde4756c863c9575170c36555bd501c694e241d3d385d9e8c98e9adcd417716",
+  "python_version": "3.8.10",
+  "official_functions": {
+    "_check_partition": {
+      "source_filename": "flashboot/source/actions.py",
+      "source_line": 505,
+      "marshaled_code_sha256": "6fb25885b62f60d5cc7a871026212c030c4160d5a9a30e713b033027cf891041"
+    },
+    "build_multi_flash": {
+      "source_filename": "flashboot/source/actions.py",
+      "source_line": 393,
+      "marshaled_code_sha256": "78a4c61c023100d65f3c9383dc261f22ca2ab9e5d864d54557e8ab1d00235305"
+    },
+    "build_multi_flash_use_partition": {
+      "source_filename": "flashboot/source/actions.py",
+      "source_line": 414,
+      "marshaled_code_sha256": "bc3fd148e1b883afd05292d7be6b18246b93c5d97be191a1fe48a5a8c00cb3d9"
+    }
+  },
+  "cases": [
+    {
+      "name": "fixed_name_default_flow",
+      "relate_partition": [
+        "partition_universal.json"
+      ],
+      "variables": {
+        "size0": "NULL",
+        "size1": "universal"
+      },
+      "part_config": null,
+      "status": "error",
+      "error_type": "FlashNotMatchError",
+      "error_text": "\n【Code】 20014\n【Reason】Unable to identify flashing media as partition table not matched\n【Detail】partition table is null",
+      "matched_partitions": [],
+      "official_logs": [
+        "match partition table: ['partition_universal.json']",
+        "not match any partition "
+      ]
+    },
+    {
+      "name": "block_placeholder_default_flow",
+      "relate_partition": [
+        "partition_{size1}.json"
+      ],
+      "variables": {
+        "size0": "NULL",
+        "size1": "universal"
+      },
+      "part_config": null,
+      "returned_partitions": [
+        "partition_universal.json"
+      ],
+      "status": "matched",
+      "matched_partitions": [
+        "partition_universal.json"
+      ],
+      "official_logs": [
+        "match partition table: ['partition_{size1}.json']",
+        "Match the original partition table: partition_universal.json",
+        "partition match result: partition_universal.json"
+      ]
+    },
+    {
+      "name": "official_two_placeholders",
+      "relate_partition": [
+        "partition_{size0}.json",
+        "partition_{size1}.json"
+      ],
+      "variables": {
+        "size0": "NULL",
+        "size1": "universal"
+      },
+      "part_config": null,
+      "returned_partitions": [
+        "partition_universal.json"
+      ],
+      "status": "matched",
+      "matched_partitions": [
+        "partition_universal.json"
+      ],
+      "official_logs": [
+        "match partition table: ['partition_{size0}.json', 'partition_{size1}.json']",
+        "Match the original partition table: partition_universal.json",
+        "partition match result: partition_universal.json"
+      ]
+    },
+    {
+      "name": "explicit_part_override",
+      "relate_partition": [
+        "partition_universal.json"
+      ],
+      "variables": {
+        "size0": "NULL",
+        "size1": "universal"
+      },
+      "part_config": [
+        "partition_universal.json"
+      ],
+      "returned_partitions": [
+        "partition_universal.json"
+      ],
+      "status": "matched",
+      "matched_partitions": [
+        "partition_universal.json"
+      ],
+      "official_logs": [
+        "Use the configured partition table: ['partition_universal.json']"
+      ]
+    },
+    {
+      "name": "block_placeholder_with_mtd_present",
+      "relate_partition": [
+        "partition_{size1}.json"
+      ],
+      "variables": {
+        "size0": "2M",
+        "size1": "universal"
+      },
+      "part_config": null,
+      "returned_partitions": [
+        "partition_universal.json"
+      ],
+      "status": "matched",
+      "matched_partitions": [
+        "partition_universal.json"
+      ],
+      "official_logs": [
+        "match partition table: ['partition_{size1}.json']",
+        "Match the original partition table: partition_universal.json",
+        "partition match result: partition_universal.json"
+      ]
+    },
+    {
+      "name": "block_placeholder_null_device",
+      "relate_partition": [
+        "partition_{size1}.json"
+      ],
+      "variables": {
+        "size0": "2M",
+        "size1": "NULL"
+      },
+      "part_config": null,
+      "status": "error",
+      "error_type": "FlashNotMatchError",
+      "error_text": "\n【Code】 20014\n【Reason】Unable to identify flashing media as partition table not matched\n【Detail】partition table is null",
+      "matched_partitions": [],
+      "official_logs": [
+        "match partition table: ['partition_{size1}.json']",
+        "not match any partition "
+      ]
+    }
+  ]
+}

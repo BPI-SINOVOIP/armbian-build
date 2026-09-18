@@ -1,0 +1,171 @@
+{
+  "date": "2026-09-18",
+  "scope": "本次新增小型證據的完整性清單；不代表原始大型映像整包驗證。",
+  "files": [
+    {
+      "path": "candidate-20260916-cm6/fastboot.yaml",
+      "bytes": 882,
+      "sha256": "181a77ebb289a92b0c5b12a08e25387704a659fec4ae85ec0bba91d00c7747cf"
+    },
+    {
+      "path": "candidate-20260916-cm6/inspection.json",
+      "bytes": 2626,
+      "sha256": "fc5686798b047a01f485c1e5e0eba32b99924f108be2f344d5244d61e47f6fe2"
+    },
+    {
+      "path": "candidate-20260916-cm6/partition_universal.json",
+      "bytes": 956,
+      "sha256": "dcc90441c298b11815b434f3ca4535cb6cd3fc5d652594680ede69424e353d56"
+    },
+    {
+      "path": "candidate-20260916-f3/fastboot.yaml",
+      "bytes": 882,
+      "sha256": "181a77ebb289a92b0c5b12a08e25387704a659fec4ae85ec0bba91d00c7747cf"
+    },
+    {
+      "path": "candidate-20260916-f3/inspection.json",
+      "bytes": 2624,
+      "sha256": "918e75f6657371d1cbfb6fe34adb6e0b47c4238353584d76705ac08bfb7765d0"
+    },
+    {
+      "path": "candidate-20260916-f3/partition_universal.json",
+      "bytes": 956,
+      "sha256": "dcc90441c298b11815b434f3ca4535cb6cd3fc5d652594680ede69424e353d56"
+    },
+    {
+      "path": "cm6-guide-generic-v2.1/fastboot.yaml",
+      "bytes": 1028,
+      "sha256": "95642b765cff5b7c6e2439e44b1b7ea70a77fd79ced3e37a907185f383545278"
+    },
+    {
+      "path": "cm6-guide-generic-v2.1/partition_2M.json",
+      "bytes": 696,
+      "sha256": "a14ca12559299f6fbf750465fcc87727b38445e5c0a45516394e6326396a8feb"
+    },
+    {
+      "path": "cm6-guide-generic-v2.1/partition_flash.json",
+      "bytes": 1296,
+      "sha256": "5f1e483082de5586dcae2b8f979b89a2f0f090cc93bd2f26b80689b654a755b4"
+    },
+    {
+      "path": "cm6-guide-generic-v2.1/partition_universal.json",
+      "bytes": 1210,
+      "sha256": "568d9848097c72ba01ded40534022d35be7dda57ece13863194dd3a442d9568e"
+    },
+    {
+      "path": "cm6-guide-generic-v2.1/retrieval.json",
+      "bytes": 12034,
+      "sha256": "266cdfbafd588fc61c70de4aac4d379e9296965c703a8442165fc49ad8dac0d5"
+    },
+    {
+      "path": "cm6-guide-generic-v2.1-source.json",
+      "bytes": 376,
+      "sha256": "c561171ff579104cdcd0350018af5d968e6aa88c4656ef18062dbac3c73bb22c"
+    },
+    {
+      "path": "comparison-check.json",
+      "bytes": 1055,
+      "sha256": "1f619cf5ac8c6f135ccbf8bf23d9594b1a3b78e0a1f4a2e419246e24bbdb1137"
+    },
+    {
+      "path": "drive-metadata.json",
+      "bytes": 4185,
+      "sha256": "d186015afd8d59c7f6a814fab1f73fe0b49ff3185a352b20802083c63ff5b434"
+    },
+    {
+      "path": "f3-bpi-md5-source.json",
+      "bytes": 285,
+      "sha256": "326ca67a0c54282d5bc03fe5086c9a282b4dc76cea5912946a8b4f034d1f5a1a"
+    },
+    {
+      "path": "f3-bpi-v1.0.12-desktop/fastboot.yaml",
+      "bytes": 1028,
+      "sha256": "95642b765cff5b7c6e2439e44b1b7ea70a77fd79ced3e37a907185f383545278"
+    },
+    {
+      "path": "f3-bpi-v1.0.12-desktop/partition_2M.json",
+      "bytes": 696,
+      "sha256": "a14ca12559299f6fbf750465fcc87727b38445e5c0a45516394e6326396a8feb"
+    },
+    {
+      "path": "f3-bpi-v1.0.12-desktop/partition_flash.json",
+      "bytes": 1296,
+      "sha256": "5f1e483082de5586dcae2b8f979b89a2f0f090cc93bd2f26b80689b654a755b4"
+    },
+    {
+      "path": "f3-bpi-v1.0.12-desktop/partition_universal.json",
+      "bytes": 1210,
+      "sha256": "568d9848097c72ba01ded40534022d35be7dda57ece13863194dd3a442d9568e"
+    },
+    {
+      "path": "f3-bpi-v1.0.12-desktop/retrieval.json",
+      "bytes": 11269,
+      "sha256": "53cd196f22a31d5d3066f03b1b16000d74c79e1d4b5990c24fb9c24a6098c936"
+    },
+    {
+      "path": "f3-bpi-v1.0.12-minimal/fastboot.yaml",
+      "bytes": 1028,
+      "sha256": "95642b765cff5b7c6e2439e44b1b7ea70a77fd79ced3e37a907185f383545278"
+    },
+    {
+      "path": "f3-bpi-v1.0.12-minimal/partition_2M.json",
+      "bytes": 696,
+      "sha256": "a14ca12559299f6fbf750465fcc87727b38445e5c0a45516394e6326396a8feb"
+    },
+    {
+      "path": "f3-bpi-v1.0.12-minimal/partition_flash.json",
+      "bytes": 1296,
+      "sha256": "5f1e483082de5586dcae2b8f979b89a2f0f090cc93bd2f26b80689b654a755b4"
+    },
+    {
+      "path": "f3-bpi-v1.0.12-minimal/partition_universal.json",
+      "bytes": 1210,
+      "sha256": "568d9848097c72ba01ded40534022d35be7dda57ece13863194dd3a442d9568e"
+    },
+    {
+      "path": "f3-bpi-v1.0.12-minimal/retrieval.json",
+      "bytes": 10906,
+      "sha256": "2b501740056022d42a3b452db3c3b24dc0a1fcfccd0076ecbd8a3c6a273a01c8"
+    },
+    {
+      "path": "f3-bpi-v1.0.12-minimal.zip.md5",
+      "bytes": 33,
+      "sha256": "683edbdd132edb6de210d84f1a2024a250c3b082e876710af0e149199239885c"
+    },
+    {
+      "path": "official-pages.json",
+      "bytes": 9131,
+      "sha256": "6ab14bdf97db3ed69012289fb2fc142a4fb75c9e5f2b41f06c297aeb4c30e348"
+    },
+    {
+      "path": "probe_zip.py",
+      "bytes": 4428,
+      "sha256": "ab8ffcab8e062b69c813d58302a072471fe222c60cf0c7f26e1409e17e41dc0c"
+    },
+    {
+      "path": "spacemit-v2.3-lxqt/fastboot.yaml",
+      "bytes": 1028,
+      "sha256": "95642b765cff5b7c6e2439e44b1b7ea70a77fd79ced3e37a907185f383545278"
+    },
+    {
+      "path": "spacemit-v2.3-lxqt/partition_2M.json",
+      "bytes": 696,
+      "sha256": "a14ca12559299f6fbf750465fcc87727b38445e5c0a45516394e6326396a8feb"
+    },
+    {
+      "path": "spacemit-v2.3-lxqt/partition_flash.json",
+      "bytes": 1296,
+      "sha256": "5f1e483082de5586dcae2b8f979b89a2f0f090cc93bd2f26b80689b654a755b4"
+    },
+    {
+      "path": "spacemit-v2.3-lxqt/partition_universal.json",
+      "bytes": 1210,
+      "sha256": "568d9848097c72ba01ded40534022d35be7dda57ece13863194dd3a442d9568e"
+    },
+    {
+      "path": "spacemit-v2.3-lxqt/retrieval.json",
+      "bytes": 12019,
+      "sha256": "e17e5a98cb3720a7693dba300a128b55822865987548021a20340e9c9c2ecc40"
+    }
+  ]
+}

@@ -1,0 +1,397 @@
+{
+  "url": "https://archive.spacemit.com/image/k1/version/bianbu/v2.3/Bianbu-LXQt-K1-V2.3.0-20251212104943.zip",
+  "archive_bytes": 2008730989,
+  "archive_sha256": null,
+  "scope": "僅擷取 ZIP 中央目錄與小型控制檔；未下載或驗證完整映像雜湊。zipfile 已驗解壓後 CRC32。",
+  "entries": [
+    {
+      "path": "bootfs.ext4",
+      "size": 268435456,
+      "compressed_size": 31072942,
+      "compress_type": 8,
+      "crc32": "e1ab259a",
+      "header_offset": 0,
+      "zip_version": 20,
+      "flag_bits": 0
+    },
+    {
+      "path": "env.bin",
+      "size": 16384,
+      "compressed_size": 2824,
+      "compress_type": 8,
+      "crc32": "06ecbe2b",
+      "header_offset": 31073011,
+      "zip_version": 20,
+      "flag_bits": 0
+    },
+    {
+      "path": "factory/",
+      "size": 0,
+      "compressed_size": 0,
+      "compress_type": 0,
+      "crc32": "00000000",
+      "header_offset": 31075900,
+      "zip_version": 10,
+      "flag_bits": 0
+    },
+    {
+      "path": "factory/bootinfo_emmc.bin",
+      "size": 80,
+      "compressed_size": 37,
+      "compress_type": 8,
+      "crc32": "ecbb4b55",
+      "header_offset": 31075966,
+      "zip_version": 20,
+      "flag_bits": 0
+    },
+    {
+      "path": "factory/FSBL.bin",
+      "size": 191808,
+      "compressed_size": 107620,
+      "compress_type": 8,
+      "crc32": "79742168",
+      "header_offset": 31076086,
+      "zip_version": 20,
+      "flag_bits": 0
+    },
+    {
+      "path": "factory/bootinfo_spinor.bin",
+      "size": 80,
+      "compressed_size": 39,
+      "compress_type": 8,
+      "crc32": "ecbb4b55",
+      "header_offset": 31183780,
+      "zip_version": 20,
+      "flag_bits": 0
+    },
+    {
+      "path": "factory/bootinfo_spinand.bin",
+      "size": 80,
+      "compressed_size": 39,
+      "compress_type": 8,
+      "crc32": "ecbb4b55",
+      "header_offset": 31183904,
+      "zip_version": 20,
+      "flag_bits": 0
+    },
+    {
+      "path": "factory/bootinfo_sd.bin",
+      "size": 80,
+      "compressed_size": 37,
+      "compress_type": 8,
+      "crc32": "ecbb4b55",
+      "header_offset": 31184029,
+      "zip_version": 20,
+      "flag_bits": 0
+    },
+    {
+      "path": "fastboot.yaml",
+      "size": 1028,
+      "compressed_size": 374,
+      "compress_type": 8,
+      "crc32": "c4b68d3f",
+      "header_offset": 31184147,
+      "zip_version": 20,
+      "flag_bits": 0
+    },
+    {
+      "path": "fw_dynamic.itb",
+      "size": 136583,
+      "compressed_size": 66987,
+      "compress_type": 8,
+      "crc32": "20935081",
+      "header_offset": 31184592,
+      "zip_version": 20,
+      "flag_bits": 0
+    },
+    {
+      "path": "genimage.cfg",
+      "size": 1511,
+      "compressed_size": 351,
+      "compress_type": 8,
+      "crc32": "b498b6a1",
+      "header_offset": 31251651,
+      "zip_version": 20,
+      "flag_bits": 0
+    },
+    {
+      "path": "partition_2M.json",
+      "size": 696,
+      "compressed_size": 251,
+      "compress_type": 8,
+      "crc32": "eed5c6df",
+      "header_offset": 31252072,
+      "zip_version": 20,
+      "flag_bits": 0
+    },
+    {
+      "path": "partition_flash.json",
+      "size": 1296,
+      "compressed_size": 316,
+      "compress_type": 8,
+      "crc32": "758a357e",
+      "header_offset": 31252398,
+      "zip_version": 20,
+      "flag_bits": 0
+    },
+    {
+      "path": "partition_universal.json",
+      "size": 1210,
+      "compressed_size": 307,
+      "compress_type": 8,
+      "crc32": "3507daf0",
+      "header_offset": 31252792,
+      "zip_version": 20,
+      "flag_bits": 0
+    },
+    {
+      "path": "rootfs.ext4",
+      "size": 8589934592,
+      "compressed_size": 1976694392,
+      "compress_type": 8,
+      "crc32": "e49daaf2",
+      "header_offset": 31253181,
+      "zip_version": 45,
+      "flag_bits": 0
+    },
+    {
+      "path": "u-boot.itb",
+      "size": 1959546,
+      "compressed_size": 781763,
+      "compress_type": 8,
+      "crc32": "069fe006",
+      "header_offset": 2007947662,
+      "zip_version": 20,
+      "flag_bits": 0
+    }
+  ],
+  "files": [
+    {
+      "path": "fastboot.yaml",
+      "bytes": 1028,
+      "sha256": "95642b765cff5b7c6e2439e44b1b7ea70a77fd79ced3e37a907185f383545278",
+      "crc32": "c4b68d3f"
+    },
+    {
+      "path": "partition_2M.json",
+      "bytes": 696,
+      "sha256": "a14ca12559299f6fbf750465fcc87727b38445e5c0a45516394e6326396a8feb",
+      "crc32": "eed5c6df"
+    },
+    {
+      "path": "partition_flash.json",
+      "bytes": 1296,
+      "sha256": "5f1e483082de5586dcae2b8f979b89a2f0f090cc93bd2f26b80689b654a755b4",
+      "crc32": "758a357e"
+    },
+    {
+      "path": "partition_universal.json",
+      "bytes": 1210,
+      "sha256": "568d9848097c72ba01ded40534022d35be7dda57ece13863194dd3a442d9568e",
+      "crc32": "3507daf0"
+    }
+  ],
+  "requests": [
+    {
+      "start": 2008730967,
+      "end": 2008730988,
+      "status": 206,
+      "content_range": "bytes 2008730967-2008730988/2008730989",
+      "bytes": 22,
+      "sha256": "81911d46182e860113b60d75b17407b5c08315bc4ad81daafe83a1e43c0f84c7",
+      "etag": "\"5D32E7A76DA7B9C5DCEFAA39C1E41337-320\"",
+      "last_modified": "Sun, 11 Jan 2026 13:44:57 GMT"
+    },
+    {
+      "start": 2008730947,
+      "end": 2008730966,
+      "status": 206,
+      "content_range": "bytes 2008730947-2008730966/2008730989",
+      "bytes": 20,
+      "sha256": "f1470957a241f9f1111fa06556ffafc0ac555ee31562000062c82b2381e4401a",
+      "etag": "\"5D32E7A76DA7B9C5DCEFAA39C1E41337-320\"",
+      "last_modified": "Sun, 11 Jan 2026 13:44:57 GMT"
+    },
+    {
+      "start": 2008730891,
+      "end": 2008730946,
+      "status": 206,
+      "content_range": "bytes 2008730891-2008730946/2008730989",
+      "bytes": 56,
+      "sha256": "219268ecf8539fc1b5d43ec31e7108c7dd61b477c3f3ded7a2823ca3e0279bb2",
+      "etag": "\"5D32E7A76DA7B9C5DCEFAA39C1E41337-320\"",
+      "last_modified": "Sun, 11 Jan 2026 13:44:57 GMT"
+    },
+    {
+      "start": 2008729493,
+      "end": 2008730890,
+      "status": 206,
+      "content_range": "bytes 2008729493-2008730890/2008730989",
+      "bytes": 1398,
+      "sha256": "431f1937b7b4bda5b76671801aa778dc656ba544c4b9a6a9880f1b8e9c1e01e7",
+      "etag": "\"5D32E7A76DA7B9C5DCEFAA39C1E41337-320\"",
+      "last_modified": "Sun, 11 Jan 2026 13:44:57 GMT"
+    },
+    {
+      "start": 31184147,
+      "end": 31184176,
+      "status": 206,
+      "content_range": "bytes 31184147-31184176/2008730989",
+      "bytes": 30,
+      "sha256": "edfb38a83614f511b53a6a0dcc1c06db440ef9679d522dbe16e6707d2cd6dbed",
+      "etag": "\"5D32E7A76DA7B9C5DCEFAA39C1E41337-320\"",
+      "last_modified": "Sun, 11 Jan 2026 13:44:57 GMT"
+    },
+    {
+      "start": 31184177,
+      "end": 31184189,
+      "status": 206,
+      "content_range": "bytes 31184177-31184189/2008730989",
+      "bytes": 13,
+      "sha256": "5a9daa7c45aa7a3a2aa13f015c5e0f23cf1ce7f778dbc2ac1c8dc93b24f59ba8",
+      "etag": "\"5D32E7A76DA7B9C5DCEFAA39C1E41337-320\"",
+      "last_modified": "Sun, 11 Jan 2026 13:44:57 GMT"
+    },
+    {
+      "start": 31184190,
+      "end": 31184217,
+      "status": 206,
+      "content_range": "bytes 31184190-31184217/2008730989",
+      "bytes": 28,
+      "sha256": "e11e272db8f46f943d51ea1b76523f716f1307249f972777290827f65fc66b64",
+      "etag": "\"5D32E7A76DA7B9C5DCEFAA39C1E41337-320\"",
+      "last_modified": "Sun, 11 Jan 2026 13:44:57 GMT"
+    },
+    {
+      "start": 31184218,
+      "end": 31184591,
+      "status": 206,
+      "content_range": "bytes 31184218-31184591/2008730989",
+      "bytes": 374,
+      "sha256": "dd48b4844132f3db18d1e48f89a63652726f60ddb0a8cd0664925e2de6c36a4b",
+      "etag": "\"5D32E7A76DA7B9C5DCEFAA39C1E41337-320\"",
+      "last_modified": "Sun, 11 Jan 2026 13:44:57 GMT"
+    },
+    {
+      "start": 31252072,
+      "end": 31252101,
+      "status": 206,
+      "content_range": "bytes 31252072-31252101/2008730989",
+      "bytes": 30,
+      "sha256": "84f47cd5d6d2ec773dd3780b78fe42d60cbd3a8625914f7e3493e892c55a9b5b",
+      "etag": "\"5D32E7A76DA7B9C5DCEFAA39C1E41337-320\"",
+      "last_modified": "Sun, 11 Jan 2026 13:44:57 GMT"
+    },
+    {
+      "start": 31252102,
+      "end": 31252118,
+      "status": 206,
+      "content_range": "bytes 31252102-31252118/2008730989",
+      "bytes": 17,
+      "sha256": "367762f2f369f4678e1aeaf2f35ec037ce9defc329f423b765a2d12b0f195903",
+      "etag": "\"5D32E7A76DA7B9C5DCEFAA39C1E41337-320\"",
+      "last_modified": "Sun, 11 Jan 2026 13:44:57 GMT"
+    },
+    {
+      "start": 31252119,
+      "end": 31252146,
+      "status": 206,
+      "content_range": "bytes 31252119-31252146/2008730989",
+      "bytes": 28,
+      "sha256": "e11e272db8f46f943d51ea1b76523f716f1307249f972777290827f65fc66b64",
+      "etag": "\"5D32E7A76DA7B9C5DCEFAA39C1E41337-320\"",
+      "last_modified": "Sun, 11 Jan 2026 13:44:57 GMT"
+    },
+    {
+      "start": 31252147,
+      "end": 31252397,
+      "status": 206,
+      "content_range": "bytes 31252147-31252397/2008730989",
+      "bytes": 251,
+      "sha256": "edd72c1e09fce3af29245dae36771462b627911ba555a0e5c3194f8a3e503807",
+      "etag": "\"5D32E7A76DA7B9C5DCEFAA39C1E41337-320\"",
+      "last_modified": "Sun, 11 Jan 2026 13:44:57 GMT"
+    },
+    {
+      "start": 31252398,
+      "end": 31252427,
+      "status": 206,
+      "content_range": "bytes 31252398-31252427/2008730989",
+      "bytes": 30,
+      "sha256": "6d830e03433ff61b75fb39bff4d783cb86c20dc40c7326ad857b9dc15f344cb7",
+      "etag": "\"5D32E7A76DA7B9C5DCEFAA39C1E41337-320\"",
+      "last_modified": "Sun, 11 Jan 2026 13:44:57 GMT"
+    },
+    {
+      "start": 31252428,
+      "end": 31252447,
+      "status": 206,
+      "content_range": "bytes 31252428-31252447/2008730989",
+      "bytes": 20,
+      "sha256": "dee0c2cde19e9ab415e01429015989eee79829910c9ef68e243e8e174f42bb8d",
+      "etag": "\"5D32E7A76DA7B9C5DCEFAA39C1E41337-320\"",
+      "last_modified": "Sun, 11 Jan 2026 13:44:57 GMT"
+    },
+    {
+      "start": 31252448,
+      "end": 31252475,
+      "status": 206,
+      "content_range": "bytes 31252448-31252475/2008730989",
+      "bytes": 28,
+      "sha256": "e11e272db8f46f943d51ea1b76523f716f1307249f972777290827f65fc66b64",
+      "etag": "\"5D32E7A76DA7B9C5DCEFAA39C1E41337-320\"",
+      "last_modified": "Sun, 11 Jan 2026 13:44:57 GMT"
+    },
+    {
+      "start": 31252476,
+      "end": 31252791,
+      "status": 206,
+      "content_range": "bytes 31252476-31252791/2008730989",
+      "bytes": 316,
+      "sha256": "ed059487f8794c1da3db8db03a02761fb126a2f906922c62b620fed9fc03d563",
+      "etag": "\"5D32E7A76DA7B9C5DCEFAA39C1E41337-320\"",
+      "last_modified": "Sun, 11 Jan 2026 13:44:57 GMT"
+    },
+    {
+      "start": 31252792,
+      "end": 31252821,
+      "status": 206,
+      "content_range": "bytes 31252792-31252821/2008730989",
+      "bytes": 30,
+      "sha256": "2c79fb824a9ecbbe3d80033f5cf86fce19807c7b375a7590964aaa0cebd6b38d",
+      "etag": "\"5D32E7A76DA7B9C5DCEFAA39C1E41337-320\"",
+      "last_modified": "Sun, 11 Jan 2026 13:44:57 GMT"
+    },
+    {
+      "start": 31252822,
+      "end": 31252845,
+      "status": 206,
+      "content_range": "bytes 31252822-31252845/2008730989",
+      "bytes": 24,
+      "sha256": "1198eeae737cd6ee93d75c2e936907fcd9e123900fdd1ca1318175b08c4b982f",
+      "etag": "\"5D32E7A76DA7B9C5DCEFAA39C1E41337-320\"",
+      "last_modified": "Sun, 11 Jan 2026 13:44:57 GMT"
+    },
+    {
+      "start": 31252846,
+      "end": 31252873,
+      "status": 206,
+      "content_range": "bytes 31252846-31252873/2008730989",
+      "bytes": 28,
+      "sha256": "e11e272db8f46f943d51ea1b76523f716f1307249f972777290827f65fc66b64",
+      "etag": "\"5D32E7A76DA7B9C5DCEFAA39C1E41337-320\"",
+      "last_modified": "Sun, 11 Jan 2026 13:44:57 GMT"
+    },
+    {
+      "start": 31252874,
+      "end": 31253180,
+      "status": 206,
+      "content_range": "bytes 31252874-31253180/2008730989",
+      "bytes": 307,
+      "sha256": "ed60a80fd5bd2949fc127098132caa7f22768be9a095c53bd598b37bbd21a041",
+      "etag": "\"5D32E7A76DA7B9C5DCEFAA39C1E41337-320\"",
+      "last_modified": "Sun, 11 Jan 2026 13:44:57 GMT"
+    }
+  ],
+  "transferred_bytes": 3050
+}

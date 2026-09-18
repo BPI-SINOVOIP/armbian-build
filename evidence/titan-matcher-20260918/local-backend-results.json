@@ -1,0 +1,155 @@
+{
+  "scope": "直接執行官方匹配函式與官方例外類型；未執行 GUI、USB、燒錄動作或核心啟動",
+  "backend_sha256": "01b510fc2601d064ea1653a7620639363609d1d2c90208cb4474cd6f5f77833a",
+  "python_version": "3.8.10",
+  "official_functions": {
+    "_check_partition": {
+      "source_filename": "flashboot/source/actions.py",
+      "source_line": 499,
+      "marshaled_code_sha256": "a997d5c623bc9bd5d836ffcf20fe2c6af3442e2a5bb89c719ba8f2df50f70075"
+    },
+    "build_multi_flash": {
+      "source_filename": "flashboot/source/actions.py",
+      "source_line": 387,
+      "marshaled_code_sha256": "5fcde4a592051aed45124f7ea84ef51bcb59207325710179dd77a758352ce274"
+    },
+    "build_multi_flash_use_partition": {
+      "source_filename": "flashboot/source/actions.py",
+      "source_line": 408,
+      "marshaled_code_sha256": "7bff21c763f9c1837544fd6755be38e4ea49ca9b956a852ec5e102ca5b5f127c"
+    }
+  },
+  "cases": [
+    {
+      "name": "fixed_name_default_flow",
+      "relate_partition": [
+        "partition_universal.json"
+      ],
+      "variables": {
+        "size0": "NULL",
+        "size1": "universal"
+      },
+      "part_config": null,
+      "status": "error",
+      "error_type": "FlashNotMatchError",
+      "error_text": "\n【错误码】 20014\n【错误原因】未匹配到分区表，无法识别刷机介质\n【详细原因】分区匹配为空",
+      "matched_partitions": [],
+      "official_logs": [
+        "开始匹配分区表: ['partition_universal.json']",
+        "未匹配到分区表"
+      ]
+    },
+    {
+      "name": "block_placeholder_default_flow",
+      "relate_partition": [
+        "partition_{size1}.json"
+      ],
+      "variables": {
+        "size0": "NULL",
+        "size1": "universal"
+      },
+      "part_config": null,
+      "returned_partitions": [
+        "partition_universal.json"
+      ],
+      "status": "matched",
+      "matched_partitions": [
+        "partition_universal.json"
+      ],
+      "official_logs": [
+        "开始匹配分区表: ['partition_{size1}.json']",
+        "匹配原始分区表: partition_universal.json",
+        "分区表匹配结果为: partition_universal.json"
+      ]
+    },
+    {
+      "name": "official_two_placeholders",
+      "relate_partition": [
+        "partition_{size0}.json",
+        "partition_{size1}.json"
+      ],
+      "variables": {
+        "size0": "NULL",
+        "size1": "universal"
+      },
+      "part_config": null,
+      "returned_partitions": [
+        "partition_universal.json"
+      ],
+      "status": "matched",
+      "matched_partitions": [
+        "partition_universal.json"
+      ],
+      "official_logs": [
+        "开始匹配分区表: ['partition_{size0}.json', 'partition_{size1}.json']",
+        "匹配原始分区表: partition_universal.json",
+        "分区表匹配结果为: partition_universal.json"
+      ]
+    },
+    {
+      "name": "explicit_part_override",
+      "relate_partition": [
+        "partition_universal.json"
+      ],
+      "variables": {
+        "size0": "NULL",
+        "size1": "universal"
+      },
+      "part_config": [
+        "partition_universal.json"
+      ],
+      "returned_partitions": [
+        "partition_universal.json"
+      ],
+      "status": "matched",
+      "matched_partitions": [
+        "partition_universal.json"
+      ],
+      "official_logs": [
+        "使用已经配置的分区表: ['partition_universal.json']"
+      ]
+    },
+    {
+      "name": "block_placeholder_with_mtd_present",
+      "relate_partition": [
+        "partition_{size1}.json"
+      ],
+      "variables": {
+        "size0": "2M",
+        "size1": "universal"
+      },
+      "part_config": null,
+      "returned_partitions": [
+        "partition_universal.json"
+      ],
+      "status": "matched",
+      "matched_partitions": [
+        "partition_universal.json"
+      ],
+      "official_logs": [
+        "开始匹配分区表: ['partition_{size1}.json']",
+        "匹配原始分区表: partition_universal.json",
+        "分区表匹配结果为: partition_universal.json"
+      ]
+    },
+    {
+      "name": "block_placeholder_null_device",
+      "relate_partition": [
+        "partition_{size1}.json"
+      ],
+      "variables": {
+        "size0": "2M",
+        "size1": "NULL"
+      },
+      "part_config": null,
+      "status": "error",
+      "error_type": "FlashNotMatchError",
+      "error_text": "\n【错误码】 20014\n【错误原因】未匹配到分区表，无法识别刷机介质\n【详细原因】分区匹配为空",
+      "matched_partitions": [],
+      "official_logs": [
+        "开始匹配分区表: ['partition_{size1}.json']",
+        "未匹配到分区表"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,271 @@
+{
+  "scope": "直接執行官方匹配函式與官方例外類型；未執行 GUI、USB、燒錄動作或核心啟動",
+  "backend_sha256": "adde4756c863c9575170c36555bd501c694e241d3d385d9e8c98e9adcd417716",
+  "python_version": "3.8.10",
+  "official_functions": {
+    "_check_partition": {
+      "source_filename": "flashboot/source/actions.py",
+      "source_line": 505,
+      "marshaled_code_sha256": "2bd5a41f7722b922c9953b7d6a227c201f129c2005742901e28ea79f8395e28f"
+    },
+    "build_multi_flash": {
+      "source_filename": "flashboot/source/actions.py",
+      "source_line": 393,
+      "marshaled_code_sha256": "ada8536dd0875561685b0153f2bac6b56844e2e3cea441672f2d72fd2375fdd5"
+    },
+    "build_multi_flash_use_partition": {
+      "source_filename": "flashboot/source/actions.py",
+      "source_line": 414,
+      "marshaled_code_sha256": "845019e4d712bc9ba9d4a915776bae59f00c96376f9dd0095931e913b68d4bbe"
+    }
+  },
+  "cases": [
+    {
+      "name": "fixed_name_default_flow",
+      "relate_partition": [
+        "partition_universal.json"
+      ],
+      "variables": {
+        "size0": "NULL",
+        "size1": "universal"
+      },
+      "part_config": null,
+      "status": "error",
+      "error_type": "FlashNotMatchError",
+      "error_text": "\n【Code】 20014\n【Reason】Unable to identify flashing media as partition table not matched\n【Detail】partition table is null",
+      "matched_partitions": [],
+      "official_logs": [
+        "match partition table: ['partition_universal.json']",
+        "not match any partition "
+      ]
+    },
+    {
+      "name": "block_placeholder_default_flow",
+      "relate_partition": [
+        "partition_{size1}.json"
+      ],
+      "variables": {
+        "size0": "NULL",
+        "size1": "universal"
+      },
+      "part_config": null,
+      "returned_partitions": [
+        "partition_universal.json"
+      ],
+      "status": "matched",
+      "matched_partitions": [
+        "partition_universal.json"
+      ],
+      "official_logs": [
+        "match partition table: ['partition_{size1}.json']",
+        "Match the original partition table: partition_universal.json",
+        "partition match result: partition_universal.json"
+      ]
+    },
+    {
+      "name": "official_two_placeholders",
+      "relate_partition": [
+        "partition_{size0}.json",
+        "partition_{size1}.json"
+      ],
+      "variables": {
+        "size0": "NULL",
+        "size1": "universal"
+      },
+      "part_config": null,
+      "returned_partitions": [
+        "partition_universal.json"
+      ],
+      "status": "matched",
+      "matched_partitions": [
+        "partition_universal.json"
+      ],
+      "official_logs": [
+        "match partition table: ['partition_{size0}.json', 'partition_{size1}.json']",
+        "Match the original partition table: partition_universal.json",
+        "partition match result: partition_universal.json"
+      ]
+    },
+    {
+      "name": "explicit_part_override",
+      "relate_partition": [
+        "partition_universal.json"
+      ],
+      "variables": {
+        "size0": "NULL",
+        "size1": "universal"
+      },
+      "part_config": [
+        "partition_universal.json"
+      ],
+      "returned_partitions": [
+        "partition_universal.json"
+      ],
+      "status": "matched",
+      "matched_partitions": [
+        "partition_universal.json"
+      ],
+      "official_logs": [
+        "Use the configured partition table: ['partition_universal.json']"
+      ]
+    },
+    {
+      "name": "block_placeholder_with_mtd_present",
+      "relate_partition": [
+        "partition_{size1}.json"
+      ],
+      "variables": {
+        "size0": "2M",
+        "size1": "universal"
+      },
+      "part_config": null,
+      "returned_partitions": [
+        "partition_universal.json"
+      ],
+      "status": "matched",
+      "matched_partitions": [
+        "partition_universal.json"
+      ],
+      "official_logs": [
+        "match partition table: ['partition_{size1}.json']",
+        "Match the original partition table: partition_universal.json",
+        "partition match result: partition_universal.json"
+      ]
+    },
+    {
+      "name": "block_placeholder_null_device",
+      "relate_partition": [
+        "partition_{size1}.json"
+      ],
+      "variables": {
+        "size0": "2M",
+        "size1": "NULL"
+      },
+      "part_config": null,
+      "status": "error",
+      "error_type": "FlashNotMatchError",
+      "error_text": "\n【Code】 20014\n【Reason】Unable to identify flashing media as partition table not matched\n【Detail】partition table is null",
+      "matched_partitions": [],
+      "official_logs": [
+        "match partition table: ['partition_{size1}.json']",
+        "not match any partition "
+      ]
+    },
+    {
+      "name": "actual_package_default_flow",
+      "relate_partition": [
+        "partition_{size1}.json"
+      ],
+      "variables": {
+        "size0": "2M",
+        "size1": "universal"
+      },
+      "part_config": null,
+      "returned_partitions": [
+        "partition_universal.json"
+      ],
+      "status": "matched",
+      "matched_partitions": [
+        "partition_universal.json"
+      ],
+      "official_logs": [
+        "match partition table: ['partition_{size1}.json']",
+        "Match the original partition table: partition_universal.json",
+        "partition match result: partition_universal.json"
+      ],
+      "package_directory": "/media/pi/SMCI/bpi/f3-cm6-vendor-20260918-rc2/output/bpi-cm6-emmc/payload",
+      "fastboot_yaml_sha256": "f85c8017934e887d700c7e963e2acc1667c38270925b7c52b35371209666a335",
+      "official_conversion_logs": [
+        "match partition table: ['partition_{size1}.json']",
+        "Match the original partition table: partition_universal.json",
+        "partition match result: partition_universal.json"
+      ],
+      "official_flash_actions": [
+        {
+          "partition": "gpt",
+          "file": "partition_universal.json",
+          "gzip_level": null,
+          "file_exists": true,
+          "file_bytes": 954,
+          "sha256": "9e3fc864903994ce0d45208d8edbb081de060386ffccc7ec7ae37f38b3b26f89"
+        },
+        {
+          "partition": "bootinfo",
+          "file": "factory/bootinfo_sd.bin",
+          "gzip_level": null,
+          "file_exists": true,
+          "file_bytes": 80,
+          "sha256": "f339e3e576ce94d7812c2887622c5882ae12ac3c9a98059aef37741850a43cb6"
+        },
+        {
+          "partition": "fsbl",
+          "file": "factory/FSBL.bin",
+          "gzip_level": null,
+          "file_exists": true,
+          "file_bytes": 191808,
+          "sha256": "896e236da5c5208bda9d75e2927ddeff814cbe504d96f529fcc27f1c30c360a6"
+        },
+        {
+          "partition": "env",
+          "file": "env.bin",
+          "gzip_level": null,
+          "file_exists": true,
+          "file_bytes": 16384,
+          "sha256": "3a10ea4c85c6457cc2680b6db6378c67e16b209b8e474cec7a09c72d4af5f1fc"
+        },
+        {
+          "partition": "opensbi",
+          "file": "fw_dynamic.itb",
+          "gzip_level": null,
+          "file_exists": true,
+          "file_bytes": 136583,
+          "sha256": "2c83066613458867db59d428102db99030ae3cf1a4c4b8092dc9a2d1b2730715"
+        },
+        {
+          "partition": "uboot",
+          "file": "u-boot.itb",
+          "gzip_level": null,
+          "file_exists": true,
+          "file_bytes": 1959546,
+          "sha256": "f734681e00ae0ca7ca4418ff33d37870b988eb3908f49fbac4f6c047b91ed06a"
+        },
+        {
+          "partition": "bootfs",
+          "file": "bootfs.ext4",
+          "gzip_level": 5,
+          "file_exists": true,
+          "file_bytes": 268435456
+        },
+        {
+          "partition": "rootfs",
+          "file": "rootfs.ext4",
+          "gzip_level": 5,
+          "file_exists": true,
+          "file_bytes": 6442450944
+        }
+      ],
+      "control_files": {
+        "fastboot.yaml": "f85c8017934e887d700c7e963e2acc1667c38270925b7c52b35371209666a335",
+        "partition_universal.json": "9e3fc864903994ce0d45208d8edbb081de060386ffccc7ec7ae37f38b3b26f89"
+      },
+      "artifact": {
+        "name": "Armbian_Noble_bpi-cm6_gnome_titan-emmc_20260918-rc2.zip",
+        "sha256": "f62d471ef88bf042af84bbd7da6aa4e031159488a4447d49a4b3e0cbc4595277",
+        "bytes": 1720610220,
+        "checked_zip_files_sha256": {
+          "fastboot.yaml": "f85c8017934e887d700c7e963e2acc1667c38270925b7c52b35371209666a335",
+          "partition_universal.json": "9e3fc864903994ce0d45208d8edbb081de060386ffccc7ec7ae37f38b3b26f89",
+          "factory/bootinfo_sd.bin": "f339e3e576ce94d7812c2887622c5882ae12ac3c9a98059aef37741850a43cb6",
+          "factory/FSBL.bin": "896e236da5c5208bda9d75e2927ddeff814cbe504d96f529fcc27f1c30c360a6",
+          "env.bin": "3a10ea4c85c6457cc2680b6db6378c67e16b209b8e474cec7a09c72d4af5f1fc",
+          "fw_dynamic.itb": "2c83066613458867db59d428102db99030ae3cf1a4c4b8092dc9a2d1b2730715",
+          "u-boot.itb": "f734681e00ae0ca7ca4418ff33d37870b988eb3908f49fbac4f6c047b91ed06a",
+          "factory/bootinfo_emmc.bin": "5433619a573ec7935450f303168b87c97dc5511905291328df40a2ff081b3d07"
+        },
+        "manifest_sha256": "2ef28f3e91204491eae72a2af5b6ca53ccdb9290b3a1074b2a3b6442a05fefb7",
+        "scope": "重算完整 ZIP 雜湊；ZIP 控制檔與小載荷逐位元核對實際重播目錄，各操作檔案大小核對 ZIP 成員"
+      },
+      "scope": "完整官方類別建立操作與驗證檔案；未呼叫 execute、未啟動 FastbootDev"
+    }
+  ]
+}

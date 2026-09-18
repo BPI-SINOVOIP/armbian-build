@@ -1,0 +1,60 @@
+{
+  "schema_version": 1,
+  "release_id": "20260918-rc2",
+  "release_status": "candidate_unverified",
+  "completion_status": "pending_actual_flash_boot_readback",
+  "software_probe_titan_version": "2.2.0-Rc",
+  "user_report_titan_version": null,
+  "regression_tests": 115,
+  "retired_release": "20260916",
+  "candidates": [
+    {
+      "board": "bpi-f3",
+      "storage": "emmc",
+      "release_id": "20260918-rc2",
+      "artifact": "bpi-f3-emmc/Armbian_Noble_bpi-f3_gnome_titan-emmc_20260918-rc2.zip",
+      "absolute_path": "/media/pi/SMCI/bpi/f3-cm6-vendor-20260918-rc2/candidates/bpi-f3-emmc/Armbian_Noble_bpi-f3_gnome_titan-emmc_20260918-rc2.zip",
+      "sha256": "865fc0cd05b0ee87257c3e637246e127b95b383d47e1befa61dc588699c99b9b",
+      "bytes": 1741939980,
+      "minimum_media_bytes": 6716129280,
+      "status": "candidate_unverified",
+      "validation": {
+        "archive_and_control_contract": "passed",
+        "official_matcher_replay": "passed",
+        "official_flash_action_build": "passed",
+        "actual_gui_device_match": "pending",
+        "usb_flash": "pending",
+        "emmc_cold_boot": "pending",
+        "readback": "pending"
+      },
+      "actual_titan_version": null,
+      "hardware_flash_log": null,
+      "hardware_boot_log": null,
+      "readback_report": null
+    },
+    {
+      "board": "bpi-cm6",
+      "storage": "emmc",
+      "release_id": "20260918-rc2",
+      "artifact": "bpi-cm6-emmc/Armbian_Noble_bpi-cm6_gnome_titan-emmc_20260918-rc2.zip",
+      "absolute_path": "/media/pi/SMCI/bpi/f3-cm6-vendor-20260918-rc2/candidates/bpi-cm6-emmc/Armbian_Noble_bpi-cm6_gnome_titan-emmc_20260918-rc2.zip",
+      "sha256": "f62d471ef88bf042af84bbd7da6aa4e031159488a4447d49a4b3e0cbc4595277",
+      "bytes": 1720610220,
+      "minimum_media_bytes": 6716129280,
+      "status": "candidate_unverified",
+      "validation": {
+        "archive_and_control_contract": "passed",
+        "official_matcher_replay": "passed",
+        "official_flash_action_build": "passed",
+        "actual_gui_device_match": "pending",
+        "usb_flash": "pending",
+        "emmc_cold_boot": "pending",
+        "readback": "pending"
+      },
+      "actual_titan_version": null,
+      "hardware_flash_log": null,
+      "hardware_boot_log": null,
+      "readback_report": null
+    }
+  ]
+}

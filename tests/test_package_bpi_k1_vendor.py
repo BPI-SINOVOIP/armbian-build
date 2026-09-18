@@ -75,7 +75,7 @@ class VendorPackageTests(unittest.TestCase):
         lock.write_text(json.dumps(record))
         return root, repo, record
 
-    def test_layout_uses_official_units_and_media_headers(self):
+    def test_layout_preserves_official_units_and_bootinfo_contract(self):
         official = json.loads((ROOT / "config/spacemit-k1-vendor/partition_universal.json").read_text())
         expected = {p["name"]: p for p in official["partitions"]}
         for emmc in (False, True):
@@ -87,8 +87,7 @@ class VendorPackageTests(unittest.TestCase):
                 if "compress" in reference:
                     self.assertEqual(part.get("compress"), reference["compress"])
             bootinfo = actual["partitions"][0]
-            self.assertEqual(bootinfo["image"],
-                             f"factory/bootinfo_{'emmc' if emmc else 'sd'}.bin")
+            self.assertEqual(bootinfo["image"], "factory/bootinfo_sd.bin")
             self.assertEqual(bootinfo["holes"], '{"(80;512)"}')
 
     def test_layout_rejects_unaligned_or_empty_rootfs(self):
@@ -310,6 +309,63 @@ class VendorPackageTests(unittest.TestCase):
         path.write_text(json.dumps(record))
         return path
 
+    def titan_members(self):
+        payload = self.payload()
+        members = {p.relative_to(payload).as_posix(): p.read_bytes()
+                   for p in payload.rglob("*") if p.is_file()}
+        members["fastboot.yaml"] = MODULE.fastboot_config().encode()
+        members["partition_universal.json"] = json.dumps(MODULE.layout(4096, True)).encode()
+        return members
+
+    def test_explicit_candidate_version_rejects_reused_or_unsafe_names(self):
+        self.assertEqual(MODULE.release_id("20260918-rc2"), "20260918-rc2")
+        for value in ("20260916", "../20260918-rc2", "20260918-rc0", "20260918-rc2.zip"):
+            with self.subTest(value=value), self.assertRaises(ValueError):
+                MODULE.release_id(value)
+
+    def test_titan_rejects_hash_consistent_archive_without_required_payloads(self):
+        manifest = self.archive_manifest([("env.bin", b"data")])
+        with self.assertRaisesRegex(ValueError, "缺少必要元件"):
+            MODULE.verify(manifest)
+
+    def test_titan_rejects_old_literal_selector_even_when_archive_hash_matches(self):
+        members = self.titan_members()
+        members["fastboot.yaml"] = members["fastboot.yaml"].replace(b"partition_{size1}.json", b"partition_universal.json")
+        manifest = self.archive_manifest(list(members.items()))
+        with self.assertRaisesRegex(ValueError, "變數匹配契約"):
+            MODULE.verify(manifest)
+
+    def test_titan_rejects_missing_media_query(self):
+        members = self.titan_members()
+        members["fastboot.yaml"] = members["fastboot.yaml"].replace(b"args: 'blk-size'", b"args: 'mtd-size'")
+        manifest = self.archive_manifest(list(members.items()))
+        with self.assertRaisesRegex(ValueError, "變數匹配契約"):
+            MODULE.verify(manifest)
+
+    def test_titan_rejects_extra_mtd_table(self):
+        members = self.titan_members()
+        members["partition_2M.json"] = b"{}"
+        manifest = self.archive_manifest(list(members.items()))
+        with self.assertRaisesRegex(ValueError, "額外分區表"):
+            MODULE.verify(manifest)
+
+    def test_titan_rejects_unreviewed_media_header_change(self):
+        members = self.titan_members()
+        members["partition_universal.json"] = members["partition_universal.json"].replace(b"bootinfo_sd.bin", b"bootinfo_emmc.bin")
+        manifest = self.archive_manifest(list(members.items()))
+        with self.assertRaisesRegex(ValueError, "官方通用表"):
+            MODULE.verify(manifest)
+
+    def test_integrity_check_preserves_recall_and_real_failure_status(self):
+        manifest = self.archive_manifest(list(self.titan_members().items()))
+        record = json.loads(manifest.read_text())
+        (self.base / "release-status.json").write_text(json.dumps({
+            "historical_artifact_sha256": record["artifact"]["sha256"],
+            "release_status": "recalled_unusable", "hardware_validation": "reported_failed"}))
+        result = MODULE.verify(manifest)
+        self.assertEqual(result["release_status"], "recalled_unusable")
+        self.assertEqual(result["hardware_validation"], "reported_failed")
+
     def test_verify_rejects_internal_change_even_with_matching_zip_hash(self):
         manifest = self.archive_manifest([("env.bin", b"changed")],
                                          {"env.bin": {"size": 7, "sha256": sha(b"correct")}})
@@ -332,14 +388,14 @@ class VendorPackageTests(unittest.TestCase):
     @unittest.skipUnless(shutil.which("mkfs.ext4"), "需要本機 mkfs.ext4")
     def test_verify_reads_real_ext4_uuids_from_archive(self):
         identities = {part: str(uuid.uuid4()) for part in ("boot", "root")}
-        members = []
+        members = self.titan_members()
         for part, value in identities.items():
             path = self.base / (part + "fs.ext4")
             with path.open("wb") as stream:
                 stream.truncate(8 * MODULE.MIB)
             subprocess.run(["mkfs.ext4", "-q", "-F", "-U", value, str(path)], check=True)
-            members.append((path.name, path.read_bytes()))
-        manifest = self.archive_manifest(members)
+            members[path.name] = path.read_bytes()
+        manifest = self.archive_manifest(list(members.items()))
         record = json.loads(manifest.read_text())
         record.update({part + "_uuid": value for part, value in identities.items()})
         manifest.write_text(json.dumps(record))

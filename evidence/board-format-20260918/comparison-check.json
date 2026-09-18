@@ -1,0 +1,27 @@
+{
+  "status": "通過",
+  "official_sources": [
+    "f3-bpi-v1.0.12-minimal",
+    "f3-bpi-v1.0.12-desktop",
+    "cm6-guide-generic-v2.1",
+    "spacemit-v2.3-lxqt"
+  ],
+  "identical_control_files": [
+    "fastboot.yaml",
+    "partition_2M.json",
+    "partition_flash.json",
+    "partition_universal.json"
+  ],
+  "official_control_sha256": {
+    "fastboot.yaml": "95642b765cff5b7c6e2439e44b1b7ea70a77fd79ced3e37a907185f383545278",
+    "partition_2M.json": "a14ca12559299f6fbf750465fcc87727b38445e5c0a45516394e6326396a8feb",
+    "partition_flash.json": "5f1e483082de5586dcae2b8f979b89a2f0f090cc93bd2f26b80689b654a755b4",
+    "partition_universal.json": "568d9848097c72ba01ded40534022d35be7dda57ece13863194dd3a442d9568e"
+  },
+  "retrieval_bytes": 12132,
+  "candidate_semantic_differences": [
+    "multi_flash.relate_partition：兩個變數模板改為固定檔名。",
+    "partition_universal.json：bootinfo.image 改為 factory/bootinfo_emmc.bin。"
+  ],
+  "scope": "只驗小型控制檔、分區語意與中央目錄；未驗硬體或整份映像。"
+}
