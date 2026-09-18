@@ -1,0 +1,720 @@
+{
+  "schema": "bpi-r2-matrix-delivery-v1",
+  "date": "2026-09-19",
+  "audit_program": {
+    "path": "/media/pi/SMCI/armbian/bpi-v26.2.1-m4zero-sram-supervisor-plan/docs/evidence/bpi-r2-matrix-I-20260918/final-audit.py",
+    "sha256": "718ecd7d58b33ef58cf6449182500713f78c3ab82f4b417c2be33b36b18447f8"
+  },
+  "code_commit": "92fd3d32f637b4573d1bce846eb8b8ab1180a9ef",
+  "plan": {
+    "path": "/media/pi/SMCI/armbian/bpi-v26.2.1-m4zero-sram-supervisor-plan/output/evidence/bpi-r2-matrix-I-20260918/batch-003/plan.json",
+    "sha256": "53b7394fb0182ee58c212bc679b25f5b23697b7e57cba8b937632d6921352cb4"
+  },
+  "summary": {
+    "path": "/media/pi/SMCI/armbian/bpi-v26.2.1-m4zero-sram-supervisor-plan/output/evidence/bpi-r2-matrix-I-20260918/batch-003/summary.json",
+    "sha256": "edcae3782e9919d7e3e6c39ea5612b87c88859deb4491316efda12480cd363d3"
+  },
+  "previous_original_audit": {
+    "path": "/media/pi/SMCI/armbian/bpi-v26.2.1-m4zero-sram-supervisor-plan/docs/evidence/bpi-lab-matrix-G-20260918/final-audit.json",
+    "sha256": "1244f805eb86553e598074320ad1bcda670c74bbba24cd3db322db1b32a683d9"
+  },
+  "original_catalog": {
+    "path": "/media/pi/SMCI/armbian/bpi-v26.2.1-m4zero-sram-supervisor-plan/output/evidence/bpi-multiboard-lab-20260917/catalog-001.json",
+    "sha256": "7ec027496d0e9215ce673f41570875647df077b1766e6190cf6b0b5e41df0fe0"
+  },
+  "original_sources_identity_verified": 444,
+  "original_prepared": 434,
+  "original_blocked": 10,
+  "candidate_prepared": 10,
+  "new_candidates_this_stage": 9,
+  "legacy_candidates_reused": 1,
+  "cross_batch_candidates_reused": 1,
+  "original_hardware_database": {
+    "path": "/media/pi/SMCI/armbian/bpi-v26.2.1-m4zero-sram-supervisor-plan/output/evidence/bpi-multiboard-lab-20260917/hardware.sqlite3",
+    "sha256": "1b94dde10232cf4028e919c65fae98e0f1946ccb351abe9435012f364ff96e13"
+  },
+  "internal_only": true,
+  "hardware_validated": false,
+  "media_written": false,
+  "boot_executed": false,
+  "integration_approved": false,
+  "boot_blob_redistribution_authorized": false,
+  "tests": {
+    "command": "BPI_LAB_REAL_C3=1 output/evidence/bpi-sram-supervisor/model-venv/bin/python -B -m unittest discover -s tests -p 'test_bpi_lab*.py'",
+    "count": 1535,
+    "failures": 0,
+    "skipped": 0,
+    "seconds": 173.278,
+    "log": {
+      "path": "/media/pi/SMCI/armbian/bpi-v26.2.1-m4zero-sram-supervisor-plan/output/evidence/bpi-r2-matrix-I-20260918/lab-final-I-001.log",
+      "sha256": "d02c874cc17d865fbda36638c2f1a15abdcf5639704eaea9958234adb2719622"
+    }
+  },
+  "ruff": {
+    "path": "/media/pi/SMCI/armbian/bpi-v26.2.1-m4zero-sram-supervisor-plan/output/evidence/bpi-r2-matrix-I-20260918/ruff-I.log",
+    "sha256": "82b3e6a6c090a57601d22943bd23fca9218d1031dbe5a7b754092f9a156b4f18"
+  },
+  "platforms": {
+    "path": "/media/pi/SMCI/armbian/bpi-v26.2.1-m4zero-sram-supervisor-plan/output/evidence/bpi-r2-matrix-I-20260918/platforms-I.json",
+    "sha256": "49f03c8590c87a44b608b657252fc9c470e4d14a703e2338c240679b747e1132"
+  },
+  "run_logs": [
+    {
+      "path": "/media/pi/SMCI/armbian/bpi-v26.2.1-m4zero-sram-supervisor-plan/output/evidence/bpi-r2-matrix-I-20260918/batch-002/run.log",
+      "sha256": "bc3f9bd57ea25632daa906b17c48460efe2dd2ec8a7d6ca1909e79c43fafb699"
+    },
+    {
+      "path": "/media/pi/SMCI/armbian/bpi-v26.2.1-m4zero-sram-supervisor-plan/output/evidence/bpi-r2-matrix-I-20260918/batch-003/run.log",
+      "sha256": "2ca46c8f4c5a0c0e98cb3aea23eaecec2a8d0749746a7ebc1c9032cdc708543e"
+    }
+  ],
+  "tools": {
+    "tools/bpi_lab_r2_matrix.py": {
+      "bytes": 22065,
+      "sha256": "9dbb6d3462748ec2dca60b432ac2e7c02033476f7326fa70692aa788a5773b63"
+    },
+    "tools/bpi_lab_r2_repack.py": {
+      "bytes": 11938,
+      "sha256": "6363aefe80c22c3ab4c797b5eed1a19699384bd99b403a589cfaba0c6ccd6d8a"
+    },
+    "tests/test_bpi_lab_r2_matrix.py": {
+      "bytes": 76293,
+      "sha256": "d38e72a94e0a13e32662dce8e3370e156b05ff14253348a38e2c3d0135da6224"
+    }
+  },
+  "rows": [
+    {
+      "image_id": "047f44d782c9edd650cf22bb5a0e89fe017c03630294895e5dcb3a77627e26d0",
+      "release": "bookworm",
+      "variant": "minimal",
+      "status": "prepared",
+      "source": {
+        "path": "/media/pi/SMCI/bpi/google-drive-upload/2026/2026.08/bpi-r2/Armbian-unofficial_26.11.0-trunk_Bananapir2_bookworm_current_6.6.153_minimal.img.xz",
+        "sha256": "38a736cbc41c21cb7969e18d0f7954a5ea217af70f347beadb0883ef6e2d58e5"
+      },
+      "candidate": {
+        "path": "/media/pi/SMCI/armbian/bpi-v26.2.1-m4zero-sram-supervisor-plan/output/evidence/bpi-lab-handoff-F-20260918/r2-candidate-002/Armbian-unofficial_26.11.0-trunk_Bananapir2_bookworm_current_6.6.153_minimal_f3-dtb-path.img.xz",
+        "bytes": 323819704,
+        "sha256": "f2e4516e1007d1e71119a4077f5465ff3588f37af3730a75786c6a4540db9788"
+      },
+      "checksum_sidecar": {
+        "path": "/media/pi/SMCI/armbian/bpi-v26.2.1-m4zero-sram-supervisor-plan/output/evidence/bpi-lab-handoff-F-20260918/r2-candidate-002/Armbian-unofficial_26.11.0-trunk_Bananapir2_bookworm_current_6.6.153_minimal_f3-dtb-path.img.xz.sha",
+        "sha256": "1b6501fc2779851d6b69b3f1b5354bc640c2c0714f9cac45e67e47293e53d380"
+      },
+      "raw": {
+        "bytes": 1296039936,
+        "original_sha256": "8f0335848b6868e89b2edc21600e26aa85d0c338637d1a62241128e40d3b4f6e",
+        "sha256": "20051c2d8dbdfb171784cdbdfdf24d444418d8df9477108df797efab0b4cc945"
+      },
+      "root_uuid": "48136f54-b977-4c35-a2a9-25267664570a",
+      "changed_range": {
+        "offset": 1228353536,
+        "bytes": 141,
+        "before": {
+          "bytes": 141,
+          "sha256": "ee6b078261398fdaa857d5c9a3343d773ca9bb79fb407a282cfd82feebd735ad"
+        },
+        "after": {
+          "bytes": 141,
+          "sha256": "74b45d86232349cdf2d838e167e61573735d8fb32cc38d362ae2fb4e2f380df6"
+        }
+      },
+      "inverse_verification": {
+        "bytes": 1296039936,
+        "candidate_sha256": "20051c2d8dbdfb171784cdbdfdf24d444418d8df9477108df797efab0b4cc945",
+        "original_sha256": "8f0335848b6868e89b2edc21600e26aa85d0c338637d1a62241128e40d3b4f6e"
+      },
+      "candidate_manifest": {
+        "path": "/media/pi/SMCI/armbian/bpi-v26.2.1-m4zero-sram-supervisor-plan/output/evidence/bpi-lab-handoff-F-20260918/r2-candidate-002/candidate.json",
+        "sha256": "fce0f7ff1a1594bb873b07b79a74cf02f8ca74981ac3f75aa3dba98ed559c253"
+      },
+      "preparation": {
+        "path": "/media/pi/SMCI/armbian/bpi-v26.2.1-m4zero-sram-supervisor-plan/output/evidence/bpi-lab-handoff-F-20260918/r2-final-xz-check-001/preparation.json",
+        "sha256": "0a372596fb6f0c8b2f7934d55f21f8691643669f2194e7193877d80a5d6a3dce"
+      },
+      "receipt": {
+        "path": "/media/pi/SMCI/armbian/bpi-v26.2.1-m4zero-sram-supervisor-plan/output/evidence/bpi-r2-matrix-I-20260918/batch-003/jobs/047f44d782c9edd650cf22bb5a0e89fe017c03630294895e5dcb3a77627e26d0/receipt.json",
+        "sha256": "926d05fd2b44ae003e8b0e5adef1900c485ecdac68ebfaece938b7c1423c9fd2"
+      },
+      "origin_receipt": null,
+      "reused_legacy": true,
+      "reused_previous": false,
+      "e2fsck_exit_code": 0,
+      "final_xz_source_reread": true,
+      "internal_only": true,
+      "hardware_validated": false,
+      "integration_approved": false,
+      "boot_blob_redistribution_authorized": false
+    },
+    {
+      "image_id": "bcbf6f1a2b9df5c795f0874f22a5830a05554bf3499fb0b8eae1b25a8840b8d6",
+      "release": "bookworm",
+      "variant": "xfce_desktop",
+      "status": "prepared",
+      "source": {
+        "path": "/media/pi/SMCI/bpi/google-drive-upload/2026/2026.08/bpi-r2/Armbian-unofficial_26.11.0-trunk_Bananapir2_bookworm_current_6.6.153_xfce_desktop.img.xz",
+        "sha256": "b151637ba20b0647285a2cce930419adc06e54d16959da7b24ac7fa25a3c0cec"
+      },
+      "candidate": {
+        "path": "/media/pi/SMCI/armbian/bpi-v26.2.1-m4zero-sram-supervisor-plan/output/evidence/bpi-r2-matrix-I-20260918/batch-002/jobs/bcbf6f1a2b9df5c795f0874f22a5830a05554bf3499fb0b8eae1b25a8840b8d6/attempt-0001/candidate/Armbian-unofficial_26.11.0-trunk_Bananapir2_bookworm_current_6.6.153_xfce_desktop_i1-dtb-path.img.xz",
+        "bytes": 975165260,
+        "sha256": "ebe8cf114968e1c041a7967a8a8dd198b852eada756438a66d8f5c1f36627931"
+      },
+      "checksum_sidecar": {
+        "path": "/media/pi/SMCI/armbian/bpi-v26.2.1-m4zero-sram-supervisor-plan/output/evidence/bpi-r2-matrix-I-20260918/batch-002/jobs/bcbf6f1a2b9df5c795f0874f22a5830a05554bf3499fb0b8eae1b25a8840b8d6/attempt-0001/candidate/Armbian-unofficial_26.11.0-trunk_Bananapir2_bookworm_current_6.6.153_xfce_desktop_i1-dtb-path.img.xz.sha",
+        "sha256": "ecd917aee231d1e192fede4bc13b84f7f1fbb990c74d682239dc58260385eceb"
+      },
+      "raw": {
+        "bytes": 4097835008,
+        "original_sha256": "62c76dd0c2d3168fc9a0ee077aa493a48a2fad6a822f49f79e0c94027c2563f4",
+        "sha256": "e43ee192862af0cbc664d7e8fcec0c0bec3155e2e3067bfbf6ce77d13221ad13"
+      },
+      "root_uuid": "64561828-eb22-4a93-bf17-f2dfe0aeb4dd",
+      "changed_range": {
+        "offset": 2989551616,
+        "bytes": 141,
+        "before": {
+          "bytes": 141,
+          "sha256": "0e34b9c87c317ab5f4b21486ff1108e9ea2ca23b3cfe84e6be736bd71279d31e"
+        },
+        "after": {
+          "bytes": 141,
+          "sha256": "76369042ff9f4767c7979fcefa08d8cbba4069b0baac65ee533741155486efce"
+        }
+      },
+      "inverse_verification": {
+        "bytes": 4097835008,
+        "candidate_sha256": "e43ee192862af0cbc664d7e8fcec0c0bec3155e2e3067bfbf6ce77d13221ad13",
+        "original_sha256": "62c76dd0c2d3168fc9a0ee077aa493a48a2fad6a822f49f79e0c94027c2563f4"
+      },
+      "candidate_manifest": {
+        "path": "/media/pi/SMCI/armbian/bpi-v26.2.1-m4zero-sram-supervisor-plan/output/evidence/bpi-r2-matrix-I-20260918/batch-002/jobs/bcbf6f1a2b9df5c795f0874f22a5830a05554bf3499fb0b8eae1b25a8840b8d6/attempt-0001/candidate/candidate.json",
+        "sha256": "fdf3baf13fd6f8370b415572516f3dba68a248efc32e35683cbcfc1fdeea23df"
+      },
+      "preparation": {
+        "path": "/media/pi/SMCI/armbian/bpi-v26.2.1-m4zero-sram-supervisor-plan/output/evidence/bpi-r2-matrix-I-20260918/batch-002/jobs/bcbf6f1a2b9df5c795f0874f22a5830a05554bf3499fb0b8eae1b25a8840b8d6/attempt-0001/final/preparation.json",
+        "sha256": "1b04da4c6b9b33b799579ce4e8f6f108f1eb1fbf96636f5c88f33d7cd6425310"
+      },
+      "receipt": {
+        "path": "/media/pi/SMCI/armbian/bpi-v26.2.1-m4zero-sram-supervisor-plan/output/evidence/bpi-r2-matrix-I-20260918/batch-003/jobs/bcbf6f1a2b9df5c795f0874f22a5830a05554bf3499fb0b8eae1b25a8840b8d6/receipt.json",
+        "sha256": "14ecb63d6fded97c1ba399f84f6e04060248e722a9ec50024556913fbf9185e1"
+      },
+      "origin_receipt": {
+        "path": "/media/pi/SMCI/armbian/bpi-v26.2.1-m4zero-sram-supervisor-plan/output/evidence/bpi-r2-matrix-I-20260918/batch-002/jobs/bcbf6f1a2b9df5c795f0874f22a5830a05554bf3499fb0b8eae1b25a8840b8d6/receipt.json",
+        "sha256": "d710e29478941d217d8edf72e3968151921a0c671a6f69dc8e3c622085e9b821"
+      },
+      "reused_legacy": false,
+      "reused_previous": true,
+      "e2fsck_exit_code": 0,
+      "final_xz_source_reread": true,
+      "internal_only": true,
+      "hardware_validated": false,
+      "integration_approved": false,
+      "boot_blob_redistribution_authorized": false
+    },
+    {
+      "image_id": "42ac333096223ddcb2911f7fe5b4a95a81ed761ea4f6e9f474dcaad2a454a9cd",
+      "release": "jammy",
+      "variant": "minimal",
+      "status": "prepared",
+      "source": {
+        "path": "/media/pi/SMCI/bpi/google-drive-upload/2026/2026.08/bpi-r2/Armbian-unofficial_26.11.0-trunk_Bananapir2_jammy_current_6.6.153_minimal.img.xz",
+        "sha256": "6f638ae2ad792e6ea309dc3aee3ab00267ad58cd92beb33ef26051b14372b526"
+      },
+      "candidate": {
+        "path": "/media/pi/SMCI/armbian/bpi-v26.2.1-m4zero-sram-supervisor-plan/output/evidence/bpi-r2-matrix-I-20260918/batch-003/jobs/42ac333096223ddcb2911f7fe5b4a95a81ed761ea4f6e9f474dcaad2a454a9cd/attempt-0001/candidate/Armbian-unofficial_26.11.0-trunk_Bananapir2_jammy_current_6.6.153_minimal_i1-dtb-path.img.xz",
+        "bytes": 317222760,
+        "sha256": "0928c9024f719f1fe9baa45fc45de791e7a277f4bb98d9da99783f907320d0e2"
+      },
+      "checksum_sidecar": {
+        "path": "/media/pi/SMCI/armbian/bpi-v26.2.1-m4zero-sram-supervisor-plan/output/evidence/bpi-r2-matrix-I-20260918/batch-003/jobs/42ac333096223ddcb2911f7fe5b4a95a81ed761ea4f6e9f474dcaad2a454a9cd/attempt-0001/candidate/Armbian-unofficial_26.11.0-trunk_Bananapir2_jammy_current_6.6.153_minimal_i1-dtb-path.img.xz.sha",
+        "sha256": "c6278c5ac47d603f9acbf747791ea4690811308deac9bce7e502605ab8bb67f4"
+      },
+      "raw": {
+        "bytes": 1207959552,
+        "original_sha256": "ed48e9c4859fb29e222baa51277d4590cf95fbfcfce4f3efa587fbb309c3edb6",
+        "sha256": "7054386c62c2325849abec57475aa6e177e5512028304bfe362b260d85f51753"
+      },
+      "root_uuid": "21016059-5cf6-444b-87da-1141c6534e6b",
+      "changed_range": {
+        "offset": 1117208576,
+        "bytes": 141,
+        "before": {
+          "bytes": 141,
+          "sha256": "ff66c5715a65fc2eea123e02ba7ff0ba592d8ea31116aa21851a6e6d17fbe519"
+        },
+        "after": {
+          "bytes": 141,
+          "sha256": "0c32dd2d082dbe465c22fcf5911caf1ef3fbcc6a461eaf7623182db2a283ed54"
+        }
+      },
+      "inverse_verification": {
+        "bytes": 1207959552,
+        "candidate_sha256": "7054386c62c2325849abec57475aa6e177e5512028304bfe362b260d85f51753",
+        "original_sha256": "ed48e9c4859fb29e222baa51277d4590cf95fbfcfce4f3efa587fbb309c3edb6"
+      },
+      "candidate_manifest": {
+        "path": "/media/pi/SMCI/armbian/bpi-v26.2.1-m4zero-sram-supervisor-plan/output/evidence/bpi-r2-matrix-I-20260918/batch-003/jobs/42ac333096223ddcb2911f7fe5b4a95a81ed761ea4f6e9f474dcaad2a454a9cd/attempt-0001/candidate/candidate.json",
+        "sha256": "66ee274505ad214aa1cd3dcb0355e8f3d67ee58a2b3081e68b85a0d6e9ab5111"
+      },
+      "preparation": {
+        "path": "/media/pi/SMCI/armbian/bpi-v26.2.1-m4zero-sram-supervisor-plan/output/evidence/bpi-r2-matrix-I-20260918/batch-003/jobs/42ac333096223ddcb2911f7fe5b4a95a81ed761ea4f6e9f474dcaad2a454a9cd/attempt-0001/final/preparation.json",
+        "sha256": "c08824b8f88f7a1f1458708216386df593a212809eb6d9e732f52b30679de892"
+      },
+      "receipt": {
+        "path": "/media/pi/SMCI/armbian/bpi-v26.2.1-m4zero-sram-supervisor-plan/output/evidence/bpi-r2-matrix-I-20260918/batch-003/jobs/42ac333096223ddcb2911f7fe5b4a95a81ed761ea4f6e9f474dcaad2a454a9cd/receipt.json",
+        "sha256": "204aa2183eb4dd08b25cc667f76e24a38bbf00cf0da658d36d461ee85c410759"
+      },
+      "origin_receipt": null,
+      "reused_legacy": false,
+      "reused_previous": false,
+      "e2fsck_exit_code": 0,
+      "final_xz_source_reread": true,
+      "internal_only": true,
+      "hardware_validated": false,
+      "integration_approved": false,
+      "boot_blob_redistribution_authorized": false
+    },
+    {
+      "image_id": "754862af1688fe85bfddfbf9eefa01fb785c1d5f94903453b3c9873dc237333a",
+      "release": "jammy",
+      "variant": "xfce_desktop",
+      "status": "prepared",
+      "source": {
+        "path": "/media/pi/SMCI/bpi/google-drive-upload/2026/2026.08/bpi-r2/Armbian-unofficial_26.11.0-trunk_Bananapir2_jammy_current_6.6.153_xfce_desktop.img.xz",
+        "sha256": "4e1ee6bd41daed19fc016202fe01ab9a897abaf17111461e98560f01ef69ad53"
+      },
+      "candidate": {
+        "path": "/media/pi/SMCI/armbian/bpi-v26.2.1-m4zero-sram-supervisor-plan/output/evidence/bpi-r2-matrix-I-20260918/batch-003/jobs/754862af1688fe85bfddfbf9eefa01fb785c1d5f94903453b3c9873dc237333a/attempt-0001/candidate/Armbian-unofficial_26.11.0-trunk_Bananapir2_jammy_current_6.6.153_xfce_desktop_i1-dtb-path.img.xz",
+        "bytes": 832089192,
+        "sha256": "05fe21eb099cfea353c7d65b16b1ea85f193c9d06dd8bb7cac4a5ee244ee3b7e"
+      },
+      "checksum_sidecar": {
+        "path": "/media/pi/SMCI/armbian/bpi-v26.2.1-m4zero-sram-supervisor-plan/output/evidence/bpi-r2-matrix-I-20260918/batch-003/jobs/754862af1688fe85bfddfbf9eefa01fb785c1d5f94903453b3c9873dc237333a/attempt-0001/candidate/Armbian-unofficial_26.11.0-trunk_Bananapir2_jammy_current_6.6.153_xfce_desktop_i1-dtb-path.img.xz.sha",
+        "sha256": "b079adbb1c53874392e928e80d75d1a3b8f07a774aee720601dbb04585274d29"
+      },
+      "raw": {
+        "bytes": 3489660928,
+        "original_sha256": "d317eadba59e42081d84b5539199368c4bccb6ed6a38b458365b1fc251f121e5",
+        "sha256": "b706d20f488930d85012147b4a27a41ef70250692df8e3689cf4d67343e88664"
+      },
+      "root_uuid": "62adc381-c8d0-4a11-99ee-7725ccaccd17",
+      "changed_range": {
+        "offset": 2857971712,
+        "bytes": 141,
+        "before": {
+          "bytes": 141,
+          "sha256": "0724123bb61127bab3587cba5cd75ad8feb79e6444e6f14eb415c4cf624db8ac"
+        },
+        "after": {
+          "bytes": 141,
+          "sha256": "845d1b4e7ef4032bf5d4182c71dcc146425d977827b79af19db5ecbb0c17bb94"
+        }
+      },
+      "inverse_verification": {
+        "bytes": 3489660928,
+        "candidate_sha256": "b706d20f488930d85012147b4a27a41ef70250692df8e3689cf4d67343e88664",
+        "original_sha256": "d317eadba59e42081d84b5539199368c4bccb6ed6a38b458365b1fc251f121e5"
+      },
+      "candidate_manifest": {
+        "path": "/media/pi/SMCI/armbian/bpi-v26.2.1-m4zero-sram-supervisor-plan/output/evidence/bpi-r2-matrix-I-20260918/batch-003/jobs/754862af1688fe85bfddfbf9eefa01fb785c1d5f94903453b3c9873dc237333a/attempt-0001/candidate/candidate.json",
+        "sha256": "640da66337655fb5440a3464844b1b4db9d80e5638c2e972dddfd9e6d520ef89"
+      },
+      "preparation": {
+        "path": "/media/pi/SMCI/armbian/bpi-v26.2.1-m4zero-sram-supervisor-plan/output/evidence/bpi-r2-matrix-I-20260918/batch-003/jobs/754862af1688fe85bfddfbf9eefa01fb785c1d5f94903453b3c9873dc237333a/attempt-0001/final/preparation.json",
+        "sha256": "20aed1b349279fd68eba0241ad02e5b199a4d1cf66f23ad5898fb3eb67908607"
+      },
+      "receipt": {
+        "path": "/media/pi/SMCI/armbian/bpi-v26.2.1-m4zero-sram-supervisor-plan/output/evidence/bpi-r2-matrix-I-20260918/batch-003/jobs/754862af1688fe85bfddfbf9eefa01fb785c1d5f94903453b3c9873dc237333a/receipt.json",
+        "sha256": "3fcdb94c6f3b1bd7c668ed4de13040c2cb3af4feeb74dee854dd121ecb43c778"
+      },
+      "origin_receipt": null,
+      "reused_legacy": false,
+      "reused_previous": false,
+      "e2fsck_exit_code": 0,
+      "final_xz_source_reread": true,
+      "internal_only": true,
+      "hardware_validated": false,
+      "integration_approved": false,
+      "boot_blob_redistribution_authorized": false
+    },
+    {
+      "image_id": "c5c774eacaf1feab2929e63d6a316c4e58bdc7f29ade7ec9141e7c1b2019b2df",
+      "release": "noble",
+      "variant": "minimal",
+      "status": "prepared",
+      "source": {
+        "path": "/media/pi/SMCI/bpi/google-drive-upload/2026/2026.08/bpi-r2/Armbian-unofficial_26.11.0-trunk_Bananapir2_noble_current_6.6.153_minimal.img.xz",
+        "sha256": "b99440f66a0f81f9384cf44e5e8d35ab55eeb4ada230e817b2610e6d6cf302ca"
+      },
+      "candidate": {
+        "path": "/media/pi/SMCI/armbian/bpi-v26.2.1-m4zero-sram-supervisor-plan/output/evidence/bpi-r2-matrix-I-20260918/batch-003/jobs/c5c774eacaf1feab2929e63d6a316c4e58bdc7f29ade7ec9141e7c1b2019b2df/attempt-0001/candidate/Armbian-unofficial_26.11.0-trunk_Bananapir2_noble_current_6.6.153_minimal_i1-dtb-path.img.xz",
+        "bytes": 317285820,
+        "sha256": "120dfb8e1a3eb7188f6f6ecb7c7838fe3d26d7c3000bba8ee75cfd9fa286d8d6"
+      },
+      "checksum_sidecar": {
+        "path": "/media/pi/SMCI/armbian/bpi-v26.2.1-m4zero-sram-supervisor-plan/output/evidence/bpi-r2-matrix-I-20260918/batch-003/jobs/c5c774eacaf1feab2929e63d6a316c4e58bdc7f29ade7ec9141e7c1b2019b2df/attempt-0001/candidate/Armbian-unofficial_26.11.0-trunk_Bananapir2_noble_current_6.6.153_minimal_i1-dtb-path.img.xz.sha",
+        "sha256": "d7b59b7da3650649e634af24a8622322fcf174856033bebe0792433bb09ac14e"
+      },
+      "raw": {
+        "bytes": 1237319680,
+        "original_sha256": "7d866be1faf6ade8264c1cf382aa57e5bf7e27a3476f3d89ab0cb9e4c32bc1dc",
+        "sha256": "f072c2c2c92796892ea7631d37ae402e7fa92eca5c2ceaf43b0bfc1e9398aa93"
+      },
+      "root_uuid": "ccae7596-a65f-44b9-a0fc-55665af56be0",
+      "changed_range": {
+        "offset": 1169174528,
+        "bytes": 141,
+        "before": {
+          "bytes": 141,
+          "sha256": "4e86a2068b0cbe83e801c16ce3e9e08b45b56a3c5e5217637e908e122db97924"
+        },
+        "after": {
+          "bytes": 141,
+          "sha256": "b877355b846d1e8b07ca8a9f25c861816695b00d8d111a9959c11520f56ccb1d"
+        }
+      },
+      "inverse_verification": {
+        "bytes": 1237319680,
+        "candidate_sha256": "f072c2c2c92796892ea7631d37ae402e7fa92eca5c2ceaf43b0bfc1e9398aa93",
+        "original_sha256": "7d866be1faf6ade8264c1cf382aa57e5bf7e27a3476f3d89ab0cb9e4c32bc1dc"
+      },
+      "candidate_manifest": {
+        "path": "/media/pi/SMCI/armbian/bpi-v26.2.1-m4zero-sram-supervisor-plan/output/evidence/bpi-r2-matrix-I-20260918/batch-003/jobs/c5c774eacaf1feab2929e63d6a316c4e58bdc7f29ade7ec9141e7c1b2019b2df/attempt-0001/candidate/candidate.json",
+        "sha256": "13a0c7f887ef545a154b51e6178206967596cb3a9b76794ddec52da7bd785c8c"
+      },
+      "preparation": {
+        "path": "/media/pi/SMCI/armbian/bpi-v26.2.1-m4zero-sram-supervisor-plan/output/evidence/bpi-r2-matrix-I-20260918/batch-003/jobs/c5c774eacaf1feab2929e63d6a316c4e58bdc7f29ade7ec9141e7c1b2019b2df/attempt-0001/final/preparation.json",
+        "sha256": "971abc851fdc58b3bd2358c66d9a343948e8d5382e1255a37fe520ec4e9f32d7"
+      },
+      "receipt": {
+        "path": "/media/pi/SMCI/armbian/bpi-v26.2.1-m4zero-sram-supervisor-plan/output/evidence/bpi-r2-matrix-I-20260918/batch-003/jobs/c5c774eacaf1feab2929e63d6a316c4e58bdc7f29ade7ec9141e7c1b2019b2df/receipt.json",
+        "sha256": "f26f8a9adcb201d99bedefe367f9fc2a74777a0127a4536498ffd763453f7cc7"
+      },
+      "origin_receipt": null,
+      "reused_legacy": false,
+      "reused_previous": false,
+      "e2fsck_exit_code": 0,
+      "final_xz_source_reread": true,
+      "internal_only": true,
+      "hardware_validated": false,
+      "integration_approved": false,
+      "boot_blob_redistribution_authorized": false
+    },
+    {
+      "image_id": "04ead74763647ccc869caeb68468bc611f3752f3e4cf295773c6276d12fd08a0",
+      "release": "noble",
+      "variant": "xfce_desktop",
+      "status": "prepared",
+      "source": {
+        "path": "/media/pi/SMCI/bpi/google-drive-upload/2026/2026.08/bpi-r2/Armbian-unofficial_26.11.0-trunk_Bananapir2_noble_current_6.6.153_xfce_desktop.img.xz",
+        "sha256": "737fdf39a7a444eed185d499ac95f41372c5a3ceef5d24bf2da8ffce9061eb4c"
+      },
+      "candidate": {
+        "path": "/media/pi/SMCI/armbian/bpi-v26.2.1-m4zero-sram-supervisor-plan/output/evidence/bpi-r2-matrix-I-20260918/batch-003/jobs/04ead74763647ccc869caeb68468bc611f3752f3e4cf295773c6276d12fd08a0/attempt-0001/candidate/Armbian-unofficial_26.11.0-trunk_Bananapir2_noble_current_6.6.153_xfce_desktop_i1-dtb-path.img.xz",
+        "bytes": 895472180,
+        "sha256": "4b722a269170a80982fc59d9125daee6ef7af310feeecaaca316480353010070"
+      },
+      "checksum_sidecar": {
+        "path": "/media/pi/SMCI/armbian/bpi-v26.2.1-m4zero-sram-supervisor-plan/output/evidence/bpi-r2-matrix-I-20260918/batch-003/jobs/04ead74763647ccc869caeb68468bc611f3752f3e4cf295773c6276d12fd08a0/attempt-0001/candidate/Armbian-unofficial_26.11.0-trunk_Bananapir2_noble_current_6.6.153_xfce_desktop_i1-dtb-path.img.xz.sha",
+        "sha256": "a6c6825db29b287c935f453900b8b36eb861d2800af50598b76d9e283befa03f"
+      },
+      "raw": {
+        "bytes": 3821010944,
+        "original_sha256": "30e28fd409a74a5f77ab101da1a7cfa6912a2600d67bbe4e4ccb136de1887163",
+        "sha256": "a89c6207147e334e2ecb633621b17cb134b48fcb13c8f34b7983d02c04f87ae7"
+      },
+      "root_uuid": "a658b602-ab0a-45b8-9011-e9be91bc53a5",
+      "changed_range": {
+        "offset": 3369988096,
+        "bytes": 141,
+        "before": {
+          "bytes": 141,
+          "sha256": "dc72b977b9504a1fd09468bc3ac17115009975c3c8e129b97161fa19b08d0b47"
+        },
+        "after": {
+          "bytes": 141,
+          "sha256": "d25c26b0e5529d71126e98939e441f5a294d72235e4c3a84fcff8447f82b43f1"
+        }
+      },
+      "inverse_verification": {
+        "bytes": 3821010944,
+        "candidate_sha256": "a89c6207147e334e2ecb633621b17cb134b48fcb13c8f34b7983d02c04f87ae7",
+        "original_sha256": "30e28fd409a74a5f77ab101da1a7cfa6912a2600d67bbe4e4ccb136de1887163"
+      },
+      "candidate_manifest": {
+        "path": "/media/pi/SMCI/armbian/bpi-v26.2.1-m4zero-sram-supervisor-plan/output/evidence/bpi-r2-matrix-I-20260918/batch-003/jobs/04ead74763647ccc869caeb68468bc611f3752f3e4cf295773c6276d12fd08a0/attempt-0001/candidate/candidate.json",
+        "sha256": "02e8fdb3f84546a5a13fcd8678fe69a71f5cf923754f1af06e228d51f7fbf191"
+      },
+      "preparation": {
+        "path": "/media/pi/SMCI/armbian/bpi-v26.2.1-m4zero-sram-supervisor-plan/output/evidence/bpi-r2-matrix-I-20260918/batch-003/jobs/04ead74763647ccc869caeb68468bc611f3752f3e4cf295773c6276d12fd08a0/attempt-0001/final/preparation.json",
+        "sha256": "6eb933d3d6bcb7e371b61de72891a256f4c4b261ec4c59401271c897bf484ee1"
+      },
+      "receipt": {
+        "path": "/media/pi/SMCI/armbian/bpi-v26.2.1-m4zero-sram-supervisor-plan/output/evidence/bpi-r2-matrix-I-20260918/batch-003/jobs/04ead74763647ccc869caeb68468bc611f3752f3e4cf295773c6276d12fd08a0/receipt.json",
+        "sha256": "e22742578554362a93f038f8d6af3a723fb8fc43b4bed07a40eead936b5c0ac0"
+      },
+      "origin_receipt": null,
+      "reused_legacy": false,
+      "reused_previous": false,
+      "e2fsck_exit_code": 0,
+      "final_xz_source_reread": true,
+      "internal_only": true,
+      "hardware_validated": false,
+      "integration_approved": false,
+      "boot_blob_redistribution_authorized": false
+    },
+    {
+      "image_id": "0a11c79101817d3b459929f94d00163771dcfc0278689672643f6b11c15b303d",
+      "release": "resolute",
+      "variant": "minimal",
+      "status": "prepared",
+      "source": {
+        "path": "/media/pi/SMCI/bpi/google-drive-upload/2026/2026.08/bpi-r2/Armbian-unofficial_26.11.0-trunk_Bananapir2_resolute_current_6.6.153_minimal.img.xz",
+        "sha256": "7c83804d7392377725b9ba3a12af2314a9357aaa5035b79804dd72999020b452"
+      },
+      "candidate": {
+        "path": "/media/pi/SMCI/armbian/bpi-v26.2.1-m4zero-sram-supervisor-plan/output/evidence/bpi-r2-matrix-I-20260918/batch-003/jobs/0a11c79101817d3b459929f94d00163771dcfc0278689672643f6b11c15b303d/attempt-0001/candidate/Armbian-unofficial_26.11.0-trunk_Bananapir2_resolute_current_6.6.153_minimal_i1-dtb-path.img.xz",
+        "bytes": 330315744,
+        "sha256": "3b4b82dc2a7443aac2b9f3b7226efbe5c2e77676cdeb2645b4eff19be6ae2bdf"
+      },
+      "checksum_sidecar": {
+        "path": "/media/pi/SMCI/armbian/bpi-v26.2.1-m4zero-sram-supervisor-plan/output/evidence/bpi-r2-matrix-I-20260918/batch-003/jobs/0a11c79101817d3b459929f94d00163771dcfc0278689672643f6b11c15b303d/attempt-0001/candidate/Armbian-unofficial_26.11.0-trunk_Bananapir2_resolute_current_6.6.153_minimal_i1-dtb-path.img.xz.sha",
+        "sha256": "0e0a12012fdb4485743329bfe2cf7bde978e7cfaf33fc995950b80775a9bf235"
+      },
+      "raw": {
+        "bytes": 1337982976,
+        "original_sha256": "b4ba864cef91d74e9a0caa36ecd5e35d23571fcc2e3d56bf8008726612fc597d",
+        "sha256": "0cdc8beac76c41c2fa4c121347e72ca0cb7cf5311aebb504f87d5327f5908560"
+      },
+      "root_uuid": "39b47c8c-206d-4f24-aa6d-6c34d40e3f87",
+      "changed_range": {
+        "offset": 1337442304,
+        "bytes": 141,
+        "before": {
+          "bytes": 141,
+          "sha256": "fce070b74ae65ec632dababe577d3eaf9f1177e80ede853b0424419ca36a4203"
+        },
+        "after": {
+          "bytes": 141,
+          "sha256": "cc12843a4013b3430242e6da1b1f57a217401c26dfad2c432ee4fc78ae233e2b"
+        }
+      },
+      "inverse_verification": {
+        "bytes": 1337982976,
+        "candidate_sha256": "0cdc8beac76c41c2fa4c121347e72ca0cb7cf5311aebb504f87d5327f5908560",
+        "original_sha256": "b4ba864cef91d74e9a0caa36ecd5e35d23571fcc2e3d56bf8008726612fc597d"
+      },
+      "candidate_manifest": {
+        "path": "/media/pi/SMCI/armbian/bpi-v26.2.1-m4zero-sram-supervisor-plan/output/evidence/bpi-r2-matrix-I-20260918/batch-003/jobs/0a11c79101817d3b459929f94d00163771dcfc0278689672643f6b11c15b303d/attempt-0001/candidate/candidate.json",
+        "sha256": "8d07bb23274772bdc4b05f95e96477664080ec4d15d4b69d703a85025f72ee6f"
+      },
+      "preparation": {
+        "path": "/media/pi/SMCI/armbian/bpi-v26.2.1-m4zero-sram-supervisor-plan/output/evidence/bpi-r2-matrix-I-20260918/batch-003/jobs/0a11c79101817d3b459929f94d00163771dcfc0278689672643f6b11c15b303d/attempt-0001/final/preparation.json",
+        "sha256": "cb32e8cee78f4ce71e941a075d3516e196c3fcb448501a3e074af3fb1fdb7929"
+      },
+      "receipt": {
+        "path": "/media/pi/SMCI/armbian/bpi-v26.2.1-m4zero-sram-supervisor-plan/output/evidence/bpi-r2-matrix-I-20260918/batch-003/jobs/0a11c79101817d3b459929f94d00163771dcfc0278689672643f6b11c15b303d/receipt.json",
+        "sha256": "e0a3b182a223982519cec7988b22837904c8b4ae15b6d065b7864b51f91eeceb"
+      },
+      "origin_receipt": null,
+      "reused_legacy": false,
+      "reused_previous": false,
+      "e2fsck_exit_code": 0,
+      "final_xz_source_reread": true,
+      "internal_only": true,
+      "hardware_validated": false,
+      "integration_approved": false,
+      "boot_blob_redistribution_authorized": false
+    },
+    {
+      "image_id": "fb58875ff384a01830abbc4109afa0e4f9ffc4849d2fa8acdd3484bfa2dbfab7",
+      "release": "resolute",
+      "variant": "xfce_desktop",
+      "status": "prepared",
+      "source": {
+        "path": "/media/pi/SMCI/bpi/google-drive-upload/2026/2026.08/bpi-r2/Armbian-unofficial_26.11.0-trunk_Bananapir2_resolute_current_6.6.153_xfce_desktop.img.xz",
+        "sha256": "c971559c484191a3b11b656b6b2f6c1e7912bdf468db3baf1fddc76fe811ecfb"
+      },
+      "candidate": {
+        "path": "/media/pi/SMCI/armbian/bpi-v26.2.1-m4zero-sram-supervisor-plan/output/evidence/bpi-r2-matrix-I-20260918/batch-003/jobs/fb58875ff384a01830abbc4109afa0e4f9ffc4849d2fa8acdd3484bfa2dbfab7/attempt-0001/candidate/Armbian-unofficial_26.11.0-trunk_Bananapir2_resolute_current_6.6.153_xfce_desktop_i1-dtb-path.img.xz",
+        "bytes": 954812420,
+        "sha256": "c5f289603709c157d395975e47fb1e1e72c3f4672754e293876b71feb9b37556"
+      },
+      "checksum_sidecar": {
+        "path": "/media/pi/SMCI/armbian/bpi-v26.2.1-m4zero-sram-supervisor-plan/output/evidence/bpi-r2-matrix-I-20260918/batch-003/jobs/fb58875ff384a01830abbc4109afa0e4f9ffc4849d2fa8acdd3484bfa2dbfab7/attempt-0001/candidate/Armbian-unofficial_26.11.0-trunk_Bananapir2_resolute_current_6.6.153_xfce_desktop_i1-dtb-path.img.xz.sha",
+        "sha256": "da488352ac3e02503666ac9176046c71dfaebec22e2e7b6d3a266635566daebc"
+      },
+      "raw": {
+        "bytes": 4345298944,
+        "original_sha256": "6db8349543b53f98f4ef4e84d8fed176d85c6c77e3d9f58ded1bb0a619776374",
+        "sha256": "2f1be4c9e0a155d566fcde92e7d3771723f1ab16dad868cebac8705fc68564b2"
+      },
+      "root_uuid": "e448f608-b045-406c-a684-b9e911043c34",
+      "changed_range": {
+        "offset": 1028468736,
+        "bytes": 141,
+        "before": {
+          "bytes": 141,
+          "sha256": "c73c1916930c7d89f5b43582bb132c1501e79222f8ccb76714dbad859cf61da1"
+        },
+        "after": {
+          "bytes": 141,
+          "sha256": "4866c869470038a1513c5d0371c9a0157c67ef1055d35ce35c0965a053254030"
+        }
+      },
+      "inverse_verification": {
+        "bytes": 4345298944,
+        "candidate_sha256": "2f1be4c9e0a155d566fcde92e7d3771723f1ab16dad868cebac8705fc68564b2",
+        "original_sha256": "6db8349543b53f98f4ef4e84d8fed176d85c6c77e3d9f58ded1bb0a619776374"
+      },
+      "candidate_manifest": {
+        "path": "/media/pi/SMCI/armbian/bpi-v26.2.1-m4zero-sram-supervisor-plan/output/evidence/bpi-r2-matrix-I-20260918/batch-003/jobs/fb58875ff384a01830abbc4109afa0e4f9ffc4849d2fa8acdd3484bfa2dbfab7/attempt-0001/candidate/candidate.json",
+        "sha256": "dd1bede3d18c1f7408cb5f366954a16f77f323dc33ce3a0caaa27594c1c5e004"
+      },
+      "preparation": {
+        "path": "/media/pi/SMCI/armbian/bpi-v26.2.1-m4zero-sram-supervisor-plan/output/evidence/bpi-r2-matrix-I-20260918/batch-003/jobs/fb58875ff384a01830abbc4109afa0e4f9ffc4849d2fa8acdd3484bfa2dbfab7/attempt-0001/final/preparation.json",
+        "sha256": "61c9f3d788c78d62e7820938191481fb17ffc40ed890b7e9526c70374d05c3ce"
+      },
+      "receipt": {
+        "path": "/media/pi/SMCI/armbian/bpi-v26.2.1-m4zero-sram-supervisor-plan/output/evidence/bpi-r2-matrix-I-20260918/batch-003/jobs/fb58875ff384a01830abbc4109afa0e4f9ffc4849d2fa8acdd3484bfa2dbfab7/receipt.json",
+        "sha256": "4f68cd9272d23d02ef5f4afe0db6315318e9f198184f8b7b6afbc2069851e88c"
+      },
+      "origin_receipt": null,
+      "reused_legacy": false,
+      "reused_previous": false,
+      "e2fsck_exit_code": 0,
+      "final_xz_source_reread": true,
+      "internal_only": true,
+      "hardware_validated": false,
+      "integration_approved": false,
+      "boot_blob_redistribution_authorized": false
+    },
+    {
+      "image_id": "efe0d25be4ffd68a5790fe2f20431d00e2fe08ae5fcac86feb2602f1b52b5d58",
+      "release": "trixie",
+      "variant": "minimal",
+      "status": "prepared",
+      "source": {
+        "path": "/media/pi/SMCI/bpi/google-drive-upload/2026/2026.08/bpi-r2/Armbian-unofficial_26.11.0-trunk_Bananapir2_trixie_current_6.6.153_minimal.img.xz",
+        "sha256": "9d6e398f9c2d007ed0fdadcde4ede1c3afc1af30c1ec3d75833035dd77ddd305"
+      },
+      "candidate": {
+        "path": "/media/pi/SMCI/armbian/bpi-v26.2.1-m4zero-sram-supervisor-plan/output/evidence/bpi-r2-matrix-I-20260918/batch-003/jobs/efe0d25be4ffd68a5790fe2f20431d00e2fe08ae5fcac86feb2602f1b52b5d58/attempt-0001/candidate/Armbian-unofficial_26.11.0-trunk_Bananapir2_trixie_current_6.6.153_minimal_i1-dtb-path.img.xz",
+        "bytes": 334979480,
+        "sha256": "fbd69d58231083bbe00f1bc3634c7f0da19de1dfc94aeade0038b0ac1dd93d7d"
+      },
+      "checksum_sidecar": {
+        "path": "/media/pi/SMCI/armbian/bpi-v26.2.1-m4zero-sram-supervisor-plan/output/evidence/bpi-r2-matrix-I-20260918/batch-003/jobs/efe0d25be4ffd68a5790fe2f20431d00e2fe08ae5fcac86feb2602f1b52b5d58/attempt-0001/candidate/Armbian-unofficial_26.11.0-trunk_Bananapir2_trixie_current_6.6.153_minimal_i1-dtb-path.img.xz.sha",
+        "sha256": "c5cc66e7e1ab4cda59f8771c91f3d956cd67d608f3d98d909ed51f78cd59ad0a"
+      },
+      "raw": {
+        "bytes": 1363148800,
+        "original_sha256": "381e919f36287cc5241ecc33b82f47475ab0d1a08b9978624435e62748e66643",
+        "sha256": "67267db83e042ebd9b550c16df2c2eff5f8b2c57d78350056319e902c0be4fb4"
+      },
+      "root_uuid": "889065fb-6c30-4fcf-8d4d-e42070f3bd9b",
+      "changed_range": {
+        "offset": 1278218240,
+        "bytes": 141,
+        "before": {
+          "bytes": 141,
+          "sha256": "d583772a22c23d661a0ea99f840d7f8d842989b8ed4c43f4c1622ac979ac1010"
+        },
+        "after": {
+          "bytes": 141,
+          "sha256": "c53cbda42e77207504ca3db3152330074d28f65212363e3e7aa7cfd23cdec73d"
+        }
+      },
+      "inverse_verification": {
+        "bytes": 1363148800,
+        "candidate_sha256": "67267db83e042ebd9b550c16df2c2eff5f8b2c57d78350056319e902c0be4fb4",
+        "original_sha256": "381e919f36287cc5241ecc33b82f47475ab0d1a08b9978624435e62748e66643"
+      },
+      "candidate_manifest": {
+        "path": "/media/pi/SMCI/armbian/bpi-v26.2.1-m4zero-sram-supervisor-plan/output/evidence/bpi-r2-matrix-I-20260918/batch-003/jobs/efe0d25be4ffd68a5790fe2f20431d00e2fe08ae5fcac86feb2602f1b52b5d58/attempt-0001/candidate/candidate.json",
+        "sha256": "4c999cfab4d0d07de9e4e48da874562d3127d96e435de0dbd532ed5e5479b809"
+      },
+      "preparation": {
+        "path": "/media/pi/SMCI/armbian/bpi-v26.2.1-m4zero-sram-supervisor-plan/output/evidence/bpi-r2-matrix-I-20260918/batch-003/jobs/efe0d25be4ffd68a5790fe2f20431d00e2fe08ae5fcac86feb2602f1b52b5d58/attempt-0001/final/preparation.json",
+        "sha256": "b1bef1ab6ef56d1af610a15ab90cac778b5b632687845cd1e29e726ff6705c73"
+      },
+      "receipt": {
+        "path": "/media/pi/SMCI/armbian/bpi-v26.2.1-m4zero-sram-supervisor-plan/output/evidence/bpi-r2-matrix-I-20260918/batch-003/jobs/efe0d25be4ffd68a5790fe2f20431d00e2fe08ae5fcac86feb2602f1b52b5d58/receipt.json",
+        "sha256": "fae01295e3cea373b26d63222278dd17309b86f85f832cb16c591362e7116a64"
+      },
+      "origin_receipt": null,
+      "reused_legacy": false,
+      "reused_previous": false,
+      "e2fsck_exit_code": 0,
+      "final_xz_source_reread": true,
+      "internal_only": true,
+      "hardware_validated": false,
+      "integration_approved": false,
+      "boot_blob_redistribution_authorized": false
+    },
+    {
+      "image_id": "f085dc2111cf5e3dec097cb774fcd4d496132d54f96efff37059d849b40049e4",
+      "release": "trixie",
+      "variant": "xfce_desktop",
+      "status": "prepared",
+      "source": {
+        "path": "/media/pi/SMCI/bpi/google-drive-upload/2026/2026.08/bpi-r2/Armbian-unofficial_26.11.0-trunk_Bananapir2_trixie_current_6.6.153_xfce_desktop.img.xz",
+        "sha256": "9493f36780d3cba13626ebbbcc56a3e0cf921523ce7e278fe69c17a4c8f6440b"
+      },
+      "candidate": {
+        "path": "/media/pi/SMCI/armbian/bpi-v26.2.1-m4zero-sram-supervisor-plan/output/evidence/bpi-r2-matrix-I-20260918/batch-003/jobs/f085dc2111cf5e3dec097cb774fcd4d496132d54f96efff37059d849b40049e4/attempt-0001/candidate/Armbian-unofficial_26.11.0-trunk_Bananapir2_trixie_current_6.6.153_xfce_desktop_i1-dtb-path.img.xz",
+        "bytes": 1048771192,
+        "sha256": "cb0d79e97f7ceb42788bf662c4e902e8cff3e430aa149c00bf1d16ff8ae9c139"
+      },
+      "checksum_sidecar": {
+        "path": "/media/pi/SMCI/armbian/bpi-v26.2.1-m4zero-sram-supervisor-plan/output/evidence/bpi-r2-matrix-I-20260918/batch-003/jobs/f085dc2111cf5e3dec097cb774fcd4d496132d54f96efff37059d849b40049e4/attempt-0001/candidate/Armbian-unofficial_26.11.0-trunk_Bananapir2_trixie_current_6.6.153_xfce_desktop_i1-dtb-path.img.xz.sha",
+        "sha256": "db95ce694ab95d413b20f3fed3a181a9966aa7834a334ce6b7e110164656d305"
+      },
+      "raw": {
+        "bytes": 4672454656,
+        "original_sha256": "cb0031a3f8310326bab3a4731d35a8b0a8193578060d787add56d445e17dd068",
+        "sha256": "9eb1aac4111f259cd974276c09e882d25c5adb47efaa79ea9e494204cde2ac85"
+      },
+      "root_uuid": "78e0e332-9395-4fe7-8bc7-379b3b69adae",
+      "changed_range": {
+        "offset": 943157248,
+        "bytes": 141,
+        "before": {
+          "bytes": 141,
+          "sha256": "aff62567358a925471cba409aaaf2d29b6ca8a12807c1d4741a50a047e331686"
+        },
+        "after": {
+          "bytes": 141,
+          "sha256": "53386fc0e43bd3d4e17e2941000a2d06e326616ba20abb2b8a696c2011723b21"
+        }
+      },
+      "inverse_verification": {
+        "bytes": 4672454656,
+        "candidate_sha256": "9eb1aac4111f259cd974276c09e882d25c5adb47efaa79ea9e494204cde2ac85",
+        "original_sha256": "cb0031a3f8310326bab3a4731d35a8b0a8193578060d787add56d445e17dd068"
+      },
+      "candidate_manifest": {
+        "path": "/media/pi/SMCI/armbian/bpi-v26.2.1-m4zero-sram-supervisor-plan/output/evidence/bpi-r2-matrix-I-20260918/batch-003/jobs/f085dc2111cf5e3dec097cb774fcd4d496132d54f96efff37059d849b40049e4/attempt-0001/candidate/candidate.json",
+        "sha256": "d3a37640e1fa332474a53711d9ad2818b490d70ebc44edafef55a69298130159"
+      },
+      "preparation": {
+        "path": "/media/pi/SMCI/armbian/bpi-v26.2.1-m4zero-sram-supervisor-plan/output/evidence/bpi-r2-matrix-I-20260918/batch-003/jobs/f085dc2111cf5e3dec097cb774fcd4d496132d54f96efff37059d849b40049e4/attempt-0001/final/preparation.json",
+        "sha256": "cfd2a0ed3f55d25651beeb4299bc4d11a2509f4dbdf17513df4e363d44350e60"
+      },
+      "receipt": {
+        "path": "/media/pi/SMCI/armbian/bpi-v26.2.1-m4zero-sram-supervisor-plan/output/evidence/bpi-r2-matrix-I-20260918/batch-003/jobs/f085dc2111cf5e3dec097cb774fcd4d496132d54f96efff37059d849b40049e4/receipt.json",
+        "sha256": "e603272ebe54187c6eb4fc7af151f435ea2d47dda9fea5df7dc848905f9bb03c"
+      },
+      "origin_receipt": null,
+      "reused_legacy": false,
+      "reused_previous": false,
+      "e2fsck_exit_code": 0,
+      "final_xz_source_reread": true,
+      "internal_only": true,
+      "hardware_validated": false,
+      "integration_approved": false,
+      "boot_blob_redistribution_authorized": false
+    }
+  ]
+}

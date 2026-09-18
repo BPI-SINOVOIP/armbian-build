@@ -33,9 +33,13 @@ with m.lock(batch):
         r.verify_receipt(receipt, plan_ref, plan, row, directory)
         c = review.ref_data(receipt["candidate_manifest"])
         p = review.ref_data(receipt["preparation"])
+        checksum = Path(c["candidate"]["path"] + ".sha")
+        expected = (c["candidate"]["sha256"] + "  " + Path(c["candidate"]["path"]).name + "\n").encode()
+        r.require(m.file_digest(checksum) == m.image.digest(expected), "候選校驗旁檔錯配")
         results.append({
             "image_id": receipt["image_id"], "release": receipt["release"], "variant": receipt["variant"],
             "status": receipt["status"], "source": c["source"], "candidate": c["candidate"],
+            "checksum_sidecar": review.reference(checksum),
             "raw": c["raw"], "root_uuid": row["root_uuid"], "changed_range": c["changed_range"],
             "inverse_verification": receipt["verified"]["inverse_verification"],
             "candidate_manifest": receipt["candidate_manifest"], "preparation": receipt["preparation"],
