@@ -2,6 +2,7 @@
 
 import copy
 import hashlib
+import io
 import os
 from pathlib import Path
 import signal
@@ -249,6 +250,202 @@ class QualifyTests(data.BackendFixture):
         self.assertEqual(len(approved["source_evidence"]), 20)
         config = {**self.config_document, "qualification": self.reference(self.root / "approved.json")}
         qualify.backend.check_qualification(config)
+
+    def approved_config(self):
+        result, _ = self.native_fixture()
+        candidate = self.write_json("candidate.json", result)
+        qualification = qualify.approve(candidate, self.review(candidate), self.root / "approved.json")
+        config = {**self.config_document, "qualification": self.reference(self.root / "approved.json")}
+        return self.write_json("qualified-backend.json", config), result, qualification
+
+    def export(self, config_ref, name="station", **kwargs):
+        return qualify.export_station(config_ref, self.root / name, Path(sys.executable).resolve(), **kwargs)
+
+    def test_station_export_disabled_replays_approve_without_hardware_or_queue(self):
+        config_ref, result, qualification = self.approved_config()
+        refs = [config_ref, *qualification["source_evidence"]]
+        before = {ref["path"]: Path(ref["path"]).read_bytes() for ref in refs}
+        state = qualify.backend.StateStore(self.config_document).read()
+        with mock.patch.object(qualify.backend.NativeRuntime, "execute", side_effect=AssertionError("不得操作硬體")):
+            with mock.patch.object(qualify.queue, "connect", side_effect=AssertionError("不得開啟佇列")):
+                with mock.patch.object(qualify.backend, "validate_result", wraps=qualify.backend.validate_result) as check:
+                    value = self.export(config_ref)
+        self.assert_shared_validation(check, result)
+        self.assertIs(value["enabled"], False)
+        self.assertEqual(value["compatible_boards"], [self.bundle["board"]])
+        self.assertEqual(value["boot_config_sha256"], config_ref["sha256"])
+        self.assertNotEqual(value["boot_config_sha256"], self.config_ref["sha256"])
+        self.assertEqual(value["adapter"]["argv"], [str(Path(sys.executable).resolve()), "-B",
+            str(Path(qualify.backend.__file__).absolute()), "--config", config_ref["path"],
+            "--config-sha256", config_ref["sha256"]])
+        self.assertEqual(value["authorization"], {**self.contract["authorization"], "record": "fixture-review"})
+        self.assertEqual(qualify.station.validate_station(value), value)
+        qualify.station._verify_qualification(value)
+        envelope = qualify.deploy.load({"path": value["qualification"]["evidence_path"],
+                                       "sha256": value["qualification"]["evidence_sha256"]})
+        self.assertEqual(envelope["schema"], "bpi-lab-qualification-v1")
+        self.assertEqual(envelope["source_evidence"], [self.reference(self.root / "approved.json"), config_ref])
+        self.assertEqual(qualify.deploy.load(self.reference(self.root / "station/station.json")), value)
+        self.assertEqual(qualify.backend.StateStore(self.config_document).read(), state)
+        self.assertEqual({path: Path(path).read_bytes() for path in before}, before)
+
+    def test_station_cli_defaults_disabled_and_requires_explicit_enable(self):
+        config_ref, _, _ = self.approved_config()
+        for enabled in (False, True):
+            output = self.root / ("cli-enabled" if enabled else "cli-disabled")
+            argv = ["station", "--config", config_ref["path"], "--config-sha256", config_ref["sha256"],
+                    "--interpreter", str(Path(sys.executable).resolve()), "--output", str(output)]
+            if enabled:
+                argv.append("--enable-reviewed-station")
+            with self.subTest(enabled=enabled), mock.patch("sys.stdout", new_callable=io.StringIO) as stdout:
+                self.assertEqual(qualify.main(argv), 0)
+            value = qualify.station._json_loads(stdout.getvalue())
+            self.assertIs(value["enabled"], enabled)
+            self.assertEqual(qualify.station.validate_station(value), value)
+            qualify.station._verify_qualification(value)
+
+    def test_exported_station_runs_queue_through_shared_backend(self):
+        config_ref, _, _ = self.approved_config()
+        value = self.export(config_ref, enabled=True)
+        queue = qualify.queue
+        db = queue.connect(self.root / "batch.sqlite3")
+        self.addCleanup(db.close)
+        queue.register_station(db, value)
+        entry = {**self.request["image"], "image_id": "fixture-image", "issues": [],
+                 "expected_sha256": self.request["image_sha256"]}
+        queue.import_catalog(db, {"schema": "bpi-lab-catalog-v1", "hardware_validated": False,
+                                  "root": str(self.root), "entries": [entry]})
+        self.assertEqual(queue.schedule(db, value["station_id"]), 1)
+        stages = []
+        def adapter(argv, request_bytes, timeout, *, capture, on_started):
+            self.assertEqual(argv, value["adapter"])
+            on_started()
+            request = qualify.station._json_loads(request_bytes)
+            self.assertEqual(request["boot_config_sha256"], config_ref["sha256"])
+            stages.append(request["stage"])
+            result = qualify.backend.run_stage(config_ref["path"], config_ref["sha256"], request)
+            self.assertEqual(result["status"], "passed", result)
+            stdout = qualify.deploy.encode(result)
+            capture("stdout", stdout)
+            return stdout, b"", None
+        with mock.patch.object(queue.station_api, "_external", side_effect=adapter):
+            with mock.patch.object(qualify.backend.NativeRuntime, "execute", side_effect=self.fake_result):
+                result = queue.run_one(db, value["station_id"], self.root / "batch-evidence", lock_root=self.queue_locks)
+        self.assertEqual(result["state"], "collected", result)
+        self.assertEqual(stages, list(qualify.station.STAGES))
+        self.assertEqual(queue.summary(db)["reports"], 5)
+
+    def test_station_export_rejects_missing_or_flag_only_qualification(self):
+        with self.assertRaises(ValueError):
+            self.export(self.config_ref)
+        self.sync_config()
+        with self.assertRaisesRegex(ValueError, "原始首輪"):
+            self.export(self.config_ref)
+        self.assertFalse((self.root / "station").exists())
+
+    def test_station_export_rejects_incomplete_or_reordered_qualification(self):
+        config_ref, _, original = self.approved_config()
+        config = qualify.deploy.load(config_ref)
+        changes = [{"approved_stages": ["preflight"]}, {"hardware_validated": False},
+                   {"source_evidence": original["source_evidence"][:-1]},
+                   {"source_evidence": [original["source_evidence"][1], original["source_evidence"][0],
+                                        *original["source_evidence"][2:]]}]
+        for index, change in enumerate(changes):
+            changed = self.write_json("changed-qualification.json", {**original, **change})
+            ref = self.write_json("changed-config.json", {**config, "qualification": changed})
+            with self.subTest(index=index), self.assertRaises(ValueError):
+                self.export(ref)
+        self.assertFalse((self.root / "station").exists())
+
+    def test_station_export_rejects_scope_change_even_with_rehashed_qualification(self):
+        config_ref, _, qualification = self.approved_config()
+        config = qualify.deploy.load(config_ref)
+        for field, value in (("station_id", "other-station"), ("test_version", "other-v2"),
+                             ("timeout_seconds", 601)):
+            changed = {**config, field: value}
+            changed["qualification"] = self.write_json("changed-qualification.json", {
+                **qualification, "scope_sha256": qualify.backend.scope_digest(changed)})
+            ref = self.write_json("changed-config.json", changed)
+            qualify.backend.check_qualification(changed)
+            with self.subTest(field=field), self.assertRaises(ValueError):
+                self.export(ref)
+        self.assertFalse((self.root / "station").exists())
+
+    def test_station_export_rejects_config_hash_pairing_media_and_backup_mismatch(self):
+        config_ref, _, _ = self.approved_config()
+        with self.assertRaises(ValueError):
+            self.export({**config_ref, "sha256": "0" * 64})
+        original = qualify.deploy.load(config_ref)
+        for field, value in (("hardware_id", "other-board"),
+                             ("resources", {**self.resources, "media": "cid:" + "9" * 32})):
+            ref = self.write_json("changed-config.json", {**original, field: value})
+            with self.subTest(field=field), self.assertRaises(ValueError):
+                self.export(ref)
+        Path(self.contract["backup"]["path"]).write_bytes(b"{}")
+        with self.assertRaises(ValueError):
+            self.export(config_ref)
+        self.assertFalse((self.root / "station").exists())
+
+    def test_station_export_replays_forged_evidence_after_all_hashes_rebound(self):
+        config_ref, result, original = self.approved_config()
+        operations = [qualify.deploy.load(ref) for ref in result["operations"]]
+        operations[0]["request"]["expected"]["cid"] = "9" * 32
+        result = self.rebind_operations(result, operations)
+        seal = Path(result["publication"]["path"])
+        result["publication"] = self.write_json(str(seal.relative_to(self.root)), qualify.publication_record(result))
+        candidate = self.write_json("forged-candidate.json", result)
+        review = self.review(candidate)
+        qualification = {**original, "source_evidence": [candidate, review, result["publication"],
+            *result["reports"], *result["operations"], *original["source_evidence"][13:]]}
+        config = qualify.deploy.load(config_ref)
+        config["qualification"] = self.write_json("forged-qualification.json", qualification)
+        ref = self.write_json("forged-config.json", config)
+        qualify.backend.check_qualification(config)
+        with self.assertRaises(ValueError):
+            self.export(ref)
+        self.assertFalse((self.root / "station").exists())
+
+    def test_station_export_rejects_revoked_review_and_pending_publication(self):
+        config_ref, _, qualification = self.approved_config()
+        review_ref = qualification["source_evidence"][1]
+        review = qualify.deploy.load(review_ref)
+        revoked = self.write_json("revoked-review.json", {**review, "approved": False})
+        changed = {**qualification, "source_evidence": [qualification["source_evidence"][0], revoked,
+                                                      *qualification["source_evidence"][2:]]}
+        config = qualify.deploy.load(config_ref)
+        config["qualification"] = self.write_json("revoked-qualification.json", changed)
+        ref = self.write_json("revoked-config.json", config)
+        qualify.backend.check_qualification(config)
+        with self.assertRaises(ValueError):
+            self.export(ref)
+        publication = Path(qualification["source_evidence"][2]["path"])
+        publication.with_name("publication.pending").write_bytes(b"{}")
+        with self.assertRaises(ValueError):
+            self.export(config_ref)
+        self.assertFalse((self.root / "station").exists())
+
+    def test_station_export_rejects_nonboolean_enable_and_unsafe_interpreter(self):
+        config_ref, _, _ = self.approved_config()
+        for value in (1, "true", None):
+            with self.subTest(enabled=value), self.assertRaises(ValueError):
+                self.export(config_ref, enabled=value)
+        plain = self.root / "not-executable"
+        plain.write_bytes(b"fixture")
+        plain.chmod(0o600)
+        link = self.root / "interpreter-link"
+        link.symlink_to(Path(sys.executable).resolve())
+        for interpreter in (plain, link):
+            with self.subTest(interpreter=interpreter), self.assertRaises((ValueError, OSError)):
+                qualify.export_station(config_ref, self.root / "station", interpreter)
+        self.assertFalse((self.root / "station").exists())
+
+    def test_station_export_does_not_overwrite_existing_output(self):
+        config_ref, _, _ = self.approved_config()
+        self.export(config_ref)
+        before = {path.name: path.read_bytes() for path in (self.root / "station").iterdir()}
+        with self.assertRaises((ValueError, OSError)):
+            self.export(config_ref, enabled=True)
+        self.assertEqual({path.name: path.read_bytes() for path in (self.root / "station").iterdir()}, before)
 
     def test_changed_operation_blocks_review(self):
         result, _ = self.native_fixture()

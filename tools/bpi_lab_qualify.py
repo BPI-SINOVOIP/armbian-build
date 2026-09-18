@@ -337,8 +337,8 @@ def first_cycle(config_ref, authorization_ref, request, *, execute=False, recove
     return summary
 
 
-def approve(candidate_ref, review_ref, output):
-    """核對完整首輪及明示人工審閱後產生資格檔；不啟用站點、不操作設備。"""
+def reviewed_qualification(candidate_ref, review_ref):
+    """唯讀重驗完整首輪與人工審閱，供核定及站點匯出共用。"""
     candidate, review = deploy.load(candidate_ref), deploy.load(review_ref)
     deploy.fields(review, "schema approved record candidate scope_sha256")
     require(review["schema"] == "bpi-lab-first-cycle-review-v1" and review["approved"] is True
@@ -381,9 +381,51 @@ def approve(candidate_ref, review_ref, output):
                      "approved_stages": list(station.STAGES), "hardware_validated": True,
                      "rescue_verified": True, "single_image_cycle_verified": True,
                      "source_evidence": [candidate_ref, review_ref, candidate["publication"], *reports, *operations, *auxiliary]}
+    return qualification, config, contract, bundle, review
+
+
+def approve(candidate_ref, review_ref, output):
+    """核對完整首輪及明示人工審閱後產生資格檔；不啟用站點、不操作設備。"""
+    qualification, *_ = reviewed_qualification(candidate_ref, review_ref)
     output = deploy.path(output)
     deploy.save(output.parent, output.name, deploy.encode(qualification))
     return qualification
+
+
+def export_station(config_ref, output, interpreter, *, enabled=False):
+    """重驗核定證據後匯出獨立站點，不登記佇列、不操作設備。"""
+    require(type(enabled) is bool, "站點啟用旗標型別不符")
+    config, contract, qualification = backend.load_config(config_ref)
+    evidence = qualification["source_evidence"]
+    require(len(evidence) >= 2, "核定缺少原始首輪及人工審閱參照")
+    verified, original, original_contract, bundle, review = reviewed_qualification(*evidence[:2])
+    require(qualification == verified, "核定內容不等於完整首輪及人工審閱重驗結果")
+    require({key: value for key, value in config.items() if key != "qualification"}
+            == {key: value for key, value in original.items() if key != "qualification"}
+            and contract == original_contract, "匯出設定或媒體不屬於原核定範圍")
+    interpreter = deploy.path(str(interpreter))
+    with station._open_regular(interpreter, executable=True) as stream:
+        interpreter_sha256 = station._digest_file(stream)
+    adapter = {"kind": "external-v1", "argv": [str(interpreter), "-B", str(Path(backend.__file__).absolute()),
+               "--config", config_ref["path"], "--config-sha256", config_ref["sha256"]], "sha256": interpreter_sha256}
+    bindings = {key: config[key] for key in ("station_id", "hardware_id", "test_version", "resources")}
+    bindings["boot_config_sha256"] = config_ref["sha256"]
+    envelope = {"schema": "bpi-lab-qualification-v1", **bindings, "media": config["resources"]["media"],
+                "adapter_sha256": interpreter_sha256, "hardware_validated": True, "rescue_verified": True,
+                "single_image_cycle_verified": True, "source_evidence": [config["qualification"], config_ref]}
+    output = deploy.new_directory(deploy.path(output))
+    deploy.save(output, "qualification.json", deploy.encode(envelope))
+    proof = reference(output / "qualification.json", envelope)
+    value = {"schema": "bpi-lab-station-v1", **bindings, "mode": "hardware", "enabled": enabled,
+             "board": bundle["board"], "compatible_boards": [bundle["board"]],
+             "timeout_seconds": min(86400, config["timeout_seconds"] + 60),
+             "adapter": adapter, "qualification": {"status": "qualified", "evidence_path": proof["path"],
+                                                    "evidence_sha256": proof["sha256"]},
+             "authorization": {**contract["authorization"], "record": review["record"]}}
+    station.validate_station(value)
+    station._verify_qualification(value)
+    deploy.save(output, "station.json", deploy.encode(value))
+    return value
 
 
 def main(argv=None):
@@ -401,11 +443,20 @@ def main(argv=None):
         command.add_argument("--" + option, required=True, type=Path)
         command.add_argument("--" + option + "-sha256", required=True)
     command.add_argument("--output", required=True, type=Path)
+    command = sub.add_parser("station", help="重驗首輪核定並匯出獨立站點，預設停用")
+    command.add_argument("--config", required=True, type=Path)
+    command.add_argument("--config-sha256", required=True)
+    command.add_argument("--interpreter", required=True, type=Path)
+    command.add_argument("--output", required=True, type=Path)
+    command.add_argument("--enable-reviewed-station", action="store_true")
     args = parser.parse_args(argv)
     def ref(name):
         return {"path": str(getattr(args, name).absolute()), "sha256": getattr(args, name + "_sha256")}
     try:
-        if args.action == "approve":
+        if args.action == "station":
+            result = export_station(ref("config"), args.output.absolute(), args.interpreter.absolute(),
+                                    enabled=args.enable_reviewed_station)
+        elif args.action == "approve":
             result = approve(ref("candidate"), ref("review"), args.output.absolute())
         else:
             result = first_cycle(ref("config"), ref("authorization"), deploy.load(ref("request")),

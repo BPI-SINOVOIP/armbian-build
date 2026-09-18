@@ -123,6 +123,42 @@ Linux 採樣另核對同次 hostkey、處理器、根裝置鏈、檔案系統與
 產出的資格只覆蓋此配對與設定範圍，不代表全部映像通過，更不代表 ROM／SPL 原開機鏈、EMAC 或長期穩定性已驗證。
 完成後仍須人工核定站點登錄；本工具不修改既有 45 個停用範本、佇列站點或工作資料，只維護自身的共用資源占用。
 
+## 匯出批次站點
+
+`approve` 產生的是 `bpi-lab-backend-qualification-v1`，供共用後端核對，不能直接當成
+佇列要求的 `bpi-lab-qualification-v1`。`station` 入口負責受控轉接，不需另寫適配器。
+
+先保留首輪引用的原始完整設定不變，另建立一份完整設定，只新增 `qualification`
+參照，指向剛取得的後端資格檔及其 SHA-256。其他欄位必須完全相同；不要覆寫首輪設定，
+否則固定證據會失效。`scope_sha256` 排除 `qualification`，因此仍須等於原核定範圍；
+新完整設定檔的 SHA-256 則須重新計算。
+
+```sh
+python3 -B tools/bpi_lab_qualify.py station \
+  --config /私有目錄/qualified-backend.json --config-sha256 新完整設定摘要 \
+  --interpreter "$(readlink -f "$(command -v python3)")" \
+  --output /私有目錄/station-001
+```
+
+輸出新目錄內的 `qualification.json` 與 `station.json`，後者預設 `enabled=false`。
+入口只讀取核定輸入、寫入新輸出，不開 UART、電源、SSH、媒體或佇列資料庫，也不啟用
+既有站點。輸出目錄不得已存在；直譯器必須為可執行的一般檔案，不能直接傳符號連結。
+
+匯出不是只讀取核定真值。`approve` 與 `station` 共用 `reviewed_qualification()`，
+重新核對原設定、首次授權、人工審閱、發布完成憑證、五階段操作、報告鏈、同次身分、
+完整 Linux 採樣及返回救援，再要求重建的後端資格與既有資格逐欄相等。
+即使重新計算候選、操作或資格摘要，缺件、錯板、錯媒體、未核准審閱、合成結果與
+未完成發布仍拒絕。新設定只允許 `qualification` 參照不同，不准藉匯出擴大範圍。
+
+佇列資格及站點的 `boot_config_sha256` 綁定**新增資格後的完整設定摘要**；
+`adapter.argv` 固定相同設定與摘要、共用後端入口及直譯器摘要。
+站點只接受首輪核對的板型，批次映像仍須存在於原核定設定的 `images`，並由後端逐套核對；
+不把首輪結果轉成其他板型或全部映像的通過資格。媒體、備份與覆寫授權沿用原部署契約。
+
+完成站點審閱且明示要啟用時，另指定全新輸出目錄並加上 `--enable-reviewed-station`。
+這只產生 `enabled=true` 的新站點檔，不登記或執行佇列；後續才由操作者依總操作文件
+執行 `register`、`schedule`、`run`。不得直接修改舊停用範本或手填資格真值取代上述重驗。
+
 ## 本機測試
 
 ```sh
