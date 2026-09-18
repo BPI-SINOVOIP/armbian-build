@@ -172,6 +172,136 @@ class MatrixRowsTests(unittest.TestCase):
                 matrix.matrix_rows(catalog, self.sample)
 
 
+class MatrixBuildSourcesTests(unittest.TestCase):
+    """以暫存 SDK 核對 SM10 例外；不讀取實際 SDK 或接觸硬體。"""
+
+    def setUp(self):
+        temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(temporary.cleanup)
+        self.root = Path(temporary.name)
+        self.repository = self.root / "repository"
+        self.repository.mkdir()
+        self.relative = self.repository / "build-helper.py"
+        self.relative.write_bytes(b"VALUE = 1\n")
+        self.sdk = self.root / "sdk" / "uboot-2022.10"
+        self.sources, pinned = {}, {}
+        for name in ("board/spacemit/k3/k3.c", "board/spacemit/k3/k3.env"):
+            path = self.sdk / name
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes(("合成 SDK 來源：" + name + "\n").encode())
+            self.sources[str(path)] = matrix.file_digest(path)
+            pinned[name] = self.sources[str(path)]["sha256"]
+        self.component = {"board": "bpi-sm10", "adapter": "spacemit", "sources": self.sources}
+        family = matrix.preparation.family_module("spacemit")
+        for patcher in (mock.patch.object(matrix, "ROOT", self.repository),
+                        mock.patch.object(family, "SDK_UBOOT", self.sdk),
+                        mock.patch.object(family, "SDK_SOURCES", pinned)):
+            patcher.start()
+            self.addCleanup(patcher.stop)
+
+    def test_sm10_pinned_sdk_absolute_dict_accepted_with_relative_sources(self):
+        component = copy.deepcopy(self.component)
+        component["sources"][self.relative.name] = matrix.file_digest(self.relative)
+        before = copy.deepcopy(component)
+        matrix.verify_build_sources(component)
+        self.assertEqual(component, before)
+
+    def test_relative_dict_and_list_sources_keep_existing_rules(self):
+        for board, adapter in (("bpi-sm10", "spacemit"), ("bpi-f2p", "sunplus")):
+            for listed in (False, True):
+                self.relative.write_bytes(b"VALUE = 1\n")
+                metadata = {"source_path": self.relative.name, **matrix.file_digest(self.relative)}
+                sources = [metadata] if listed else {self.relative.name: metadata}
+                component = {"board": board, "adapter": adapter, "sources": sources}
+                with self.subTest(board=board, listed=listed):
+                    matrix.verify_build_sources(component)
+                    self.relative.write_bytes(b"VALUE = 2\n")
+                    with self.assertRaises(ValueError):
+                        matrix.verify_build_sources(component)
+
+    def test_sdk_absolute_sources_rejected_for_other_boards(self):
+        for board in ("bpi-cm6", "bpi-f3", "bpi-f2p", "bpi-unknown"):
+            component = {**self.component, "board": board}
+            with self.subTest(board=board), self.assertRaises(ValueError):
+                matrix.verify_build_sources(component)
+
+    def test_sdk_absolute_sources_rejected_for_other_adapters(self):
+        for adapter in ("allwinner", "amlogic", "rockchip", "mediatek", "special", "sunplus"):
+            component = {**self.component, "adapter": adapter, "family": "spacemit"}
+            with self.subTest(adapter=adapter), self.assertRaises(ValueError):
+                matrix.verify_build_sources(component)
+
+    def test_sdk_absolute_sources_rejected_with_missing_or_empty_identity(self):
+        for field in ("board", "adapter"):
+            for mode in ("missing", "null", "empty"):
+                component = dict(self.component)
+                if mode == "missing":
+                    component.pop(field)
+                else:
+                    component[field] = None if mode == "null" else ""
+                with self.subTest(field=field, mode=mode), self.assertRaises(ValueError):
+                    matrix.verify_build_sources(component)
+
+    def test_sdk_absolute_list_sources_rejected(self):
+        sources = [{"source_path": name, **metadata} for name, metadata in self.sources.items()]
+        with self.assertRaises(ValueError):
+            matrix.verify_build_sources({**self.component, "sources": sources})
+
+    def test_unknown_absolute_sources_rejected_even_with_pinned_digest(self):
+        original = Path(next(iter(self.sources)))
+        paths = (original.with_name("unknown.c"), self.sdk / "k3.c", self.root / "k3.c", self.relative)
+        for path in paths:
+            path.write_bytes(original.read_bytes())
+            component = {**self.component, "sources": {str(path): matrix.file_digest(path)}}
+            with self.subTest(path=str(path)), self.assertRaises(ValueError):
+                matrix.verify_build_sources(component)
+
+    def test_sdk_metadata_must_match_path_specific_pinned_digest(self):
+        for name, metadata in self.sources.items():
+            other_digest = next(row["sha256"] for key, row in self.sources.items() if key != name)
+            for sha256 in ("0" * 64, other_digest):
+                sources = {name: {**metadata, "sha256": sha256}}
+                with self.subTest(path=name, sha256=sha256), self.assertRaises(ValueError):
+                    matrix.verify_build_sources({**self.component, "sources": sources})
+
+    def test_changed_sdk_file_rejected_even_with_refreshed_metadata(self):
+        for name, metadata in self.sources.items():
+            path = Path(name)
+            path.write_bytes(path.read_bytes() + "合成變動\n".encode())
+            for refreshed in (False, True):
+                sources = {name: matrix.file_digest(path) if refreshed else metadata}
+                with self.subTest(path=name, refreshed=refreshed), self.assertRaises(ValueError):
+                    matrix.verify_build_sources({**self.component, "sources": sources})
+
+    def test_parent_paths_rejected_for_relative_and_sdk_sources(self):
+        paths = {"../repository/" + self.relative.name: matrix.file_digest(self.relative)}
+        for name, metadata in self.sources.items():
+            path = Path(name)
+            paths[str(path.parent / ".." / path.parent.name / path.name)] = metadata
+        for name, metadata in paths.items():
+            for listed in (False, True):
+                sources = [{"source_path": name, **metadata}] if listed else {name: metadata}
+                with self.subTest(path=name, listed=listed), self.assertRaises(ValueError):
+                    matrix.verify_build_sources({**self.component, "sources": sources})
+
+    def test_sdk_file_symlinks_rejected_even_with_matching_contents(self):
+        for name, metadata in self.sources.items():
+            path = Path(name)
+            target = self.root / path.name
+            path.rename(target)
+            path.symlink_to(target)
+            with self.subTest(path=name), self.assertRaises((ValueError, OSError)):
+                matrix.verify_build_sources({**self.component, "sources": {name: metadata}})
+
+    def test_sdk_directory_symlinks_rejected_even_with_matching_contents(self):
+        directory = self.sdk / "board" / "spacemit" / "k3"
+        directory.rename(self.root / "k3")
+        directory.symlink_to(self.root / "k3", target_is_directory=True)
+        for name, metadata in self.sources.items():
+            with self.subTest(path=name), self.assertRaises((ValueError, OSError)):
+                matrix.verify_build_sources({**self.component, "sources": {name: metadata}})
+
+
 class MatrixExecutionTests(unittest.TestCase):
     def setUp(self):
         temporary = tempfile.TemporaryDirectory()

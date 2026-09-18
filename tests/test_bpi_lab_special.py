@@ -176,6 +176,28 @@ def template(board):
     return result
 
 
+def desktop_bootargs(board, *, bootlogo="false", console="both", verbosity="1", bindings=None):
+    """依兩板固定腳本列出期望參數，不呼叫待測解析器產生答案。"""
+    if board == "bpi-ai2n":
+        args = ["root=UUID=" + UUID, "rootwait", "rootfstype=ext4"]
+        args += ["splash", "plymouth.ignore-serial-consoles"] if bootlogo == "true" else ["splash=verbose"]
+        args += ["console=ttySC0,115200"]
+        if console in ("both", "display"):
+            args += ["console=tty1"]
+        args += ["consoleblank=0", "loglevel=" + verbosity, "fsck.mode=force", "fsck.repair=yes",
+                 "net.ifnames=0", "board=bpi-ai2n", "ethaddr=${ethaddr}", "eth1addr=${eth1addr}",
+                 "serialno=${serial}", "systemd.machine_id=${chipid}"]
+    elif board == "bpi-m6":
+        args = ["console=ttyS0,115200n8", "console=tty1", "rootfstype=ext4", "root=UUID=" + UUID,
+                "rw", "rootwait", "board=bpi-m6", "loglevel=" + verbosity, "tz_enable", "vppta",
+                "chipid=43111a82aee08964", "cma=343932928@1509949440"]
+    else:
+        raise ValueError("桌面測資只涵蓋 AI2N 與 M6")
+    for key, value in (bindings or {}).items():
+        args = [arg.replace("${" + key + "}", value) for arg in args]
+    return args
+
+
 class KernelTests(unittest.TestCase):
     def test_uimage_entry_must_be_within_loaded_payload_and_aligned(self):
         version = release("bpi-f2s")
@@ -279,6 +301,78 @@ class PrepareTests(unittest.TestCase):
         self.assertEqual(manifest["status"], "blocked", manifest)
         self.assertTrue(manifest["blockers"])
         self.assertFalse(manifest["hardware_validated"])
+
+    def assert_desktop_environment(self, board, environment):
+        files = fixture(board)
+        expected_env = {"rootdev": "UUID=" + UUID, "fdtfile": special.PROFILES[board]["dtbs"][0]}
+        if board == "bpi-ai2n":
+            expected_env.update(board=board, debug_uart="ttySC0")
+        expected_env.update(environment)
+        files["/boot/armbianEnv.txt"] += env_bytes(environment)
+        original = files["/boot/armbianEnv.txt"]
+        result = self.prepare(board, files=files)
+        self.assertEqual(result["environment"], expected_env)
+        self.assertEqual((self.output / "files/boot/armbianEnv.txt").read_bytes(), original)
+        self.assertEqual(result["status"], "prepared", result["blockers"])
+        self.assertEqual(result["blockers"], [])
+        self.assertEqual(result["bootargs_template"], desktop_bootargs(board, **environment))
+        self.assertEqual(result["root_uuid"], UUID)
+        self.assertEqual(special.validate(self.output), result)
+        t = template(board)
+        before = copy.deepcopy(t)
+        config = special.bootconfig(self.output, template=t)
+        self.assertEqual(config["bootargs"], desktop_bootargs(board, **environment, bindings=t["bindings"]))
+        self.assertEqual(config["boot_command"], "booti " + " ".join(
+            f"{t['addresses'][role]:x}" for role in ("kernel", "initrd", "dtb")))
+        self.assertEqual(t, before)
+        self.assertEqual(config["status"], "validated_offline")
+        self.assertTrue(config["boot_config_validated"])
+        self.assertTrue(result["qualification_blockers"])
+        self.assertEqual(config["qualification_blockers"], result["qualification_blockers"])
+        self.assertFalse(result["hardware_validated"] or result["execution_ready"])
+        self.assertFalse(config["hardware_validated"] or config["execution_ready"] or config["executed"])
+        self.assertEqual(result["environment"], expected_env)
+        self.assertEqual(files["/boot/armbianEnv.txt"], original)
+        self.assertEqual((self.output / "files/boot/armbianEnv.txt").read_bytes(), original)
+
+    def test_desktop_twelve_combinations_preserve_environment_and_exact_bootargs(self):
+        for board in ("bpi-ai2n", "bpi-m6"):
+            for bootlogo in ("false", "true"):
+                for console in ("serial", "both", "display"):
+                    with self.subTest(board=board, bootlogo=bootlogo, console=console):
+                        self.assert_desktop_environment(board, {
+                            "bootlogo": bootlogo, "console": console, "verbosity": "8"})
+
+    def test_desktop_defaults_preserve_absent_environment_keys(self):
+        for board in ("bpi-ai2n", "bpi-m6"):
+            for environment in ({}, {"bootlogo": "false"}, {"bootlogo": "true"},
+                                {"console": "serial"}, {"console": "both"}, {"console": "display"}):
+                with self.subTest(board=board, environment=environment):
+                    self.assert_desktop_environment(board, environment)
+
+    def test_desktop_invalid_values_rejected(self):
+        invalid = {"bootlogo": ("", "on", "1", "True", "FALSE", "false; reset", "$(reset)"),
+                   "console": ("", "none", "tty1", "Both", "DISPLAY", "both; reset", "${console}")}
+        for board in ("bpi-ai2n", "bpi-m6"):
+            for key, values in invalid.items():
+                for value in values:
+                    with self.subTest(board=board, key=key, value=value):
+                        files = fixture(board)
+                        files["/boot/armbianEnv.txt"] += env_bytes({"bootlogo": "false", "console": "both", key: value})
+                        result = self.prepare(board, files=files)
+                        self.blocked(result)
+                        self.assertEqual([item["stage"] for item in result["blockers"]], ["environment"])
+
+    def test_desktop_duplicate_keys_rejected(self):
+        for board in ("bpi-ai2n", "bpi-m6"):
+            for key, first, second in (("bootlogo", "false", "false"), ("bootlogo", "false", "true"),
+                                       ("console", "both", "both"), ("console", "both", "serial")):
+                with self.subTest(board=board, key=key, second=second):
+                    files = fixture(board)
+                    files["/boot/armbianEnv.txt"] += env_bytes({key: first}) + env_bytes({key: second})
+                    result = self.prepare(board, files=files)
+                    self.blocked(result)
+                    self.assertEqual(result["blockers"], [{"stage": "environment", "reason": "設定鍵重複：" + key}])
 
     def test_all_six_boards_and_replay(self):
         for board in special.PROFILES:

@@ -18,7 +18,7 @@ from tools import bpi_lab_console as console
 from tools import bpi_lab_special as special
 from tools import bpi_lab_special_runtime as runtime
 from tools import bpi_lab_uboot as uboot
-from tests.test_bpi_lab_special import UUID, fixture, release, template
+from tests.test_bpi_lab_special import UUID, desktop_bootargs, env_bytes, fixture, release, template
 from tests.test_bpi_lab_uboot import Channel, Clock
 
 
@@ -117,10 +117,12 @@ class RuntimeTests(unittest.TestCase):
                                     for name in ("binary", "build_config", "link_map")}}
         config["qualification"] = self.reference("qualification.json", q)
 
-    def configuration(self, board="bpi-f2p", *, kernel_placement="original"):
+    def configuration(self, board="bpi-f2p", *, kernel_placement="original", environment=None):
         self.counter += 1
         output = self.root / f"components-{self.counter}"
         files = fixture(board)
+        if environment is not None:
+            files["/boot/armbianEnv.txt"] += env_bytes(environment)
         def read(path):
             if path not in files:
                 raise FileNotFoundError(path)
@@ -232,6 +234,73 @@ class RuntimeTests(unittest.TestCase):
         self.assertFalse(any(cmd.startswith(("bootm ", "booti ", "bpilab boot")) for cmd in channel.commands))
         self.assertFalse(channel.closed)
         return channel, records
+
+    def test_desktop_render_and_uart_preserve_exact_bootargs(self):
+        for board in ("bpi-ai2n", "bpi-m6"):
+            for bootlogo in ("false", "true"):
+                for console_mode in ("serial", "both", "display"):
+                    with self.subTest(board=board, bootlogo=bootlogo, console=console_mode):
+                        environment = {"bootlogo": bootlogo, "console": console_mode, "verbosity": "8"}
+                        config, context, blobs = self.configuration(board, environment=environment)
+                        expected = desktop_bootargs(board, **environment, bindings=config["template"]["bindings"])
+                        self.assertEqual(context["recipe"]["bootargs"], expected)
+                        self.assertEqual(context["core"]["bootargs"], expected)
+                        rendered = runtime.render(config)
+                        self.assertFalse(rendered["executed"])
+                        value = " ".join(expected)
+                        command = "setenv bootargs " + value
+                        steps = rendered["steps"]
+                        self.assertEqual([step for step in steps if step["command"].startswith("setenv bootargs ")],
+                                         [{"command": command, "check": "status"}])
+                        self.assertEqual([step for step in steps if step["command"] == "printenv bootargs"],
+                                         [{"command": "printenv bootargs", "check": "env", "variable": "bootargs", "value": value}])
+                        session, channel, clock, log = self.session(context, blobs)
+                        records = []
+                        result = runtime.boot(session, config, records, monotonic=clock)
+                        self.assertEqual(channel.commands, [step["command"] for step in steps])
+                        self.assertEqual(channel.env["bootargs"], value)
+                        self.assertEqual(sum(("if " + command + "; then").encode() in wire for wire in channel.writes), 1)
+                        readbacks = [record for record in records if record["command"] == "printenv bootargs"]
+                        self.assertEqual(len(readbacks), 1)
+                        self.assertEqual(readbacks[0]["status"], "verified")
+                        self.assertEqual(readbacks[0]["output"].strip(), "bootargs=" + value)
+                        self.assertIn(("bootargs=" + value + "\r\n").encode(), log.read_bytes())
+                        self.assertEqual(result["status"], "kernel-marker-observed")
+                        self.assertFalse(result["hardware_validated"] or result["root_verified"] or result["smoke_verified"])
+                        self.assertFalse(result["firmware_execution_verified"] or result["environment_saved"] or result["boot_chain_changed"])
+                        self.assertEqual(channel.commands[-1], context["recipe"]["boot_command"])
+
+    def test_desktop_uart_missing_bootarg_token_stops_before_boot(self):
+        for board in ("bpi-ai2n", "bpi-m6"):
+            for bootlogo in ("false", "true"):
+                with self.subTest(board=board, bootlogo=bootlogo):
+                    environment = {"bootlogo": bootlogo, "console": "both", "verbosity": "8"}
+                    config, context, blobs = self.configuration(board, environment=environment)
+                    expected = desktop_bootargs(board, **environment, bindings=config["template"]["bindings"])
+                    self.assertEqual(context["core"]["bootargs"], expected)
+                    tokens = [arg for arg in expected if arg.startswith(("console=", "splash"))
+                              or arg == "plymouth.ignore-serial-consoles"]
+                    for token in tokens:
+                        with self.subTest(token=token):
+                            session, channel, clock, _ = self.session(context, blobs)
+                            # 只破壞假 UART 的讀回，不改原配證據、配方或正式執行器。
+                            def readback(token=token):
+                                actual = channel.env["bootargs"].split()
+                                self.assertEqual(actual, expected)
+                                self.assertEqual(actual.count(token), 1)
+                                actual.remove(token)
+                                return ("bootargs=" + " ".join(actual) + "\r\n").encode()
+                            channel.overrides["printenv bootargs"] = readback
+                            records = []
+                            with self.assertRaisesRegex(uboot.UBootError, "RAM 環境值未正確設定"):
+                                runtime.boot(session, config, records, monotonic=clock)
+                            self.assertEqual(channel.env["bootargs"], " ".join(expected))
+                            self.assertEqual(channel.commands[-1], "printenv bootargs")
+                            self.assertEqual(records[-1]["check"], "env")
+                            self.assertEqual(records[-1]["variable"], "bootargs")
+                            self.assertEqual(records[-1]["status"], "failed")
+                            self.assertFalse(any(command.startswith(("booti ", "bootm ")) for command in channel.commands))
+                            self.assertFalse(channel.closed)
 
     def test_four_boards_execute_real_runner_and_keep_raw_rx(self):
         for board in sorted(runtime.SUPPORTED):

@@ -383,19 +383,22 @@ def _environment(c, profile):
         require(env.get("rootfstype", "ext4") == "ext4", "目前只核對原配 ext4 根")
         require(not any(env.get(key) for key in ("overlays", "user_overlays", "extraargs", "bootopts")),
                 "非空 overlay 或額外參數須另行適配，不得忽略")
-        require(env.get("bootlogo", "false") == "false" and env.get("console", "both") in ("serial", "both"),
-                "此分支未核對圖形啟動畫面或非序列主控台")
+        require(env.get("bootlogo", "false") in ("false", "true")
+                and env.get("console", "both") in ("serial", "both", "display"),
+                "圖形啟動畫面或主控台模式無效")
         require(env.get("docker_optimizations", "off") in ("off", "on"), "docker 參數無效")
         level = env.get("verbosity", "1")
         require(re.fullmatch(r"[0-8]", level), "verbosity 超出範圍")
         m.update(root_uuid=root[5:].lower(), root_target=root, boot_command="booti")
         if group == "synaptics":
+            # M6 原腳本保留這兩個環境欄位，但不以它們決定 bootargs。
             args = (f"console=ttyS0,115200n8 console=tty1 rootfstype=ext4 root={root} rw rootwait "
                     f"board=bpi-m6 loglevel={level} tz_enable vppta chipid=43111a82aee08964 cma=343932928@1509949440")
         else:
             require(env.get("board") == "bpi-ai2n" and env.get("debug_uart") == "ttySC0", "AI2N 板型或 UART 缺失")
-            console = "console=ttySC0,115200" + (" console=tty1" if env.get("console", "both") == "both" else "")
-            args = (f"root={root} rootwait rootfstype=ext4 splash=verbose {console} consoleblank=0 loglevel={level} "
+            console = "console=ttySC0,115200" + (" console=tty1" if env.get("console", "both") in ("both", "display") else "")
+            splash = "splash plymouth.ignore-serial-consoles" if env.get("bootlogo", "false") == "true" else "splash=verbose"
+            args = (f"root={root} rootwait rootfstype=ext4 {splash} {console} consoleblank=0 loglevel={level} "
                     "fsck.mode=force fsck.repair=yes net.ifnames=0 board=bpi-ai2n ethaddr=${ethaddr} "
                     "eth1addr=${eth1addr} serialno=${serial} systemd.machine_id=${chipid}")
             if env.get("docker_optimizations", "off") == "on":

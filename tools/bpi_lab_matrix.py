@@ -211,10 +211,16 @@ def read_failed(result, directory):
 def verify_build_sources(component):
     sources = component.get("sources", {})
     require(type(sources) in (dict, list), "家族建置來源索引錯誤")
+    external = {}
+    if component.get("board") == "bpi-sm10" and component.get("adapter") == "spacemit" and type(sources) is dict:
+        sdk = preparation.family_module("spacemit")
+        external = {str(sdk.SDK_UBOOT / name): sha for name, sha in sdk.SDK_SOURCES.items()}
     rows = sources.items() if type(sources) is dict else ((r["source_path"], r) for r in sources)
     for name, metadata in rows:
         path = Path(name)
-        require(not path.is_absolute() and ".." not in path.parts, "建置來源路徑越界")
+        require(".." not in path.parts, "建置來源路徑越界")
+        if path.is_absolute():
+            require(name in external and metadata["sha256"] == external[name], "建置來源路徑或固定摘要越界")
         require(file_digest(ROOT / path)["sha256"] == metadata["sha256"], "建置來源已變動，不能跳過舊結果")
 
 
