@@ -278,3 +278,9 @@ USB／NVMe 規格與驅動支援仍需兩套核心及實體埠驗證；serial／
 E1／E2 的[操作文件](bananapi-lab-runtime-cache-20260918.md)與
 [機器可讀實證](evidence/bpi-multiboard-integrate-20260917/crossarch-runtime-audit.json)
 分開記錄來源、合併相依、保留原件及真正執行收據。
+
+E4 補查發現 `status`／`jobs` 共用可寫連線，會執行資料庫初始化語句。
+將新增只讀連線分支，不建立資料庫或修改 schema／journal_mode／user_version；
+使用 `mode=ro` 讀取有效 WAL，不用 `immutable=1` 忽略尚未 checkpoint 的工作。
+SQLite 仍可能使用讀取協調旁檔，不把 SQL 唯讀宣稱為完全不觸碰檔案系統。
+補上唯讀拒寫、不建新庫、版本拒絕與即時 WAL 查詢回歸，原排程寫入介面維持不變。
