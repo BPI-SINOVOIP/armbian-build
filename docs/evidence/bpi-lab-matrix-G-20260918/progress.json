@@ -1,6 +1,6 @@
 {
   "schema": "bpi-lab-matrix-progress-v1",
-  "recorded_at": "2026-09-18T22:02:42+08:00",
+  "recorded_at": "2026-09-18T22:15:59+08:00",
   "status": "in_progress",
   "scope": "固定原始映像的離線組件準備；階段快照，不是即時狀態或實板通過證明。",
   "code_commit": "1da0d6399631937fe9011f71305260d84f2af8a1",
@@ -14,14 +14,18 @@
   },
   "boards": 45,
   "target_images": 444,
-  "checked": 100,
-  "prepared": 94,
-  "blocked": 6,
-  "remaining": 344,
+  "checked": 164,
+  "prepared": 154,
+  "blocked": 10,
+  "remaining": 280,
   "retryable_observed": 0,
   "blocked_boards": ["bpi-r2"],
-  "active_group": ["arm32", "resolute"],
-  "completed_groups": ["arm32/bookworm", "arm32/jammy", "arm32/noble"],
+  "active_group": ["arm64", "bookworm"],
+  "completed_groups": ["arm32/bookworm", "arm32/jammy", "arm32/noble", "arm32/resolute", "arm32/trixie"],
+  "completed_architectures": {
+    "arm32": {"checked": 160, "prepared": 150, "blocked": 10}
+  },
+  "blocker_note": "R2 五個 OS 的 CLI／XFCE 共十套，皆引用不存在的 /boot/dtb/mediatek/mt7623n-bananapi-bpi-r2；逐筆確認，非由抽樣推論。",
   "regression": {
     "passed": 1443,
     "failed": 0,
