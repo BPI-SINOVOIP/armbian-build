@@ -5,6 +5,12 @@
 新增實作為 `tools/bpi_lab_metadata_review.py`，專用回歸為
 `tests/test_bpi_lab_metadata_review.py`。
 
+普通 `bpi_lab.py prepare` 與 `queue.import_catalog()` 現在明確拒絕任何帶
+`metadata_review` 的候選，包含只剩逐筆標記或手改 `integration_approved=true`。
+CLI 拒絕發生在資料庫連線之前。只有本工具 `demonstrate` 完成下述全部核對後，
+才在新建立的副本使用內部快照交易；沒有普通匯入的跳過檢查旗標。
+內部 API 不是任意 Python 程式的安全沙箱；不得刪除追溯標記或直接呼叫內部交易來繞過審閱。
+
 ## 固定範圍
 
 - 輸入必須為固定 SHA-256 的原始 45 板、444 筆完整 catalog，不接受只含 20 筆的子集。

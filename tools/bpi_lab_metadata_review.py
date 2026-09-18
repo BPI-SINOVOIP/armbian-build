@@ -500,7 +500,7 @@ def demonstrate(catalog_ref, candidate_ref, database_ref, output):
         targets = {x["image_id"] for x in validate_catalog(original)}
         require(len(blocked) == 20 and {queue.decode(before[k]["body"])["image"]["image_id"] for k in blocked} == targets,
                 "原阻擋工作不是這 20 筆來源")
-        queue.import_catalog(db, candidate)
+        queue._import_catalog_snapshot(db, candidate)
         for station in stations:
             queue.schedule(db, station["station_id"])
         after = {r["work_key"]: dict(r) for r in db.execute("SELECT * FROM jobs")}

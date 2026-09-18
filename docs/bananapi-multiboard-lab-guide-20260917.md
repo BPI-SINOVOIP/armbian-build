@@ -20,6 +20,7 @@
 | K3 原廠入口、獨立救援 U-Boot 與真實 SDK 編譯 | [K3 執行器](bananapi-lab-k3-runtime-20260918.md)，`tools/bpi_lab_k3_runtime.py` |
 | 固定 SD 加 USB／NVMe 測試區 | [外部媒體](bananapi-lab-external-media-20260918.md)、[五階段與核定](bananapi-lab-external-backend-20260918.md) |
 | 外部根保護與目標 Python 封裝 | [根保護](bananapi-lab-external-root-20260918.md)，`tools/bpi_lab_external_bundle.py`、`tools/bpi_lab_external_guard.py` |
+| F2P／F2S 原版號 `0` 的逐筆核對與完整候選 | [重審工具](bananapi-lab-metadata-review-20260918.md)，只產生候選及獨立副本，不直接匯入正式佇列 |
 
 首次核定與已核定佇列是兩個入口，避免「尚未測第一套卻先要求全部通過」的循環依賴。
 首次核定仍須有實際配對、備份、可覆寫範圍及引導資格，不能用它繞過媒體保護。
@@ -107,6 +108,13 @@ python3 -B tools/bpi_lab.py prepare \
 
 新輸出檔名不可覆寫既有檔案。清單按完整來源目錄快照匯入；已移除或條件更換的待跑工作改為 `superseded`，歷史紀錄仍保留。已配對站點請另存設定，用 `register` 更新，不修改產生用的 `pending-*` 範本。新資料庫若要避免重跑舊十套，須引用歷史：
 
+普通 `prepare`／`queue.import_catalog()` 拒絕頂層或逐筆含 `metadata_review` 的重審候選；
+CLI 在開啟或建立資料庫之前即拒絕，`--simulation` 也不繞過這個限制。
+手改 `integration_approved=true` 不是整合審閱，不會讓候選獲准匯入。
+E3 工具只在核對原來源、完整候選及全部原工作後，對新建立的獨立副本示範遷移；
+副本不是正式佇列，原庫保持不變。這是正常工具入口的工作流程限制，不是防禦任意
+Python 呼叫、刪除追溯欄位或手改 SQLite 的沙箱；不得以這些方式繞過整合審閱。
+
 ```bash
 python3 -B tools/bpi_lab.py history \
   --db output/evidence/bpi-multiboard-lab-20260917/hardware.sqlite3 \
@@ -146,7 +154,10 @@ python3 -B tools/bpi_lab.py schedule --db <資料庫> --station-id <站點代號
 python3 -B tools/bpi_lab.py run --db <資料庫> --station-id <站點代號> --evidence <新證據目錄> --limit 10
 ```
 
-共用排程已有實作，**各 SoC 真正的引導／燒錄／返回救援適配器仍須逐平台完成及實測**。不能把建立 45 個範本說成 45 板已適配。沒有 eMMC 的板型，先決定已授權 USB 或網路測試區，不能直接套用 0845 的儲存路徑。
+共用排程及已明示格式的家族適配器已有實作，支援界線以本頁最新整合入口及交付清單為準；
+**各板真正的引導／燒錄／返回救援仍須實測核定**。不能把建立 45 個範本說成 45 板已實測。
+沒有 eMMC 的板型採已授權 USB／NVMe 契約，不能直接套用 0845 的儲存路徑，
+也不能將尚未支援的網路根視為已完成後端。
 
 ## 中斷與失敗
 

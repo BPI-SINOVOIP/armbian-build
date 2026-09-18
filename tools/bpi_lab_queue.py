@@ -174,7 +174,21 @@ def event(db, key, kind, data):
                (key, kind, encode(data).decode(), time.time()))
 
 
+def validate_catalog_import(catalog):
+    """普通匯入不接受重審候選；旗標不是整合核定證據。"""
+    require(type(catalog) is dict and isinstance(catalog.get("entries"), list), "映像清單無效")
+    require("metadata_review" not in catalog and
+            all(type(item) is dict and "metadata_review" not in item for item in catalog["entries"]),
+            "重審候選不能由普通匯入接管正式佇列；請使用受控副本示範並另行整合審閱")
+
+
 def import_catalog(db, catalog):
+    validate_catalog_import(catalog)
+    return _import_catalog_snapshot(db, catalog)
+
+
+def _import_catalog_snapshot(db, catalog):
+    """內部快照交易；重審工具只可在完整驗證後用於獨立示範副本。"""
     require(catalog.get("schema") == "bpi-lab-catalog-v1" and
             catalog.get("hardware_validated") is False, "必須匯入離線清單")
     require(isinstance(catalog.get("entries"), list), "映像清單無效")

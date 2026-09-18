@@ -102,12 +102,15 @@ def dispatch(args):
         ref = queue.save_json(args.output, data)
         return {**ref, "images": len(data["entries"]), "boards": len(data["boards"]),
                 "issues": data["issues"], "hardware_validated": False}
+    if args.command == "prepare":
+        catalog = queue.read_json(args.catalog)
+        queue.validate_catalog_import(catalog)
     if args.command != "prepare":
         queue.require(Path(args.db).is_file(), "資料庫不存在；先執行 prepare，不建立空白進度")
     db = queue.connect(args.db, readonly=args.command in ("status", "jobs"))
     try:
         if args.command == "prepare":
-            return prepare(db, queue.read_json(args.catalog), args.stations_dir, args.simulation)
+            return prepare(db, catalog, args.stations_dir, args.simulation)
         if args.command == "register":
             return {"station_sha256": queue.register_station(db, queue.read_json(args.station))}
         if args.command == "history":
