@@ -17,7 +17,7 @@ G1 盤點有 62 個原來源曾準備成功、1 個原始 R2 阻擋；另 4 個�
 
 ```bash
 PY=output/evidence/bpi-sram-supervisor/model-venv/bin/python
-OUT=output/evidence/bpi-lab-matrix-G-20260918/batch-001
+OUT=output/evidence/bpi-lab-matrix-G-20260918/batch-003
 
 "$PY" -B tools/bpi_lab_matrix.py init \
   --catalog output/evidence/bpi-multiboard-lab-20260917/catalog-001.json \
@@ -42,6 +42,11 @@ OUT=output/evidence/bpi-lab-matrix-G-20260918/batch-001
 
 ## 中斷與重試
 
+本次正式執行使用 `batch-002`，固定計畫摘要為
+`42cd1da5a5e664e6fab3b35f25101dcf12fb641a567c73cf4008281ce12b11fd`。
+`batch-001` 只建立計畫，未執行映像；啟動前補上最後一項守門後改用新批次。
+上方 `batch-003` 僅為未來新批次的範例，不表示需要重做已完成來源。
+
 - 同一計畫重跑上述 `run`，來源身分、旁檔、工具和產物摘要相符才跳過完成項目。
 - 單一批次使用 `flock`，拒絕同時啟動第二個執行者；不要刪除鎖檔繞過限制。
 - 缺少完成收據的目錄不是完成。保留舊嘗試，以新的 `attempt-*` 續作；已完整擷取者優先重播。
@@ -64,6 +69,16 @@ OUT=output/evidence/bpi-lab-matrix-G-20260918/batch-001
 只有無可重試項目才產生 `summary.json`；仍有問題則產生獨立 `incomplete-*.json`。
 即使 444 筆都檢查完，仍須分列 `prepared` 與 `blocked`，不能說全部可用。
 
+已有收據後，可用下列唯讀命令查詢目前完成數；尚無收據時不會回報完成：
+
+```bash
+OUT=output/evidence/bpi-lab-matrix-G-20260918/batch-002
+jq -s '{completed: length, status: (group_by(.status) |
+  map({key: .[0].status, value: length}) | from_entries)}' \
+  "$OUT"/jobs/*/receipt.json
+tail -n 10 "$OUT/run.log"
+```
+
 Sunplus 原始版本欄位仍保持 `0`，只記錄二進位實際解析版本；不藉此核准 metadata 候選。
 原始 R2 的錯誤 DTB 路徑逐筆核對；F3 衍生候選不是原 444 筆成員，不替代原件或解除阻擋。
 
@@ -74,4 +89,8 @@ Sunplus 原始版本欄位仍保持 `0`，只記錄二進位實際解析版本�
 /home/pi/.local/bin/ruff check tools/bpi_lab_matrix.py tests/test_bpi_lab_matrix.py
 ```
 
-完整回歸與實際批次結果完成後另記固定摘要；本文件不預先宣告批次成功。
+工具提交 `1da0d6399631937fe9011f71305260d84f2af8a1` 的專用 62 項回歸通過。
+完整 `BPI_LAB_REAL_C3=1` 回歸為 1,443 項，177.080 秒，零失敗、零跳過；
+紀錄 `output/evidence/bpi-lab-matrix-G-20260918/lab-final-G.log` 的 SHA-256 為
+`b54ade14067e0b0f650a3d0cd113551dd59780461b186ccef070abe6d732bbe4`。
+Ruff 通過；實際映像結果獨立記錄，不以軟體回歸代替映像或實板測試。

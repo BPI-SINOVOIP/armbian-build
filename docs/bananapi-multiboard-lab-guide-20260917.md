@@ -10,6 +10,7 @@
 | 工作 | 文件與工具 |
 | --- | --- |
 | XZ／原映像的 MBR／GPT、多分割與原配組件核對 | [準備入口](bananapi-lab-prepare-20260917.md)，`tools/bpi_lab_prepare.py` |
+| 全部 444 筆逐套準備、去重與中斷續跑 | [完整離線批次](bananapi-lab-matrix-20260918.md)，`tools/bpi_lab_matrix.py`；不修改硬體佇列或升格資格 |
 | Allwinner 與 Amlogic 組件、DTB、CMA 核對 | [Allwinner](bananapi-lab-allwinner-20260917.md)、[Amlogic](bananapi-lab-amlogic-20260917.md) |
 | Rockchip、MediaTek、SpacemiT 原始引導設定 | [原入口](bananapi-lab-original-entry-20260917.md)、[extlinux](bananapi-lab-extlinux-20260917.md) |
 | Sunplus、Renesas、Realtek、Synaptics 差異 | [特殊平台](bananapi-lab-special-20260917.md) |
