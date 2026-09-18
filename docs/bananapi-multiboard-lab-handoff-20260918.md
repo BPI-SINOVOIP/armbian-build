@@ -1,7 +1,7 @@
 # 跨板測試交付與接板清單
 
 本頁彙整軟體交付與後續集中實板驗證，不取代各模組的受控格式、媒體授權或引導資格。
-本輪計畫 C／D／E 所列、能離線完成的受控軟體實作與整合已完成，包含 K3 與 USB／NVMe。
+本輪計畫 C／D／E 及補查 F 所列、能離線完成的受控軟體實作與整合已完成，包含 K3 與 USB／NVMe。
 這不是「45 款板子已實測可用」或「444 套映像已通過」的宣告。
 下方明列軟體交付、來源阻擋與接板後工作；沒有把未驗證項目算成完成。
 
@@ -10,10 +10,14 @@
 `c28488ef5`（外部根與五階段）、`6c8042e50`（真實目標執行環境）。
 續作提交為 `c2b023490`（ARM32／RISC-V 真實探測）、`4fa51404b`（唯讀查詢）、
 `cfbc9652f`（Sunplus 20 份逐筆重審及副本續作）。
+F 階段新增 `c88c949c7`（共用 eMMC 首輪到站點匯出）、`e8980a0ac`（候選匯入守門）、
+`eab01ed88`（R2 current 路徑修正及內部衍生候選）。F 是後續操作路徑補查發現的缺口，
+不以先前 C／D／E 回歸通過宣稱當時已驗證這些新增流程。
 
 ## 範圍
 
 既有目錄共 444 筆映像工作、45 款板型；本輪不重建、替換或刪除原始 XZ。
+另有一份 R2 內部衍生候選，不計入或取代這 444 筆原工作。
 ARM32 為 16 款、ARM64 為 26 款、RISC-V 為 3 款。
 這是目前已收錄的板型，不是所有歷代 Banana Pi 產品或所有硬體修訂的支援聲明。
 
@@ -54,18 +58,24 @@ ARM32 為 16 款、ARM64 為 26 款、RISC-V 為 3 款。
 
 ## 最終離線驗證
 
-**最新 E 階段：1,355 項全部通過，零失敗、零跳過。** 命令如下：
+**最新 F 階段：1,381 項全部通過，零失敗、零跳過。** 命令如下：
 
 ```bash
 BPI_LAB_REAL_C3=1 output/evidence/bpi-sram-supervisor/model-venv/bin/python \
   -B -m unittest discover -s tests -p 'test_bpi_lab*.py'
 ```
 
-日誌為 `output/evidence/bpi-crossarch-runtime-20260918/lab-final-E4-mode-fixed.log`。
-此結果已包含快取 14 項、metadata 46 項及唯讀查詢六項新增回歸，不能再相加。
-所有 `bpi_lab*.py` 工具與測試的 Ruff 亦通過。
+日誌為 `output/evidence/bpi-lab-handoff-F-20260918/lab-final-F.log`。
+此結果包含首輪 83 項、候選守門六項及 R2 重封裝九項，不能再相加。
+另啟用 `BPI_R2_DTB_REAL=1`，R2 板級與同版套件 13 項全部通過、零跳過。
+所有 `bpi_lab*.py` 工具與測試，以及 R2 板級測試的 Ruff 亦通過；45 板／98 來源核對通過。
+[F 階段最終摘要](evidence/bpi-lab-handoff-F-20260918/delivery-F-final.json)
+保存固定命令、來源、候選及原庫摘要。原 registry 保留，新 registry 只更新 R2 板級來源。
+
+E 階段 1,355 項的歷史日誌仍為
+`output/evidence/bpi-crossarch-runtime-20260918/lab-final-E4-mode-fixed.log`。
 [E 階段最終摘要](evidence/bpi-multiboard-integrate-20260917/delivery-E-final.json)
-固定命令、日誌與程式摘要，另保存來源重審及未變更的原硬體佇列。
+保留當時命令、日誌與程式摘要，不改成目前程式的測試證據。
 
 以下保留 C／D 歷史驗證，日誌均在 `output/evidence/bpi-multiboard-integrate-20260917/`，
 互有重複的測試組不相加；未修改的 H618／SRAM 產物沿用明列證據，不冒稱本輪重跑。
@@ -155,6 +165,13 @@ R2 抽樣的 `6.6.153-current-mt7623` 原始環境指定
 `/boot/dtb/mediatek/mt7623n-bananapi-bpi-r2`，但缺少該無副檔名檔案。
 新的完整擷取再次確認，連 `mediatek` 子目錄也不存在，不是解析器找錯分割區或單純副檔名差異。
 原始檔不修改、不自動改選 `.dtb`，也不將此筆標成通過；需另提供修正且固定摘要的來源。
+
+F 階段已完成來源修正及一份內部衍生候選：`current` 改為平鋪的
+`mt7623n-bananapi-bpi-r2.dtb`，`edge` 不變。已確認原映像本來含該 DTB，
+候選只改環境的 141 位元組區間，保留原核心、initrd、DTB、腳本及其餘 raw 位元組。
+候選的 `e2fsck` 與最終 XZ 完整組件準備皆通過；原來源仍為阻擋，不混成 45 份原映像全通過。
+位置及固定摘要見[R2 修正說明](bananapi-r2-dtb-path-fix-20260918.md)。
+這是重封裝而非重新編譯，僅供內部驗證，既有開機載荷的對外發布限制未解除。
 
 F2P／F2S 原檔名的版號 `0` 已有全部 20 份原核心證據，實際均為
 `5.4.35-legacy-sunplus-sp7021-bpi`。完整候選及副本續作驗證已完成，

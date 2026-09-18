@@ -17,6 +17,7 @@
 | H618 的既有 0845 配對及五階段 | [H618 適配器](bananapi-lab-h618-adapter-20260917.md) |
 | 其他家族的固定配置、完整部署、登入及返回 | [共用後端](bananapi-lab-shared-backend-20260917.md)，`tools/bpi_lab_backend.py` |
 | 第一片板的單套授權、證據審閱與資格檔 | [首次核定](bananapi-lab-qualify-20260917.md)，`tools/bpi_lab_qualify.py` |
+| 共用 eMMC 首輪後接正式批次 | 同一工具的 `station` 子命令，重驗首輪並匯出兩層資格及站點，預設停用 |
 | K3 原廠入口、獨立救援 U-Boot 與真實 SDK 編譯 | [K3 執行器](bananapi-lab-k3-runtime-20260918.md)，`tools/bpi_lab_k3_runtime.py` |
 | 固定 SD 加 USB／NVMe 測試區 | [外部媒體](bananapi-lab-external-media-20260918.md)、[五階段與核定](bananapi-lab-external-backend-20260918.md) |
 | 外部根保護與目標 Python 封裝 | [根保護](bananapi-lab-external-root-20260918.md)，`tools/bpi_lab_external_bundle.py`、`tools/bpi_lab_external_guard.py` |
@@ -147,6 +148,12 @@ python3 -B tools/bpi_lab.py simulate \
 3. 平台適配器實作 `preflight → deploy → boot → smoke → recovery`，有界返回結構化報告。`deploy` 必須核對媒體、來源及完整回讀；`boot` 必須證明是候選核心與根系統，不是救援核心。
 4. 每片媒體完成備份與核對，取得該片的 userarea 覆寫授權。其他片的備份或授權不可移用。
 5. 首次平台適配由工程流程受控驗證一套完整循環及返回救援；先前 H618 原型可參考，但不能自動核定新站點。產生綁定站點／硬體／媒體／引導／適配器／測試版本的資格 JSON，再啟用批次站點。
+
+共用 eMMC 後端完成 `approve` 後，先把產生的後端資格參照加入一份新的後端設定，
+再用 `bpi_lab_qualify.py station` 匯出站點。它會重驗完整首輪，不是把後端資格檔
+直接填入佇列要求的另一種 schema。預設 `enabled=false`；只在明示
+`--enable-reviewed-station` 時匯出啟用設定，仍不自動 `register` 或寫入原資料庫。
+完整命令與設定摘要的更換方式見[站點匯出](bananapi-lab-qualify-20260917.md)。
 
 ```bash
 python3 -B tools/bpi_lab.py register --db <資料庫> --station <已核定站點.json>
