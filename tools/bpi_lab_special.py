@@ -284,7 +284,10 @@ class Capture:
     def attempt(self, stage, action):
         try:
             return action()
-        except (SpecialError, shared.AmlogicError, uboot.UBootError, UnicodeError, OSError, zlib.error) as exc:
+        except (shared.ToolError, OSError) as exc:
+            self.manifest["blockers"].append({"stage": stage, "reason": str(exc), "code": "execution_failed"})
+            return None
+        except (SpecialError, shared.AmlogicError, uboot.UBootError, UnicodeError, zlib.error) as exc:
             reason = str(exc) if isinstance(exc, (SpecialError, shared.AmlogicError, uboot.UBootError)) else "檔案、編碼或壓縮資料無法核對"
             self.block(stage, reason)
             return None

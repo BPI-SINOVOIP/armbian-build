@@ -87,6 +87,10 @@ class AmlogicError(ValueError):
     """來源、組件或核定配置不符合此適配器的限定契約。"""
 
 
+class ToolError(AmlogicError):
+    """本機工具未完成，不等於來源資料已確定不支援。"""
+
+
 def _require(condition, reason):
     if not condition:
         raise AmlogicError(reason)
@@ -136,10 +140,13 @@ class _Capture:
     def attempt(self, stage, action):
         try:
             return action()
+        except ToolError as exc:
+            self.manifest["blockers"].append({"stage": stage, "reason": str(exc), "code": "execution_failed"})
         except AmlogicError as exc:
             self.block(stage, str(exc))
         except (OSError, subprocess.SubprocessError):
-            self.block(stage, "本機工具或檔案操作失敗／逾時，未完成核對")
+            self.manifest["blockers"].append({"stage": stage, "code": "execution_failed",
+                                              "reason": "本機工具或檔案操作失敗／逾時，未完成核對"})
         return None
 
     def save(self, relative, data, role, **metadata):
@@ -340,7 +347,9 @@ def _run(argv):
         result = subprocess.run(argv, stdin=subprocess.DEVNULL, capture_output=True, timeout=30,
                                 check=False, env={"PATH": "/usr/bin:/bin", "LC_ALL": "C"})
     except (OSError, subprocess.SubprocessError) as exc:
-        raise AmlogicError("離線工具不存在、執行失敗或逾時：" + Path(argv[0]).name) from exc
+        raise ToolError("離線工具不存在、執行失敗或逾時：" + Path(argv[0]).name) from exc
+    if result.returncode < 0:
+        raise ToolError("離線工具遭訊號中斷：" + Path(argv[0]).name)
     _require(result.returncode == 0, "離線工具拒絕資料：" + Path(argv[0]).name)
     _require(len(result.stdout) <= 1024**2 and len(result.stderr) <= 1024**2, "離線工具輸出超限")
     return result.stdout
