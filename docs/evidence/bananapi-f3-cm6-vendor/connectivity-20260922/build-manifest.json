@@ -1,0 +1,150 @@
+{
+  "schema_version": 1,
+  "status": "complete",
+  "scope": "source-cross-compile-elf",
+  "board": "bpi-cm6",
+  "hardware_validation": "pending",
+  "source": {
+    "repository": "https://github.com/spacemit-com/rtk_hciattach",
+    "commit": "9ce1210f63cce2da2ee7a347fa7f71cfb764aa20",
+    "url": "https://codeload.github.com/spacemit-com/rtk_hciattach/tar.gz/9ce1210f63cce2da2ee7a347fa7f71cfb764aa20",
+    "bytes": 33032,
+    "sha256": "9e77a9764f6a6fe2507784dd6221418d93d04fe6e2ea72f6a79069b663593bbe",
+    "license": "GPL-2.0-or-later",
+    "license_source": "https://github.com/spacemit-com/rtk_hciattach/blob/9ce1210f63cce2da2ee7a347fa7f71cfb764aa20/hciattach_rtk.c",
+    "license_note": "授權依官方來源檔頭；保留完整原始碼與原授權文字供追溯，不宣稱自行取得額外授權。"
+  },
+  "source_lock_sha256": "ed8f3c1e1c41ab9e927a5520480043c979b275873ba9aa48e7ac1b87c64b36b4",
+  "patches": [
+    {
+      "path": "0001-uart-failure-defer-to-service.patch",
+      "sha256": "235f595eeb1dbc137388d2f3a8d2787df61eff96266d020b6a295141c2a5561c",
+      "target": "hciattach.c",
+      "before_sha256": "386900bb2164d89ce6669d90ddf08dd895d1ca561db950457ec78c6b49090dac",
+      "after_sha256": "f02855f415c38d7a0a59d316b8334edb862e4dad0499cc1b7fe7f8af1b50259e",
+      "purpose": "移除固定 rfkill0 的內部電源重設；UART 錯誤以非零退出交由服務重新選址，並初始化錯誤狀態避免未定義診斷值。"
+    }
+  ],
+  "source_files_after_patch": {
+    "Makefile": "7f7964d78cef3d5d0ae062baa5a2ffec6de769b6376ff627174db5055f1c4ba7",
+    "hciattach.c": "f02855f415c38d7a0a59d316b8334edb862e4dad0499cc1b7fe7f8af1b50259e",
+    "hciattach.h": "220064b5e45bc5ce1086a999e9d516307a7eb3d318ec7f7306a8d6ad0cebf160",
+    "hciattach_h4.c": "daf0ed42fb835f7bbef07fa4ffd7cf4334c1bfd66c570bf688032ae09e146214",
+    "hciattach_h4.h": "0b9990719b3d4215691a7313f04f87825126203d266bad8abdb7da78fda3f2fc",
+    "hciattach_rtk.c": "e5d8df8fba521201513d2a3c83bda98fb31ac02488d36a90cd5ac56b77f8f872",
+    "rtb_fwc.c": "ca69273e2c83f8d0db1ae6a2facf17c6d8c15877b8a4cd25d77e5b6f0f650920",
+    "rtb_fwc.h": "480553a7d224da8888b1a7fc155f7277504ad5d629b727ce23d78d07487f9b58"
+  },
+  "compiler": {
+    "path": "/usr/bin/riscv64-linux-gnu-gcc-13",
+    "sha256": "0c2a199ea3ae14d39b008fd4080d4b18d675b07daa17976c7d9755e8ea67310b",
+    "version": "13.3.0",
+    "target": "riscv64-linux-gnu"
+  },
+  "readelf": {
+    "path": "/usr/bin/riscv64-linux-gnu-readelf",
+    "sha256": "c7ad4a928cba7d4c691d2007af8c2ba2d3e774a9e7d0951f9b5d705522fd8bd7"
+  },
+  "command": [
+    "/usr/bin/riscv64-linux-gnu-gcc-13",
+    "-std=gnu11",
+    "-O2",
+    "-Wall",
+    "-march=rv64gc",
+    "-mabi=lp64d",
+    "-fstack-protector-strong",
+    "-D_FORTIFY_SOURCE=2",
+    "-fPIE",
+    "-pie",
+    "-Wl,-z,relro,-z,now",
+    "-ffile-prefix-map=/media/pi/SMCI/bpi/f3-cm6-connectivity-20260922/bluetooth-build-v2/source=/usr/src/bpi-cm6-bluetooth",
+    "/media/pi/SMCI/bpi/f3-cm6-connectivity-20260922/bluetooth-build-v2/source/hciattach.c",
+    "/media/pi/SMCI/bpi/f3-cm6-connectivity-20260922/bluetooth-build-v2/source/hciattach_rtk.c",
+    "/media/pi/SMCI/bpi/f3-cm6-connectivity-20260922/bluetooth-build-v2/source/hciattach_h4.c",
+    "/media/pi/SMCI/bpi/f3-cm6-connectivity-20260922/bluetooth-build-v2/source/rtb_fwc.c",
+    "-o",
+    "/media/pi/SMCI/bpi/f3-cm6-connectivity-20260922/bluetooth-build-v2/bin/rtk_hciattach"
+  ],
+  "elf": {
+    "class": "ELF64",
+    "endianness": "little",
+    "machine": "RISC-V",
+    "abi": "lp64d",
+    "flags": 5
+  },
+  "files": {
+    "bin/rtk_hciattach": {
+      "bytes": 69168,
+      "sha256": "05a8e84111066ddb85d4399230254814a860dae355892673d74005b60ad8ccd6"
+    },
+    "build.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "build.stdout": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "compiler.txt": {
+      "bytes": 267,
+      "sha256": "caf872b9ceb439ca02b148541da0ae75e4c81c9dbbca7a374491ef03ea997314"
+    },
+    "patch.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "patch.stdout": {
+      "bytes": 26,
+      "sha256": "2a1887c75ea7c3f9d93a2589a83c30d6f6a9dac4e9f52a2c5b6fdf993a11258c"
+    },
+    "patches/0001-uart-failure-defer-to-service.patch": {
+      "bytes": 2199,
+      "sha256": "235f595eeb1dbc137388d2f3a8d2787df61eff96266d020b6a295141c2a5561c"
+    },
+    "readelf.txt": {
+      "bytes": 6672,
+      "sha256": "f1fdf88e6a4ca5d5d067dc663bcf46dc2dc63fb1c0d97fd7225731bf44b043fe"
+    },
+    "source/Makefile": {
+      "bytes": 402,
+      "sha256": "7f7964d78cef3d5d0ae062baa5a2ffec6de769b6376ff627174db5055f1c4ba7"
+    },
+    "source/hciattach.c": {
+      "bytes": 11701,
+      "sha256": "f02855f415c38d7a0a59d316b8334edb862e4dad0499cc1b7fe7f8af1b50259e"
+    },
+    "source/hciattach.h": {
+      "bytes": 5230,
+      "sha256": "220064b5e45bc5ce1086a999e9d516307a7eb3d318ec7f7306a8d6ad0cebf160"
+    },
+    "source/hciattach_h4.c": {
+      "bytes": 10065,
+      "sha256": "daf0ed42fb835f7bbef07fa4ffd7cf4334c1bfd66c570bf688032ae09e146214"
+    },
+    "source/hciattach_h4.h": {
+      "bytes": 502,
+      "sha256": "0b9990719b3d4215691a7313f04f87825126203d266bad8abdb7da78fda3f2fc"
+    },
+    "source/hciattach_rtk.c": {
+      "bytes": 56680,
+      "sha256": "e5d8df8fba521201513d2a3c83bda98fb31ac02488d36a90cd5ac56b77f8f872"
+    },
+    "source/rtb_fwc.c": {
+      "bytes": 38932,
+      "sha256": "ca69273e2c83f8d0db1ae6a2facf17c6d8c15877b8a4cd25d77e5b6f0f650920"
+    },
+    "source/rtb_fwc.h": {
+      "bytes": 2933,
+      "sha256": "480553a7d224da8888b1a7fc155f7277504ad5d629b727ce23d78d07487f9b58"
+    },
+    "source-lock.json": {
+      "bytes": 2894,
+      "sha256": "ed8f3c1e1c41ab9e927a5520480043c979b275873ba9aa48e7ac1b87c64b36b4"
+    },
+    "source.tar.gz": {
+      "bytes": 33032,
+      "sha256": "9e77a9764f6a6fe2507784dd6221418d93d04fe6e2ea72f6a79069b663593bbe"
+    }
+  },
+  "limitation": "只證明固定來源交叉編譯與 ELF 格式；未執行 UART、下載板上韌體或證明藍牙可用。"
+}

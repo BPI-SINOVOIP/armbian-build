@@ -1,0 +1,22 @@
+[Unit]
+Description=Banana Pi CM6 藍牙 UART 初始化
+After=systemd-udev-trigger.service systemd-rfkill.service
+Before=bluetooth.service
+Wants=bluetooth.service
+StartLimitIntervalSec=90
+StartLimitBurst=2
+
+[Service]
+Type=simple
+ExecStart=/usr/sbin/bpi-cm6-bluetooth --start
+Restart=on-failure
+RestartPreventExitStatus=2
+RestartSec=5
+TimeoutStopSec=10
+KillMode=control-group
+UMask=0077
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

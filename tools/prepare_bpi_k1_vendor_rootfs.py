@@ -80,6 +80,32 @@ def package_selection(lock, board, cache):
     return selected
 
 
+def bluetooth_package(board, path):
+    """CM6 的 UART 藍牙工具必須成套進入映像，不能只安裝 BlueZ。"""
+    if board != "bpi-cm6":
+        if path is not None:
+            raise ValueError("CM6 藍牙套件不可套用至其他板型")
+        return None
+    if path is None:
+        raise ValueError("CM6 新候選須提供 --cm6-bluetooth-package，避免缺少板級藍牙啟動程序")
+    package = regular(path)
+    metadata = json.loads(regular(package.parent / "package-manifest.json").read_text())
+    source_lock = json.loads((REPO / "config/spacemit-k1-connectivity/source-lock.json").read_text())
+    if (metadata.get("board") != "bpi-cm6" or metadata.get("package") != "bpi-cm6-bluetooth" or
+            metadata.get("architecture") != "riscv64" or metadata.get("artifact") != package.name or
+            metadata.get("source") != source_lock["source"] or
+            metadata.get("patches") != source_lock["patches"] or
+            metadata.get("source_lock_sha256") != sha256(REPO / "config/spacemit-k1-connectivity/source-lock.json") or
+            metadata.get("bytes") != package.stat().st_size or metadata.get("sha256") != sha256(package)):
+        raise ValueError("CM6 藍牙套件與封裝紀錄不符")
+    control = subprocess.check_output(["dpkg-deb", "-f", str(package)], text=True)
+    fields = dict(line.split(": ", 1) for line in control.splitlines() if ": " in line and not line.startswith(" "))
+    if any(fields.get(key) != expected for key, expected in (
+            ("Package", "bpi-cm6-bluetooth"), ("Architecture", "riscv64"), ("Version", metadata["version"]))):
+        raise ValueError("CM6 藍牙套件控制欄位不符")
+    return package, metadata
+
+
 def write(path, text, mode=0o644):
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(text, encoding="utf-8")
@@ -123,6 +149,7 @@ def main():
     p.add_argument("--output", required=True, type=Path)
     p.add_argument("--deb-cache", required=True, type=Path)
     p.add_argument("--lock", type=Path, default=REPO / "config/spacemit-k1-acceleration/noble.lock.json")
+    p.add_argument("--cm6-bluetooth-package", type=Path, help="CM6 必填：附 package-manifest.json 的板級藍牙 Debian 套件")
     p.add_argument("--resume", action="store_true", help="僅續作相同來源的未完成候選")
     p.add_argument("--refresh-packages", action="store_true", help="搭配續作，明確更新同來源候選的固定套件配套")
     p.add_argument("--inside", action="store_true", help=argparse.SUPPRESS)
@@ -137,11 +164,16 @@ def main():
     lock_bytes = lock_path.read_bytes()
     lock = acceleration.load_lock(lock_path)
     packages = package_selection(lock, args.board, args.deb_cache.resolve())
+    bluetooth = bluetooth_package(args.board, args.cm6_bluetooth_package)
+    if bluetooth:
+        packages.append(bluetooth[0])
     out = args.output.absolute()
     if out.is_symlink() or out == source.parent or out == Path("/"):
         raise ValueError("輸出必須是專用工作目錄")
     identity = {"board": args.board, "source_sha256": sha256(source),
                 "acceleration_lock_sha256": hashlib.sha256(lock_bytes).hexdigest(), "schema_version": 1}
+    if bluetooth:
+        identity["cm6_bluetooth_package_sha256"] = bluetooth[1]["sha256"]
     marker = out / "preparation.json"
     if out.exists():
         if not args.resume or not marker.exists():
@@ -150,6 +182,8 @@ def main():
         compare = dict(prior["identity"])
         if args.refresh_packages:
             compare["acceleration_lock_sha256"] = identity["acceleration_lock_sha256"]
+            if bluetooth:
+                compare["cm6_bluetooth_package_sha256"] = identity["cm6_bluetooth_package_sha256"]
         if compare != identity:
             raise ValueError("續作來源或套件鎖已變更")
         if prior["status"] == "complete" and not args.refresh_packages:
@@ -257,6 +291,10 @@ def main():
         status_text = (mount / "var/lib/dpkg/status").read_text()
         pinned = {lock["packages"][k]["Package"]: lock["packages"][k]["Version"]
                   for k in lock["profiles"][args.board]["packages"]}
+        if bluetooth:
+            pinned["bpi-cm6-bluetooth"] = bluetooth[1]["version"]
+            write(mount / "usr/share/bpi-cm6-bluetooth/package-manifest.json",
+                  json.dumps(bluetooth[1], ensure_ascii=False, indent=2) + "\n")
         for para in status_text.split("\n\n"):
             fields = dict(line.split(": ", 1) for line in para.splitlines() if ": " in line and not line.startswith(" "))
             if fields.get("Package", "").startswith(("linux-image-", "linux-dtb-", "linux-u-boot-", "armbian-bsp-", "armbian-config")):

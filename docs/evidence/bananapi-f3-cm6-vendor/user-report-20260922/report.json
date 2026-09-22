@@ -1,0 +1,93 @@
+{
+  "schema_version": 1,
+  "reported_on": "2026-09-22",
+  "board": "bpi-cm6",
+  "carrier_board": null,
+  "release_id": "20260918-rc2",
+  "artifact_name": "Armbian_Noble_bpi-cm6_gnome_titan-emmc_20260918-rc2.zip",
+  "published_sha256": "f62d471ef88bf042af84bbd7da6aa4e031159488a4447d49a4b3e0cbc4595277",
+  "tester_confirmed_sha256": null,
+  "evidence_type": "user_text_report",
+  "observations": {
+    "flashing": "user_reported_pass",
+    "boot": "user_reported_pass",
+    "ethernet_eth1": "user_reported_pass",
+    "bluetooth": "user_reported_failed_no_adapter",
+    "ethernet_eth0": "user_reported_failed_no_connectivity"
+  },
+  "actual_titan_version": null,
+  "cold_boot_from_emmc_only": null,
+  "flash_log": null,
+  "boot_log": null,
+  "readback_report": null,
+  "hardware_validation_complete": false,
+  "note": "保留使用者文字回報；燒錄與啟動通過不擴張為冷開機、回讀、所有網口或加速功能均已驗證。",
+  "source_text_note": "以下原始文字逐字保留供追溯；其餘紀錄使用繁體中文。",
+  "source_text": "镜像名：Armbian_Noble_bpi-cm6_gnome_titan-emmc_20260918-rc2.zip\n镜像烧录启动PASS。\n目前镜像存在的问题\n1.板载蓝牙功能未开启，使用命令查询不到蓝牙适配器 2.eth0网口接入网线无法使用，eth1网口接入网线可以正常工作。",
+  "screenshots": [
+    {
+      "file": "49.png",
+      "bytes": 2022,
+      "sha256": "6bd54c2f46358a8feada3e215b5185dc0e650c50b6b13f2a21314101c831cf5f",
+      "observation": {
+        "command": "hciconfig -a",
+        "hci_adapters_listed": 0
+      }
+    },
+    {
+      "file": "50.png",
+      "bytes": 40870,
+      "sha256": "d15104f5468f2ad2b290b8a5b93786b9877907063798aa27d6c6840b4107eeb8",
+      "observation": {
+        "command": "ip a",
+        "eth0": {
+          "flags": [
+            "BROADCAST",
+            "MULTICAST"
+          ],
+          "state": "DOWN",
+          "altname": "end0"
+        },
+        "eth1": {
+          "flags": [
+            "BROADCAST",
+            "MULTICAST",
+            "UP",
+            "LOWER_UP"
+          ],
+          "state": "UP",
+          "altname": "end1",
+          "ipv4_address": "present_dynamic"
+        }
+      }
+    },
+    {
+      "file": "51.png",
+      "bytes": 27204,
+      "sha256": "d5518204956be430f825005b8f3d1e0ce3702b9a7f52e573cd98b6e122791579",
+      "observation": {
+        "command": "ip a",
+        "eth0": {
+          "flags": [
+            "BROADCAST",
+            "MULTICAST"
+          ],
+          "state": "DOWN",
+          "altname": "end0"
+        },
+        "eth1": {
+          "flags": [
+            "NO-CARRIER",
+            "BROADCAST",
+            "MULTICAST",
+            "UP"
+          ],
+          "state": "DOWN",
+          "altname": "end1",
+          "ipv4_address": "not_listed"
+        }
+      }
+    }
+  ],
+  "screenshot_note": "原始截圖保存在本機證據目錄；此紀錄只摘錄診斷必要的介面狀態，不發布截圖中的網路位址。"
+}

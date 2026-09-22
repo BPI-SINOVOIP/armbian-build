@@ -1,0 +1,50 @@
+{
+  "status": "passed",
+  "tests": 92,
+  "hardware_validation": "pending",
+  "note": "測試原始輸出供不可變證據追溯；非本次新撰自然語言。生命週期使用 Debian 真實 helper 與 systemctl 替身；隔離 rc2 副本使用真實 dpkg，未接觸板卡或主機服務。",
+  "commands": [
+    {
+      "command": "python3 -m unittest discover -s tests -p 'test_*cm6*bluetooth*.py' -v",
+      "tests": 52,
+      "log": "bluetooth-regression.log"
+    },
+    {
+      "command": "python3 -m unittest discover -s tests -p test_prepare_bpi_k1_vendor_rootfs.py -v",
+      "tests": 29,
+      "log": "rootfs-regression.log"
+    },
+    {
+      "command": "python3 -m unittest discover -s tests -p test_collect_bpi_cm6_connectivity.py -v",
+      "tests": 11,
+      "log": "collector-regression.log"
+    }
+  ],
+  "files": {
+    "bluetooth-regression.log": {
+      "bytes": 7614,
+      "sha256": "95a489614582e92ff2da468ca4700db6f91f4113669d9a65d688e68467616980"
+    },
+    "rootfs-regression.log": {
+      "bytes": 4731,
+      "sha256": "a375b6d965810e2afe1b1ca64c4654887dd0bc91570791ceed0bef3ffc2a185a"
+    },
+    "collector-regression.log": {
+      "bytes": 1806,
+      "sha256": "c84ce5cd3e9d8e6aeea50d20f9f6c08d9e11a506a967c971067231aebf0bf558"
+    },
+    "installation-validation-rc2.log": {
+      "bytes": 7750,
+      "sha256": "83e5b961084f778cc77e1079d897ad3d2f71bc6402e4fd98262eba1bc55b1a66"
+    },
+    "validate-package-rc2.py": {
+      "bytes": 4159,
+      "sha256": "e6101f425a02dbf6eea31b913f804d90e5f398a4a1f47fa843a129b8366607f3"
+    }
+  },
+  "whitespace_check": {
+    "command": "git diff --cached --check -- . ':(exclude)config/spacemit-k1-connectivity/0001-uart-failure-defer-to-service.patch'",
+    "status": "passed",
+    "note": "唯一排除檔案是 unified diff 補丁；其中上下文行的空白／tab 是必要格式，已由固定補丁雜湊及實際套用與 C 故障路徑測試驗證。"
+  }
+}

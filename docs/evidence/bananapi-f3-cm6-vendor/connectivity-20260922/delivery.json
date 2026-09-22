@@ -1,0 +1,10 @@
+{
+  "status": "candidate_unverified",
+  "artifact": "BPI-CM6_rc2_藍牙修正候選_20260922.zip",
+  "bytes": 109861,
+  "sha256": "60b0172cd4c703e9d8117e937b2a89ffa815d7c9c70ca8e511f5fbf2e421f6e7",
+  "package_sha256": "49531220e72a508aa015e8b99f2c82d99418df93a5beb421e7a132a7d1b519d5",
+  "archive_validation": "passed",
+  "hardware_validation": "pending",
+  "ethernet_fix": "not_included"
+}

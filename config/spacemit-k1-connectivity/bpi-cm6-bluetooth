@@ -1,0 +1,194 @@
+#!/usr/bin/python3
+"""核對 CM6 身分及硬體節點後，初始化專用 UART 藍牙；預設僅檢查。"""
+
+import argparse
+import fcntl
+import hashlib
+import json
+import os
+from pathlib import Path
+import re
+import stat
+import subprocess
+import sys
+import time
+
+
+UART_PATH = "soc/uart@d4017100"
+BT_PATH = "rf-pwrseq/bt-pwrseq"
+BINARY = Path("/usr/lib/bpi-cm6-bluetooth/rtk_hciattach")
+LOCK = Path("/usr/share/bpi-cm6-bluetooth/source-lock.json")
+
+
+class ChineseArgumentParser(argparse.ArgumentParser):
+    def __init__(self, **kwargs):
+        super().__init__(add_help=False, **kwargs)
+        self._positionals.title = "位置參數"
+        self._optionals.title = "選項"
+        self.add_argument("-h", "--help", action="help", help="顯示此說明後結束")
+
+    def format_usage(self):
+        return super().format_usage().replace("usage: ", "用法：", 1)
+
+    def format_help(self):
+        return super().format_help().replace("usage: ", "用法：", 1)
+
+    def error(self, message):
+        self.print_usage(sys.stderr)
+        self.exit(2, "參數不完整或無法辨識，請使用 --help 檢查用法。\n")
+
+
+def require(condition, message):
+    if not condition:
+        raise ValueError(message)
+
+
+def strings(path):
+    return path.read_bytes().rstrip(b"\0").decode().split("\0")
+
+
+def same_node(link, expected):
+    try:
+        return link.resolve(strict=True) == expected.resolve(strict=True)
+    except FileNotFoundError:
+        return False
+
+
+def inspect_hardware(sysroot=Path("/sys"), procroot=Path("/proc")):
+    """純讀取：依 OF 路徑選址，拒絕錯板、占用主控台與模糊候選。"""
+    tree = sysroot / "firmware/devicetree/base"
+    require("bananapi,bpi-cm6" in strings(tree / "compatible"), "板型不是 Banana Pi CM6")
+    uart = tree / UART_PATH
+    bt = tree / BT_PATH
+    require(uart.is_dir() and bt.is_dir(), "缺少 CM6 UART 或藍牙電源 OF 節點")
+    require("spacemit,pxa-uart" in strings(uart / "compatible"), "UART 相容字串不符")
+    require("spacemit,bt-pwrseq" in strings(bt / "compatible"), "藍牙電源相容字串不符")
+    for node in (uart, bt, bt.parent):
+        if (node / "status").exists():
+            require(strings(node / "status")[0] in ("ok", "okay"), "硬體 OF 節點未啟用")
+    hci = [p.name for p in (sysroot / "class/bluetooth").glob("hci*") if re.fullmatch(r"hci\d+", p.name)]
+    require(not hci, "已有 HCI 控制器，拒絕重設或重複初始化：" + ",".join(hci))
+    ttys = [p for p in (sysroot / "class/tty").glob("ttyS*")
+            if re.fullmatch(r"ttyS\d+", p.name) and same_node(p / "device/of_node", uart)]
+    require(len(ttys) == 1, f"CM6 藍牙 UART 候選數量必須為一，目前為 {len(ttys)}")
+    tty = ttys[0].name
+    consoles = [v.split("=", 1)[1].split(",", 1)[0]
+                for v in (procroot / "cmdline").read_text().split() if v.startswith("console=")]
+    active = sysroot / "class/tty/console/active"
+    if active.exists():
+        consoles.extend(active.read_text().split())
+    require(tty not in consoles, "藍牙 UART 同時被指定為主控台，拒絕占用")
+    stdout = tree / "chosen/stdout-path"
+    if stdout.exists():
+        target = strings(stdout)[0].split(":", 1)[0]
+        if not target.startswith("/"):
+            alias = tree / "aliases" / target
+            if alias.exists():
+                target = strings(alias)[0]
+        require(target != "/" + UART_PATH, "裝置樹 stdout-path 指向藍牙 UART，拒絕占用")
+    radios = []
+    for p in (sysroot / "class/rfkill").glob("rfkill*"):
+        if not re.fullmatch(r"rfkill\d+", p.name):
+            continue
+        if ((p / "type").read_text().strip() == "bluetooth"
+                and (p / "name").read_text().strip() == "spacemit-bt"
+                and same_node(p / "device/of_node", bt)):
+            radios.append(p)
+    require(len(radios) == 1, f"CM6 藍牙電源候選數量必須為一，目前為 {len(radios)}")
+    radio = radios[0]
+    require((radio / "hard").read_text().strip() == "0", "藍牙硬體封鎖尚未解除")
+    require((radio / "state").read_text().strip() in ("0", "1"), "藍牙電源狀態無法識別")
+    return {"tty": tty, "rfkill": str(radio), "uart_of_path": "/" + UART_PATH,
+            "status": "ready", "hardware_validation": "pending"}
+
+
+def check_device(tty, sysroot=Path("/sys"), devroot=Path("/dev")):
+    device = devroot / tty
+    info = device.stat()
+    require(stat.S_ISCHR(info.st_mode), "所選 UART 不是字元裝置")
+    expected = (sysroot / "class/tty" / tty / "dev").read_text().strip()
+    require(expected == f"{os.major(info.st_rdev)}:{os.minor(info.st_rdev)}", "UART 裝置編號與 sysfs 不符")
+    return device
+
+
+def check_busy(device, procroot=Path("/proc")):
+    """只讀取程序描述符資訊，不開啟 UART；不能檢查時採拒絕策略。"""
+    target = device.stat()
+    for process in procroot.iterdir():
+        if not process.name.isdigit():
+            continue
+        try:
+            for fd in (process / "fd").iterdir():
+                try:
+                    info = fd.stat()
+                    same = ((stat.S_ISCHR(target.st_mode) and stat.S_ISCHR(info.st_mode)
+                             and info.st_rdev == target.st_rdev)
+                            or (info.st_dev, info.st_ino) == (target.st_dev, target.st_ino))
+                    require(not same, f"UART 已被程序 {process.name} 占用，拒絕初始化")
+                except (FileNotFoundError, ProcessLookupError):
+                    continue
+        except (FileNotFoundError, ProcessLookupError):
+            continue
+
+
+def verify_assets(lock_path=LOCK, binary=BINARY):
+    record = json.loads(lock_path.read_text())
+    contract = record["hardware_contract"]
+    require(contract["compatible"] == "bananapi,bpi-cm6" and contract["uart_of_path"] == "/" + UART_PATH,
+            "安裝的藍牙來源契約不符")
+    require(binary.is_file() and os.access(binary, os.X_OK), "缺少可執行的 CM6 專用 rtk_hciattach")
+    for field in ("firmware", "firmware_config"):
+        asset = contract[field]
+        actual = hashlib.sha256(Path(asset["path"]).read_bytes()).hexdigest()
+        require(actual == asset["sha256"], "藍牙韌體與已核對版本不符：" + asset["path"])
+
+
+def start():
+    require(os.geteuid() == 0, "初始化需要 root 權限")
+    # 先完成所有只讀檢查，才能載入模組或切換藍牙電源。
+    selection = inspect_hardware()
+    device = check_device(selection["tty"])
+    check_busy(device)
+    verify_assets()
+    lock_fd = os.open("/run/bpi-cm6-bluetooth.lock", os.O_CREAT | os.O_RDWR | os.O_NOFOLLOW, 0o600)
+    try:
+        try:
+            fcntl.flock(lock_fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError as exc:
+            raise ValueError("已有 CM6 藍牙初始化程序") from exc
+        os.set_inheritable(lock_fd, True)
+        subprocess.run(["/usr/sbin/modprobe", "hci_uart"], check=True, timeout=15)
+        require(inspect_hardware() == selection, "初始化前硬體節點發生變更")
+        check_busy(device)
+        state = Path(selection["rfkill"]) / "state"
+        print(json.dumps({**selection, "action": "attach"}, ensure_ascii=False), flush=True)
+        state.write_text("0\n")
+        time.sleep(1)
+        state.write_text("1\n")
+        # 保留前景程序與標準輸出，讓 systemd 管理生命週期並保存原始晶片識別日誌。
+        os.execv(str(BINARY), [str(BINARY), "-n", "-s", "115200", str(device), "rtk_h5"])
+    finally:
+        os.close(lock_fd)
+
+
+def main():
+    parser = ChineseArgumentParser(description="CM6 藍牙 UART 檢查與初始化")
+    parser.add_argument("--start", action="store_true", help="核對硬體與資產後實際初始化；預設僅檢查")
+    args = parser.parse_args()
+    try:
+        if args.start:
+            start()
+        else:
+            result = inspect_hardware()
+            device = check_device(result["tty"])
+            check_busy(device)
+            verify_assets()
+            print(json.dumps(result, ensure_ascii=False))
+        return 0
+    except (ValueError, OSError, KeyError, subprocess.SubprocessError) as exc:
+        print(f"CM6 藍牙初始化未執行或失敗：{exc}", file=sys.stderr)
+        return 2
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

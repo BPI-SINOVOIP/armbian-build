@@ -1,0 +1,107 @@
+--- a/hciattach.c
++++ b/hciattach.c
+@@ -47,8 +47,6 @@
+ #include <sys/timerfd.h>
+ 
+ #include "hciattach.h"
+-
+-#define RFKILL_NODE	"/sys/class/rfkill/rfkill0/state"
+ 
+ #ifdef NEED_PPOLL
+ #include "ppoll.h"
+@@ -312,48 +310,6 @@
+ 	return -1;
+ }
+ 
+-static int reset_bluetooth(void)
+-{
+-
+-	int fd;
+-	char state[2];
+-	int result;
+-
+-	/* power off and power on BT */
+-	fd = open(RFKILL_NODE, O_RDWR);
+-	if (fd < 0) {
+-		RS_ERR("Cannot open %s, %d %s", RFKILL_NODE, errno,
+-				strerror(errno));
+-		return -1;
+-	}
+-	state[0] = '0';
+-	state[1] = '\0';
+-	result = write(fd, state, strlen(state) + 1);
+-	if (result != (strlen(state) + 1)) {
+-		RS_ERR("Cannot write 0 to rfkill state %d %s", errno,
+-				strerror(errno));
+-		close(fd);
+-		return -1;
+-	}
+-
+-	usleep(500000);
+-
+-	state[0] = '1';
+-	state[1] = '\0';
+-	result = write(fd, state, strlen(state) + 1);
+-	if (result != (strlen(state) + 1)) {
+-		RS_ERR("Cannot write 1 to rfkill state %d %s", errno,
+-				strerror(errno));
+-		close(fd);
+-		return -1;
+-	}
+-
+-	usleep(500000);
+-	close(fd);
+-
+-	return 0;
+-}
+-
+ static void usage(void)
+ {
+ 	RS_INFO("hciattach - HCI UART driver initialization utility");
+@@ -365,13 +321,13 @@
+ int main(int argc, char *argv[])
+ {
+ 	struct uart_t *u = NULL;
+-	int detach, printpid, raw, opt, i, n, ld, err;
++	int detach, printpid, raw, opt, i, n, ld, err = 0;
+ 	int to = 10;
+ 	int init_speed = 0;
+ 	int send_break = 0;
+ 	pid_t pid;
+ 	struct sigaction sa;
+-	struct pollfd p;
++	struct pollfd p = { 0 };
+ 	sigset_t sigs;
+ 	char dev[PATH_MAX];
+ #ifdef SCHED_ENABLE
+@@ -491,8 +447,6 @@
+ 		exit(1);
+ 	}
+ 
+-start:
+-
+ #ifdef SCHED_ENABLE
+ 	RS_INFO("Increase the priority of the process with set sched");
+ 	memset(&sched_par, 0, sizeof(sched_par));
+@@ -575,6 +529,7 @@
+ 		err = ppoll(&p, 1, NULL, &sigs);
+ 		if (err < 0 && errno == EINTR) {
+ 			RS_INFO("Got EINTR.");
++			err = 0;
+ 			continue;
+ 		} if (err)
+ 			break;
+@@ -591,10 +546,9 @@
+ 		exit(1);
+ 	}
+ 
+-	if (p.revents & (POLLERR | POLLHUP)) {
+-		RS_INFO("Recover...");
+-		reset_bluetooth();
+-		goto start;
++	if (err < 0 || (p.revents & (POLLERR | POLLHUP | POLLNVAL))) {
++		RS_ERR("UART 連線中斷或輪詢失敗，交由服務重新初始化");
++		return 1;
+ 	}
+ 
+ 	return 0;

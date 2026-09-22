@@ -134,6 +134,56 @@ class PrepareRootfsTests(unittest.TestCase):
         with self.assertRaises((KeyError, ValueError)):
             MOD.package_selection(lock, "bpi-other", self.cache)
 
+    def test_cm6_cannot_omit_uart_bluetooth_package(self):
+        with self.assertRaisesRegex(ValueError, "cm6-bluetooth-package"):
+            MOD.bluetooth_package("bpi-cm6", None)
+
+    def test_f3_does_not_accept_cm6_bluetooth_package(self):
+        self.assertIsNone(MOD.bluetooth_package("bpi-f3", None))
+        with self.assertRaises(ValueError):
+            MOD.bluetooth_package("bpi-f3", self.source)
+
+    def bluetooth_fixture(self):
+        path = self.cache / "bpi-cm6-bluetooth.deb"
+        path.write_bytes(b"fixed-package-fixture")
+        metadata = {"board": "bpi-cm6", "package": "bpi-cm6-bluetooth", "architecture": "riscv64",
+                    "artifact": path.name, "version": "0.1.0~test", "bytes": path.stat().st_size,
+                    "sha256": MOD.sha256(path), "source": json.loads((REPO / "config/spacemit-k1-connectivity/source-lock.json").read_text())["source"]}
+        metadata["patches"] = json.loads((REPO / "config/spacemit-k1-connectivity/source-lock.json").read_text())["patches"]
+        metadata["source_lock_sha256"] = MOD.sha256(REPO / "config/spacemit-k1-connectivity/source-lock.json")
+        (self.cache / "package-manifest.json").write_text(json.dumps(metadata))
+        return path, metadata
+
+    def test_bluetooth_package_tampering_rejected_before_control_read(self):
+        path, _ = self.bluetooth_fixture()
+        path.write_bytes(b"modified-package-data")
+        with mock.patch.object(MOD.subprocess, "check_output") as control:
+            with self.assertRaises(ValueError):
+                MOD.bluetooth_package("bpi-cm6", path)
+        control.assert_not_called()
+
+    def test_bluetooth_manifest_cannot_disguise_wrong_architecture(self):
+        path, _ = self.bluetooth_fixture()
+        fields = "Package: bpi-cm6-bluetooth\nVersion: 0.1.0~test\nArchitecture: arm64\n"
+        with mock.patch.object(MOD.subprocess, "check_output", return_value=fields):
+            with self.assertRaises(ValueError):
+                MOD.bluetooth_package("bpi-cm6", path)
+
+    def test_bluetooth_package_must_use_pinned_official_source(self):
+        path, metadata = self.bluetooth_fixture()
+        metadata["source"]["commit"] = "0" * 40
+        (self.cache / "package-manifest.json").write_text(json.dumps(metadata))
+        with mock.patch.object(MOD.subprocess, "check_output") as control:
+            with self.assertRaises(ValueError):
+                MOD.bluetooth_package("bpi-cm6", path)
+        control.assert_not_called()
+
+    def test_matching_bluetooth_package_is_selected(self):
+        path, metadata = self.bluetooth_fixture()
+        fields = "Package: bpi-cm6-bluetooth\nVersion: 0.1.0~test\nArchitecture: riscv64\n"
+        with mock.patch.object(MOD.subprocess, "check_output", return_value=fields):
+            self.assertEqual(MOD.bluetooth_package("bpi-cm6", path), (path, metadata))
+
     def test_non_regular_source_is_rejected(self):
         with self.assertRaises(ValueError):
             MOD.regular(Path("/dev/null"))
@@ -159,6 +209,7 @@ class PrepareRootfsTests(unittest.TestCase):
         with mock.patch.object(MOD.sys, "argv", argv), \
              mock.patch.object(MOD.os, "geteuid", return_value=0), \
              mock.patch.object(MOD, "package_selection", return_value=[]), \
+             mock.patch.object(MOD, "bluetooth_package", return_value=None), \
              mock.patch.object(MOD, "run", side_effect=AssertionError("來源拒絕前不得執行命令")) as command, \
              mock.patch.object(MOD.subprocess, "check_output", side_effect=AssertionError("來源拒絕前不得讀取分區")):
             with self.assertRaises(ValueError):
@@ -188,6 +239,49 @@ class PrepareRootfsTests(unittest.TestCase):
         marker, identity, argv = self.resume_fixture()
         marker.write_text(json.dumps({"identity": identity, "status": "complete"}))
         self.assert_resume_rejected_without_mount(argv)
+
+    def check_bluetooth_refresh(self, old_hash, refresh, source_changed=False):
+        marker, identity, argv = self.resume_fixture()
+        if old_hash is not None:
+            identity["cm6_bluetooth_package_sha256"] = old_hash
+        marker.write_text(json.dumps({"identity": identity, "status": "complete"}))
+        old_marker = marker.read_bytes()
+        package, metadata = self.bluetooth_fixture()
+        argv.extend(["--cm6-bluetooth-package", str(package)])
+        if refresh:
+            argv.append("--refresh-packages")
+        if source_changed:
+            self.source.write_bytes(b"different-source")
+        with mock.patch.object(MOD.sys, "argv", argv), \
+             mock.patch.object(MOD.os, "geteuid", return_value=0), \
+             mock.patch.object(MOD, "package_selection", return_value=[]), \
+             mock.patch.object(MOD, "bluetooth_package", return_value=(package, metadata)), \
+             mock.patch.object(MOD.acceleration, "verify_sources", side_effect=RuntimeError("已通過續作身分核對")) as verify, \
+             mock.patch.object(MOD, "run") as command:
+            if refresh and not source_changed:
+                with self.assertRaisesRegex(RuntimeError, "已通過續作身分核對"):
+                    MOD.main()
+                verify.assert_called_once()
+                archived = list((marker.parent / "history").glob("*.json"))
+                self.assertEqual([p.read_bytes() for p in archived], [old_marker])
+            else:
+                with self.assertRaises(ValueError):
+                    MOD.main()
+                verify.assert_not_called()
+        command.assert_not_called()
+        self.assertEqual(marker.read_bytes(), old_marker)
+
+    def test_explicit_refresh_can_add_missing_bluetooth_package(self):
+        self.check_bluetooth_refresh(None, True)
+
+    def test_explicit_refresh_can_update_bluetooth_package(self):
+        self.check_bluetooth_refresh("0" * 64, True)
+
+    def test_bluetooth_package_cannot_change_without_explicit_refresh(self):
+        self.check_bluetooth_refresh("0" * 64, False)
+
+    def test_explicit_bluetooth_refresh_cannot_change_source_image(self):
+        self.check_bluetooth_refresh("0" * 64, True, source_changed=True)
 
 
 if __name__ == "__main__":

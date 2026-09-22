@@ -1,0 +1,133 @@
+{
+  "schema_version": 1,
+  "analysis_date": "2026-09-22",
+  "board": "bpi-cm6",
+  "release_id": "20260918-rc2",
+  "status": "root_cause_undetermined",
+  "hardware_fix_verified": false,
+  "conclusion": "使用者截圖證實 eth0 當時未具 UP 旗標；目前不能區分尚未啟用、網路管理政策或驅動啟用失敗。先收集 NetworkManager 的狀態、原因與啟用錯誤；PHY reset 的板級差異保留為待驗假說，不視為唯一根因，也不據此修改 DTB。",
+  "artifact": {
+    "name": "Armbian_Noble_bpi-cm6_gnome_titan-emmc_20260918-rc2.zip",
+    "sha256": "f62d471ef88bf042af84bbd7da6aa4e031159488a4447d49a4b3e0cbc4595277",
+    "hash_scope": "既有發布 manifest 的整包雜湊；本輪未重新讀取整份 ZIP 計算。",
+    "bootfs_path": "/media/pi/SMCI/bpi/f3-cm6-vendor-20260918-rc2/output/bpi-cm6-emmc/payload/bootfs.ext4",
+    "rootfs_path": "/media/pi/SMCI/bpi/f3-cm6-vendor-20260918-rc2/output/bpi-cm6-emmc/payload/rootfs.ext4",
+    "kernel": "6.6.36-legacy-spacemit",
+    "kernel_commit": "0d0af0d895251383baee939d44e523699e31889f",
+    "dtb_path_in_bootfs": "/dtb/spacemit/k1-x_bpi_cm6.dtb",
+    "dtb_bytes": 83687,
+    "dtb_sha256": "6d8db2aa3dc0a106190052316a0839cf9dda6a64b41ff6fe8fcc317f96a46f67",
+    "dtb_verification": "以 debugfs 唯讀取得已封裝 bootfs 的 DTB，與 boot-tree 副本逐位元組相同。"
+  },
+  "user_observations": [
+    {
+      "path": "/media/pi/SMCI/bpi/bpi-cm6/log/50.png",
+      "observed": "eth0 僅有 BROADCAST,MULTICAST，qdisc noop、state DOWN、altname end0；eth1 有 UP,LOWER_UP，state UP、altname end1，並有 IPv4 DHCP 位址。",
+      "scope": "已親自檢視使用者截圖；不是本機硬體測試。"
+    },
+    {
+      "path": "/media/pi/SMCI/bpi/bpi-cm6/log/51.png",
+      "observed": "eth0 仍無 UP；eth1 有 UP 但為 NO-CARRIER，state DOWN，沒有 IPv4 位址。",
+      "scope": "此畫面不能單獨證明 eth0 的線材、PHY、DHCP 或 NetworkManager 根因。"
+    }
+  ],
+  "network_configuration_verified_in_rc2": {
+    "/etc/netplan/00-default-use-network-manager.yaml": "只有 network.version=2 與 renderer=NetworkManager；未設 eth*、end*、MAC 或單一介面匹配。",
+    "/etc/NetworkManager/NetworkManager.conf": "plugins=ifupdown,keyfile；ifupdown.managed=false，但 /etc/network/interfaces 不存在。",
+    "/etc/NetworkManager/system-connections": "空目錄；沒有預存只綁 eth1 的連線設定。",
+    "/var/lib/NetworkManager": "空目錄；沒有預存 no-auto-default.state。",
+    "/etc/systemd/network": "空目錄；沒有預存 networkd 的 end* 規則。",
+    "/etc/udev/rules.d/70-persistent-net.rules": "不存在。",
+    "/root/.not_logged_in_yet": "零位元組；沒有 PRESET_NET_CHANGE_DEFAULTS=1，不會觸發首登入腳本的第一張網卡專用自動配置。",
+    "/usr/lib/armbian/armbian-firstlogin": "第 118 行的單介面預設配置受 PRESET_NET_CHANGE_DEFAULTS=1 控制；本映像未設定。",
+    "/etc/systemd/system/multi-user.target.wants": "有 NetworkManager.service 連結，沒有 systemd-networkd.service 連結。",
+    "/usr/lib/NetworkManager/conf.d/10-globally-managed-devices.conf": "Ubuntu 套件的通用規則預設排除有線介面；需查看實機 Netplan 產生的 /run/NetworkManager/conf.d 覆寫與 NetworkManager --print-config，不能把此原檔單獨判為 eth0 專屬錯誤。",
+    "scope": "以上為尚未經使用者首開機變更的封裝根系統；不能代替實機目前狀態。"
+  },
+  "device_tree": {
+    "eth0_alias": "/soc/ethernet@cac80000",
+    "eth1_alias": "/soc/ethernet@cac81000",
+    "mapping_scope": "這是 DT aliases；實際 Linux 介面與插孔對應仍以 sysfs device/of_node、ethtool bus-info 與載板型號確認。",
+    "kernel_config": {
+      "CONFIG_NET_VENDOR_SPACEMIT": "y",
+      "CONFIG_K1X_EMAC": "y",
+      "CONFIG_REALTEK_PHY": "y",
+      "CONFIG_MOTORCOMM_PHY": "m"
+    },
+    "common_properties": {
+      "compatible": "spacemit,k1x-emac",
+      "status": "okay",
+      "phy_compatible": "ethernet-phy-id001c.c916",
+      "phy_mdio_address": 1,
+      "phy_mode": "rgmii",
+      "reset_active_low": true,
+      "reset_delays_us": [0, 10000, 100000],
+      "ref_clock_from_phy": true,
+      "clock_tuning_by_delayline": true
+    },
+    "eth0": {"reset_gpio": 45, "tx_phase": 60, "rx_phase": 73},
+    "eth1": {"reset_gpio": 46, "tx_phase": 90, "rx_phase": 73}
+  },
+  "official_cm6_reference": {
+    "local_source_image": "/media/pi/SMCI/bpi/bpi-cm6/20260106-bianbu-lxqt-v2.3-bpi-cm6.img.xz",
+    "bootfs_path": "/media/pi/SMCI/bpi/f3-cm6-vendor-20260916/reference/cm6-bianbu-v2.3-bootfs.ext4",
+    "dtb_path_in_bootfs": "/spacemit/6.6.63/k1-x_deb1.dtb",
+    "dtb_bytes": 88984,
+    "dtb_sha256": "0f74f008faeede2931f03bb17b8b2779db32da8a5b0d762eeff48da3721dc277",
+    "scope": "取樣為本機板廠 CM6 磁碟映像內的 deb1 DTB，不是 F3 DTB。官網目前列出的 20260109 版屬不同檔案，未冒稱兩者相同。尚未取得使用者載板版本。",
+    "same_properties": "兩埠 PHY ID、MDIO 位址、RGMII 模式、reset GPIO、延遲、時脈來源及 TX/RX phase 與 rc2 相同。",
+    "pinmux_difference": [
+      {
+        "node": "/soc/pinctrl@d401e000/gmac0_grp",
+        "property": "pinctrl-single,pins",
+        "official_extra_cells_hex": ["0xb8", "0x0", "0xb040"],
+        "meaning": "GPIO45，pin-id 46，MUX_MODE0，EDGE_NONE | PULL_DOWN | PAD_1V8_DS2。",
+        "rc2": "此三元組不存在。"
+      },
+      {
+        "node": "/soc/pinctrl@d401e000/gmac1_grp",
+        "property": "pinctrl-single,pins",
+        "official_extra_cells_hex": ["0xbc", "0x0", "0xb040"],
+        "meaning": "GPIO46，pin-id 47，MUX_MODE0，EDGE_NONE | PULL_DOWN | PAD_1V8_DS2。",
+        "rc2": "此三元組不存在。"
+      }
+    ],
+    "gpio_ranges_difference": "官方 DTB 有 GPIO45→pin46、GPIO46→pin47 的單腳映射；rc2 有 gpio-ranges，但未涵蓋 GPIO45／46，不能寫成整份 gpio-ranges 不存在。",
+    "version_binding_caution": "兩版核心的 reset ID 編號不同，不能把官方較新 DTB 的數值全部複製到 6.6.36。"
+  },
+  "driver_path_verified": [
+    {
+      "url": "https://github.com/BPI-SINOVOIP/pi-linux/blob/0d0af0d895251383baee939d44e523699e31889f/drivers/net/ethernet/spacemit/k1x-emac.c#L2076",
+      "finding": "EMAC reset 使用 gpio_request、gpio_direction_output 與 gpio_set_value；此處沒有自行設定腳位 mux。"
+    },
+    {
+      "url": "https://github.com/BPI-SINOVOIP/pi-linux/blob/0d0af0d895251383baee939d44e523699e31889f/drivers/gpio/gpio-k1x.c#L83",
+      "finding": "GPIO 輸出函式只寫資料與方向暫存器；第 374 行的 request 回呼是 gpiochip_generic_request。"
+    },
+    {
+      "url": "https://github.com/BPI-SINOVOIP/pi-linux/blob/0d0af0d895251383baee939d44e523699e31889f/drivers/pinctrl/core.c#L792",
+      "finding": "未找到精確 GPIO range 時，若同 GPIO chip 已有其他 range，pinctrl_gpio_request 可以直接成功返回而不選 mux。這說明 rc2 的 reset 腳位可能依賴先前初始化狀態，尚未證明本次實機正處於錯誤 mux。"
+    },
+    {
+      "url": "https://github.com/BPI-SINOVOIP/pi-linux/blob/0d0af0d895251383baee939d44e523699e31889f/include/dt-bindings/pinctrl/k1-x-pinctrl.h",
+      "finding": "PINID(x)=x+1；K1X_PADCONF 以 pin-id 乘 4；0xb040 解碼為上述低有效 reset 的板廠腳位設定。"
+    }
+  ],
+  "carrier_reference": {
+    "official_page": "https://docs.banana-pi.org/en/BPI-CM6/BananaPi_BPI-CM6",
+    "folder_url": "https://drive.google.com/drive/folders/1VwRMNDRAgObni_CIwOuLQ8c1SViLPSwy",
+    "file_url": "https://drive.google.com/file/d/1lUk9K-nXuALNHHxsmmIGpDfmYsadAzFX/view",
+    "file_name": "bpi_cm6_carrier_v00_sch-20251011.pdf",
+    "bytes": 1131949,
+    "sha256": "845d043473a2535b1d39fd91ecbc25ab3152ad1b33180660441745e2529091ff",
+    "page": 4,
+    "finding": "原理圖標示 BPI_CM6_Carrier、04.RGMII PHY；U5 為 RTL8211FI-CG，連接 GMAC1，PHY0 由核心板的 GBE0_MDI 差分線接到 RJ45。可確認官方雙埠拓樸，尚不能推定使用者是這個載板版本。"
+  },
+  "next_evidence": [
+    "eth0／eth1 的 NetworkManager STATE、REASON、NM-MANAGED、AUTOCONNECT 與連線名稱。",
+    "NetworkManager --print-config、/run/NetworkManager/conf.d、no-auto-default.state、udevadm 管理權屬資訊。",
+    "主代理已請使用者執行的 nmcli device connect eth0 結果，以及同時段 NetworkManager 與核心日誌。",
+    "若管理層要求啟用卻失敗，再依 PHY 附接錯誤、ethtool、sysfs OF 路徑與載板版本核對 reset／時脈。"
+  ],
+  "changes_performed": "此調查沒有修改映像、DTB、網路設定或硬體狀態。診斷工具另行新增，僅輸出 collected_unverified。"
+}

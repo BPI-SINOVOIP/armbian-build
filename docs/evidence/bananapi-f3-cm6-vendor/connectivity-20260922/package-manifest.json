@@ -1,0 +1,172 @@
+{
+  "schema_version": 1,
+  "board": "bpi-cm6",
+  "status": "candidate_unverified",
+  "package": "bpi-cm6-bluetooth",
+  "version": "0.1.0~20260922rc2",
+  "architecture": "riscv64",
+  "artifact": "bpi-cm6-bluetooth_0.1.0~20260922rc2_riscv64.deb",
+  "bytes": 97448,
+  "sha256": "49531220e72a508aa015e8b99f2c82d99418df93a5beb421e7a132a7d1b519d5",
+  "source_build_manifest_sha256": "c3f818252563bb3679f96d950ed17e5d85eedadef60b0b760f0d8651f6a3a0b4",
+  "source": {
+    "repository": "https://github.com/spacemit-com/rtk_hciattach",
+    "commit": "9ce1210f63cce2da2ee7a347fa7f71cfb764aa20",
+    "url": "https://codeload.github.com/spacemit-com/rtk_hciattach/tar.gz/9ce1210f63cce2da2ee7a347fa7f71cfb764aa20",
+    "bytes": 33032,
+    "sha256": "9e77a9764f6a6fe2507784dd6221418d93d04fe6e2ea72f6a79069b663593bbe",
+    "license": "GPL-2.0-or-later",
+    "license_source": "https://github.com/spacemit-com/rtk_hciattach/blob/9ce1210f63cce2da2ee7a347fa7f71cfb764aa20/hciattach_rtk.c",
+    "license_note": "授權依官方來源檔頭；保留完整原始碼與原授權文字供追溯，不宣稱自行取得額外授權。"
+  },
+  "patches": [
+    {
+      "path": "0001-uart-failure-defer-to-service.patch",
+      "sha256": "235f595eeb1dbc137388d2f3a8d2787df61eff96266d020b6a295141c2a5561c",
+      "target": "hciattach.c",
+      "before_sha256": "386900bb2164d89ce6669d90ddf08dd895d1ca561db950457ec78c6b49090dac",
+      "after_sha256": "f02855f415c38d7a0a59d316b8334edb862e4dad0499cc1b7fe7f8af1b50259e",
+      "purpose": "移除固定 rfkill0 的內部電源重設；UART 錯誤以非零退出交由服務重新選址，並初始化錯誤狀態避免未定義診斷值。"
+    }
+  ],
+  "source_lock_sha256": "ed8f3c1e1c41ab9e927a5520480043c979b275873ba9aa48e7ac1b87c64b36b4",
+  "files": {
+    "DEBIAN/control": {
+      "bytes": 434,
+      "sha256": "220e78bf8614be067b6c7030e2e4eda1fc0f274ced5bfbfd498391107376ba6b",
+      "mode": "0o644"
+    },
+    "DEBIAN/postinst": {
+      "bytes": 832,
+      "sha256": "633df8e29de46e109f06a9727cad11bdcc54e27514f853b5b509517c8f56bfdc",
+      "mode": "0o755"
+    },
+    "DEBIAN/postrm": {
+      "bytes": 264,
+      "sha256": "2edd1f772c726bef4952cb4bd207b48ec3198a87736e74a7434a91d7a31b7fee",
+      "mode": "0o755"
+    },
+    "DEBIAN/preinst": {
+      "bytes": 411,
+      "sha256": "ffc35db1e7dbd3c857da60fb46197b3cd1ef533cfd6009f2aabc394b6fdc1c55",
+      "mode": "0o755"
+    },
+    "DEBIAN/prerm": {
+      "bytes": 214,
+      "sha256": "080d377d99e2df28e91ba01c24f401303ae13b2b1a57627f4b7ed543f224b7e9",
+      "mode": "0o755"
+    },
+    "usr/lib/bpi-cm6-bluetooth/rtk_hciattach": {
+      "bytes": 69168,
+      "sha256": "05a8e84111066ddb85d4399230254814a860dae355892673d74005b60ad8ccd6",
+      "mode": "0o755"
+    },
+    "usr/lib/systemd/system/bpi-cm6-bluetooth.service": {
+      "bytes": 468,
+      "sha256": "2503ea2a36fb41158b29708bcaa24177fc7c5ddf9680cdad168fbbfe61ae1658",
+      "mode": "0o644"
+    },
+    "usr/sbin/bpi-cm6-bluetooth": {
+      "bytes": 8368,
+      "sha256": "6ddd47b72f356c6420cd0c40025f6e8e083ee3337e836ab9a9ba9f5f579cc667",
+      "mode": "0o755"
+    },
+    "usr/share/bpi-cm6-bluetooth/source-lock.json": {
+      "bytes": 2894,
+      "sha256": "ed8f3c1e1c41ab9e927a5520480043c979b275873ba9aa48e7ac1b87c64b36b4",
+      "mode": "0o644"
+    },
+    "usr/share/doc/bpi-cm6-bluetooth/build-manifest.json": {
+      "bytes": 6174,
+      "sha256": "c3f818252563bb3679f96d950ed17e5d85eedadef60b0b760f0d8651f6a3a0b4",
+      "mode": "0o644"
+    },
+    "usr/share/doc/bpi-cm6-bluetooth/build.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "mode": "0o644"
+    },
+    "usr/share/doc/bpi-cm6-bluetooth/build.stdout": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "mode": "0o644"
+    },
+    "usr/share/doc/bpi-cm6-bluetooth/compiler.txt": {
+      "bytes": 267,
+      "sha256": "caf872b9ceb439ca02b148541da0ae75e4c81c9dbbca7a374491ef03ea997314",
+      "mode": "0o644"
+    },
+    "usr/share/doc/bpi-cm6-bluetooth/patch.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "mode": "0o644"
+    },
+    "usr/share/doc/bpi-cm6-bluetooth/patch.stdout": {
+      "bytes": 26,
+      "sha256": "2a1887c75ea7c3f9d93a2589a83c30d6f6a9dac4e9f52a2c5b6fdf993a11258c",
+      "mode": "0o644"
+    },
+    "usr/share/doc/bpi-cm6-bluetooth/patches/0001-uart-failure-defer-to-service.patch": {
+      "bytes": 2199,
+      "sha256": "235f595eeb1dbc137388d2f3a8d2787df61eff96266d020b6a295141c2a5561c",
+      "mode": "0o644"
+    },
+    "usr/share/doc/bpi-cm6-bluetooth/readelf.txt": {
+      "bytes": 6672,
+      "sha256": "f1fdf88e6a4ca5d5d067dc663bcf46dc2dc63fb1c0d97fd7225731bf44b043fe",
+      "mode": "0o644"
+    },
+    "usr/share/doc/bpi-cm6-bluetooth/rtk_hciattach-source.tar.gz": {
+      "bytes": 33032,
+      "sha256": "9e77a9764f6a6fe2507784dd6221418d93d04fe6e2ea72f6a79069b663593bbe",
+      "mode": "0o644"
+    },
+    "usr/share/doc/bpi-cm6-bluetooth/source/Makefile": {
+      "bytes": 402,
+      "sha256": "7f7964d78cef3d5d0ae062baa5a2ffec6de769b6376ff627174db5055f1c4ba7",
+      "mode": "0o644"
+    },
+    "usr/share/doc/bpi-cm6-bluetooth/source/hciattach.c": {
+      "bytes": 11701,
+      "sha256": "f02855f415c38d7a0a59d316b8334edb862e4dad0499cc1b7fe7f8af1b50259e",
+      "mode": "0o644"
+    },
+    "usr/share/doc/bpi-cm6-bluetooth/source/hciattach.h": {
+      "bytes": 5230,
+      "sha256": "220064b5e45bc5ce1086a999e9d516307a7eb3d318ec7f7306a8d6ad0cebf160",
+      "mode": "0o644"
+    },
+    "usr/share/doc/bpi-cm6-bluetooth/source/hciattach_h4.c": {
+      "bytes": 10065,
+      "sha256": "daf0ed42fb835f7bbef07fa4ffd7cf4334c1bfd66c570bf688032ae09e146214",
+      "mode": "0o644"
+    },
+    "usr/share/doc/bpi-cm6-bluetooth/source/hciattach_h4.h": {
+      "bytes": 502,
+      "sha256": "0b9990719b3d4215691a7313f04f87825126203d266bad8abdb7da78fda3f2fc",
+      "mode": "0o644"
+    },
+    "usr/share/doc/bpi-cm6-bluetooth/source/hciattach_rtk.c": {
+      "bytes": 56680,
+      "sha256": "e5d8df8fba521201513d2a3c83bda98fb31ac02488d36a90cd5ac56b77f8f872",
+      "mode": "0o644"
+    },
+    "usr/share/doc/bpi-cm6-bluetooth/source/rtb_fwc.c": {
+      "bytes": 38932,
+      "sha256": "ca69273e2c83f8d0db1ae6a2facf17c6d8c15877b8a4cd25d77e5b6f0f650920",
+      "mode": "0o644"
+    },
+    "usr/share/doc/bpi-cm6-bluetooth/source/rtb_fwc.h": {
+      "bytes": 2933,
+      "sha256": "480553a7d224da8888b1a7fc155f7277504ad5d629b727ce23d78d07487f9b58",
+      "mode": "0o644"
+    },
+    "usr/share/doc/bpi-cm6-bluetooth/來源與驗證界線.txt": {
+      "bytes": 508,
+      "sha256": "07174f5f4c395501ee81e28652d464511517a037e16222c2cfd60bf9f573e354",
+      "mode": "0o644"
+    }
+  },
+  "bluetooth_hardware_validation": "pending",
+  "ethernet_fix": "not_included"
+}

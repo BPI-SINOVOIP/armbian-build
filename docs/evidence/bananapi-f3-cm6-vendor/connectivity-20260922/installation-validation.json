@@ -1,0 +1,8 @@
+{
+  "status": "passed",
+  "scope": "isolated-rc2-rootfs-install-remove-reinstall-upgrade-disable-preservation-and-purge",
+  "package_sha256": "49531220e72a508aa015e8b99f2c82d99418df93a5beb421e7a132a7d1b519d5",
+  "source_rootfs": "/media/pi/SMCI/bpi/f3-cm6-vendor-20260918-rc2/output/bpi-cm6-emmc/payload/rootfs.ext4",
+  "hardware_validation": "pending",
+  "host_sysfs_and_devices_exposed": false
+}

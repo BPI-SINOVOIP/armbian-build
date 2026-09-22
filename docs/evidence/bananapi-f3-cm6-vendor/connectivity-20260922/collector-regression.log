@@ -1,0 +1,16 @@
+test_command_permission_denied_is_explicit (test_collect_bpi_cm6_connectivity.ConnectivityTests.test_command_permission_denied_is_explicit) ... ok
+test_directory_limit_and_sysfs_snapshot_use_only_fixtures (test_collect_bpi_cm6_connectivity.ConnectivityTests.test_directory_limit_and_sysfs_snapshot_use_only_fixtures) ... ok
+test_existing_output_is_never_overwritten (test_collect_bpi_cm6_connectivity.ConnectivityTests.test_existing_output_is_never_overwritten) ... ok
+test_file_limit_fifo_and_symlink_escape (test_collect_bpi_cm6_connectivity.ConnectivityTests.test_file_limit_fifo_and_symlink_escape) ... ok
+test_file_permission_denied_is_explicit (test_collect_bpi_cm6_connectivity.ConnectivityTests.test_file_permission_denied_is_explicit) ... ok
+test_filesystem_timeout_preserves_partial_collection (test_collect_bpi_cm6_connectivity.ConnectivityTests.test_filesystem_timeout_preserves_partial_collection) ... ok
+test_fixed_commands_have_no_state_changing_operations (test_collect_bpi_cm6_connectivity.ConnectivityTests.test_fixed_commands_have_no_state_changing_operations) ... ok
+test_manifest_hashes_and_missing_commands_do_not_grant_pass (test_collect_bpi_cm6_connectivity.ConnectivityTests.test_manifest_hashes_and_missing_commands_do_not_grant_pass) ... ok
+test_missing_command_is_explicit (test_collect_bpi_cm6_connectivity.ConnectivityTests.test_missing_command_is_explicit) ... ok
+test_output_limit_stops_unbounded_producer (test_collect_bpi_cm6_connectivity.ConnectivityTests.test_output_limit_stops_unbounded_producer) ... ok
+test_timeout_keeps_partial_output_and_stops_process (test_collect_bpi_cm6_connectivity.ConnectivityTests.test_timeout_keeps_partial_output_and_stops_process) ... ok
+
+----------------------------------------------------------------------
+Ran 11 tests in 0.336s
+
+OK

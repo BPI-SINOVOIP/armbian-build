@@ -1,0 +1,33 @@
+{
+  "date": "2026-09-22",
+  "folder": "https://drive.google.com/drive/folders/1B7huvEywIIBR3yd1OeNfCEy098Iog9mF",
+  "status": "uploaded_metadata_verified",
+  "remote_full_content_hash_verified": false,
+  "note": "連接器未提供雲端 checksum；已回讀名稱、容量、父目錄。下載端使用 SHA-256 核對內容。原始實機截圖未上傳。",
+  "files": [
+    {
+      "local_path": "/media/pi/SMCI/bpi/f3-cm6-connectivity-20260922/BPI-CM6_rc2_藍牙修正候選_20260922.zip",
+      "id": "1Ma7wKF_TCrGZlUz87CCZ2cav9D-SpKIA",
+      "url": "https://drive.google.com/file/d/1Ma7wKF_TCrGZlUz87CCZ2cav9D-SpKIA/view",
+      "bytes": 109861,
+      "local_sha256": "60b0172cd4c703e9d8117e937b2a89ffa815d7c9c70ca8e511f5fbf2e421f6e7",
+      "remote_name_size_parent_verified": true
+    },
+    {
+      "local_path": "/media/pi/SMCI/bpi/f3-cm6-connectivity-20260922/BPI-CM6_rc2_藍牙修正候選_20260922.zip.sha256",
+      "id": "1ajG9B1LO3cmXV3AsnehS14aqgg5UVKVj",
+      "url": "https://drive.google.com/file/d/1ajG9B1LO3cmXV3AsnehS14aqgg5UVKVj/view",
+      "bytes": 110,
+      "local_sha256": "df9f679f47a95f500c9d1934630f7b677f708856f99d06d6da42f2786d66900d",
+      "remote_name_size_parent_verified": true
+    },
+    {
+      "local_path": "/media/pi/SMCI/bpi/f3-cm6-connectivity-20260922/鏡像說明-20260922.txt",
+      "id": "1BC2xi80-jiGs9W3IR8pvig0bdcN-GmeC",
+      "url": "https://drive.google.com/file/d/1BC2xi80-jiGs9W3IR8pvig0bdcN-GmeC/view",
+      "bytes": 1258,
+      "local_sha256": "c6d949e33253a602f4b4db57fc2d9ecac81ced28ccf04dbae6ad302daede5689",
+      "remote_name_size_parent_verified": true
+    }
+  ]
+}

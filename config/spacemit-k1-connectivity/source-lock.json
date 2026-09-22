@@ -1,0 +1,54 @@
+{
+  "schema_version": 1,
+  "component": "bpi-cm6-bluetooth",
+  "source": {
+    "repository": "https://github.com/spacemit-com/rtk_hciattach",
+    "commit": "9ce1210f63cce2da2ee7a347fa7f71cfb764aa20",
+    "url": "https://codeload.github.com/spacemit-com/rtk_hciattach/tar.gz/9ce1210f63cce2da2ee7a347fa7f71cfb764aa20",
+    "bytes": 33032,
+    "sha256": "9e77a9764f6a6fe2507784dd6221418d93d04fe6e2ea72f6a79069b663593bbe",
+    "license": "GPL-2.0-or-later",
+    "license_source": "https://github.com/spacemit-com/rtk_hciattach/blob/9ce1210f63cce2da2ee7a347fa7f71cfb764aa20/hciattach_rtk.c",
+    "license_note": "授權依官方來源檔頭；保留完整原始碼與原授權文字供追溯，不宣稱自行取得額外授權。"
+  },
+  "compiler": {
+    "command": "riscv64-linux-gnu-gcc",
+    "target": "riscv64-linux-gnu",
+    "version": "13.3.0",
+    "sha256": "0c2a199ea3ae14d39b008fd4080d4b18d675b07daa17976c7d9755e8ea67310b"
+  },
+  "hardware_contract": {
+    "compatible": "bananapi,bpi-cm6",
+    "uart_of_path": "/soc/uart@d4017100",
+    "rfkill_name": "spacemit-bt",
+    "rfkill_type": "bluetooth",
+    "rfkill_of_path": "/rf-pwrseq/bt-pwrseq",
+    "protocol": "rtk_h5",
+    "initial_baud": 115200,
+    "firmware": {
+      "path": "/lib/firmware/rtlbt/rtl8852bs_fw",
+      "sha256": "af469c0df2af4d6a8721f442fef356a76ec4b72a605d53faffc1fa0cad595de5"
+    },
+    "firmware_config": {
+      "path": "/lib/firmware/rtlbt/rtl8852bs_config",
+      "sha256": "efa8915db59c5bc30aaa23e1f264656bbf425fcaf091db0954c27752a1d8f7a0"
+    }
+  },
+  "references": {
+    "official_startup": "https://github.com/spacemit-com/buildroot-ext/blob/855fba3e9458d69d08f71bad66e42e87979e6885/board/spacemit/k1/plt_overlay/etc/init.d/S40hci",
+    "board_dts": "https://github.com/BPI-SINOVOIP/pi-linux/blob/0d0af0d895251383baee939d44e523699e31889f/arch/riscv/boot/dts/spacemit/k1-x_deb1.dts",
+    "uart_aliases": "https://github.com/BPI-SINOVOIP/pi-linux/blob/0d0af0d895251383baee939d44e523699e31889f/arch/riscv/boot/dts/spacemit/k1-x.dtsi",
+    "power_driver": "https://github.com/BPI-SINOVOIP/pi-linux/blob/0d0af0d895251383baee939d44e523699e31889f/drivers/soc/spacemit/spacemit-rf/spacemit-bt.c"
+  },
+  "scope": "CM6 UART 藍牙初始化候選；現有韌體內容固定取自 rc2，尚待板上識別、韌體載入、掃描、配對及冷開機驗證。",
+  "patches": [
+    {
+      "path": "0001-uart-failure-defer-to-service.patch",
+      "sha256": "235f595eeb1dbc137388d2f3a8d2787df61eff96266d020b6a295141c2a5561c",
+      "target": "hciattach.c",
+      "before_sha256": "386900bb2164d89ce6669d90ddf08dd895d1ca561db950457ec78c6b49090dac",
+      "after_sha256": "f02855f415c38d7a0a59d316b8334edb862e4dad0499cc1b7fe7f8af1b50259e",
+      "purpose": "移除固定 rfkill0 的內部電源重設；UART 錯誤以非零退出交由服務重新選址，並初始化錯誤狀態避免未定義診斷值。"
+    }
+  ]
+}
