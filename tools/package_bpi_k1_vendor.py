@@ -23,6 +23,9 @@ import yaml
 REPO = Path(__file__).resolve().parents[1]
 MIB = 1024 * 1024
 DTBS = {"bpi-cm6": "k1-x_bpi_cm6.dtb", "bpi-f3": "k1-bananapi-f3.dtb"}
+CM6_CONNECTIVITY_DTB = "k1-x_bpi_cm6-eth0-reset.dtb"
+CM6_CONNECTIVITY_PATH = "/bpi-k1-vendor/" + CM6_CONNECTIVITY_DTB
+CM6_CONNECTIVITY_SHA256 = "f0b9795fda72868cd2bc9a6db0cf5aa2f15ea494f114a5b42adfc1fa931962c1"
 PARTS = [("fsbl", 128*1024, 256*1024, "factory/FSBL.bin"),
          ("env", 384*1024, 64*1024, "env.bin"),
          ("opensbi", MIB, MIB, "fw_dynamic.itb"),
@@ -88,13 +91,16 @@ def write(path, content, mode=0o644):
     path.chmod(mode)
 
 
-def extlinux(board, root_uuid):
+def extlinux(board, root_uuid, cm6_connectivity=False):
     if board not in DTBS:
         raise ValueError("不支援的板型")
+    if cm6_connectivity and board != "bpi-cm6":
+        raise ValueError("CM6 網路修正不能套用其他板型")
+    dtb_path = CM6_CONNECTIVITY_PATH if cm6_connectivity else "/dtb/spacemit/" + DTBS[board]
     root_uuid = str(uuid.UUID(root_uuid))
     return ("DEFAULT armbian\nTIMEOUT 20\nLABEL armbian\n"
             "  KERNEL /Image\n  INITRD /uInitrd\n"
-            f"  FDT /dtb/spacemit/{DTBS[board]}\n"
+            f"  FDT {dtb_path}\n"
             f"  APPEND root=UUID={root_uuid} rootwait rootfstype=ext4 rw "
             "earlycon=sbi console=tty1 console=ttyS0,115200 loglevel=4 "
             "fsck.repair=yes net.ifnames=0\n")
@@ -216,11 +222,25 @@ def normalize_kernel(boot):
             "image_sha256": digest(image)}
 
 
-def verify_boot_contract(payload, board, root_uuid, boot_uuid):
+def prepare_cm6_connectivity(boot, output):
+    """只在官方格式的開機樹副本新增獨立 DTB，保留套件原檔。"""
+    source = child_file(boot, "dtb/spacemit/" + DTBS["bpi-cm6"]).resolve()
+    target = boot / CM6_CONNECTIVITY_PATH.lstrip("/")
+    target.parent.mkdir(exist_ok=True)
+    manifest = output / "cm6-ethernet-dtb.json"
+    run([sys.executable, REPO / "tools/bpi_cm6_ethernet_dtb.py", "--source", source,
+         "--output", target, "--manifest", manifest], stdout=subprocess.DEVNULL)
+    record = json.loads(manifest.read_text())
+    if digest(regular(target)) != CM6_CONNECTIVITY_SHA256:
+        raise ValueError("產生的 CM6 DTB 與已實機驗證候選不同")
+    return record
+
+
+def verify_boot_contract(payload, board, root_uuid, boot_uuid, cm6_connectivity=False):
     def content(filesystem, name):
         return subprocess.check_output(["debugfs", "-R", "cat " + name,
                                         str(payload / filesystem)], stderr=subprocess.DEVNULL, text=True)
-    expected = extlinux(board, root_uuid)
+    expected = extlinux(board, root_uuid, cm6_connectivity)
     if content("bootfs.ext4", "/extlinux/extlinux.conf") != expected:
         raise ValueError("實際 bootfs 開機選項與板型或根分區不符")
     environment = content("bootfs.ext4", "/env_k1-x.txt")
@@ -234,6 +254,13 @@ def verify_boot_contract(payload, board, root_uuid, boot_uuid):
     marker = json.loads(content("rootfs.ext4", "/etc/bpi-k1-vendor.json"))
     if (marker["board"], marker["root_uuid"], marker["boot_uuid"]) != (board, root_uuid, boot_uuid):
         raise ValueError("根檔案系統內的媒體身分不符")
+    if cm6_connectivity:
+        if marker.get("boot_dtb_path") != CM6_CONNECTIVITY_PATH:
+            raise ValueError("CM6 核心更新入口未保留獨立網路修正 DTB")
+        data = subprocess.check_output(["debugfs", "-R", "cat " + CM6_CONNECTIVITY_PATH,
+                                        str(payload / "bootfs.ext4")], stderr=subprocess.DEVNULL)
+        if hashlib.sha256(data).hexdigest() != CM6_CONNECTIVITY_SHA256:
+            raise ValueError("bootfs 的 CM6 修正 DTB 與實機驗證內容不符")
     return {"status": "passed", "scope": "bootfs-extlinux-env-rootfs-fstab-marker"}
 
 
@@ -401,6 +428,9 @@ def build(args):
                 "release_id": candidate_release,
                 "reference_payloads": reference_hashes,
                 "sources_lock_sha256": reference_record["sources_lock_sha256"]}
+    cm6_connectivity = args.board == "bpi-cm6"
+    if cm6_connectivity:
+        identity["cm6_ethernet_dtb_sha256"] = CM6_CONNECTIVITY_SHA256
     root_uuid = str(uuid.uuid5(uuid.NAMESPACE_URL, json.dumps(identity, sort_keys=True) + ":root"))
     boot_uuid = str(uuid.uuid5(uuid.NAMESPACE_URL, json.dumps(identity, sort_keys=True) + ":boot"))
     run(["tune2fs", "-U", root_uuid, "-L", "armbian-root", payload / "rootfs.ext4"], stdout=subprocess.DEVNULL)
@@ -415,7 +445,8 @@ def build(args):
         if not (boot / name).is_file():
             raise ValueError(f"開機元件不存在：{name}")
     kernel_record = normalize_kernel(boot)
-    write(boot / "extlinux/extlinux.conf", extlinux(args.board, root_uuid))
+    ethernet_record = prepare_cm6_connectivity(boot, out) if cm6_connectivity else None
+    write(boot / "extlinux/extlinux.conf", extlinux(args.board, root_uuid, cm6_connectivity))
     write(boot / "env_k1-x.txt", "kernel_addr_r=0x08000000\nfdt_addr_r=0x31000000\n"
           "ramdisk_addr_r=0x21000000\npxefile_addr_r=0x0c200000\n"
           "bootcmd=sysboot ${bootfs_devname} ${boot_devnum}:${bootfs_part} any ${pxefile_addr_r} /extlinux/extlinux.conf\n")
@@ -438,7 +469,10 @@ def build(args):
                  f"UUID={boot_uuid} /boot ext4 defaults,noatime 0 2"]
         write(fstab, "\n".join(kept) + "\n")
         marker = {**identity, "root_uuid": root_uuid, "boot_uuid": boot_uuid,
-                  "dtb": DTBS[args.board], "hardware_validation": "pending"}
+                  "dtb": DTBS[args.board],
+                  "hardware_validation": "pending"}
+        if cm6_connectivity:
+            marker["boot_dtb_path"] = CM6_CONNECTIVITY_PATH
         write(mount / "etc/bpi-k1-vendor.json", json.dumps(marker, ensure_ascii=False, indent=2) + "\n")
         grow_tool = mount / "usr/local/sbin/bpi_k1_grow_rootfs.py"
         shutil.copyfile(REPO / "tools/bpi_k1_grow_rootfs.py", grow_tool)
@@ -464,7 +498,7 @@ def build(args):
                 shutil.rmtree(child)
         hook = '#!/usr/bin/python3\n"""更新核心後維持官方分區配置的開機選項。"""\nimport gzip,json,os,shutil\nfrom pathlib import Path\nm=json.loads(Path("/etc/bpi-k1-vendor.json").read_text())\n'
         hook += 'source=Path("/boot/vmlinuz")\nif not source.is_file():\n    raise SystemExit("找不到套件更新後的核心")\nwith source.open("rb") as f:\n    compressed=f.read(2)==b"\\x1f\\x8b"\ntarget=Path("/boot/Image.vendor-new")\nwith (gzip.open(source,"rb") if compressed else source.open("rb")) as src, target.open("wb") as dst:\n    shutil.copyfileobj(src,dst)\ndata=target.read_bytes()\nexpected={"bpi-cm6":b"23.2@6460340","bpi-f3":b"24.2@6603887"}[m["board"]]\nif len(data)>0x04200000 or (data[:4]!=b"\\xd0\\x0d\\xfe\\xed" and data[56:60]!=b"RSC\\x05") or expected not in data:\n    target.unlink()\n    raise SystemExit("核心格式、大小或 GPU 配套已變更，須重新驗證整套映像")\nos.replace(target,"/boot/Image")\n'
-        hook += 'text="DEFAULT armbian\\nTIMEOUT 20\\nLABEL armbian\\n  KERNEL /Image\\n  INITRD /uInitrd\\n  FDT /dtb/spacemit/"+m["dtb"]+"\\n  APPEND root=UUID="+m["root_uuid"]+" rootwait rootfstype=ext4 rw earlycon=sbi console=tty1 console=ttyS0,115200 loglevel=4 fsck.repair=yes net.ifnames=0\\n"\n'
+        hook += 'dtb_path=m.get("boot_dtb_path", "/dtb/spacemit/"+m["dtb"])\ntext="DEFAULT armbian\\nTIMEOUT 20\\nLABEL armbian\\n  KERNEL /Image\\n  INITRD /uInitrd\\n  FDT "+dtb_path+"\\n  APPEND root=UUID="+m["root_uuid"]+" rootwait rootfstype=ext4 rw earlycon=sbi console=tty1 console=ttyS0,115200 loglevel=4 fsck.repair=yes net.ifnames=0\\n"\n'
         hook += 'Path("/boot/extlinux").mkdir(exist_ok=True)\nPath("/boot/extlinux/extlinux.conf").write_text(text)\n'
         compile(hook, "zz-bpi-k1-vendor", "exec")
         write(mount / "etc/kernel/postinst.d/zz-bpi-k1-vendor", hook, 0o755)
@@ -476,7 +510,7 @@ def build(args):
         with (payload / name).open("rb") as stream:
             if filesystem_uuid(stream) != (root_uuid if name == "rootfs.ext4" else boot_uuid):
                 raise ValueError(f"建立的檔案系統 UUID 不符：{name}")
-    boot_contract = verify_boot_contract(payload, args.board, root_uuid, boot_uuid)
+    boot_contract = verify_boot_contract(payload, args.board, root_uuid, boot_uuid, cm6_connectivity)
     check_payloads(payload)
     layout_obj = layout((payload / "rootfs.ext4").stat().st_size, args.storage == "emmc")
     write(payload / "partition_universal.json", json.dumps(layout_obj, indent=2) + "\n")
@@ -490,6 +524,8 @@ def build(args):
                 "boot_kernel": kernel_record,
                 "boot_contract": boot_contract, "acceleration_preflight": preflight,
                 "reference": reference_record}
+    if ethernet_record:
+        manifest["cm6_ethernet_dtb"] = ethernet_record
     if args.storage == "sd":
         img = out / (stem + ".img")
         manifest["minimum_media_bytes"] = make_sd(payload, img, identity)

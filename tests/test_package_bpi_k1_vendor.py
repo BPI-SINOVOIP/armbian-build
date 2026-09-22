@@ -106,6 +106,42 @@ class VendorPackageTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             MODULE.extlinux("../board", value)
 
+    def test_cm6_connectivity_keeps_separate_boot_path_and_rejects_f3(self):
+        value = str(uuid.uuid4())
+        original = MODULE.extlinux("bpi-cm6", value)
+        revised = MODULE.extlinux("bpi-cm6", value, cm6_connectivity=True)
+        self.assertEqual(revised.replace(MODULE.CM6_CONNECTIVITY_PATH, "/dtb/spacemit/" + MODULE.DTBS["bpi-cm6"]), original)
+        with self.assertRaises(ValueError):
+            MODULE.extlinux("bpi-f3", value, cm6_connectivity=True)
+
+    def test_connectivity_boot_verifier_rejects_wrong_update_path_or_dtb(self):
+        root_uuid, boot_uuid = str(uuid.uuid4()), str(uuid.uuid4())
+        payload = self.base / "payload"
+        data = b"CM6-DTB"
+        marker = {"board": "bpi-cm6", "root_uuid": root_uuid, "boot_uuid": boot_uuid,
+                  "dtb": MODULE.DTBS["bpi-cm6"], "boot_dtb_path": MODULE.CM6_CONNECTIVITY_PATH}
+        def content(argv, **kwargs):
+            name = argv[2]
+            if name == "cat /extlinux/extlinux.conf":
+                return MODULE.extlinux("bpi-cm6", root_uuid, True)
+            if name == "cat /env_k1-x.txt":
+                return "bootcmd=sysboot ${bootfs_devname} ${boot_devnum}:${bootfs_part} any ${pxefile_addr_r} /extlinux/extlinux.conf"
+            if name == "cat /etc/fstab":
+                return f"UUID={root_uuid} / ext4 defaults 0 1\nUUID={boot_uuid} /boot ext4 defaults 0 2\n"
+            if name == "cat /etc/bpi-k1-vendor.json":
+                return json.dumps(marker)
+            return data
+        with patch.object(MODULE.subprocess, "check_output", side_effect=content), \
+                patch.object(MODULE, "CM6_CONNECTIVITY_SHA256", sha(data)):
+            self.assertEqual(MODULE.verify_boot_contract(payload, "bpi-cm6", root_uuid, boot_uuid, True)["status"], "passed")
+            marker["boot_dtb_path"] = "/dtb/spacemit/" + MODULE.DTBS["bpi-cm6"]
+            with self.assertRaisesRegex(ValueError, "核心更新入口"):
+                MODULE.verify_boot_contract(payload, "bpi-cm6", root_uuid, boot_uuid, True)
+            marker["boot_dtb_path"] = MODULE.CM6_CONNECTIVITY_PATH
+            data = b"changed"
+            with self.assertRaisesRegex(ValueError, "實機驗證內容"):
+                MODULE.verify_boot_contract(payload, "bpi-cm6", root_uuid, boot_uuid, True)
+
     def kernel(self, data):
         boot = self.base / "boot"
         boot.mkdir(exist_ok=True)

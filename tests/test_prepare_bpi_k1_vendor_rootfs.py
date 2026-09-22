@@ -150,6 +150,7 @@ class PrepareRootfsTests(unittest.TestCase):
                     "artifact": path.name, "version": "0.1.0~test", "bytes": path.stat().st_size,
                     "sha256": MOD.sha256(path), "source": json.loads((REPO / "config/spacemit-k1-connectivity/source-lock.json").read_text())["source"]}
         metadata["patches"] = json.loads((REPO / "config/spacemit-k1-connectivity/source-lock.json").read_text())["patches"]
+        metadata["firmware_source"] = json.loads((REPO / "config/spacemit-k1-connectivity/source-lock.json").read_text())["firmware_source"]
         metadata["source_lock_sha256"] = MOD.sha256(REPO / "config/spacemit-k1-connectivity/source-lock.json")
         (self.cache / "package-manifest.json").write_text(json.dumps(metadata))
         return path, metadata

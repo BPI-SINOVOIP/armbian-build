@@ -7,3 +7,5 @@ patch/kernel/archive/sunplus-sp7021-bpi-5.4/*.patch -whitespace
 patch/u-boot/u-boot-sunplus-sp7021-bpi-legacy/*.patch -whitespace
 patch/kernel/archive/bananapim6-legacy/*.patch -whitespace
 patch/u-boot/legacy/u-boot-vs680-bananapim6/*.patch -whitespace
+# 保留已鎖定補丁中空白上下文行的單一前綴空格。
+config/spacemit-k1-connectivity/0002-cm6-private-firmware.patch whitespace=-blank-at-eol

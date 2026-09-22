@@ -30,6 +30,22 @@ class BluetoothPackageTests(unittest.TestCase):
                      "patches": [{"path": "fixture.patch", "target": "hciattach.c",
                                   "sha256": hashlib.sha256(b"patch-fixture").hexdigest(),
                                   "after_sha256": hashlib.sha256(b"patched-source").hexdigest()}]}
+        firmware_files = {"firmware-source.tar.xz": b"firmware-archive-fixture",
+                          "firmware/copyright": b"copyright-fixture",
+                          "firmware/rtl8852bs_fw": b"firmware-fixture",
+                          "firmware/rtl8852bs_config": b"config-fixture"}
+        for name, content in firmware_files.items():
+            path = self.root / name
+            path.parent.mkdir(exist_ok=True)
+            path.write_bytes(content)
+        def identity(name):
+            path = self.root / name
+            return {"bytes": path.stat().st_size, "sha256": MOD.digest(path)}
+        self.lock["firmware_source"] = {**identity("firmware-source.tar.xz"),
+                                        "copyright": identity("firmware/copyright")}
+        self.lock["hardware_contract"] = {
+            field: {**identity("firmware/" + name), "path": "/" + MOD.FIRMWARE_ROOT + name}
+            for field, name in MOD.FIRMWARE_FILES.items()}
         (self.root / "patches").mkdir()
         (self.root / "patches/fixture.patch").write_bytes(b"patch-fixture")
         (self.root / "source").mkdir()
@@ -42,11 +58,13 @@ class BluetoothPackageTests(unittest.TestCase):
         struct.pack_into("<H", header, 18, 243)
         (self.root / "bin/rtk_hciattach").write_bytes(header)
         self.record = {"status": "complete", "board": "bpi-cm6", "source": self.lock["source"],
+                       "firmware_source": self.lock["firmware_source"],
                        "patches": self.lock["patches"],
                        "source_files_after_patch": {"hciattach.c": MOD.digest(self.root / "source/hciattach.c")},
                        "source_lock_sha256": MOD.digest(self.config / "source-lock.json"),
                        "files": {name: {"bytes": (self.root / name).stat().st_size, "sha256": MOD.digest(self.root / name)}
                                  for name in ("source.tar.gz", "source-lock.json", "bin/rtk_hciattach", "patches/fixture.patch", "source/hciattach.c")}}
+        self.record["files"].update({name: identity(name) for name in firmware_files})
         self.save()
         patch = mock.patch.object(MOD, "CONFIG", self.config)
         patch.start()
@@ -96,6 +114,35 @@ class BluetoothPackageTests(unittest.TestCase):
         self.record["files"]["source/hciattach.c"] = {"bytes": path.stat().st_size, "sha256": MOD.digest(path)}
         self.record["source_files_after_patch"]["hciattach.c"] = MOD.digest(path);self.save()
         with self.assertRaises(ValueError): MOD.verify_build(self.root)
+
+    def test_self_consistent_firmware_replacement_is_rejected(self):
+        path = self.root / "firmware/rtl8852bs_fw"
+        path.write_bytes(b"replacement-firmware")
+        self.record["files"]["firmware/rtl8852bs_fw"] = {
+            "bytes": path.stat().st_size, "sha256": MOD.digest(path)}
+        self.save()
+        with self.assertRaisesRegex(ValueError, "固定來源鎖"):
+            MOD.verify_build(self.root)
+
+    def test_firmware_source_and_copyright_evidence_are_required(self):
+        for name in ("firmware-source.tar.xz", "firmware/copyright"):
+            with self.subTest(name=name):
+                value = self.record["files"].pop(name)
+                self.save()
+                with self.assertRaisesRegex(ValueError, "來源證據"):
+                    MOD.verify_build(self.root)
+                self.record["files"][name] = value
+
+    def test_firmware_cannot_target_armbian_managed_path(self):
+        self.lock["hardware_contract"]["firmware"]["path"] = "/lib/firmware/rtlbt/rtl8852bs_fw"
+        (self.config / "source-lock.json").write_text(json.dumps(self.lock))
+        (self.root / "source-lock.json").write_bytes((self.config / "source-lock.json").read_bytes())
+        self.record["source_lock_sha256"] = MOD.digest(self.config / "source-lock.json")
+        path = self.root / "source-lock.json"
+        self.record["files"]["source-lock.json"] = {"bytes": path.stat().st_size, "sha256": MOD.digest(path)}
+        self.save()
+        with self.assertRaisesRegex(ValueError, "獨立安裝路徑"):
+            MOD.verify_build(self.root)
 
 
 if __name__ == "__main__":

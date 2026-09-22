@@ -1,0 +1,16 @@
+僅將 CM6 helper 的韌體與設定搜尋目錄改為套件私有位置，保留原有載入流程。
+
+diff --git a/rtb_fwc.c b/rtb_fwc.c
+--- a/rtb_fwc.c
++++ b/rtb_fwc.c
+@@ -34,8 +34,8 @@
+ 
+ #define ARRAY_SIZE(a)	(sizeof(a) / sizeof(a[0]))
+ 
+-#define FIRMWARE_DIRECTORY	"/lib/firmware/rtlbt/"
+-#define BT_CONFIG_DIRECTORY	"/lib/firmware/rtlbt/"
++#define FIRMWARE_DIRECTORY	"/usr/lib/bpi-cm6-bluetooth/firmware/"
++#define BT_CONFIG_DIRECTORY	"/usr/lib/bpi-cm6-bluetooth/firmware/"
+ #define EXTRA_CONFIG_FILE	"/opt/rtk_btconfig.txt"
+ #define BT_ADDR_FILE		"/opt/bdaddr"
+ #define BDADDR_STRING_LEN	17

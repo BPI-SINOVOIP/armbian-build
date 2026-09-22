@@ -19,6 +19,12 @@ ROOT = Path(__file__).resolve().parents[1]
 LOCK = ROOT / "config/spacemit-k1-connectivity/source-lock.json"
 SOURCES = ("hciattach.c", "hciattach_rtk.c", "hciattach_h4.c", "rtb_fwc.c")
 SOURCE_FILES = set(SOURCES) | {"Makefile", "hciattach.h", "hciattach_h4.h", "rtb_fwc.h"}
+PATCH_TARGETS = {
+    "0001-uart-failure-defer-to-service.patch": "hciattach.c",
+    "0002-cm6-private-firmware.patch": "rtb_fwc.c",
+}
+FIRMWARE_NAMES = {"firmware": "rtl8852bs_fw", "firmware_config": "rtl8852bs_config"}
+PRIVATE_FIRMWARE_DIRECTORY = "/usr/lib/bpi-cm6-bluetooth/firmware/"
 
 
 class ChineseArgumentParser(argparse.ArgumentParser):
@@ -80,12 +86,13 @@ def validate_elf(data):
 
 def validate_patches(record, patch_root):
     patches = record.get("patches", [])
-    require(len(patches) == 1, "必須提供固定的 UART 錯誤恢復補丁")
+    require([item.get("path") for item in patches] == list(PATCH_TARGETS),
+            "必須提供依固定順序排列的 UART 恢復與 CM6 私有韌體補丁")
     result = []
     for item in patches:
         name = item["path"]
         require(Path(name).name == name and name.endswith(".patch"), "本機補丁路徑不合法")
-        require(item["target"] == "hciattach.c", "補丁目標不符受控範圍")
+        require(item["target"] == PATCH_TARGETS[name], "補丁目標不符受控範圍")
         path = patch_root / name
         require(not path.is_symlink(), "本機補丁不得為符號連結")
         data = path.read_bytes()
@@ -99,6 +106,8 @@ def apply_patches(source_dir, output, patches):
     patch_dir.mkdir()
     for item, data in patches:
         target = source_dir / item["target"]
+        untouched = {name: sha((source_dir / name).read_bytes())
+                     for name in SOURCE_FILES if name != item["target"]}
         require(sha(target.read_bytes()) == item["before_sha256"], "套用補丁前的官方來源不符")
         path = patch_dir / item["path"]
         path.write_bytes(data)
@@ -106,13 +115,68 @@ def apply_patches(source_dir, output, patches):
                                  "-p1", "-d", str(source_dir), "--input", str(path)],
                                 capture_output=True, stdin=subprocess.DEVNULL, timeout=30,
                                 env={**os.environ, "LC_ALL": "C"})
-        (output / "patch.stdout").write_bytes(result.stdout)
-        (output / "patch.stderr").write_bytes(result.stderr)
-        require(result.returncode == 0, "本機補丁套用失敗，請查看 patch.stderr")
+        path.with_name(path.name + ".stdout").write_bytes(result.stdout)
+        path.with_name(path.name + ".stderr").write_bytes(result.stderr)
+        require(result.returncode == 0, "本機補丁套用失敗，請查看個別補丁的 stderr")
         require(sha(target.read_bytes()) == item["after_sha256"], "套用補丁後的來源 SHA-256 不符")
+        require(all(sha((source_dir / name).read_bytes()) == digest for name, digest in untouched.items()),
+                "補丁改變了指定檔案以外的來源")
     text = (source_dir / "hciattach.c").read_text()
     require(all(value not in text for value in ("RFKILL_NODE", "reset_bluetooth", "/sys/class/rfkill/", "goto start;")),
             "藍牙 helper 仍含繞過選址的內部電源恢復流程")
+    firmware_text = (source_dir / "rtb_fwc.c").read_text()
+    for name in ("FIRMWARE_DIRECTORY", "BT_CONFIG_DIRECTORY"):
+        require(f'#define {name}\t"{PRIVATE_FIRMWARE_DIRECTORY}"' in firmware_text,
+                "CM6 helper 未使用固定私有韌體目錄")
+
+
+def validate_firmware_archive(data, record):
+    """僅讀取固定 tar 成員，不解開路徑、不接受所選檔案的連結。"""
+    source = record["firmware_source"]
+    require(len(data) == source["bytes"] and sha(data) == source["sha256"],
+            "官方韌體來源壓縮檔大小或 SHA-256 不符")
+    selected = {}
+    for field, name in FIRMWARE_NAMES.items():
+        item = record["hardware_contract"][field]
+        require(item["path"] == PRIVATE_FIRMWARE_DIRECTORY + name, "韌體安裝路徑不是固定 CM6 私有目錄")
+        member = source["selected_paths"][field]
+        require(member == "spacemit-uart-bt/lib/firmware/rtlbt/" + name,
+                "韌體來源成員路徑不符受控範圍")
+        selected[member] = (name, item)
+    copyright_record = source["copyright"]
+    require(copyright_record["path"] == "spacemit-uart-bt/debian/copyright", "原授權追溯檔路徑不符")
+    selected[copyright_record["path"]] = ("copyright", copyright_record)
+    files = {}
+    total = 0
+    with tarfile.open(fileobj=io.BytesIO(data), mode="r:xz") as archive:
+        for index, member in enumerate(archive, 1):
+            total += member.size
+            require(index <= 4096 and 0 <= member.size <= 64 * 1024 * 1024
+                    and total <= 128 * 1024 * 1024, "韌體來源成員數量或解壓大小超出上限")
+            if member.name not in selected:
+                continue
+            name, expected = selected[member.name]
+            require(name not in files, "韌體來源含重複的指定成員")
+            require(member.isfile(), "指定韌體來源成員必須是一般檔案，不能是連結")
+            require(member.size == expected["bytes"] and member.size <= 1024 * 1024,
+                    "指定韌體來源成員大小不符")
+            content = archive.extractfile(member).read(expected["bytes"] + 1)
+            require(len(content) == expected["bytes"] and sha(content) == expected["sha256"],
+                    "指定韌體來源成員大小或 SHA-256 不符")
+            files[name] = content
+    require(set(files) == {*FIRMWARE_NAMES.values(), "copyright"}, "韌體來源缺少指定檔案或原授權追溯檔")
+    return files
+
+
+def load_archive(path, source):
+    if path is None:
+        with urllib.request.urlopen(source["url"], timeout=30) as response:
+            return response.read(source["bytes"] + 1)
+    path = Path(path)
+    require(path.is_file() and not path.is_symlink(), "來源壓縮檔必須是一般檔案，不能是連結或裝置")
+    require(path.stat().st_size == source["bytes"], "來源壓縮檔大小不符")
+    with path.open("rb") as stream:
+        return stream.read(source["bytes"] + 1)
 
 
 def capture(argv, timeout=30):
@@ -123,8 +187,9 @@ def capture(argv, timeout=30):
     return result.stdout.decode()
 
 
-def build(output, source_archive=None):
-    record = json.loads(LOCK.read_text())
+def build(output, source_archive=None, firmware_archive=None):
+    lock_data = LOCK.read_bytes()
+    record = json.loads(lock_data)
     source = record["source"]
     expected = record["compiler"]
     compiler_path = shutil.which(expected["command"])
@@ -137,21 +202,24 @@ def build(output, source_archive=None):
     require(version == expected["version"] and target == expected["target"], "交叉編譯器版本或目標不符")
     version_text = capture([str(compiler), "--version"])
     require(not output.exists(), "輸出目錄已存在，請使用新的建置目錄")
-    if source_archive:
-        data = source_archive.read_bytes()
-    else:
-        with urllib.request.urlopen(source["url"], timeout=30) as response:
-            data = response.read(source["bytes"] + 1)
+    data = load_archive(source_archive, source)
     files = validate_archive(data, source)
     patches = validate_patches(record, LOCK.parent)
+    firmware_data = load_archive(firmware_archive, record["firmware_source"])
+    firmware_files = validate_firmware_archive(firmware_data, record)
     output.mkdir(parents=True)
     (output / "source.tar.gz").write_bytes(data)
+    (output / "firmware-source.tar.xz").write_bytes(firmware_data)
+    firmware_dir = output / "firmware"
+    firmware_dir.mkdir()
+    for name, content in firmware_files.items():
+        (firmware_dir / name).write_bytes(content)
     source_dir = output / "source"
     source_dir.mkdir()
     for name, content in sorted(files.items()):
         (source_dir / name).write_bytes(content)
     apply_patches(source_dir, output, patches)
-    (output / "source-lock.json").write_text(LOCK.read_text())
+    (output / "source-lock.json").write_bytes(lock_data)
     binary_dir = output / "bin"
     binary_dir.mkdir()
     binary = binary_dir / "rtk_hciattach"
@@ -178,13 +246,14 @@ def build(output, source_archive=None):
             evidence[path.relative_to(output).as_posix()] = {"bytes": path.stat().st_size, "sha256": sha(path.read_bytes())}
     manifest = {"schema_version": 1, "status": "complete", "scope": "source-cross-compile-elf",
                 "board": "bpi-cm6", "hardware_validation": "pending", "source": source,
-                "source_lock_sha256": sha(LOCK.read_bytes()),
+                "source_lock_sha256": sha(lock_data),
+                "firmware_source": record["firmware_source"],
                 "patches": record["patches"],
                 "source_files_after_patch": {name: sha((source_dir / name).read_bytes()) for name in sorted(SOURCE_FILES)},
                 "compiler": {"path": str(compiler), "sha256": compiler_sha, "version": version, "target": target},
                 "readelf": {"path": readelf, "sha256": sha(Path(readelf).read_bytes())},
                 "command": argv, "elf": elf, "files": evidence,
-                "limitation": "只證明固定來源交叉編譯與 ELF 格式；未執行 UART、下載板上韌體或證明藍牙可用。"}
+                "limitation": "只證明固定來源交叉編譯、ELF 格式與所選韌體完整性；未執行 UART、下載板上韌體或證明藍牙可用。"}
     (output / "build-manifest.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n")
     return manifest
 
@@ -193,9 +262,11 @@ def main():
     parser = ChineseArgumentParser(description="編譯並留存 CM6 專用藍牙工具的來源與 ABI 證據")
     parser.add_argument("--output", type=Path, required=True, metavar="目錄", help="必須尚不存在的獨立輸出目錄")
     parser.add_argument("--source-archive", type=Path, metavar="來源壓縮檔", help="可選的既有官方壓縮檔，仍須通過固定 SHA-256")
+    parser.add_argument("--firmware-archive", type=Path, metavar="韌體來源壓縮檔",
+                        help="可選的官方韌體來源壓縮檔；未提供時下載已鎖定版本，仍核對大小與 SHA-256")
     args = parser.parse_args()
     try:
-        manifest = build(args.output.resolve(), args.source_archive)
+        manifest = build(args.output.resolve(), args.source_archive, args.firmware_archive)
         print(json.dumps({"status": manifest["status"], "output": str(args.output),
                           "binary_sha256": manifest["files"]["bin/rtk_hciattach"]["sha256"],
                           "hardware_validation": "pending"}, ensure_ascii=False))

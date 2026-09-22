@@ -48,7 +48,7 @@ COMMANDS = (
     ("rfkill", ("rfkill", "--json", "list")),
     ("bluetooth_list", ("bluetoothctl", "--timeout", "5", "list")),
     ("bluetooth_show", ("bluetoothctl", "--timeout", "5", "show")),
-    ("kernel_journal", ("journalctl", "--boot", "--kernel", "--no-pager", "--lines=200", "--output=short-monotonic")),
+    ("kernel_journal", ("journalctl", "--boot", "--dmesg", "--no-pager", "--lines=200", "--output=short-monotonic")),
     ("nm_journal", ("journalctl", "--boot", "--unit=NetworkManager.service", "--no-pager", "--lines=200", "--output=short-monotonic")),
     ("bluetooth_journal", ("journalctl", "--boot", "--unit=bluetooth.service", "--unit=bpi-cm6-bluetooth.service", "--no-pager", "--lines=200", "--output=short-monotonic")),
 )

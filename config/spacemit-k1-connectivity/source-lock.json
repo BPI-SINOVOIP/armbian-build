@@ -26,11 +26,13 @@
     "protocol": "rtk_h5",
     "initial_baud": 115200,
     "firmware": {
-      "path": "/lib/firmware/rtlbt/rtl8852bs_fw",
-      "sha256": "af469c0df2af4d6a8721f442fef356a76ec4b72a605d53faffc1fa0cad595de5"
+      "path": "/usr/lib/bpi-cm6-bluetooth/firmware/rtl8852bs_fw",
+      "bytes": 181658,
+      "sha256": "a3a203199fd7cafaa5bd22d34b08b7ff5ad3ee0339d7a2bc95e02577d9d3d88a"
     },
     "firmware_config": {
-      "path": "/lib/firmware/rtlbt/rtl8852bs_config",
+      "path": "/usr/lib/bpi-cm6-bluetooth/firmware/rtl8852bs_config",
+      "bytes": 33,
       "sha256": "efa8915db59c5bc30aaa23e1f264656bbf425fcaf091db0954c27752a1d8f7a0"
     }
   },
@@ -40,7 +42,7 @@
     "uart_aliases": "https://github.com/BPI-SINOVOIP/pi-linux/blob/0d0af0d895251383baee939d44e523699e31889f/arch/riscv/boot/dts/spacemit/k1-x.dtsi",
     "power_driver": "https://github.com/BPI-SINOVOIP/pi-linux/blob/0d0af0d895251383baee939d44e523699e31889f/drivers/soc/spacemit/spacemit-rf/spacemit-bt.c"
   },
-  "scope": "CM6 UART 藍牙初始化候選；現有韌體內容固定取自 rc2，尚待板上識別、韌體載入、掃描、配對及冷開機驗證。",
+  "scope": "CM6 專用 UART 藍牙初始化與固定韌體；驗證範圍由各次硬體報告記錄。",
   "patches": [
     {
       "path": "0001-uart-failure-defer-to-service.patch",
@@ -49,6 +51,36 @@
       "before_sha256": "386900bb2164d89ce6669d90ddf08dd895d1ca561db950457ec78c6b49090dac",
       "after_sha256": "f02855f415c38d7a0a59d316b8334edb862e4dad0499cc1b7fe7f8af1b50259e",
       "purpose": "移除固定 rfkill0 的內部電源重設；UART 錯誤以非零退出交由服務重新選址，並初始化錯誤狀態避免未定義診斷值。"
+    },
+    {
+      "path": "0002-cm6-private-firmware.patch",
+      "sha256": "1d3b8b3021cf20d8fd64b86a7e4f2fd1d9a6446f34b74a7e1dbff078333c17e6",
+      "target": "rtb_fwc.c",
+      "before_sha256": "ca69273e2c83f8d0db1ae6a2facf17c6d8c15877b8a4cd25d77e5b6f0f650920",
+      "after_sha256": "e861db7da62fcd6035053304df757b8800b48a296a4f721fdb378cb58e4e6bad",
+      "purpose": "僅變更兩個搜尋目錄定義，使 CM6 helper 使用私有韌體及設定，不覆蓋 Armbian 共用韌體。"
     }
-  ]
+  ],
+  "firmware_source": {
+    "url": "https://archive.spacemit.com/bianbu/pool/main/s/spacemit-uart-bt/spacemit-uart-bt_2.8.tar.xz",
+    "bytes": 3200420,
+    "sha256": "a5c23e924d660143dd6d5e5e854f9451d4372f7760a8daffec65e4d42f725fed",
+    "selected_paths": {
+      "firmware": "spacemit-uart-bt/lib/firmware/rtlbt/rtl8852bs_fw",
+      "firmware_config": "spacemit-uart-bt/lib/firmware/rtlbt/rtl8852bs_config"
+    },
+    "copyright": {
+      "path": "spacemit-uart-bt/debian/copyright",
+      "bytes": 4909,
+      "sha256": "dbee8608a12bb5f41d3623db08e3a90015998824414d156bcb9038fda62f6785"
+    },
+    "license_status": "upstream_unspecified",
+    "license_note": "上游原授權追溯檔對所選韌體標示 __NO_COPYRIGHT_NOR_LICENSE__；如實保留原檔，不將 helper 的 GPL 授權套用到韌體。",
+    "hardware_reference": {
+      "image_name": "20260106-bianbu-lxqt-v2.3-bpi-cm6.img.xz",
+      "bytes": 1343376464,
+      "sha256": "daf11f2a4a925f0888f43bf420a7aea5b7cf6c91951b06c609d7a40486523fc3",
+      "note": "所選兩個檔案與本機已鎖定 CM6 板廠母映像中的韌體及設定逐位元組一致。"
+    }
+  }
 }

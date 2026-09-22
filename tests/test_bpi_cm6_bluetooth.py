@@ -291,6 +291,19 @@ class BluetoothSourceTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "必須提供"):
             BUILD.validate_patches({}, BUILD.LOCK.parent)
 
+    def test_patch_targets_and_order_remain_fixed(self):
+        record = json.loads(BUILD.LOCK.read_text())
+        self.assertEqual(len(BUILD.validate_patches(record, BUILD.LOCK.parent)), 2)
+        record["patches"][1]["target"] = "hciattach.c"
+        with self.assertRaisesRegex(ValueError, "目標"):
+            BUILD.validate_patches(record, BUILD.LOCK.parent)
+        record["patches"][1]["target"] = "../../outside"
+        with self.assertRaisesRegex(ValueError, "目標"):
+            BUILD.validate_patches(record, BUILD.LOCK.parent)
+        record["patches"].reverse()
+        with self.assertRaisesRegex(ValueError, "固定順序"):
+            BUILD.validate_patches(record, BUILD.LOCK.parent)
+
     def test_python_help_is_traditional_chinese(self):
         for path in (BUILD.__file__, RUNTIME.__file__):
             with self.subTest(path=path):
@@ -301,6 +314,99 @@ class BluetoothSourceTests(unittest.TestCase):
                 self.assertIn("顯示此說明後結束", result.stdout)
                 for text in ("usage:", "options:", "show this help"):
                     self.assertNotIn(text, result.stdout)
+
+
+class BluetoothFirmwareSourceTests(unittest.TestCase):
+    def archive(self, kind=None, missing_copyright=False, duplicate=False):
+        record = json.loads(BUILD.LOCK.read_text())
+        payloads = {"rtl8852bs_fw": b"firmware-fixture", "rtl8852bs_config": b"config-fixture",
+                    "copyright": "原授權追溯測試檔".encode()}
+        buffer = io.BytesIO()
+        with tarfile.open(fileobj=buffer, mode="w:xz") as archive:
+            selected = []
+            for field, name in BUILD.FIRMWARE_NAMES.items():
+                item = record["hardware_contract"][field]
+                item.update(bytes=len(payloads[name]), sha256=BUILD.sha(payloads[name]))
+                selected.append((record["firmware_source"]["selected_paths"][field], name))
+            copyright_record = record["firmware_source"]["copyright"]
+            copyright_record.update(bytes=len(payloads["copyright"]), sha256=BUILD.sha(payloads["copyright"]))
+            if not missing_copyright:
+                selected.append((copyright_record["path"], "copyright"))
+            if duplicate:
+                selected.append(selected[0])
+            for path, name in selected:
+                member = tarfile.TarInfo(path)
+                if name == "rtl8852bs_fw" and kind is not None:
+                    member.type = kind
+                    member.linkname = "/etc/passwd"
+                    archive.addfile(member)
+                else:
+                    member.size = len(payloads[name])
+                    archive.addfile(member, io.BytesIO(payloads[name]))
+        data = buffer.getvalue()
+        record["firmware_source"].update(bytes=len(data), sha256=BUILD.sha(data))
+        return data, record, payloads
+
+    def test_fixed_firmware_and_original_copyright_are_selected(self):
+        data, record, expected = self.archive()
+        self.assertEqual(BUILD.validate_firmware_archive(data, record), expected)
+
+    def test_archive_and_asset_hashes_are_both_checked(self):
+        data, record, _ = self.archive()
+        with self.assertRaisesRegex(ValueError, "壓縮檔大小或 SHA-256"):
+            BUILD.validate_firmware_archive(data + b"\0", record)
+        record["hardware_contract"]["firmware"]["sha256"] = "0" * 64
+        with self.assertRaisesRegex(ValueError, "成員大小或 SHA-256"):
+            BUILD.validate_firmware_archive(data, record)
+
+    def test_selected_file_size_and_copyright_hash_are_checked(self):
+        data, record, _ = self.archive()
+        record["hardware_contract"]["firmware_config"]["bytes"] += 1
+        with self.assertRaisesRegex(ValueError, "成員大小"):
+            BUILD.validate_firmware_archive(data, record)
+        data, record, _ = self.archive()
+        record["firmware_source"]["copyright"]["sha256"] = "0" * 64
+        with self.assertRaisesRegex(ValueError, "成員大小或 SHA-256"):
+            BUILD.validate_firmware_archive(data, record)
+
+    def test_selected_links_and_directories_are_rejected(self):
+        for kind in (tarfile.SYMTYPE, tarfile.LNKTYPE, tarfile.DIRTYPE):
+            with self.subTest(kind=kind):
+                data, record, _ = self.archive(kind=kind)
+                with self.assertRaisesRegex(ValueError, "一般檔案"):
+                    BUILD.validate_firmware_archive(data, record)
+
+    def test_missing_copyright_and_duplicate_asset_are_rejected(self):
+        data, record, _ = self.archive(missing_copyright=True)
+        with self.assertRaisesRegex(ValueError, "缺少"):
+            BUILD.validate_firmware_archive(data, record)
+        data, record, _ = self.archive(duplicate=True)
+        with self.assertRaisesRegex(ValueError, "重複"):
+            BUILD.validate_firmware_archive(data, record)
+
+    def test_archive_member_and_destination_paths_are_fixed(self):
+        data, record, _ = self.archive()
+        record["firmware_source"]["selected_paths"]["firmware"] = "../../outside"
+        with self.assertRaisesRegex(ValueError, "路徑"):
+            BUILD.validate_firmware_archive(data, record)
+        data, record, _ = self.archive()
+        record["hardware_contract"]["firmware"]["path"] = "/lib/firmware/rtlbt/rtl8852bs_fw"
+        with self.assertRaisesRegex(ValueError, "私有目錄"):
+            BUILD.validate_firmware_archive(data, record)
+
+    def test_local_archive_requires_regular_file_and_exact_size(self):
+        data, record, _ = self.archive()
+        with tempfile.TemporaryDirectory() as temporary:
+            source = Path(temporary) / "firmware.tar.xz"
+            source.write_bytes(data)
+            self.assertEqual(BUILD.load_archive(source, record["firmware_source"]), data)
+            linked = source.with_name("link.tar.xz")
+            linked.symlink_to(source)
+            with self.assertRaisesRegex(ValueError, "一般檔案"):
+                BUILD.load_archive(linked, record["firmware_source"])
+            source.write_bytes(data + b"\0")
+            with self.assertRaisesRegex(ValueError, "大小"):
+                BUILD.load_archive(source, record["firmware_source"])
 
 
 class BluetoothPatchedHelperTests(unittest.TestCase):
@@ -323,6 +429,8 @@ class BluetoothPatchedHelperTests(unittest.TestCase):
             (source / name).write_bytes(data)
         BUILD.apply_patches(source, cls.base, BUILD.validate_patches(record, BUILD.LOCK.parent))
         cls.patched_source = (source / "hciattach.c").read_text()
+        cls.firmware_original = files["rtb_fwc.c"].decode()
+        cls.firmware_patched = (source / "rtb_fwc.c").read_text()
         cls.uart = cls.base / "fake-uart"
         cls.uart.write_bytes(b"")
         harness = cls.base / "fake-uart.c"
@@ -407,6 +515,22 @@ int __wrap_ppoll(struct pollfd *fds, nfds_t count,
     def test_patched_source_has_no_fixed_rfkill_path(self):
         for text in ("RFKILL_NODE", "reset_bluetooth", "/sys/class/rfkill/", "goto start;"):
             self.assertNotIn(text, self.patched_source)
+
+    def test_firmware_patch_only_changes_two_directory_definitions(self):
+        expected = self.firmware_original.replace('"/lib/firmware/rtlbt/"',
+                                                 '"/usr/lib/bpi-cm6-bluetooth/firmware/"')
+        self.assertEqual(self.firmware_patched, expected)
+        changed = [(before, after) for before, after in
+                   zip(self.firmware_original.splitlines(), self.firmware_patched.splitlines()) if before != after]
+        self.assertEqual(len(changed), 2)
+        for name in ("FIRMWARE_DIRECTORY", "BT_CONFIG_DIRECTORY"):
+            self.assertTrue(any(before.startswith("#define " + name) for before, _ in changed))
+        self.assertIn(BUILD.PRIVATE_FIRMWARE_DIRECTORY.encode(), self.binary.read_bytes())
+
+    def test_each_patch_has_independent_build_logs(self):
+        for name in BUILD.PATCH_TARGETS:
+            self.assertTrue((self.base / "patches" / (name + ".stdout")).is_file())
+            self.assertTrue((self.base / "patches" / (name + ".stderr")).is_file())
 
 
 if __name__ == "__main__":

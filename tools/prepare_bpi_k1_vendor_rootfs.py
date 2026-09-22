@@ -95,6 +95,7 @@ def bluetooth_package(board, path):
             metadata.get("architecture") != "riscv64" or metadata.get("artifact") != package.name or
             metadata.get("source") != source_lock["source"] or
             metadata.get("patches") != source_lock["patches"] or
+            metadata.get("firmware_source") != source_lock["firmware_source"] or
             metadata.get("source_lock_sha256") != sha256(REPO / "config/spacemit-k1-connectivity/source-lock.json") or
             metadata.get("bytes") != package.stat().st_size or metadata.get("sha256") != sha256(package)):
         raise ValueError("CM6 藍牙套件與封裝紀錄不符")
@@ -292,6 +293,12 @@ def main():
         pinned = {lock["packages"][k]["Package"]: lock["packages"][k]["Version"]
                   for k in lock["profiles"][args.board]["packages"]}
         if bluetooth:
+            connectivity_lock = json.loads((REPO / "config/spacemit-k1-connectivity/source-lock.json").read_text())
+            for field in ("firmware", "firmware_config"):
+                asset = connectivity_lock["hardware_contract"][field]
+                installed = regular(mount / asset["path"].lstrip("/"))
+                if installed.stat().st_size != asset["bytes"] or sha256(installed) != asset["sha256"]:
+                    raise ValueError("安裝後的 CM6 藍牙韌體與固定內容不符：" + asset["path"])
             pinned["bpi-cm6-bluetooth"] = bluetooth[1]["version"]
             write(mount / "usr/share/bpi-cm6-bluetooth/package-manifest.json",
                   json.dumps(bluetooth[1], ensure_ascii=False, indent=2) + "\n")

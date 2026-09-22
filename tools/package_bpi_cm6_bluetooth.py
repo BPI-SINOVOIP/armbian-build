@@ -16,7 +16,9 @@ import sys
 REPO = Path(__file__).resolve().parents[1]
 CONFIG = REPO / "config/spacemit-k1-connectivity"
 PACKAGE = "bpi-cm6-bluetooth"
-DEFAULT_VERSION = "0.1.0~20260922rc2"
+DEFAULT_VERSION = "0.1.0~20260923rc3"
+FIRMWARE_ROOT = "usr/lib/bpi-cm6-bluetooth/firmware/"
+FIRMWARE_FILES = {"firmware": "rtl8852bs_fw", "firmware_config": "rtl8852bs_config"}
 
 
 class ChineseArgumentParser(argparse.ArgumentParser):
@@ -77,6 +79,22 @@ def verify_build(root):
     if not sources or any("source/" + name not in record["files"] or
                           digest(regular_child(root, "source/" + name)) != sha for name, sha in sources.items()):
         raise ValueError("缺少可追溯的完整修改後原始碼")
+    firmware_source = lock["firmware_source"]
+    if record.get("firmware_source") != firmware_source:
+        raise ValueError("藍牙韌體來源與固定官方套件不符")
+    required = {"firmware-source.tar.xz": firmware_source,
+                "firmware/copyright": firmware_source["copyright"]}
+    for field, name in FIRMWARE_FILES.items():
+        asset = lock["hardware_contract"][field]
+        if asset["path"] != "/" + FIRMWARE_ROOT + name:
+            raise ValueError("CM6 韌體必須使用獨立安裝路徑")
+        required["firmware/" + name] = asset
+    for name, asset in required.items():
+        if name not in record["files"]:
+            raise ValueError("建置缺少固定韌體或來源證據：" + name)
+        path = regular_child(root, name)
+        if path.stat().st_size != asset["bytes"] or digest(path) != asset["sha256"]:
+            raise ValueError("韌體或授權來源內容與固定來源鎖不符：" + name)
     header = regular_child(root, "bin/rtk_hciattach").read_bytes()[:64]
     if (len(header) < 64 or header[:6] != b"\x7fELF\x02\x01" or
             struct.unpack_from("<H", header, 18)[0] != 243):
@@ -169,6 +187,12 @@ def build(build_root, output, version=DEFAULT_VERSION):
     )
     for source, relative, mode in entries:
         copy(source, stage, relative, mode)
+    for name in FIRMWARE_FILES.values():
+        copy(regular_child(build_root, "firmware/" + name), stage, FIRMWARE_ROOT + name)
+    copy(regular_child(build_root, "firmware-source.tar.xz"), stage,
+         "usr/share/doc/bpi-cm6-bluetooth/firmware-source.tar.xz")
+    copy(regular_child(build_root, "firmware/copyright"), stage,
+         "usr/share/doc/bpi-cm6-bluetooth/firmware-copyright")
     for name in source_record["files"]:
         if name.startswith(("source/", "patches/")) or name in (
                 "build.stdout", "build.stderr", "compiler.txt", "readelf.txt", "patch.stdout", "patch.stderr"):
@@ -177,6 +201,8 @@ def build(build_root, output, version=DEFAULT_VERSION):
           "本套件補上 BPI-CM6 的 Realtek UART 藍牙啟動程序。\n"
           "來源鎖、官方原始碼封存檔、本機補丁、修改後完整原始碼與交叉編譯紀錄隨套件保存。\n"
           "本機補丁使 UART 異常直接退出，由服務依裝置樹重新選擇正確的藍牙電源節點。\n"
+          "CM6 使用官方固定韌體，安裝在專用目錄，不覆寫 Armbian 韌體套件的檔案。\n"
+          "韌體來源與原授權資料另行保存；helper 的 GPL 不代表韌體授權。\n"
           "第三方來源內的授權與著作權原文供法律追溯，原樣保留。\n"
           "安裝與服務啟動成功不能代替 HCI、掃描、配對及冷開機實測。\n"
           "移除套件可使用 sudo apt remove bpi-cm6-bluetooth。\n")
@@ -186,7 +212,7 @@ def build(build_root, output, version=DEFAULT_VERSION):
           "Depends: libc6 (>= 2.38), bluez, python3 (>= 3.10), kmod, init-system-helpers\n"
           f"Installed-Size: {installed_size}\n"
           "Description: BPI-CM6 板載藍牙啟動修正候選\n"
-          " 補上固定來源的 Realtek H5 工具與依裝置樹選址的啟動服務。\n"
+          " 包含官方固定韌體、Realtek H5 工具與依裝置樹選址的啟動服務。\n"
           " 硬體連線功能仍需實機驗證。\n")
     for name, content in (("preinst", PREINST), ("postinst", POSTINST), ("prerm", PRERM), ("postrm", POSTRM)):
         write(stage / "DEBIAN" / name, content, 0o755)
@@ -200,6 +226,7 @@ def build(build_root, output, version=DEFAULT_VERSION):
               "artifact": package.name, "bytes": package.stat().st_size, "sha256": digest(package),
               "source_build_manifest_sha256": digest(build_root / "build-manifest.json"),
               "source": source_record["source"], "patches": source_record["patches"],
+              "firmware_source": source_record["firmware_source"],
               "source_lock_sha256": source_record["source_lock_sha256"], "files": file_records,
               "bluetooth_hardware_validation": "pending", "ethernet_fix": "not_included"}
     write(output / "package-manifest.json", json.dumps(record, ensure_ascii=False, indent=2) + "\n")
