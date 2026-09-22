@@ -37,7 +37,7 @@ SD 已完成首次帳號設定、繁體中文與時區設定，根檔案系統�
 | --- | ---: | --- |
 | `rtl8852bs_fw` | 181658 | `a3a203199fd7cafaa5bd22d34b08b7ff5ad3ee0339d7a2bc95e02577d9d3d88a` |
 | `rtl8852bs_config` | 33 | `efa8915db59c5bc30aaa23e1f264656bbf425fcaf091db0954c27752a1d8f7a0` |
-| 私有 `rtk_hciattach` | — | `51a308418c5a860b6ed536633422423aebd90ce300f844829caf0f298d62b4ab` |
+| 私有 `rtk_hciattach` | 69168 | `51a308418c5a860b6ed536633422423aebd90ce300f844829caf0f298d62b4ab` |
 | rc3 Debian 套件 | 3357488 | `f5abe051e30b8a8a3a0510ae5f715729fcc1e226651f92a100883e02a8683339` |
 
 韌體來自[官方 `spacemit-uart-bt_2.8.tar.xz`](https://archive.spacemit.com/bianbu/pool/main/s/spacemit-uart-bt/spacemit-uart-bt_2.8.tar.xz)，來源封存檔為 3,200,420 bytes，SHA-256 為 `a5c23e924d660143dd6d5e5e854f9451d4372f7760a8daffec65e4d42f725fed`。所選韌體與設定均與既有 CM6 板廠母映像一致；[來源鎖](../config/spacemit-k1-connectivity/source-lock.json) 保存成員路徑、大小及雜湊。套件保留原始 `copyright` 作為不可變追溯資料；上游對韌體標示 `__NO_COPYRIGHT_NOR_LICENSE__`，故授權狀態如實記為 `upstream_unspecified`，不能將 helper 的 GPL 套用至韌體。
@@ -46,7 +46,7 @@ SD 已完成首次帳號設定、繁體中文與時區設定，根檔案系統�
 
 ## rc3 交付候選與驗證範圍
 
-`20260923-rc3` 的 CM6 SD 與 Titan eMMC 兩份候選已完成封裝，封裝程序均以退出碼 0 結束。候選納入上述 eth0 DTB 修正與正式 rc3 藍牙套件；F3 未變更。成品位於 `/media/pi/SMCI/bpi/f3-cm6-vendor-20260923-rc3/output/`，下表大小及雜湊取自各自的 `manifest.json`，本次文件更新未重新計算大型成品雜湊。
+`20260923-rc3` 的 CM6 SD 與 Titan eMMC 兩份候選已完成封裝，封裝程序均以退出碼 0 結束。候選納入上述 eth0 DTB 修正與正式 rc3 藍牙套件；F3 未變更。成品位於 `/media/pi/SMCI/bpi/f3-cm6-vendor-20260923-rc3/output/`，下表大小及雜湊取自各自的 `manifest.json`，交付分段與實際合併後均再次核對一致。
 
 | 媒體 | 成品檔名 | 容量（bytes） | SHA-256 |
 | --- | --- | ---: | --- |
@@ -54,6 +54,10 @@ SD 已完成首次帳號設定、繁體中文與時區設定，根檔案系統�
 | eMMC | `Armbian_Noble_bpi-cm6_gnome_titan-emmc_20260923-rc3.zip` | 1713113819 | `06e02aa4bfb309535e7858add46d20745f5fbf65f94ccfd21e4acf974e2d55a3` |
 
 兩份 manifest 的開機設定契約與已安裝加速套件預檢通過；SD 另有 GPT、MBR 與分區範圍離線檢查通過。這些結果只涵蓋封裝與靜態完整性，manifest 仍維持 `candidate_unverified`、`hardware_validation=pending`。
+
+本輪 DTB、官方封裝、連線蒐集、藍牙建置／封裝與根系統準備的六組回歸分別通過 10、30、11、44、12、29 項，共 136 項。另完成實際 helper 交叉編譯、Debian 套件內容與板端安裝核對。
+
+兩份成品已上傳至 [Google Drive rc3 資料夾](https://drive.google.com/drive/folders/1FqXcZbDQ2UDzaNPWzVXuzCzDBw2j_tUa)，每種格式 18 個分段，附繁體中文說明、Python／Windows 合併工具與 SHA-256 清單。Linux Python 的 12 項合併回歸，以及兩種格式各一次真實完整合併與獨立雜湊核對均通過；Windows 與 macOS 未實際執行。雲端共 45 個檔案，已回讀核對全部名稱與大小，沒有重新下載全數雲端分段計算雜湊；完整 ZIP 仍由下載後的合併工具核對。本機交付紀錄為 `/media/pi/SMCI/bpi/f3-cm6-vendor-20260923-rc3/雲端交付紀錄.json`。
 
 本次硬體測試是在已燒錄的 rc2 SD 系統逐項套用相同修正，已涵蓋正式私有藍牙套件的冷開機；新 rc3 SD 整包尚未重新燒錄，新 rc3 eMMC 整包也尚未經 Titan 重新燒錄驗證。GPU／AI／VPU 負載、藍牙配對／傳輸／音訊仍未驗證；HDMI 僅取得黑青畫面並伴隨 EDID 失敗，不能列為桌面顯示通過。
 
