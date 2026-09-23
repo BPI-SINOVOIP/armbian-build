@@ -1,0 +1,253 @@
+{
+  "schema_version": 1,
+  "date": "2026-09-23",
+  "status": "測試候選工具；不是映像發布認證",
+  "scope": "白名單交付 GPU、合成 AI 模型、相機配套與候選／回復 DTB，以及只讀蒐集、UART 接收、固定網路資料對端、受控 CPU 短測；不含憑證、SSH 存取工具、實拍影像或歷史私有資料。",
+  "delivery_directory": "/media/pi/SMCI/bpi/f3-cm6-vendor-20260923-rc3/output/驗證文件/驗證工具",
+  "files": [
+    {
+      "path": "GPU/cm6_gpu_probe",
+      "bytes": 28880,
+      "sha256": "cab839906cb0ee186bc1f0ac5ba7d610fb23ba5fb16f1b8bb246db1154bee169",
+      "source": "/media/pi/SMCI/bpi/cm6-hardware-validation-20260923/rc3-full-sd-reflash-20260923/gpu-host-prep/cm6_gpu_probe"
+    },
+    {
+      "path": "GPU/cm6_gpu_probe.c",
+      "bytes": 16416,
+      "sha256": "49ff28da6ceb854ab2ca564a50a0ccd9ca56fc9d2d249def999d36c7491d35ea",
+      "source": "/media/pi/SMCI/bpi/cm6-hardware-validation-20260923/rc3-full-sd-reflash-20260923/gpu-host-prep/cm6_gpu_probe.c"
+    },
+    {
+      "path": "GPU/build-manifest.json",
+      "bytes": 3406,
+      "sha256": "bb2a3a0f4bb5e6ab7573b4bc08b7f873263953c05a4c3ad5d8c64fdba9738479",
+      "source": "/media/pi/SMCI/bpi/cm6-hardware-validation-20260923/rc3-full-sd-reflash-20260923/gpu-host-prep/build-manifest.json"
+    },
+    {
+      "path": "AI/cm6-ai-board-bundle-v2.tar.gz",
+      "bytes": 8551,
+      "sha256": "c8e6fa856ac2903a2f4f0040b9e30a1f55af853d451ae9e262a8b4a1b9772ca9",
+      "source": "/media/pi/SMCI/bpi/cm6-hardware-validation-20260923/rc3-full-sd-reflash-20260923/ai-host-prep/cm6-ai-board-bundle-v2.tar.gz"
+    },
+    {
+      "path": "AI/cm6-ai-conv-probe-v3.tar.gz",
+      "bytes": 7672,
+      "sha256": "1a4f1346dc7ab2c565b7bae1b0f8f73ae68f0f9398ed6a13f0ec9b4d16a0ba04",
+      "source": "/media/pi/SMCI/bpi/cm6-hardware-validation-20260923/rc3-full-sd-reflash-20260923/ai-host-prep/cm6-ai-conv-probe-v3.tar.gz"
+    },
+    {
+      "path": "AI/cm6-ai-fp16-probe-v4.tar.gz",
+      "bytes": 7616,
+      "sha256": "b8d79c6b7950b65daa19f1e1a6acb03f889affacfcc7589ba5b7030e068500a6",
+      "source": "/media/pi/SMCI/bpi/cm6-hardware-validation-20260923/rc3-full-sd-reflash-20260923/ai-host-prep/cm6-ai-fp16-probe-v4.tar.gz"
+    },
+    {
+      "path": "AI/cm6-ai-qdq-probe-v5.tar.gz",
+      "bytes": 8056,
+      "sha256": "e67d57561af1533cc0b721bc34bf674858ca7f059eb7cac3744c3e2c302d897d",
+      "source": "/media/pi/SMCI/bpi/cm6-hardware-validation-20260923/rc3-full-sd-reflash-20260923/ai-host-prep/cm6-ai-qdq-probe-v5.tar.gz"
+    },
+    {
+      "path": "camera/k1x-cam_0.2.34_riscv64.deb",
+      "bytes": 586148,
+      "sha256": "d00ec6d3e6758571a5959428517a167e1264db08ca5d61fdfbfc506b33088e40",
+      "source": "/media/pi/SMCI/bpi/cm6-hardware-validation-20260923/rc3-full-sd-reflash-20260923/camera-host-prep/k1x-cam_0.2.34_riscv64.deb"
+    },
+    {
+      "path": "camera/k1x-cam-lib_0.1.8_riscv64.deb",
+      "bytes": 430424,
+      "sha256": "89c9867d9dab50958e8eb01195313452ad425dbef345d6003d568d4176c0572d",
+      "source": "/media/pi/SMCI/bpi/cm6-hardware-validation-20260923/rc3-full-sd-reflash-20260923/camera-host-prep/k1x-cam-lib_0.1.8_riscv64.deb"
+    },
+    {
+      "path": "camera/sensor0-imx415-offscreen-500.json",
+      "bytes": 1421,
+      "sha256": "9ec5536429253c6b20f91592146fa2ca0f8b67e221880f235e5ca165d36da941",
+      "source": "/media/pi/SMCI/bpi/cm6-hardware-validation-20260923/rc3-full-sd-reflash-20260923/camera-host-prep/sensor0-imx415-offscreen-500.json"
+    },
+    {
+      "path": "camera/sensor2-imx415-offscreen-500.json",
+      "bytes": 1421,
+      "sha256": "19062591b89baba427e2373264f1077d5d7e037aa3667e3fdb196c497b0f9fba",
+      "source": "/media/pi/SMCI/bpi/cm6-hardware-validation-20260923/rc3-full-sd-reflash-20260923/camera-host-prep/sensor2-imx415-offscreen-500.json"
+    },
+    {
+      "path": "camera/sensor0-2-imx415-dual-online-500.json",
+      "bytes": 1424,
+      "sha256": "f77e01c08254908fc59ade98c97e3075b86fbd827e323b3e1aab32cc50c0a582",
+      "source": "/media/pi/SMCI/bpi/cm6-hardware-validation-20260923/rc3-full-sd-reflash-20260923/camera-host-prep/sensor0-2-imx415-dual-online-500.json"
+    },
+    {
+      "path": "camera/sensor2-imx415-offscreen-100.json",
+      "bytes": 1420,
+      "sha256": "2620c51af222b6ec04ab7a08fef039ef57e98553c70b3bd6eaa38e98a42341cb",
+      "source": "/media/pi/SMCI/bpi/cm6-hardware-validation-20260923/rc3-full-sd-reflash-20260923/camera-host-prep/sensor2-imx415-offscreen-100.json"
+    },
+    {
+      "path": "camera/csi1_camera_detect.json",
+      "bytes": 2189,
+      "sha256": "709bbf69ccd9e762d7659a090d3c13593041268342e17af0bd2030f67bc0b358",
+      "source": "/media/pi/SMCI/bpi/cm6-hardware-validation-20260923/rc3-full-sd-reflash-20260923/camera-host-prep/csi1_camera_detect.json"
+    },
+    {
+      "path": "camera/csi3_camera_detect.json",
+      "bytes": 2191,
+      "sha256": "06c56d4abf2d5e584f98715004cda02a9a8510a4a6a2bc442f0f30f848fc6576",
+      "source": "/media/pi/SMCI/bpi/cm6-hardware-validation-20260923/rc3-full-sd-reflash-20260923/camera-host-prep/csi3_camera_detect.json"
+    },
+    {
+      "path": "camera/k1-x_bpi_cm6-eth0-camera-candidate.dtb",
+      "bytes": 83731,
+      "sha256": "91bb7a9cde6380e16d9dbc12161212aad768cf145de79dd2f51665366e0065c3",
+      "source": "/media/pi/SMCI/bpi/cm6-hardware-validation-20260923/rc3-full-sd-reflash-20260923/camera-host-prep/k1-x_bpi_cm6-eth0-camera-candidate.dtb"
+    },
+    {
+      "path": "camera/k1-x_bpi_cm6-eth0-camera-rollback.dtb",
+      "bytes": 83699,
+      "sha256": "f0b9795fda72868cd2bc9a6db0cf5aa2f15ea494f114a5b42adfc1fa931962c1",
+      "source": "/media/pi/SMCI/bpi/cm6-hardware-validation-20260923/rc3-full-sd-reflash-20260923/camera-host-prep/k1-x_bpi_cm6-eth0-camera-rollback.dtb"
+    },
+    {
+      "path": "camera/camera-dtb-candidate-manifest.json",
+      "bytes": 2665,
+      "sha256": "52f9e34985141860a06019ce6f4e07a4c2fe0804adcbbac59dbc31ba6de1d9db",
+      "source": "/media/pi/SMCI/bpi/cm6-hardware-validation-20260923/rc3-full-sd-reflash-20260923/camera-host-prep/camera-dtb-candidate-manifest.json"
+    },
+    {
+      "path": "cm6_rc3_camera_test.py",
+      "bytes": 13792,
+      "sha256": "6bfc6e738f77ab9205540452e4a1e5cc469ee6d1e3745d37e02b3230a0e6f448",
+      "source": "tools/cm6_rc3_camera_test.py"
+    },
+    {
+      "path": "collect_cm6_rc3_validation.sh",
+      "bytes": 7744,
+      "sha256": "0207d42e9f9e708767b164c7cee5c97f2c00c402df05907a2b61aec843089f63",
+      "source": "/media/pi/SMCI/armbian/bpi-v26.2.1-f3-cm6-vendor-format/tools/collect_cm6_rc3_validation.sh"
+    },
+    {
+      "path": "cm6_rc3_net_peer.py",
+      "bytes": 3026,
+      "sha256": "aef21b11e9d3e628c0d780ac84bcbff054103ccab6e585a870a509357137fe67",
+      "source": "/media/pi/SMCI/armbian/bpi-v26.2.1-f3-cm6-vendor-format/tools/cm6_rc3_net_peer.py"
+    },
+    {
+      "path": "cm6_rc3_uart_capture.py",
+      "bytes": 2099,
+      "sha256": "d281662cd4ac63d3f489399409c85b0d2da87dc66e74d40e07798e91bd946cc5",
+      "source": "/media/pi/SMCI/armbian/bpi-v26.2.1-f3-cm6-vendor-format/tools/cm6_rc3_uart_capture.py"
+    },
+    {
+      "path": "cm6_rc3_short_stress.py",
+      "bytes": 12924,
+      "sha256": "73492a2d47ec8b64784265905e6d0cebdb7be791af4f260217992ebd8b369d98",
+      "source": "/media/pi/SMCI/armbian/bpi-v26.2.1-f3-cm6-vendor-format/tools/cm6_rc3_short_stress.py"
+    }
+  ],
+  "camera_dependencies": {
+    "python": "python3 >= 3.11",
+    "runtime_packages": [
+      "libc6 >= 2.38",
+      "libegl1",
+      "libgcc-s1 >= 3.0",
+      "libgles2",
+      "libstdc++6 >= 13.1",
+      "libwayland-client0 >= 1.20.0",
+      "libwayland-cursor0 >= 1.0.2",
+      "libwayland-egl1 >= 1.15.0",
+      "libwayland-server0 >= 1.0.2",
+      "img-gpu-powervr",
+      "libgbm-dev"
+    ],
+    "extraction": "兩個指定 DEB 以 dpkg-deb -x 解到同一個新建 runtime 目錄；不是 dpkg -i 安裝。",
+    "calibration_relative_path": "usr/share/camera_json/sensor_rear_primary_cpp_preview_setting.data",
+    "cam_test_sha256": "ee7e40dc46a493e9d9078a729677c7d30fb77bc3305ee87ec1b763c932e76921",
+    "calibration_sha256": "dfb193cc3da6833111812e95e7ecec687bb6b8dcddd197b4627b5345fb803faa"
+  },
+  "known_limitations": [
+    "原 rc3 映像第二路相機尚未啟用；候選 DTB 是獨立測試變更，不屬於原始 rc3 成品，也不是自動安裝項目。",
+    "GPU 與 DTB 原始 manifest 保留其製作當時狀態供追溯；最新實機結果應以完整測試手冊與 rc3-full-sd 證據為準。",
+    "相機工具出口 0 只表示程序結束且取得待審查證據，不代表畫質、FPS、完整影格計數或停止流程通過。",
+    "雙路相機曾出現 500 ms 停止逾時；未經重開機再開 sensor2 曾成功，但不能因此把停止缺陷改為通過。",
+    "相機 runner 僅接受四份固定串流配置；偵測 JSON 只供來源追溯，避免 SDK 在共用路徑寫入自動產生配置。",
+    "runner 拒絕既有 /usr/share/camera_json 與既有 /tmp 相機輸出；不得同時執行其他相機程式。只清除自己建立的校正連結與本次新增且已複製校驗的影格。",
+    "散熱不足時測試應阻擋；預設起始須低於 80°C，過程達 90°C 中止，最長 60 秒。不得提高門檻掩蓋實機曾達 92–94°C 並降頻的限制。",
+    "AI 四個工具包測過的模型皆回退 CPU；模型正確不等於 SpaceMIT EP 或 IME 加速通過。",
+    "GPU 原始碼使用 build-manifest 所列 EGL／GLES／GBM 開發標頭；板端執行現成二進位不需要這些標頭。"
+  ],
+  "helper_validation": {
+    "日期": "2026-09-23",
+    "語法與說明": [
+      "python3 -m py_compile tools/cm6_rc3_camera_test.py",
+      "python3 tools/cm6_rc3_camera_test.py --help"
+    ],
+    "白名單解壓檢查": "四份 AI archive 的所有成員均為一般檔案，無絕對路徑、上層跳脫或連結；兩個相機 DEB 已解到獨立暫存 runtime，四份串流配置均通過 --check-only。",
+    "模擬測試": {
+      "日期": "2026-09-23",
+      "範圍": "只使用暫存目錄、溫度及核心紀錄替身；未連線開發板，未操作磁碟、相機或開機設定。",
+      "受測程式_sha256": "6bfc6e738f77ab9205540452e4a1e5cc469ee6d1e3745d37e02b3230a0e6f448",
+      "測試": [
+        {
+          "項目": "僅核對輸入，不建立輸出",
+          "結果": "PASS"
+        },
+        {
+          "項目": "拒絕白名單外的配置",
+          "結果": "PASS"
+        },
+        {
+          "項目": "拒絕既有證據目錄且保留內容",
+          "結果": "PASS"
+        },
+        {
+          "項目": "拒絕既有校正路徑且保留內容",
+          "結果": "PASS"
+        },
+        {
+          "項目": "拒絕既有影格且保留原始內容",
+          "結果": "PASS"
+        },
+        {
+          "項目": "起始達 80°C 不執行相機",
+          "結果": "PASS"
+        },
+        {
+          "項目": "正常退出僅標 NEEDS_REVIEW，影格校驗並清除自建連結",
+          "結果": "PASS"
+        },
+        {
+          "項目": "SDK 失敗仍保存紀錄且清除自建連結",
+          "結果": "PASS"
+        },
+        {
+          "項目": "時間上限停止自己的程序",
+          "結果": "PASS"
+        },
+        {
+          "項目": "運行達 90°C 中止並保存證據",
+          "結果": "PASS"
+        },
+        {
+          "項目": "拒絕超過 60 秒的設定",
+          "結果": "PASS"
+        },
+        {
+          "項目": "摘要無法寫入仍清除自建連結",
+          "結果": "PASS"
+        },
+        {
+          "項目": "校正路徑遭外部取代時保留新檔並判失敗",
+          "結果": "PASS"
+        }
+      ]
+    }
+  },
+  "additional_validation": {
+    "collector_tests": 5,
+    "camera_tests": 13,
+    "short_stress_tests": 6,
+    "transport_tests": 4,
+    "result": "PASS",
+    "note": "替身與回環資料驗證；未操作板子、未啟動實際 CPU 壓測、不代表新增硬體通過。"
+  }
+}

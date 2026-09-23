@@ -1,0 +1,652 @@
+{
+  "schema_version": 1,
+  "method": "只讀 debugfs ls/stat，未新增掛載、未执行板端程式。存在與可執行位元不等於實機功能通過。",
+  "roots": {
+    "sd": {
+      "image_path": "/media/pi/SMCI/bpi/f3-cm6-vendor-20260923-rc3/output/bpi-cm6-sd/payload/rootfs.ext4",
+      "image_bytes": 6442450944,
+      "commands": {
+        "python3": {
+          "present": true,
+          "matches": [
+            {
+              "path": "/usr/bin/python3",
+              "mode": "120777",
+              "stat": "Inode: 3505   Type: symlink    Mode:  0777   Flags: 0x0\nGeneration: 287570131    Version: 0x00000000:00000002\nUser:     0   Group:     0   Project:     0   Size: 10\nFile ACL: 0\nLinks: 1   Blockcount: 0\nFragment:  Address: 0    Number: 0    Size: 0\n ctime: 0x6a9dda26:6aabdf18 -- Mon Sep  7 05:24:54 2026\n atime: 0x6aaab87c:c022d4c4 -- Wed Sep 16 23:40:44 2026\n mtime: 0x69147a70:00000000 -- Wed Nov 12 20:15:44 2025\ncrtime: 0x6a9dda26:6aabdf18 -- Mon Sep  7 05:24:54 2026\nSize of extra inode fields: 32\nInode checksum: 0x17056ce0\nFast link dest: \"python3.12\"\n",
+              "executable_mode": true,
+              "link_target": "/usr/bin/python3.12",
+              "link_target_stat": "Inode: 4560   Type: regular    Mode:  0755   Flags: 0x80000\nGeneration: 3476377714    Version: 0x00000000:00000009\nUser:     0   Group:     0   Project:     0   Size: 7677968\nFile ACL: 0\nLinks: 1   Blockcount: 15000\nFragment:  Address: 0    Number: 0    Size: 0\n ctime: 0x6a9dda26:80211d68 -- Mon Sep  7 05:24:54 2026\n atime: 0x6aaab87c:c022d4c4 -- Wed Sep 16 23:40:44 2026\n mtime: 0x6a581be1:00000000 -- Thu Jul 16 07:46:41 2026\ncrtime: 0x6a9dda26:7eefef48 -- Mon Sep  7 05:24:54 2026\nSize of extra inode fields: 32\nInode checksum: 0xbfb101c9\nEXTENTS:\n(0-1874):508778-510652\n"
+            }
+          ]
+        },
+        "curl": {
+          "present": true,
+          "matches": [
+            {
+              "path": "/usr/bin/curl",
+              "mode": "100755",
+              "stat": "Inode: 3920   Type: regular    Mode:  0755   Flags: 0x80000\nGeneration: 182281474    Version: 0x00000000:00000004\nUser:     0   Group:     0   Project:     0   Size: 280848\nFile ACL: 0\nLinks: 1   Blockcount: 552\nFragment:  Address: 0    Number: 0    Size: 0\n ctime: 0x6a9dda26:7064bc80 -- Mon Sep  7 05:24:54 2026\n atime: 0x6a9dda26:7064bc80 -- Mon Sep  7 05:24:54 2026\n mtime: 0x6a875467:00000000 -- Fri Aug 21 03:24:23 2026\ncrtime: 0x6a9dda26:7064bc80 -- Mon Sep  7 05:24:54 2026\nSize of extra inode fields: 32\nInode checksum: 0xdaf7b935\nEXTENTS:\n(0-68):43178-43246\n",
+              "executable_mode": true
+            }
+          ]
+        },
+        "ethtool": {
+          "present": true,
+          "matches": [
+            {
+              "path": "/usr/sbin/ethtool",
+              "mode": "100755",
+              "stat": "Inode: 22120   Type: regular    Mode:  0755   Flags: 0x80000\nGeneration: 3956010906    Version: 0x00000000:00000004\nUser:     0   Group:     0   Project:     0   Size: 638488\nFile ACL: 0\nLinks: 1   Blockcount: 1248\nFragment:  Address: 0    Number: 0    Size: 0\n ctime: 0x6a9dda29:35837b08 -- Mon Sep  7 05:24:57 2026\n atime: 0x6a9dda29:35837b08 -- Mon Sep  7 05:24:57 2026\n mtime: 0x661413de:00000000 -- Mon Apr  8 23:57:18 2024\ncrtime: 0x6a9dda29:35837b08 -- Mon Sep  7 05:24:57 2026\nSize of extra inode fields: 32\nInode checksum: 0x05f0c66e\nEXTENTS:\n(0-155):1006927-1007082\n",
+              "executable_mode": true
+            }
+          ]
+        },
+        "rfkill": {
+          "present": true,
+          "matches": [
+            {
+              "path": "/usr/sbin/rfkill",
+              "mode": "100755",
+              "stat": "Inode: 22245   Type: regular    Mode:  0755   Flags: 0x80000\nGeneration: 3551397975    Version: 0x00000000:00000004\nUser:     0   Group:     0   Project:     0   Size: 51312\nFile ACL: 0\nLinks: 1   Blockcount: 104\nFragment:  Address: 0    Number: 0    Size: 0\n ctime: 0x6a9dda29:385fe9bc -- Mon Sep  7 05:24:57 2026\n atime: 0x6a9dda29:385fe9bc -- Mon Sep  7 05:24:57 2026\n mtime: 0x6a85de37:00000000 -- Thu Aug 20 00:47:51 2026\ncrtime: 0x6a9dda29:385fe9bc -- Mon Sep  7 05:24:57 2026\nSize of extra inode fields: 32\nInode checksum: 0x205baac5\nEXTENTS:\n(0-12):950974-950986\n",
+              "executable_mode": true
+            }
+          ]
+        },
+        "bluetoothctl": {
+          "present": true,
+          "matches": [
+            {
+              "path": "/usr/bin/bluetoothctl",
+              "mode": "100755",
+              "stat": "Inode: 3835   Type: regular    Mode:  0755   Flags: 0x80000\nGeneration: 47368604    Version: 0x00000000:00000004\nUser:     0   Group:     0   Project:     0   Size: 481432\nFile ACL: 0\nLinks: 1   Blockcount: 944\nFragment:  Address: 0    Number: 0    Size: 0\n ctime: 0x6a9dda26:6e3f6978 -- Mon Sep  7 05:24:54 2026\n atime: 0x6a9dda26:6e3f6978 -- Mon Sep  7 05:24:54 2026\n mtime: 0x68e5fc3d:00000000 -- Wed Oct  8 13:53:01 2025\ncrtime: 0x6a9dda26:6e3f6978 -- Mon Sep  7 05:24:54 2026\nSize of extra inode fields: 32\nInode checksum: 0x0e519f9c\nEXTENTS:\n(0-117):40960-41077\n",
+              "executable_mode": true
+            }
+          ]
+        },
+        "btmgmt": {
+          "present": true,
+          "matches": [
+            {
+              "path": "/usr/bin/btmgmt",
+              "mode": "100755",
+              "stat": "Inode: 3845   Type: regular    Mode:  0755   Flags: 0x80000\nGeneration: 3577131608    Version: 0x00000000:00000004\nUser:     0   Group:     0   Project:     0   Size: 165528\nFile ACL: 0\nLinks: 1   Blockcount: 328\nFragment:  Address: 0    Number: 0    Size: 0\n ctime: 0x6a9dda26:6e7c72b4 -- Mon Sep  7 05:24:54 2026\n atime: 0x6a9dda26:6e7c72b4 -- Mon Sep  7 05:24:54 2026\n mtime: 0x68e5fc3d:00000000 -- Wed Oct  8 13:53:01 2025\ncrtime: 0x6a9dda26:6e7c72b4 -- Mon Sep  7 05:24:54 2026\nSize of extra inode fields: 32\nInode checksum: 0x8580b642\nEXTENTS:\n(0-40):41300-41340\n",
+              "executable_mode": true
+            }
+          ]
+        },
+        "hcitool": {
+          "present": true,
+          "matches": [
+            {
+              "path": "/usr/bin/hcitool",
+              "mode": "100755",
+              "stat": "Inode: 4231   Type: regular    Mode:  0755   Flags: 0x80000\nGeneration: 2662058848    Version: 0x00000000:00000004\nUser:     0   Group:     0   Project:     0   Size: 167712\nFile ACL: 0\nLinks: 1   Blockcount: 328\nFragment:  Address: 0    Number: 0    Size: 0\n ctime: 0x6a9dda26:7842ecf4 -- Mon Sep  7 05:24:54 2026\n atime: 0x6a9dda26:7842ecf4 -- Mon Sep  7 05:24:54 2026\n mtime: 0x68e5fc3d:00000000 -- Wed Oct  8 13:53:01 2025\ncrtime: 0x6a9dda26:7842ecf4 -- Mon Sep  7 05:24:54 2026\nSize of extra inode fields: 32\nInode checksum: 0x34d6fd39\nEXTENTS:\n(0-40):58725-58765\n",
+              "executable_mode": true
+            }
+          ]
+        },
+        "nvme": {
+          "present": true,
+          "matches": [
+            {
+              "path": "/usr/sbin/nvme",
+              "mode": "100755",
+              "stat": "Inode: 22215   Type: regular    Mode:  0755   Flags: 0x80000\nGeneration: 285050791    Version: 0x00000000:00000004\nUser:     0   Group:     0   Project:     0   Size: 1101416\nFile ACL: 0\nLinks: 1   Blockcount: 2152\nFragment:  Address: 0    Number: 0    Size: 0\n ctime: 0x6a9dda29:3822e084 -- Mon Sep  7 05:24:57 2026\n atime: 0x6a9dda29:37e5d748 -- Mon Sep  7 05:24:57 2026\n mtime: 0x66bcbf4b:00000000 -- Wed Aug 14 22:29:31 2024\ncrtime: 0x6a9dda29:37e5d748 -- Mon Sep  7 05:24:57 2026\nSize of extra inode fields: 32\nInode checksum: 0x7a53c690\nEXTENTS:\n(0-268):546786-547054\n",
+              "executable_mode": true
+            }
+          ]
+        },
+        "lsblk": {
+          "present": true,
+          "matches": [
+            {
+              "path": "/usr/bin/lsblk",
+              "mode": "100755",
+              "stat": "Inode: 4325   Type: regular    Mode:  0755   Flags: 0x80000\nGeneration: 81150872    Version: 0x00000000:00000004\nUser:     0   Group:     0   Project:     0   Size: 211216\nFile ACL: 0\nLinks: 1   Blockcount: 416\nFragment:  Address: 0    Number: 0    Size: 0\n ctime: 0x6a9dda26:7aa54938 -- Mon Sep  7 05:24:54 2026\n atime: 0x6a9dda26:7aa54938 -- Mon Sep  7 05:24:54 2026\n mtime: 0x6a85de37:00000000 -- Thu Aug 20 00:47:51 2026\ncrtime: 0x6a9dda26:7aa54938 -- Mon Sep  7 05:24:54 2026\nSize of extra inode fields: 32\nInode checksum: 0xf08b5adf\nEXTENTS:\n(0-51):60928-60979\n",
+              "executable_mode": true
+            }
+          ]
+        },
+        "findmnt": {
+          "present": true,
+          "matches": [
+            {
+              "path": "/usr/bin/findmnt",
+              "mode": "100755",
+              "stat": "Inode: 4101   Type: regular    Mode:  0755   Flags: 0x80000\nGeneration: 3259871378    Version: 0x00000000:00000004\nUser:     0   Group:     0   Project:     0   Size: 85528\nFile ACL: 0\nLinks: 1   Blockcount: 168\nFragment:  Address: 0    Number: 0    Size: 0\n ctime: 0x6a9dda26:72c718c4 -- Mon Sep  7 05:24:54 2026\n atime: 0x6a9dda26:72c718c4 -- Mon Sep  7 05:24:54 2026\n mtime: 0x6a85de37:00000000 -- Thu Aug 20 00:47:51 2026\ncrtime: 0x6a9dda26:72c718c4 -- Mon Sep  7 05:24:54 2026\nSize of extra inode fields: 32\nInode checksum: 0xc3dd9c9a\nEXTENTS:\n(0-20):45455-45475\n",
+              "executable_mode": true
+            }
+          ]
+        },
+        "blockdev": {
+          "present": true,
+          "matches": [
+            {
+              "path": "/usr/sbin/blockdev",
+              "mode": "100755",
+              "stat": "Inode: 22075   Type: regular    Mode:  0755   Flags: 0x80000\nGeneration: 3575903277    Version: 0x00000000:00000004\nUser:     0   Group:     0   Project:     0   Size: 88328\nFile ACL: 0\nLinks: 1   Blockcount: 176\nFragment:  Address: 0    Number: 0    Size: 0\n ctime: 0x6a9dda29:348f5620 -- Mon Sep  7 05:24:57 2026\n atime: 0x6a9dda29:348f5620 -- Mon Sep  7 05:24:57 2026\n mtime: 0x6a85de37:00000000 -- Thu Aug 20 00:47:51 2026\ncrtime: 0x6a9dda29:348f5620 -- Mon Sep  7 05:24:57 2026\nSize of extra inode fields: 32\nInode checksum: 0x91638e39\nEXTENTS:\n(0-21):988976-988997\n",
+              "executable_mode": true
+            }
+          ]
+        },
+        "aplay": {
+          "present": true,
+          "matches": [
+            {
+              "path": "/usr/bin/aplay",
+              "mode": "100755",
+              "stat": "Inode: 3734   Type: regular    Mode:  0755   Flags: 0x80000\nGeneration: 1682629079    Version: 0x00000000:00000004\nUser:     0   Group:     0   Project:     0   Size: 71992\nFile ACL: 0\nLinks: 1   Blockcount: 144\nFragment:  Address: 0    Number: 0    Size: 0\n ctime: 0x6a9dda26:6c9428e4 -- Mon Sep  7 05:24:54 2026\n atime: 0x6a9dda26:6c9428e4 -- Mon Sep  7 05:24:54 2026\n mtime: 0x661246c3:00000000 -- Sun Apr  7 15:09:55 2024\ncrtime: 0x6a9dda26:6c9428e4 -- Mon Sep  7 05:24:54 2026\nSize of extra inode fields: 32\nInode checksum: 0x55a11e07\nEXTENTS:\n(0-17):36241-36258\n",
+              "executable_mode": true
+            }
+          ]
+        },
+        "arecord": {
+          "present": true,
+          "matches": [
+            {
+              "path": "/usr/bin/arecord",
+              "mode": "120777",
+              "stat": "Inode: 3213   Type: symlink    Mode:  0777   Flags: 0x0\nGeneration: 3851901499    Version: 0x00000000:00000002\nUser:     0   Group:     0   Project:     0   Size: 5\nFile ACL: 0\nLinks: 1   Blockcount: 0\nFragment:  Address: 0    Number: 0    Size: 0\n ctime: 0x6a9dda26:69f4c368 -- Mon Sep  7 05:24:54 2026\n atime: 0x6a9dda26:69f4c368 -- Mon Sep  7 05:24:54 2026\n mtime: 0x661246c3:00000000 -- Sun Apr  7 15:09:55 2024\ncrtime: 0x6a9dda26:69f4c368 -- Mon Sep  7 05:24:54 2026\nSize of extra inode fields: 32\nInode checksum: 0x37c0d5f3\nFast link dest: \"aplay\"\n",
+              "executable_mode": true,
+              "link_target": "/usr/bin/aplay",
+              "link_target_stat": "Inode: 3734   Type: regular    Mode:  0755   Flags: 0x80000\nGeneration: 1682629079    Version: 0x00000000:00000004\nUser:     0   Group:     0   Project:     0   Size: 71992\nFile ACL: 0\nLinks: 1   Blockcount: 144\nFragment:  Address: 0    Number: 0    Size: 0\n ctime: 0x6a9dda26:6c9428e4 -- Mon Sep  7 05:24:54 2026\n atime: 0x6a9dda26:6c9428e4 -- Mon Sep  7 05:24:54 2026\n mtime: 0x661246c3:00000000 -- Sun Apr  7 15:09:55 2024\ncrtime: 0x6a9dda26:6c9428e4 -- Mon Sep  7 05:24:54 2026\nSize of extra inode fields: 32\nInode checksum: 0x55a11e07\nEXTENTS:\n(0-17):36241-36258\n"
+            }
+          ]
+        },
+        "speaker-test": {
+          "present": true,
+          "matches": [
+            {
+              "path": "/usr/bin/speaker-test",
+              "mode": "100755",
+              "stat": "Inode: 4689   Type: regular    Mode:  0755   Flags: 0x80000\nGeneration: 730915169    Version: 0x00000000:00000004\nUser:     0   Group:     0   Project:     0   Size: 26944\nFile ACL: 0\nLinks: 1   Blockcount: 56\nFragment:  Address: 0    Number: 0    Size: 0\n ctime: 0x6a9dda26:87483230 -- Mon Sep  7 05:24:54 2026\n atime: 0x6a9dda26:87483230 -- Mon Sep  7 05:24:54 2026\n mtime: 0x661246c3:00000000 -- Sun Apr  7 15:09:55 2024\ncrtime: 0x6a9dda26:87483230 -- Mon Sep  7 05:24:54 2026\nSize of extra inode fields: 32\nInode checksum: 0x39456624\nEXTENTS:\n(0-6):51751-51757\n",
+              "executable_mode": true
+            }
+          ]
+        },
+        "pactl": {
+          "present": true,
+          "matches": [
+            {
+              "path": "/usr/bin/pactl",
+              "mode": "100755",
+              "stat": "Inode: 4443   Type: regular    Mode:  0755   Flags: 0x80000\nGeneration: 2344828263    Version: 0x00000000:00000004\nUser:     0   Group:     0   Project:     0   Size: 80152\nFile ACL: 0\nLinks: 1   Blockcount: 160\nFragment:  Address: 0    Number: 0    Size: 0\n ctime: 0x6a9dda26:7cca9c40 -- Mon Sep  7 05:24:54 2026\n atime: 0x6a9dda26:7cca9c40 -- Mon Sep  7 05:24:54 2026\n mtime: 0x6757fd4f:00000000 -- Tue Dec 10 16:35:27 2024\ncrtime: 0x6a9dda26:7cca9c40 -- Mon Sep  7 05:24:54 2026\nSize of extra inode fields: 32\nInode checksum: 0xbe2c4989\nEXTENTS:\n(0-19):63840-63859\n",
+              "executable_mode": true
+            }
+          ]
+        },
+        "wpctl": {
+          "present": false,
+          "matches": []
+        },
+        "v4l2-ctl": {
+          "present": true,
+          "matches": [
+            {
+              "path": "/usr/bin/v4l2-ctl",
+              "mode": "100755",
+              "stat": "Inode: 4822   Type: regular    Mode:  0755   Flags: 0x80000\nGeneration: 1930992160    Version: 0x00000000:00000004\nUser:     0   Group:     0   Project:     0   Size: 471016\nFile ACL: 0\nLinks: 1   Blockcount: 920\nFragment:  Address: 0    Number: 0    Size: 0\n ctime: 0x6a9dda26:8a9eb358 -- Mon Sep  7 05:24:54 2026\n atime: 0x6a9dda26:8a9eb358 -- Mon Sep  7 05:24:54 2026\n mtime: 0x66124a14:00000000 -- Sun Apr  7 15:24:04 2024\ncrtime: 0x6a9dda26:8a9eb358 -- Mon Sep  7 05:24:54 2026\nSize of extra inode fields: 32\nInode checksum: 0xb55b0262\nEXTENTS:\n(0-114):54489-54603\n",
+              "executable_mode": true
+            }
+          ]
+        },
+        "stress-ng": {
+          "present": false,
+          "matches": []
+        },
+        "timeout": {
+          "present": true,
+          "matches": [
+            {
+              "path": "/usr/bin/timeout",
+              "mode": "100755",
+              "stat": "Inode: 4766   Type: regular    Mode:  0755   Flags: 0x80000\nGeneration: 1283399563    Version: 0x00000000:00000004\nUser:     0   Group:     0   Project:     0   Size: 43912\nFile ACL: 0\nLinks: 1   Blockcount: 88\nFragment:  Address: 0    Number: 0    Size: 0\n ctime: 0x6a9dda26:88b66988 -- Mon Sep  7 05:24:54 2026\n atime: 0x6a9dda26:88b66988 -- Mon Sep  7 05:24:54 2026\n mtime: 0x6a8db00f:00000000 -- Tue Aug 25 23:09:03 2026\ncrtime: 0x6a9dda26:88b66988 -- Mon Sep  7 05:24:54 2026\nSize of extra inode fields: 32\nInode checksum: 0x350ef77d\nEXTENTS:\n(0-10):52088-52098\n",
+              "executable_mode": true
+            }
+          ]
+        },
+        "sha256sum": {
+          "present": true,
+          "matches": [
+            {
+              "path": "/usr/bin/sha256sum",
+              "mode": "100755",
+              "stat": "Inode: 4668   Type: regular    Mode:  0755   Flags: 0x80000\nGeneration: 3894799431    Version: 0x00000000:00000004\nUser:     0   Group:     0   Project:     0   Size: 43488\nFile ACL: 0\nLinks: 1   Blockcount: 88\nFragment:  Address: 0    Number: 0    Size: 0\n ctime: 0x6a9dda26:870b28f4 -- Mon Sep  7 05:24:54 2026\n atime: 0x6a9dda26:870b28f4 -- Mon Sep  7 05:24:54 2026\n mtime: 0x6a8db00f:00000000 -- Tue Aug 25 23:09:03 2026\ncrtime: 0x6a9dda26:870b28f4 -- Mon Sep  7 05:24:54 2026\nSize of extra inode fields: 32\nInode checksum: 0xf681bbb0\nEXTENTS:\n(0-10):33704-33714\n",
+              "executable_mode": true
+            }
+          ]
+        },
+        "unzip": {
+          "present": true,
+          "matches": [
+            {
+              "path": "/usr/bin/unzip",
+              "mode": "100755",
+              "stat": "Inode: 4996   Type: regular    Mode:  0755   Flags: 0x80000\nGeneration: 4215341682    Version: 0x00000000:00000004\nUser:     0   Group:     0   Project:     0   Size: 166216\nFile ACL: 0\nLinks: 2   Blockcount: 328\nFragment:  Address: 0    Number: 0    Size: 0\n ctime: 0x6a9dda26:8d7b220c -- Mon Sep  7 05:24:54 2026\n atime: 0x6a9dda26:8d3e18d4 -- Mon Sep  7 05:24:54 2026\n mtime: 0x66fd4aaf:00000000 -- Wed Oct  2 21:29:19 2024\ncrtime: 0x6a9dda26:8d3e18d4 -- Mon Sep  7 05:24:54 2026\nSize of extra inode fields: 32\nInode checksum: 0x32541255\nEXTENTS:\n(0-40):499556-499596\n",
+              "executable_mode": true
+            }
+          ]
+        },
+        "dpkg-deb": {
+          "present": true,
+          "matches": [
+            {
+              "path": "/usr/bin/dpkg-deb",
+              "mode": "100755",
+              "stat": "Inode: 3988   Type: regular    Mode:  0755   Flags: 0x80000\nGeneration: 2351058046    Version: 0x00000000:00000004\nUser:     0   Group:     0   Project:     0   Size: 166432\nFile ACL: 0\nLinks: 1   Blockcount: 328\nFragment:  Address: 0    Number: 0    Size: 0\n ctime: 0x6a9dda26:7158e168 -- Mon Sep  7 05:24:54 2026\n atime: 0x6ab2bcf9:7b200c28 -- Wed Sep 23 01:38:01 2026\n mtime: 0x69fb7c8a:00000000 -- Thu May  7 01:38:18 2026\ncrtime: 0x6a9dda26:7158e168 -- Mon Sep  7 05:24:54 2026\nSize of extra inode fields: 32\nInode checksum: 0x43825d00\nEXTENTS:\n(0-40):44472-44512\n",
+              "executable_mode": true
+            }
+          ]
+        },
+        "fdtdump": {
+          "present": true,
+          "matches": [
+            {
+              "path": "/usr/bin/fdtdump",
+              "mode": "100755",
+              "stat": "Inode: 4089   Type: regular    Mode:  0755   Flags: 0x80000\nGeneration: 2994143707    Version: 0x00000000:00000004\nUser:     0   Group:     0   Project:     0   Size: 18696\nFile ACL: 0\nLinks: 1   Blockcount: 40\nFragment:  Address: 0    Number: 0    Size: 0\n ctime: 0x6a9dda26:728a0f88 -- Mon Sep  7 05:24:54 2026\n atime: 0x6a9dda26:728a0f88 -- Mon Sep  7 05:24:54 2026\n mtime: 0x66141384:00000000 -- Mon Apr  8 23:55:48 2024\ncrtime: 0x6a9dda26:728a0f88 -- Mon Sep  7 05:24:54 2026\nSize of extra inode fields: 32\nInode checksum: 0x6298e105\nEXTENTS:\n(0-4):44002-44006\n",
+              "executable_mode": true
+            }
+          ]
+        },
+        "fdtget": {
+          "present": true,
+          "matches": [
+            {
+              "path": "/usr/bin/fdtget",
+              "mode": "100755",
+              "stat": "Inode: 4090   Type: regular    Mode:  0755   Flags: 0x80000\nGeneration: 2192575470    Version: 0x00000000:00000004\nUser:     0   Group:     0   Project:     0   Size: 18696\nFile ACL: 0\nLinks: 1   Blockcount: 40\nFragment:  Address: 0    Number: 0    Size: 0\n ctime: 0x6a9dda26:728a0f88 -- Mon Sep  7 05:24:54 2026\n atime: 0x6a9dda26:728a0f88 -- Mon Sep  7 05:24:54 2026\n mtime: 0x66141384:00000000 -- Mon Apr  8 23:55:48 2024\ncrtime: 0x6a9dda26:728a0f88 -- Mon Sep  7 05:24:54 2026\nSize of extra inode fields: 32\nInode checksum: 0x1cbf3258\nEXTENTS:\n(0-4):44007-44011\n",
+              "executable_mode": true
+            }
+          ]
+        },
+        "systemctl": {
+          "present": true,
+          "matches": [
+            {
+              "path": "/usr/bin/systemctl",
+              "mode": "100755",
+              "stat": "Inode: 4719   Type: regular    Mode:  0755   Flags: 0x80000\nGeneration: 2088944421    Version: 0x00000000:00000004\nUser:     0   Group:     0   Project:     0   Size: 1365576\nFile ACL: 0\nLinks: 1   Blockcount: 2672\nFragment:  Address: 0    Number: 0    Size: 0\n ctime: 0x6a9dda26:87ff4ddc -- Mon Sep  7 05:24:54 2026\n atime: 0x6ab2bcfb:6161d680 -- Wed Sep 23 01:38:03 2026\n mtime: 0x6a68c50d:00000000 -- Tue Jul 28 23:04:45 2026\ncrtime: 0x6a9dda26:87ff4ddc -- Mon Sep  7 05:24:54 2026\nSize of extra inode fields: 32\nInode checksum: 0x2ac77644\nEXTENTS:\n(0-333):511161-511494\n",
+              "executable_mode": true
+            }
+          ]
+        },
+        "journalctl": {
+          "present": true,
+          "matches": [
+            {
+              "path": "/usr/bin/journalctl",
+              "mode": "100755",
+              "stat": "Inode: 4269   Type: regular    Mode:  0755   Flags: 0x80000\nGeneration: 3487691147    Version: 0x00000000:00000005\nUser:     0   Group:     0   Project:     0   Size: 72488\nFile ACL: 0\nLinks: 1   Blockcount: 144\nFragment:  Address: 0    Number: 0    Size: 0\n ctime: 0x6a9dda26:793711dc -- Mon Sep  7 05:24:54 2026\n atime: 0x6a9dda26:78fa08a4 -- Mon Sep  7 05:24:54 2026\n mtime: 0x6a68c50d:00000000 -- Tue Jul 28 23:04:45 2026\ncrtime: 0x6a9dda26:78fa08a4 -- Mon Sep  7 05:24:54 2026\nSize of extra inode fields: 32\nInode checksum: 0x3c936c0f\nEXTENTS:\n(0-17):59998-60015\n",
+              "executable_mode": true
+            }
+          ]
+        },
+        "script": {
+          "present": true,
+          "matches": [
+            {
+              "path": "/usr/bin/script",
+              "mode": "100755",
+              "stat": "Inode: 4635   Type: regular    Mode:  0755   Flags: 0x80000\nGeneration: 1022701494    Version: 0x00000000:00000004\nUser:     0   Group:     0   Project:     0   Size: 71944\nFile ACL: 0\nLinks: 1   Blockcount: 144\nFragment:  Address: 0    Number: 0    Size: 0\n ctime: 0x6a9dda26:86911680 -- Mon Sep  7 05:24:54 2026\n atime: 0x6a9dda26:86911680 -- Mon Sep  7 05:24:54 2026\n mtime: 0x6a85de37:00000000 -- Thu Aug 20 00:47:51 2026\ncrtime: 0x6a9dda26:86911680 -- Mon Sep  7 05:24:54 2026\nSize of extra inode fields: 32\nInode checksum: 0x79e0f849\nEXTENTS:\n(0-17):51373-51390\n",
+              "executable_mode": true
+            }
+          ]
+        },
+        "ffmpeg": {
+          "present": true,
+          "matches": [
+            {
+              "path": "/usr/bin/ffmpeg",
+              "mode": "100755",
+              "stat": "Inode: 35227   Type: regular    Mode:  0755   Flags: 0x80000\nGeneration: 2349825709    Version: 0x00000000:00000006\nUser:     0   Group:     0   Project:     0   Size: 285184\nFile ACL: 0\nLinks: 1   Blockcount: 560\nFragment:  Address: 0    Number: 0    Size: 0\n ctime: 0x6aaab856:46e868dc -- Wed Sep 16 23:40:06 2026\n atime: 0x6aaab84f:00000000 -- Wed Sep 16 23:39:59 2026\n mtime: 0x684ad2e2:00000000 -- Thu Jun 12 21:15:14 2025\ncrtime: 0x6aaab856:39515ba0 -- Wed Sep 16 23:40:06 2026\nSize of extra inode fields: 32\nInode checksum: 0x8b4c3ff4\nEXTENTS:\n(0-69):1550592-1550661\n",
+              "executable_mode": true
+            }
+          ]
+        },
+        "ffplay": {
+          "present": true,
+          "matches": [
+            {
+              "path": "/usr/bin/ffplay",
+              "mode": "100755",
+              "stat": "Inode: 35228   Type: regular    Mode:  0755   Flags: 0x80000\nGeneration: 481353990    Version: 0x00000000:00000005\nUser:     0   Group:     0   Project:     0   Size: 129544\nFile ACL: 0\nLinks: 1   Blockcount: 256\nFragment:  Address: 0    Number: 0    Size: 0\n ctime: 0x6aaab856:47257214 -- Wed Sep 16 23:40:06 2026\n atime: 0x6aaab84f:00000000 -- Wed Sep 16 23:39:59 2026\n mtime: 0x684ad2e2:00000000 -- Thu Jun 12 21:15:14 2025\ncrtime: 0x6aaab856:3a8289b4 -- Wed Sep 16 23:40:06 2026\nSize of extra inode fields: 32\nInode checksum: 0x2a47e623\nEXTENTS:\n(0-31):1550688-1550719\n",
+              "executable_mode": true
+            }
+          ]
+        },
+        "numpy": {
+          "present": true,
+          "path": "/usr/lib/python3/dist-packages/numpy/__init__.py",
+          "stat": "Inode: 262894   Type: regular    Mode:  0644   Flags: 0x80000\nGeneration: 3563437919    Version: 0x00000000:00000004\nUser:     0   Group:     0   Project:     0   Size: 17005\nFile ACL: 0\nLinks: 1   Blockcount: 40\nFragment:  Address: 0    Number: 0    Size: 0\n ctime: 0x6aaab874:b657aa1c -- Wed Sep 16 23:40:36 2026\n atime: 0x6aaab880:06e4689c -- Wed Sep 16 23:40:48 2026\n mtime: 0x660be801:00000000 -- Tue Apr  2 19:12:01 2024\ncrtime: 0x6aaab874:60fcde40 -- Wed Sep 16 23:40:36 2026\nSize of extra inode fields: 32\nInode checksum: 0x39765939\nEXTENTS:\n(0-4):1010839-1010843\n"
+        }
+      },
+      "sha256": "3a2da9cf4184bc4fb61bb4b743dbf0596715a95074bf1370ec0bcf1953d67b86",
+      "reference_sha256": "3a2da9cf4184bc4fb61bb4b743dbf0596715a95074bf1370ec0bcf1953d67b86",
+      "matches_artifact": true
+    },
+    "emmc": {
+      "image_path": "/media/pi/SMCI/bpi/f3-cm6-vendor-20260923-rc3/output/bpi-cm6-emmc/payload/rootfs.ext4",
+      "image_bytes": 6442450944,
+      "commands": {
+        "python3": {
+          "present": true,
+          "matches": [
+            {
+              "path": "/usr/bin/python3",
+              "mode": "120777",
+              "stat": "Inode: 3505   Type: symlink    Mode:  0777   Flags: 0x0\nGeneration: 287570131    Version: 0x00000000:00000002\nUser:     0   Group:     0   Project:     0   Size: 10\nFile ACL: 0\nLinks: 1   Blockcount: 0\nFragment:  Address: 0    Number: 0    Size: 0\n ctime: 0x6a9dda26:6aabdf18 -- Mon Sep  7 05:24:54 2026\n atime: 0x6aaab87c:c022d4c4 -- Wed Sep 16 23:40:44 2026\n mtime: 0x69147a70:00000000 -- Wed Nov 12 20:15:44 2025\ncrtime: 0x6a9dda26:6aabdf18 -- Mon Sep  7 05:24:54 2026\nSize of extra inode fields: 32\nInode checksum: 0x17056ce0\nFast link dest: \"python3.12\"\n",
+              "executable_mode": true,
+              "link_target": "/usr/bin/python3.12",
+              "link_target_stat": "Inode: 4560   Type: regular    Mode:  0755   Flags: 0x80000\nGeneration: 3476377714    Version: 0x00000000:00000009\nUser:     0   Group:     0   Project:     0   Size: 7677968\nFile ACL: 0\nLinks: 1   Blockcount: 15000\nFragment:  Address: 0    Number: 0    Size: 0\n ctime: 0x6a9dda26:80211d68 -- Mon Sep  7 05:24:54 2026\n atime: 0x6aaab87c:c022d4c4 -- Wed Sep 16 23:40:44 2026\n mtime: 0x6a581be1:00000000 -- Thu Jul 16 07:46:41 2026\ncrtime: 0x6a9dda26:7eefef48 -- Mon Sep  7 05:24:54 2026\nSize of extra inode fields: 32\nInode checksum: 0xbfb101c9\nEXTENTS:\n(0-1874):508778-510652\n"
+            }
+          ]
+        },
+        "curl": {
+          "present": true,
+          "matches": [
+            {
+              "path": "/usr/bin/curl",
+              "mode": "100755",
+              "stat": "Inode: 3920   Type: regular    Mode:  0755   Flags: 0x80000\nGeneration: 182281474    Version: 0x00000000:00000004\nUser:     0   Group:     0   Project:     0   Size: 280848\nFile ACL: 0\nLinks: 1   Blockcount: 552\nFragment:  Address: 0    Number: 0    Size: 0\n ctime: 0x6a9dda26:7064bc80 -- Mon Sep  7 05:24:54 2026\n atime: 0x6a9dda26:7064bc80 -- Mon Sep  7 05:24:54 2026\n mtime: 0x6a875467:00000000 -- Fri Aug 21 03:24:23 2026\ncrtime: 0x6a9dda26:7064bc80 -- Mon Sep  7 05:24:54 2026\nSize of extra inode fields: 32\nInode checksum: 0xdaf7b935\nEXTENTS:\n(0-68):43178-43246\n",
+              "executable_mode": true
+            }
+          ]
+        },
+        "ethtool": {
+          "present": true,
+          "matches": [
+            {
+              "path": "/usr/sbin/ethtool",
+              "mode": "100755",
+              "stat": "Inode: 22120   Type: regular    Mode:  0755   Flags: 0x80000\nGeneration: 3956010906    Version: 0x00000000:00000004\nUser:     0   Group:     0   Project:     0   Size: 638488\nFile ACL: 0\nLinks: 1   Blockcount: 1248\nFragment:  Address: 0    Number: 0    Size: 0\n ctime: 0x6a9dda29:35837b08 -- Mon Sep  7 05:24:57 2026\n atime: 0x6a9dda29:35837b08 -- Mon Sep  7 05:24:57 2026\n mtime: 0x661413de:00000000 -- Mon Apr  8 23:57:18 2024\ncrtime: 0x6a9dda29:35837b08 -- Mon Sep  7 05:24:57 2026\nSize of extra inode fields: 32\nInode checksum: 0x05f0c66e\nEXTENTS:\n(0-155):1006927-1007082\n",
+              "executable_mode": true
+            }
+          ]
+        },
+        "rfkill": {
+          "present": true,
+          "matches": [
+            {
+              "path": "/usr/sbin/rfkill",
+              "mode": "100755",
+              "stat": "Inode: 22245   Type: regular    Mode:  0755   Flags: 0x80000\nGeneration: 3551397975    Version: 0x00000000:00000004\nUser:     0   Group:     0   Project:     0   Size: 51312\nFile ACL: 0\nLinks: 1   Blockcount: 104\nFragment:  Address: 0    Number: 0    Size: 0\n ctime: 0x6a9dda29:385fe9bc -- Mon Sep  7 05:24:57 2026\n atime: 0x6a9dda29:385fe9bc -- Mon Sep  7 05:24:57 2026\n mtime: 0x6a85de37:00000000 -- Thu Aug 20 00:47:51 2026\ncrtime: 0x6a9dda29:385fe9bc -- Mon Sep  7 05:24:57 2026\nSize of extra inode fields: 32\nInode checksum: 0x205baac5\nEXTENTS:\n(0-12):950974-950986\n",
+              "executable_mode": true
+            }
+          ]
+        },
+        "bluetoothctl": {
+          "present": true,
+          "matches": [
+            {
+              "path": "/usr/bin/bluetoothctl",
+              "mode": "100755",
+              "stat": "Inode: 3835   Type: regular    Mode:  0755   Flags: 0x80000\nGeneration: 47368604    Version: 0x00000000:00000004\nUser:     0   Group:     0   Project:     0   Size: 481432\nFile ACL: 0\nLinks: 1   Blockcount: 944\nFragment:  Address: 0    Number: 0    Size: 0\n ctime: 0x6a9dda26:6e3f6978 -- Mon Sep  7 05:24:54 2026\n atime: 0x6a9dda26:6e3f6978 -- Mon Sep  7 05:24:54 2026\n mtime: 0x68e5fc3d:00000000 -- Wed Oct  8 13:53:01 2025\ncrtime: 0x6a9dda26:6e3f6978 -- Mon Sep  7 05:24:54 2026\nSize of extra inode fields: 32\nInode checksum: 0x0e519f9c\nEXTENTS:\n(0-117):40960-41077\n",
+              "executable_mode": true
+            }
+          ]
+        },
+        "btmgmt": {
+          "present": true,
+          "matches": [
+            {
+              "path": "/usr/bin/btmgmt",
+              "mode": "100755",
+              "stat": "Inode: 3845   Type: regular    Mode:  0755   Flags: 0x80000\nGeneration: 3577131608    Version: 0x00000000:00000004\nUser:     0   Group:     0   Project:     0   Size: 165528\nFile ACL: 0\nLinks: 1   Blockcount: 328\nFragment:  Address: 0    Number: 0    Size: 0\n ctime: 0x6a9dda26:6e7c72b4 -- Mon Sep  7 05:24:54 2026\n atime: 0x6a9dda26:6e7c72b4 -- Mon Sep  7 05:24:54 2026\n mtime: 0x68e5fc3d:00000000 -- Wed Oct  8 13:53:01 2025\ncrtime: 0x6a9dda26:6e7c72b4 -- Mon Sep  7 05:24:54 2026\nSize of extra inode fields: 32\nInode checksum: 0x8580b642\nEXTENTS:\n(0-40):41300-41340\n",
+              "executable_mode": true
+            }
+          ]
+        },
+        "hcitool": {
+          "present": true,
+          "matches": [
+            {
+              "path": "/usr/bin/hcitool",
+              "mode": "100755",
+              "stat": "Inode: 4231   Type: regular    Mode:  0755   Flags: 0x80000\nGeneration: 2662058848    Version: 0x00000000:00000004\nUser:     0   Group:     0   Project:     0   Size: 167712\nFile ACL: 0\nLinks: 1   Blockcount: 328\nFragment:  Address: 0    Number: 0    Size: 0\n ctime: 0x6a9dda26:7842ecf4 -- Mon Sep  7 05:24:54 2026\n atime: 0x6a9dda26:7842ecf4 -- Mon Sep  7 05:24:54 2026\n mtime: 0x68e5fc3d:00000000 -- Wed Oct  8 13:53:01 2025\ncrtime: 0x6a9dda26:7842ecf4 -- Mon Sep  7 05:24:54 2026\nSize of extra inode fields: 32\nInode checksum: 0x34d6fd39\nEXTENTS:\n(0-40):58725-58765\n",
+              "executable_mode": true
+            }
+          ]
+        },
+        "nvme": {
+          "present": true,
+          "matches": [
+            {
+              "path": "/usr/sbin/nvme",
+              "mode": "100755",
+              "stat": "Inode: 22215   Type: regular    Mode:  0755   Flags: 0x80000\nGeneration: 285050791    Version: 0x00000000:00000004\nUser:     0   Group:     0   Project:     0   Size: 1101416\nFile ACL: 0\nLinks: 1   Blockcount: 2152\nFragment:  Address: 0    Number: 0    Size: 0\n ctime: 0x6a9dda29:3822e084 -- Mon Sep  7 05:24:57 2026\n atime: 0x6a9dda29:37e5d748 -- Mon Sep  7 05:24:57 2026\n mtime: 0x66bcbf4b:00000000 -- Wed Aug 14 22:29:31 2024\ncrtime: 0x6a9dda29:37e5d748 -- Mon Sep  7 05:24:57 2026\nSize of extra inode fields: 32\nInode checksum: 0x7a53c690\nEXTENTS:\n(0-268):546786-547054\n",
+              "executable_mode": true
+            }
+          ]
+        },
+        "lsblk": {
+          "present": true,
+          "matches": [
+            {
+              "path": "/usr/bin/lsblk",
+              "mode": "100755",
+              "stat": "Inode: 4325   Type: regular    Mode:  0755   Flags: 0x80000\nGeneration: 81150872    Version: 0x00000000:00000004\nUser:     0   Group:     0   Project:     0   Size: 211216\nFile ACL: 0\nLinks: 1   Blockcount: 416\nFragment:  Address: 0    Number: 0    Size: 0\n ctime: 0x6a9dda26:7aa54938 -- Mon Sep  7 05:24:54 2026\n atime: 0x6a9dda26:7aa54938 -- Mon Sep  7 05:24:54 2026\n mtime: 0x6a85de37:00000000 -- Thu Aug 20 00:47:51 2026\ncrtime: 0x6a9dda26:7aa54938 -- Mon Sep  7 05:24:54 2026\nSize of extra inode fields: 32\nInode checksum: 0xf08b5adf\nEXTENTS:\n(0-51):60928-60979\n",
+              "executable_mode": true
+            }
+          ]
+        },
+        "findmnt": {
+          "present": true,
+          "matches": [
+            {
+              "path": "/usr/bin/findmnt",
+              "mode": "100755",
+              "stat": "Inode: 4101   Type: regular    Mode:  0755   Flags: 0x80000\nGeneration: 3259871378    Version: 0x00000000:00000004\nUser:     0   Group:     0   Project:     0   Size: 85528\nFile ACL: 0\nLinks: 1   Blockcount: 168\nFragment:  Address: 0    Number: 0    Size: 0\n ctime: 0x6a9dda26:72c718c4 -- Mon Sep  7 05:24:54 2026\n atime: 0x6a9dda26:72c718c4 -- Mon Sep  7 05:24:54 2026\n mtime: 0x6a85de37:00000000 -- Thu Aug 20 00:47:51 2026\ncrtime: 0x6a9dda26:72c718c4 -- Mon Sep  7 05:24:54 2026\nSize of extra inode fields: 32\nInode checksum: 0xc3dd9c9a\nEXTENTS:\n(0-20):45455-45475\n",
+              "executable_mode": true
+            }
+          ]
+        },
+        "blockdev": {
+          "present": true,
+          "matches": [
+            {
+              "path": "/usr/sbin/blockdev",
+              "mode": "100755",
+              "stat": "Inode: 22075   Type: regular    Mode:  0755   Flags: 0x80000\nGeneration: 3575903277    Version: 0x00000000:00000004\nUser:     0   Group:     0   Project:     0   Size: 88328\nFile ACL: 0\nLinks: 1   Blockcount: 176\nFragment:  Address: 0    Number: 0    Size: 0\n ctime: 0x6a9dda29:348f5620 -- Mon Sep  7 05:24:57 2026\n atime: 0x6a9dda29:348f5620 -- Mon Sep  7 05:24:57 2026\n mtime: 0x6a85de37:00000000 -- Thu Aug 20 00:47:51 2026\ncrtime: 0x6a9dda29:348f5620 -- Mon Sep  7 05:24:57 2026\nSize of extra inode fields: 32\nInode checksum: 0x91638e39\nEXTENTS:\n(0-21):988976-988997\n",
+              "executable_mode": true
+            }
+          ]
+        },
+        "aplay": {
+          "present": true,
+          "matches": [
+            {
+              "path": "/usr/bin/aplay",
+              "mode": "100755",
+              "stat": "Inode: 3734   Type: regular    Mode:  0755   Flags: 0x80000\nGeneration: 1682629079    Version: 0x00000000:00000004\nUser:     0   Group:     0   Project:     0   Size: 71992\nFile ACL: 0\nLinks: 1   Blockcount: 144\nFragment:  Address: 0    Number: 0    Size: 0\n ctime: 0x6a9dda26:6c9428e4 -- Mon Sep  7 05:24:54 2026\n atime: 0x6a9dda26:6c9428e4 -- Mon Sep  7 05:24:54 2026\n mtime: 0x661246c3:00000000 -- Sun Apr  7 15:09:55 2024\ncrtime: 0x6a9dda26:6c9428e4 -- Mon Sep  7 05:24:54 2026\nSize of extra inode fields: 32\nInode checksum: 0x55a11e07\nEXTENTS:\n(0-17):36241-36258\n",
+              "executable_mode": true
+            }
+          ]
+        },
+        "arecord": {
+          "present": true,
+          "matches": [
+            {
+              "path": "/usr/bin/arecord",
+              "mode": "120777",
+              "stat": "Inode: 3213   Type: symlink    Mode:  0777   Flags: 0x0\nGeneration: 3851901499    Version: 0x00000000:00000002\nUser:     0   Group:     0   Project:     0   Size: 5\nFile ACL: 0\nLinks: 1   Blockcount: 0\nFragment:  Address: 0    Number: 0    Size: 0\n ctime: 0x6a9dda26:69f4c368 -- Mon Sep  7 05:24:54 2026\n atime: 0x6a9dda26:69f4c368 -- Mon Sep  7 05:24:54 2026\n mtime: 0x661246c3:00000000 -- Sun Apr  7 15:09:55 2024\ncrtime: 0x6a9dda26:69f4c368 -- Mon Sep  7 05:24:54 2026\nSize of extra inode fields: 32\nInode checksum: 0x37c0d5f3\nFast link dest: \"aplay\"\n",
+              "executable_mode": true,
+              "link_target": "/usr/bin/aplay",
+              "link_target_stat": "Inode: 3734   Type: regular    Mode:  0755   Flags: 0x80000\nGeneration: 1682629079    Version: 0x00000000:00000004\nUser:     0   Group:     0   Project:     0   Size: 71992\nFile ACL: 0\nLinks: 1   Blockcount: 144\nFragment:  Address: 0    Number: 0    Size: 0\n ctime: 0x6a9dda26:6c9428e4 -- Mon Sep  7 05:24:54 2026\n atime: 0x6a9dda26:6c9428e4 -- Mon Sep  7 05:24:54 2026\n mtime: 0x661246c3:00000000 -- Sun Apr  7 15:09:55 2024\ncrtime: 0x6a9dda26:6c9428e4 -- Mon Sep  7 05:24:54 2026\nSize of extra inode fields: 32\nInode checksum: 0x55a11e07\nEXTENTS:\n(0-17):36241-36258\n"
+            }
+          ]
+        },
+        "speaker-test": {
+          "present": true,
+          "matches": [
+            {
+              "path": "/usr/bin/speaker-test",
+              "mode": "100755",
+              "stat": "Inode: 4689   Type: regular    Mode:  0755   Flags: 0x80000\nGeneration: 730915169    Version: 0x00000000:00000004\nUser:     0   Group:     0   Project:     0   Size: 26944\nFile ACL: 0\nLinks: 1   Blockcount: 56\nFragment:  Address: 0    Number: 0    Size: 0\n ctime: 0x6a9dda26:87483230 -- Mon Sep  7 05:24:54 2026\n atime: 0x6a9dda26:87483230 -- Mon Sep  7 05:24:54 2026\n mtime: 0x661246c3:00000000 -- Sun Apr  7 15:09:55 2024\ncrtime: 0x6a9dda26:87483230 -- Mon Sep  7 05:24:54 2026\nSize of extra inode fields: 32\nInode checksum: 0x39456624\nEXTENTS:\n(0-6):51751-51757\n",
+              "executable_mode": true
+            }
+          ]
+        },
+        "pactl": {
+          "present": true,
+          "matches": [
+            {
+              "path": "/usr/bin/pactl",
+              "mode": "100755",
+              "stat": "Inode: 4443   Type: regular    Mode:  0755   Flags: 0x80000\nGeneration: 2344828263    Version: 0x00000000:00000004\nUser:     0   Group:     0   Project:     0   Size: 80152\nFile ACL: 0\nLinks: 1   Blockcount: 160\nFragment:  Address: 0    Number: 0    Size: 0\n ctime: 0x6a9dda26:7cca9c40 -- Mon Sep  7 05:24:54 2026\n atime: 0x6a9dda26:7cca9c40 -- Mon Sep  7 05:24:54 2026\n mtime: 0x6757fd4f:00000000 -- Tue Dec 10 16:35:27 2024\ncrtime: 0x6a9dda26:7cca9c40 -- Mon Sep  7 05:24:54 2026\nSize of extra inode fields: 32\nInode checksum: 0xbe2c4989\nEXTENTS:\n(0-19):63840-63859\n",
+              "executable_mode": true
+            }
+          ]
+        },
+        "wpctl": {
+          "present": false,
+          "matches": []
+        },
+        "v4l2-ctl": {
+          "present": true,
+          "matches": [
+            {
+              "path": "/usr/bin/v4l2-ctl",
+              "mode": "100755",
+              "stat": "Inode: 4822   Type: regular    Mode:  0755   Flags: 0x80000\nGeneration: 1930992160    Version: 0x00000000:00000004\nUser:     0   Group:     0   Project:     0   Size: 471016\nFile ACL: 0\nLinks: 1   Blockcount: 920\nFragment:  Address: 0    Number: 0    Size: 0\n ctime: 0x6a9dda26:8a9eb358 -- Mon Sep  7 05:24:54 2026\n atime: 0x6a9dda26:8a9eb358 -- Mon Sep  7 05:24:54 2026\n mtime: 0x66124a14:00000000 -- Sun Apr  7 15:24:04 2024\ncrtime: 0x6a9dda26:8a9eb358 -- Mon Sep  7 05:24:54 2026\nSize of extra inode fields: 32\nInode checksum: 0xb55b0262\nEXTENTS:\n(0-114):54489-54603\n",
+              "executable_mode": true
+            }
+          ]
+        },
+        "stress-ng": {
+          "present": false,
+          "matches": []
+        },
+        "timeout": {
+          "present": true,
+          "matches": [
+            {
+              "path": "/usr/bin/timeout",
+              "mode": "100755",
+              "stat": "Inode: 4766   Type: regular    Mode:  0755   Flags: 0x80000\nGeneration: 1283399563    Version: 0x00000000:00000004\nUser:     0   Group:     0   Project:     0   Size: 43912\nFile ACL: 0\nLinks: 1   Blockcount: 88\nFragment:  Address: 0    Number: 0    Size: 0\n ctime: 0x6a9dda26:88b66988 -- Mon Sep  7 05:24:54 2026\n atime: 0x6a9dda26:88b66988 -- Mon Sep  7 05:24:54 2026\n mtime: 0x6a8db00f:00000000 -- Tue Aug 25 23:09:03 2026\ncrtime: 0x6a9dda26:88b66988 -- Mon Sep  7 05:24:54 2026\nSize of extra inode fields: 32\nInode checksum: 0x350ef77d\nEXTENTS:\n(0-10):52088-52098\n",
+              "executable_mode": true
+            }
+          ]
+        },
+        "sha256sum": {
+          "present": true,
+          "matches": [
+            {
+              "path": "/usr/bin/sha256sum",
+              "mode": "100755",
+              "stat": "Inode: 4668   Type: regular    Mode:  0755   Flags: 0x80000\nGeneration: 3894799431    Version: 0x00000000:00000004\nUser:     0   Group:     0   Project:     0   Size: 43488\nFile ACL: 0\nLinks: 1   Blockcount: 88\nFragment:  Address: 0    Number: 0    Size: 0\n ctime: 0x6a9dda26:870b28f4 -- Mon Sep  7 05:24:54 2026\n atime: 0x6a9dda26:870b28f4 -- Mon Sep  7 05:24:54 2026\n mtime: 0x6a8db00f:00000000 -- Tue Aug 25 23:09:03 2026\ncrtime: 0x6a9dda26:870b28f4 -- Mon Sep  7 05:24:54 2026\nSize of extra inode fields: 32\nInode checksum: 0xf681bbb0\nEXTENTS:\n(0-10):33704-33714\n",
+              "executable_mode": true
+            }
+          ]
+        },
+        "unzip": {
+          "present": true,
+          "matches": [
+            {
+              "path": "/usr/bin/unzip",
+              "mode": "100755",
+              "stat": "Inode: 4996   Type: regular    Mode:  0755   Flags: 0x80000\nGeneration: 4215341682    Version: 0x00000000:00000004\nUser:     0   Group:     0   Project:     0   Size: 166216\nFile ACL: 0\nLinks: 2   Blockcount: 328\nFragment:  Address: 0    Number: 0    Size: 0\n ctime: 0x6a9dda26:8d7b220c -- Mon Sep  7 05:24:54 2026\n atime: 0x6a9dda26:8d3e18d4 -- Mon Sep  7 05:24:54 2026\n mtime: 0x66fd4aaf:00000000 -- Wed Oct  2 21:29:19 2024\ncrtime: 0x6a9dda26:8d3e18d4 -- Mon Sep  7 05:24:54 2026\nSize of extra inode fields: 32\nInode checksum: 0x32541255\nEXTENTS:\n(0-40):499556-499596\n",
+              "executable_mode": true
+            }
+          ]
+        },
+        "dpkg-deb": {
+          "present": true,
+          "matches": [
+            {
+              "path": "/usr/bin/dpkg-deb",
+              "mode": "100755",
+              "stat": "Inode: 3988   Type: regular    Mode:  0755   Flags: 0x80000\nGeneration: 2351058046    Version: 0x00000000:00000004\nUser:     0   Group:     0   Project:     0   Size: 166432\nFile ACL: 0\nLinks: 1   Blockcount: 328\nFragment:  Address: 0    Number: 0    Size: 0\n ctime: 0x6a9dda26:7158e168 -- Mon Sep  7 05:24:54 2026\n atime: 0x6ab2bcf9:7b200c28 -- Wed Sep 23 01:38:01 2026\n mtime: 0x69fb7c8a:00000000 -- Thu May  7 01:38:18 2026\ncrtime: 0x6a9dda26:7158e168 -- Mon Sep  7 05:24:54 2026\nSize of extra inode fields: 32\nInode checksum: 0x43825d00\nEXTENTS:\n(0-40):44472-44512\n",
+              "executable_mode": true
+            }
+          ]
+        },
+        "fdtdump": {
+          "present": true,
+          "matches": [
+            {
+              "path": "/usr/bin/fdtdump",
+              "mode": "100755",
+              "stat": "Inode: 4089   Type: regular    Mode:  0755   Flags: 0x80000\nGeneration: 2994143707    Version: 0x00000000:00000004\nUser:     0   Group:     0   Project:     0   Size: 18696\nFile ACL: 0\nLinks: 1   Blockcount: 40\nFragment:  Address: 0    Number: 0    Size: 0\n ctime: 0x6a9dda26:728a0f88 -- Mon Sep  7 05:24:54 2026\n atime: 0x6a9dda26:728a0f88 -- Mon Sep  7 05:24:54 2026\n mtime: 0x66141384:00000000 -- Mon Apr  8 23:55:48 2024\ncrtime: 0x6a9dda26:728a0f88 -- Mon Sep  7 05:24:54 2026\nSize of extra inode fields: 32\nInode checksum: 0x6298e105\nEXTENTS:\n(0-4):44002-44006\n",
+              "executable_mode": true
+            }
+          ]
+        },
+        "fdtget": {
+          "present": true,
+          "matches": [
+            {
+              "path": "/usr/bin/fdtget",
+              "mode": "100755",
+              "stat": "Inode: 4090   Type: regular    Mode:  0755   Flags: 0x80000\nGeneration: 2192575470    Version: 0x00000000:00000004\nUser:     0   Group:     0   Project:     0   Size: 18696\nFile ACL: 0\nLinks: 1   Blockcount: 40\nFragment:  Address: 0    Number: 0    Size: 0\n ctime: 0x6a9dda26:728a0f88 -- Mon Sep  7 05:24:54 2026\n atime: 0x6a9dda26:728a0f88 -- Mon Sep  7 05:24:54 2026\n mtime: 0x66141384:00000000 -- Mon Apr  8 23:55:48 2024\ncrtime: 0x6a9dda26:728a0f88 -- Mon Sep  7 05:24:54 2026\nSize of extra inode fields: 32\nInode checksum: 0x1cbf3258\nEXTENTS:\n(0-4):44007-44011\n",
+              "executable_mode": true
+            }
+          ]
+        },
+        "systemctl": {
+          "present": true,
+          "matches": [
+            {
+              "path": "/usr/bin/systemctl",
+              "mode": "100755",
+              "stat": "Inode: 4719   Type: regular    Mode:  0755   Flags: 0x80000\nGeneration: 2088944421    Version: 0x00000000:00000004\nUser:     0   Group:     0   Project:     0   Size: 1365576\nFile ACL: 0\nLinks: 1   Blockcount: 2672\nFragment:  Address: 0    Number: 0    Size: 0\n ctime: 0x6a9dda26:87ff4ddc -- Mon Sep  7 05:24:54 2026\n atime: 0x6ab2bcfb:6161d680 -- Wed Sep 23 01:38:03 2026\n mtime: 0x6a68c50d:00000000 -- Tue Jul 28 23:04:45 2026\ncrtime: 0x6a9dda26:87ff4ddc -- Mon Sep  7 05:24:54 2026\nSize of extra inode fields: 32\nInode checksum: 0x2ac77644\nEXTENTS:\n(0-333):511161-511494\n",
+              "executable_mode": true
+            }
+          ]
+        },
+        "journalctl": {
+          "present": true,
+          "matches": [
+            {
+              "path": "/usr/bin/journalctl",
+              "mode": "100755",
+              "stat": "Inode: 4269   Type: regular    Mode:  0755   Flags: 0x80000\nGeneration: 3487691147    Version: 0x00000000:00000005\nUser:     0   Group:     0   Project:     0   Size: 72488\nFile ACL: 0\nLinks: 1   Blockcount: 144\nFragment:  Address: 0    Number: 0    Size: 0\n ctime: 0x6a9dda26:793711dc -- Mon Sep  7 05:24:54 2026\n atime: 0x6a9dda26:78fa08a4 -- Mon Sep  7 05:24:54 2026\n mtime: 0x6a68c50d:00000000 -- Tue Jul 28 23:04:45 2026\ncrtime: 0x6a9dda26:78fa08a4 -- Mon Sep  7 05:24:54 2026\nSize of extra inode fields: 32\nInode checksum: 0x3c936c0f\nEXTENTS:\n(0-17):59998-60015\n",
+              "executable_mode": true
+            }
+          ]
+        },
+        "script": {
+          "present": true,
+          "matches": [
+            {
+              "path": "/usr/bin/script",
+              "mode": "100755",
+              "stat": "Inode: 4635   Type: regular    Mode:  0755   Flags: 0x80000\nGeneration: 1022701494    Version: 0x00000000:00000004\nUser:     0   Group:     0   Project:     0   Size: 71944\nFile ACL: 0\nLinks: 1   Blockcount: 144\nFragment:  Address: 0    Number: 0    Size: 0\n ctime: 0x6a9dda26:86911680 -- Mon Sep  7 05:24:54 2026\n atime: 0x6a9dda26:86911680 -- Mon Sep  7 05:24:54 2026\n mtime: 0x6a85de37:00000000 -- Thu Aug 20 00:47:51 2026\ncrtime: 0x6a9dda26:86911680 -- Mon Sep  7 05:24:54 2026\nSize of extra inode fields: 32\nInode checksum: 0x79e0f849\nEXTENTS:\n(0-17):51373-51390\n",
+              "executable_mode": true
+            }
+          ]
+        },
+        "ffmpeg": {
+          "present": true,
+          "matches": [
+            {
+              "path": "/usr/bin/ffmpeg",
+              "mode": "100755",
+              "stat": "Inode: 35227   Type: regular    Mode:  0755   Flags: 0x80000\nGeneration: 2349825709    Version: 0x00000000:00000006\nUser:     0   Group:     0   Project:     0   Size: 285184\nFile ACL: 0\nLinks: 1   Blockcount: 560\nFragment:  Address: 0    Number: 0    Size: 0\n ctime: 0x6aaab856:46e868dc -- Wed Sep 16 23:40:06 2026\n atime: 0x6aaab84f:00000000 -- Wed Sep 16 23:39:59 2026\n mtime: 0x684ad2e2:00000000 -- Thu Jun 12 21:15:14 2025\ncrtime: 0x6aaab856:39515ba0 -- Wed Sep 16 23:40:06 2026\nSize of extra inode fields: 32\nInode checksum: 0x8b4c3ff4\nEXTENTS:\n(0-69):1550592-1550661\n",
+              "executable_mode": true
+            }
+          ]
+        },
+        "ffplay": {
+          "present": true,
+          "matches": [
+            {
+              "path": "/usr/bin/ffplay",
+              "mode": "100755",
+              "stat": "Inode: 35228   Type: regular    Mode:  0755   Flags: 0x80000\nGeneration: 481353990    Version: 0x00000000:00000005\nUser:     0   Group:     0   Project:     0   Size: 129544\nFile ACL: 0\nLinks: 1   Blockcount: 256\nFragment:  Address: 0    Number: 0    Size: 0\n ctime: 0x6aaab856:47257214 -- Wed Sep 16 23:40:06 2026\n atime: 0x6aaab84f:00000000 -- Wed Sep 16 23:39:59 2026\n mtime: 0x684ad2e2:00000000 -- Thu Jun 12 21:15:14 2025\ncrtime: 0x6aaab856:3a8289b4 -- Wed Sep 16 23:40:06 2026\nSize of extra inode fields: 32\nInode checksum: 0x2a47e623\nEXTENTS:\n(0-31):1550688-1550719\n",
+              "executable_mode": true
+            }
+          ]
+        },
+        "numpy": {
+          "present": true,
+          "path": "/usr/lib/python3/dist-packages/numpy/__init__.py",
+          "stat": "Inode: 262894   Type: regular    Mode:  0644   Flags: 0x80000\nGeneration: 3563437919    Version: 0x00000000:00000004\nUser:     0   Group:     0   Project:     0   Size: 17005\nFile ACL: 0\nLinks: 1   Blockcount: 40\nFragment:  Address: 0    Number: 0    Size: 0\n ctime: 0x6aaab874:b657aa1c -- Wed Sep 16 23:40:36 2026\n atime: 0x6aaab880:06e4689c -- Wed Sep 16 23:40:48 2026\n mtime: 0x660be801:00000000 -- Tue Apr  2 19:12:01 2024\ncrtime: 0x6aaab874:60fcde40 -- Wed Sep 16 23:40:36 2026\nSize of extra inode fields: 32\nInode checksum: 0x39765939\nEXTENTS:\n(0-4):1010839-1010843\n"
+        }
+      },
+      "sha256": "c61a8a366308e4d7b05eb0f369ef17f68f83f45462f14614ace94b604bf8e1aa",
+      "reference_sha256": "c61a8a366308e4d7b05eb0f369ef17f68f83f45462f14614ace94b604bf8e1aa",
+      "matches_artifact": true
+    }
+  }
+}

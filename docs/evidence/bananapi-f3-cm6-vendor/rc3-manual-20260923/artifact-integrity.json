@@ -1,0 +1,1211 @@
+{
+  "schema_version": 1,
+  "generated_utc": "2026-09-22T23:38:42Z",
+  "method": "以唯讀檔案模式重新計算完整 SHA-256；串流解壓每一 ZIP 成員並驗證 CRC 與 manifest 雜湊；未改動映像或操作板子。",
+  "artifacts": {
+    "bpi-cm6-sd": {
+      "path": "/media/pi/SMCI/bpi/f3-cm6-vendor-20260923-rc3/output/bpi-cm6-sd/Armbian_Noble_bpi-cm6_gnome_vendor-sd_20260923-rc3.img.zip",
+      "bytes": 1713117447,
+      "sha256": "228cef7811e763cbf0b8f0d57d55ba78f79f87f2f3bf5e7f59d5d53bd94c78a7",
+      "matches_manifest": true,
+      "manifest": {
+        "schema_version": 1,
+        "board": "bpi-cm6",
+        "release": "noble",
+        "desktop": "gnome-wayland",
+        "storage": "sd",
+        "identity": {
+          "board": "bpi-cm6",
+          "source_sha256": "72207dcdfbec77bdf5b6df86f8b493814429ac543281edce59c3ff782fa425aa",
+          "acceleration_lock_sha256": "5318fc9fd4fbb6073c1a5b631136e3442f1a35efb9243f2ba4d76339cf1a9df6",
+          "schema_version": 1,
+          "cm6_bluetooth_package_sha256": "f5abe051e30b8a8a3a0510ae5f715729fcc1e226651f92a100883e02a8683339",
+          "storage": "sd",
+          "layout_version": "bianbu-v2.3",
+          "release_id": "20260923-rc3",
+          "reference_payloads": {
+            "factory/FSBL.bin": "896e236da5c5208bda9d75e2927ddeff814cbe504d96f529fcc27f1c30c360a6",
+            "factory/bootinfo_sd.bin": "f339e3e576ce94d7812c2887622c5882ae12ac3c9a98059aef37741850a43cb6",
+            "factory/bootinfo_emmc.bin": "5433619a573ec7935450f303168b87c97dc5511905291328df40a2ff081b3d07",
+            "fw_dynamic.itb": "2c83066613458867db59d428102db99030ae3cf1a4c4b8092dc9a2d1b2730715",
+            "u-boot.itb": "f734681e00ae0ca7ca4418ff33d37870b988eb3908f49fbac4f6c047b91ed06a",
+            "env.bin": "3a10ea4c85c6457cc2680b6db6378c67e16b209b8e474cec7a09c72d4af5f1fc"
+          },
+          "sources_lock_sha256": "60b9d53ed5df3b57551f349d93fbc4e28e21b3943404b0f163dbdb8750ccf5f8",
+          "cm6_ethernet_dtb_sha256": "f0b9795fda72868cd2bc9a6db0cf5aa2f15ea494f114a5b42adfc1fa931962c1"
+        },
+        "root_uuid": "b420f97c-df24-5531-974c-582f4a977d96",
+        "boot_uuid": "2b3957a6-2286-5464-ba31-8f22284cb925",
+        "release_id": "20260923-rc3",
+        "release_status": "candidate_unverified",
+        "producer_sha256": "1cae1806dcbdad009980985d9e8dd1483e77c28d19c94ddf5c51978e1d347731",
+        "kernel": "6.6.36-legacy-spacemit",
+        "hardware_validation": "pending",
+        "archive_members": {
+          "Armbian_Noble_bpi-cm6_gnome_vendor-sd_20260923-rc3.img": {
+            "size": 6716129280,
+            "sha256": "562cd7820b788df1a35e4763a23d585262684015c0fbb2921fc1fa23c0608766"
+          }
+        },
+        "boot_kernel": {
+          "source_was_gzip": false,
+          "format": "fit",
+          "image_size": 45755476,
+          "image_sha256": "4e8cf15b7a8fbd46f7d643d1a5cdfa342bf5979ef44534924fbda5b055e5f878"
+        },
+        "boot_contract": {
+          "status": "passed",
+          "scope": "bootfs-extlinux-env-rootfs-fstab-marker"
+        },
+        "acceleration_preflight": {
+          "board": "bpi-cm6",
+          "stage": "installed",
+          "passed": true,
+          "errors": [],
+          "pending_dependencies": [],
+          "kernel_pvr_found": [
+            "23.2@6460340"
+          ],
+          "hardware_verified": false,
+          "runtime_status": {
+            "gpu": "待實機驗證",
+            "ai": "待實機驗證",
+            "vpu": "待實機驗證"
+          }
+        },
+        "reference": {
+          "url": "https://archive.spacemit.com/image/k1/version/bianbu/v2.3/Bianbu-LXQt-K1-V2.3.0-20251212104943.zip",
+          "archive_bytes": 2008730989,
+          "files": [
+            {
+              "path": "env.bin",
+              "size": 16384,
+              "sha256": "3a10ea4c85c6457cc2680b6db6378c67e16b209b8e474cec7a09c72d4af5f1fc",
+              "crc32": "06ecbe2b",
+              "header_offset": 31073011,
+              "compressed_size": 2824
+            },
+            {
+              "path": "factory/bootinfo_emmc.bin",
+              "size": 80,
+              "sha256": "5433619a573ec7935450f303168b87c97dc5511905291328df40a2ff081b3d07",
+              "crc32": "ecbb4b55",
+              "header_offset": 31075966,
+              "compressed_size": 37
+            },
+            {
+              "path": "factory/FSBL.bin",
+              "size": 191808,
+              "sha256": "896e236da5c5208bda9d75e2927ddeff814cbe504d96f529fcc27f1c30c360a6",
+              "crc32": "79742168",
+              "header_offset": 31076086,
+              "compressed_size": 107620
+            },
+            {
+              "path": "factory/bootinfo_spinor.bin",
+              "size": 80,
+              "sha256": "49b63bcbcdcf2e0bbcaabbc1f2a01959ab56ed70c16a3594b25bc1183d92efae",
+              "crc32": "ecbb4b55",
+              "header_offset": 31183780,
+              "compressed_size": 39
+            },
+            {
+              "path": "factory/bootinfo_spinand.bin",
+              "size": 80,
+              "sha256": "ff681a4a120f8b9288c8401ce309bc13ff3ed994280dd750662bcc51806c96d6",
+              "crc32": "ecbb4b55",
+              "header_offset": 31183904,
+              "compressed_size": 39
+            },
+            {
+              "path": "factory/bootinfo_sd.bin",
+              "size": 80,
+              "sha256": "f339e3e576ce94d7812c2887622c5882ae12ac3c9a98059aef37741850a43cb6",
+              "crc32": "ecbb4b55",
+              "header_offset": 31184029,
+              "compressed_size": 37
+            },
+            {
+              "path": "fastboot.yaml",
+              "size": 1028,
+              "sha256": "95642b765cff5b7c6e2439e44b1b7ea70a77fd79ced3e37a907185f383545278",
+              "crc32": "c4b68d3f",
+              "header_offset": 31184147,
+              "compressed_size": 374
+            },
+            {
+              "path": "fw_dynamic.itb",
+              "size": 136583,
+              "sha256": "2c83066613458867db59d428102db99030ae3cf1a4c4b8092dc9a2d1b2730715",
+              "crc32": "20935081",
+              "header_offset": 31184592,
+              "compressed_size": 66987
+            },
+            {
+              "path": "genimage.cfg",
+              "size": 1511,
+              "sha256": "8fc8372ed3cd5a831f12e4a05d1ad3e8505395b9f1584301cae5b3b5b0768343",
+              "crc32": "b498b6a1",
+              "header_offset": 31251651,
+              "compressed_size": 351
+            },
+            {
+              "path": "partition_2M.json",
+              "size": 696,
+              "sha256": "a14ca12559299f6fbf750465fcc87727b38445e5c0a45516394e6326396a8feb",
+              "crc32": "eed5c6df",
+              "header_offset": 31252072,
+              "compressed_size": 251
+            },
+            {
+              "path": "partition_flash.json",
+              "size": 1296,
+              "sha256": "5f1e483082de5586dcae2b8f979b89a2f0f090cc93bd2f26b80689b654a755b4",
+              "crc32": "758a357e",
+              "header_offset": 31252398,
+              "compressed_size": 316
+            },
+            {
+              "path": "partition_universal.json",
+              "size": 1210,
+              "sha256": "568d9848097c72ba01ded40534022d35be7dda57ece13863194dd3a442d9568e",
+              "crc32": "3507daf0",
+              "header_offset": 31252792,
+              "compressed_size": 307
+            },
+            {
+              "path": "u-boot.itb",
+              "size": 1959546,
+              "sha256": "f734681e00ae0ca7ca4418ff33d37870b988eb3908f49fbac4f6c047b91ed06a",
+              "crc32": "069fe006",
+              "header_offset": 2007947662,
+              "compressed_size": 781763
+            }
+          ],
+          "sources_lock_sha256": "60b9d53ed5df3b57551f349d93fbc4e28e21b3943404b0f163dbdb8750ccf5f8"
+        },
+        "cm6_ethernet_dtb": {
+          "schema_version": 1,
+          "board": "bpi-cm6",
+          "kernel": "6.6.36-legacy-spacemit",
+          "status": "離線驗證通過",
+          "source": {
+            "name": "k1-x_bpi_cm6.dtb",
+            "bytes": 83687,
+            "sha256": "6d8db2aa3dc0a106190052316a0839cf9dda6a64b41ff6fe8fcc317f96a46f67"
+          },
+          "candidate": {
+            "name": "k1-x_bpi_cm6-eth0-reset.dtb",
+            "bytes": 83699,
+            "sha256": "f0b9795fda72868cd2bc9a6db0cf5aa2f15ea494f114a5b42adfc1fa931962c1"
+          },
+          "changed_properties": [
+            "/soc/pinctrl@d401e000/gmac0_grp/pinctrl-single,pins"
+          ],
+          "appended_cells": [
+            "0xb8",
+            "0x0",
+            "0xb040"
+          ],
+          "change": "僅在 GMAC0 群組加入 GPIO45 的 GPIO mux、下拉與官方驅動強度設定。",
+          "semantic_validation": "還原唯一修改的屬性後，排序輸出的 DTB 完全一致，含保留記憶體與開機 CPU 識別。",
+          "hardware_validation": "本工具只驗證離線產物；不執行或判定板端安裝、開機及網路驗收。"
+        },
+        "minimum_media_bytes": 6716129280,
+        "sd_structure_validation": {
+          "status": "passed",
+          "scope": "gpt-crc-mbr-payload-ranges"
+        },
+        "artifact": {
+          "name": "Armbian_Noble_bpi-cm6_gnome_vendor-sd_20260923-rc3.img.zip",
+          "sha256": "228cef7811e763cbf0b8f0d57d55ba78f79f87f2f3bf5e7f59d5d53bd94c78a7",
+          "size": 1713117447
+        }
+      },
+      "members": [
+        {
+          "name": "Armbian_Noble_bpi-cm6_gnome_vendor-sd_20260923-rc3.img",
+          "bytes": 6716129280,
+          "compressed_bytes": 1713117201,
+          "sha256": "562cd7820b788df1a35e4763a23d585262684015c0fbb2921fc1fa23c0608766",
+          "crc32": "31cf7183",
+          "matches_manifest": true
+        }
+      ],
+      "zip_crc_test": "全部成員串流讀取完成，CRC 均通過",
+      "members_match_manifest": true
+    },
+    "sd_raw_image": {
+      "path": "/media/pi/SMCI/bpi/f3-cm6-vendor-20260923-rc3/output/bpi-cm6-sd/Armbian_Noble_bpi-cm6_gnome_vendor-sd_20260923-rc3.img",
+      "bytes": 6716129280,
+      "sha256": "562cd7820b788df1a35e4763a23d585262684015c0fbb2921fc1fa23c0608766",
+      "matches_zip_member": true,
+      "gpt_partitions": [
+        {
+          "number": 1,
+          "name": "fsbl",
+          "first_lba": 256,
+          "last_lba": 767,
+          "bytes": 262144,
+          "type_guid": "0fc63daf-8483-4772-8e79-3d69d8477de4"
+        },
+        {
+          "number": 2,
+          "name": "env",
+          "first_lba": 768,
+          "last_lba": 895,
+          "bytes": 65536,
+          "type_guid": "0fc63daf-8483-4772-8e79-3d69d8477de4"
+        },
+        {
+          "number": 3,
+          "name": "opensbi",
+          "first_lba": 2048,
+          "last_lba": 4095,
+          "bytes": 1048576,
+          "type_guid": "0fc63daf-8483-4772-8e79-3d69d8477de4"
+        },
+        {
+          "number": 4,
+          "name": "uboot",
+          "first_lba": 4096,
+          "last_lba": 8191,
+          "bytes": 2097152,
+          "type_guid": "0fc63daf-8483-4772-8e79-3d69d8477de4"
+        },
+        {
+          "number": 5,
+          "name": "bootfs",
+          "first_lba": 8192,
+          "last_lba": 532479,
+          "bytes": 268435456,
+          "type_guid": "0fc63daf-8483-4772-8e79-3d69d8477de4",
+          "superblock": {
+            "filesystem": "ext4",
+            "uuid": "2b3957a6-2286-5464-ba31-8f22284cb925",
+            "label": "bootfs",
+            "block_size": 4096,
+            "filesystem_bytes": 268435456
+          }
+        },
+        {
+          "number": 6,
+          "name": "rootfs",
+          "first_lba": 532480,
+          "last_lba": 13115391,
+          "bytes": 6442450944,
+          "type_guid": "0fc63daf-8483-4772-8e79-3d69d8477de4",
+          "superblock": {
+            "filesystem": "ext4",
+            "uuid": "b420f97c-df24-5531-974c-582f4a977d96",
+            "label": "armbian-root",
+            "block_size": 4096,
+            "filesystem_bytes": 6442450944
+          }
+        }
+      ]
+    },
+    "bpi-cm6-emmc": {
+      "path": "/media/pi/SMCI/bpi/f3-cm6-vendor-20260923-rc3/output/bpi-cm6-emmc/Armbian_Noble_bpi-cm6_gnome_titan-emmc_20260923-rc3.zip",
+      "bytes": 1713113819,
+      "sha256": "06e02aa4bfb309535e7858add46d20745f5fbf65f94ccfd21e4acf974e2d55a3",
+      "matches_manifest": true,
+      "manifest": {
+        "schema_version": 1,
+        "board": "bpi-cm6",
+        "release": "noble",
+        "desktop": "gnome-wayland",
+        "storage": "emmc",
+        "identity": {
+          "board": "bpi-cm6",
+          "source_sha256": "72207dcdfbec77bdf5b6df86f8b493814429ac543281edce59c3ff782fa425aa",
+          "acceleration_lock_sha256": "5318fc9fd4fbb6073c1a5b631136e3442f1a35efb9243f2ba4d76339cf1a9df6",
+          "schema_version": 1,
+          "cm6_bluetooth_package_sha256": "f5abe051e30b8a8a3a0510ae5f715729fcc1e226651f92a100883e02a8683339",
+          "storage": "emmc",
+          "layout_version": "bianbu-v2.3",
+          "release_id": "20260923-rc3",
+          "reference_payloads": {
+            "factory/FSBL.bin": "896e236da5c5208bda9d75e2927ddeff814cbe504d96f529fcc27f1c30c360a6",
+            "factory/bootinfo_sd.bin": "f339e3e576ce94d7812c2887622c5882ae12ac3c9a98059aef37741850a43cb6",
+            "factory/bootinfo_emmc.bin": "5433619a573ec7935450f303168b87c97dc5511905291328df40a2ff081b3d07",
+            "fw_dynamic.itb": "2c83066613458867db59d428102db99030ae3cf1a4c4b8092dc9a2d1b2730715",
+            "u-boot.itb": "f734681e00ae0ca7ca4418ff33d37870b988eb3908f49fbac4f6c047b91ed06a",
+            "env.bin": "3a10ea4c85c6457cc2680b6db6378c67e16b209b8e474cec7a09c72d4af5f1fc"
+          },
+          "sources_lock_sha256": "60b9d53ed5df3b57551f349d93fbc4e28e21b3943404b0f163dbdb8750ccf5f8",
+          "cm6_ethernet_dtb_sha256": "f0b9795fda72868cd2bc9a6db0cf5aa2f15ea494f114a5b42adfc1fa931962c1"
+        },
+        "root_uuid": "88c6221a-58a5-5fd9-b74e-c28382efc978",
+        "boot_uuid": "0a8e24db-eee1-5dc4-a206-2f9c8e9e7022",
+        "release_id": "20260923-rc3",
+        "release_status": "candidate_unverified",
+        "producer_sha256": "1cae1806dcbdad009980985d9e8dd1483e77c28d19c94ddf5c51978e1d347731",
+        "kernel": "6.6.36-legacy-spacemit",
+        "hardware_validation": "pending",
+        "archive_members": {
+          "bootfs.ext4": {
+            "size": 268435456,
+            "sha256": "0578b2f40de665fab2e16bc4f2caa34c43a689b3f7504e3766756ecbbbe6f031"
+          },
+          "u-boot.itb": {
+            "size": 1959546,
+            "sha256": "f734681e00ae0ca7ca4418ff33d37870b988eb3908f49fbac4f6c047b91ed06a"
+          },
+          "rootfs.ext4": {
+            "size": 6442450944,
+            "sha256": "c61a8a366308e4d7b05eb0f369ef17f68f83f45462f14614ace94b604bf8e1aa"
+          },
+          "fw_dynamic.itb": {
+            "size": 136583,
+            "sha256": "2c83066613458867db59d428102db99030ae3cf1a4c4b8092dc9a2d1b2730715"
+          },
+          "fastboot.yaml": {
+            "size": 943,
+            "sha256": "f85c8017934e887d700c7e963e2acc1667c38270925b7c52b35371209666a335"
+          },
+          "partition_universal.json": {
+            "size": 954,
+            "sha256": "9e3fc864903994ce0d45208d8edbb081de060386ffccc7ec7ae37f38b3b26f89"
+          },
+          "env.bin": {
+            "size": 16384,
+            "sha256": "3a10ea4c85c6457cc2680b6db6378c67e16b209b8e474cec7a09c72d4af5f1fc"
+          },
+          "factory/bootinfo_sd.bin": {
+            "size": 80,
+            "sha256": "f339e3e576ce94d7812c2887622c5882ae12ac3c9a98059aef37741850a43cb6"
+          },
+          "factory/FSBL.bin": {
+            "size": 191808,
+            "sha256": "896e236da5c5208bda9d75e2927ddeff814cbe504d96f529fcc27f1c30c360a6"
+          },
+          "factory/bootinfo_emmc.bin": {
+            "size": 80,
+            "sha256": "5433619a573ec7935450f303168b87c97dc5511905291328df40a2ff081b3d07"
+          }
+        },
+        "boot_kernel": {
+          "source_was_gzip": false,
+          "format": "fit",
+          "image_size": 45755476,
+          "image_sha256": "4e8cf15b7a8fbd46f7d643d1a5cdfa342bf5979ef44534924fbda5b055e5f878"
+        },
+        "boot_contract": {
+          "status": "passed",
+          "scope": "bootfs-extlinux-env-rootfs-fstab-marker"
+        },
+        "acceleration_preflight": {
+          "board": "bpi-cm6",
+          "stage": "installed",
+          "passed": true,
+          "errors": [],
+          "pending_dependencies": [],
+          "kernel_pvr_found": [
+            "23.2@6460340"
+          ],
+          "hardware_verified": false,
+          "runtime_status": {
+            "gpu": "待實機驗證",
+            "ai": "待實機驗證",
+            "vpu": "待實機驗證"
+          }
+        },
+        "reference": {
+          "url": "https://archive.spacemit.com/image/k1/version/bianbu/v2.3/Bianbu-LXQt-K1-V2.3.0-20251212104943.zip",
+          "archive_bytes": 2008730989,
+          "files": [
+            {
+              "path": "env.bin",
+              "size": 16384,
+              "sha256": "3a10ea4c85c6457cc2680b6db6378c67e16b209b8e474cec7a09c72d4af5f1fc",
+              "crc32": "06ecbe2b",
+              "header_offset": 31073011,
+              "compressed_size": 2824
+            },
+            {
+              "path": "factory/bootinfo_emmc.bin",
+              "size": 80,
+              "sha256": "5433619a573ec7935450f303168b87c97dc5511905291328df40a2ff081b3d07",
+              "crc32": "ecbb4b55",
+              "header_offset": 31075966,
+              "compressed_size": 37
+            },
+            {
+              "path": "factory/FSBL.bin",
+              "size": 191808,
+              "sha256": "896e236da5c5208bda9d75e2927ddeff814cbe504d96f529fcc27f1c30c360a6",
+              "crc32": "79742168",
+              "header_offset": 31076086,
+              "compressed_size": 107620
+            },
+            {
+              "path": "factory/bootinfo_spinor.bin",
+              "size": 80,
+              "sha256": "49b63bcbcdcf2e0bbcaabbc1f2a01959ab56ed70c16a3594b25bc1183d92efae",
+              "crc32": "ecbb4b55",
+              "header_offset": 31183780,
+              "compressed_size": 39
+            },
+            {
+              "path": "factory/bootinfo_spinand.bin",
+              "size": 80,
+              "sha256": "ff681a4a120f8b9288c8401ce309bc13ff3ed994280dd750662bcc51806c96d6",
+              "crc32": "ecbb4b55",
+              "header_offset": 31183904,
+              "compressed_size": 39
+            },
+            {
+              "path": "factory/bootinfo_sd.bin",
+              "size": 80,
+              "sha256": "f339e3e576ce94d7812c2887622c5882ae12ac3c9a98059aef37741850a43cb6",
+              "crc32": "ecbb4b55",
+              "header_offset": 31184029,
+              "compressed_size": 37
+            },
+            {
+              "path": "fastboot.yaml",
+              "size": 1028,
+              "sha256": "95642b765cff5b7c6e2439e44b1b7ea70a77fd79ced3e37a907185f383545278",
+              "crc32": "c4b68d3f",
+              "header_offset": 31184147,
+              "compressed_size": 374
+            },
+            {
+              "path": "fw_dynamic.itb",
+              "size": 136583,
+              "sha256": "2c83066613458867db59d428102db99030ae3cf1a4c4b8092dc9a2d1b2730715",
+              "crc32": "20935081",
+              "header_offset": 31184592,
+              "compressed_size": 66987
+            },
+            {
+              "path": "genimage.cfg",
+              "size": 1511,
+              "sha256": "8fc8372ed3cd5a831f12e4a05d1ad3e8505395b9f1584301cae5b3b5b0768343",
+              "crc32": "b498b6a1",
+              "header_offset": 31251651,
+              "compressed_size": 351
+            },
+            {
+              "path": "partition_2M.json",
+              "size": 696,
+              "sha256": "a14ca12559299f6fbf750465fcc87727b38445e5c0a45516394e6326396a8feb",
+              "crc32": "eed5c6df",
+              "header_offset": 31252072,
+              "compressed_size": 251
+            },
+            {
+              "path": "partition_flash.json",
+              "size": 1296,
+              "sha256": "5f1e483082de5586dcae2b8f979b89a2f0f090cc93bd2f26b80689b654a755b4",
+              "crc32": "758a357e",
+              "header_offset": 31252398,
+              "compressed_size": 316
+            },
+            {
+              "path": "partition_universal.json",
+              "size": 1210,
+              "sha256": "568d9848097c72ba01ded40534022d35be7dda57ece13863194dd3a442d9568e",
+              "crc32": "3507daf0",
+              "header_offset": 31252792,
+              "compressed_size": 307
+            },
+            {
+              "path": "u-boot.itb",
+              "size": 1959546,
+              "sha256": "f734681e00ae0ca7ca4418ff33d37870b988eb3908f49fbac4f6c047b91ed06a",
+              "crc32": "069fe006",
+              "header_offset": 2007947662,
+              "compressed_size": 781763
+            }
+          ],
+          "sources_lock_sha256": "60b9d53ed5df3b57551f349d93fbc4e28e21b3943404b0f163dbdb8750ccf5f8"
+        },
+        "cm6_ethernet_dtb": {
+          "schema_version": 1,
+          "board": "bpi-cm6",
+          "kernel": "6.6.36-legacy-spacemit",
+          "status": "離線驗證通過",
+          "source": {
+            "name": "k1-x_bpi_cm6.dtb",
+            "bytes": 83687,
+            "sha256": "6d8db2aa3dc0a106190052316a0839cf9dda6a64b41ff6fe8fcc317f96a46f67"
+          },
+          "candidate": {
+            "name": "k1-x_bpi_cm6-eth0-reset.dtb",
+            "bytes": 83699,
+            "sha256": "f0b9795fda72868cd2bc9a6db0cf5aa2f15ea494f114a5b42adfc1fa931962c1"
+          },
+          "changed_properties": [
+            "/soc/pinctrl@d401e000/gmac0_grp/pinctrl-single,pins"
+          ],
+          "appended_cells": [
+            "0xb8",
+            "0x0",
+            "0xb040"
+          ],
+          "change": "僅在 GMAC0 群組加入 GPIO45 的 GPIO mux、下拉與官方驅動強度設定。",
+          "semantic_validation": "還原唯一修改的屬性後，排序輸出的 DTB 完全一致，含保留記憶體與開機 CPU 識別。",
+          "hardware_validation": "本工具只驗證離線產物；不執行或判定板端安裝、開機及網路驗收。"
+        },
+        "minimum_media_bytes": 6716129280,
+        "artifact": {
+          "name": "Armbian_Noble_bpi-cm6_gnome_titan-emmc_20260923-rc3.zip",
+          "sha256": "06e02aa4bfb309535e7858add46d20745f5fbf65f94ccfd21e4acf974e2d55a3",
+          "size": 1713113819
+        }
+      },
+      "members": [
+        {
+          "name": "bootfs.ext4",
+          "bytes": 268435456,
+          "compressed_bytes": 57811347,
+          "sha256": "0578b2f40de665fab2e16bc4f2caa34c43a689b3f7504e3766756ecbbbe6f031",
+          "crc32": "d3a61da0",
+          "matches_manifest": true
+        },
+        {
+          "name": "env.bin",
+          "bytes": 16384,
+          "compressed_bytes": 3079,
+          "sha256": "3a10ea4c85c6457cc2680b6db6378c67e16b209b8e474cec7a09c72d4af5f1fc",
+          "crc32": "06ecbe2b",
+          "matches_manifest": true
+        },
+        {
+          "name": "factory/FSBL.bin",
+          "bytes": 191808,
+          "compressed_bytes": 110334,
+          "sha256": "896e236da5c5208bda9d75e2927ddeff814cbe504d96f529fcc27f1c30c360a6",
+          "crc32": "79742168",
+          "matches_manifest": true
+        },
+        {
+          "name": "factory/bootinfo_emmc.bin",
+          "bytes": 80,
+          "compressed_bytes": 38,
+          "sha256": "5433619a573ec7935450f303168b87c97dc5511905291328df40a2ff081b3d07",
+          "crc32": "ecbb4b55",
+          "matches_manifest": true
+        },
+        {
+          "name": "factory/bootinfo_sd.bin",
+          "bytes": 80,
+          "compressed_bytes": 38,
+          "sha256": "f339e3e576ce94d7812c2887622c5882ae12ac3c9a98059aef37741850a43cb6",
+          "crc32": "ecbb4b55",
+          "matches_manifest": true
+        },
+        {
+          "name": "fastboot.yaml",
+          "bytes": 943,
+          "compressed_bytes": 374,
+          "sha256": "f85c8017934e887d700c7e963e2acc1667c38270925b7c52b35371209666a335",
+          "crc32": "0895ea99",
+          "matches_manifest": true,
+          "text": "version: 1.0 # 設定檔版本\nsupport: # 支援的專案代號\n  - 'k1x'\n  - 'k1pro'\nactions: # 燒錄操作定義\n\n  - getvar:\n      args: 'version-brom'\n      set: 'version'\n      skip_fail: true\n      timeout:\n        seconds: 1\n\n  - stage:\n      file: 'factory/FSBL.bin'\n      skip_when: \"not temp.version\"\n      timeout:\n        minutes: 2\n\n  - continue:\n      skip_when: \"not temp.version\"\n      timeout:\n        seconds: 1\n\n  - stage:\n      file: 'u-boot.itb'\n      skip_when: \"not temp.version\"\n      timeout:\n        minutes: 2\n      retry: 3\n\n  - continue:\n      skip_when: \"not temp.version\"\n      timeout:\n        seconds: 1\n\n  - getvar:\n      args: 'mtd-size'\n      set_var: 'size0'\n      timeout:\n        seconds: 1\n\n  - getvar:\n      args: 'blk-size'\n      set_var: 'size1'\n      timeout:\n        seconds: 1\n\n  - multi_flash:\n      timeout:\n        minutes: 10\n      retry: 3\n      relate_partition: ['partition_{size1}.json']\n"
+        },
+        {
+          "name": "fw_dynamic.itb",
+          "bytes": 136583,
+          "compressed_bytes": 68255,
+          "sha256": "2c83066613458867db59d428102db99030ae3cf1a4c4b8092dc9a2d1b2730715",
+          "crc32": "20935081",
+          "matches_manifest": true
+        },
+        {
+          "name": "partition_universal.json",
+          "bytes": 954,
+          "compressed_bytes": 303,
+          "sha256": "9e3fc864903994ce0d45208d8edbb081de060386ffccc7ec7ae37f38b3b26f89",
+          "crc32": "e9126f97",
+          "matches_manifest": true,
+          "text": "{\n  \"version\": \"1.0\",\n  \"format\": \"gpt\",\n  \"partitions\": [\n    {\n      \"name\": \"bootinfo\",\n      \"hidden\": true,\n      \"offset\": \"0K\",\n      \"size\": \"512\",\n      \"image\": \"factory/bootinfo_sd.bin\",\n      \"holes\": \"{\\\"(80;512)\\\"}\"\n    },\n    {\n      \"name\": \"fsbl\",\n      \"offset\": \"128K\",\n      \"size\": \"256K\",\n      \"image\": \"factory/FSBL.bin\"\n    },\n    {\n      \"name\": \"env\",\n      \"offset\": \"384K\",\n      \"size\": \"64K\",\n      \"image\": \"env.bin\"\n    },\n    {\n      \"name\": \"opensbi\",\n      \"offset\": \"1M\",\n      \"size\": \"1M\",\n      \"image\": \"fw_dynamic.itb\"\n    },\n    {\n      \"name\": \"uboot\",\n      \"offset\": \"2M\",\n      \"size\": \"2M\",\n      \"image\": \"u-boot.itb\"\n    },\n    {\n      \"name\": \"bootfs\",\n      \"offset\": \"4M\",\n      \"size\": \"256M\",\n      \"image\": \"bootfs.ext4\",\n      \"compress\": \"gzip-5\"\n    },\n    {\n      \"name\": \"rootfs\",\n      \"offset\": \"260M\",\n      \"size\": \"-\",\n      \"image\": \"rootfs.ext4\",\n      \"compress\": \"gzip-5\"\n    }\n  ]\n}\n"
+        },
+        {
+          "name": "rootfs.ext4",
+          "bytes": 6442450944,
+          "compressed_bytes": 1654294230,
+          "sha256": "c61a8a366308e4d7b05eb0f369ef17f68f83f45462f14614ace94b604bf8e1aa",
+          "crc32": "55e46b73",
+          "matches_manifest": true
+        },
+        {
+          "name": "u-boot.itb",
+          "bytes": 1959546,
+          "compressed_bytes": 824691,
+          "sha256": "f734681e00ae0ca7ca4418ff33d37870b988eb3908f49fbac4f6c047b91ed06a",
+          "crc32": "069fe006",
+          "matches_manifest": true
+        }
+      ],
+      "zip_crc_test": "全部成員串流讀取完成，CRC 均通過",
+      "members_match_manifest": true,
+      "ext4_superblocks": {
+        "bootfs.ext4": {
+          "filesystem": "ext4",
+          "uuid": "0a8e24db-eee1-5dc4-a206-2f9c8e9e7022",
+          "label": "bootfs",
+          "block_size": 4096,
+          "filesystem_bytes": 268435456
+        },
+        "rootfs.ext4": {
+          "filesystem": "ext4",
+          "uuid": "88c6221a-58a5-5fd9-b74e-c28382efc978",
+          "label": "armbian-root",
+          "block_size": 4096,
+          "filesystem_bytes": 6442450944
+        }
+      }
+    }
+  },
+  "evidence": {
+    "測試摘要.json": {
+      "path": "/media/pi/SMCI/bpi/cm6-hardware-validation-20260923/rc3-full-sd-reflash-20260923/測試摘要.json",
+      "bytes": 4395,
+      "sha256": "65b740323f13fd9bd48e4ac48fec3489bf099ef1d03744192fb8325a61676f3e",
+      "matches_recorded": true
+    },
+    "baseline.json": {
+      "path": "/media/pi/SMCI/bpi/cm6-hardware-validation-20260923/rc3-full-sd-reflash-20260923/baseline.json",
+      "bytes": 6152,
+      "sha256": "038e53195118d9889cbbca4b9f44e3a59f6dc92513c4ee478d3a43cca79dcec0",
+      "matches_recorded": true
+    },
+    "network-summary.json": {
+      "path": "/media/pi/SMCI/bpi/cm6-hardware-validation-20260923/rc3-full-sd-reflash-20260923/network-summary.json",
+      "bytes": 3696,
+      "sha256": "ad1c23166856584ff937654ea74a7063aa00ec8db527c9b9a70dfa29e5ebcbee",
+      "matches_recorded": true
+    },
+    "wifi-recheck-network-summary.json": {
+      "path": "/media/pi/SMCI/bpi/cm6-hardware-validation-20260923/rc3-full-sd-reflash-20260923/wifi-recheck-network-summary.json",
+      "bytes": 1236,
+      "sha256": "6cda505a4401f7cef1ef2555f15a4222b27dee062fa51a9782f8ebff60e9f76e",
+      "matches_recorded": true
+    },
+    "wifi-counter-localization.json": {
+      "path": "/media/pi/SMCI/bpi/cm6-hardware-validation-20260923/rc3-full-sd-reflash-20260923/wifi-counter-localization.json",
+      "bytes": 2876,
+      "sha256": "c18cf0102074cc2058f4d301fcb102b24f8ac3434686473f04273388473527ff",
+      "matches_recorded": true
+    },
+    "bluetooth-fresh-default.json": {
+      "path": "/media/pi/SMCI/bpi/cm6-hardware-validation-20260923/rc3-full-sd-reflash-20260923/bluetooth-fresh-default.json",
+      "bytes": 9609,
+      "sha256": "b0ad4a5b9993df3db5feeab5f8c5208dfa3ab939618384c193700c2dc652e3e5",
+      "matches_recorded": true
+    },
+    "gpu-gbm-render-validation.json": {
+      "path": "/media/pi/SMCI/bpi/cm6-hardware-validation-20260923/rc3-full-sd-reflash-20260923/gpu-gbm-render-validation.json",
+      "bytes": 14968,
+      "sha256": "36824c743c95b59df21ef6ee839b0497737890517f5816c1d28dd8b7df135fde",
+      "matches_recorded": true
+    },
+    "nvme-data-validation.json": {
+      "path": "/media/pi/SMCI/bpi/cm6-hardware-validation-20260923/rc3-full-sd-reflash-20260923/nvme-data-validation.json",
+      "bytes": 5327,
+      "sha256": "25d7eb733dc96e17ef60600afa8a23b4007d4f3aa470d7b35c20024fc6df5cbf",
+      "matches_recorded": true
+    },
+    "nvme-cleanup-check.json": {
+      "path": "/media/pi/SMCI/bpi/cm6-hardware-validation-20260923/rc3-full-sd-reflash-20260923/nvme-cleanup-check.json",
+      "bytes": 182,
+      "sha256": "6b39adaac846e02c98d290d75aa99b97ac22fe37ca3eaeaeef47f37780ca5505",
+      "matches_recorded": true
+    },
+    "rc3-offline-rfkill-state-check.json": {
+      "path": "/media/pi/SMCI/bpi/cm6-hardware-validation-20260923/rc3-full-sd-reflash-20260923/rc3-offline-rfkill-state-check.json",
+      "bytes": 864,
+      "sha256": "74be35d61f22aaed3c5a3bd30fdd9b4540cb413c2b114ca0f3f09854ee414ee1",
+      "matches_recorded": true
+    },
+    "thermal-pre-ai-v2.json": {
+      "path": "/media/pi/SMCI/bpi/cm6-hardware-validation-20260923/rc3-full-sd-reflash-20260923/thermal-pre-ai-v2.json",
+      "bytes": 1825,
+      "sha256": "2bcfdce228780e655cd03838d0c43dc888922537efccc9e617d285fd207c9e1c",
+      "matches_recorded": true
+    },
+    "ai-global-capability-diagnosis.json": {
+      "path": "/media/pi/SMCI/bpi/cm6-hardware-validation-20260923/rc3-full-sd-reflash-20260923/ai-global-capability-diagnosis.json",
+      "bytes": 30034,
+      "sha256": "31b903755677d03b0487ea7a84fe2f45d7e3ed507a7c9077a932df22693cb7ff",
+      "matches_recorded": true
+    },
+    "camera-sensor0-detect.json": {
+      "path": "/media/pi/SMCI/bpi/cm6-hardware-validation-20260923/rc3-full-sd-reflash-20260923/camera-sensor0-detect.json",
+      "bytes": 6651,
+      "sha256": "ebc0e9a137de66f16c98dd5c9893bf7472b0b9ec3991a965a38cebe5e8bafe57",
+      "matches_recorded": true
+    },
+    "camera-sensor2-detect.json": {
+      "path": "/media/pi/SMCI/bpi/cm6-hardware-validation-20260923/rc3-full-sd-reflash-20260923/camera-sensor2-detect.json",
+      "bytes": 6902,
+      "sha256": "ea0f8a9de102e2d4778e39756793da7c62b9951349cbb08ba1e502c84df3d337",
+      "matches_recorded": true
+    },
+    "camera-candidate-boot-state.json": {
+      "path": "/media/pi/SMCI/bpi/cm6-hardware-validation-20260923/rc3-full-sd-reflash-20260923/camera-candidate-boot-state.json",
+      "bytes": 11459,
+      "sha256": "cd6f030b3045df51ca6be7dff0e909a8f02f9d56e7731933590edf5e182aedec",
+      "matches_recorded": true
+    },
+    "camera-cold-connectivity-regression.json": {
+      "path": "/media/pi/SMCI/bpi/cm6-hardware-validation-20260923/rc3-full-sd-reflash-20260923/camera-cold-connectivity-regression.json",
+      "bytes": 3190,
+      "sha256": "10f858072adb0520236fea1817757c5e88e09b96a400a2ce8c5209a439b52f03",
+      "matches_recorded": true
+    },
+    "final-posttest-state.json": {
+      "path": "/media/pi/SMCI/bpi/cm6-hardware-validation-20260923/rc3-full-sd-reflash-20260923/final-posttest-state.json",
+      "bytes": 1868,
+      "sha256": "5e0fee17703e8f6ef510586839ec30961062bf2b82c96f7b5f87b0582dba58b9",
+      "matches_recorded": true
+    },
+    "ai-board-results-v2/summary.json": {
+      "path": "/media/pi/SMCI/bpi/cm6-hardware-validation-20260923/rc3-full-sd-reflash-20260923/ai-board-results-v2/summary.json",
+      "bytes": 78938,
+      "sha256": "15141a7f0c132dbba49a7581342b72cad1349bbfc4db8b804210456b9226ab2f",
+      "matches_recorded": true
+    },
+    "ai-board-results-v3/summary.json": {
+      "path": "/media/pi/SMCI/bpi/cm6-hardware-validation-20260923/rc3-full-sd-reflash-20260923/ai-board-results-v3/summary.json",
+      "bytes": 11014,
+      "sha256": "43e9eccefdff40d1b56c580d09cde6e49321f509d13a7546d2b726aadcb80910",
+      "matches_recorded": true
+    },
+    "ai-board-results-v4/summary.json": {
+      "path": "/media/pi/SMCI/bpi/cm6-hardware-validation-20260923/rc3-full-sd-reflash-20260923/ai-board-results-v4/summary.json",
+      "bytes": 11167,
+      "sha256": "827e745fbcc4040569839f805b31b13476a7cc94def832f78d05741c02638739",
+      "matches_recorded": true
+    },
+    "ai-board-results-v5/summary.json": {
+      "path": "/media/pi/SMCI/bpi/cm6-hardware-validation-20260923/rc3-full-sd-reflash-20260923/ai-board-results-v5/summary.json",
+      "bytes": 16483,
+      "sha256": "17b0b50326092565ef2ac6c940197969134339c1abdc5b9a3981479945a4953b",
+      "matches_recorded": true
+    },
+    "camera-sensor2-results/summary.json": {
+      "path": "/media/pi/SMCI/bpi/cm6-hardware-validation-20260923/rc3-full-sd-reflash-20260923/camera-sensor2-results/summary.json",
+      "bytes": 5799,
+      "sha256": "f53d801316acc309226706173035c5d38b5cf7c5abec693c75402ca3fcf6b478",
+      "matches_recorded": true
+    },
+    "camera-dual-results/summary.json": {
+      "path": "/media/pi/SMCI/bpi/cm6-hardware-validation-20260923/rc3-full-sd-reflash-20260923/camera-dual-results/summary.json",
+      "bytes": 6134,
+      "sha256": "18abcc9677957edd8852347821095a27f7458f4c21f17590c26bcfc17deb231f",
+      "matches_recorded": true
+    },
+    "camera-reopen-results/summary.json": {
+      "path": "/media/pi/SMCI/bpi/cm6-hardware-validation-20260923/rc3-full-sd-reflash-20260923/camera-reopen-results/summary.json",
+      "bytes": 1687,
+      "sha256": "d0860a6151c2d3288bfd3d00a81d5c686f5c5a46e2e2db92f4f31bb00b0e04cc",
+      "matches_recorded": true
+    }
+  },
+  "portable_assets": [
+    {
+      "path": "/media/pi/SMCI/bpi/cm6-hardware-validation-20260923/rc3-full-sd-reflash-20260923/gpu-host-prep/build-manifest.json",
+      "bytes": 3406,
+      "sha256": "bb2a3a0f4bb5e6ab7573b4bc08b7f873263953c05a4c3ad5d8c64fdba9738479"
+    },
+    {
+      "path": "/media/pi/SMCI/bpi/cm6-hardware-validation-20260923/rc3-full-sd-reflash-20260923/gpu-host-prep/cm6_gpu_probe",
+      "bytes": 28880,
+      "sha256": "cab839906cb0ee186bc1f0ac5ba7d610fb23ba5fb16f1b8bb246db1154bee169"
+    },
+    {
+      "path": "/media/pi/SMCI/bpi/cm6-hardware-validation-20260923/rc3-full-sd-reflash-20260923/gpu-host-prep/cm6_gpu_probe.c",
+      "bytes": 16416,
+      "sha256": "49ff28da6ceb854ab2ca564a50a0ccd9ca56fc9d2d249def999d36c7491d35ea"
+    },
+    {
+      "path": "/media/pi/SMCI/bpi/cm6-hardware-validation-20260923/rc3-full-sd-reflash-20260923/gpu-host-prep/host-self-test.json",
+      "bytes": 356,
+      "sha256": "56f4db9123a5b5037a5ba64ed10530cc3f0f6cda0d60605853099cf67f10a058"
+    },
+    {
+      "path": "/media/pi/SMCI/bpi/cm6-hardware-validation-20260923/rc3-full-sd-reflash-20260923/ai-host-prep/ai-acceleration-limitations-20260923.json",
+      "bytes": 6731,
+      "sha256": "96df923f70babdb668d4fa134213cc498dff11cdc3273f6b338ec42effd210a7"
+    },
+    {
+      "path": "/media/pi/SMCI/bpi/cm6-hardware-validation-20260923/rc3-full-sd-reflash-20260923/ai-host-prep/board-bundle-sha256.json",
+      "bytes": 849,
+      "sha256": "e18631b62b7c867d0d21b311258c10e39d896c7c35ad4d512a272acbe3fb0d12"
+    },
+    {
+      "path": "/media/pi/SMCI/bpi/cm6-hardware-validation-20260923/rc3-full-sd-reflash-20260923/ai-host-prep/board-bundle-v2-sha256.json",
+      "bytes": 855,
+      "sha256": "10cd83cf5a1094f2f04f91760d63870034b829f4912e14cb50b346eb0b33f3fe"
+    },
+    {
+      "path": "/media/pi/SMCI/bpi/cm6-hardware-validation-20260923/rc3-full-sd-reflash-20260923/ai-host-prep/cm6-ai-board-bundle-v2.tar.gz",
+      "bytes": 8551,
+      "sha256": "c8e6fa856ac2903a2f4f0040b9e30a1f55af853d451ae9e262a8b4a1b9772ca9"
+    },
+    {
+      "path": "/media/pi/SMCI/bpi/cm6-hardware-validation-20260923/rc3-full-sd-reflash-20260923/ai-host-prep/cm6-ai-board-bundle.tar.gz",
+      "bytes": 9961,
+      "sha256": "8bab07d41c1d2dc64814a7cff650566a79bcc1c1edf672a27e4a5aa7cea87b63"
+    },
+    {
+      "path": "/media/pi/SMCI/bpi/cm6-hardware-validation-20260923/rc3-full-sd-reflash-20260923/ai-host-prep/cm6-ai-capability-probe-v6.tar.gz",
+      "bytes": 3966,
+      "sha256": "3f2cc5245817c49bed68c26f26b03aa3c03e852be5422fc87e0e4dbf986ac526"
+    },
+    {
+      "path": "/media/pi/SMCI/bpi/cm6-hardware-validation-20260923/rc3-full-sd-reflash-20260923/ai-host-prep/cm6-ai-conv-probe-v3.tar.gz",
+      "bytes": 7672,
+      "sha256": "1a4f1346dc7ab2c565b7bae1b0f8f73ae68f0f9398ed6a13f0ec9b4d16a0ba04"
+    },
+    {
+      "path": "/media/pi/SMCI/bpi/cm6-hardware-validation-20260923/rc3-full-sd-reflash-20260923/ai-host-prep/cm6-ai-fp16-probe-v4.tar.gz",
+      "bytes": 7616,
+      "sha256": "b8d79c6b7950b65daa19f1e1a6acb03f889affacfcc7589ba5b7030e068500a6"
+    },
+    {
+      "path": "/media/pi/SMCI/bpi/cm6-hardware-validation-20260923/rc3-full-sd-reflash-20260923/ai-host-prep/cm6-ai-qdq-probe-v5.tar.gz",
+      "bytes": 8056,
+      "sha256": "e67d57561af1533cc0b721bc34bf674858ca7f059eb7cac3744c3e2c302d897d"
+    },
+    {
+      "path": "/media/pi/SMCI/bpi/cm6-hardware-validation-20260923/rc3-full-sd-reflash-20260923/ai-host-prep/models.json",
+      "bytes": 1708,
+      "sha256": "3044bec02ada581d40264730c208629986de32e64508c83e41d57421205c25c3"
+    },
+    {
+      "path": "/media/pi/SMCI/bpi/cm6-hardware-validation-20260923/rc3-full-sd-reflash-20260923/ai-host-prep/prepare_conv_probe_v3.py",
+      "bytes": 3608,
+      "sha256": "bf2d2aabca8c6a30fa6bafd9f35c61681536d128581b1c11d674dbe4ec27840b"
+    },
+    {
+      "path": "/media/pi/SMCI/bpi/cm6-hardware-validation-20260923/rc3-full-sd-reflash-20260923/ai-host-prep/prepare_models.py",
+      "bytes": 4902,
+      "sha256": "55bc7818aa94e589b9d38874e6b8cbb4c522311aa9e48a45974af0841d4a60c1"
+    },
+    {
+      "path": "/media/pi/SMCI/bpi/cm6-hardware-validation-20260923/rc3-full-sd-reflash-20260923/ai-host-prep/prepare_qdq_probe_v5.py",
+      "bytes": 4679,
+      "sha256": "5d17ff3a39b841ca17350611055e79bb7d35f60aed0af995d42fb94212b3e082"
+    },
+    {
+      "path": "/media/pi/SMCI/bpi/cm6-hardware-validation-20260923/rc3-full-sd-reflash-20260923/ai-host-prep/run_cm6_ai.py",
+      "bytes": 12499,
+      "sha256": "612d7de8be016037bb7fa502d4c1fb16ceb641302fa3f79c683f7f6603b918d5"
+    },
+    {
+      "path": "/media/pi/SMCI/bpi/cm6-hardware-validation-20260923/rc3-full-sd-reflash-20260923/ai-host-prep/run_cm6_ai_v2.py",
+      "bytes": 12706,
+      "sha256": "482c076107f4d65f20ab6488328079d0648d128b2f95e4ac85175976a3576903"
+    },
+    {
+      "path": "/media/pi/SMCI/bpi/cm6-hardware-validation-20260923/rc3-full-sd-reflash-20260923/ai-host-prep/test_ai_prep.py",
+      "bytes": 3380,
+      "sha256": "5626e3e84572342e616b2cefe83b6c279115ccdd19d314729d577d7adb1d4d07"
+    },
+    {
+      "path": "/media/pi/SMCI/bpi/cm6-hardware-validation-20260923/rc3-full-sd-reflash-20260923/ai-host-prep/test_ai_prep_v2.py",
+      "bytes": 4514,
+      "sha256": "e624b497430c690167f43b733ec7403b3dd7383d318fe7bcbdfe9e961e7a367a"
+    },
+    {
+      "path": "/media/pi/SMCI/bpi/cm6-hardware-validation-20260923/rc3-full-sd-reflash-20260923/ai-host-prep/test_ai_prep_v3.py",
+      "bytes": 4624,
+      "sha256": "6a24251244ce72b1a9dce9fba2a8aeb3304f5105edf22153b74b238bbbed3352"
+    },
+    {
+      "path": "/media/pi/SMCI/bpi/cm6-hardware-validation-20260923/rc3-full-sd-reflash-20260923/ai-host-prep/test_ai_prep_v4.py",
+      "bytes": 6036,
+      "sha256": "43d8d6a99e59331809b1e9ee5a8f3a5b2e501a2b580ed878bb6d0175eb376bd3"
+    },
+    {
+      "path": "/media/pi/SMCI/bpi/cm6-hardware-validation-20260923/rc3-full-sd-reflash-20260923/ai-host-prep/test_ai_prep_v5.py",
+      "bytes": 4620,
+      "sha256": "03aa7e8d2fd36f4ae89d8ef53fc07e9ed711e6783368bdd0f5cc53e4220cfbc5"
+    },
+    {
+      "path": "/media/pi/SMCI/bpi/cm6-hardware-validation-20260923/rc3-full-sd-reflash-20260923/camera-host-prep/build-camera-candidate.py",
+      "bytes": 4773,
+      "sha256": "273e05db0438b6564fd93c9c5c0172add244b16447ee936807be3b763347f603"
+    },
+    {
+      "path": "/media/pi/SMCI/bpi/cm6-hardware-validation-20260923/rc3-full-sd-reflash-20260923/camera-host-prep/camera-dtb-candidate-manifest.json",
+      "bytes": 2665,
+      "sha256": "52f9e34985141860a06019ce6f4e07a4c2fe0804adcbbac59dbc31ba6de1d9db"
+    },
+    {
+      "path": "/media/pi/SMCI/bpi/cm6-hardware-validation-20260923/rc3-full-sd-reflash-20260923/camera-host-prep/camera-preparation-manifest.json",
+      "bytes": 5196,
+      "sha256": "179d6ac4e62b98f8255c28c1c5dadcbbbda6313c639dc4979896b42ef46b2d3b"
+    },
+    {
+      "path": "/media/pi/SMCI/bpi/cm6-hardware-validation-20260923/rc3-full-sd-reflash-20260923/camera-host-prep/camera-semantic-restored.dtb",
+      "bytes": 83699,
+      "sha256": "9f88a447ad1207898a6c991b50316f358e794cf74b4e2b4450c6ed012659f377"
+    },
+    {
+      "path": "/media/pi/SMCI/bpi/cm6-hardware-validation-20260923/rc3-full-sd-reflash-20260923/camera-host-prep/csi1-camera-auto-from-board.json",
+      "bytes": 1139,
+      "sha256": "bdc1576bd97dc3fdd000fb109ec0ebf10293b9a9c696767db374b8eb6d9742f1"
+    },
+    {
+      "path": "/media/pi/SMCI/bpi/cm6-hardware-validation-20260923/rc3-full-sd-reflash-20260923/camera-host-prep/csi1_camera_detect.json",
+      "bytes": 2189,
+      "sha256": "709bbf69ccd9e762d7659a090d3c13593041268342e17af0bd2030f67bc0b358"
+    },
+    {
+      "path": "/media/pi/SMCI/bpi/cm6-hardware-validation-20260923/rc3-full-sd-reflash-20260923/camera-host-prep/csi2_camera_detect.json",
+      "bytes": 2190,
+      "sha256": "850a917abc1c1846124d01e0cba09afbed06ead5b6d5eef231f9cc6b253994b0"
+    },
+    {
+      "path": "/media/pi/SMCI/bpi/cm6-hardware-validation-20260923/rc3-full-sd-reflash-20260923/camera-host-prep/csi3-camera-auto-from-board.json",
+      "bytes": 1139,
+      "sha256": "8af0e6b79a33a03f21be343eb3c756bcf6547ad541352265d8c67583d5baf349"
+    },
+    {
+      "path": "/media/pi/SMCI/bpi/cm6-hardware-validation-20260923/rc3-full-sd-reflash-20260923/camera-host-prep/csi3_camera_detect.json",
+      "bytes": 2191,
+      "sha256": "06c56d4abf2d5e584f98715004cda02a9a8510a4a6a2bc442f0f30f848fc6576"
+    },
+    {
+      "path": "/media/pi/SMCI/bpi/cm6-hardware-validation-20260923/rc3-full-sd-reflash-20260923/camera-host-prep/docs-buildroot-tree.json",
+      "bytes": 303945,
+      "sha256": "c7e9324db7946c2ef78d6c2df20e88e01646074ce93a2becde0bd4936b552ebc"
+    },
+    {
+      "path": "/media/pi/SMCI/bpi/cm6-hardware-validation-20260923/rc3-full-sd-reflash-20260923/camera-host-prep/k1-x_bpi_cm6-eth0-camera-candidate.dtb",
+      "bytes": 83731,
+      "sha256": "91bb7a9cde6380e16d9dbc12161212aad768cf145de79dd2f51665366e0065c3"
+    },
+    {
+      "path": "/media/pi/SMCI/bpi/cm6-hardware-validation-20260923/rc3-full-sd-reflash-20260923/camera-host-prep/k1-x_bpi_cm6-eth0-camera-rollback.dtb",
+      "bytes": 83699,
+      "sha256": "f0b9795fda72868cd2bc9a6db0cf5aa2f15ea494f114a5b42adfc1fa931962c1"
+    },
+    {
+      "path": "/media/pi/SMCI/bpi/cm6-hardware-validation-20260923/rc3-full-sd-reflash-20260923/camera-host-prep/k1x-cam-lib_0.1.8_riscv64.deb",
+      "bytes": 430424,
+      "sha256": "89c9867d9dab50958e8eb01195313452ad425dbef345d6003d568d4176c0572d"
+    },
+    {
+      "path": "/media/pi/SMCI/bpi/cm6-hardware-validation-20260923/rc3-full-sd-reflash-20260923/camera-host-prep/k1x-cam-tree.json",
+      "bytes": 132931,
+      "sha256": "71e1282a1c2992a444ddc63062b60c2015d441b54bb5fcdbc8010eeedee63780"
+    },
+    {
+      "path": "/media/pi/SMCI/bpi/cm6-hardware-validation-20260923/rc3-full-sd-reflash-20260923/camera-host-prep/k1x-cam_0.2.34_riscv64.deb",
+      "bytes": 586148,
+      "sha256": "d00ec6d3e6758571a5959428517a167e1264db08ca5d61fdfbfc506b33088e40"
+    },
+    {
+      "path": "/media/pi/SMCI/bpi/cm6-hardware-validation-20260923/rc3-full-sd-reflash-20260923/camera-host-prep/official-cm6.dtb",
+      "bytes": 88984,
+      "sha256": "0f74f008faeede2931f03bb17b8b2779db32da8a5b0d762eeff48da3721dc277"
+    },
+    {
+      "path": "/media/pi/SMCI/bpi/cm6-hardware-validation-20260923/rc3-full-sd-reflash-20260923/camera-host-prep/rc3-cm6.dtb",
+      "bytes": 83699,
+      "sha256": "f0b9795fda72868cd2bc9a6db0cf5aa2f15ea494f114a5b42adfc1fa931962c1"
+    },
+    {
+      "path": "/media/pi/SMCI/bpi/cm6-hardware-validation-20260923/rc3-full-sd-reflash-20260923/camera-host-prep/rc3-offline-library-packages.json",
+      "bytes": 449,
+      "sha256": "63132e9117e03d2d5bd09cfb4280c4d6e0ffa410174fdcf40b0b05dae0749ba9"
+    },
+    {
+      "path": "/media/pi/SMCI/bpi/cm6-hardware-validation-20260923/rc3-full-sd-reflash-20260923/camera-host-prep/sensor-uapi-comparison.json",
+      "bytes": 1042,
+      "sha256": "987b3205a674ca73a2ec8afcf1f97cb6f67481a753dddf691c082c7b4f421f53"
+    },
+    {
+      "path": "/media/pi/SMCI/bpi/cm6-hardware-validation-20260923/rc3-full-sd-reflash-20260923/camera-host-prep/sensor0-2-imx415-dual-online-500.json",
+      "bytes": 1424,
+      "sha256": "f77e01c08254908fc59ade98c97e3075b86fbd827e323b3e1aab32cc50c0a582"
+    },
+    {
+      "path": "/media/pi/SMCI/bpi/cm6-hardware-validation-20260923/rc3-full-sd-reflash-20260923/camera-host-prep/sensor0-imx415-isponly-500.json",
+      "bytes": 1421,
+      "sha256": "bf500ec3d71bb542f37cbad5fa1319c621f4018074d958336510ce2cd2e191fe"
+    },
+    {
+      "path": "/media/pi/SMCI/bpi/cm6-hardware-validation-20260923/rc3-full-sd-reflash-20260923/camera-host-prep/sensor0-imx415-offscreen-500.json",
+      "bytes": 1421,
+      "sha256": "9ec5536429253c6b20f91592146fa2ca0f8b67e221880f235e5ca165d36da941"
+    },
+    {
+      "path": "/media/pi/SMCI/bpi/cm6-hardware-validation-20260923/rc3-full-sd-reflash-20260923/camera-host-prep/sensor2-imx415-offscreen-100.json",
+      "bytes": 1420,
+      "sha256": "2620c51af222b6ec04ab7a08fef039ef57e98553c70b3bd6eaa38e98a42341cb"
+    },
+    {
+      "path": "/media/pi/SMCI/bpi/cm6-hardware-validation-20260923/rc3-full-sd-reflash-20260923/camera-host-prep/sensor2-imx415-offscreen-500.json",
+      "bytes": 1421,
+      "sha256": "19062591b89baba427e2373264f1077d5d7e037aa3667e3fdb196c497b0f9fba"
+    },
+    {
+      "path": "/media/pi/SMCI/bpi/cm6-hardware-validation-20260923/rc3-full-sd-reflash-20260923/camera-host-prep/upstream-demo_dual_pipeline_capture_test.c",
+      "bytes": 26595,
+      "sha256": "7799f6e4310e6ce58555ff97fa61331b27fe6fbe8904f20d85903ddbaa1b05cd"
+    },
+    {
+      "path": "/media/pi/SMCI/bpi/cm6-hardware-validation-20260923/rc3-full-sd-reflash-20260923/camera-host-prep/upstream-sensors_cam_sensors_module.c",
+      "bytes": 30949,
+      "sha256": "20ab16b149e9de75089128cab8c426575d404bbf8cc3d0a29cb74a81c1a4d004"
+    }
+  ],
+  "evidence_summary": {
+    "schema_version": 1,
+    "board": "bpi-cm6",
+    "release": "20260923-rc3",
+    "overall_status": "尚未整體通過",
+    "gpu": {
+      "status": "離屏硬體渲染及像素核對通過",
+      "checked_pixels": 524288,
+      "maximum_gpu_utilisation_percent": 80
+    },
+    "ai": {
+      "status": "已測模型全部回退 CPU，SpaceMIT 加速未通過",
+      "cases": {
+        "v2": [
+          {
+            "model": "fp32_matmul",
+            "cpu_passed": true,
+            "spacemit_passed": false,
+            "cpu_difference": 0.0
+          },
+          {
+            "model": "int8_qlinearconv",
+            "cpu_passed": true,
+            "spacemit_passed": false,
+            "cpu_difference": 0.0
+          }
+        ],
+        "v3": [
+          {
+            "model": "fp32_conv_relu",
+            "cpu_passed": true,
+            "spacemit_passed": false,
+            "cpu_difference": 0.0
+          }
+        ],
+        "v4": [
+          {
+            "model": "fp32_conv_relu",
+            "cpu_passed": true,
+            "spacemit_passed": false,
+            "cpu_difference": 0.0
+          }
+        ],
+        "v5": [
+          {
+            "model": "qdq_int8_conv",
+            "cpu_passed": true,
+            "spacemit_passed": false,
+            "cpu_difference": 0.0
+          }
+        ]
+      },
+      "ime_instruction_verified": false
+    },
+    "camera": {
+      "status": "兩顆 IMX415 單路及同時擷取已有資料；雙路停止逾時與畫質／目標幀率待處理",
+      "evidence": {
+        "camera-sensor2-results": {
+          "seconds": 27.12,
+          "outputs": [
+            {
+              "name": "cpp0_output_1920x1080_s1920.nv12",
+              "bytes": 3110400,
+              "sha256": "264c48a47422fb25427bf87c145587cd04f290b715bd0282ca1710f9a25338e6"
+            },
+            {
+              "name": "raw_output0_3864x2192.raw",
+              "bytes": 11293184,
+              "sha256": "cb7f723a75c7e75ed89d0eb9c90d44843e23350f007f6065836760e800bc775a"
+            }
+          ],
+          "max_temperature_c": 93.0
+        },
+        "camera-dual-results": {
+          "seconds": 27.13,
+          "outputs": [
+            {
+              "name": "cpp0_output_1920x1080_s1920.nv12",
+              "bytes": 3110400,
+              "sha256": "4977b27fda6d8c7a7c622b7ed5276a4943a3c3a56a0ca7ee6a565927e3d242b2"
+            },
+            {
+              "name": "cpp1_output_1920x1080_s1920.nv12",
+              "bytes": 3110400,
+              "sha256": "678c0eb12c3fb3be660c45b43a5727d2cf3335525096a88b40638e86ac1b77b9"
+            },
+            {
+              "name": "raw_output0_3864x2192.raw",
+              "bytes": 11293184,
+              "sha256": "cb759511c1cabaf7e4e62bf774a7f5e09577402f1700189518d367b3eee68ac7"
+            },
+            {
+              "name": "raw_output1_3864x2192.raw",
+              "bytes": 11293184,
+              "sha256": "47ddde1b99afe1e60a4c528b980165f823f92dbb9afd7996b3a7b8d0cc56213f"
+            }
+          ],
+          "max_temperature_c": 94.0
+        },
+        "camera-reopen-results": {
+          "seconds": 6.03,
+          "outputs": [
+            {
+              "name": "cpp0_output_1920x1080_s1920.nv12",
+              "bytes": 3110400,
+              "sha256": "09092bb733cca47dd10a18071816c7e31209a5adf9e7d03d40e9e72f1a3de5da"
+            },
+            {
+              "name": "raw_output0_3864x2192.raw",
+              "bytes": 11293184,
+              "sha256": "e09826522a4835db5acc1ace5a589e9427631a7e804ae4af630a546d23a95df1"
+            }
+          ],
+          "max_temperature_c": 94.0
+        }
+      },
+      "dual_main_channel_frames_each": 502,
+      "dual_software_error_frames_each": 0,
+      "dual_hardware_error_frames_each": 0,
+      "candidate_dtb_sha256": "91bb7a9cde6380e16d9dbc12161212aad768cf145de79dd2f51665366e0065c3",
+      "next_boot": "已還原原 rc3 DTB；下次開機第二路不會自動維持啟用"
+    },
+    "nvme": {
+      "nvme0": "三段直接重複讀取一致；未格式化，未做寫入測試",
+      "nvme1": "三段直接重複讀取與 256 MiB 暫存檔寫入／同步／直接回讀通過，暫存檔已清理且卸載",
+      "smart_errors_increased": false
+    },
+    "other_findings": [
+      "兩有線網口基本通訊通過",
+      "Wi-Fi 資料完整性通過，背景接收丟棄待定位",
+      "藍牙初開 HCI 軟體封鎖；解除後與後續冷開可用",
+      "SoC 約 92–94°C 且降頻；尚未驗證持續效能",
+      "HDMI 尚未清楚呈現桌面"
+    ],
+    "board_state": "保留開機；測試程序均結束、NVMe 測試掛載及暫存校正連結已清理"
+  },
+  "all_artifact_checks_passed": true,
+  "all_evidence_checks_passed": true,
+  "command_cautions": [
+    "所有 SD 及 eMMC 成品仍是 candidate_unverified／pending；本輪實機證據僅支持完整 SD 的限定項目。",
+    "GPU 使用 RISC-V cm6_gpu_probe，勿傳主機 cm6_gpu_probe.host；需保存 stdout、stderr 及真正退出碼，不能只讀 tee 的退出碼。",
+    "AI 必須先 import onnxruntime、再 import spacemit_ort；SPACEMIT_EP_FLOAT16_MODE=1 應傳 provider_options，不是同名環境變數。",
+    "不要執行 nvme_board_test.py 作為泛用工具，該歷史腳本綁定當次兩顆實體碟；未知磁碟保持唯讀。",
+    "相機固定程式會寫 /tmp 下固定檔名，測前不得已有同名資料；校正檔需受控提供，不能覆寫既有 /usr/share/camera_json。",
+    "原 rc3 sensor2 未啟用且缺 k1x-cam 套件，兩路證據使用獨立相機 DTB 候選及解包套件；未回封映像。",
+    "當前相機候選只是本次開機載入；extlinux 已回復原 rc3，下次重開 sensor2 不會維持啟用。",
+    "camera runtime cam-test 不傳遞內層函式失敗，exit0 不等 PASS；須核對本次新影格、兩路回呼與新增核心警告。",
+    "藍牙首開封鎖與後续解除封鎖成功須分兩項；不要先 rfkill unblock all 掩蓋首開問題。",
+    "SoC 曾 92–94°C 且降頻，不得因未達115°C臨界值即放行長時間壓測。"
+  ]
+}

@@ -1,0 +1,286 @@
+{
+  "schema_version": 1,
+  "date": "2026-09-23",
+  "checked_utc": "2026-09-23T00:14:03.661564+00:00",
+  "purpose": "CM6 rc3 操作文件與工具交付驗證；沒有重建、修改映像或新增實機測試結果。",
+  "result": "PASS",
+  "hardware_release_gate": "尚未通過；維持候選，不宣告發布。",
+  "pdf": {
+    "pages": 24,
+    "size_bytes": 613141,
+    "sha256": "2ab25b8538cf76d4921ed935e223dd06dc8c120e79b84dff48be475e7d5255c1",
+    "renderer": "WeasyPrint 66.0",
+    "markdown": "Python Markdown 3.5.2",
+    "fonts": "Noto Sans CJK TC、DejaVu Sans Mono；全部內嵌並具 Unicode 對映。",
+    "render_command": "/tmp/cm6-rc3-doc-render/bin/python tools/render_cm6_rc3_manual.py",
+    "raster_command": "pdftoppm -png -r 100 docs/BPI-CM6-rc3-完整測試與驗證手冊-20260923.pdf /tmp/cm6-rc3-pdf-final/page",
+    "text_command": "pdftotext -bbox-layout docs/BPI-CM6-rc3-完整測試與驗證手冊-20260923.pdf /tmp/cm6-rc3-pdf-final/bbox.html",
+    "visual_review": "主代理已目視檢查全部 24 頁；修正速查表欄寬超出內容邊界，重看第 1 頁；第 2–24 頁重新渲染 SHA 與已檢視版本逐頁一致。無裁切、亂碼、方框缺字或頁尾重疊。",
+    "review_directory": "/media/pi/SMCI/bpi/f3-cm6-vendor-20260923-rc3/output/驗證文件/排版檢視",
+    "page_checks": [
+      {
+        "page": 1,
+        "status": "PASS",
+        "png_sha256": "a23053a385c4ce6e52f0030658ed952c0bddc88ef431ea780168c16c5d25e60c"
+      },
+      {
+        "page": 2,
+        "status": "PASS",
+        "png_sha256": "b29ba854989524ac17afd05857cec0b2441b7101192907820caf70e7de83c6e9"
+      },
+      {
+        "page": 3,
+        "status": "PASS",
+        "png_sha256": "db5f52c74d745ded19d2cc59e9f037ba2749327c6349b26f9f5a10c39445e65e"
+      },
+      {
+        "page": 4,
+        "status": "PASS",
+        "png_sha256": "2844f0519b04954649735127c815a53cc9d9fc0fb0d1251c0135daa6fc9bfd85"
+      },
+      {
+        "page": 5,
+        "status": "PASS",
+        "png_sha256": "f76c161df82bfbbcdb533ddc943ce94ba3fd8625f8d30f95f02e92a119956017"
+      },
+      {
+        "page": 6,
+        "status": "PASS",
+        "png_sha256": "0f758437ede56285767d503d248d3d2cc325a1b5155bdbb4f347d0ee48145d0a"
+      },
+      {
+        "page": 7,
+        "status": "PASS",
+        "png_sha256": "0f141ab7654a4b0951998db457a2e1bdaa44a5cb8325fd1881d74360a08ad035"
+      },
+      {
+        "page": 8,
+        "status": "PASS",
+        "png_sha256": "fcb644b04b1984cd83afa4e2842b022dc0f9ed14132085e3874efdd41155251d"
+      },
+      {
+        "page": 9,
+        "status": "PASS",
+        "png_sha256": "674df5b079bb7e9fbcf1cfb03995f416f8136e2e72cbd2d8dc7492895acdafb4"
+      },
+      {
+        "page": 10,
+        "status": "PASS",
+        "png_sha256": "91df323553877053364c1aa61c2b1e907219b563b596704369268f3a50fb3b7e"
+      },
+      {
+        "page": 11,
+        "status": "PASS",
+        "png_sha256": "483fe4a76f9ced1c494261d734f6c8b78c68ecd995a434b6d0826b6dd2e93781"
+      },
+      {
+        "page": 12,
+        "status": "PASS",
+        "png_sha256": "f40b8a2131755789cfc2325598bf0cfed37ca804791ec805eec6ef75ca852ed5"
+      },
+      {
+        "page": 13,
+        "status": "PASS",
+        "png_sha256": "7252099346d9d8be121a758124c3c91e05e6dce553d1c5795565949b40c137b8"
+      },
+      {
+        "page": 14,
+        "status": "PASS",
+        "png_sha256": "8080d47c7172c0ec867d2a32bd519b2b5bf57260c974fd9babfdb07b5a69f355"
+      },
+      {
+        "page": 15,
+        "status": "PASS",
+        "png_sha256": "79579e9b6a62a55a58073f873be9ab4999b03a1bbf2228fa363c1d6e6ea61a16"
+      },
+      {
+        "page": 16,
+        "status": "PASS",
+        "png_sha256": "a7e8e1d2e40281fd759cabe909f28b881e0196907b275a04259153766492867c"
+      },
+      {
+        "page": 17,
+        "status": "PASS",
+        "png_sha256": "35888840541635d5cb3f77c993731fdd41b85e6f3fa0715d1df5d14f803f7286"
+      },
+      {
+        "page": 18,
+        "status": "PASS",
+        "png_sha256": "8e295b8f851b4b8914ce179e5625d24f0fd56d52d93bbf55a66ffdd5c04bb6b5"
+      },
+      {
+        "page": 19,
+        "status": "PASS",
+        "png_sha256": "435195a4717d293bbc6ad5a1d6ff7f554e7097b0e66b60b8ea24293573e0a679"
+      },
+      {
+        "page": 20,
+        "status": "PASS",
+        "png_sha256": "e20b3f4bd7b170a35e20ba6f58734039ef67b246bf05a255b195885378e275f7"
+      },
+      {
+        "page": 21,
+        "status": "PASS",
+        "png_sha256": "32effc39c95e8aecf8d8e5701fcbd382a41c9a283da8b35e8e4814703ac74fdb"
+      },
+      {
+        "page": 22,
+        "status": "PASS",
+        "png_sha256": "5d30d9fc8c21d30d69e05ed31bc1657c8d20f18945633403b4fa2430472c0623"
+      },
+      {
+        "page": 23,
+        "status": "PASS",
+        "png_sha256": "dc87654cc25cfd16843b9d86f30fb546e055aa6494dddc1c8398bf377feb8834"
+      },
+      {
+        "page": 24,
+        "status": "PASS",
+        "png_sha256": "06a1890c49195f8218aac6a49d57c4026493e4c34a91ab981bbf5ea0271279d4"
+      }
+    ],
+    "text_boundary_violations": 0,
+    "replacement_or_tofu_characters": 0,
+    "quick_sequence_pages": 1
+  },
+  "tests": [
+    {
+      "command": "python3 -m unittest discover -s tests -p 'test_cm6_rc3_*.py' -v",
+      "count": 23,
+      "result": "PASS",
+      "scope": "相機安全替身 13、CPU 短測替身 6、回環網路與 UART 替身 4。"
+    },
+    {
+      "command": "python3 -m unittest discover -s tests -p test_collect_cm6_rc3_validation.py -v",
+      "count": 5,
+      "result": "PASS"
+    },
+    {
+      "command": "bash -n tools/collect_cm6_rc3_validation.sh",
+      "result": "PASS"
+    },
+    {
+      "command": "shellcheck tools/collect_cm6_rc3_validation.sh",
+      "result": "PASS"
+    },
+    {
+      "command": "python3 -m py_compile tools/cm6_rc3_*.py tools/render_cm6_rc3_manual.py",
+      "result": "PASS"
+    },
+    {
+      "command": "逐一擷取手冊 bash 區塊並執行 bash -n",
+      "count": 45,
+      "result": "PASS"
+    },
+    {
+      "command": "CSV 解析、順序 ID、狀態與精確證據欄位檢查",
+      "count": 34,
+      "result": "PASS"
+    },
+    {
+      "command": "固定兩份相機 DEB 隔離解壓、四份配置 --check-only",
+      "count": 4,
+      "result": "PASS",
+      "scope": "不執行 RISC-V 相機程式，不接觸板子。"
+    },
+    {
+      "command": "23 份工具大小與 SHA、來源及交付路徑核對；sha256sum -c SHA256SUMS",
+      "count": 23,
+      "result": "PASS"
+    },
+    {
+      "command": "三份完整映像 SHA、兩 ZIP 共 11 成員串流 CRC/SHA 與 ext4 UUID 核對",
+      "result": "PASS",
+      "evidence": "evidence/bananapi-f3-cm6-vendor/rc3-manual-20260923/artifact-integrity.json"
+    },
+    {
+      "command": "24 份指定歷史結果檔大小／SHA 核對",
+      "count": 24,
+      "result": "PASS"
+    },
+    {
+      "command": "兩份 rc3 rootfs 唯讀 debugfs 命令路徑與執行位元核對",
+      "result": "PASS",
+      "evidence": "evidence/bananapi-f3-cm6-vendor/rc3-manual-20260923/command-availability.json",
+      "note": "wpctl、stress-ng 缺少，手冊改用已存在的 pactl 與受控 CPU 工具；未新增掛載。"
+    }
+  ],
+  "path_validation": {
+    "checked_local_paths": [
+      "/media/pi/SMCI/bpi/f3-cm6-vendor-20260923-rc3/output/驗證文件/驗證工具/GPU/cm6_gpu_probe",
+      "/media/pi/SMCI/bpi/f3-cm6-vendor-20260923-rc3/output/驗證文件/驗證工具/GPU/cm6_gpu_probe.c",
+      "/media/pi/SMCI/bpi/f3-cm6-vendor-20260923-rc3/output/驗證文件/驗證工具/GPU/build-manifest.json",
+      "/media/pi/SMCI/bpi/f3-cm6-vendor-20260923-rc3/output/驗證文件/驗證工具/AI/cm6-ai-board-bundle-v2.tar.gz",
+      "/media/pi/SMCI/bpi/f3-cm6-vendor-20260923-rc3/output/驗證文件/驗證工具/AI/cm6-ai-conv-probe-v3.tar.gz",
+      "/media/pi/SMCI/bpi/f3-cm6-vendor-20260923-rc3/output/驗證文件/驗證工具/AI/cm6-ai-fp16-probe-v4.tar.gz",
+      "/media/pi/SMCI/bpi/f3-cm6-vendor-20260923-rc3/output/驗證文件/驗證工具/AI/cm6-ai-qdq-probe-v5.tar.gz",
+      "/media/pi/SMCI/bpi/f3-cm6-vendor-20260923-rc3/output/驗證文件/驗證工具/camera/k1x-cam_0.2.34_riscv64.deb",
+      "/media/pi/SMCI/bpi/f3-cm6-vendor-20260923-rc3/output/驗證文件/驗證工具/camera/k1x-cam-lib_0.1.8_riscv64.deb",
+      "/media/pi/SMCI/bpi/f3-cm6-vendor-20260923-rc3/output/驗證文件/驗證工具/camera/sensor0-imx415-offscreen-500.json",
+      "/media/pi/SMCI/bpi/f3-cm6-vendor-20260923-rc3/output/驗證文件/驗證工具/camera/sensor2-imx415-offscreen-500.json",
+      "/media/pi/SMCI/bpi/f3-cm6-vendor-20260923-rc3/output/驗證文件/驗證工具/camera/sensor0-2-imx415-dual-online-500.json",
+      "/media/pi/SMCI/bpi/f3-cm6-vendor-20260923-rc3/output/驗證文件/驗證工具/camera/sensor2-imx415-offscreen-100.json",
+      "/media/pi/SMCI/bpi/f3-cm6-vendor-20260923-rc3/output/驗證文件/驗證工具/camera/csi1_camera_detect.json",
+      "/media/pi/SMCI/bpi/f3-cm6-vendor-20260923-rc3/output/驗證文件/驗證工具/camera/csi3_camera_detect.json",
+      "/media/pi/SMCI/bpi/f3-cm6-vendor-20260923-rc3/output/驗證文件/驗證工具/camera/k1-x_bpi_cm6-eth0-camera-candidate.dtb",
+      "/media/pi/SMCI/bpi/f3-cm6-vendor-20260923-rc3/output/驗證文件/驗證工具/camera/k1-x_bpi_cm6-eth0-camera-rollback.dtb",
+      "/media/pi/SMCI/bpi/f3-cm6-vendor-20260923-rc3/output/驗證文件/驗證工具/camera/camera-dtb-candidate-manifest.json",
+      "/media/pi/SMCI/bpi/f3-cm6-vendor-20260923-rc3/output/驗證文件/驗證工具/cm6_rc3_camera_test.py",
+      "/media/pi/SMCI/bpi/f3-cm6-vendor-20260923-rc3/output/驗證文件/驗證工具/collect_cm6_rc3_validation.sh",
+      "/media/pi/SMCI/bpi/f3-cm6-vendor-20260923-rc3/output/驗證文件/驗證工具/cm6_rc3_net_peer.py",
+      "/media/pi/SMCI/bpi/f3-cm6-vendor-20260923-rc3/output/驗證文件/驗證工具/cm6_rc3_uart_capture.py",
+      "/media/pi/SMCI/bpi/f3-cm6-vendor-20260923-rc3/output/驗證文件/驗證工具/cm6_rc3_short_stress.py",
+      "/media/pi/SMCI/bpi/cm6-hardware-validation-20260923/rc3-full-sd-reflash-20260923/測試摘要.json",
+      "/media/pi/SMCI/bpi/cm6-hardware-validation-20260923/rc3-full-sd-reflash-20260923/測試證據校驗.json",
+      "/media/pi/SMCI/bpi/cm6-hardware-validation-20260923/rc3-full-sd-reflash-20260923/network-summary.json",
+      "/media/pi/SMCI/bpi/cm6-hardware-validation-20260923/rc3-full-sd-reflash-20260923/bluetooth-fresh-default.json",
+      "/media/pi/SMCI/bpi/cm6-hardware-validation-20260923/rc3-full-sd-reflash-20260923/gpu-gbm-render-validation.json",
+      "/media/pi/SMCI/bpi/cm6-hardware-validation-20260923/rc3-full-sd-reflash-20260923/nvme-data-validation.json",
+      "/media/pi/SMCI/bpi/cm6-hardware-validation-20260923/rc3-full-sd-reflash-20260923/camera-dual-results/summary.json",
+      "/media/pi/SMCI/bpi/cm6-hardware-validation-20260923/rc3-full-sd-reflash-20260923/camera-reopen-results/summary.json",
+      "/media/pi/SMCI/bpi/cm6-hardware-validation-20260923/rc3-full-sd-reflash-20260923/ai-board-results-v2/summary.json",
+      "/media/pi/SMCI/bpi/cm6-hardware-validation-20260923/rc3-full-sd-reflash-20260923/ai-board-results-v3/summary.json",
+      "/media/pi/SMCI/bpi/cm6-hardware-validation-20260923/rc3-full-sd-reflash-20260923/ai-board-results-v4/summary.json",
+      "/media/pi/SMCI/bpi/cm6-hardware-validation-20260923/rc3-full-sd-reflash-20260923/ai-board-results-v5/summary.json",
+      "/media/pi/SMCI/armbian/bpi-v26.2.1-f3-cm6-vendor-format/docs/bananapi-cm6-rc3-full-sd-20260923.md",
+      "/media/pi/SMCI/armbian/bpi-v26.2.1-f3-cm6-vendor-format/docs/bananapi-cm6-hardware-20260923.md",
+      "/media/pi/SMCI/armbian/bpi-v26.2.1-f3-cm6-vendor-format/docs/bananapi-cm6-connectivity-20260922.md",
+      "/media/pi/SMCI/armbian/bpi-v26.2.1-f3-cm6-vendor-format/docs/bananapi-f3-cm6-vendor-external-validation-20260916.md"
+    ],
+    "runtime_paths": "待測板上的 /sys、/proc、/dev 與案件輸出路徑依本手冊現場識別；不假定新測試主機具有 pi-88 的裝置號。",
+    "sources": "四份指定來源全文核對；官方入門頁入口仍有效，但本輪頁面動態內容未由文字擷取取得，不據此新增 Titan 版本相容宣稱。"
+  },
+  "privacy": "只白名單交付工具與文件；未讀取或複製私有登入檔、Wi-Fi 存取資料、SSH 金鑰或歷史實拍影像。",
+  "copy_policy": "同一 MD、PDF、CSV、工具清單及本紀錄逐位元組複製到共同文件目錄與 SD/eMMC 兩個映像目錄；工具共用驗證文件/驗證工具。",
+  "delivery_directories": [
+    "/media/pi/SMCI/bpi/f3-cm6-vendor-20260923-rc3/output/驗證文件",
+    "/media/pi/SMCI/bpi/f3-cm6-vendor-20260923-rc3/output/bpi-cm6-sd",
+    "/media/pi/SMCI/bpi/f3-cm6-vendor-20260923-rc3/output/bpi-cm6-emmc"
+  ],
+  "content_files": [
+    {
+      "path": "docs/BPI-CM6-rc3-完整測試與驗證手冊-20260923.md",
+      "bytes": 67138,
+      "sha256": "116f89b300b37a813d8a261ef04a8231ce22e3f51fbbcb7248773b28408907e0"
+    },
+    {
+      "path": "docs/BPI-CM6-rc3-完整測試與驗證手冊-20260923.pdf",
+      "bytes": 613141,
+      "sha256": "2ab25b8538cf76d4921ed935e223dd06dc8c120e79b84dff48be475e7d5255c1"
+    },
+    {
+      "path": "docs/BPI-CM6-rc3-測試結果表-20260923.csv",
+      "bytes": 7948,
+      "sha256": "f6939df84dd383cf3a5dc6a42ce44a76650a43e61dd766c7bc452c8a6546d6f1"
+    },
+    {
+      "path": "docs/BPI-CM6-rc3-驗證工具清單-20260923.json",
+      "bytes": 12039,
+      "sha256": "92dc8d2ebb1b124156335b55676b21dda1beaf04b4f9885383bdb52618b249a0"
+    }
+  ],
+  "limitations": [
+    "本輪僅驗證文件、封裝與工具安全邊界，未操作真板或重做所有功能測試。",
+    "藍牙乾淨首開、Wi-Fi 丟棄、HDMI、AI 加速、雙相機停止／畫質／幀率、散熱及 rc3 eMMC 實測仍有未過關卡。"
+  ]
+}
