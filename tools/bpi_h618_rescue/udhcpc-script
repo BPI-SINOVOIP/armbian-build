@@ -1,3 +1,0 @@
-#!/bin/busybox sh
-# 由標準函式庫核對 IP 與遮罩，拒絕把 DHCP 資料當成 shell 指令。
-exec /usr/sbin/bpi-rescue dhcp "$1"
