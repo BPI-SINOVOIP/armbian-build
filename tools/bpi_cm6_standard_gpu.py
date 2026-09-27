@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import argparse
 import copy
+import configparser
+import shlex
 import hashlib
 import io
 import json
@@ -52,9 +54,18 @@ PAYLOADS = {
 SDL_LINE = "SDL_VIDEODRIVER=wayland"
 MANIFEST = "usr/share/bpi-cm6-standard-gpu/manifest.json"
 PREFERENCES = "etc/apt/preferences.d/bpi-cm6-standard-gpu"
+XORG_POLICY = "usr/share/X11/xorg.conf.d/00-noglamoregl.conf"
+XORG_BEFORE_SHA = "67b1408c57124001b06df6bc68fd86dab91cd742228d1cfe01c5bd843e0794af"
+XORG_AFTER_SHA = "b520f17f61e853b347b0011393c9493e80b3b365e26c43a348017c84320b2f38"
+LIGHTDM_DEFAULT = "usr/share/lightdm/lightdm.conf.d/50-xserver-command.conf"
+LIGHTDM_PVR = "etc/lightdm/lightdm.conf.d/20-bpi-cm6-pvr.conf"
+LIGHTDM_CONTENT = ("[Seat:*]\n"
+    "xserver-command=/usr/bin/env MESA_LOADER_DRIVER_OVERRIDE=pvr /usr/lib/xorg/Xorg -core\n")
 LIMITATIONS = [
     "僅核對固定 GPU 套件、ELF、韌體及根系統相容條件；尚未實機驗證。",
-    "保留官方 Xorg 停用 glamor 的設定；不宣稱 XFCE 桌面或 GLX 已硬體加速。",
+    "標準 Noble XFCE 啟用單檔 glamor 並由 LightDM 明確傳入 PVR；新成品仍待實機驗證。",
+    "Xorg glamor、X11 EGL 與 GLX 分別驗證；不以 GBM 成功代替 X11，也不宣稱 GLX 已硬體加速。",
+    "PVR 的 OpenGL ES 與 GLX 桌面 OpenGL 不等同；個別 GLX 程式可用 env -u MESA_LOADER_DRIVER_OVERRIDE 以軟體相容模式啟動。",
     "不安裝 GNOME、GDM、相機、AI 或 VPU 配套，不更改媒體格式。",
 ]
 
@@ -126,8 +137,86 @@ def payload_records(path, package):
     return records
 
 
+def check_xfce_scope(root, packages):
+    """只接受標準 CM6 legacy 的既有 Noble XFCE 根系統。"""
+    values = {}
+    for line in native.root_file(root, "etc/armbian-release").read_text().splitlines():
+        if "=" in line:
+            key, value = line.split("=", 1)
+            parsed = shlex.split(value)
+            values[key] = parsed[0] if len(parsed) == 1 else None
+    require(values.get("BOARD") == "bananapicm6" and values.get("KERNEL_TARGET") == "legacy"
+            and values.get("BRANCH", "legacy") == "legacy", "圖形修正只接受標準 CM6 legacy")
+    names = {row["package"] for row in packages}
+    require({"lightdm", "xfce4-session", "xfwm4", "linux-image-legacy-spacemit"} <= names
+            and not names.intersection({"gdm3", "gnome-shell"}), "圖形修正只接受 LightDM／XFCE 配套")
+    native.root_file(root, "usr/share/xsessions/xfce.desktop")
+
+
+def lightdm_configuration(root):
+    """讀完整設定層級；任何額外 Xserver 命令均拒絕，其他設定保留不動。"""
+    paths = []
+    for relative in ("usr/share/lightdm/lightdm.conf.d", "usr/local/share/lightdm/lightdm.conf.d",
+                     "etc/xdg/lightdm/lightdm.conf.d", "etc/lightdm/lightdm.conf.d"):
+        directory = native.writable_path(root, relative)
+        require(not directory.exists() or directory.is_dir(), "LightDM 設定目錄型態不符")
+        if directory.exists():
+            paths.extend(path.relative_to(root).as_posix() for path in sorted(directory.glob("*.conf")))
+    main = native.writable_path(root, "etc/lightdm/lightdm.conf")
+    if main.exists():
+        paths.append(main.relative_to(root).as_posix())
+    records, commands, sessions = [], [], []
+    for relative in paths:
+        path = common.regular(native.writable_path(root, relative))
+        data = path.read_bytes()
+        parser = configparser.RawConfigParser(strict=True, delimiters=("=",),
+            comment_prefixes=("#",), empty_lines_in_values=False)
+        parser.optionxform = str
+        try:
+            parser.read_string(data.decode("utf-8"))
+        except (UnicodeError, configparser.Error) as exc:
+            raise ValueError("LightDM 設定無法明確解析：" + relative) from exc
+        require(not parser.defaults(), "不接受 LightDM 未知 DEFAULT 繼承設定")
+        for section in parser.sections():
+            for key, value in parser.items(section):
+                if key.lower() == "xserver-command":
+                    commands.append((relative, section, key, value.strip()))
+                if key == "user-session":
+                    sessions.append((section, value.strip()))
+        records.append({"path": "/" + relative, "sha256": hashlib.sha256(data).hexdigest()})
+    require(commands == [(LIGHTDM_DEFAULT, "Seat:*", "xserver-command", "X -core")],
+            "LightDM 原 Xserver 命令不是唯一官方 X -core，或存在額外覆寫")
+    require(sessions and all(section == "Seat:*" and value == "xfce" for section, value in sessions),
+            "LightDM 使用者工作階段不是明確的 XFCE")
+    return records
+
+
+def plan_xfce_adaptations(root):
+    """在任何設定寫入前核全部前置；官方套件載荷紀錄不改寫。"""
+    path = common.regular(native.writable_path(root, XORG_POLICY))
+    original = path.read_bytes()
+    require(hashlib.sha256(original).hexdigest() == XORG_BEFORE_SHA, "官方 Xorg 原載荷 SHA 不符")
+    modified = original.replace(b'Option "Accelmethod" "none"', b'Option "Accelmethod" "glamor"')
+    modified = modified.replace(b'Disable "glamoregl"', b'Load "glamoregl"')
+    require(hashlib.sha256(modified).hexdigest() == XORG_AFTER_SHA, "Xorg 限定替換結果 SHA 不符")
+    destination = native.writable_path(root, LIGHTDM_PVR)
+    require(not destination.exists(), "CM6 LightDM 配置已存在，拒絕覆寫")
+    inputs = lightdm_configuration(root)
+    content = LIGHTDM_CONTENT.encode()
+    changes = [
+        {"path": "/" + XORG_POLICY, "before_sha256": XORG_BEFORE_SHA,
+         "after_sha256": XORG_AFTER_SHA, "reason": "只啟用固定 modesetting 配置的 glamor。"},
+        {"path": "/" + LIGHTDM_PVR, "before_sha256": None, "before_state": "absent",
+         "after_sha256": hashlib.sha256(content).hexdigest(), "inputs": inputs,
+         "reason": "LightDM 清空 Xserver 環境後，由受支援的啟動命令明確傳入 PVR，保留 -core。"},
+    ]
+    writes = [(path, modified, path.stat().st_mode & 0o777), (destination, content, 0o644)]
+    return changes, writes
+
+
 def check_root(root, selected):
     packages = native.validate_root(root, BOARD, selected)
+    check_xfce_scope(root, packages)
     result = acceleration.preflight(selected, BOARD, root, "base")
     require(result["passed"], "GPU 根系統預檢失敗：" + "；".join(result["errors"]))
     return packages, result
@@ -254,12 +343,16 @@ def finish(root, work):
     manifest = native.writable_path(root, MANIFEST)
     preferences = native.writable_path(root, PREFERENCES)
     require(not manifest.exists() and not preferences.exists(), "GPU 完成紀錄已存在，拒絕重複寫入")
+    adaptations, adaptation_writes = plan_xfce_adaptations(root)
     result = {"schema_version": 1, "status": "installed", "board": "bananapicm6",
               "lock_sha256": state["lock_sha256"], "kernel": state["kernel"],
               "packages": checked_records, "payloads": checked_payloads,
               "verified_sources": state["verified_sources"],
+              "source_adaptations": adaptations,
               "removed_package_sdl_wayland_lines": remove_count,
               "hardware_validation": "pending", "limitations": LIMITATIONS}
+    for path, data, mode in adaptation_writes:
+        common.write(path, data.decode("utf-8"), mode)
     common.write(env_path, content, env_path.stat().st_mode & 0o777 if env_path.exists() else 0o644)
     common.write(preferences, acceleration.pin_preferences([lock["packages"][key] for key in GPU_IDS]))
     manifest.parent.mkdir(parents=True, exist_ok=True)

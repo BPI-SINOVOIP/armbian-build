@@ -31,4 +31,12 @@ GPIO／藍牙套件各保存來源、補丁、builder／lock SHA、實際工具�
 
 官方 GPU SDK／七個 Mesa 配套目前僅鎖定 Noble。Jammy／Trixie 不安裝這組 Noble DEB，不宣稱已具備相同硬體加速；Noble XFCE 的配套安裝亦仍需實機桌面驗收。完整 GPU／影音門檻由獨立的 Noble GNOME 代表驗證承擔。
 
+標準 Noble XFCE 在核對官方 Xorg 載荷 SHA 後，只將 `00-noglamoregl.conf` 的 `Accelmethod none` 改為 `glamor`、`Disable glamoregl` 改為 `Load glamoregl`。LightDM 會清除 Xserver 的一般繼承環境，因此新增 `20-bpi-cm6-pvr.conf`，透過 `xserver-command=/usr/bin/env MESA_LOADER_DRIVER_OVERRIDE=pvr /usr/lib/xorg/Xorg -core` 明確傳入 PVR；不使用 systemd 環境變數補丁。修改前核對完整 LightDM 設定，原指令須為唯一官方 `X -core`，其他啟動命令覆寫或非 XFCE 工作階段會拒絕。
+
+傳遞方式依據 LightDM 固定來源中的[清空環境](https://github.com/ubuntu/lightdm/blob/170df31f7d9c00b049bdd158682472df915adeae/src/x-server-local.c#L453)與[保留啟動引數](https://github.com/ubuntu/lightdm/blob/170df31f7d9c00b049bdd158682472df915adeae/src/x-server-local.c#L325)；不依賴私密控制系統。
+
+原官方 DEB／payload manifest 保留原 SHA，兩份設定改動另記 `source_adaptations` 的修改前後 SHA，新增檔明記原先不存在；此修正不更動核心、DEB 鎖或官方 GNOME／vendor／其他發行版。Xorg glamor、真實 X11 EGL、GLX 與畫面須分別驗證，不能以 GBM 成功代替 X11，也不宣稱 GLX 已硬體加速。新版成品仍待重建與實機核對。
+
+PVR 配套提供的 OpenGL ES 不代表 GLX 桌面 OpenGL 支援；全域 PVR 選擇保留，以維持 EGL 硬體路徑。遇到 GLX 程式的 `BadValue`，可只對該程式使用 `env -u MESA_LOADER_DRIVER_OVERRIDE <程式>`，作為軟體相容啟動方式；同一環境下 EGL 亦可能改用軟體繪圖，不能將此方式記為 GPU 加速通過。
+
 此來源增量仍須由標準 compile.sh 在實際 rootfs 階段建出成品，核對 dpkg／ABI／安裝清單，再進行逐份開機、正常登入、媒體及回救援驗證。離線守門、成功建 DEB 或 QEMU 執行均不可算實機通過。
