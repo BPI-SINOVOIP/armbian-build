@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "description": "K1 原生建置的 Noble／riscv64 GNOME 最小桌面；官方加速配套於映像階段另行整合。",
+  "repository": "https://github.com/armbian/configng",
+  "commit": "93d12895028410789962b2e6a1b8b2a25e69d1fc",
+  "boards": ["bananapicm6", "bananapif3"],
+  "release": "noble",
+  "architecture": "riscv64",
+  "desktop": "gnome",
+  "tier": "minimal",
+  "upstream_gnome_sha256": "937ea0fd8b5bef6baab24741c1dc5b9b5e84671b1e28cc7533d0e9403caaf63e",
+  "add_packages": ["gjs", "gnome-terminal", "ibus", "fonts-noto-cjk"],
+  "remove_packages": ["printer-driver-all", "cups", "profile-sync-daemon"],
+  "required_packages": ["gnome-session", "gnome-shell", "gnome-control-center", "gnome-terminal", "gjs", "gdm3", "nautilus", "ibus", "fonts-noto-cjk", "bluez", "network-manager", "dbus-x11", "xwayland"],
+  "limitations": "這是限定板型的建置定義，不代表上游已宣告支援；套件可安裝性及硬體加速仍須完整建置與實機驗證。"
+}

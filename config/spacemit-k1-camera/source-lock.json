@@ -1,0 +1,387 @@
+{
+  "schema_version": 1,
+  "board": "bpi-cm6",
+  "camera_profile": "dual-imx415",
+  "package": "k1x-cam",
+  "version": "0.2.34+cm6.2",
+  "architecture": "riscv64",
+  "source_date_epoch": 1747755093,
+  "source": {
+    "path": "k1x-cam_0.2.34.tar.xz",
+    "kind": "official",
+    "bytes": 3691792,
+    "sha256": "01199aa94d078a3ff63ce4e1cac171d1b423ec6c20f04e8ad8b6199485437d6e",
+    "url": "https://archive.spacemit.com/bianbu/pool/main/k/k1x-cam/k1x-cam_0.2.34.tar.xz"
+  },
+  "upstream_packages": {
+    "k1x-cam": {
+      "path": "k1x-cam_0.2.34_riscv64.deb",
+      "kind": "official",
+      "bytes": 586148,
+      "sha256": "d00ec6d3e6758571a5959428517a167e1264db08ca5d61fdfbfc506b33088e40",
+      "url": "https://archive.spacemit.com/bianbu/pool/main/k/k1x-cam/k1x-cam_0.2.34_riscv64.deb"
+    },
+    "k1x-cam-lib": {
+      "path": "k1x-cam-lib_0.1.8_riscv64.deb",
+      "kind": "official",
+      "bytes": 430424,
+      "sha256": "89c9867d9dab50958e8eb01195313452ad425dbef345d6003d568d4176c0572d",
+      "url": "https://archive.spacemit.com/bianbu/pool/main/k/k1x-cam-lib/k1x-cam-lib_0.1.8_riscv64.deb"
+    }
+  },
+  "config": {
+    "path": "cm6-dual-imx415-mode2.json",
+    "sha256": "5b4ce30051084cb3239e91e61d4a56529d3d52676572b14854b4d47adc408f0c",
+    "installed_path": "usr/share/camera_json/cm6-dual-imx415-mode2.json"
+  },
+  "inputs": [
+    {
+      "path": "k1x-cam_0.2.34.tar.xz",
+      "kind": "official",
+      "bytes": 3691792,
+      "sha256": "01199aa94d078a3ff63ce4e1cac171d1b423ec6c20f04e8ad8b6199485437d6e",
+      "url": "https://archive.spacemit.com/bianbu/pool/main/k/k1x-cam/k1x-cam_0.2.34.tar.xz"
+    },
+    {
+      "path": "k1x-cam_0.2.34_riscv64.deb",
+      "kind": "official",
+      "bytes": 586148,
+      "sha256": "d00ec6d3e6758571a5959428517a167e1264db08ca5d61fdfbfc506b33088e40",
+      "url": "https://archive.spacemit.com/bianbu/pool/main/k/k1x-cam/k1x-cam_0.2.34_riscv64.deb"
+    },
+    {
+      "path": "k1x-cam-lib_0.1.8_riscv64.deb",
+      "kind": "official",
+      "bytes": 430424,
+      "sha256": "89c9867d9dab50958e8eb01195313452ad425dbef345d6003d568d4176c0572d",
+      "url": "https://archive.spacemit.com/bianbu/pool/main/k/k1x-cam-lib/k1x-cam-lib_0.1.8_riscv64.deb"
+    },
+    {
+      "path": "gcc-13-riscv64-linux-gnu_13.3.0-6ubuntu2~24.04.1cross1_amd64.deb",
+      "kind": "toolchain",
+      "bytes": 19269540,
+      "sha256": "5f53e45ad9cf19269750560573572c6db1c5ee024d5a011d70c32fc267a4fdef",
+      "url": "https://archive.ubuntu.com/ubuntu/pool/main/g/gcc-13-cross/gcc-13-riscv64-linux-gnu_13.3.0-6ubuntu2~24.04.1cross1_amd64.deb",
+      "package": "gcc-13-riscv64-linux-gnu",
+      "version": "13.3.0-6ubuntu2~24.04.1cross1",
+      "architecture": "amd64"
+    },
+    {
+      "path": "cpp-13-riscv64-linux-gnu_13.3.0-6ubuntu2~24.04.1cross1_amd64.deb",
+      "kind": "toolchain",
+      "bytes": 10007770,
+      "sha256": "5c1ad931ca7114a91518808e0a5b390f830db3edc111c8e9b4f97ca1662802c3",
+      "url": "https://archive.ubuntu.com/ubuntu/pool/main/g/gcc-13-cross/cpp-13-riscv64-linux-gnu_13.3.0-6ubuntu2~24.04.1cross1_amd64.deb",
+      "package": "cpp-13-riscv64-linux-gnu",
+      "version": "13.3.0-6ubuntu2~24.04.1cross1",
+      "architecture": "amd64"
+    },
+    {
+      "path": "g++-13-riscv64-linux-gnu_13.3.0-6ubuntu2~24.04.1cross1_amd64.deb",
+      "kind": "toolchain",
+      "bytes": 11352020,
+      "sha256": "c32633522465d0abde6acadc35966901efa7caeab73ae9f4cf16f31a70901ab0",
+      "url": "https://archive.ubuntu.com/ubuntu/pool/main/g/gcc-13-cross/g++-13-riscv64-linux-gnu_13.3.0-6ubuntu2~24.04.1cross1_amd64.deb",
+      "package": "g++-13-riscv64-linux-gnu",
+      "version": "13.3.0-6ubuntu2~24.04.1cross1",
+      "architecture": "amd64"
+    },
+    {
+      "path": "gcc-13-riscv64-linux-gnu-base_13.3.0-6ubuntu2~24.04.1cross1_amd64.deb",
+      "kind": "toolchain",
+      "bytes": 51848,
+      "sha256": "a2f3b28a4621da51926cce3524b4b502032f3d160586e29b426ce7d8ff31a23d",
+      "url": "https://archive.ubuntu.com/ubuntu/pool/main/g/gcc-13-cross/gcc-13-riscv64-linux-gnu-base_13.3.0-6ubuntu2~24.04.1cross1_amd64.deb",
+      "package": "gcc-13-riscv64-linux-gnu-base",
+      "version": "13.3.0-6ubuntu2~24.04.1cross1",
+      "architecture": "amd64"
+    },
+    {
+      "path": "binutils-riscv64-linux-gnu_2.42-4ubuntu2.10_amd64.deb",
+      "kind": "toolchain",
+      "bytes": 1425246,
+      "sha256": "91a73e7b44662a072605a1973d2b43d608d12e16d599c1422f39b949d3214930",
+      "url": "https://archive.ubuntu.com/ubuntu/pool/main/b/binutils/binutils-riscv64-linux-gnu_2.42-4ubuntu2.10_amd64.deb",
+      "package": "binutils-riscv64-linux-gnu",
+      "version": "2.42-4ubuntu2.10",
+      "architecture": "amd64"
+    },
+    {
+      "path": "libgcc-13-dev-riscv64-cross_13.3.0-6ubuntu2~24.04.1cross1_all.deb",
+      "kind": "toolchain",
+      "bytes": 1711792,
+      "sha256": "fb0fe93ed67202f6c39704203399dd3a4e90fa72254eb0f2328dba1c13277a19",
+      "url": "https://archive.ubuntu.com/ubuntu/pool/main/g/gcc-13-cross/libgcc-13-dev-riscv64-cross_13.3.0-6ubuntu2~24.04.1cross1_all.deb",
+      "package": "libgcc-13-dev-riscv64-cross",
+      "version": "13.3.0-6ubuntu2~24.04.1cross1",
+      "architecture": "all"
+    },
+    {
+      "path": "libstdc++-13-dev-riscv64-cross_13.3.0-6ubuntu2~24.04.1cross1_all.deb",
+      "kind": "toolchain",
+      "bytes": 3690178,
+      "sha256": "a751da657d2b24b3355563cb67142cb4922d57817bc303189a7325cf69a49e99",
+      "url": "https://archive.ubuntu.com/ubuntu/pool/main/g/gcc-13-cross/libstdc++-13-dev-riscv64-cross_13.3.0-6ubuntu2~24.04.1cross1_all.deb",
+      "package": "libstdc++-13-dev-riscv64-cross",
+      "version": "13.3.0-6ubuntu2~24.04.1cross1",
+      "architecture": "all"
+    },
+    {
+      "path": "libgcc-s1-riscv64-cross_14.2.0-4ubuntu2~24.04.1cross1_all.deb",
+      "kind": "toolchain",
+      "bytes": 62966,
+      "sha256": "288fd6ebaf9fe898bde7f624767b870ea705af3e95f9e6b7548162d3502dd7f4",
+      "url": "https://archive.ubuntu.com/ubuntu/pool/main/g/gcc-14-cross/libgcc-s1-riscv64-cross_14.2.0-4ubuntu2~24.04.1cross1_all.deb",
+      "package": "libgcc-s1-riscv64-cross",
+      "version": "14.2.0-4ubuntu2~24.04.1cross1",
+      "architecture": "all"
+    },
+    {
+      "path": "libstdc++6-riscv64-cross_14.2.0-4ubuntu2~24.04.1cross1_all.deb",
+      "kind": "toolchain",
+      "bytes": 750850,
+      "sha256": "83720d74b0a05a25e2b831e41721c38316855bce9f7092564e8656aad48d3e67",
+      "url": "https://archive.ubuntu.com/ubuntu/pool/main/g/gcc-14-cross/libstdc++6-riscv64-cross_14.2.0-4ubuntu2~24.04.1cross1_all.deb",
+      "package": "libstdc++6-riscv64-cross",
+      "version": "14.2.0-4ubuntu2~24.04.1cross1",
+      "architecture": "all"
+    },
+    {
+      "path": "libc6-dev-riscv64-cross_2.39-0ubuntu8cross1_all.deb",
+      "kind": "toolchain",
+      "bytes": 3500990,
+      "sha256": "aa4e752b0cbd32902ec0835cc4f9dc464030c329eda1fb0349e5774acda77f20",
+      "url": "https://archive.ubuntu.com/ubuntu/pool/main/c/cross-toolchain-base/libc6-dev-riscv64-cross_2.39-0ubuntu8cross1_all.deb",
+      "package": "libc6-dev-riscv64-cross",
+      "version": "2.39-0ubuntu8cross1",
+      "architecture": "all"
+    },
+    {
+      "path": "libc6-riscv64-cross_2.39-0ubuntu8cross1_all.deb",
+      "kind": "toolchain",
+      "bytes": 1243500,
+      "sha256": "d0eabe13dbb68e914aa0485da0d4b28843bd80b5066d801cf34d4c00e5b61df2",
+      "url": "https://archive.ubuntu.com/ubuntu/pool/main/c/cross-toolchain-base/libc6-riscv64-cross_2.39-0ubuntu8cross1_all.deb",
+      "package": "libc6-riscv64-cross",
+      "version": "2.39-0ubuntu8cross1",
+      "architecture": "all"
+    },
+    {
+      "path": "linux-libc-dev-riscv64-cross_6.8.0-25.25cross1_all.deb",
+      "kind": "toolchain",
+      "bytes": 1370362,
+      "sha256": "d21675d3b0b8865733f03eb50408d776d8d8da4ec71409ac7238ffeaf08b56bc",
+      "url": "https://archive.ubuntu.com/ubuntu/pool/main/c/cross-toolchain-base/linux-libc-dev-riscv64-cross_6.8.0-25.25cross1_all.deb",
+      "package": "linux-libc-dev-riscv64-cross",
+      "version": "6.8.0-25.25cross1",
+      "architecture": "all"
+    },
+    {
+      "path": "libegl-dev_1.7.0-1build1_riscv64.deb",
+      "kind": "target",
+      "bytes": 18204,
+      "sha256": "075c3bcb17198191b2688acdeed3ddf3952aba06f5f62303b579fa29cf7bb62a",
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libg/libglvnd/libegl-dev_1.7.0-1build1_riscv64.deb",
+      "package": "libegl-dev",
+      "version": "1.7.0-1build1",
+      "architecture": "riscv64"
+    },
+    {
+      "path": "libgles-dev_1.7.0-1build1_riscv64.deb",
+      "kind": "target",
+      "bytes": 50450,
+      "sha256": "66b0945b1f462abddfd0b514b1d5339796e2e8f4f0e309efc5954297409cee21",
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libg/libglvnd/libgles-dev_1.7.0-1build1_riscv64.deb",
+      "package": "libgles-dev",
+      "version": "1.7.0-1build1",
+      "architecture": "riscv64"
+    },
+    {
+      "path": "libglvnd-core-dev_1.7.0-1build1_riscv64.deb",
+      "kind": "target",
+      "bytes": 13548,
+      "sha256": "9f79e6df7ecc042839209ed7be60bf887f3da9e22cba8ed9ffd957d2c15a24f8",
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libg/libglvnd/libglvnd-core-dev_1.7.0-1build1_riscv64.deb",
+      "package": "libglvnd-core-dev",
+      "version": "1.7.0-1build1",
+      "architecture": "riscv64"
+    },
+    {
+      "path": "libwayland-dev_1.22.0-2.1build1_riscv64.deb",
+      "kind": "target",
+      "bytes": 71334,
+      "sha256": "f0b7b8bc395e1132bc244754a8fd556cd0a0dad870ca7eba3c27ab50390c4cd2",
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/w/wayland/libwayland-dev_1.22.0-2.1build1_riscv64.deb",
+      "package": "libwayland-dev",
+      "version": "1.22.0-2.1build1",
+      "architecture": "riscv64"
+    },
+    {
+      "path": "libdrm-dev_2.4.120-2build1_riscv64.deb",
+      "kind": "target",
+      "bytes": 375236,
+      "sha256": "18a712d2d5103da9170eec41a7d94feafacc17cd0f8fb41f53798c2673a7c10f",
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libd/libdrm/libdrm-dev_2.4.120-2build1_riscv64.deb",
+      "package": "libdrm-dev",
+      "version": "2.4.120-2build1",
+      "architecture": "riscv64"
+    },
+    {
+      "path": "libegl1_1.7.0-1build1_riscv64.deb",
+      "kind": "target",
+      "bytes": 38502,
+      "sha256": "bcfaf03d860a8f87be4f931dfaf47f7e8ef8145acef472933acfb46f2b2300f4",
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libg/libglvnd/libegl1_1.7.0-1build1_riscv64.deb",
+      "package": "libegl1",
+      "version": "1.7.0-1build1",
+      "architecture": "riscv64"
+    },
+    {
+      "path": "libgles2_1.7.0-1build1_riscv64.deb",
+      "kind": "target",
+      "bytes": 22226,
+      "sha256": "7b2a0246b3a29032a2b498d7fd8dd72e384941dfe5ae810034550c290621cf15",
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libg/libglvnd/libgles2_1.7.0-1build1_riscv64.deb",
+      "package": "libgles2",
+      "version": "1.7.0-1build1",
+      "architecture": "riscv64"
+    },
+    {
+      "path": "libwayland-client0_1.22.0-2.1build1_riscv64.deb",
+      "kind": "target",
+      "bytes": 28294,
+      "sha256": "d739c5e3e296902b3c39ed18a1336ab7a2448a117a68ac9ef05b043e14fc2940",
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/w/wayland/libwayland-client0_1.22.0-2.1build1_riscv64.deb",
+      "package": "libwayland-client0",
+      "version": "1.22.0-2.1build1",
+      "architecture": "riscv64"
+    },
+    {
+      "path": "libwayland-server0_1.22.0-2.1build1_riscv64.deb",
+      "kind": "target",
+      "bytes": 36570,
+      "sha256": "207b0fc06c386823323e932f0f1d3026b0cb4a2764c1d87c2a8e6fdffedc5a5d",
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/w/wayland/libwayland-server0_1.22.0-2.1build1_riscv64.deb",
+      "package": "libwayland-server0",
+      "version": "1.22.0-2.1build1",
+      "architecture": "riscv64"
+    },
+    {
+      "path": "libwayland-egl1_1.22.0-2.1build1_riscv64.deb",
+      "kind": "target",
+      "bytes": 5524,
+      "sha256": "14dc308461723e410f42840746de5f4639ceac283a12c5a15a83b1d475c721f3",
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/w/wayland/libwayland-egl1_1.22.0-2.1build1_riscv64.deb",
+      "package": "libwayland-egl1",
+      "version": "1.22.0-2.1build1",
+      "architecture": "riscv64"
+    },
+    {
+      "path": "libwayland-cursor0_1.22.0-2.1build1_riscv64.deb",
+      "kind": "target",
+      "bytes": 10556,
+      "sha256": "38e454a7b0c59ac6cab885e7e2c73a5568dcd99e412fb7ff19406a162db70bd1",
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/w/wayland/libwayland-cursor0_1.22.0-2.1build1_riscv64.deb",
+      "package": "libwayland-cursor0",
+      "version": "1.22.0-2.1build1",
+      "architecture": "riscv64"
+    },
+    {
+      "path": "libgbm-dev_22.3.5-bb2_riscv64.deb",
+      "kind": "target",
+      "bytes": 17040,
+      "sha256": "4b7f5c27e455ef1a2d9dbad9dee8da45f175fa732a66c19f176347f37cee9fc9",
+      "url": "https://archive.spacemit.com/bianbu/pool/main/m/mesa/libgbm-dev_22.3.5-bb2_riscv64.deb",
+      "package": "libgbm-dev",
+      "version": "22.3.5-bb2",
+      "architecture": "riscv64"
+    },
+    {
+      "path": "libgbm1_22.3.5-bb2_riscv64.deb",
+      "kind": "target",
+      "bytes": 43406,
+      "sha256": "632924dbbb230283798fb1e752e2960e2c92b4e7b8db8653378fe8ecd33da1fe",
+      "url": "https://archive.spacemit.com/bianbu/pool/main/m/mesa/libgbm1_22.3.5-bb2_riscv64.deb",
+      "package": "libgbm1",
+      "version": "22.3.5-bb2",
+      "architecture": "riscv64"
+    },
+    {
+      "path": "libgl-dev_1.7.0-1build1_riscv64.deb",
+      "kind": "target",
+      "bytes": 102444,
+      "sha256": "f65f94fb7e99f537b68371da6b429c6f67ed46991f147d8c83666a18af0e35aa",
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libg/libglvnd/libgl-dev_1.7.0-1build1_riscv64.deb",
+      "package": "libgl-dev",
+      "version": "1.7.0-1build1",
+      "architecture": "riscv64"
+    }
+  ],
+  "toolchain": {
+    "host": "amd64",
+    "target": "riscv64-linux-gnu",
+    "version": "13.3.0",
+    "root": "toolchain",
+    "sysroot": ".",
+    "commands": {
+      "riscv64-linux-gnu-gcc": "usr/bin/riscv64-linux-gnu-gcc-13",
+      "riscv64-linux-gnu-g++": "usr/bin/riscv64-linux-gnu-g++-13",
+      "riscv64-linux-gnu-readelf": "usr/bin/riscv64-linux-gnu-readelf"
+    },
+    "host_requirements": {
+      "libc6": "2.38",
+      "libgmp10": "6.3.0",
+      "libisl23": "0.15",
+      "libmpc3": "1.1.0",
+      "libmpfr6": "3.1.3",
+      "libstdc++6": "5",
+      "libzstd1": "1.5.5",
+      "zlib1g": "1:1.1.4",
+      "dpkg": "1.22.6",
+      "patch": "2.7",
+      "libctf-nobfd0": "2.42",
+      "libctf0": "2.42",
+      "libjansson4": "2.14",
+      "libsframe1": "2.42"
+    },
+    "scope": "使用固定 Ubuntu amd64 交叉工具鏈 DEB 解到本次建置目錄；主機僅提供列明的正常執行依賴與封裝工具，記錄實際版本，不綁絕對主機檔案。"
+  },
+  "scope": "CM6 雙 IMX415 模式修正與兩路 VI 先停止的共用 helper；自動及手動停止共用，單路及核心等待不變。正式套件硬體驗證待完成；診斷版仍曾出現晚到 IRQ 警告。",
+  "reproducibility": "固定來源及 DEB 輸入；cm6.1 已在同一主機兩個新目錄獨立建置逐位元一致，不能代替 cm6.2 或跨主機驗證。",
+  "target_libraries": [
+    "usr/lib/libcam_sensors.so",
+    "usr/lib/libisp.so",
+    "usr/lib/libcpp.so",
+    "usr/lib/libvi.so",
+    "usr/lib/libtuningtools.so",
+    "usr/lib/libispeagle.so",
+    "usr/lib/libcppfw-2.0.so",
+    "usr/lib/libccic.so",
+    "usr/lib/riscv64-linux-gnu/libEGL.so.1",
+    "usr/lib/riscv64-linux-gnu/libGLESv2.so.2",
+    "usr/lib/riscv64-linux-gnu/libwayland-client.so.0",
+    "usr/lib/riscv64-linux-gnu/libwayland-server.so.0",
+    "usr/lib/riscv64-linux-gnu/libwayland-egl.so.1",
+    "usr/lib/riscv64-linux-gnu/libwayland-cursor.so.0",
+    "usr/lib/riscv64-linux-gnu/libgbm.so.1"
+  ],
+  "header_aliases": {
+    "drm": "libdrm"
+  },
+  "patches": [
+    {
+      "path": "0001-dual-sensor-work-mode.patch",
+      "sha256": "99e1a522972618df8d3c40fb90431a0eb23c07b0033d886372b67d1b49d8afdf",
+      "target": "demo/online_pipeline_test.c",
+      "before_sha256": "4fd07f273112e93fa550ccec904233cc4b98c8ccff2003209d16915111671da4",
+      "after_sha256": "525e5247b552c0682c2149d2e90526ad21055596e55279c247f2a66c7caa3148"
+    },
+    {
+      "path": "0002-dual-vi-stop-before-isp.patch",
+      "sha256": "2aceba83243250bdfc0b57608e279588cf23b086a2ddc5b5bd81016cf540bb17",
+      "target": "demo/online_pipeline_test.c",
+      "before_sha256": "525e5247b552c0682c2149d2e90526ad21055596e55279c247f2a66c7caa3148",
+      "after_sha256": "455874ba9ce7833e9f31cbbf59b893a825949cb81f601bf2a9d5b4efeddea64c"
+    }
+  ]
+}

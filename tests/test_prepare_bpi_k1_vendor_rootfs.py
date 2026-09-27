@@ -108,6 +108,84 @@ class PrepareRootfsTests(unittest.TestCase):
         self.assertEqual([p.name for p in MOD.package_selection(lock, "bpi-cm6", self.cache)], ["gpu-old.deb"])
         self.assertEqual([p.name for p in MOD.package_selection(lock, "bpi-f3", self.cache)], ["gpu-new.deb"])
 
+    def test_cm6_gnome_creates_cursor_environment(self):
+        MOD.configure_gnome_environment(self.base, "bpi-cm6", "gnome-wayland")
+        path = self.base / "etc/environment"
+        self.assertEqual(path.read_text(), "MUTTER_DEBUG_DISABLE_HW_CURSORS=1\n")
+        self.assertEqual(path.stat().st_mode & 0o777, 0o644)
+
+    def test_camera_packages_are_opt_in_and_cm6_only(self):
+        self.assertEqual(MOD.camera_packages("bpi-cm6", None), [])
+        self.assertEqual(MOD.camera_packages("bpi-f3", None), [])
+        with self.assertRaisesRegex(ValueError, "其他板型"):
+            MOD.camera_packages("bpi-f3", self.cache)
+
+    def test_modified_camera_package_is_rejected_before_dpkg(self):
+        record = MOD.CM6_CAMERA_PACKAGES["k1x-cam"]
+        package = self.cache / f"k1x-cam_{record['version']}_riscv64.deb"
+        package.write_bytes(b"x" * record["size"])
+        with mock.patch.object(MOD.subprocess, "check_output") as inspect:
+            with self.assertRaisesRegex(ValueError, "雜湊"):
+                MOD.camera_packages("bpi-cm6", self.cache)
+            inspect.assert_not_called()
+
+    def test_camera_permissions_replace_world_access_and_disable_vendor_service(self):
+        wanted = self.base / "etc/systemd/system/multi-user.target.wants/camera.service"
+        wanted.parent.mkdir(parents=True)
+        wanted.symlink_to("/lib/systemd/system/camera.service")
+        MOD.configure_camera_permissions(self.base)
+        MOD.configure_camera_permissions(self.base)
+        self.assertFalse(wanted.is_symlink())
+        self.assertEqual((self.base / "etc/systemd/system/camera.service").readlink(), Path("/dev/null"))
+        rules = self.base / "etc/udev/rules.d"
+        self.assertTrue((rules / "99-video-permissions.rules").is_file())
+        text = "".join(path.read_text() for path in rules.iterdir())
+        for pattern in ("cam_sensor*", "mars11isp-pipe*", 'KERNEL=="system"'):
+            self.assertIn(pattern, text)
+        self.assertNotIn("0666", text)
+        self.assertNotIn("0777", text)
+        self.assertEqual(text.count('GROUP="video", MODE="0660"'), 4)
+
+    def test_cm6_gnome_preserves_pvr_environment_and_is_idempotent(self):
+        path = self.base / "etc/environment"
+        path.parent.mkdir()
+        preserved = ('# 既有官方 GPU 環境\nPATH="/usr/bin:/bin"\nCOGL_DRIVER=gles2\n'
+                     'GDK_GL=gles\nXWAYLAND_NO_GLAMOR=1\nSDL_VIDEODRIVER=wayland\n'
+                     'MESA_LOADER_DRIVER_OVERRIDE=pvr\n\n')
+        path.write_text(preserved + 'MUTTER_DEBUG_DISABLE_HW_CURSORS=0\n'
+                        'export MUTTER_DEBUG_DISABLE_HW_CURSORS="1"\n'
+                        'MUTTER_DEBUG_DISABLE_HW_CURSORS="\n')
+        path.chmod(0o640)
+        MOD.configure_gnome_environment(self.base, "bpi-cm6", "gnome-wayland")
+        self.assertEqual(path.read_text(), preserved + "MUTTER_DEBUG_DISABLE_HW_CURSORS=1\n")
+        self.assertEqual(path.stat().st_mode & 0o777, 0o640)
+        before = (path.read_bytes(), path.stat().st_mtime_ns)
+        MOD.configure_gnome_environment(self.base, "bpi-cm6", "gnome-wayland")
+        self.assertEqual((path.read_bytes(), path.stat().st_mtime_ns), before)
+
+    def test_cursor_environment_does_not_touch_f3_or_other_desktops(self):
+        path = self.base / "etc/environment"
+        path.parent.mkdir()
+        for board, desktop in (("bpi-f3", "gnome-wayland"), ("bpi-cm6", "minimal")):
+            with self.subTest(board=board, desktop=desktop):
+                MOD.configure_gnome_environment(self.base, board, desktop)
+                self.assertFalse(path.exists())
+                path.write_text("MUTTER_DEBUG_DISABLE_HW_CURSORS=0\nCOGL_DRIVER=gles2\n")
+                before = (path.read_bytes(), path.stat().st_mtime_ns)
+                MOD.configure_gnome_environment(self.base, board, desktop)
+                self.assertEqual((path.read_bytes(), path.stat().st_mtime_ns), before)
+                path.unlink()
+
+    def test_cursor_environment_absolute_symlink_stays_in_candidate_root(self):
+        path = self.base / "etc/environment"
+        path.parent.mkdir()
+        path.symlink_to("/etc/vendor-environment")
+        target = self.base / "etc/vendor-environment"
+        target.write_text("COGL_DRIVER=gles2")
+        MOD.configure_gnome_environment(self.base, "bpi-cm6", "gnome-wayland")
+        self.assertTrue(path.is_symlink())
+        self.assertEqual(target.read_text(), "COGL_DRIVER=gles2\nMUTTER_DEBUG_DISABLE_HW_CURSORS=1\n")
+
     def test_modified_package_with_same_size_is_rejected(self):
         lock = self.package_lock()
         (self.cache / "gpu-old.deb").write_bytes(b"bad-pvr")

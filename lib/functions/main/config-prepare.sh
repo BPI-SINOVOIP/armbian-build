@@ -154,6 +154,14 @@ function config_source_board_file() {
 
 function config_early_init() {
 
+	# 官方媒體板型需要在核心設定提問前帶入缺省；其他板型仍走原流程。
+	case "${BOARD:-}" in
+		bananapicm6-titan-emmc | bananapif3-titan-emmc | bananapicm6-vendor-sd | bananapif3-vendor-sd)
+			source "${SRC}/config/boards/include/bpi-k1-board-targets.inc"
+			bpi_k1_board_target_defaults
+			;;
+	esac
+
 	# default umask for root is 022 so parent directories won't be group writeable without this
 	# this is used instead of making the chmod in prepare_host() recursive
 	umask 002

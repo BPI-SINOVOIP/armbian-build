@@ -17,8 +17,27 @@ import tempfile
 import urllib.parse
 import urllib.request
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import bpi_k1_board_targets as targets
 
 DEFAULT_LOCK = Path(__file__).resolve().parents[1] / "config/spacemit-k1-acceleration/noble.lock.json"
+
+# 明列桌面必要元件，避免缺少設定中心、輸入法或 D-Bus 啟動程式。
+GNOME_DESKTOP_COMPONENTS = {
+    "gnome-session": "/usr/bin/gnome-session",
+    "gnome-shell": "/usr/bin/gnome-shell",
+    "gjs": "/usr/bin/gjs",
+    "gdm3": "/usr/sbin/gdm3",
+    "gnome-terminal": "/usr/bin/gnome-terminal",
+    "nautilus": "/usr/bin/nautilus",
+    "gnome-control-center": "/usr/bin/gnome-control-center",
+    "ibus": "/usr/bin/ibus-daemon",
+}
+
+# CM6 實機 A/B/A 已確認硬體游標出現方塊，改由 Mutter 合成游標。
+GNOME_BOARD_ENVIRONMENT = {
+    "bpi-cm6": {"MUTTER_DEBUG_DISABLE_HW_CURSORS": "1"},
+}
 
 
 class AuditError(Exception):
@@ -187,6 +206,21 @@ def rooted_path(root: Path, path: str) -> Path:
     return root.joinpath(*resolved)
 
 
+def environment_values(text: str, key: str) -> list[str | None]:
+    """唯讀解析指定環境鍵，保留重複或無法解析的項目以便拒絕衝突。"""
+    values = []
+    pattern = re.compile(r"^\s*(?:export\s+)?" + re.escape(key) + r"\s*=\s*(.*)$")
+    for line in text.splitlines():
+        match = pattern.match(line)
+        if match:
+            try:
+                tokens = shlex.split(match.group(1), comments=True)
+                values.append(tokens[0] if len(tokens) == 1 else None)
+            except ValueError:
+                values.append(None)
+    return values
+
+
 def version_matches(actual: str, operator: str | None, wanted: str | None) -> bool:
     if not operator:
         return True
@@ -224,7 +258,16 @@ def dependency_missing(expression: str, available: dict[str, str]) -> list[str]:
     return missing
 
 
-def preflight(lock: dict, board: str, root: Path, stage: str) -> dict:
+def armbian_board_name(text: str) -> str | None:
+    """只讀取單一完整板名設定，拒絕重複、字尾拼接與 shell 運算。"""
+    values = re.findall(r"(?m)^[ \t]*(?:export[ \t]+)?BOARD[ \t]*=(.*)$", text)
+    if len(values) != 1:
+        return None
+    match = re.fullmatch(r'''[ \t]*(?:'([A-Za-z0-9_.-]+)'|"([A-Za-z0-9_.-]+)"|([A-Za-z0-9_.-]+))(?:[ \t]+(?:\#.*)?)?''', values[0])
+    return next((value for value in match.groups() if value is not None), None) if match else None
+
+
+def preflight(lock: dict, board: str, root: Path, stage: str, armbian_board: str | None = None) -> dict:
     profile = lock["profiles"][board]
     errors, pending = [], []
     release_path = rooted_path(root, "/etc/os-release")
@@ -240,9 +283,8 @@ def preflight(lock: dict, board: str, root: Path, stage: str) -> dict:
     if not armbian.is_file():
         errors.append("根系統缺少 Armbian 身分")
     else:
-        board_name = "bananapif3" if board == "bpi-f3" else "bananapicm6"
-        board_match = re.search(r"(?m)^BOARD=['\"]?([^'\"\n]+)", armbian.read_text())
-        if not board_match or board_match.group(1) != board_name:
+        board_name = armbian_board if armbian_board is not None else ("bananapif3" if board == "bpi-f3" else "bananapicm6")
+        if not targets.expected_board(board_name, board) or armbian_board_name(armbian.read_text()) != board_name:
             errors.append("Armbian 板型與加速配套不同")
     installed = {item["Package"]: item for item in paragraphs(rooted_path(root, "/var/lib/dpkg/status").read_text()) if item.get("Status") == "install ok installed"}
     if installed.get("libc6", {}).get("Architecture") != "riscv64":
@@ -300,7 +342,38 @@ def preflight(lock: dict, board: str, root: Path, stage: str) -> dict:
         sessions = rooted_path(root, "/usr/share/wayland-sessions")
         if not sessions.is_dir() or not list(sessions.glob("*.desktop")):
             errors.append("缺少 Wayland 桌面工作階段")
-    return {"board": board, "stage": stage, "passed": not errors, "errors": errors, "pending_dependencies": pending, "kernel_pvr_found": sorted(kernel_versions), "hardware_verified": False, "runtime_status": lock["runtime_status"]}
+        if profile.get("desktop_protocol") == "wayland":
+            marker = rooted_path(root, "/etc/bpi-k1-vendor.json")
+            desktop = None
+            if marker.is_file():
+                try:
+                    desktop = json.loads(marker.read_text()).get("desktop")
+                except (ValueError, AttributeError):
+                    errors.append("官方格式根系統標記無法解析：/etc/bpi-k1-vendor.json")
+            gnome_session = any(
+                rooted_path(root, "/usr/share/wayland-sessions/" + name).is_file()
+                for name in ("gnome.desktop", "gnome-wayland.desktop")
+            )
+            if desktop == "gnome-wayland" or "gnome-shell" in installed or gnome_session:
+                if not gnome_session:
+                    errors.append("缺少 GNOME Wayland 桌面工作階段")
+                for name, executable in GNOME_DESKTOP_COMPONENTS.items():
+                    if name not in installed:
+                        errors.append("GNOME 桌面必要套件未完成安裝：" + name)
+                    path = rooted_path(root, executable)
+                    if not path.is_file() or not path.stat().st_mode & 0o111:
+                        errors.append("GNOME 桌面必要程式缺失或不可執行：" + executable)
+                required_environment = GNOME_BOARD_ENVIRONMENT.get(board, {})
+                if required_environment:
+                    environment = rooted_path(root, "/etc/environment")
+                    text = environment.read_text() if environment.is_file() else ""
+                    for key, value in required_environment.items():
+                        if environment_values(text, key) != [value]:
+                            errors.append(f"GNOME 板級相容設定缺失或衝突：/etc/environment 須唯一設定 {key}={value}")
+    result = {"board": board, "stage": stage, "passed": not errors, "errors": errors, "pending_dependencies": pending, "kernel_pvr_found": sorted(kernel_versions), "hardware_verified": False, "runtime_status": lock["runtime_status"]}
+    if armbian_board is not None and targets.target_for(armbian_board):
+        result["armbian_board"] = armbian_board
+    return result
 
 
 def main() -> int:
@@ -313,6 +386,7 @@ def main() -> int:
     prep.add_argument("--output", type=Path, required=True, help="準備報告與版本優先序")
     audit = sub.add_parser("preflight", help="唯讀檢查候選根系統")
     audit.add_argument("--board", choices=("bpi-f3", "bpi-cm6"), required=True)
+    audit.add_argument("--armbian-board", help="核對完整官方格式板名；省略時僅接受原始板名")
     audit.add_argument("--rootfs", type=Path, required=True, help="已掛載的候選根系統")
     audit.add_argument("--stage", choices=("base", "installed"), default="installed", help="安裝前或安裝後的檢查階段")
     args = parser.parse_args()
@@ -321,7 +395,7 @@ def main() -> int:
         if args.command == "prepare":
             report = prepare(lock, args.lock, args.board, args.cache, args.output)
         else:
-            report = preflight(lock, args.board, args.rootfs.resolve(), args.stage)
+            report = preflight(lock, args.board, args.rootfs.resolve(), args.stage, args.armbian_board)
         print(json.dumps(report, ensure_ascii=False, indent=2))
         return 0 if report.get("passed", True) else 2
     except (AuditError, OSError, ValueError, subprocess.SubprocessError) as exc:

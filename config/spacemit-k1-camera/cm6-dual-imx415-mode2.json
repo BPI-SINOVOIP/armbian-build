@@ -1,0 +1,65 @@
+{
+  "tuning_server_enable": 0,
+  "show_fps": 1,
+  "auto_run": 1,
+  "gpu_render": 0,
+  "save_yuv": 0,
+  "auto_detect": 0,
+  "use_v4l": 0,
+  "test_frame": 300,
+  "dump_one_frame": 150,
+  "cpp_node": [
+    {
+      "name": "cpp0",
+      "enable": 1,
+      "format": "NV12",
+      "src_from_file": 0,
+      "src_path": "/tmp/cpp_case_in_data/1920x1080/",
+      "size_width": 1920,
+      "size_height": 1080
+    },
+    {
+      "name": "cpp1",
+      "enable": 1,
+      "format": "NV12",
+      "src_from_file": 0,
+      "src_path": "/tmp/cpp_case_in_data/1920x1080/",
+      "size_width": 1920,
+      "size_height": 1080
+    }
+  ],
+  "isp_node": [
+    {
+      "name": "isp0",
+      "enable": 1,
+      "work_mode": "online",
+      "format": "NV12",
+      "out_width": 1920,
+      "out_height": 1080,
+      "sensor_name": "imx415_spm",
+      "sensor_id": 0,
+      "sensor_work_mode": 2,
+      "fps": 30,
+      "src_file": "/tmp/1920x1080_raw12_long_packed.vrf",
+      "bit_depth": 10,
+      "in_width": 3840,
+      "in_height": 2160
+    },
+    {
+      "name": "isp1",
+      "enable": 1,
+      "work_mode": "online",
+      "format": "NV12",
+      "out_width": 1920,
+      "out_height": 1080,
+      "sensor_name": "imx415_spm",
+      "sensor_id": 2,
+      "sensor_work_mode": 2,
+      "fps": 30,
+      "src_file": "/tmp/1920x1080_raw12_long_packed.vrf",
+      "bit_depth": 10,
+      "in_width": 3840,
+      "in_height": 2160
+    }
+  ]
+}

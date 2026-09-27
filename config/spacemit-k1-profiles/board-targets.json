@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "release_id": "20260927-rc12",
+  "targets": {
+    "bananapicm6-titan-emmc": {
+      "base_board": "bananapicm6",
+      "board": "bpi-cm6",
+      "branch": "legacy",
+      "storage": "emmc",
+      "camera_profile": "dual-imx415"
+    },
+    "bananapif3-titan-emmc": {
+      "base_board": "bananapif3",
+      "board": "bpi-f3",
+      "branch": "current",
+      "storage": "emmc",
+      "camera_profile": "none"
+    },
+    "bananapicm6-vendor-sd": {
+      "base_board": "bananapicm6",
+      "board": "bpi-cm6",
+      "branch": "legacy",
+      "storage": "sd",
+      "camera_profile": "dual-imx415"
+    },
+    "bananapif3-vendor-sd": {
+      "base_board": "bananapif3",
+      "board": "bpi-f3",
+      "branch": "current",
+      "storage": "sd",
+      "camera_profile": "none"
+    }
+  }
+}

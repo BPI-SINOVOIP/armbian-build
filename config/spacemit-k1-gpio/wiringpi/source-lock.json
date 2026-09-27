@@ -1,0 +1,76 @@
+{
+  "schema_version": 1,
+  "board": "bpi-cm6",
+  "package": "bpi-cm6-wiringpi",
+  "version": "3.19+gitda58b589.cm6.1",
+  "architecture": "riscv64",
+  "source_date_epoch": 1787591559,
+  "source": {
+    "repository": "https://github.com/BPI-SINOVOIP/BPI-WiringPi2.git",
+    "commit": "da58b589a3ca3e44f569850f07ee17de2e294b5f",
+    "archive_url": "https://codeload.github.com/BPI-SINOVOIP/BPI-WiringPi2/tar.gz/da58b589a3ca3e44f569850f07ee17de2e294b5f",
+    "archive_name": "BPI-WiringPi2-da58b589a3ca3e44f569850f07ee17de2e294b5f.tar.gz",
+    "archive_bytes": 623750,
+    "archive_sha256": "0cc1014d3082fb2f197e47dd2b7ebd04f1448d24ffc905dacf19a1eca1ef33e4",
+    "archive_root": "BPI-WiringPi2-da58b589a3ca3e44f569850f07ee17de2e294b5f",
+    "patches": [
+      {
+        "path": "0001-bpi-version-readonly.patch",
+        "sha256": "5d4ef6f773741e06590edc0929cf306f95f6e7e6aa0eb3a8e5458a391df6e628",
+        "purpose": "讓已辨識的 BPI 版本查詢在任何記憶體或 GPIO 裝置探測前返回。"
+      },
+      {
+        "path": "0002-devlib-explicit-link.patch",
+        "sha256": "d2ce8404fbf1296208ea5b4dac0a43e52814d52833d64c06c0e81282b85922fd",
+        "purpose": "讓 libwiringPiDev 明確連結 libwiringPi，避免只靠呼叫程式先載入其他函式庫。"
+      }
+    ]
+  },
+  "build_dependencies": [
+    {
+      "package": "libcrypt1",
+      "version": "1:4.4.36-4build1",
+      "architecture": "riscv64",
+      "filename": "libcrypt1_4.4.36-4build1_riscv64.deb",
+      "url": "https://ports.ubuntu.com/pool/main/libx/libxcrypt/libcrypt1_4.4.36-4build1_riscv64.deb",
+      "bytes": 102060,
+      "sha256": "461cedb84928a02f0de8a0194f5d2d26c208c9e2562acbf35e1cb8965f501f5a",
+      "purpose": "只解包至交叉建置 sysroot，不安裝主機。"
+    },
+    {
+      "package": "libcrypt-dev",
+      "version": "1:4.4.36-4build1",
+      "architecture": "riscv64",
+      "filename": "libcrypt-dev_4.4.36-4build1_riscv64.deb",
+      "url": "https://ports.ubuntu.com/pool/main/libx/libxcrypt/libcrypt-dev_4.4.36-4build1_riscv64.deb",
+      "bytes": 250318,
+      "sha256": "6b6d5bc2d4ce80a6489b331158ea6ceff8bbd686abda4d0ba8c00679ba8cf562",
+      "purpose": "只解包至交叉建置 sysroot，不安裝主機。"
+    }
+  ],
+  "depends": [
+    "libc6 (>= 2.38)",
+    "libcrypt1 (>= 1:4.4.36)"
+  ],
+  "safe_probe": {
+    "commands": [
+      [
+        "gpio",
+        "-v"
+      ],
+      [
+        "gpio",
+        "-R"
+      ]
+    ],
+    "scope": "只讀取版本、板型資料與裝置樹；不呼叫 wiringPiSetup，不探測 GPIO 記憶體，不設定腳位。",
+    "excluded": [
+      "readall",
+      "mode",
+      "write",
+      "pwm",
+      "i2cdetect",
+      "spi"
+    ]
+  }
+}

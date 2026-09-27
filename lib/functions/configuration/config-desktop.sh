@@ -48,9 +48,20 @@ function interactive_desktop_main_configuration() {
 	# happily cache-hit a pre-configng-change rootfs. Hoisting the
 	# fetch up here makes the clone authoritative for every
 	# BUILD_DESKTOP=yes invocation.
-	fetch_from_repo "https://github.com/armbian/configng" "armbian-configng" "branch:main"
+	# 擴充可固定來源；未啟用時保留既有網址、分支與快取位置。
+	call_extension_method "pre_desktop_sources" <<- 'PRE_DESKTOP_SOURCES'
+		桌面來源取得前設定來源與目標組合。
+	PRE_DESKTOP_SOURCES
+	fetch_from_repo "${CONFIGNG_REPOSITORY:-https://github.com/armbian/configng}" \
+		"${CONFIGNG_CACHE_NAME:-armbian-configng}" "${CONFIGNG_REF:-branch:main}"
 
-	local configng_dir="${SRC}/cache/sources/armbian-configng"
+	declare -g CONFIGNG_DIRECTORY="${SRC}/cache/sources/${CONFIGNG_CACHE_NAME:-armbian-configng}"
+	declare -g DESKTOP_SOURCE_DIRECTORY="${CONFIGNG_DIRECTORY}"
+	call_extension_method "post_desktop_sources" <<- 'POST_DESKTOP_SOURCES'
+		桌面來源取得後，可於隔離副本套用修正並設定 DESKTOP_SOURCE_DIRECTORY。
+		此階段早於桌面解析及 rootfs 快取身分計算。
+	POST_DESKTOP_SOURCES
+	local configng_dir="${DESKTOP_SOURCE_DIRECTORY}"
 	local yaml_dir="${configng_dir}/tools/modules/desktops/yaml"
 	local parser="${configng_dir}/tools/modules/desktops/scripts/parse_desktop_yaml.py"
 

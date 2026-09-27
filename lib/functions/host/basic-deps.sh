@@ -26,11 +26,16 @@ function prepare_host_basic() {
 		"linux-version:linux-base"
 		"locale-gen:locales"
 		"git:git"
+		"python3:python3"
 	)
 
 	for check_pack in "${checklist[@]}"; do
 		if ! which ${check_pack%:*} > /dev/null; then local install_pack+=${check_pack#*:}" "; fi
 	done
+	# 桌面設定解析早於完整依賴安裝；在基礎準備階段提供既有依賴。
+	if ! python3 -c 'import yaml' >/dev/null 2>&1; then
+		install_pack+="python3-yaml "
+	fi
 
 	if [[ -n $install_pack ]]; then
 		# This obviously only works on Debian or Ubuntu.

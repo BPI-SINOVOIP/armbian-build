@@ -14,6 +14,7 @@ import stat
 import struct
 import subprocess
 import sys
+import tempfile
 import uuid
 import zipfile
 import zlib
@@ -21,11 +22,26 @@ import zlib
 import yaml
 
 REPO = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(REPO / "tools"))
+from prepare_bpi_k1_vendor_rootfs import CM6_CAMERA_PACKAGES, camera_package_records
+from bpi_k1_board_targets import expected_board
+
 MIB = 1024 * 1024
 DTBS = {"bpi-cm6": "k1-x_bpi_cm6.dtb", "bpi-f3": "k1-bananapi-f3.dtb"}
 CM6_CONNECTIVITY_DTB = "k1-x_bpi_cm6-eth0-reset.dtb"
 CM6_CONNECTIVITY_PATH = "/bpi-k1-vendor/" + CM6_CONNECTIVITY_DTB
 CM6_CONNECTIVITY_SHA256 = "f0b9795fda72868cd2bc9a6db0cf5aa2f15ea494f114a5b42adfc1fa931962c1"
+CM6_CAMERA_DTB = "k1-x_bpi_cm6-dual-imx415.dtb"
+CM6_CAMERA_PATH = "/bpi-k1-vendor/" + CM6_CAMERA_DTB
+CM6_CAMERA_SHA256 = "91bb7a9cde6380e16d9dbc12161212aad768cf145de79dd2f51665366e0065c3"
+# 固定兩個新目錄建置一致的正式載荷；來源變更必須重新審查此封裝契約。
+CM6_CAMERA_DERIVED = {
+    "version": "0.2.34+cm6.2", "size": 974380,
+    "sha256": "813be3b38d5bd3d86cae88c234bd7560e6f8b5b78cc8f9cf42fdba9ed0855027",
+    "source_lock_sha256": "3ad11b5f5a9a2af3beab6c2976b53dc07a96568fc4370e815ab6816d8df5f324",
+    "builder_sha256": "a20a36f26fe269bdb64a5811547ec93d1323f51391665ba02c52d6ad1e09b096",
+    "library_sha256": "c962d8f724507cacb7366517f4366246c3d8f2d8b419e134d62f10118b2bd14e",
+}
 PARTS = [("fsbl", 128*1024, 256*1024, "factory/FSBL.bin"),
          ("env", 384*1024, 64*1024, "env.bin"),
          ("opensbi", MIB, MIB, "fw_dynamic.itb"),
@@ -91,12 +107,24 @@ def write(path, content, mode=0o644):
     path.chmod(mode)
 
 
-def extlinux(board, root_uuid, cm6_connectivity=False):
+def boot_dtb_path(board, cm6_connectivity=False, cm6_dual_imx415=False, native=False):
     if board not in DTBS:
         raise ValueError("不支援的板型")
     if cm6_connectivity and board != "bpi-cm6":
         raise ValueError("CM6 網路修正不能套用其他板型")
-    dtb_path = CM6_CONNECTIVITY_PATH if cm6_connectivity else "/dtb/spacemit/" + DTBS[board]
+    if native:
+        if cm6_dual_imx415 and board != "bpi-cm6":
+            raise ValueError("雙 IMX415 選項只允許 BPI-CM6")
+        return "/dtb/spacemit/" + DTBS[board]
+    if cm6_dual_imx415:
+        if board != "bpi-cm6":
+            raise ValueError("雙 IMX415 選項只允許 BPI-CM6")
+        return CM6_CAMERA_PATH
+    return CM6_CONNECTIVITY_PATH if cm6_connectivity else "/dtb/spacemit/" + DTBS[board]
+
+
+def extlinux(board, root_uuid, cm6_connectivity=False, cm6_dual_imx415=False, native=False):
+    dtb_path = boot_dtb_path(board, cm6_connectivity, cm6_dual_imx415, native)
     root_uuid = str(uuid.UUID(root_uuid))
     return ("DEFAULT armbian\nTIMEOUT 20\nLABEL armbian\n"
             "  KERNEL /Image\n  INITRD /uInitrd\n"
@@ -104,6 +132,68 @@ def extlinux(board, root_uuid, cm6_connectivity=False):
             f"  APPEND root=UUID={root_uuid} rootwait rootfstype=ext4 rw "
             "earlycon=sbi console=tty1 console=ttyS0,115200 loglevel=4 "
             "fsck.repair=yes net.ifnames=0\n")
+
+
+def native_target_contract(identity, board, storage):
+    """核對新增板名的媒體邊界，保留未含別名的歷史原生紀錄。"""
+    armbian_board = identity.get("armbian_board")
+    if armbian_board is not None and not expected_board(armbian_board, board, storage):
+        raise ValueError("官方格式板名與封裝板型或媒體不符")
+
+
+def native_dtb_contract(identity, board, path=None):
+    """原生 DTB 使用本次編譯身分及語義，絕不套用歷史候選 SHA 常數。"""
+    if identity.get("source_kind") != "armbian-native-rootfs" or identity.get("board") != board or identity.get("schema_version") != 2:
+        raise ValueError("原生來源或板型身分不符")
+    camera = identity.get("camera_profile")
+    if camera not in ("none", "dual-imx415") or (board != "bpi-cm6" and camera != "none"):
+        raise ValueError("原生相機配置不符板型")
+    record = identity.get("native_dtb", {})
+    if record.get("path") != boot_dtb_path(board, native=True) or not re.fullmatch(r"[0-9a-f]{64}", record.get("sha256", "")):
+        raise ValueError("原生 DTB 路徑或 SHA-256 身分不符")
+    if camera == "dual-imx415":
+        verify_camera_packages(identity)
+    if path is not None:
+        if digest(regular(path)) != record["sha256"]:
+            raise ValueError("原生 DTB 與本次編譯 SHA-256 不符")
+        if board == "bpi-cm6":
+            import bpi_cm6_native_dtb
+            if bpi_cm6_native_dtb.validate(path, camera) != record.get("validation"):
+                raise ValueError("原生 DTB 語義與匯出紀錄不符")
+    elif board == "bpi-cm6":
+        validation = record.get("validation", {})
+        if (validation.get("board"), validation.get("camera_profile"), validation.get("dtb", {}).get("sha256")) != (board, camera, record["sha256"]):
+            raise ValueError("原生 DTB 缺少一致的語義驗證紀錄")
+    return record
+
+
+def boot_inventory(root):
+    from bpi_k1_native import tree_inventory
+    result = tree_inventory(root)
+    # 根系統內 /boot 絕對連結在獨立 boot-tree 中會改為等價的相對連結。
+    for name, entry in result.items():
+        if entry["type"] == "symlink" and entry["target"].startswith("/boot/"):
+            entry["target"] = os.path.relpath(entry["target"][6:], str(Path(name).parent))
+    return result
+
+
+def prepared_contract(prepared, prep, board, camera_option=None):
+    schema = prep.get("schema_version", 1)
+    native = schema == 2
+    if schema not in (1, 2) or (not native and prep.get("identity", {}).get("source_kind") == "armbian-native-rootfs"):
+        raise ValueError("不支援或混用的 prepared 結構版本")
+    if native:
+        record = native_dtb_contract(prep["identity"], board)
+        dual = prep["identity"]["camera_profile"] == "dual-imx415"
+        if camera_option is not None and camera_option != dual:
+            raise ValueError("明確相機選項與原生 prepared 配置不一致")
+        if not prep.get("boot_tree") or boot_inventory(prepared / "boot-tree") != prep["boot_tree"]:
+            raise ValueError("原生 boot-tree 已偏離匯出內容")
+        path = child_file(prepared / "boot-tree", record["path"].lstrip("/"))
+        native_dtb_contract(prep["identity"], board, path)
+    else:
+        dual = bool(camera_option)
+    return native, dual
 
 
 def layout(root_size, emmc=False):
@@ -236,11 +326,100 @@ def prepare_cm6_connectivity(boot, output):
     return record
 
 
-def verify_boot_contract(payload, board, root_uuid, boot_uuid, cm6_connectivity=False):
+def verify_camera_record(record):
+    """相機紀錄必須同時固定 eth0 來源與已測雙相機候選。"""
+    if (not isinstance(record, dict) or record.get("board") != "bpi-cm6" or
+            not isinstance(record.get("source"), dict) or
+            not isinstance(record.get("candidate"), dict) or
+            record.get("source", {}).get("sha256") != CM6_CONNECTIVITY_SHA256 or
+            record.get("candidate", {}).get("sha256") != CM6_CAMERA_SHA256 or
+            record.get("candidate", {}).get("name") != CM6_CAMERA_DTB):
+        raise ValueError("CM6 雙相機 DTB 紀錄的板型、路徑或 SHA-256 缺失／不符")
+
+
+def verify_camera_packages(identity):
+    """保留固定官方配套，另嚴格核對原生 CM6 的來源修正版。"""
+    records = identity.get("cm6_camera_packages")
+    if identity.get("board") != "bpi-cm6":
+        raise ValueError("相機配套身分只適用 BPI-CM6")
+    if records == CM6_CAMERA_PACKAGES or records == camera_package_records(None):
+        return None
+    if (identity.get("schema_version") != 2 or identity.get("source_kind") != "armbian-native-rootfs" or
+            identity.get("camera_profile") != "dual-imx415"):
+        raise ValueError("雙 IMX415 封裝缺少固定 CM6 相機配套身分，請以 --cm6-camera-cache 重新準備根系統")
+    config = REPO / "config/spacemit-k1-camera"
+    pinned = CM6_CAMERA_DERIVED
+    if (digest(regular(config / "source-lock.json")) != pinned["source_lock_sha256"] or
+            digest(regular(REPO / "tools/build_bpi_cm6_camera.py")) != pinned["builder_sha256"]):
+        raise ValueError("相機配套身分的來源鎖或建置工具已變更")
+    lock = json.loads((config / "source-lock.json").read_text())
+    for item in lock["patches"]:
+        if digest(child_file(config, item["path"])) != item["sha256"]:
+            raise ValueError("相機配套身分的兩補丁內容不符來源鎖")
+    if digest(child_file(config, lock["config"]["path"])) != lock["config"]["sha256"]:
+        raise ValueError("相機配套身分的 mode2 配置不符來源鎖")
+    provenance = {key: pinned[key] for key in ("source_lock_sha256", "builder_sha256", "library_sha256")}
+    provenance.update(source_sha256=lock["source"]["sha256"], patches=lock["patches"],
+                      streamoff_fixed=False, stop_order_patch_applied=True,
+                      hardware_validation="pending", scope=lock["scope"])
+    expected = {
+        "k1x-cam": {**{key: pinned[key] for key in ("version", "size", "sha256")},
+                    "filename": "k1x-cam_0.2.34+cm6.2_riscv64.deb", "provenance": provenance},
+        "k1x-cam-lib": {**CM6_CAMERA_PACKAGES["k1x-cam-lib"], "filename": "k1x-cam-lib_0.1.8_riscv64.deb",
+                        "provenance": {"signature_verified": False, "scope": "保持固定官方閉源 SDK，未變更內容。"}},
+    }
+    if records != expected:
+        raise ValueError("相機配套身分缺少固定 cm6.2 套件 SHA-256 或完整來源紀錄")
+    return {"provenance": provenance, "config": lock["config"], "packages": expected}
+
+
+def verify_camera_rootfs(identity, filesystem):
+    """對修正版再次核對實際根系統載荷與安裝狀態，避免只憑身分欄位放行。"""
+    contract = verify_camera_packages(identity)
+    if contract is None:
+        return
+    def content(name):
+        return subprocess.check_output(["debugfs", "-R", "cat /" + name, str(filesystem)], stderr=subprocess.DEVNULL)
+    provenance = contract["provenance"]
+    config = contract["config"]
+    for name, expected in (("usr/lib/libsdkcam.so", provenance["library_sha256"]),
+                           (config["installed_path"], config["sha256"])):
+        if hashlib.sha256(content(name)).hexdigest() != expected:
+            raise ValueError("實際根系統的相機載荷 SHA-256 不符：" + name)
+    if json.loads(content("usr/share/doc/k1x-cam/cm6-source.json")) != provenance:
+        raise ValueError("實際根系統的相機來源紀錄不符")
+    from bpi_k1_acceleration import paragraphs
+    packages = [row for row in paragraphs(content("var/lib/dpkg/status").decode())
+                if row.get("Package") in contract["packages"]]
+    if len(packages) != 2 or {row.get("Package") for row in packages} != set(contract["packages"]):
+        raise ValueError("實際根系統缺少相機套件安裝紀錄")
+    for row in packages:
+        if (row.get("Version"), row.get("Architecture"), row.get("Status")) != (
+                contract["packages"][row["Package"]]["version"], "riscv64", "install ok installed"):
+            raise ValueError("實際根系統的相機套件版本、架構或安裝狀態不符")
+
+
+def prepare_cm6_camera(boot, output):
+    """在已修 eth0 的獨立 DTB 上套用明確選用的雙相機候選。"""
+    source = child_file(boot, CM6_CONNECTIVITY_PATH.lstrip("/"))
+    if digest(source) != CM6_CONNECTIVITY_SHA256:
+        raise ValueError("雙相機 DTB 來源缺少固定 eth0 修正")
+    target = boot / CM6_CAMERA_PATH.lstrip("/")
+    manifest = output / "cm6-camera-dtb.json"
+    run([sys.executable, REPO / "tools/bpi_cm6_camera_dtb.py", "--source", source,
+         "--output", target, "--manifest", manifest], stdout=subprocess.DEVNULL)
+    record = json.loads(regular(manifest).read_text())
+    verify_camera_record(record)
+    if digest(regular(target)) != CM6_CAMERA_SHA256:
+        raise ValueError("產生的 CM6 雙相機 DTB 與已實測候選不同")
+    return record
+
+
+def verify_boot_contract(payload, board, root_uuid, boot_uuid, cm6_connectivity=False, cm6_dual_imx415=False, native_identity=None):
     def content(filesystem, name):
         return subprocess.check_output(["debugfs", "-R", "cat " + name,
                                         str(payload / filesystem)], stderr=subprocess.DEVNULL, text=True)
-    expected = extlinux(board, root_uuid, cm6_connectivity)
+    expected = extlinux(board, root_uuid, cm6_connectivity, cm6_dual_imx415, native=bool(native_identity))
     if content("bootfs.ext4", "/extlinux/extlinux.conf") != expected:
         raise ValueError("實際 bootfs 開機選項與板型或根分區不符")
     environment = content("bootfs.ext4", "/env_k1-x.txt")
@@ -254,12 +433,50 @@ def verify_boot_contract(payload, board, root_uuid, boot_uuid, cm6_connectivity=
     marker = json.loads(content("rootfs.ext4", "/etc/bpi-k1-vendor.json"))
     if (marker["board"], marker["root_uuid"], marker["boot_uuid"]) != (board, root_uuid, boot_uuid):
         raise ValueError("根檔案系統內的媒體身分不符")
-    if cm6_connectivity:
-        if marker.get("boot_dtb_path") != CM6_CONNECTIVITY_PATH:
-            raise ValueError("CM6 核心更新入口未保留獨立網路修正 DTB")
-        data = subprocess.check_output(["debugfs", "-R", "cat " + CM6_CONNECTIVITY_PATH,
+    if native_identity:
+        record = native_dtb_contract(native_identity, board)
+        if board == "bpi-cm6":
+            gpio_records = native_identity.get("cm6_gpio_packages")
+            if not gpio_records or marker.get("cm6_gpio_packages") != gpio_records:
+                raise ValueError("CM6 成品缺少一致的 GPIO 套件來源身分")
+            root_marker = json.loads(content("rootfs.ext4", "/etc/bpi-k1-native.json"))
+            if root_marker.get("cm6_gpio_packages") != gpio_records:
+                raise ValueError("CM6 原生根系統 GPIO manifest 與封裝不符")
+            for package in gpio_records.values():
+                for name, item in package["payload"].items():
+                    if item["type"] != "file":
+                        continue
+                    if not re.fullmatch(r"usr/[A-Za-z0-9_./+\-]+", name) or ".." in Path(name).parts:
+                        raise ValueError("GPIO 成品驗證檔案路徑不合法")
+                    data = subprocess.check_output(["debugfs", "-R", "cat /" + name,
+                                                    str(payload / "rootfs.ext4")], stderr=subprocess.DEVNULL)
+                    if len(data) != item["bytes"] or hashlib.sha256(data).hexdigest() != item["sha256"]:
+                        raise ValueError("GPIO 套件檔案未完整進入成品：" + name)
+        if native_identity.get("camera_profile") == "dual-imx415":
+            if marker.get("cm6_camera_packages") != native_identity.get("cm6_camera_packages"):
+                raise ValueError("實際根系統的相機配套身分與原生來源不符")
+            verify_camera_rootfs(native_identity, payload / "rootfs.ext4")
+        if marker.get("native_dtb") != record or marker.get("boot_dtb_path") != record["path"]:
+            raise ValueError("原生媒體 DTB 標記或更新入口不一致")
+        data = subprocess.check_output(["debugfs", "-R", "cat " + record["path"], str(payload / "bootfs.ext4")], stderr=subprocess.DEVNULL)
+        with tempfile.TemporaryDirectory(prefix="bpi-k1-dtb-check-") as temporary:
+            path = Path(temporary) / Path(record["path"]).name
+            path.write_bytes(data)
+            native_dtb_contract(native_identity, board, path)
+        return {"status": "passed", "scope": "native-bootfs-extlinux-env-rootfs-fstab-marker-dtb"}
+    if cm6_connectivity or cm6_dual_imx415:
+        if marker.get("boot_dtb_path") != boot_dtb_path(board, cm6_connectivity, cm6_dual_imx415):
+            raise ValueError("CM6 核心更新入口未保留指定的獨立修正 DTB")
+    dtbs = [(CM6_CONNECTIVITY_PATH, CM6_CONNECTIVITY_SHA256)] if cm6_connectivity else []
+    if cm6_dual_imx415:
+        verify_camera_packages(marker)
+        if marker.get("cm6_camera_dtb_sha256") != CM6_CAMERA_SHA256:
+            raise ValueError("CM6 雙相機身分標記缺少正確 DTB SHA-256")
+        dtbs.append((CM6_CAMERA_PATH, CM6_CAMERA_SHA256))
+    for path, expected_sha in dtbs:
+        data = subprocess.check_output(["debugfs", "-R", "cat " + path,
                                         str(payload / "bootfs.ext4")], stderr=subprocess.DEVNULL)
-        if hashlib.sha256(data).hexdigest() != CM6_CONNECTIVITY_SHA256:
+        if hashlib.sha256(data).hexdigest() != expected_sha:
             raise ValueError("bootfs 的 CM6 修正 DTB 與實機驗證內容不符")
     return {"status": "passed", "scope": "bootfs-extlinux-env-rootfs-fstab-marker"}
 
@@ -343,9 +560,53 @@ def archive(target, entries):
             z.write(path, name)
 
 
+def verify_native_archive(archive, manifest):
+    record = native_dtb_contract(manifest["identity"], manifest["board"])
+    if manifest.get("native_dtb_sha256") != record["sha256"]:
+        raise ValueError("原生封裝的獨立 DTB SHA-256 欄位不符")
+    with tempfile.TemporaryDirectory(prefix="bpi-k1-native-verify-") as temporary:
+        bootfs = Path(temporary) / "bootfs.ext4"
+        if manifest["storage"] == "emmc":
+            member, offset = "bootfs.ext4", 0
+            length = archive.getinfo(member).file_size
+        else:
+            member, offset, length = next(iter(manifest["archive_members"])), 4 * MIB, 256 * MIB
+        if not 0 < length <= 256 * MIB:
+            raise ValueError("原生 bootfs 長度超出格式上限")
+        with archive.open(member) as source, bootfs.open("wb") as target:
+            source.seek(offset)
+            left = length
+            while left:
+                block = source.read(min(left, MIB))
+                if not block:
+                    raise ValueError("原生 bootfs 載荷不足")
+                target.write(block)
+                left -= len(block)
+        data = subprocess.check_output(["debugfs", "-R", "cat " + record["path"], str(bootfs)], stderr=subprocess.DEVNULL)
+        path = Path(temporary) / Path(record["path"]).name
+        path.write_bytes(data)
+        native_dtb_contract(manifest["identity"], manifest["board"], path)
+
+
 def verify(manifest_path):
     manifest_path = Path(manifest_path)
     m = json.loads(regular(manifest_path).read_text())
+    native = m.get("schema_version", 1) == 2
+    if m.get("schema_version", 1) not in (1, 2):
+        raise ValueError("不支援的封裝紀錄版本")
+    if native:
+        native_target_contract(m.get("identity", {}), m["board"], m["storage"])
+        native_dtb_contract(m.get("identity", {}), m["board"])
+        if any(key in m.get("identity", {}) for key in ("cm6_camera_dtb_sha256", "cm6_ethernet_dtb_sha256")):
+            raise ValueError("原生封裝不可混用歷史 DTB 身分")
+    elif m.get("identity", {}).get("source_kind") == "armbian-native-rootfs":
+        raise ValueError("原生來源必須使用 schema 2")
+    camera_hash = m.get("identity", {}).get("cm6_camera_dtb_sha256")
+    if "cm6_camera_dtb" in m or "cm6_camera_dtb_sha256" in m.get("identity", {}):
+        if m["board"] != "bpi-cm6" or camera_hash != CM6_CAMERA_SHA256:
+            raise ValueError("封裝的 CM6 雙相機板型或身分 SHA-256 不符")
+        verify_camera_packages(m["identity"])
+        verify_camera_record(m.get("cm6_camera_dtb"))
     base = manifest_path.parent
     artifact = child_file(base, m["artifact"]["name"])
     if digest(artifact) != m["artifact"]["sha256"]:
@@ -374,6 +635,8 @@ def verify(manifest_path):
                     actual = filesystem_uuid(stream, offset if m["storage"] == "sd" else 0)
                 if actual != m[part + "_uuid"]:
                     raise ValueError(f"封裝內檔案系統 UUID 不符：{part}")
+        if native:
+            verify_native_archive(z, m)
     status = {"status": "passed", "scope": "offline-archive-integrity",
               "board": m["board"], "storage": m["storage"],
               "release_status": m.get("release_status", "candidate_unverified"),
@@ -392,6 +655,10 @@ def verify(manifest_path):
 
 def build(args):
     candidate_release = release_id(args.release_id)
+    camera_option = getattr(args, "cm6_dual_imx415", None)
+    cm6_dual_imx415 = bool(camera_option)
+    cm6_connectivity = args.board == "bpi-cm6"
+    selected_dtb = boot_dtb_path(args.board, cm6_connectivity, cm6_dual_imx415)
     if os.geteuid() != 0:
         raise ValueError("需要 sudo，在隔離掛載中產生媒體專屬檔案系統")
     if not args.inside:
@@ -401,6 +668,13 @@ def build(args):
     prep = json.loads((prepared / "preparation.json").read_text())
     if prep["status"] != "complete" or prep["identity"]["board"] != args.board:
         raise ValueError("根檔案系統尚未完成或板型不符")
+    if prep.get("schema_version") == 2:
+        native_target_contract(prep["identity"], args.board, args.storage)
+    native, cm6_dual_imx415 = prepared_contract(prepared, prep, args.board, camera_option)
+    cm6_connectivity = args.board == "bpi-cm6" and not native
+    selected_dtb = boot_dtb_path(args.board, cm6_connectivity, cm6_dual_imx415, native=native)
+    if cm6_dual_imx415:
+        verify_camera_packages(prep["identity"])
     preflight = json.loads((prepared / "acceleration-preflight.json").read_text())
     if not preflight.get("passed") or preflight.get("board") != args.board or preflight.get("stage") != "installed":
         raise ValueError("已安裝加速配套尚未通過離線預檢")
@@ -428,9 +702,10 @@ def build(args):
                 "release_id": candidate_release,
                 "reference_payloads": reference_hashes,
                 "sources_lock_sha256": reference_record["sources_lock_sha256"]}
-    cm6_connectivity = args.board == "bpi-cm6"
     if cm6_connectivity:
         identity["cm6_ethernet_dtb_sha256"] = CM6_CONNECTIVITY_SHA256
+    if cm6_dual_imx415 and not native:
+        identity["cm6_camera_dtb_sha256"] = CM6_CAMERA_SHA256
     root_uuid = str(uuid.uuid5(uuid.NAMESPACE_URL, json.dumps(identity, sort_keys=True) + ":root"))
     boot_uuid = str(uuid.uuid5(uuid.NAMESPACE_URL, json.dumps(identity, sort_keys=True) + ":boot"))
     run(["tune2fs", "-U", root_uuid, "-L", "armbian-root", payload / "rootfs.ext4"], stdout=subprocess.DEVNULL)
@@ -446,7 +721,8 @@ def build(args):
             raise ValueError(f"開機元件不存在：{name}")
     kernel_record = normalize_kernel(boot)
     ethernet_record = prepare_cm6_connectivity(boot, out) if cm6_connectivity else None
-    write(boot / "extlinux/extlinux.conf", extlinux(args.board, root_uuid, cm6_connectivity))
+    camera_record = prepare_cm6_camera(boot, out) if cm6_dual_imx415 and not native else None
+    write(boot / "extlinux/extlinux.conf", extlinux(args.board, root_uuid, cm6_connectivity, cm6_dual_imx415, native=native))
     write(boot / "env_k1-x.txt", "kernel_addr_r=0x08000000\nfdt_addr_r=0x31000000\n"
           "ramdisk_addr_r=0x21000000\npxefile_addr_r=0x0c200000\n"
           "bootcmd=sysboot ${bootfs_devname} ${boot_devnum}:${bootfs_part} any ${pxefile_addr_r} /extlinux/extlinux.conf\n")
@@ -455,8 +731,11 @@ def build(args):
     run(["mkfs.ext4", "-q", "-F", "-U", boot_uuid, "-L", "bootfs", "-d", boot, payload / "bootfs.ext4"])
     mount = out / "mount"
     mount.mkdir()
+    policy_record = None
     try:
         run(["mount", "-o", "loop,nodev,nosuid", payload / "rootfs.ext4", mount])
+        if native and boot_inventory(mount / "boot") != prep["boot_tree"]:
+            raise ValueError("原生根系統與獨立 boot-tree 不一致，停止媒體配置")
         fstab = mount / "etc/fstab"
         old = fstab.read_text()
         kept = []
@@ -471,8 +750,11 @@ def build(args):
         marker = {**identity, "root_uuid": root_uuid, "boot_uuid": boot_uuid,
                   "dtb": DTBS[args.board],
                   "hardware_validation": "pending"}
-        if cm6_connectivity:
-            marker["boot_dtb_path"] = CM6_CONNECTIVITY_PATH
+        if cm6_connectivity or native:
+            marker["boot_dtb_path"] = selected_dtb
+        if native:
+            import bpi_k1_vendor_policy
+            marker["native_boot"] = bpi_k1_vendor_policy.boot_record(boot, prep["kernel"], selected_dtb)
         write(mount / "etc/bpi-k1-vendor.json", json.dumps(marker, ensure_ascii=False, indent=2) + "\n")
         grow_tool = mount / "usr/local/sbin/bpi_k1_grow_rootfs.py"
         shutil.copyfile(REPO / "tools/bpi_k1_grow_rootfs.py", grow_tool)
@@ -502,6 +784,8 @@ def build(args):
         hook += 'Path("/boot/extlinux").mkdir(exist_ok=True)\nPath("/boot/extlinux/extlinux.conf").write_text(text)\n'
         compile(hook, "zz-bpi-k1-vendor", "exec")
         write(mount / "etc/kernel/postinst.d/zz-bpi-k1-vendor", hook, 0o755)
+        if native:
+            policy_record = bpi_k1_vendor_policy.apply(mount, marker, boot)
     finally:
         if os.path.ismount(mount):
             run(["umount", mount])
@@ -510,13 +794,14 @@ def build(args):
         with (payload / name).open("rb") as stream:
             if filesystem_uuid(stream) != (root_uuid if name == "rootfs.ext4" else boot_uuid):
                 raise ValueError(f"建立的檔案系統 UUID 不符：{name}")
-    boot_contract = verify_boot_contract(payload, args.board, root_uuid, boot_uuid, cm6_connectivity)
+    boot_contract = verify_boot_contract(payload, args.board, root_uuid, boot_uuid, cm6_connectivity, cm6_dual_imx415,
+                                         native_identity=identity if native else None)
     check_payloads(payload)
     layout_obj = layout((payload / "rootfs.ext4").stat().st_size, args.storage == "emmc")
     write(payload / "partition_universal.json", json.dumps(layout_obj, indent=2) + "\n")
     write(payload / "fastboot.yaml", fastboot_config())
     stem = f"Armbian_Noble_{args.board}_gnome_{'vendor-sd' if args.storage == 'sd' else 'titan-emmc'}_{candidate_release}"
-    manifest = {"schema_version": 1, "board": args.board, "release": "noble", "desktop": "gnome-wayland",
+    manifest = {"schema_version": 2 if native else 1, "board": args.board, "release": "noble", "desktop": "gnome-wayland",
                 "storage": args.storage, "identity": identity, "root_uuid": root_uuid, "boot_uuid": boot_uuid,
                 "release_id": candidate_release, "release_status": "candidate_unverified",
                 "producer_sha256": digest(Path(__file__)),
@@ -524,8 +809,14 @@ def build(args):
                 "boot_kernel": kernel_record,
                 "boot_contract": boot_contract, "acceleration_preflight": preflight,
                 "reference": reference_record}
+    if native:
+        manifest["native_dtb_sha256"] = identity["native_dtb"]["sha256"]
+        manifest["native_boot"] = marker["native_boot"]
+        manifest["vendor_policy"] = policy_record
     if ethernet_record:
         manifest["cm6_ethernet_dtb"] = ethernet_record
+    if camera_record:
+        manifest["cm6_camera_dtb"] = camera_record
     if args.storage == "sd":
         img = out / (stem + ".img")
         manifest["minimum_media_bytes"] = make_sd(payload, img, identity)
@@ -558,6 +849,8 @@ def main():
     b.add_argument("--reference", type=Path, required=True)
     b.add_argument("--output", type=Path, required=True)
     b.add_argument("--release-id", required=True, help="明確候選版本，例如 20260918-rc2")
+    b.add_argument("--cm6-dual-imx415", action=argparse.BooleanOptionalAction, default=None,
+                   help="僅 CM6：歷史來源明確啟用雙相機；原生來源省略時依 prepared 配置，明確衝突則拒絕")
     b.add_argument("--inside", action="store_true", help=argparse.SUPPRESS)
     v = sub.add_parser("verify", help="重新核對發布套件與內部元件")
     v.add_argument("manifest", type=Path)

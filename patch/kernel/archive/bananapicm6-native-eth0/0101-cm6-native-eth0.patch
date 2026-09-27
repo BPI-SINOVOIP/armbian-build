@@ -1,0 +1,34 @@
+Subject: [PATCH] CM6 官方格式的 eth0 PHY 重設腳位
+
+基於固定核心 0d0af0d895251383baee939d44e523699e31889f，
+須先套用 bananapicm6-legacy 的板型辨識補丁。僅由官方格式擴充選用。
+
+diff --git a/arch/riscv/boot/dts/spacemit/k1-x_bpi_cm6.dts b/arch/riscv/boot/dts/spacemit/k1-x_bpi_cm6.dts
+--- a/arch/riscv/boot/dts/spacemit/k1-x_bpi_cm6.dts
++++ b/arch/riscv/boot/dts/spacemit/k1-x_bpi_cm6.dts
+@@ -9,3 +9,25 @@
+ 
+ 	chosen { /delete-property/ bootargs; };
+ };
++
++/* GPIO45 用作 PHY 重設，保留其餘 RGMII 腳位與驅動強度。 */
++&pinctrl_gmac0 {
++	pinctrl-single,pins = <
++		K1X_PADCONF(GPIO_00, MUX_MODE1, (EDGE_NONE | PULL_DIS | PAD_1V8_DS2))
++		K1X_PADCONF(GPIO_01, MUX_MODE1, (EDGE_NONE | PULL_DIS | PAD_1V8_DS2))
++		K1X_PADCONF(GPIO_02, MUX_MODE1, (EDGE_NONE | PULL_DIS | PAD_1V8_DS2))
++		K1X_PADCONF(GPIO_03, MUX_MODE1, (EDGE_NONE | PULL_DIS | PAD_1V8_DS2))
++		K1X_PADCONF(GPIO_04, MUX_MODE1, (EDGE_NONE | PULL_DIS | PAD_1V8_DS2))
++		K1X_PADCONF(GPIO_05, MUX_MODE1, (EDGE_NONE | PULL_DIS | PAD_1V8_DS2))
++		K1X_PADCONF(GPIO_06, MUX_MODE1, (EDGE_NONE | PULL_DIS | PAD_1V8_DS2))
++		K1X_PADCONF(GPIO_07, MUX_MODE1, (EDGE_NONE | PULL_DIS | PAD_1V8_DS2))
++		K1X_PADCONF(GPIO_08, MUX_MODE1, (EDGE_NONE | PULL_DIS | PAD_1V8_DS2))
++		K1X_PADCONF(GPIO_09, MUX_MODE1, (EDGE_NONE | PULL_DIS | PAD_1V8_DS2))
++		K1X_PADCONF(GPIO_10, MUX_MODE1, (EDGE_NONE | PULL_DIS | PAD_1V8_DS2))
++		K1X_PADCONF(GPIO_11, MUX_MODE1, (EDGE_NONE | PULL_DIS | PAD_1V8_DS2))
++		K1X_PADCONF(GPIO_12, MUX_MODE1, (EDGE_NONE | PULL_DIS | PAD_1V8_DS0))
++		K1X_PADCONF(GPIO_13, MUX_MODE1, (EDGE_NONE | PULL_DIS | PAD_1V8_DS0))
++		K1X_PADCONF(GPIO_14, MUX_MODE1, (EDGE_NONE | PULL_DIS | PAD_1V8_DS2))
++		K1X_PADCONF(GPIO_45, MUX_MODE0, (EDGE_NONE | PULL_DOWN | PAD_1V8_DS2))
++	>;
++};

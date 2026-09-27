@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "package": "python3-bpi-cm6-gpio",
+  "version": "0.7.1+cm6.1",
+  "architecture": "riscv64",
+  "source": {
+    "repository": "https://github.com/BPI-SINOVOIP/RPi.GPIO",
+    "commit": "c04d27c86f65ed824921a457455a09d6820b9e1d",
+    "url": "https://codeload.github.com/BPI-SINOVOIP/RPi.GPIO/tar.gz/c04d27c86f65ed824921a457455a09d6820b9e1d",
+    "archive_sha256": "f99f0855182a4c75cbc2d7519eaa8f09e350ec68e34afebc1c748eaf1d255c92",
+    "archive_name": "source.tar.gz",
+    "source_date_epoch": 1784421268
+  },
+  "build_dependencies": [
+    {
+      "package": "libpython3.12-dev",
+      "version": "3.12.3-1",
+      "architecture": "riscv64",
+      "url": "https://ports.ubuntu.com/pool/main/p/python3.12/libpython3.12-dev_3.12.3-1_riscv64.deb",
+      "filename": "libpython3.12-dev_3.12.3-1_riscv64.deb",
+      "sha256": "82903b4ff84c98f7405f540e185df9e90e7d27dce8db0816e2709d9ef32a3d71"
+    }
+  ],
+  "index_verification": {
+    "suite": "noble",
+    "component": "main",
+    "architecture": "riscv64",
+    "inrelease_sha256": "cdb2f31d809f589719a53c6ad15f255b27569c4059542ada282aaa21b8e164b0",
+    "packages_xz_sha256": "cd2428f2fc1753e8d20645e841939b398c9816fd1e719860b0d9c2ce703af50b",
+    "keyring": "ubuntu-archive-keyring.gpg",
+    "verified": true
+  },
+  "runtime_dependencies": [
+    "python3 (>= 3.12~)",
+    "python3 (<< 3.13)",
+    "libc6 (>= 2.34)"
+  ],
+  "patches": [],
+  "toolchain_packages": [
+    {
+      "package": "gcc-13-riscv64-linux-gnu",
+      "version": "13.3.0-6ubuntu2~24.04.1cross1"
+    },
+    {
+      "package": "libc6-dev-riscv64-cross",
+      "version": "2.39-0ubuntu8cross1"
+    },
+    {
+      "package": "libc6-riscv64-cross",
+      "version": "2.39-0ubuntu8cross1"
+    },
+    {
+      "package": "binutils-riscv64-linux-gnu",
+      "version": "2.42-4ubuntu2.10"
+    },
+    {
+      "package": "linux-libc-dev-riscv64-cross",
+      "version": "6.8.0-25.25cross1"
+    }
+  ]
+}

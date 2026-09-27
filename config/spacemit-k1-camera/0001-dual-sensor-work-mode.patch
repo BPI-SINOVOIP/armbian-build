@@ -1,0 +1,16 @@
+--- a/demo/online_pipeline_test.c
++++ b/demo/online_pipeline_test.c
+@@ -1739,11 +1739,11 @@
+ 
+     // sensor init
+     testSensorInit(&sensor0Handle, config->ispFeConfig[0].sensorName,
+-                    config->ispFeConfig[0].sensorId, config->ispFeConfig[0].workMode,
++                    config->ispFeConfig[0].sensorId, config->ispFeConfig[0].sensorWorkMode,
+                     config);
+     testSensorGetDevInfo(sensor0Handle, &sensor0_info);
+     testSensorInit(&sensor1Handle, config->ispFeConfig[1].sensorName,
+-                    config->ispFeConfig[1].sensorId, config->ispFeConfig[1].workMode,
++                    config->ispFeConfig[1].sensorId, config->ispFeConfig[1].sensorWorkMode,
+                     config);
+     testSensorGetDevInfo(sensor1Handle, &sensor1_info);
+ 

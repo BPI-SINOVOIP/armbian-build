@@ -1,0 +1,35 @@
+Subject: [PATCH] CM6 官方格式的雙 IMX415 選用配置
+
+須先套用 CM6 板型辨識及原生 eth0 補丁。使用 DTS label 建立參照，
+不固定 phandle 數值。none 配置不套本補丁，保留原有單路相機設定。
+
+diff --git a/arch/riscv/boot/dts/spacemit/k1-x_bpi_cm6.dts b/arch/riscv/boot/dts/spacemit/k1-x_bpi_cm6.dts
+--- a/arch/riscv/boot/dts/spacemit/k1-x_bpi_cm6.dts
++++ b/arch/riscv/boot/dts/spacemit/k1-x_bpi_cm6.dts
+@@ -31,3 +31,26 @@
+ 		K1X_PADCONF(GPIO_45, MUX_MODE0, (EDGE_NONE | PULL_DOWN | PAD_1V8_DS2))
+ 	>;
+ };
++
++/* CM6 雙 IMX415：第二路使用 I²C 5 與完整 DPHY2。 */
++&pinctrl_i2c5_0 {
++	pinctrl-single,pins = <
++		K1X_PADCONF(GPIO_81, MUX_MODE5, (EDGE_NONE | PULL_UP | PAD_1V8_DS2))
++		K1X_PADCONF(GPIO_82, MUX_MODE5, (EDGE_NONE | PULL_UP | PAD_1V8_DS2))
++	>;
++};
++
++&i2c5 {
++	pinctrl-names = "default";
++	pinctrl-0 = <&pinctrl_i2c5_0>;
++	status = "okay";
++};
++
++&frontsensor {
++	twsi-index = <5>;
++	status = "okay";
++};
++
++&csiphy2 {
++	/delete-property/ spacemit,bifmode-enable;
++};

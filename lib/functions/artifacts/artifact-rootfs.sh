@@ -25,7 +25,8 @@ function artifact_rootfs_config_dump() {
 	# is just installed and its contents don't affect the rootfs.
 	if [[ "${BUILD_DESKTOP}" == "yes" ]]; then
 		declare configng_desktops_hash="undetermined"
-		local configng_dir="${SRC}/cache/sources/armbian-configng"
+		# 擴充指定來源時，快取證據也必須讀取該份 Git；一般建置保留原位置。
+		local configng_dir="${CONFIGNG_DIRECTORY:-${SRC}/cache/sources/armbian-configng}"
 		if [[ -d "${configng_dir}/.git" ]]; then
 			# Best-effort knob for cache-invalidation, not a build blocker - if
 			# git can't read this clone (torn checkout, stale files, broken HEAD,

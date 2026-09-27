@@ -18,6 +18,12 @@ sys.path.insert(0, str(REPO / "tools"))
 import bpi_k1_acceleration as acceleration
 BOARDS = {"bpi-cm6": ("bananapicm6", "6.6.36-legacy-spacemit"),
           "bpi-f3": ("bananapif3", "6.18.37-current-spacemit")}
+CM6_CAMERA_PACKAGES = {
+    "k1x-cam": {"version": "0.2.34", "size": 586148,
+                "sha256": "d00ec6d3e6758571a5959428517a167e1264db08ca5d61fdfbfc506b33088e40"},
+    "k1x-cam-lib": {"version": "0.1.8", "size": 430424,
+                    "sha256": "89c9867d9dab50958e8eb01195313452ad425dbef345d6003d568d4176c0572d"},
+}
 
 
 def sha256(path):
@@ -113,6 +119,70 @@ def write(path, text, mode=0o644):
     path.chmod(mode)
 
 
+def camera_package_records(cache):
+    """區分固定官方套件與有完整來源紀錄的 CM6 模式修正版。"""
+    if cache is not None and (Path(cache) / "camera-build-manifest.json").exists():
+        import build_bpi_cm6_camera
+        return build_bpi_cm6_camera.package_records(cache)
+    return {name: {**item, "filename": f"{name}_{item['version']}_riscv64.deb",
+                   "provenance": {"signature_verified": False,
+                                  "scope": "只核對固定官方版本、容量、SHA-256 與 DEB 欄位。"}}
+            for name, item in CM6_CAMERA_PACKAGES.items()}
+
+
+def camera_packages(board, cache):
+    """只接受 CM6 固定官方套件或受控來源修正版；不更動加速來源鎖。"""
+    if cache is None:
+        return []
+    if board != "bpi-cm6":
+        raise ValueError("CM6 相機套件不可套用至其他板型")
+    selected = []
+    for name, record in camera_package_records(cache).items():
+        package = regular(cache / f"{name}_{record['version']}_riscv64.deb")
+        if package.stat().st_size != record["size"] or sha256(package) != record["sha256"]:
+            raise ValueError("CM6 相機套件雜湊或容量不符：" + package.name)
+        fields = subprocess.check_output(["dpkg-deb", "-f", str(package), "Package", "Version", "Architecture"], text=True)
+        actual = dict(line.split(": ", 1) for line in fields.splitlines())
+        if actual != {"Package": name, "Version": record["version"], "Architecture": "riscv64"}:
+            raise ValueError("CM6 相機套件控制欄位不符：" + package.name)
+        selected.append(package)
+    return selected
+
+
+def configure_camera_permissions(root):
+    """以 video 群組權限取代官方啟動腳本對裝置的全域開放。"""
+    service = root / "etc/systemd/system/camera.service"
+    service.parent.mkdir(parents=True, exist_ok=True)
+    service.unlink(missing_ok=True)
+    service.symlink_to("/dev/null")
+    for wanted in (root / "etc/systemd/system").glob("*.wants/camera.service"):
+        wanted.unlink()
+    write(root / "etc/udev/rules.d/99-video-permissions.rules",
+          '# 使用標準 video 群組存取相機裝置。\n'
+          'SUBSYSTEM=="video4linux", KERNEL=="video*", GROUP="video", MODE="0660"\n')
+    write(root / "etc/udev/rules.d/99-bpi-cm6-camera.rules",
+          '# CM6 官方相機配套；不在開機時啟動串流。\n'
+          'KERNEL=="cam_sensor*", GROUP="video", MODE="0660"\n'
+          'KERNEL=="mars11isp-pipe*", GROUP="video", MODE="0660"\n'
+          'SUBSYSTEM=="dma_heap", KERNEL=="system", GROUP="video", MODE="0660"\n')
+
+
+def configure_gnome_environment(root, board, desktop):
+    """保留既有加速環境，僅為指定板型的 GNOME 寫入相容設定。"""
+    settings = acceleration.GNOME_BOARD_ENVIRONMENT.get(board, {})
+    if desktop != "gnome-wayland" or not settings:
+        return
+    path = acceleration.rooted_path(root, "/etc/environment")
+    original = path.read_bytes().decode("utf-8") if path.exists() else ""
+    content = "".join(line for line in original.splitlines(keepends=True)
+                      if not any(acceleration.environment_values(line, key) for key in settings))
+    if content and not content.endswith("\n"):
+        content += "\n"
+    content += "".join(f"{key}={value}\n" for key, value in settings.items())
+    if content != original:
+        write(path, content, path.stat().st_mode & 0o777 if path.exists() else 0o644)
+
+
 def protect_media_tools(mount, chroot):
     """保護實際安裝引擎及套件更新入口；不只攔截相容命令名稱。"""
     message = "本映像使用官方格式，媒體重裝請使用隨附 SD 映像或 Titan eMMC 套件。"
@@ -151,6 +221,7 @@ def main():
     p.add_argument("--deb-cache", required=True, type=Path)
     p.add_argument("--lock", type=Path, default=REPO / "config/spacemit-k1-acceleration/noble.lock.json")
     p.add_argument("--cm6-bluetooth-package", type=Path, help="CM6 必填：附 package-manifest.json 的板級藍牙 Debian 套件")
+    p.add_argument("--cm6-camera-cache", type=Path, help="選配：CM6 已固定版本的官方相機 Debian 套件目錄")
     p.add_argument("--resume", action="store_true", help="僅續作相同來源的未完成候選")
     p.add_argument("--refresh-packages", action="store_true", help="搭配續作，明確更新同來源候選的固定套件配套")
     p.add_argument("--inside", action="store_true", help=argparse.SUPPRESS)
@@ -168,6 +239,8 @@ def main():
     bluetooth = bluetooth_package(args.board, args.cm6_bluetooth_package)
     if bluetooth:
         packages.append(bluetooth[0])
+    camera = camera_packages(args.board, args.cm6_camera_cache)
+    packages.extend(camera)
     out = args.output.absolute()
     if out.is_symlink() or out == source.parent or out == Path("/"):
         raise ValueError("輸出必須是專用工作目錄")
@@ -175,6 +248,8 @@ def main():
                 "acceleration_lock_sha256": hashlib.sha256(lock_bytes).hexdigest(), "schema_version": 1}
     if bluetooth:
         identity["cm6_bluetooth_package_sha256"] = bluetooth[1]["sha256"]
+    if camera:
+        identity["cm6_camera_packages"] = camera_package_records(args.cm6_camera_cache)
     marker = out / "preparation.json"
     if out.exists():
         if not args.resume or not marker.exists():
@@ -185,6 +260,8 @@ def main():
             compare["acceleration_lock_sha256"] = identity["acceleration_lock_sha256"]
             if bluetooth:
                 compare["cm6_bluetooth_package_sha256"] = identity["cm6_bluetooth_package_sha256"]
+            if camera:
+                compare["cm6_camera_packages"] = identity["cm6_camera_packages"]
         if compare != identity:
             raise ValueError("續作來源或套件鎖已變更")
         if prior["status"] == "complete" and not args.refresh_packages:
@@ -280,7 +357,7 @@ def main():
         env = dict(os.environ, DEBIAN_FRONTEND="noninteractive", LC_ALL="C.UTF-8")
         chroot = ["chroot", mount, "/usr/bin/env", "DEBIAN_FRONTEND=noninteractive"]
         run([*chroot, "apt-get", "update"], env=env)
-        desktop = ["gnome-session", "gnome-shell", "gdm3", "gnome-terminal", "nautilus",
+        desktop = [*acceleration.GNOME_DESKTOP_COMPONENTS,
                    "mesa-utils", "vulkan-tools", "python3-numpy", "python3-pil",
                    "cloud-guest-utils", "gdisk", "e2fsprogs"]
         run([*chroot, "apt-get", "install", "-y", "--no-remove", "--no-install-recommends", "--allow-downgrades",
@@ -292,6 +369,14 @@ def main():
         status_text = (mount / "var/lib/dpkg/status").read_text()
         pinned = {lock["packages"][k]["Package"]: lock["packages"][k]["Version"]
                   for k in lock["profiles"][args.board]["packages"]}
+        if camera:
+            installed = {item["Package"]: item["Version"] for item in acceleration.paragraphs(status_text)
+                         if item.get("Status") == "install ok installed"}
+            for name, record in camera_package_records(args.cm6_camera_cache).items():
+                if installed.get(name) != record["version"]:
+                    raise ValueError("CM6 相機套件未完成安裝或版本不符：" + name)
+                pinned[name] = record["version"]
+            configure_camera_permissions(mount)
         if bluetooth:
             connectivity_lock = json.loads((REPO / "config/spacemit-k1-connectivity/source-lock.json").read_text())
             for field in ("firmware", "firmware_config"):
@@ -321,6 +406,7 @@ def main():
         (mount / "usr/local/sbin/collect_bpi_k1_runtime.py").chmod(0o755)
         write(mount / "etc/X11/default-display-manager", "/usr/sbin/gdm3\n")
         write(mount / "etc/gdm3/custom.conf", "[daemon]\nWaylandEnable=true\n[security]\n[xdmcp]\n[chooser]\n[debug]\n")
+        configure_gnome_environment(mount, args.board, "gnome-wayland")
         display = mount / "etc/systemd/system/display-manager.service"
         display.unlink(missing_ok=True)
         display.symlink_to("/lib/systemd/system/gdm3.service")

@@ -45,6 +45,41 @@ class AccelerationTests(unittest.TestCase):
         self.assertFalse(result["hardware_verified"])
         self.assertTrue(result["pending_dependencies"])
 
+    def test_aliases_require_explicit_exact_board_and_physical_pairing(self):
+        self.baseline()
+        for name, target in MOD.targets.load_registry()["targets"].items():
+            with self.subTest(alias=name):
+                physical = target["board"]
+                profile = self.lock["profiles"][physical]
+                self.file("etc/armbian-release", "BOARD=" + name + "\n")
+                self.file("boot/Image", profile["kernel_pvr"])
+                self.file("boot/config-" + profile["kernel_release"],
+                          "\n".join(k + "=y" for k in self.lock["required_kernel_options"]) + "\n")
+                good = MOD.preflight(self.lock, physical, self.root, "base", name)
+                self.assertTrue(good["passed"], good["errors"])
+                self.assertEqual(good["armbian_board"], name)
+                old_entry = MOD.preflight(self.lock, physical, self.root, "base")
+                self.assertIn("Armbian 板型與加速配套不同", old_entry["errors"])
+                other_medium = name.replace("vendor-sd", "titan-emmc") if target["storage"] == "sd" else name.replace("titan-emmc", "vendor-sd")
+                mismatch = MOD.preflight(self.lock, physical, self.root, "base", other_medium)
+                self.assertIn("Armbian 板型與加速配套不同", mismatch["errors"])
+                wrong_physical = "bpi-f3" if physical == "bpi-cm6" else "bpi-cm6"
+                mismatch = MOD.preflight(self.lock, wrong_physical, self.root, "base", name)
+                self.assertIn("Armbian 板型與加速配套不同", mismatch["errors"])
+
+    def test_duplicate_board_cannot_hide_cross_board_identity(self):
+        self.baseline()
+        self.file("etc/armbian-release", "BOARD=bananapicm6\nBOARD=bananapif3\n")
+        self.assertIn("Armbian 板型與加速配套不同", MOD.preflight(self.lock, "bpi-cm6", self.root, "base")["errors"])
+
+    def test_board_assignment_rejects_suffixes_and_duplicate_exports(self):
+        for value in ('BOARD="bananapicm6"-unknown\n',
+                      'BOARD=bananapicm6\nexport BOARD=bananapif3\n',
+                      'BOARD=bananapicm6#other\n', 'BOARD=$(false)\n'):
+            with self.subTest(value=value):
+                self.assertIsNone(MOD.armbian_board_name(value))
+        self.assertEqual(MOD.armbian_board_name('BOARD="bananapicm6" # 板型\n'), 'bananapicm6')
+
     def test_cross_board_kernel_is_rejected(self):
         self.baseline()
         result = MOD.preflight(self.lock, "bpi-f3", self.root, "base")
@@ -82,6 +117,119 @@ class AccelerationTests(unittest.TestCase):
         self.assertFalse(result["passed"])
         self.assertTrue(any("套件版本" in error for error in result["errors"]))
         self.assertTrue(any("Wayland" in error for error in result["errors"]))
+
+    def desktop_fixture(self, packages, session="gnome.desktop"):
+        self.baseline()
+        # 此組測試隔離桌面守門；既有測試另驗證固定 BSP 與相依條件。
+        self.lock["profiles"]["bpi-cm6"]["packages"] = []
+        status = self.root / "var/lib/dpkg/status"
+        with status.open("a") as stream:
+            for name in packages:
+                stream.write(f"\nPackage: {name}\nStatus: install ok installed\nVersion: 1\n")
+                program = self.file(MOD.GNOME_DESKTOP_COMPONENTS[name], "#!/bin/sh\nexit 0\n")
+                program.chmod(0o755)
+        for name in ("/usr/lib/libspacemit_ep.so.1.2.2", "/usr/lib/libonnxruntime.so.1.18.1",
+                     "/usr/lib/libspacemit_mpp.so.0.0.15", "/usr/lib/libpvr_dri_support.so",
+                     "/etc/vulkan/icd.d/powervr_icd.json", "/lib/firmware/linlon-v52_v76-80-2/h264dec.fwb",
+                     "/lib/firmware/linlon-v52_v76-80-2/hevcdec.fwb"):
+            self.file(name, "測試資料\n")
+        self.file("/usr/share/wayland-sessions/" + session, "[Desktop Entry]\n")
+        self.file("/etc/environment", "MUTTER_DEBUG_DISABLE_HW_CURSORS=1\n")
+
+    def test_rc3_session_without_settings_and_input_method_is_rejected(self):
+        self.desktop_fixture(("gnome-session", "gnome-shell", "gdm3", "gnome-terminal", "nautilus"))
+        result = MOD.preflight(self.lock, "bpi-cm6", self.root, "installed")
+        self.assertFalse(result["passed"])
+        for name in ("gnome-control-center", "ibus"):
+            self.assertIn("GNOME 桌面必要套件未完成安裝：" + name, result["errors"])
+        self.assertFalse(any("缺少 Wayland" in error for error in result["errors"]))
+
+    def test_rc4_screensaver_cannot_be_satisfied_by_only_libgjs(self):
+        self.desktop_fixture(name for name in MOD.GNOME_DESKTOP_COMPONENTS if name != "gjs")
+        with (self.root / "var/lib/dpkg/status").open("a") as stream:
+            stream.write("\nPackage: libgjs0g\nStatus: install ok installed\nVersion: 1.80.2-1build2\n")
+        self.file("/usr/share/dbus-1/services/org.gnome.ScreenSaver.service",
+                  "[D-BUS Service]\nName=org.gnome.ScreenSaver\n"
+                  "Exec=/usr/bin/gjs -m /usr/share/gnome-shell/org.gnome.ScreenSaver\n")
+        self.file("/usr/share/gnome-shell/org.gnome.ScreenSaver", "// 測試用啟動腳本\n")
+        result = MOD.preflight(self.lock, "bpi-cm6", self.root, "installed")
+        self.assertFalse(result["passed"])
+        self.assertEqual(result["errors"], ["GNOME 桌面必要套件未完成安裝：gjs",
+                                           "GNOME 桌面必要程式缺失或不可執行：/usr/bin/gjs"])
+        self.assertFalse(result["hardware_verified"])
+
+    def test_complete_gnome_components_pass_for_both_board_profiles(self):
+        self.desktop_fixture(MOD.GNOME_DESKTOP_COMPONENTS)
+        for board, armbian, ddk in (("bpi-cm6", "bananapicm6", "23.2@6460340"),
+                                    ("bpi-f3", "bananapif3", "24.2@6603887")):
+            with self.subTest(board=board):
+                self.lock["profiles"][board]["packages"] = []
+                self.file("etc/armbian-release", "BOARD=" + armbian + "\n")
+                self.file("boot/Image", ddk)
+                if board == "bpi-f3":
+                    (self.root / "etc/environment").unlink()
+                result = MOD.preflight(self.lock, board, self.root, "installed")
+                self.assertTrue(result["passed"], result["errors"])
+                self.assertFalse(result["hardware_verified"])
+
+    def test_installed_package_does_not_hide_missing_or_nonexecutable_program(self):
+        self.desktop_fixture(MOD.GNOME_DESKTOP_COMPONENTS)
+        (self.root / "usr/bin/gnome-control-center").unlink()
+        (self.root / "usr/bin/gjs").unlink()
+        (self.root / "usr/bin/ibus-daemon").chmod(0o644)
+        result = MOD.preflight(self.lock, "bpi-cm6", self.root, "installed")
+        self.assertFalse(result["passed"])
+        for name in ("gnome-control-center", "gjs", "ibus-daemon"):
+            self.assertIn("GNOME 桌面必要程式缺失或不可執行：/usr/bin/" + name, result["errors"])
+
+    def test_gnome_marker_cannot_be_satisfied_by_unrelated_session(self):
+        self.desktop_fixture((), session="other.desktop")
+        self.file("etc/bpi-k1-vendor.json", json.dumps({"desktop": "gnome-wayland"}))
+        result = MOD.preflight(self.lock, "bpi-cm6", self.root, "installed")
+        self.assertIn("GNOME 桌面必要套件未完成安裝：gnome-shell", result["errors"])
+        self.assertIn("缺少 GNOME Wayland 桌面工作階段", result["errors"])
+
+    def test_invalid_desktop_marker_is_reported_as_preflight_failure(self):
+        self.desktop_fixture(MOD.GNOME_DESKTOP_COMPONENTS)
+        self.file("etc/bpi-k1-vendor.json", "{")
+        result = MOD.preflight(self.lock, "bpi-cm6", self.root, "installed")
+        self.assertFalse(result["passed"])
+        self.assertIn("官方格式根系統標記無法解析：/etc/bpi-k1-vendor.json", result["errors"])
+
+    def test_other_desktop_or_profile_does_not_require_gnome_components(self):
+        self.desktop_fixture((), session="other.desktop")
+        (self.root / "etc/environment").unlink()
+        result = MOD.preflight(self.lock, "bpi-cm6", self.root, "installed")
+        self.assertTrue(result["passed"], result["errors"])
+        self.lock["profiles"]["bpi-cm6"].pop("desktop_protocol")
+        self.file("etc/bpi-k1-vendor.json", json.dumps({"desktop": "gnome-wayland"}))
+        result = MOD.preflight(self.lock, "bpi-cm6", self.root, "installed")
+        self.assertTrue(result["passed"], result["errors"])
+
+    def test_cm6_gnome_rejects_missing_disabled_or_conflicting_cursor_setting(self):
+        self.desktop_fixture(MOD.GNOME_DESKTOP_COMPONENTS)
+        path = self.root / "etc/environment"
+        for text in (None, "MUTTER_DEBUG_DISABLE_HW_CURSORS=0\n",
+                     "MUTTER_DEBUG_DISABLE_HW_CURSORS=1\nMUTTER_DEBUG_DISABLE_HW_CURSORS=0\n",
+                     'MUTTER_DEBUG_DISABLE_HW_CURSORS="1\n'):
+            with self.subTest(environment=text):
+                if text is None:
+                    path.unlink()
+                else:
+                    path.write_text(text)
+                result = MOD.preflight(self.lock, "bpi-cm6", self.root, "installed")
+                self.assertFalse(result["passed"])
+                self.assertTrue(any("GNOME 板級相容設定缺失或衝突" in error for error in result["errors"]))
+                self.assertFalse(result["hardware_verified"])
+
+    def test_cm6_cursor_setting_accepts_quotes_and_comments_without_hardware_claim(self):
+        self.desktop_fixture(MOD.GNOME_DESKTOP_COMPONENTS)
+        path = self.file("etc/environment", '# MUTTER_DEBUG_DISABLE_HW_CURSORS=0\nMUTTER_DEBUG_DISABLE_HW_CURSORS="1" # 相容設定\n')
+        original = path.read_bytes()
+        result = MOD.preflight(self.lock, "bpi-cm6", self.root, "installed")
+        self.assertTrue(result["passed"], result["errors"])
+        self.assertFalse(result["hardware_verified"])
+        self.assertEqual(path.read_bytes(), original)
 
     def test_python_upper_bound_and_alternative_dependencies(self):
         available = {"python3": "3.13.1", "python3-minimal": "3.12.3", "libopencl1": "2.2"}

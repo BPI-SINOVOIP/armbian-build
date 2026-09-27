@@ -1,0 +1,52 @@
+--- a/demo/online_pipeline_test.c
++++ b/demo/online_pipeline_test.c
+@@ -1704,13 +1704,20 @@
+     return 0;
+ }
+ 
+-static int online_test_viisp_streamOff(void* sensorHandle, int pipelineId, int firmwareId)
+-{
+-    viisp_vi_online_streamOff(pipelineId);
+-    testSensorStop(sensorHandle);
+-    viisp_isp_streamOff(firmwareId);
+-    cpp_stop(pipelineId);
+-    test_buffer_reset(pipelineId);
++static int dual_pipeline_viisp_streamOff(void* sensor0Handle, int pipeline0Id, int firmware0Id,
++                                       void* sensor1Handle, int pipeline1Id, int firmware1Id)
++{
++    /* 兩路 VI 完成關閉後，再停止各路感測器、ISP 與 CPP。 */
++    viisp_vi_online_streamOff(pipeline0Id);
++    viisp_vi_online_streamOff(pipeline1Id);
++    testSensorStop(sensor0Handle);
++    viisp_isp_streamOff(firmware0Id);
++    cpp_stop(pipeline0Id);
++    test_buffer_reset(pipeline0Id);
++    testSensorStop(sensor1Handle);
++    viisp_isp_streamOff(firmware1Id);
++    cpp_stop(pipeline1Id);
++    test_buffer_reset(pipeline1Id);
+ 
+     return 0;
+ }
+@@ -1812,8 +1819,8 @@
+ 
+         streamOnFlags[pipeline0Id] = 0;
+         streamOnFlags[pipeline1Id] = 0;
+-        online_test_viisp_streamOff(sensor0Handle, pipeline0Id, firmware0Id);
+-        online_test_viisp_streamOff(sensor1Handle, pipeline1Id, firmware1Id);
++        dual_pipeline_viisp_streamOff(sensor0Handle, pipeline0Id, firmware0Id,
++                                     sensor1Handle, pipeline1Id, firmware1Id);
+         CLOG_INFO("sensor stream off");
+ 
+         condition_deinit(&testAutoRunCond[pipeline0Id]);
+@@ -1838,8 +1845,8 @@
+             if (ch == 'c' || ch == 'C') {
+                 streamOnFlags[pipeline0Id] = 0;
+                 streamOnFlags[pipeline1Id] = 0;
+-                online_test_viisp_streamOff(sensor0Handle, pipeline0Id, firmware0Id);
+-                online_test_viisp_streamOff(sensor1Handle, pipeline1Id, firmware1Id);
++                dual_pipeline_viisp_streamOff(sensor0Handle, pipeline0Id, firmware0Id,
++                                             sensor1Handle, pipeline1Id, firmware1Id);
+                 CLOG_INFO("sensor stream off");
+                 continue;
+             }

@@ -1,0 +1,7 @@
+# BananaPi BPI-F3：官方 SD 媒體格式建置候選
+source "${SRC}/config/boards/include/bpi-k1-board-targets.inc"
+bpi_k1_board_target_defaults
+source "${SRC}/config/boards/bananapif3.conf"
+BOARD_NAME="BananaPi BPI-F3（官方 SD 候選）"
+KERNEL_TARGET="current"
+enable_extension "bpi-k1-vendor"

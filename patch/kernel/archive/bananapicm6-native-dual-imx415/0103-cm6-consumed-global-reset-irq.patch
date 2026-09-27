@@ -1,0 +1,12 @@
+--- a/drivers/media/platform/spacemit/camera/vi/k1xvi/fe_isp.c
++++ b/drivers/media/platform/spacemit/camera/vi/k1xvi/fe_isp.c
+@@ -4919,7 +4919,8 @@
+ 	err2_irq_status = hw_isp_top_get_err2_irq_status(SC_BLOCK(isp_ctx->pipes[0]));
+ 	if (err2_irq_status)
+ 		hw_isp_top_clr_err2_irq_status(SC_BLOCK(isp_ctx->pipes[0]), err2_irq_status);
+-	irq_data.pipe0_irq_status = pipe0_irq_status;
++	/* 全域 reset 完成已由 VI 處理；其餘中斷仍交給 ISP。 */
++	irq_data.pipe0_irq_status = pipe0_irq_status & ~ISP_IRQ_G_RST_DONE;
+ 	irq_data.pipe1_irq_status = pipe1_irq_status;
+ 	sc_ispfirm_call(ispfirm_ops, irq_callback, ISP_IRQ, &irq_data, sizeof(irq_data));
+ 	//cam_dbg("pipe0 irq status=0x%08x, pipe1 irq status=0x%08x", pipe0_irq_status, pipe1_irq_status);

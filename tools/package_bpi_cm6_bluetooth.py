@@ -14,9 +14,12 @@ import sys
 
 
 REPO = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(REPO / "tools"))
+from bpi_k1_board_targets import load_registry
+
 CONFIG = REPO / "config/spacemit-k1-connectivity"
 PACKAGE = "bpi-cm6-bluetooth"
-DEFAULT_VERSION = "0.1.0~20260923rc3"
+DEFAULT_VERSION = "0.1.0~20260925rc7"
 FIRMWARE_ROOT = "usr/lib/bpi-cm6-bluetooth/firmware/"
 FIRMWARE_FILES = {"firmware": "rtl8852bs_fw", "firmware_config": "rtl8852bs_config"}
 
@@ -122,11 +125,13 @@ if [ -r /proc/device-tree/compatible ]; then
         printf '%s\\n' '此修正套件只適用 BPI-CM6，板型不符。' >&2
         exit 1
     }
-elif ! grep -qx 'BOARD=bananapicm6' /etc/armbian-release 2>/dev/null; then
+elif ! grep -Eq '^BOARD=(@CM6_BOARD_PATTERN@)$' /etc/armbian-release 2>/dev/null; then
     printf '%s\\n' '無法確認 BPI-CM6 根系統，停止安裝。' >&2
     exit 1
 fi
-"""
+""".replace("@CM6_BOARD_PATTERN@", "|".join(
+    ["bananapicm6"] + sorted(name for name, target in load_registry()["targets"].items()
+                            if target["board"] == "bpi-cm6")))
 
 POSTINST = """#!/bin/sh
 set -eu

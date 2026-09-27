@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "release": "noble",
+  "architecture": "riscv64",
+  "desktop": "gnome",
+  "desktop_tier": "minimal",
+  "profiles": {
+    "bananapicm6": {
+      "board": "bpi-cm6",
+      "branch": "legacy",
+      "kernel_repository": "https://github.com/BPI-SINOVOIP/pi-linux.git",
+      "kernel_commit": "0d0af0d895251383baee939d44e523699e31889f",
+      "kernel_release": "6.6.36-legacy-spacemit",
+      "kernel_pvr": "23.2@6460340",
+      "dtb": "spacemit/k1-x_bpi_cm6.dtb",
+      "camera_profiles": [
+        "none",
+        "dual-imx415"
+      ],
+      "kernel_patch_directories": [
+        "archive/bananapicm6-legacy",
+        "archive/bananapicm6-native-eth0"
+      ],
+      "camera_patch_directory": "archive/bananapicm6-native-dual-imx415"
+    },
+    "bananapif3": {
+      "board": "bpi-f3",
+      "branch": "current",
+      "kernel_repository": "https://github.com/jasonmontleon/linux-spacemit.git",
+      "kernel_commit": "3e8e7fd730721aee3926a365cef6635221705b61",
+      "kernel_release": "6.18.37-current-spacemit",
+      "kernel_pvr": "24.2@6603887",
+      "dtb": "spacemit/k1-bananapi-f3.dtb",
+      "camera_profiles": [
+        "none"
+      ]
+    }
+  },
+  "camera_packages": {
+    "k1x-cam": {
+      "version": "0.2.34",
+      "url": "https://archive.spacemit.com/bianbu/pool/main/k/k1x-cam/k1x-cam_0.2.34_riscv64.deb",
+      "size": 586148,
+      "sha256": "d00ec6d3e6758571a5959428517a167e1264db08ca5d61fdfbfc506b33088e40"
+    },
+    "k1x-cam-lib": {
+      "version": "0.1.8",
+      "url": "https://archive.spacemit.com/bianbu/pool/main/k/k1x-cam-lib/k1x-cam-lib_0.1.8_riscv64.deb",
+      "size": 430424,
+      "sha256": "89c9867d9dab50958e8eb01195313452ad425dbef345d6003d568d4176c0572d"
+    }
+  },
+  "camera_source_verification": "固定官方 HTTPS 來源、大小與 SHA-256；相機套件的 APT 索引簽章鏈尚待補齊。",
+  "scope": "固定原生建置的板型與配套；硬體驗證由各次候選報告記錄。",
+  "camera_build": {
+    "profile": "dual-imx415",
+    "source_lock": "config/spacemit-k1-camera/source-lock.json",
+    "package_version": "0.2.34+cm6.2",
+    "scope": "僅 CM6 的固定來源模式與雙路停止候選；保留官方感測器表、閉源 SDK 及核心等待，正式套件硬體驗證仍待完成。"
+  }
+}

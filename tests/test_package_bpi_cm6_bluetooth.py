@@ -5,6 +5,7 @@ import importlib.util
 import json
 from pathlib import Path
 import struct
+import subprocess
 import tempfile
 import unittest
 from unittest import mock
@@ -75,6 +76,17 @@ class BluetoothPackageTests(unittest.TestCase):
 
     def test_consistent_source_manifest_is_accepted(self):
         self.assertEqual(MOD.verify_build(self.root)["board"], "bpi-cm6")
+
+    def test_preinst_accepts_only_registered_cm6_rootfs_names(self):
+        release = self.base / "armbian-release"
+        script = MOD.PREINST.replace("/proc/device-tree/compatible", str(self.base / "no-device-tree"))
+        script = script.replace("/etc/armbian-release", str(release))
+        for board, accepted in (("bananapicm6", True), ("bananapicm6-titan-emmc", True),
+                                ("bananapicm6-vendor-sd", True), ("bananapif3-titan-emmc", False),
+                                ("bananapicm6-titan-emmc-extra", False), ("bananapicm6-unknown", False)):
+            release.write_text("BOARD=" + board + "\n")
+            result = subprocess.run(["sh", "-c", script], capture_output=True)
+            self.assertEqual(result.returncode == 0, accepted, board)
 
     def test_changed_payload_is_rejected(self):
         (self.root / "bin/rtk_hciattach").write_bytes(b"changed")

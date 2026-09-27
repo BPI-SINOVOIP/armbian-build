@@ -1,0 +1,7 @@
+# BananaPi BPI-CM6：Titan eMMC 官方媒體格式建置候選
+source "${SRC}/config/boards/include/bpi-k1-board-targets.inc"
+bpi_k1_board_target_defaults
+source "${SRC}/config/boards/bananapicm6.wip"
+BOARD_NAME="BananaPi BPI-CM6（Titan eMMC 候選）"
+KERNEL_TARGET="legacy"
+enable_extension "bpi-k1-vendor"

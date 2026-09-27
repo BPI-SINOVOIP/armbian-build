@@ -111,7 +111,6 @@
   "reference_version": "Bianbu-LXQt-K1-V2.3.0-20251212104943",
   "archive_full_sha256": null,
   "retrieval_method": "HTTP Range，ZIP 中央目錄與所取成員的 CRC32 均經檢查；未下載整份封裝，不宣稱整包 SHA-256。",
-  "local_binary_directory": "/media/pi/SMCI/bpi/f3-cm6-vendor-20260916/reference/vendor-v2.3",
   "scope": "官方參考載荷與格式來源；仍須完成 Titan 匯入、媒體選擇、燒錄及實機開機。",
   "source_references": [
     {

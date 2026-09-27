@@ -475,7 +475,10 @@ function create_new_rootfs_cache_via_debootstrap() {
 		python3 "${SRC}/lib/tools/common/patch-desktop-package-compatibility.py" \
 			--rootfs "${SDCARD}" \
 			--release "${RELEASE}"
-		chroot_sdcard "SUDO_USER= DEBIAN_FRONTEND=noninteractive DIALOG=read armbian-config --api module_desktops install de=${DESKTOP_ENVIRONMENT} tier=${DESKTOP_TIER:-mid} mode=build"
+		call_extension_method "pre_install_desktop" <<- 'PRE_INSTALL_DESKTOP'
+			桌面安裝前準備經核對的來源與安裝器；DESKTOP_INSTALLER 預設為 armbian-config。
+		PRE_INSTALL_DESKTOP
+		chroot_sdcard "SUDO_USER= DEBIAN_FRONTEND=noninteractive DIALOG=read \"${DESKTOP_INSTALLER:-armbian-config}\" --api module_desktops install de=${DESKTOP_ENVIRONMENT} tier=${DESKTOP_TIER:-mid} mode=build"
 	fi
 
 	# stage: check md5 sum of installed packages. Just in case. @TODO: rpardini: this should also be done when a cache is used, not only when it is created

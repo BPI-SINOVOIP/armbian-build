@@ -1,0 +1,18 @@
+--- a/gpio/gpio.c
++++ b/gpio/gpio.c
+@@ -944,6 +944,15 @@
+     }
+   }
+ 
++#ifdef BPI
++  /* BPI 版本查詢只讀取板型資料，不以 Raspberry Pi 位址探測 GPIO 記憶體。 */
++  if (model >= BPI_MODEL_MIN)
++  {
++    printf ("  * 僅顯示版本與板型，未探測 GPIO 記憶體或腳位。\n") ;
++    return ;
++  }
++#endif
++
+   int bGlobalAccess = wiringPiGlobalMemoryAccess();		// User level GPIO is GO
+   switch(bGlobalAccess) {
+     case 0:

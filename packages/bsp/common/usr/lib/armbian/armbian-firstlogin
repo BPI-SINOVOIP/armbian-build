@@ -19,8 +19,17 @@
 # Cleanup gate: EXIT trap removes the marker only after FIRSTLOGIN_SUCCESS=1,
 # so power-loss or mid-run failure reruns firstlogin on next boot.
 FIRSTLOGIN_SUCCESS=0
+ROOT_PASSWORD_READY=0
+USER_SETUP_STARTED=0
+USER_SETUP_COMPLETE=0
+USER_SETUP_SKIPPED=0
+_firstlogin_can_complete() {
+	[[ "$ROOT_PASSWORD_READY" == 1 &&
+		( "$USER_SETUP_COMPLETE" == 1 ||
+		  ( "$USER_SETUP_SKIPPED" == 1 && "$USER_SETUP_STARTED" == 0 ) ) ]]
+}
 _firstlogin_cleanup() {
-	if [ "$FIRSTLOGIN_SUCCESS" = "1" ]; then
+	if [ "$FIRSTLOGIN_SUCCESS" = "1" ] && _firstlogin_can_complete; then
 		rm -f /root/.not_logged_in_yet
 		sync -f /root 2>/dev/null || sync
 	fi
@@ -31,18 +40,29 @@ trap _firstlogin_cleanup EXIT
 # EXIT trap gets cut short: builtins still run, but external commands (rm) do
 # not survive the dying shell. Handle the signal in normal execution context
 # instead — cleanup runs fully, then exit.
-trap '_firstlogin_cleanup; exit' HUP INT TERM
+_firstlogin_interrupted() {
+	_firstlogin_cleanup
+	# 桌面接管可能在成功後送出訊號；只有已完整完成時維持成功退出。
+	if [[ "$FIRSTLOGIN_SUCCESS" == 1 ]] && _firstlogin_can_complete; then
+		exit 0
+	fi
+	exit 1
+}
+trap _firstlogin_interrupted HUP INT TERM
 
 check_abort() {
-
-	echo -e "\nDisabling user account creation procedure\n"
-	FIRSTLOGIN_SUCCESS=1
-	if [[ ${USER_SHELL} == zsh ]]; then
-		printf "\nYou selected \e[0;91mZSH\x1B[0m as your default shell. If you want to use it right away, please logout and login! \n\n"
+	# 保留尚未開始使用者設定前明確略過的流程；部分設定不可偽裝成完成。
+	if [[ "$USER_SETUP_STARTED" != 0 || "$ROOT_PASSWORD_READY" != 1 ]]; then
+		FIRSTLOGIN_SUCCESS=0
+		printf '\n首次設定尚未完成，保留標記供下次登入重試。\n' >&2
+		exit 1
 	fi
+	USER_SETUP_SKIPPED=1
+	_firstlogin_can_complete || exit 1
+	FIRSTLOGIN_SUCCESS=1
+	printf '\n已依使用者要求略過一般使用者建立。\n'
 	trap - INT
 	exit 0
-
 }
 
 mask2cidr() {
@@ -203,37 +223,10 @@ get_local_ip_addr() {
 }
 
 read_password() {
-
-	unset password
-	unset charcount
-	prompt="$1 password: "
-
-	stty -echo
-
-	charcount=0
-	while IFS= read -p "$prompt" -r -s -n 1 char; do
-		if [[ $char == $'\0' ]]; then
-			break
-		fi
-
-		# Handle backspace
-		if [[ $char == $'\177' ]]; then
-			if [ $charcount -gt 0 ]; then
-				charcount=$((charcount - 1))
-				prompt=$'\b \b'
-				password="${password%?}"
-			else
-				prompt=''
-			fi
-		else
-			charcount=$((charcount + 1))
-			prompt='*'
-			password+="$char"
-		fi
-	done
-
-	stty echo
-
+	# 單次靜默讀取由 Bash 還原終端狀態；不自行強制切換 stty echo。
+	# EOF 即使已有部分輸入也回報失敗，不能當成使用者確認空密碼。
+	password=
+	IFS= read -r -s -p "$1 密碼：" password
 }
 
 set_shell() {
@@ -601,19 +594,23 @@ add_profile_sync_settings() {
 add_user() {
 	read -r -t 0 _
 	REPEATS=3
+	USER_SETUP_COMPLETE=0
+	USER_SETUP_STARTED=1
 
 	# Power-loss re-run: detect existing regular user, skip username prompt
 	local existing_user
 	existing_user=$(awk -F: '$3 >= 1000 && $1 != "nobody" {print $1; exit}' /etc/passwd)
 	if [ -n "${existing_user}" ]; then
+		USER_SETUP_STARTED=1
 		RealUserName="${existing_user}"
 		username="${existing_user}"
 		echo -e "Detected existing user \e[0;92m$RealUserName\x1B[0m from previous setup, reusing."
 	else
+	USER_SETUP_STARTED=0
 	while [ -f "/root/.not_logged_in_yet" ]; do
 		[[ -z "${PRESET_USER_NAME}" ]] && echo -e "\nPlease provide a username (eg. your first name): \c"
 		if [ -z "$PRESET_USER_NAME" ];then
-			read -r -e username
+			read -r -e username || return 1
 		else
 			username="$PRESET_USER_NAME"
 		fi
@@ -638,18 +635,20 @@ add_user() {
 	fi
 
 	# Set default user login icon
+	USER_SETUP_STARTED=1
 	set_user_icon "$RealUserName"
 
 	while [ -f "/root/.not_logged_in_yet" ]; do
 		if [ -z "$PRESET_USER_PASSWORD" ];then
-			read_password "Create user ($username)"
+			printf '若兩次密碼都留白，將建立無密碼帳號。\n'
+			read_password "建立使用者（$username）" || { unset password first_input second_input; printf '使用者密碼輸入中斷，保留首次設定狀態。\n' >&2; return 1; }
 			echo ""
 		else
 			password="$PRESET_USER_PASSWORD"
 		fi
 		first_input="$password"
 		if [ -z "$PRESET_USER_PASSWORD" ];then
-			read_password "Repeat user ($username)"
+			read_password "再次輸入使用者（$username）" || { unset password first_input second_input; printf '使用者密碼輸入中斷，保留首次設定狀態。\n' >&2; return 1; }
 			echo ""
 		else
 			password="$PRESET_USER_PASSWORD"
@@ -666,7 +665,7 @@ add_user() {
 			fi
 			if [ -z "$PRESET_DEFAULT_REALNAME" ];then
 				echo -e ""
-				read -r -e -p "Please provide your real name: " -i "${RealUserName^}" RealName
+				read -r -e -p "請提供顯示名稱：" -i "${RealUserName^}" RealName || return 1
 			else
 				RealName="$PRESET_DEFAULT_REALNAME"
 			fi
@@ -704,13 +703,20 @@ add_user() {
 			fi
 
 			if [[ -n "$first_input" ]]; then
-				(
-					echo "$first_input"
-					echo "$second_input"
-				) | passwd "$RealUserName" > /dev/null 2>&1
+				if ! printf '%s\n%s\n' "$first_input" "$second_input" | passwd "$RealUserName" > /dev/null 2>&1; then
+					unset password first_input second_input
+					printf '使用者密碼設定失敗，帳號設定尚未完成；下次登入將重試。\n' >&2
+					return 1
+				fi
 			else
-				passwd -d "$RealUserName" > /dev/null 2>&1
+				# 保留既有產品政策：使用者明確確認兩次空輸入才執行密碼刪除。
+				if ! passwd -d "$RealUserName" > /dev/null 2>&1; then
+					unset password first_input second_input
+					printf '使用者空密碼設定失敗，帳號設定尚未完成；下次登入將重試。\n' >&2
+					return 1
+				fi
 			fi
+			unset password first_input second_input
 
 			# Pre-create docker group to ensure user membership is set up before Docker installation.
 			# (docker-ce package creates this group automatically during postinst, but we create it early
@@ -729,8 +735,6 @@ add_user() {
 			chown "$RealUserName":"$RealUserName" /home/"$RealUserName"/.Xauthority
 			RealName="$(awk -F":" "/^${RealUserName}:/ {print \$5}" < /etc/passwd | cut -d',' -f1)"
 			[ -z "$RealName" ] && RealName="$RealUserName"
-			echo -e "\nDear \e[0;92m${RealName}\x1B[0m, your account \e[0;92m${RealUserName}\x1B[0m has been created and is sudo enabled."
-			echo -e "Please use this account for your daily work from now on.\n"
 			# .not_logged_in_yet is NOT deleted here - the EXIT trap removes
 			# it once FIRSTLOGIN_SUCCESS=1 is set after all config completes.
 			# set up profile sync daemon on desktop systems
@@ -749,14 +753,17 @@ add_user() {
 				touch /home/"${RealUserName}"/.activate_psd
 				chown "$RealUserName":"$RealUserName" /home/"${RealUserName}"/.activate_psd
 			fi
+			USER_SETUP_COMPLETE=1
+			printf '\n使用者 %s 的密碼設定已完成。\n' "$RealUserName"
 			break
-		elif [[ -n $password ]]; then
-			echo -e "Rejected - \e[0;31mpasswords do not match.\x1B[0m Try again [${REPEATS}]."
-			REPEATS=$((REPEATS - 1))
+		else
+			printf '兩次使用者密碼不同，請重新輸入。\n' >&2
 		fi
-		[[ "$REPEATS" -eq 0 ]] && exit 0
+		unset password first_input second_input
+		REPEATS=$((REPEATS - 1))
+		[[ "$REPEATS" -le 0 ]] && return 1
 	done
-
+	[[ "$USER_SETUP_COMPLETE" == 1 ]]
 }
 
 set_user_icon() {
@@ -906,7 +913,7 @@ if [[ -f /root/.not_logged_in_yet ]] && tty -s; then
 	while [ -f "/root/.not_logged_in_yet" ]; do
 		. /root/.not_logged_in_yet
 		if [ -z "$PRESET_ROOT_PASSWORD" ];then
-			read_password "Create root"
+			read_password "建立 root" || { unset password first_input second_input; printf '密碼輸入中斷，保留首次設定狀態。\n' >&2; exit 1; }
 		else
 			# allow automated install also in interactive session
 			#if [ "$(who am i | awk '{print $2}')" != "tty1" ];then
@@ -944,31 +951,35 @@ if [[ -f /root/.not_logged_in_yet ]] && tty -s; then
 		first_input="$password"
 		if [ -z "$PRESET_ROOT_PASSWORD" ];then
 			echo ""
-			read_password "Repeat root"
+			read_password "再次輸入 root" || { unset password first_input second_input; printf '密碼輸入中斷，保留首次設定狀態。\n' >&2; exit 1; }
 			echo ""
 		else
 			password="$PRESET_ROOT_PASSWORD"
 		fi
 		second_input="$password"
-		if [[ "$first_input" == "$second_input" ]]; then
-			# minimal might not have this
+		if [[ -z "$first_input" || -z "$second_input" ]]; then
+			printf 'root 密碼不可為空，請重新輸入。\n' >&2
+		elif [[ "$first_input" == "$second_input" ]]; then
 			if command -v cracklib-check > /dev/null 2>&1; then
 				result="$(cracklib-check <<< "$password")"
 				okay="$(awk -F': ' '{ print $2}' <<< "$result")"
 				if [[ "$okay" != "OK" ]]; then
-					echo -e "\n\e[0;31mWarning:\x1B[0m Weak password, $okay \b!"
+					printf '警告：密碼強度檢查未通過。\n' >&2
 				fi
 			fi
-			(
-				echo "$first_input"
-				echo "$second_input"
-			) | passwd root > /dev/null 2>&1
-			break
-		elif [[ -n $password ]]; then
-			echo -e "Rejected - \e[0;31mpasswords do not match.\x1B[0m Try again [${REPEATS}]."
-			REPEATS=$((REPEATS - 1))
+			if printf '%s\n%s\n' "$first_input" "$second_input" | passwd root > /dev/null 2>&1; then
+				unset password first_input second_input
+				ROOT_PASSWORD_READY=1
+				break
+			fi
+			printf 'root 密碼設定失敗，保留首次設定狀態。\n' >&2
+		else
+			printf '兩次 root 密碼不同，請重新輸入。\n' >&2
 		fi
-		[[ "$REPEATS" -eq 0 ]] && exit
+		unset password first_input second_input
+		[[ -n "${PRESET_ROOT_PASSWORD:-}" ]] && exit 1
+		REPEATS=$((REPEATS - 1))
+		[[ "$REPEATS" -le 0 ]] && exit 1
 	done
 	trap - INT
 
@@ -1033,6 +1044,7 @@ if [[ -f /root/.not_logged_in_yet ]] && tty -s; then
 	# All critical configuration is complete. The EXIT trap may now safely
 	# remove the marker; subsequent failures (DM startup, etc.) should not
 	# force a full firstlogin rerun.
+	_firstlogin_can_complete || { printf '首次設定尚未完成，保留標記。\n' >&2; exit 1; }
 	FIRSTLOGIN_SUCCESS=1
 
 	# rpardini: hacks per-dm, very much legacy stuff that works by a miracle
