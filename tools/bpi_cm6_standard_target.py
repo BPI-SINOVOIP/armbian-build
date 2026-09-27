@@ -62,6 +62,31 @@ def parse_install_plan(text):
     return result
 
 
+def removal_plan(text, packages, added_build):
+    """將 APT 套件名解析回唯一 dpkg 身分，只接受本輪新增建置相依。"""
+    require(not any(line.startswith("Inst ") for line in text.splitlines()),
+            "移除建置相依不可安裝或升降級套件")
+    resolved = {}
+    for line in text.splitlines():
+        if not line.startswith(("Remv ", "Purg ")):
+            continue
+        fields = line.split()
+        require(len(fields) >= 2, "APT 移除計畫格式不符")
+        token = fields[1]
+        match = re.fullmatch(r"([a-z0-9][a-z0-9+.-]+)(?::([a-z0-9][a-z0-9-]*))?", token)
+        require(match is not None, "APT 移除套件名稱不合法")
+        name, architecture = match.groups()
+        matches = [key for key, item in packages.items()
+                   if key.split(":", 1)[0] == name
+                   and (architecture is None or item["architecture"] == architecture)]
+        require(len(matches) == 1, "APT 移除套件身分未知或架構不唯一：" + token)
+        key = matches[0]
+        require(key in added_build, "移除建置相依會更動原套件或執行期套件：" + key)
+        resolved[token] = key
+    return {"plan": text, "resolved_packages": resolved,
+            "removed_build_packages": sorted(set(resolved.values()))}
+
+
 def apt_install(names, archive_dir, receipts):
     before = installed()
     plan = run(APT + ["--simulate", "--no-remove", "--no-upgrade", "--no-install-recommends", "install", *names])
@@ -296,11 +321,18 @@ def main(bundle):
         packages = compile_all(bundle, output, state, abi)
         paths = [str(output / p["artifact"]) for p in packages]
         run(APT + ["--no-remove", "--no-install-recommends", "install", *paths])
+        cleanup = {"plan": "", "resolved_packages": {}, "removed_build_packages": []}
         if added_build:
             plan = run(APT + ["--simulate", "purge", *sorted(added_build)])
-            removals = {line.split()[1] for line in plan.splitlines() if line.startswith(("Remv ", "Purg "))}
-            require(not any(line.startswith("Inst ") for line in plan.splitlines()) and removals <= added_build,
-                    "移除建置相依會更動原套件或執行期套件，停止封裝")
+            cleanup_state = {"plan": plan, "added_build_packages": sorted(added_build),
+                             "installed_packages": installed()}
+            write_json(output / "cleanup-plan.json", cleanup_state)
+            try:
+                cleanup = removal_plan(plan, cleanup_state["installed_packages"], added_build)
+            except ValueError:
+                # rootfs 清理前仍在建置日誌保留真正拒絕的計畫；不繼續 purge。
+                print(json.dumps({"cleanup_rejected": cleanup_state}, ensure_ascii=False), file=sys.stderr)
+                raise
             run(APT + ["purge", *sorted(added_build)])
         after = installed()
         require(all(after.get(name) == info for name, info in before.items()), "建置流程更動了原已安裝套件")
@@ -319,7 +351,8 @@ def main(bundle):
             write_json(output / (kind + "-package-manifest.json"), record)
         write_json(output / "result.json", {"schema_version": 1, "status": "complete", "release": state["release"],
                    "source_manifest_sha256": digest(bundle / "source-manifest.json"), "packages": packages,
-                   "builddeps_added_and_removed": sorted(added_build), "initial_packages": before,
+                   "builddeps_added_and_removed": sorted(added_build), "builddeps_cleanup": cleanup,
+                   "initial_packages": before,
                    "final_packages": after, "hardware_validation": "pending"})
     finally:
         write_json(output / "commands.json", COMMANDS)
