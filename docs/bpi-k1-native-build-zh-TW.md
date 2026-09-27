@@ -15,7 +15,7 @@ cd armbian-cm6
 git rev-parse HEAD
 sudo ./compile.sh build BOARD=bananapicm6-titan-emmc \
   EXPERT=yes PREFER_DOCKER=no CPUTHREADS=8 \
-  SHARE_LOG=no UPLOAD_TO_OCI_ONLY=no ARTIFACT_IGNORE_CACHE=yes
+  SHARE_LOG=no UPLOAD_TO_OCI_ONLY=no ARTIFACT_IGNORE_CACHE=yes KERNEL_GIT=shallow
 ```
 
 上述命令在新來源目錄重建核心、框架U-Boot及Armbian根系統；沒有 `DONT_BUILD_ARTIFACTS`、既成rootfs或私人覆層。建置前記錄完整提交SHA；重現指定版本時先 `git checkout --detach <完整提交SHA>`。普通Ubuntu套件從當次已簽章的公開APT索引解析，實際版本由成品紀錄保存；不宣稱未固定APT快照時全鏡像位元一致。
@@ -25,7 +25,7 @@ SD採相同標準入口，只換BOARD：
 ```bash
 sudo ./compile.sh build BOARD=bananapicm6-vendor-sd \
   EXPERT=yes PREFER_DOCKER=no CPUTHREADS=8 \
-  SHARE_LOG=no UPLOAD_TO_OCI_ONLY=no ARTIFACT_IGNORE_CACHE=yes
+  SHARE_LOG=no UPLOAD_TO_OCI_ONLY=no ARTIFACT_IGNORE_CACHE=yes KERNEL_GIT=shallow
 ```
 
 | 板名 | 產物 | 與一般Armbian的關係 |
@@ -37,6 +37,26 @@ sudo ./compile.sh build BOARD=bananapicm6-vendor-sd \
 | `bananapicm6`／`bananapif3` | 一般Armbian映像 | 不因官方別名而強制改為Titan格式 |
 
 官方別名固定Noble／GNOME／相應核心分支及媒體，錯誤參數會拒絕。此設定不能拿來生成原四發行版minimal／XFCE矩陣；標準BOARD矩陣另依自身發行版、ABI及配套支援處理。`CARD_DEVICE`不被官方格式入口接受，建置不會直接燒錄媒體。
+
+## 標準 CM6 矩陣
+
+一般 Armbian 成品使用 `BOARD=bananapicm6 BRANCH=legacy`，保留原 MBR 磁碟格式。連線修正與 GPIO 已納入共同標準配方；Jammy／Trixie 在各自 rootfs 建套件，使用自身 Python ABI，不套用 Noble DEB。Noble XFCE 另含固定官方 GPU 配套，其他發行版不宣稱同等硬體加速。
+
+```bash
+sudo ./compile.sh build BOARD=bananapicm6 BRANCH=legacy \
+  RELEASE=jammy BUILD_MINIMAL=yes BUILD_DESKTOP=no KERNEL_CONFIGURE=no \
+  EXPERT=yes PREFER_DOCKER=no CPUTHREADS=8 KERNEL_GIT=shallow \
+  SHARE_LOG=no UPLOAD_TO_OCI_ONLY=no
+sudo ./compile.sh build BOARD=bananapicm6 BRANCH=legacy \
+  RELEASE=noble BUILD_MINIMAL=no BUILD_DESKTOP=yes \
+  DESKTOP_ENVIRONMENT=xfce DESKTOP_TIER=mid KERNEL_CONFIGURE=no \
+  EXPERT=yes PREFER_DOCKER=no CPUTHREADS=8 KERNEL_GIT=shallow \
+  SHARE_LOG=no UPLOAD_TO_OCI_ONLY=no
+```
+
+相容候選為 Jammy、Noble、Trixie 各 minimal／XFCE，共六份；各自需實際建置與開機結果。原清單另有 Resolute 的 minimal／XFCE，因 K1 的 RVA22 與 Ubuntu 26.04 官方套件 RVA23 要求不符，入口明確拒絕，不以其他版本湊數。詳見 [標準板名配套](../config/spacemit-k1-standard/README.md)。同源核心及固定資產可以重用，但必須記錄實際快取命中，不能稱每份都完整重新編譯。
+
+公開提交 `84abf7db89de373ed759e73262a78a573f4e91e3` 的 Noble GNOME eMMC 代表已由乾淨來源、全新根系統及重編核心完成本輪適用實機短測；本節後續標準配方增量不改寫該代表的來源提交。一般 MBR 與官方 GPT 成品保持區隔，不能把一份通過結果套給其他成品。
 
 ## 來源與二進位邊界
 

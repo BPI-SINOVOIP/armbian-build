@@ -1,0 +1,13 @@
+--- a/source/py_gpio.c
++++ b/source/py_gpio.c
+@@ -1051,8 +1051,10 @@
+    Py_INCREF(&PWMType);
+    PyModule_AddObject(module, "PWM", (PyObject*)&PWMType);
+ 
++#if PY_VERSION_HEX < 0x03090000
+    if (!PyEval_ThreadsInitialized())
+       PyEval_InitThreads();
++#endif
+ 
+    // register exit functions - last declared is called first
+    if (Py_AtExit(cleanup) != 0)

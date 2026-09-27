@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "board": "bananapicm6",
+  "releases": {
+    "jammy": {
+      "id": "ubuntu",
+      "python_abi": "3.10"
+    },
+    "trixie": {
+      "id": "debian",
+      "python_abi": "3.13"
+    }
+  },
+  "rejected_releases": {
+    "resolute": "CM6 K1 為 RVA22；Ubuntu 26.04 官方套件要求 RVA23。"
+  },
+  "source_commits": {
+    "wiringpi": "da58b589a3ca3e44f569850f07ee17de2e294b5f",
+    "rpi-gpio": "c04d27c86f65ed824921a457455a09d6820b9e1d",
+    "bluetooth": "9ce1210f63cce2da2ee7a347fa7f71cfb764aa20"
+  },
+  "versions": {
+    "wiringpi": "3.19+gitda58b589.cm6.2",
+    "rpi-gpio": "0.7.1+cm6.2",
+    "bluetooth": "0.1.0~20260927rc12.1"
+  },
+  "python_patches": [
+    {
+      "path": "0001-python-new-thread-api.patch",
+      "sha256": "9a4c2a9ee5d353d491284e5a893f96cdef55a391d87cddb2aefd966fee3db60d",
+      "purpose": "Python 3.9 起由直譯器初始化執行緒；避免呼叫 Python 3.13 已移除的 API。"
+    }
+  ],
+  "build_dependencies": [
+    "build-essential",
+    "python3-dev",
+    "libcrypt-dev"
+  ],
+  "compiler_flags": [
+    "-march=rv64gc",
+    "-mabi=lp64d"
+  ],
+  "dependency_policy": "只使用目標發行版簽章 APT；每次先固定解析結果與 DEB SHA，不升降級既有套件，僅移除本輪新增建置相依。",
+  "reproducibility_limit": "預設跟隨建置當時的簽章索引；輸出依賴收據可追溯，但未固定 APT 快照時不保證跨日期位元組一致。"
+}
