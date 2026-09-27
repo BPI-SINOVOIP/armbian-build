@@ -88,3 +88,5 @@ python3 -I -B -c 'import RPi.GPIO as G, RPi._GPIO as C; print(G.VERSION, G.RPI_I
 ## 驗證範圍
 
 本輪公開代表需對自己的成品重新驗證正常開機／登入／媒體、原生畫面、單路相機30FPS、網路、BT掃描、雙聲道、擴容、GPU／桌面、VPU／影音、USB基本讀寫、GPIO軟體及APT基本更新。實際結果另記，不沿用先前版本的PASS。AI、雙相機、長測、HDMI擷取色偏與首登異常情境不在本輪門檻，GPIO不操作腳位。SD載入eMMC只證明該路徑，不能當無SD獨立啟動或Titan USB實燒通過。
+
+建置追溯檔以 `${SOURCE_ROOT}`、`${BUILD_ROOT}` 等穩定標記表示來源與暫存根目錄，避免成品帶入工作站私有路徑。各標記意義隨 manifest 記錄；來源、builder、固定鎖、補丁與套件 SHA 仍保留，可核對實際建置內容。這些標記只用於紀錄，不會改變編譯命令的實際執行位置。
