@@ -24,6 +24,20 @@ PACKAGE = "bpi-cm6-wiringpi"
 VERSION = "3.19+gitda58b589.cm6.1"
 
 
+def portable_record(value, roots):
+    """只正規化追溯文字；實際執行參數及來源／套件內容保持原樣。"""
+    if isinstance(value, str):
+        for path, marker in sorted(roots.items(), key=lambda item: len(item[0]), reverse=True):
+            # 同時涵蓋 argv、-I／-L、-Wl 與 -ffile-prefix-map；不誤改同名前綴目錄。
+            value = re.sub(re.escape(path) + r"(?=$|[/=,:\s'\"])", lambda _: marker, value)
+        return value
+    if isinstance(value, list):
+        return [portable_record(item, roots) for item in value]
+    if isinstance(value, dict):
+        return {key: portable_record(item, roots) for key, item in value.items()}
+    return value
+
+
 def require(condition, message):
     if not condition:
         raise ValueError(message)
@@ -77,6 +91,8 @@ def run_build(args):
     cache.mkdir(parents=True, exist_ok=True)
     output.mkdir(parents=True, exist_ok=True)
     commands = []
+    path_roots = {str(ROOT): "${RECIPE_ROOT}", str(cache): "${CACHE_ROOT}",
+                  str(output): "${OUTPUT_ROOT}"}
     started = datetime.datetime.now(datetime.timezone.utc).isoformat()
     env = os.environ.copy()
     env.update({"SOURCE_DATE_EPOCH": str(lock["source_date_epoch"]), "LC_ALL": "C", "TZ": "UTC"})
@@ -87,8 +103,8 @@ def run_build(args):
     def run(argv, cwd=None):
         result = subprocess.run([str(a) for a in argv], cwd=cwd, env=env,
                                 stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
-        commands.append({"argv": [str(a) for a in argv], "cwd": str(cwd) if cwd else None,
-                         "exit": result.returncode})
+        commands.append(portable_record({"argv": [str(a) for a in argv], "cwd": str(cwd) if cwd else None,
+                                         "exit": result.returncode}, path_roots))
         log.write("\n" + json.dumps(commands[-1], ensure_ascii=False) + "\n" + result.stdout)
         log.flush()
         require(result.returncode == 0, "建置命令失敗，請查 build.log")
@@ -101,6 +117,7 @@ def run_build(args):
         for name in required:
             exe = shutil.which(name)
             require(exe is not None, "缺少建置工具：" + name)
+            path_roots[str(Path(exe).absolute())] = "${TOOL:" + name + "}"
             tools[name] = {"path": exe, "sha256": sha256(Path(exe).resolve()),
                            "version": run([exe, "--version"]).splitlines()[0]}
         require(run(["riscv64-linux-gnu-gcc", "-dumpmachine"]).strip() == "riscv64-linux-gnu",
@@ -110,6 +127,7 @@ def run_build(args):
                         source["archive_bytes"], source["archive_sha256"])
         with tempfile.TemporaryDirectory(prefix="cm6-wiringpi-", dir=cache) as work_name:
             work = Path(work_name)
+            path_roots[str(work)] = "${BUILD_ROOT}"
             with tarfile.open(archive, "r:gz") as tar:
                 for member in tar.getmembers():
                     p = PurePosixPath(member.name)
@@ -118,6 +136,7 @@ def run_build(args):
                     require(member.isfile() or member.isdir(), "來源封存含不允許的特殊項目")
                 tar.extractall(work, filter="data")
             src = work / source["archive_root"]
+            path_roots[str(src)] = "${SOURCE_ROOT}"
             require((src / "VERSION").read_text().strip() == "3.19", "來源版本不符")
             for patch in source["patches"]:
                 p = CONFIG / patch["path"]
@@ -233,12 +252,20 @@ def run_build(args):
                         "safe_probe": lock["safe_probe"], "source_date_epoch": epoch,
                         "started_at": started, "completed_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
                         "commands": commands, "deb_control": fields, "deb_files": files,
+                        "path_markers": {
+                            "${RECIPE_ROOT}": "包含本 builder 與固定來源鎖的配方根目錄。",
+                            "${SOURCE_ROOT}": "固定來源解包後、套用指定補丁的 WiringPi 根目錄。",
+                            "${BUILD_ROOT}": "本次暫存建置根目錄；包含 dependencies 與 package。",
+                            "${CACHE_ROOT}": "呼叫端指定的 --cache 目錄。",
+                            "${OUTPUT_ROOT}": "呼叫端指定的 --output 目錄。",
+                            "${TOOL:name}": "對應 toolchain 中同名工具，實際內容仍由 SHA 與版本綁定。"},
                         "hardware_validation": "未執行；交由主代理依租約在代表鏡像驗證。"}
+            manifest = portable_record(manifest, path_roots)
             save(output / "package-manifest.json", manifest)
         print(json.dumps({"artifact": str(artifact), "sha256": manifest["sha256"], "manifest": str(output / "package-manifest.json")}, ensure_ascii=False))
     except Exception as exc:
-        save(output / "failure.json", {"started_at": started, "failed_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
-                                       "error": str(exc), "commands": commands})
+        save(output / "failure.json", portable_record({"started_at": started, "failed_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+                                                       "error": str(exc), "commands": commands}, path_roots))
         raise
     finally:
         log.close()

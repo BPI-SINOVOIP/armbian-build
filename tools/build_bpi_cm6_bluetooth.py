@@ -7,6 +7,7 @@ import io
 import json
 import os
 from pathlib import Path, PurePosixPath
+import re
 import shutil
 import struct
 import subprocess
@@ -187,6 +188,26 @@ def capture(argv, timeout=30):
     return result.stdout.decode()
 
 
+def public_manifest(record, source_dir, build_root):
+    """只轉換成品紀錄的工作根，不改實際命令或原始建置紀錄。"""
+    roots = ((str(source_dir), "${SOURCE_ROOT}"), (str(build_root), "${BUILD_ROOT}"))
+
+    def argument(value):
+        for root, marker in roots:
+            # 同時涵蓋獨立路徑與 -ffile-prefix-map 的來源；不誤改同名前綴目錄。
+            pattern = r"(^|[=,])" + re.escape(root) + r"(?=/|$|[=,])"
+            value = re.sub(pattern, lambda match: match.group(1) + marker, value)
+        return value
+
+    result = dict(record)
+    result["command"] = [argument(value) for value in record["command"]]
+    if isinstance(record.get("cwd"), str):
+        result["cwd"] = argument(record["cwd"])
+    result["command_roots"] = {"SOURCE_ROOT": "source", "BUILD_ROOT": "."}
+    result["builder_sha256"] = sha(Path(__file__).read_bytes())
+    return result
+
+
 def build(output, source_archive=None, firmware_archive=None):
     lock_data = LOCK.read_bytes()
     record = json.loads(lock_data)
@@ -254,6 +275,7 @@ def build(output, source_archive=None, firmware_archive=None):
                 "readelf": {"path": readelf, "sha256": sha(Path(readelf).read_bytes())},
                 "command": argv, "elf": elf, "files": evidence,
                 "limitation": "只證明固定來源交叉編譯、ELF 格式與所選韌體完整性；未執行 UART、下載板上韌體或證明藍牙可用。"}
+    manifest = public_manifest(manifest, source_dir, output)
     (output / "build-manifest.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n")
     return manifest
 
