@@ -244,6 +244,29 @@ function create_new_rootfs_cache_via_debootstrap() {
 	if [[ $BUILD_DESKTOP == "yes" ]]; then
 		display_alert "Installing desktop via armbian-config" "${DESKTOP_ENVIRONMENT} tier=${DESKTOP_TIER:-mid}" "info"
 		chroot_sdcard_apt_get_install armbian-config
+		if [[ ${RELEASE} == jammy && ${DESKTOP_ENVIRONMENT} == xfce ]]; then
+			# Jammy 的 X11 benchmark 尚未改名，亦未提供兩個 libcamera 整合套件。
+			run_host_command_logged python3 - "${SDCARD}/usr/share/armbian-config/desktops/yaml/xfce.yaml" <<'JAMMY_XFCE_COMPAT'
+import pathlib
+import sys
+import yaml
+
+path = pathlib.Path(sys.argv[1])
+if not path.is_file() or path.is_symlink():
+    raise SystemExit("Jammy XFCE 定義不是普通檔案")
+data = yaml.safe_load(path.read_text(encoding="utf-8"))
+release = data["releases"]["jammy"]
+for key, additions in {
+    "packages_remove": ["pipewire-libcamera", "gstreamer1.0-libcamera", "glmark2-x11", "glmark2-es2-x11"],
+    "packages": ["glmark2", "glmark2-es2"],
+}.items():
+    values = release.setdefault(key, [])
+    if not isinstance(values, list) or not all(isinstance(value, str) for value in values):
+        raise SystemExit("Jammy XFCE 套件欄位格式不符")
+    values.extend(value for value in additions if value not in values)
+path.write_text(yaml.safe_dump(data, sort_keys=False, allow_unicode=True), encoding="utf-8")
+JAMMY_XFCE_COMPAT
+		fi
 		chroot_sdcard "SUDO_USER= DEBIAN_FRONTEND=noninteractive DIALOG=read armbian-config --api module_desktops install de=${DESKTOP_ENVIRONMENT} tier=${DESKTOP_TIER:-mid} mode=build"
 	fi
 
