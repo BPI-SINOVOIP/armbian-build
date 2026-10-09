@@ -1,0 +1,21 @@
+--- a/debian/changelog
++++ b/debian/changelog
+@@ -1,3 +1,11 @@
++mesa (23.2.1-1ubuntu3.1~22.04.4+bpi1) jammy; urgency=medium
++
++  * 回補 G31 不支援 EARLY_ZS_ALWAYS 的架構界線檢查。
++  * 保留 Ubuntu 原有功能、架構條件、ABI 守門與套件集合。
++  * 本機建置候選；尚未完成實板驗證。
++
++ -- BPI Local Build <bpi-local@localhost>  Sat, 10 Oct 2026 02:40:00 +0800
++
+ mesa (23.2.1-1ubuntu3.1~22.04.4) jammy-security; urgency=medium
+ 
+   * SECURITY UPDATE: out-of-bounds memory access in WebGPU
+--- a/debian/patches/series
++++ b/debian/patches/series
+@@ -15,3 +15,4 @@
+ CVE-2026-40393-pre2.patch
+ CVE-2026-40393-1.patch
+ CVE-2026-40393-2.patch
++bpi-g31-preload.patch

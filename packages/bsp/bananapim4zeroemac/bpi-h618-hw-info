@@ -1,0 +1,72 @@
+#!/usr/bin/env bash
+set -u
+shopt -s nullglob
+
+usage() {
+	printf '用法：bpi-h618-hw-info [--help]\n'
+	printf '列出板型、核心、標準 I/O 節點及已設定的覆蓋層。\n'
+	printf '僅查詢資訊；不請求 GPIO 線路、不掃描匯流排、不修改設定。\n'
+}
+
+if (($# > 1)); then
+	usage >&2
+	exit 2
+fi
+case "${1:-}" in
+	--help | -h)
+		usage
+		exit 0
+		;;
+	'') ;;
+	*)
+		usage >&2
+		exit 2
+		;;
+esac
+
+list_nodes() {
+	local label="$1"
+	shift
+	printf '%s：' "${label}"
+	if (($#)); then
+		printf ' %s' "$@"
+	else
+		printf '未找到'
+	fi
+	printf '\n'
+}
+
+model=''
+if [[ -r /proc/device-tree/model ]]; then
+	model=$(tr -d '\0' 2> /dev/null < /proc/device-tree/model) || model=''
+fi
+printf '板型：%s\n' "${model:-無法辨識}"
+printf '核心：%s\n' "$(uname -r)"
+
+printf '\n標準 I/O 節點：\n'
+list_nodes GPIO /dev/gpiochip[0-9]*
+list_nodes I2C /dev/i2c-[0-9]*
+list_nodes SPI /dev/spidev[0-9]*
+list_nodes UART /dev/ttyS[0-9]*
+list_nodes PWM /sys/class/pwm/pwmchip[0-9]*
+
+printf '\nGPIO 控制器資訊：\n'
+if command -v gpiodetect > /dev/null 2>&1; then
+	if controllers=$(gpiodetect 2> /dev/null); then
+		printf '%s\n' "${controllers:-未找到 GPIO 控制器。}"
+	else
+		printf '無法完整讀取；請檢查裝置權限及核心支援。\n'
+	fi
+else
+	printf '未安裝 gpiodetect；僅列出裝置節點。\n'
+fi
+
+printf '\n已設定的覆蓋層：\n'
+if [[ -r /boot/armbianEnv.txt ]] && overlays=$(sed -n \
+	-e '/^overlays=/p' -e '/^user_overlays=/p' 2> /dev/null < /boot/armbianEnv.txt); then
+	printf '%s\n' "${overlays:-未設定。}"
+else
+	printf '無法讀取 /boot/armbianEnv.txt。\n'
+fi
+printf '\n節點存在不代表接線可用；覆蓋層設定不代表已套用。\n'
+printf 'EMAC 保留 PA0-PA9、PA12；不得請求或重新設定這些腳位。\n'

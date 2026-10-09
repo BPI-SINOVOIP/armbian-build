@@ -1,0 +1,4 @@
+bd1034d3d29ef9e1e638bb5645a0ca31426bc2bcbb60842cbad2adcccffb4a00  mesa_22.3.6-1+deb12u2.dsc
+737cb8e5d380ce1a0ad01fb8b74db7f27303435c353e753d2302e8cf3927bad2  mesa_22.3.6.orig.tar.gz
+a6045acd53bc400eafcf8b2aba94df5728378df27b6e61154784b00eaec2ec1e  mesa_22.3.6-1+deb12u2.diff.gz
+1e62f7653e00dcf4368a902f6d352f796a46c5cc61eac704e3b0ea3b17498ff8  bpi-g31-preload.patch

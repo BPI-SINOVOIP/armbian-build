@@ -1,0 +1,26 @@
+// SPDX-License-Identifier: (GPL-2.0+ OR MIT)
+/dts-v1/;
+/plugin/;
+
+#include <dt-bindings/thermal/thermal.h>
+
+/ {
+	compatible = "sinovoip,bpi-m4-zero", "allwinner,sun50i-h618";
+
+	fragment@0 {
+		target-path = "/thermal-zones/cpu-thermal";
+		__overlay__ {
+			cooling-maps {
+				map0 {
+					trip = <&cpu_threshold>;
+					cooling-device = <&cpu0 1 3>;
+				};
+
+				map1 {
+					trip = <&cpu_target>;
+					cooling-device = <&cpu0 4 THERMAL_NO_LIMIT>;
+				};
+			};
+		};
+	};
+};

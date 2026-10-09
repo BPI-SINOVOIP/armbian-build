@@ -1,0 +1,25 @@
+--- a/src/panfrost/lib/pan_blitter.c
++++ b/src/panfrost/lib/pan_blitter.c
+@@ -1295,7 +1295,10 @@
+       enum pipe_format fmt = fb->zs.view.zs
+                                 ? fb->zs.view.zs->image->layout.format
+                                 : fb->zs.view.s->image->layout.format;
+-      bool always = false;
++      /* G31 全畫面預載須使用 ALWAYS，而非 INTERSECT。 */
++      bool always = !fb->extent.minx && !fb->extent.miny &&
++                    fb->extent.maxx == (fb->width - 1) &&
++                    fb->extent.maxy == (fb->height - 1);
+ 
+       /* If we're dealing with a combined ZS resource and only one
+        * component is cleared, we need to reload the whole surface
+@@ -1314,8 +1317,9 @@
+        * preferable (saving bandwidth vs having ZS preloaded
+        * earlier), so let's leave it like that for now.
+        */
++      /* EARLY_ZS_ALWAYS 始於 7.2，G31 的 7.0 不支援。 */
+       fb->bifrost.pre_post.modes[dcd_idx] =
+-         desc_pool->dev->arch > 6
++         (desc_pool->dev->arch > 6 && desc_pool->dev->gpu_id >= 0x7200)
+             ? MALI_PRE_POST_FRAME_SHADER_MODE_EARLY_ZS_ALWAYS
+          : always ? MALI_PRE_POST_FRAME_SHADER_MODE_ALWAYS
+                   : MALI_PRE_POST_FRAME_SHADER_MODE_INTERSECT;

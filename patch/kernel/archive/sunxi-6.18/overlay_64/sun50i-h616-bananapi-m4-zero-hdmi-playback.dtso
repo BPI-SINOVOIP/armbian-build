@@ -1,0 +1,15 @@
+// SPDX-License-Identifier: (GPL-2.0+ OR MIT)
+/dts-v1/;
+/plugin/;
+
+/ {
+	compatible = "sinovoip,bpi-m4-zero", "allwinner,sun50i-h618";
+
+	fragment@0 {
+		target = <&ahub1_mach>;
+		__overlay__ {
+			/* HDMI 僅供播放，避免桌面音訊服務誤開擷取串流。 */
+			soundcard-mach,playback-only;
+		};
+	};
+};

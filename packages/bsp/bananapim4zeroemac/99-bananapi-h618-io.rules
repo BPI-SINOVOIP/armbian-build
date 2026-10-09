@@ -1,0 +1,4 @@
+# 僅供本板的主 GPIO 控制器；BSP 安裝時建立 gpio 系統群組。
+# 群組權限涵蓋整顆控制器，不能排除 EMAC 的 PA0-PA9、PA12。
+# 僅授權可信任使用者；不開放 R_PIO、I2C、SPI、UART 或 PWM。
+SUBSYSTEM=="gpio", KERNEL=="gpiochip[0-9]*", DRIVERS=="sun50i-h616-pinctrl", GROUP="gpio", MODE="0660"

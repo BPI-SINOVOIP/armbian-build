@@ -280,10 +280,9 @@ function reversion_armbian-bsp-cli_deb_contents() {
 	if [[ "${KEEP_ORIGINAL_OS_RELEASE:-"no"}" == "yes" ]]; then
 		depends_base_files=""
 	fi
-	# Provides/Conflicts/Replaces linux-sysctl-defaults: the BSP ships
-	# /usr/lib/sysctl.d/50-default.conf itself (armbian's copy of the distro
-	# defaults), so it satisfies that dependency without pulling the external
-	# package, and cleanly takes over its file if it was ever installed.
+	# BSP 以 /usr/lib/sysctl.d/60-armbian-defaults.conf 提供預設值。
+	# 保留 linux-sysctl-defaults 的套件關係，不另拉入該套件。
+	# 使用自有檔名，避免覆寫 systemd 的 50-default.conf。
 	cat <<- EOF >> "${control_file_new}"
 		Depends: bash, linux-base, u-boot-tools, initramfs-tools, lsb-release, fping, device-tree-compiler${depends_base_files}${EXTRA_BSPDEPS:+, ${EXTRA_BSPDEPS}}
 		Replaces: zram-config, linux-sysctl-defaults, armbian-bsp-cli-${BOARD}${EXTRA_BSP_NAME} (<< ${REVISION})
@@ -398,9 +397,8 @@ function board_side_bsp_cli_preinst() {
 			echo vm.swappiness=100 >> /etc/sysctl.conf
 			;;
 	esac
-	# --system (not -p) so the change to /etc/sysctl.conf above *and* the
-	# drop-ins under /usr/lib/sysctl.d (our 50-default.conf) are applied on
-	# upgrade; -p reads only /etc/sysctl.conf and would leave them to next boot.
+	# --system 同時套用 /etc/sysctl.conf 與 60-armbian-defaults.conf 等設定。
+	# -p 只讀 /etc/sysctl.conf，其他設定須等下次開機。
 	sysctl --system > /dev/null 2>&1
 	# replace canonical advertisement
 	if [[ -d "/var/lib/ubuntu-advantage/messages/" ]]; then
