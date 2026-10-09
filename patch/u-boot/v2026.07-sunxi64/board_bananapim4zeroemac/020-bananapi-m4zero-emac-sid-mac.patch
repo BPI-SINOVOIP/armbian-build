@@ -1,0 +1,176 @@
+--- a/board/sunxi/board.c
++++ b/board/sunxi/board.c
+@@ -47,6 +47,8 @@
+ #include <fdt_support.h>
+ #include <nand.h>
+ #include <net.h>
++#include <search.h>
++#include <linux/ctype.h>
+ #include <spl.h>
+ #include <sy8106a.h>
+ #include <asm/setup.h>
+@@ -824,6 +826,95 @@
+ 	return true;
+ }
+ 
++static bool bpi_m4zero_valid_mac(const char *name, u8 *mac)
++{
++	static const u8 placeholder[] = { 0xde, 0xad, 0xbe, 0xef, 0x00 };
++	const char *value = env_get(name);
++	int i;
++
++	if (!value || strlen(value) != 17)
++		return false;
++	for (i = 0; i < 17; i++)
++		if (i % 3 == 2 ? value[i] != ':' : !isxdigit(value[i]))
++			return false;
++
++	return eth_env_get_enetaddr(name, mac) &&
++		(memcmp(mac, placeholder, sizeof(placeholder)) || mac[5] > 1);
++}
++
++static int bpi_m4zero_set_mac(const char *name, const u8 *mac)
++{
++	char value[18];
++	const char * const argv[] = { "setenv", name, value };
++	u8 current[6];
++	bool valid = bpi_m4zero_valid_mac(name, current);
++	int flags = H_PROGRAMMATIC;
++
++	if (valid && !memcmp(current, mac, sizeof(current)))
++		return 0;
++	/* 僅允許遷移無效值與已知占位值，不解除全域 MAC 保護。 */
++	if (!valid)
++		flags |= H_FORCE;
++	snprintf(value, sizeof(value), "%02x:%02x:%02x:%02x:%02x:%02x",
++		 mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
++	if (env_do_env_set(0, 3, (char * const *)argv, flags) ||
++	    !bpi_m4zero_valid_mac(name, current) ||
++	    memcmp(current, mac, sizeof(current)))
++		return -EINVAL;
++	return 0;
++}
++
++static void bpi_m4zero_setup_network(const void *fdt)
++{
++	static const char * const names[] = {
++		"ethaddr", "eth1addr", "usbnet_hostaddr"
++	};
++	unsigned int sid[4];
++	u8 mac[3][6];
++	bool generated[3] = { false };
++	int i, j, attempt;
++
++	if (fdt_node_check_compatible(fdt, 0, "sinovoip,bpi-m4-zero") ||
++	    !get_unique_sid(sid))
++		return;
++
++	for (i = 0; i < ARRAY_SIZE(names); i++) {
++		if (bpi_m4zero_valid_mac(names[i], mac[i]))
++			continue;
++		if (i == 1 && bpi_m4zero_valid_mac("usbnet_devaddr", mac[i]))
++			continue;
++		mac[i][0] = (i << 4) | 0x02;
++		mac[i][1] = sid[0] & 0xff;
++		mac[i][2] = sid[3] >> 24;
++		mac[i][3] = sid[3] >> 16;
++		mac[i][4] = sid[3] >> 8;
++		mac[i][5] = sid[3];
++		generated[i] = true;
++	}
++
++	/* 自動位址避開自訂位址；三個介面至多排除兩個候選。 */
++	for (i = 0; i < ARRAY_SIZE(names); i++) {
++		if (!generated[i])
++			continue;
++		for (attempt = 0; attempt < ARRAY_SIZE(names); attempt++) {
++			for (j = 0; j < ARRAY_SIZE(names); j++)
++				if (i != j && !memcmp(mac[i], mac[j], sizeof(mac[i])))
++					break;
++			if (j == ARRAY_SIZE(names))
++				break;
++			mac[i][0] += 0x10;
++		}
++	}
++
++	for (i = 0; i < ARRAY_SIZE(names); i++)
++		if (bpi_m4zero_set_mac(names[i], mac[i])) {
++			printf("BPI-M4 Zero: MAC 設定失敗：%s\n", names[i]);
++			return;
++		}
++	if (bpi_m4zero_set_mac("usbnet_devaddr", mac[1]))
++		printf("BPI-M4 Zero: USB MAC 設定失敗\n");
++}
++
+ /*
+  * Note this function gets called multiple times.
+  * It must not make any changes to env variables which already exist.
+@@ -905,6 +996,7 @@
+ 		env_set("fdtfile", str);
+ 	}
+ 
++	bpi_m4zero_setup_network(gd->fdt_blob);
+ 	setup_environment(gd->fdt_blob);
+ 
+ 	return 0;
+--- a/drivers/usb/gadget/ether.c
++++ b/drivers/usb/gadget/ether.c
+@@ -2463,8 +2463,10 @@
+ 	priv->netdev = dev;
+ 	l_priv = priv;
+ 
+-	get_ether_addr(CONFIG_USBNET_DEV_ADDR, pdata->enetaddr);
+-	eth_env_set_enetaddr("usbnet_devaddr", pdata->enetaddr);
++	if (!env_get("usbnet_devaddr")) {
++		get_ether_addr(CONFIG_USBNET_DEV_ADDR, pdata->enetaddr);
++		eth_env_set_enetaddr("usbnet_devaddr", pdata->enetaddr);
++	}
+ 
+ 	/* Configure default mac-addresses for the USB ethernet device */
+ #ifdef CONFIG_USBNET_DEV_ADDR
+@@ -2490,6 +2492,7 @@
+ 		pr_err("Need valid 'usbnet_hostaddr' to be set");
+ 		return -EINVAL;
+ 	}
++	get_ether_addr(dev_addr, pdata->enetaddr);
+ 
+ 	priv->eth_driver.speed		= DEVSPEED;
+ 	priv->eth_driver.bind		= eth_bind;
+--- a/dts/upstream/src/arm64/allwinner/sun50i-h618-bananapi-m4.dtsi
++++ b/dts/upstream/src/arm64/allwinner/sun50i-h618-bananapi-m4.dtsi
+@@ -16,6 +16,7 @@
+ 	compatible = "sinovoip,bpi-m4-zero", "allwinner,sun50i-h618";
+ 
+ 	aliases {
++		ethernet0 = &emac1;
+ 		serial0 = &uart0;
+ 		serial5 = &uart5;
+ 	};
+@@ -82,6 +83,27 @@
+ 	};
+ };
+ 
++&{/soc} {
++	emac1: ethernet@5030000 {
++		compatible = "allwinner,sun50i-h616-emac";
++		syscon = <&syscon 1>;
++		reg = <0x05030000 0x10000>;
++		interrupts = <GIC_SPI 15 IRQ_TYPE_LEVEL_HIGH>;
++		interrupt-names = "macirq";
++		resets = <&ccu RST_BUS_EMAC1>;
++		reset-names = "stmmaceth";
++		clocks = <&ccu CLK_BUS_EMAC1>;
++		clock-names = "stmmaceth";
++		status = "disabled";
++
++		mdio1: mdio {
++			compatible = "snps,dwmac-mdio";
++			#address-cells = <1>;
++			#size-cells = <0>;
++		};
++	};
++};
++
+ &cpu0 {
+ 	cpu-supply = <&reg_dcdc2>;
+ };
