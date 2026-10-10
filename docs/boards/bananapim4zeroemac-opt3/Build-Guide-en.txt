@@ -1,0 +1,352 @@
+BPI-M4 Zero EMAC opt3 Public Source Build Guide
+
+Date: 2026-10-10
+Image version: 26.11.0-trunk-opt3
+Board: bananapim4zeroemac; architecture: arm64; kernel: 6.18.55-current-sunxi64
+Scope: Debian 12 Bookworm, Debian 13 Trixie, Ubuntu 22.04 Jammy, Ubuntu 24.04 Noble, Ubuntu 26.04 Resolute.
+Each distribution has minimal and XFCE images: ten images total.
+Use only BPI-M4 Zero with a compatible FPC24 Ethernet expansion board.
+
+This guide provides public sources and commands for all ten builds. No private repository is required.
+Build matching Mesa packages first for Bookworm and Jammy using their recipes.
+Source publication is not a clean rebuild or full hardware acceptance. These images remain test candidates, not stable releases.
+
+1. Public Sources and Pinned Code Revision
+
+Public branch: bpi-m4zeroemac-opt3-20261010
+Public URL: https://github.com/BPI-SINOVOIP/armbian-build.git
+Pinned code commit: 170bc7a688deb6cd6f8bdf29f3f249883758efee
+
+The branch may contain later documentation commits. The pinned code commit must be an ancestor of the public branch.
+This version includes board definitions, SID MAC fixes, GPU/VPU/I/O, kernel and U-Boot patches, BSP, and Mesa recipes.
+It derives from a public baseline. No experimental tools or specific laboratory equipment are required.
+The original images predate source consolidation and used caches. Rebuilt hashes need not match the original published images.
+Use a new directory without existing userpatches, packages, or caches.
+Prepare Git and CA certificates, then run these commands in order:
+
+    set -euo pipefail
+    sudo apt update
+    sudo apt install --yes git ca-certificates
+    src_url=https://github.com/BPI-SINOVOIP/armbian-build.git
+    src_ref=bpi-m4zeroemac-opt3-20261010
+    src_commit=170bc7a688deb6cd6f8bdf29f3f249883758efee
+    git ls-remote --exit-code "$src_url" "refs/heads/$src_ref"
+    git clone --single-branch --branch "$src_ref" "$src_url" armbian-build-opt3
+    cd armbian-build-opt3
+    git merge-base --is-ancestor "$src_commit" HEAD
+    git checkout --detach "$src_commit"
+    test "$(git rev-parse HEAD)" = "$src_commit"
+    test -z "$(git status --porcelain)"
+
+2. Host and Dependencies
+
+The designated commit's README.md requires at least 8 GB RAM and approximately 50 GB free disk space.
+Use Armbian/Debian 13 Trixie for native builds. Supported host architectures are x86_64, aarch64, and riscv64.
+These commands select native builds with PREFER_DOCKER=no. Provide sudo or root access and network connectivity.
+README also lists Docker and WSL2. This guide does not validate those paths.
+Prepare Bash, Git, sudo, and CA certificates. Keep the system and package sources functional.
+
+Use lib/functions/host/basic-deps.sh and lib/functions/host/prepare-host.sh for the full host dependency definitions.
+The framework installs compilers, make, ccache, bison, flex, dtc, u-boot-tools, Python, image tools, and other dependencies.
+Cross-architecture builds need the matching cross-compiler and QEMU/binfmt. A short package list is not the full dependency set.
+Mesa also needs an isolated arm64 environment for its distribution and dependencies from the original debian/control.
+
+50 GB does not guarantee enough space to retain ten image sets.
+The ten original .img files total 40986738688 bytes; the ten .img.xz files total 8026885916 bytes.
+Together they require 49013624604 bytes, excluding sources, caches, temporary files, and Mesa builds.
+The Mesa recipes list reference resources: 6 CPUs, 8 GiB RAM, approximately 20 GiB disk, and no additional swap.
+Reserve additional space before building. The framework's 10 GiB disk check is a warning threshold, not sufficient capacity.
+Build sequentially. Do not run multiple builds in the same worktree.
+
+3. opt3 Components and Mesa Prerequisites
+
+Kernel source: https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git
+Pinned kernel commit: 725bd2f3c81d54edccb66fead01d4c0c222e2231
+Apply the repository's patch/kernel/archive/sunxi-6.18/ patches. Upstream kernel sources alone are insufficient.
+U-Boot: tag:v2026.07; recorded build source: https://github.com/u-boot/u-boot
+Recorded resolved commit: ece349ade2973e220f524ce59e59711cc919263f
+U-Boot also uses patch/u-boot/v2026.07-sunxi64/.
+ATF: https://github.com/ARM-software/arm-trusted-firmware; tag:lts-v2.12.9; PLAT=sun50i_h616.
+Board inheritance and versions come from config/boards/bananapim4zero.conf, config/boards/bananapim4zeroemac.csc,
+config/sources/families/sun50iw9-bpi.conf, and config/sources/families/include/sunxi64_common.inc.
+
+The board enables bpi-m4zeroemac-mesa automatically. No additional ENABLE_EXTENSIONS argument is required.
+Bookworm and Jammy require BPI_MESA_DEB_DIR. The extension does not download prebuilt patched Mesa packages.
+This commit already renames the BSP defaults file to 60-armbian-defaults.conf.
+Do not add ENABLE_EXTENSIONS=bsp-sysctl-coexist. That older extension requires 50-default.conf and fails with this commit.
+IMAGE_VERSION sets the image name. It does not change every package REVISION to opt3.
+The original .img.txt files report Revision 26.11.0-trunk. Version strings alone cannot establish identical contents.
+
+Bookworm Mesa:
+Official source: https://deb.debian.org/debian/pool/main/m/mesa/
+Source version: 22.3.6-1+deb12u2; candidate version: 22.3.6-1+deb12u2+bpi1.
+Full recipe: config/sources/vendors/bananapi/mesa/bookworm/README.zh-TW.md.
+Source manifest: SHA256SUMS.source.txt; patch: bpi-g31-preload.patch.
+
+Jammy Mesa:
+Official source: https://archive.ubuntu.com/ubuntu/pool/main/m/mesa/
+Source version: 23.2.1-1ubuntu3.1~22.04.4; candidate version: 23.2.1-1ubuntu3.1~22.04.4+bpi1.
+Full recipe: config/sources/vendors/bananapi/mesa/jammy/README.zh-TW.md.
+Source manifest: SOURCE-SHA256SUMS.txt; patches: jammy-23.2.1-g31-preload.patch and packaging-version.patch.
+
+Follow each complete recipe: acquire sources, verify official signatures and SHA, install dependencies, apply patches, then build packages.
+Key commands include python3 verify-official-source.py, sha256sum -c, apt-get build-dep,
+dpkg-checkbuilddeps, and dpkg-buildpackage -b -us -uc -j6. Do not omit their prerequisites.
+This review inspected recipes only in the designated source candidate. It did not download, authenticate, or rebuild sources.
+Stop if indexes lack the version, authentication fails, or dependencies cannot be resolved. Official patches may use only documented, verified offsets. BPI and packaging changes require zero fuzz and zero offset.
+Do not mix distributions, disable signature checks, or substitute unpatched packages.
+These backports are not official Debian, Ubuntu, or Armbian packages.
+
+Place verified, matching-version arm64 Mesa .deb files and SHA256SUMS.txt in separate package directories.
+Use actual checksums for your rebuilt packages. Do not copy reference artifact checksums to imply a match.
+Required packages include libgl1-mesa-dri, libegl-mesa0, libglx-mesa0, libgbm1, and libglapi-mesa.
+Also cover every Source=mesa package already installed in the rootfs.
+The extension rejects missing packages, mixed versions, and downgrades.
+Exclude unrelated packages and unlisted .deb files. Do not rename .ddeb files to .deb.
+The extension selects required packages; it does not install every development or debug package.
+Image trace records reside in /usr/share/bpi-m4zeroemac-mesa/.
+
+The board selects official trixie-backports Mesa for Trixie, requiring at least 25.2.0.
+The release notes record 26.1.6 for this batch, but the build rules do not pin that exact version.
+Noble and Resolute bypass local Mesa installation and resolve packages from their distribution sources.
+None of these ten configurations provides a complete immutable package snapshot.
+
+These paths are examples for your package directories. Complete the recipes first, then adjust the paths:
+
+    BOOKWORM_MESA_DIR="$HOME/mesa-opt3/bookworm/packages"
+    JAMMY_MESA_DIR="$HOME/mesa-opt3/jammy/packages"
+
+Place only verified Mesa .deb files for the matching distribution in each package directory. Generate relative-filename checksums:
+
+    (cd "$BOOKWORM_MESA_DIR" && sha256sum -- *.deb > SHA256SUMS.txt)
+    (cd "$JAMMY_MESA_DIR" && sha256sum -- *.deb > SHA256SUMS.txt)
+
+    test -f "$BOOKWORM_MESA_DIR/SHA256SUMS.txt"
+    test -f "$JAMMY_MESA_DIR/SHA256SUMS.txt"
+    (cd "$BOOKWORM_MESA_DIR" && sha256sum -c SHA256SUMS.txt)
+    (cd "$JAMMY_MESA_DIR" && sha256sum -c SHA256SUMS.txt)
+
+4. Ten Image Build Commands
+
+Run these commands from the approved source root in the same Bash session. Continue only after each build succeeds.
+Commands derive from ten successful build records. Jammy uses the second attempt, not the earlier BSP collision failure.
+Compared with those records, sudo -n and DONT_BUILD_ARTIFACTS=uboot are removed.
+This permits U-Boot acquisition or compilation in a fresh environment.
+Mesa paths become user-owned paths. Trixie additionally sets CARD_DEVICE= to avoid selecting a direct-write device.
+Other listed parameters retain recorded values. These adapted commands have not been rerun from a clean source checkout.
+Omitting ENABLE_EXTENSIONS=bsp-sysctl-coexist is intentional and necessary.
+minimal requires BUILD_MINIMAL=yes; a standard CLI image is not equivalent.
+XFCE requires BUILD_DESKTOP=yes, BUILD_MINIMAL=no, DESKTOP_ENVIRONMENT=xfce, and DESKTOP_TIER=mid.
+
+1. bookworm minimal
+
+    ./compile.sh build \
+      BOARD=bananapim4zeroemac BRANCH=current RELEASE=bookworm EXPERT=yes \
+      BUILD_DESKTOP=no BUILD_MINIMAL=yes \
+      KERNEL_CONFIGURE=no KERNELBRANCH=commit:725bd2f3c81d54edccb66fead01d4c0c222e2231 \
+      KERNEL_GIT=shallow IMAGE_VERSION=26.11.0-trunk-opt3 MAKE_FOLDERS=optimized3-20261010 \
+      COMPRESS_OUTPUTIMAGE=sha CPUTHREADS=6 FORCE_USE_RAMDISK=no \
+      PREFER_DOCKER=no ARTIFACT_IGNORE_CACHE=no CLEAN_LEVEL=none SHARE_LOG=no CARD_DEVICE= \
+      BPI_MESA_DEB_DIR="$BOOKWORM_MESA_DIR"
+
+2. bookworm xfce
+
+    ./compile.sh build \
+      BOARD=bananapim4zeroemac BRANCH=current RELEASE=bookworm EXPERT=yes \
+      BUILD_DESKTOP=yes BUILD_MINIMAL=no \
+      DESKTOP_ENVIRONMENT=xfce DESKTOP_TIER=mid \
+      KERNEL_CONFIGURE=no KERNELBRANCH=commit:725bd2f3c81d54edccb66fead01d4c0c222e2231 \
+      KERNEL_GIT=shallow IMAGE_VERSION=26.11.0-trunk-opt3 MAKE_FOLDERS=optimized3-20261010 \
+      COMPRESS_OUTPUTIMAGE=sha CPUTHREADS=6 FORCE_USE_RAMDISK=no \
+      PREFER_DOCKER=no ARTIFACT_IGNORE_CACHE=no CLEAN_LEVEL=none SHARE_LOG=no CARD_DEVICE= \
+      BPI_MESA_DEB_DIR="$BOOKWORM_MESA_DIR"
+
+3. trixie minimal
+
+    ./compile.sh build \
+      BOARD=bananapim4zeroemac BRANCH=current RELEASE=trixie EXPERT=yes \
+      BUILD_DESKTOP=no BUILD_MINIMAL=yes \
+      KERNEL_CONFIGURE=no KERNELBRANCH=commit:725bd2f3c81d54edccb66fead01d4c0c222e2231 \
+      KERNEL_GIT=shallow IMAGE_VERSION=26.11.0-trunk-opt3 MAKE_FOLDERS=optimized3-20261010 \
+      COMPRESS_OUTPUTIMAGE=sha CPUTHREADS=6 FORCE_USE_RAMDISK=no \
+      PREFER_DOCKER=no ARTIFACT_IGNORE_CACHE=no CLEAN_LEVEL=none SHARE_LOG=no CARD_DEVICE=
+
+4. trixie xfce
+
+    ./compile.sh build \
+      BOARD=bananapim4zeroemac BRANCH=current RELEASE=trixie EXPERT=yes \
+      BUILD_DESKTOP=yes BUILD_MINIMAL=no \
+      DESKTOP_ENVIRONMENT=xfce DESKTOP_TIER=mid \
+      KERNEL_CONFIGURE=no KERNELBRANCH=commit:725bd2f3c81d54edccb66fead01d4c0c222e2231 \
+      KERNEL_GIT=shallow IMAGE_VERSION=26.11.0-trunk-opt3 MAKE_FOLDERS=optimized3-20261010 \
+      COMPRESS_OUTPUTIMAGE=sha CPUTHREADS=6 FORCE_USE_RAMDISK=no \
+      PREFER_DOCKER=no ARTIFACT_IGNORE_CACHE=no CLEAN_LEVEL=none SHARE_LOG=no CARD_DEVICE=
+
+5. jammy minimal
+
+    ./compile.sh build \
+      BOARD=bananapim4zeroemac BRANCH=current RELEASE=jammy EXPERT=yes \
+      BUILD_DESKTOP=no BUILD_MINIMAL=yes \
+      KERNEL_CONFIGURE=no KERNELBRANCH=commit:725bd2f3c81d54edccb66fead01d4c0c222e2231 \
+      KERNEL_GIT=shallow IMAGE_VERSION=26.11.0-trunk-opt3 MAKE_FOLDERS=optimized3-20261010 \
+      COMPRESS_OUTPUTIMAGE=sha CPUTHREADS=6 FORCE_USE_RAMDISK=no \
+      PREFER_DOCKER=no ARTIFACT_IGNORE_CACHE=no CLEAN_LEVEL=none SHARE_LOG=no CARD_DEVICE= \
+      BPI_MESA_DEB_DIR="$JAMMY_MESA_DIR"
+
+6. jammy xfce
+
+    ./compile.sh build \
+      BOARD=bananapim4zeroemac BRANCH=current RELEASE=jammy EXPERT=yes \
+      BUILD_DESKTOP=yes BUILD_MINIMAL=no \
+      DESKTOP_ENVIRONMENT=xfce DESKTOP_TIER=mid \
+      KERNEL_CONFIGURE=no KERNELBRANCH=commit:725bd2f3c81d54edccb66fead01d4c0c222e2231 \
+      KERNEL_GIT=shallow IMAGE_VERSION=26.11.0-trunk-opt3 MAKE_FOLDERS=optimized3-20261010 \
+      COMPRESS_OUTPUTIMAGE=sha CPUTHREADS=6 FORCE_USE_RAMDISK=no \
+      PREFER_DOCKER=no ARTIFACT_IGNORE_CACHE=no CLEAN_LEVEL=none SHARE_LOG=no CARD_DEVICE= \
+      BPI_MESA_DEB_DIR="$JAMMY_MESA_DIR"
+
+7. noble minimal
+
+    ./compile.sh build \
+      BOARD=bananapim4zeroemac BRANCH=current RELEASE=noble EXPERT=yes \
+      BUILD_DESKTOP=no BUILD_MINIMAL=yes \
+      KERNEL_CONFIGURE=no KERNELBRANCH=commit:725bd2f3c81d54edccb66fead01d4c0c222e2231 \
+      KERNEL_GIT=shallow IMAGE_VERSION=26.11.0-trunk-opt3 MAKE_FOLDERS=optimized3-20261010 \
+      COMPRESS_OUTPUTIMAGE=sha CPUTHREADS=6 FORCE_USE_RAMDISK=no \
+      PREFER_DOCKER=no ARTIFACT_IGNORE_CACHE=no CLEAN_LEVEL=none SHARE_LOG=no CARD_DEVICE=
+
+8. noble xfce
+
+    ./compile.sh build \
+      BOARD=bananapim4zeroemac BRANCH=current RELEASE=noble EXPERT=yes \
+      BUILD_DESKTOP=yes BUILD_MINIMAL=no \
+      DESKTOP_ENVIRONMENT=xfce DESKTOP_TIER=mid \
+      KERNEL_CONFIGURE=no KERNELBRANCH=commit:725bd2f3c81d54edccb66fead01d4c0c222e2231 \
+      KERNEL_GIT=shallow IMAGE_VERSION=26.11.0-trunk-opt3 MAKE_FOLDERS=optimized3-20261010 \
+      COMPRESS_OUTPUTIMAGE=sha CPUTHREADS=2 FORCE_USE_RAMDISK=no \
+      PREFER_DOCKER=no ARTIFACT_IGNORE_CACHE=no CLEAN_LEVEL=none SHARE_LOG=no CARD_DEVICE=
+
+9. resolute minimal
+
+    ./compile.sh build \
+      BOARD=bananapim4zeroemac BRANCH=current RELEASE=resolute EXPERT=yes \
+      BUILD_DESKTOP=no BUILD_MINIMAL=yes \
+      KERNEL_CONFIGURE=no KERNELBRANCH=commit:725bd2f3c81d54edccb66fead01d4c0c222e2231 \
+      KERNEL_GIT=shallow IMAGE_VERSION=26.11.0-trunk-opt3 MAKE_FOLDERS=optimized3-20261010 \
+      COMPRESS_OUTPUTIMAGE=sha CPUTHREADS=2 FORCE_USE_RAMDISK=no \
+      PREFER_DOCKER=no ARTIFACT_IGNORE_CACHE=no CLEAN_LEVEL=none SHARE_LOG=no CARD_DEVICE=
+
+10. resolute xfce
+
+    ./compile.sh build \
+      BOARD=bananapim4zeroemac BRANCH=current RELEASE=resolute EXPERT=yes \
+      BUILD_DESKTOP=yes BUILD_MINIMAL=no \
+      DESKTOP_ENVIRONMENT=xfce DESKTOP_TIER=mid \
+      KERNEL_CONFIGURE=no KERNELBRANCH=commit:725bd2f3c81d54edccb66fead01d4c0c222e2231 \
+      KERNEL_GIT=shallow IMAGE_VERSION=26.11.0-trunk-opt3 MAKE_FOLDERS=optimized3-20261010 \
+      COMPRESS_OUTPUTIMAGE=sha CPUTHREADS=2 FORCE_USE_RAMDISK=no \
+      PREFER_DOCKER=no ARTIFACT_IGNORE_CACHE=no CLEAN_LEVEL=none SHARE_LOG=no CARD_DEVICE=
+
+5. Outputs, Compression, and SHA-256
+
+Output directory: output/images/bananapim4zeroemac/optimized3-20261010/
+COMPRESS_OUTPUTIMAGE=sha retains .img and produces .img.sha and the .img.txt description.
+The batch produced raw images before compression. The following commands process your rebuilt outputs.
+Complete all ten builds first. Exclude other versions with matching names.
+Do not start with existing same-name .xz files or SHA256SUMS.txt.
+These commands retain .img files. Missing files, checksum mismatches, or compression errors stop processing.
+Your generated SHA256SUMS.txt identifies your rebuilds. It does not authenticate the original release files.
+
+    set -euo pipefail
+    cd output/images/bananapim4zeroemac/optimized3-20261010
+    test ! -e SHA256SUMS.txt
+    for release in bookworm trixie jammy noble resolute; do
+      for variant in minimal xfce_desktop; do
+        img="Armbian-unofficial_26.11.0-trunk-opt3_Bananapim4zeroemac_${release}_current_6.18.55_${variant}.img"
+        test -f "$img"
+        test ! -e "$img.xz"
+        test -f "$img.sha"
+        sha256sum -c "$img.sha"
+        xz -T2 -6 --keep "$img"
+        xz -t "$img.xz"
+        sha256sum "$img.xz" > "$img.xz.sha"
+      done
+    done
+    cat Armbian-unofficial_26.11.0-trunk-opt3_Bananapim4zeroemac_*_current_6.18.55_*.img.xz.sha > SHA256SUMS.txt
+    test "$(wc -l < SHA256SUMS.txt)" -eq 10
+    sha256sum -c SHA256SUMS.txt
+
+6. Original Batch Artifact Identity
+
+Names, byte counts, and SHA-256 values below come from existing file metadata and .img.xz.sha files.
+This documentation review did not reread large images, recalculate image hashes, or repeat XZ tests.
+Each entry lists the .img.xz filename, raw .img bytes, compressed .img.xz bytes, and compressed-file SHA-256.
+These identify the original batch. They do not guarantee that your rebuild will match.
+For original release downloads, run sha256sum -c SHA256SUMS.txt with that batch's official manifest. Stop on any mismatch.
+
+Armbian-unofficial_26.11.0-trunk-opt3_Bananapim4zeroemac_bookworm_current_6.18.55_minimal.img.xz
+.img: 2294284288 bytes; .img.xz: 484212368 bytes
+SHA-256: 14802a3de5cfc4c91b158d8ffaaab4d8a6220de9fd3be0cd23ec61d48724af36
+
+Armbian-unofficial_26.11.0-trunk-opt3_Bananapim4zeroemac_bookworm_current_6.18.55_xfce_desktop.img.xz
+.img: 5314183168 bytes; .img.xz: 1097342804 bytes
+SHA-256: 10e9f951fca79bd31b3da05b5723f3048036ba621cc242ff96ebd3da7e590d1c
+
+Armbian-unofficial_26.11.0-trunk-opt3_Bananapim4zeroemac_jammy_current_6.18.55_minimal.img.xz
+.img: 2076180480 bytes; .img.xz: 455404456 bytes
+SHA-256: 2f423cd5170dca3f9f2d3ca50c5309c06d1993196d9a30ef87096896007fcbcc
+
+Armbian-unofficial_26.11.0-trunk-opt3_Bananapim4zeroemac_jammy_current_6.18.55_xfce_desktop.img.xz
+.img: 6576668672 bytes; .img.xz: 1102865760 bytes
+SHA-256: 0ca22ff2ef025376872b35e25f7c04f809af42289b40899a92f853c59bc62a34
+
+Armbian-unofficial_26.11.0-trunk-opt3_Bananapim4zeroemac_noble_current_6.18.55_minimal.img.xz
+.img: 2256535552 bytes; .img.xz: 458012356 bytes
+SHA-256: ddab8dbf480995746f0dfa13f862990bf7df051c230639a70fccf6acefb3c102
+
+Armbian-unofficial_26.11.0-trunk-opt3_Bananapim4zeroemac_noble_current_6.18.55_xfce_desktop.img.xz
+.img: 5708447744 bytes; .img.xz: 1071856564 bytes
+SHA-256: fa8d7fb65b7922db3980be917e3b79df27a1a498d6af91ae6158daf4fd07c2fe
+
+Armbian-unofficial_26.11.0-trunk-opt3_Bananapim4zeroemac_resolute_current_6.18.55_minimal.img.xz
+.img: 2365587456 bytes; .img.xz: 494774272 bytes
+SHA-256: f1c1363345b13f8a92ef42b9e81efc14d3e651bad079000ea4ff0608aa8b78ed
+
+Armbian-unofficial_26.11.0-trunk-opt3_Bananapim4zeroemac_resolute_current_6.18.55_xfce_desktop.img.xz
+.img: 5913968640 bytes; .img.xz: 1144699024 bytes
+SHA-256: 7b8d0a9acfde5df0b244fe42338e4eb8ef3babc90a44758ba5dae13d13186fdd
+
+Armbian-unofficial_26.11.0-trunk-opt3_Bananapim4zeroemac_trixie_current_6.18.55_minimal.img.xz
+.img: 2420113408 bytes; .img.xz: 504806256 bytes
+SHA-256: bce4fc09f3f979926271ef50b201a7828ccb8d7dd8a43a74d48c668c53bb2fe7
+
+Armbian-unofficial_26.11.0-trunk-opt3_Bananapim4zeroemac_trixie_current_6.18.55_xfce_desktop.img.xz
+.img: 6060769280 bytes; .img.xz: 1212912056 bytes
+SHA-256: 3bfbaa6c186d951b95c7394dfd914913f01ebb9489150d821196d964b57adee2
+
+7. Reproducibility and Validation Limits
+
+Pinned source and kernel commits establish traceability, not byte-for-byte reproducibility.
+APT indexes, packages, firmware, toolchains, caches, timestamps, filesystem identifiers, and XZ versions can affect results.
+U-Boot and ATF rules use tags. Complete immutable source, toolchain, and package snapshots are not provided.
+Some batch images reused earlier BSP caches. Jammy's second attempt used the renamed BSP file.
+Rebuilding the final HEAD therefore cannot be claimed equivalent to all ten original images.
+Record source, dependencies, hashes, and functional validation separately, even when rebuilt filenames match.
+
+This review covered documents, source settings, successful commands, filenames, sizes, and existing checksum manifests.
+This source publication did not rebuild all ten images or repeat existing hardware workloads. Source acquisition and document checks are not successful build evidence.
+Existing release notes report complete hardware acceptance at 0/10.
+Only Trixie minimal and XFCE have partial hardware tests.
+The other eight images cannot inherit acceptance from Trixie or the older macfix1 batch.
+The Panfrost TERM cancellation fault remains unresolved. The Mesa backport does not fix that fault.
+This guide grants no complete GPU, media, network, or GPIO acceptance. Consult the matching release notes.
+
+8. Published Scope and Remaining Validation
+
+This public branch supplies standard board code, complete Mesa source acquisition and authentication recipes, patches, and trilingual build guides.
+The pinned code commit fixes this repository only. External APT packages, toolchains, and desktop packages still require their respective sources.
+All ten images have not been rebuilt from this public branch in clean environments.
+Complete per-image source/cache mappings and immutable snapshots of all packages remain incomplete.
+Publication does not pass clean rebuilds, full hardware acceptance, or the known GPU cancellation fault.
+Build and release notes are supplied as UTF-8 TXT in Traditional Chinese, Simplified Chinese, and English.
+Release documents also include searchable PDFs with embedded fonts. Copy commands from TXT; PDF lines may wrap for reading.

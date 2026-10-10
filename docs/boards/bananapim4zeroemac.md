@@ -1,5 +1,21 @@
 # BPI-M4 Zero EMAC 編譯與驗證
 
+## opt3 新版入口
+
+本頁下方保留 `macfix1` 舊批次說明，不適用於 `opt3`。
+新版請依三語編譯指南與發布說明：
+
+- [zh-TW 編譯指南](bananapim4zeroemac-opt3/Build-Guide-zh-TW.txt)
+- [zh-CN 編譯指南](bananapim4zeroemac-opt3/Build-Guide-zh-CN.txt)
+- [en 編譯指南](bananapim4zeroemac-opt3/Build-Guide-en.txt)
+- [zh-TW 發布說明](bananapim4zeroemac-opt3/Release-Notes-zh-TW.txt)
+- [zh-CN 發布說明](bananapim4zeroemac-opt3/Release-Notes-zh-CN.txt)
+- [en 發布說明](bananapim4zeroemac-opt3/Release-Notes-en.txt)
+
+`opt3` 不啟用舊 `bsp-sysctl-coexist` 擴充。
+Bookworm／Jammy 須先依公開 Mesa 配方建包，不使用私有套件來源。
+公開來源不代表完成十套乾淨重建或完整硬體驗收。
+
 ## 適用範圍
 
 本板型適用於 BPI-M4 Zero 與相容 FPC24 Ethernet 擴充板。

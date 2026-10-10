@@ -1,0 +1,346 @@
+BPI-M4 Zero EMAC opt3 公開來源編譯指南
+
+日期：2026-10-10
+映像版本：26.11.0-trunk-opt3
+板型：bananapim4zeroemac；架構：arm64；核心：6.18.55-current-sunxi64
+範圍：Debian 12 Bookworm、Debian 13 Trixie、Ubuntu 22.04 Jammy、Ubuntu 24.04 Noble、Ubuntu 26.04 Resolute。
+每個發行版各有 minimal 與 XFCE，共十套。僅適用於 BPI-M4 Zero 與相容 FPC24 Ethernet 擴充板。
+
+本指南提供公開來源與十套建置命令，不需要私有倉庫。
+Bookworm 與 Jammy 須先依配方建置同版 Mesa 套件。
+來源公開不等於乾淨環境重建或完整硬體驗收；本批仍是測試候選，不是穩定正式版。
+
+1. 公開來源與固定程式版本
+
+公開分支：bpi-m4zeroemac-opt3-20261010
+公開網址：https://github.com/BPI-SINOVOIP/armbian-build.git
+固定程式提交：170bc7a688deb6cd6f8bdf29f3f249883758efee
+
+分支可能另有文件更新；以下固定程式提交必須是公開分支的祖先。
+此版本包含板型、SID MAC、GPU／VPU／I/O、核心與 U-Boot 補丁、BSP、Mesa 擴充及兩套重建配方。
+它從已公開基線整理，不需要實驗工具或特定實驗室設備。
+本批映像早於來源整理提交，且曾使用快取；不保證重建 SHA 等於原發布映像。
+請使用全新目錄，不混入既有 userpatches、套件或快取。
+先備妥 Git 與 CA 憑證，依序執行：
+
+    set -euo pipefail
+    sudo apt update
+    sudo apt install --yes git ca-certificates
+    src_url=https://github.com/BPI-SINOVOIP/armbian-build.git
+    src_ref=bpi-m4zeroemac-opt3-20261010
+    src_commit=170bc7a688deb6cd6f8bdf29f3f249883758efee
+    git ls-remote --exit-code "$src_url" "refs/heads/$src_ref"
+    git clone --single-branch --branch "$src_ref" "$src_url" armbian-build-opt3
+    cd armbian-build-opt3
+    git merge-base --is-ancestor "$src_commit" HEAD
+    git checkout --detach "$src_commit"
+    test "$(git rev-parse HEAD)" = "$src_commit"
+    test -z "$(git status --porcelain)"
+
+2. 主機與依賴
+
+依指定提交的 README.md：RAM 至少 8 GB，磁碟約需 50 GB 可用空間。
+原生建置主機採 Armbian/Debian 13 Trixie；支援 x86_64、aarch64 或 riscv64。
+本指南命令選擇原生建置 PREFER_DOCKER=no，須具備 sudo 或 root 權限及可用網路。
+README 另列 Docker 與 WSL2，但本指南沒有驗證這些路徑。
+先備妥 Bash、Git、sudo 與 CA 憑證，維持系統及套件來源正常。
+
+完整主機依賴以 lib/functions/host/basic-deps.sh 與 lib/functions/host/prepare-host.sh 為準。
+框架會安裝依賴，包括編譯器、make、ccache、bison、flex、dtc、u-boot-tools、Python 及映像工具。
+跨架構需要對應交叉編譯器與 QEMU/binfmt；不要把簡短套件清單當成完整依賴。
+Mesa 另需同發行版的隔離 arm64 環境及原封裝 debian/control 所列依賴。
+
+50 GB 不是保留十套產物的充分容量保證。
+本批十份 .img 合計 40986738688 bytes；十份 .img.xz 合計 8026885916 bytes。
+兩者合計 49013624604 bytes，尚未計來源、快取、暫存與 Mesa 建包。
+Mesa 配方另列參考資源：6 CPU、8 GiB RAM、約 20 GiB 磁碟、無額外 swap。
+建置前另行預留這些空間；框架的 10 GiB 磁碟檢查只是警戒，不代表足夠完成。
+依序建置，不在同一工作樹同時啟動多套。
+
+3. opt3 元件與 Mesa 前置條件
+
+核心來源：https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git
+核心固定提交：725bd2f3c81d54edccb66fead01d4c0c222e2231
+核心另套用倉庫 patch/kernel/archive/sunxi-6.18/，不能只取上游核心。
+U-Boot：tag:v2026.07；建置紀錄來源：https://github.com/u-boot/u-boot
+紀錄解析提交：ece349ade2973e220f524ce59e59711cc919263f
+U-Boot 另套用 patch/u-boot/v2026.07-sunxi64/。
+ATF：https://github.com/ARM-software/arm-trusted-firmware；tag:lts-v2.12.9；PLAT=sun50i_h616。
+板型繼承與版本依據：config/boards/bananapim4zero.conf、config/boards/bananapim4zeroemac.csc、
+config/sources/families/sun50iw9-bpi.conf、config/sources/families/include/sunxi64_common.inc。
+
+板型自動啟用 bpi-m4zeroemac-mesa；不需另傳 ENABLE_EXTENSIONS。
+Bookworm、Jammy 必須提供 BPI_MESA_DEB_DIR，不會自動下載已修補的 Mesa 二進位套件。
+本提交已將 BSP 預設檔改成 60-armbian-defaults.conf。
+不要加入 ENABLE_EXTENSIONS=bsp-sysctl-coexist；舊擴充要求 50-default.conf，會在本提交失敗。
+IMAGE_VERSION 設定映像名稱；它不會把所有套件 REVISION 改成 opt3。
+原有 .img.txt 的 Revision 為 26.11.0-trunk，不能僅憑版本字串推定內容相同。
+
+Bookworm Mesa：
+官方來源 https://deb.debian.org/debian/pool/main/m/mesa/
+來源版本 22.3.6-1+deb12u2；候選版本 22.3.6-1+deb12u2+bpi1。
+完整配方 config/sources/vendors/bananapi/mesa/bookworm/README.zh-TW.md。
+來源清單 SHA256SUMS.source.txt；補丁 bpi-g31-preload.patch。
+
+Jammy Mesa：
+官方來源 https://archive.ubuntu.com/ubuntu/pool/main/m/mesa/
+來源版本 23.2.1-1ubuntu3.1~22.04.4；候選版本 23.2.1-1ubuntu3.1~22.04.4+bpi1。
+完整配方 config/sources/vendors/bananapi/mesa/jammy/README.zh-TW.md。
+來源清單 SOURCE-SHA256SUMS.txt；補丁 jammy-23.2.1-g31-preload.patch、packaging-version.patch。
+
+先依各配方取得完整來源、驗證官方簽章鏈與 SHA、安裝依賴，再套用補丁及建包。
+配方的關鍵命令為 python3 verify-official-source.py、sha256sum -c、apt-get build-dep、
+dpkg-checkbuilddeps、dpkg-buildpackage -b -us -uc -j6；不得跳過其前置步驟。
+目前配方只在指定來源候選內核對；未重新下載來源、驗簽或建包。
+官方索引缺版、驗簽失敗或依賴無法滿足時停止。官方原補丁僅接受配方核對的既有偏移；BPI 與封裝修改必須零 fuzz、零偏移。
+不要混用發行版、停用簽章檢查或改用未修補套件。
+回補包不是 Debian、Ubuntu 或 Armbian 官方套件。
+
+將核對完成的同版 arm64 Mesa .deb 與 SHA256SUMS.txt 放入各自的獨立套件目錄。
+自建套件須使用自己的實際 SHA；不能複製參考產物 SHA 冒充吻合。
+最少須有 libgl1-mesa-dri、libegl-mesa0、libglx-mesa0、libgbm1、libglapi-mesa。
+另須覆蓋 rootfs 已安裝的全部 Source=mesa 套件；擴充會拒絕缺包、混版與降版。
+不要把其他來源套件或未列入清單的 .deb 放入目錄，也不要將 .ddeb 改名為 .deb。
+擴充只選擇所需集合，不是將所有開發與除錯套件裝進映像。
+映像內的追溯資料位於 /usr/share/bpi-m4zeroemac-mesa/。
+
+Trixie 由板型選用官方 trixie-backports Mesa，要求版本至少 25.2.0。
+本批發布說明記錄為 26.1.6，但建置規則未精確釘選該版。
+Noble、Resolute 不走本地 Mesa 安裝分支；套件隨其發行版來源解算。
+因此十套都不能宣稱已具備完整固定套件快照。
+
+下列路徑是使用者自己的套件目錄範例；先完成對應配方，再按實際位置調整：
+
+    BOOKWORM_MESA_DIR="$HOME/mesa-opt3/bookworm/packages"
+    JAMMY_MESA_DIR="$HOME/mesa-opt3/jammy/packages"
+
+每個套件目錄只放本發行版已核對的 Mesa .deb，以相對檔名建立清單：
+
+    (cd "$BOOKWORM_MESA_DIR" && sha256sum -- *.deb > SHA256SUMS.txt)
+    (cd "$JAMMY_MESA_DIR" && sha256sum -- *.deb > SHA256SUMS.txt)
+
+    test -f "$BOOKWORM_MESA_DIR/SHA256SUMS.txt"
+    test -f "$JAMMY_MESA_DIR/SHA256SUMS.txt"
+    (cd "$BOOKWORM_MESA_DIR" && sha256sum -c SHA256SUMS.txt)
+    (cd "$JAMMY_MESA_DIR" && sha256sum -c SHA256SUMS.txt)
+
+4. 十組映像建置命令
+
+以下在核定來源根目錄、同一 Bash 工作階段執行。每組成功後才執行下一組。
+命令依十套成功紀錄整理；Jammy 使用第二次成功紀錄，不採第一次 BSP 衝突失敗紀錄。
+相對原紀錄，移除 sudo -n 與 DONT_BUILD_ARTIFACTS=uboot，讓全新環境能取得或建置 U-Boot。
+Mesa 路徑改成使用者目錄；Trixie 額外明列 CARD_DEVICE=，禁止指定直接寫入裝置。
+其餘列出的參數保留成功紀錄值。這些整理後的命令尚未在乾淨來源重跑。
+未設定 ENABLE_EXTENSIONS=bsp-sysctl-coexist 是刻意且必要的差異。
+minimal 必須是 BUILD_MINIMAL=yes；不能以一般 CLI 版替代。
+XFCE 必須是 BUILD_DESKTOP=yes、BUILD_MINIMAL=no、DESKTOP_ENVIRONMENT=xfce、DESKTOP_TIER=mid。
+
+1. bookworm minimal
+
+    ./compile.sh build \
+      BOARD=bananapim4zeroemac BRANCH=current RELEASE=bookworm EXPERT=yes \
+      BUILD_DESKTOP=no BUILD_MINIMAL=yes \
+      KERNEL_CONFIGURE=no KERNELBRANCH=commit:725bd2f3c81d54edccb66fead01d4c0c222e2231 \
+      KERNEL_GIT=shallow IMAGE_VERSION=26.11.0-trunk-opt3 MAKE_FOLDERS=optimized3-20261010 \
+      COMPRESS_OUTPUTIMAGE=sha CPUTHREADS=6 FORCE_USE_RAMDISK=no \
+      PREFER_DOCKER=no ARTIFACT_IGNORE_CACHE=no CLEAN_LEVEL=none SHARE_LOG=no CARD_DEVICE= \
+      BPI_MESA_DEB_DIR="$BOOKWORM_MESA_DIR"
+
+2. bookworm xfce
+
+    ./compile.sh build \
+      BOARD=bananapim4zeroemac BRANCH=current RELEASE=bookworm EXPERT=yes \
+      BUILD_DESKTOP=yes BUILD_MINIMAL=no \
+      DESKTOP_ENVIRONMENT=xfce DESKTOP_TIER=mid \
+      KERNEL_CONFIGURE=no KERNELBRANCH=commit:725bd2f3c81d54edccb66fead01d4c0c222e2231 \
+      KERNEL_GIT=shallow IMAGE_VERSION=26.11.0-trunk-opt3 MAKE_FOLDERS=optimized3-20261010 \
+      COMPRESS_OUTPUTIMAGE=sha CPUTHREADS=6 FORCE_USE_RAMDISK=no \
+      PREFER_DOCKER=no ARTIFACT_IGNORE_CACHE=no CLEAN_LEVEL=none SHARE_LOG=no CARD_DEVICE= \
+      BPI_MESA_DEB_DIR="$BOOKWORM_MESA_DIR"
+
+3. trixie minimal
+
+    ./compile.sh build \
+      BOARD=bananapim4zeroemac BRANCH=current RELEASE=trixie EXPERT=yes \
+      BUILD_DESKTOP=no BUILD_MINIMAL=yes \
+      KERNEL_CONFIGURE=no KERNELBRANCH=commit:725bd2f3c81d54edccb66fead01d4c0c222e2231 \
+      KERNEL_GIT=shallow IMAGE_VERSION=26.11.0-trunk-opt3 MAKE_FOLDERS=optimized3-20261010 \
+      COMPRESS_OUTPUTIMAGE=sha CPUTHREADS=6 FORCE_USE_RAMDISK=no \
+      PREFER_DOCKER=no ARTIFACT_IGNORE_CACHE=no CLEAN_LEVEL=none SHARE_LOG=no CARD_DEVICE=
+
+4. trixie xfce
+
+    ./compile.sh build \
+      BOARD=bananapim4zeroemac BRANCH=current RELEASE=trixie EXPERT=yes \
+      BUILD_DESKTOP=yes BUILD_MINIMAL=no \
+      DESKTOP_ENVIRONMENT=xfce DESKTOP_TIER=mid \
+      KERNEL_CONFIGURE=no KERNELBRANCH=commit:725bd2f3c81d54edccb66fead01d4c0c222e2231 \
+      KERNEL_GIT=shallow IMAGE_VERSION=26.11.0-trunk-opt3 MAKE_FOLDERS=optimized3-20261010 \
+      COMPRESS_OUTPUTIMAGE=sha CPUTHREADS=6 FORCE_USE_RAMDISK=no \
+      PREFER_DOCKER=no ARTIFACT_IGNORE_CACHE=no CLEAN_LEVEL=none SHARE_LOG=no CARD_DEVICE=
+
+5. jammy minimal
+
+    ./compile.sh build \
+      BOARD=bananapim4zeroemac BRANCH=current RELEASE=jammy EXPERT=yes \
+      BUILD_DESKTOP=no BUILD_MINIMAL=yes \
+      KERNEL_CONFIGURE=no KERNELBRANCH=commit:725bd2f3c81d54edccb66fead01d4c0c222e2231 \
+      KERNEL_GIT=shallow IMAGE_VERSION=26.11.0-trunk-opt3 MAKE_FOLDERS=optimized3-20261010 \
+      COMPRESS_OUTPUTIMAGE=sha CPUTHREADS=6 FORCE_USE_RAMDISK=no \
+      PREFER_DOCKER=no ARTIFACT_IGNORE_CACHE=no CLEAN_LEVEL=none SHARE_LOG=no CARD_DEVICE= \
+      BPI_MESA_DEB_DIR="$JAMMY_MESA_DIR"
+
+6. jammy xfce
+
+    ./compile.sh build \
+      BOARD=bananapim4zeroemac BRANCH=current RELEASE=jammy EXPERT=yes \
+      BUILD_DESKTOP=yes BUILD_MINIMAL=no \
+      DESKTOP_ENVIRONMENT=xfce DESKTOP_TIER=mid \
+      KERNEL_CONFIGURE=no KERNELBRANCH=commit:725bd2f3c81d54edccb66fead01d4c0c222e2231 \
+      KERNEL_GIT=shallow IMAGE_VERSION=26.11.0-trunk-opt3 MAKE_FOLDERS=optimized3-20261010 \
+      COMPRESS_OUTPUTIMAGE=sha CPUTHREADS=6 FORCE_USE_RAMDISK=no \
+      PREFER_DOCKER=no ARTIFACT_IGNORE_CACHE=no CLEAN_LEVEL=none SHARE_LOG=no CARD_DEVICE= \
+      BPI_MESA_DEB_DIR="$JAMMY_MESA_DIR"
+
+7. noble minimal
+
+    ./compile.sh build \
+      BOARD=bananapim4zeroemac BRANCH=current RELEASE=noble EXPERT=yes \
+      BUILD_DESKTOP=no BUILD_MINIMAL=yes \
+      KERNEL_CONFIGURE=no KERNELBRANCH=commit:725bd2f3c81d54edccb66fead01d4c0c222e2231 \
+      KERNEL_GIT=shallow IMAGE_VERSION=26.11.0-trunk-opt3 MAKE_FOLDERS=optimized3-20261010 \
+      COMPRESS_OUTPUTIMAGE=sha CPUTHREADS=6 FORCE_USE_RAMDISK=no \
+      PREFER_DOCKER=no ARTIFACT_IGNORE_CACHE=no CLEAN_LEVEL=none SHARE_LOG=no CARD_DEVICE=
+
+8. noble xfce
+
+    ./compile.sh build \
+      BOARD=bananapim4zeroemac BRANCH=current RELEASE=noble EXPERT=yes \
+      BUILD_DESKTOP=yes BUILD_MINIMAL=no \
+      DESKTOP_ENVIRONMENT=xfce DESKTOP_TIER=mid \
+      KERNEL_CONFIGURE=no KERNELBRANCH=commit:725bd2f3c81d54edccb66fead01d4c0c222e2231 \
+      KERNEL_GIT=shallow IMAGE_VERSION=26.11.0-trunk-opt3 MAKE_FOLDERS=optimized3-20261010 \
+      COMPRESS_OUTPUTIMAGE=sha CPUTHREADS=2 FORCE_USE_RAMDISK=no \
+      PREFER_DOCKER=no ARTIFACT_IGNORE_CACHE=no CLEAN_LEVEL=none SHARE_LOG=no CARD_DEVICE=
+
+9. resolute minimal
+
+    ./compile.sh build \
+      BOARD=bananapim4zeroemac BRANCH=current RELEASE=resolute EXPERT=yes \
+      BUILD_DESKTOP=no BUILD_MINIMAL=yes \
+      KERNEL_CONFIGURE=no KERNELBRANCH=commit:725bd2f3c81d54edccb66fead01d4c0c222e2231 \
+      KERNEL_GIT=shallow IMAGE_VERSION=26.11.0-trunk-opt3 MAKE_FOLDERS=optimized3-20261010 \
+      COMPRESS_OUTPUTIMAGE=sha CPUTHREADS=2 FORCE_USE_RAMDISK=no \
+      PREFER_DOCKER=no ARTIFACT_IGNORE_CACHE=no CLEAN_LEVEL=none SHARE_LOG=no CARD_DEVICE=
+
+10. resolute xfce
+
+    ./compile.sh build \
+      BOARD=bananapim4zeroemac BRANCH=current RELEASE=resolute EXPERT=yes \
+      BUILD_DESKTOP=yes BUILD_MINIMAL=no \
+      DESKTOP_ENVIRONMENT=xfce DESKTOP_TIER=mid \
+      KERNEL_CONFIGURE=no KERNELBRANCH=commit:725bd2f3c81d54edccb66fead01d4c0c222e2231 \
+      KERNEL_GIT=shallow IMAGE_VERSION=26.11.0-trunk-opt3 MAKE_FOLDERS=optimized3-20261010 \
+      COMPRESS_OUTPUTIMAGE=sha CPUTHREADS=2 FORCE_USE_RAMDISK=no \
+      PREFER_DOCKER=no ARTIFACT_IGNORE_CACHE=no CLEAN_LEVEL=none SHARE_LOG=no CARD_DEVICE=
+
+5. 輸出、壓縮與 SHA-256
+
+輸出目錄：output/images/bananapim4zeroemac/optimized3-20261010/
+COMPRESS_OUTPUTIMAGE=sha 會保留 .img，並產生 .img.sha 與映像說明 .img.txt。
+本批採先產生 raw、再壓縮的流程。下列是使用者重建產物的後處理命令。
+須先完成十組建置；目錄不可混入其他同名版本，且不得已有同名 .xz 或 SHA256SUMS.txt。
+下列命令保留 .img；缺檔、SHA 不符或壓縮失敗即停止。
+自己產生的 SHA256SUMS.txt 只識別自己的重建產物，不是原發布檔案的認證。
+
+    set -euo pipefail
+    cd output/images/bananapim4zeroemac/optimized3-20261010
+    test ! -e SHA256SUMS.txt
+    for release in bookworm trixie jammy noble resolute; do
+      for variant in minimal xfce_desktop; do
+        img="Armbian-unofficial_26.11.0-trunk-opt3_Bananapim4zeroemac_${release}_current_6.18.55_${variant}.img"
+        test -f "$img"
+        test ! -e "$img.xz"
+        test -f "$img.sha"
+        sha256sum -c "$img.sha"
+        xz -T2 -6 --keep "$img"
+        xz -t "$img.xz"
+        sha256sum "$img.xz" > "$img.xz.sha"
+      done
+    done
+    cat Armbian-unofficial_26.11.0-trunk-opt3_Bananapim4zeroemac_*_current_6.18.55_*.img.xz.sha > SHA256SUMS.txt
+    test "$(wc -l < SHA256SUMS.txt)" -eq 10
+    sha256sum -c SHA256SUMS.txt
+
+6. 原批次產物識別
+
+以下檔名、bytes 與 SHA-256 來自既有檔案中繼資料及 .img.xz.sha。
+本次文件核對沒有重新讀取大型映像，也沒有重算映像 SHA 或重跑 XZ 測試。
+每筆依序列出 .img.xz 檔名、原始 .img bytes、壓縮 .img.xz bytes、壓縮檔 SHA-256。
+這些是原批次參考值，不是保證自建產物吻合的預期值。
+取得原發布檔案時，使用同批正式清單執行 sha256sum -c SHA256SUMS.txt；任一不符即停止。
+
+Armbian-unofficial_26.11.0-trunk-opt3_Bananapim4zeroemac_bookworm_current_6.18.55_minimal.img.xz
+.img: 2294284288 bytes; .img.xz: 484212368 bytes
+SHA-256: 14802a3de5cfc4c91b158d8ffaaab4d8a6220de9fd3be0cd23ec61d48724af36
+
+Armbian-unofficial_26.11.0-trunk-opt3_Bananapim4zeroemac_bookworm_current_6.18.55_xfce_desktop.img.xz
+.img: 5314183168 bytes; .img.xz: 1097342804 bytes
+SHA-256: 10e9f951fca79bd31b3da05b5723f3048036ba621cc242ff96ebd3da7e590d1c
+
+Armbian-unofficial_26.11.0-trunk-opt3_Bananapim4zeroemac_jammy_current_6.18.55_minimal.img.xz
+.img: 2076180480 bytes; .img.xz: 455404456 bytes
+SHA-256: 2f423cd5170dca3f9f2d3ca50c5309c06d1993196d9a30ef87096896007fcbcc
+
+Armbian-unofficial_26.11.0-trunk-opt3_Bananapim4zeroemac_jammy_current_6.18.55_xfce_desktop.img.xz
+.img: 6576668672 bytes; .img.xz: 1102865760 bytes
+SHA-256: 0ca22ff2ef025376872b35e25f7c04f809af42289b40899a92f853c59bc62a34
+
+Armbian-unofficial_26.11.0-trunk-opt3_Bananapim4zeroemac_noble_current_6.18.55_minimal.img.xz
+.img: 2256535552 bytes; .img.xz: 458012356 bytes
+SHA-256: ddab8dbf480995746f0dfa13f862990bf7df051c230639a70fccf6acefb3c102
+
+Armbian-unofficial_26.11.0-trunk-opt3_Bananapim4zeroemac_noble_current_6.18.55_xfce_desktop.img.xz
+.img: 5708447744 bytes; .img.xz: 1071856564 bytes
+SHA-256: fa8d7fb65b7922db3980be917e3b79df27a1a498d6af91ae6158daf4fd07c2fe
+
+Armbian-unofficial_26.11.0-trunk-opt3_Bananapim4zeroemac_resolute_current_6.18.55_minimal.img.xz
+.img: 2365587456 bytes; .img.xz: 494774272 bytes
+SHA-256: f1c1363345b13f8a92ef42b9e81efc14d3e651bad079000ea4ff0608aa8b78ed
+
+Armbian-unofficial_26.11.0-trunk-opt3_Bananapim4zeroemac_resolute_current_6.18.55_xfce_desktop.img.xz
+.img: 5913968640 bytes; .img.xz: 1144699024 bytes
+SHA-256: 7b8d0a9acfde5df0b244fe42338e4eb8ef3babc90a44758ba5dae13d13186fdd
+
+Armbian-unofficial_26.11.0-trunk-opt3_Bananapim4zeroemac_trixie_current_6.18.55_minimal.img.xz
+.img: 2420113408 bytes; .img.xz: 504806256 bytes
+SHA-256: bce4fc09f3f979926271ef50b201a7828ccb8d7dd8a43a74d48c668c53bb2fe7
+
+Armbian-unofficial_26.11.0-trunk-opt3_Bananapim4zeroemac_trixie_current_6.18.55_xfce_desktop.img.xz
+.img: 6060769280 bytes; .img.xz: 1212912056 bytes
+SHA-256: 3bfbaa6c186d951b95c7394dfd914913f01ebb9489150d821196d964b57adee2
+
+7. 重現與驗證界線
+
+固定來源提交與核心提交，只能建立可追溯基線，不能保證逐位元組重現。
+APT 索引、套件、韌體、工具鏈、快取、時間戳、檔案系統識別與 XZ 版本均可能影響結果。
+U-Boot 與 ATF 規則使用 tag；尚未提供全部來源、工具鏈及套件的不可變快照。
+本批部分映像沿用較早 BSP 快取；Jammy 第二次建置使用更名後 BSP。
+因此不能宣稱以最終 HEAD 重建必然等同十套既有映像。
+重建檔案即使名稱相同，也須獨立記錄 SHA、來源、依賴及功能驗證。
+
+本次只核對文件、來源設定、成功命令、檔名、大小與既有 SHA 清單。
+本次來源發布沒有重新建置十套映像或重跑既有硬體負載。來源取得與文件檢查不能取代建置成功證據。
+既有發布說明記錄：完整實機驗收為 0/10；僅 Trixie minimal、XFCE 有部分實測。
+其餘八套不能借用 Trixie 或舊 macfix1 的通過資格。
+Panfrost 的 TERM 取消故障仍未修復；Mesa 回補不等於該故障修復。
+本指南不授予 GPU、影音、網路或 GPIO 等完整功能通過；以對應版本發布說明為準。
+
+8. 已公開範圍與剩餘驗證
+
+本公開分支提供上述標準板級程式、Mesa 完整來源取得與驗簽配方、補丁及三語編譯指南。
+固定程式提交只釘選本倉內容；外部 APT、工具鏈與桌面套件仍依其來源取得。
+尚未從公開分支重新建完十套；逐映像完整來源／快取對照與全部套件不可變快照仍待補齊。
+乾淨重建、全矩陣實機驗收及已知 GPU 取消故障均不得因本次公開而標為通過。
+編譯與發佈說明附繁中、簡中、英文 UTF-8 TXT；發布文件另附嵌字型、可選取文字的 PDF。
+執行命令請從 TXT 複製；PDF 供閱讀，長行可能按頁寬換行。

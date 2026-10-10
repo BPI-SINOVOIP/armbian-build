@@ -1,0 +1,63 @@
+Banana Pi BPI-M4 Zero EMAC 發布說明
+發布日期：2026-10-10
+版本：26.11.0-trunk-opt3（opt3 測試候選）
+架構：arm64
+核心：6.18.55-current-sunxi64
+
+一、發布定位
+本批是供客戶平行評估的測試候選，不是穩定版，不適用於生產環境。
+十套映像、XZ 壓縮檔與離線內容核對已完成；完整實機驗收為 0/10。
+下載後請使用同批 SHA256SUMS.txt 核對檔案完整性。
+目前只有 Trixie 的 minimal 與 XFCE 進行過部分實機測試，其餘八套尚未上板。
+本批與舊 macfix1 分開提供，不取代舊版，也不沿用舊版通過資格。
+標準板級來源、補丁與 Mesa 重建配方提供於以下公開分支；詳見同批 Build-Guide-zh-TW.txt。
+公開網址：https://github.com/BPI-SINOVOIP/armbian-build.git
+分支：bpi-m4zeroemac-opt3-20261010
+固定程式提交：170bc7a688deb6cd6f8bdf29f3f249883758efee
+公開來源已提供；尚未重新完成十套乾淨重建，亦不保證自建 SHA 等於本批發布檔案。
+
+二、十套映像
+每個發行版各有 minimal 命令列版與 XFCE 桌面版，共十套。
+- Debian 12 Bookworm：minimal、XFCE。
+- Debian 13 Trixie：minimal、XFCE。
+- Ubuntu 22.04 Jammy：minimal、XFCE。
+- Ubuntu 24.04 Noble：minimal、XFCE。
+- Ubuntu 26.04 Resolute：minimal、XFCE。
+Jammy 另含避免設定檔衝突的 BSP 封裝更名；不可假設十套的所有套件完全相同。
+
+三、標準功能調整
+- DDR／PMIC 沿用官方板級基線，未新增超頻或電壓調整；保留晶片 SID 衍生網路位址修正。
+- 預設啟用 Mali-G31／Panfrost GPU。Trixie 使用 Mesa 26.1.6；Bookworm／Jammy 以各自發行版來源回補 G31 預載修正，這兩組回補套件不是原發行版官方套件。這不代表 TERM 取消故障已修復。
+- Cedrus 改用 H616 相容的變體設定，時脈 600 MHz，限定本次 8 位元解碼能力；不宣稱 10 位元硬解。CMA 預留 256 MiB，並補上 CPU 溫控降頻對應。
+- HDMI 音訊設定為僅播放；加入標準圖形、GStreamer、V4L2 與 I/O 工具。
+- 提供 gpiod、i2c-tools、Python GPIO／SPI 工具及 bpi-h618-hw-info 資訊命令。工具存在不等於腳位功能通過；未自動授予使用者 gpio 群組權限。該群組不是逐腳位隔離，不得重新配置 EMAC 使用的 PA0-PA9、PA12。
+
+四、已測結果與未解風險
+- Trixie minimal 與 XFCE：各完成 1 GiB 記憶體完整一輪，以及六輪 CPU 測試；每輪為 300 秒負載加 300 秒閒置。這些項目通過，不等於整套通過。
+- Trixie XFCE GPU：正常自然結束的 33 場景測試通過。但 TERM 取消後仍重現 Panfrost TRANSLATION_FAULT_3／JOB_BUS_FAULT，尚未修復；正常場景通過不能抵銷取消路徑故障。
+  GPU 程式中止故障列為已知問題，本輪暫緩追查、等待上游修正，不阻塞其他功能測試與測試候選交付；未修復前不能授予該項通過。
+- Trixie minimal GPU：DRM／EGL 本體自然退出 0，完成 33 場景、1000.01 秒，分數 153，核心錯誤紀錄空白。但收尾 KMS 模式檢查使整體流程於 09:17:04（UTC+08:00）退出 2。
+  使用者回報更換螢幕；09:21 實讀最大顯示模式由 1920x1080 變為 800x600。此次受換屏干擾，不授予完整通過，不能寫成 minimal GPU 核心故障，也不代表 XFCE TERM 故障已修復。
+  後續同映像已正常重啟；顯示模式重新辨識為最高 1920x1080。09:26:49–09:27:33（UTC+08:00）以 Mali-G31／Panfrost 完成 30 秒 build 場景及結束後 10 秒觀察，退出 0，前後核心錯誤紀錄空白且 EDID 相同。這只是換屏後的短時間驗證通過，不取代完整測試，也不代表 XFCE TERM 故障已修復。
+- Trixie minimal 與 XFCE Cedrus：各自完成四種 640x360、8 位元、60 幀樣本解碼。H.264／H.265／VP8 與軟體參考逐位元相同；MPEG-2 有小幅像素差異，平均 PSNR 70.809520 dB。不能外推所有解析度、影片或播放器。
+- Trixie minimal 與 XFCE：各自通過固定 4 KiB 資料的 AES-256-CBC 256 次往返，硬體請求增量 512、回退增量 0；64 MiB 一般檔案同步寫入及直接讀回摘要一致。不是所有加密演算法、全盤耐久或掉電持久性認證。
+- Trixie minimal Wi-Fi：使用 WPA2-PSK 成功連線，正常重啟後自動恢復並取得 DHCP 位址。此組硬體不接受本次自動產生的 SAE 設定；使用 Netplan 時須明確指定 auth.key-management: psk，不只填 password。未驗證 WPA3。
+- Trixie XFCE 網路：EMAC 與 Wi-Fi 均有雙向各 60 秒吞吐結果，但存在 TCP 重傳，Wi-Fi 亦有丟包；不是無損或效能保證，不代表 minimal 或其餘八套已通過。
+- Trixie minimal 網路：EMAC 雙向接收約 89.5／93.9 Mbps，Wi-Fi 約 50.9／52.6 Mbps，各方向 60 秒；兩介面各十次 ping 全收，本輪 TCP 重傳為 0。同期有背景資料傳輸，不作最大效能保證；短測結果不抵銷 XFCE 的丟包紀錄，也不外推其餘八套。
+- Trixie XFCE HDMI 音訊：10 秒測試音有有限的雙聲道輸出證據；完整 15 秒擷取因 I/O 錯誤未完成，未取得全面音訊通過資格。
+- GPIO 等外接介面尚未完成治具驗證；Bluetooth 真實配對未驗證。原生 SD 完整開機流程、重啟及冷開機尚未逐套完成。
+- 曾觀察到特定 USB 周邊接入時冷開機異常，原因未定；初次驗證使用最少周邊，待穩定後再逐件接入。
+
+五、校驗與試用
+1. 確認硬體為本批適用的 BPI-M4 Zero EMAC，並選對發行版及 minimal／XFCE。不要用於未確認相容的其他板型。
+2. 在同批檔案所在目錄執行：
+   sha256sum -c SHA256SUMS.txt
+   只有全部校驗成功才繼續；缺檔或摘要不符即停止。
+3. 將下列 IMAGE.img.xz 換成實際選定的檔名，保留壓縮原檔並解壓：
+   xz -dk "IMAGE.img.xz"
+   須有足夠磁碟空間；解壓錯誤時停止，不使用不完整的映像。
+4. 備份目標 SD 卡資料，確認卡片容量足夠，再用支援寫入後驗證的映像工具寫入解壓後的 .img。選擇整張正確的卡片，勿選系統磁碟；此步會覆寫目標資料。
+5. 完成寫入驗證並安全退出卡片。使用穩定供電及最少周邊，再開機完成首次設定。
+6. 分別核對核心版本、顯示、網路及所需周邊。若出現 GPU 核心錯誤、顯示異常或儲存 I/O 錯誤，停止相關負載並保留紀錄，不以反覆重跑當成修復。
+
+本說明不保證所有顯示器、USB 裝置、無線環境或影音格式相容，也不授予生產使用資格。

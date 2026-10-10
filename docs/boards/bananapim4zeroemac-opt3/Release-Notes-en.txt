@@ -1,0 +1,63 @@
+Banana Pi BPI-M4 Zero EMAC Release Notes
+Release date: 2026-10-10
+Version: 26.11.0-trunk-opt3 (opt3 test candidate)
+Architecture: arm64
+Kernel: 6.18.55-current-sunxi64
+
+1. Release Status
+This batch is a test candidate for parallel customer evaluation, not a stable release. Do not use it in production.
+All ten images, XZ archives and offline content checks are complete. Full hardware acceptance remains 0/10.
+After downloading, verify file integrity using SHA256SUMS.txt from this batch.
+Only the Trixie minimal and XFCE images have undergone partial hardware testing. The other eight images have not been tested on hardware.
+This batch is provided separately from macfix1. It neither replaces that release nor inherits its test results.
+Standard board sources, patches, and Mesa rebuild recipes are supplied in the public branch below. See Build-Guide-en.txt.
+Public URL: https://github.com/BPI-SINOVOIP/armbian-build.git
+Branch: bpi-m4zeroemac-opt3-20261010
+Pinned code commit: 170bc7a688deb6cd6f8bdf29f3f249883758efee
+Sources are public. Clean rebuilds of all ten images remain unverified; rebuilt hashes need not match this release.
+
+2. Ten Images
+Each distribution has a minimal command-line image and an XFCE desktop image, for ten images in total.
+- Debian 12 Bookworm: minimal, XFCE.
+- Debian 13 Trixie: minimal, XFCE.
+- Ubuntu 22.04 Jammy: minimal, XFCE.
+- Ubuntu 24.04 Noble: minimal, XFCE.
+- Ubuntu 26.04 Resolute: minimal, XFCE.
+Jammy also includes a BSP packaging rename to avoid a configuration-file conflict. Do not assume all packages are identical across the ten images.
+
+3. Standard Feature Changes
+- DDR and PMIC retain the official board baseline, without additional overclocking or voltage changes. The chip-SID-derived network-address correction is retained.
+- Mali-G31/Panfrost GPU support is enabled by default. Trixie uses Mesa 26.1.6. Bookworm and Jammy use G31 preload fixes backported to their respective distribution sources; these two backported package sets are not official distribution packages. This does not fix the TERM cancellation fault.
+- Cedrus selects the H616-compatible variant at 600 MHz, limited here to 8-bit decoding capabilities. No 10-bit hardware-decoding claim is made. CMA reserves 256 MiB, and CPU thermal cooling mappings are added.
+- HDMI audio is configured for playback only. Standard graphics, GStreamer, V4L2 and I/O tools are included.
+- gpiod, i2c-tools, Python GPIO/SPI tools and the bpi-h618-hw-info information command are provided. Tool availability is not proof of tested pin functionality. Users are not automatically added to the gpio group. That group does not provide per-pin isolation; do not reconfigure EMAC pins PA0-PA9 or PA12.
+
+4. Test Results and Unresolved Risks
+- Trixie minimal and XFCE each passed one complete 1 GiB memory-test round and six CPU cycles. Each cycle comprised 300 seconds of load and 300 seconds of idle time. These passes do not constitute full-image acceptance.
+- Trixie XFCE GPU: the naturally completed 33-scene test passed. However, TERM cancellation still reproduces Panfrost TRANSLATION_FAULT_3/JOB_BUS_FAULT. This remains unfixed; a normal-scene pass does not cancel out the termination-path fault.
+  The GPU application-termination fault is a known issue; further investigation is deferred this round pending an upstream fix, without blocking other functional testing or test-candidate delivery, but this item cannot be marked as passed while unfixed.
+- Trixie minimal GPU: the DRM/EGL benchmark exited naturally with code 0 after 33 scenes and 1000.01 seconds, with a score of 153 and an empty kernel-error log. However, final KMS mode validation made the overall test exit with code 2 at 09:17:04 (UTC+08:00).
+  The user reported changing monitors. At 09:21, the maximum reported display mode had changed from 1920x1080 to 800x600. The monitor change affected this test, so full acceptance is withheld. This is not evidence of a minimal GPU kernel fault and does not establish a fix for the XFCE TERM fault.
+  The same image subsequently rebooted normally, with a maximum detected display mode of 1920x1080. From 09:26:49 to 09:27:33 (UTC+08:00), Mali-G31/Panfrost completed a 30-second build scene and 10 seconds of post-exit observation. The check exited with code 0; kernel-error logs were empty before and after, and EDID was unchanged. This passes only the short check after the monitor change, not the complete test, and does not establish a fix for the XFCE TERM fault.
+- Trixie minimal and XFCE Cedrus: each decoded four 640x360, 8-bit, 60-frame samples. H.264, H.265 and VP8 matched the software reference bit for bit. MPEG-2 showed small pixel differences, with average PSNR of 70.809520 dB. These results do not cover all resolutions, videos or players.
+- Trixie minimal and XFCE each passed 256 AES-256-CBC round trips with fixed 4 KiB data. Hardware requests increased by 512, with no fallback increase. A 64 MiB regular-file synchronized write and direct read produced matching hashes. This does not certify every encryption algorithm, whole-device endurance or power-loss persistence.
+- Trixie minimal Wi-Fi connected using WPA2-PSK and automatically reconnected with a DHCP address after a normal reboot. This hardware rejected the automatically generated SAE configuration in this test. With Netplan, explicitly set auth.key-management: psk instead of supplying only password. WPA3 remains unverified.
+- Trixie XFCE networking: EMAC and Wi-Fi each have 60-second throughput results in both directions, but TCP retransmissions occurred, and Wi-Fi also had packet loss. This is neither a loss-free nor a performance guarantee, and it does not establish passes for minimal or the other eight images.
+- Trixie minimal networking: received throughput was approximately 89.5/93.9 Mbps for EMAC and 50.9/52.6 Mbps for Wi-Fi. Each direction ran for 60 seconds. Both interfaces received all ten ping replies, with zero TCP retransmissions in this round. Background data transfer occurred, so these are not maximum-performance guarantees. This short test does not cancel the XFCE packet-loss record or cover the other eight images.
+- Trixie XFCE HDMI audio: a 10-second test tone has limited evidence of stereo output. The complete 15-second capture failed with an I/O error. Full audio acceptance has not been achieved.
+- GPIO and other external interfaces have not completed fixture-based validation. Actual Bluetooth pairing is untested. The complete native SD boot sequence, reboot and cold-boot checks have not been completed for every image.
+- Cold-boot abnormalities have been observed with a specific USB peripheral connected; the cause is unresolved. Use the fewest peripherals for initial validation, then connect them one at a time after the system is stable.
+
+5. Verification and Evaluation
+1. Confirm that the hardware is the BPI-M4 Zero EMAC supported by this batch. Select the intended distribution and minimal/XFCE image. Do not use it on other boards without confirmed compatibility.
+2. In the directory containing the matching batch files, run:
+   sha256sum -c SHA256SUMS.txt
+   Continue only when every check succeeds. Stop if a file is missing or a checksum differs.
+3. Replace IMAGE.img.xz below with the selected filename. Decompress while keeping the original archive:
+   xz -dk "IMAGE.img.xz"
+   Ensure sufficient disk space. Stop on decompression errors; do not use an incomplete image.
+4. Back up the target SD card and confirm sufficient capacity. Write the extracted .img using an image-writing tool with read-back verification. Select the correct whole card, not the system disk. This overwrites the target data.
+5. Complete write verification and safely eject the card. Use a stable power supply and the fewest peripherals, then boot and complete initial setup.
+6. Check the kernel version, display, network and required peripherals separately. If GPU kernel errors, display abnormalities or storage I/O errors occur, stop the relevant workload and retain the records. Repeated runs are not a repair.
+
+These notes do not guarantee compatibility with every display, USB device, wireless environment or media format. They do not qualify this candidate for production use.
