@@ -96,26 +96,52 @@ apt-get build-dep --no-install-recommends -y ./mesa-23.2.1
 
 ## 套用與建包
 
+### 補丁核對
+
 回到非 root 建置帳號，在同一工作目錄執行：
+先套用釘選來源的官方補丁；只接受下列兩筆指定補丁、檔案與 hunk 的已知偏移。
+新增、缺少、重複或不同偏移均停止；任何 fuzz 或失敗也停止。
 
 ```bash
 set -euo pipefail
 export LC_ALL=C.UTF-8
-cp jammy-23.2.1-g31-preload.patch mesa-23.2.1/debian/patches/bpi-g31-preload.patch
-patch --batch --fuzz=0 -p1 -d mesa-23.2.1 -i ../packaging-version.patch \
-  > packaging-apply.log 2>&1
-if grep -Ei 'fuzz|offset|FAILED' packaging-apply.log; then exit 1; fi
 cd mesa-23.2.1
 export QUILT_PATCHES=debian/patches QUILT_PATCH_OPTS=--fuzz=0
-quilt --quiltrc /dev/null push -a --fuzz=0 > ../patch-apply.log 2>&1
-if grep -Ei 'fuzz|offset|FAILED' ../patch-apply.log; then exit 1; fi
+quilt --quiltrc /dev/null push -a --fuzz=0 > ../ubuntu-patch-apply.log 2>&1
+if grep -Ei 'fuzz|FAILED' ../ubuntu-patch-apply.log; then exit 1; fi
+awk '
+  /^Applying patch / { patch = $3; sub(/^debian\/patches\//, "", patch) }
+  /^patching file / { file = substr($0, 15) }
+  /offset/ { print patch "\t" file "\t" $0 }
+' ../ubuntu-patch-apply.log > ../ubuntu-offsets.tsv
+diff -u <(printf '%s\t%s\t%s\n' \
+  fix-clover-build-without-spirv.diff \
+  src/compiler/meson.build 'Hunk #1 succeeded at 58 (offset -23 lines).' \
+  use_common_clear_texture.patch \
+  src/gallium/drivers/virgl/virgl_context.c 'Hunk #2 succeeded at 931 (offset 4 lines).') \
+  ../ubuntu-offsets.tsv
+cp ../jammy-23.2.1-g31-preload.patch debian/patches/bpi-g31-preload.patch
+patch --batch --fuzz=0 -p1 -i ../packaging-version.patch > ../packaging-apply.log 2>&1
+if grep -Ei 'fuzz|offset|FAILED' ../packaging-apply.log; then exit 1; fi
+quilt --quiltrc /dev/null push --fuzz=0 > ../bpi-patch-apply.log 2>&1
+if grep -Ei 'fuzz|offset|FAILED' ../bpi-patch-apply.log; then exit 1; fi
 quilt --quiltrc /dev/null pop -a
+```
+
+封裝與 BPI 補丁均須零 fuzz、零偏移；官方補丁只允許上述精確匹配。
+
+### 建包
+
+補丁核對成功後，保持在 `mesa-23.2.1` 目錄執行：
+
+```bash
+set -euo pipefail
 export DEB_BUILD_OPTIONS=parallel=6 DEB_BUILD_PROFILES=
 dpkg-checkbuilddeps
 dpkg-buildpackage -b -uc -us -j6
 ```
 
-所有補丁須零 fuzz、零偏移；保留原測試設定，不使用 `nocheck`。
+保留原測試設定，不使用 `nocheck`。
 保留 `dh_missing --fail-missing`、`dh_makeshlibs -a -- -c4`。
 不更動建包配置來減少套件或測試。
 
