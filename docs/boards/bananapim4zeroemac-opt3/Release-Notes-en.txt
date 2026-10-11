@@ -1,20 +1,19 @@
 Banana Pi BPI-M4 Zero EMAC Release Notes
-Release date: 2026-10-10
-Version: 26.11.0-trunk-opt3 (opt3 test candidate)
-Architecture: arm64
-Kernel: 6.18.55-current-sunxi64
+Evidence snapshot time: 2026-10-11T19:47:36.101095+08:00
+26.11.0-trunk-opt3 / arm64 / 6.18.55-current-sunxi64
 
-1. Release Status
-This batch is a test candidate for parallel customer evaluation, not a stable release. Do not use it in production.
-All ten images, XZ archives and offline content checks are complete. Full hardware acceptance remains 0/10.
-After downloading, verify file integrity using SHA256SUMS.txt from this batch.
-Only the Trixie minimal and XFCE images have undergone partial hardware testing. The other eight images have not been tested on hardware.
-This batch is provided separately from macfix1. It neither replaces that release nor inherits its test results.
-Standard board sources, patches, and Mesa rebuild recipes are supplied in the public branch below. See Build-Guide-en.txt.
-Public URL: https://github.com/BPI-SINOVOIP/armbian-build.git
-Branch: bpi-m4zeroemac-opt3-20261010
-Pinned code commit: 170bc7a688deb6cd6f8bdf29f3f249883758efee
-Sources are public. Clean rebuilds of all ten images remain unverified; rebuilt hashes need not match this release.
+1. Version and Validation Scope
+These images are test candidates, not stable releases. They are not approved for production.
+Images booted with identity evidence: 10/10. Complete hardware acceptance: 0/10.
+This round uses bounded functional tests. It adds no memory stress, CPU stress, long GPU benchmarks, or endurance tests.
+Scope: image/root identity, kernel, EMAC/Wi-Fi, bounded networking, display/GPU renderer, VPU, storage, AES, audio, reboot, and one cold boot.
+These tests cover eMMC root filesystems. They do not establish native, complete SD boot-chain acceptance for each published image.
+“Limited test evidence recorded” means records exist for a limited scope of that item. This establishes neither a pass nor full functional acceptance. “No evidence for this round” does not mean the hardware is unsupported. Failures, incomplete results, and known limitations remain recorded.
+Results apply only to their identified image. They do not transfer between images or from the older macfix1 batch.
+See the matching Build Guide for public sources, the pinned code commit, and all ten build commands.
+https://github.com/BPI-SINOVOIP/armbian-build.git
+bpi-m4zeroemac-opt3-20261010
+170bc7a688deb6cd6f8bdf29f3f249883758efee
 
 2. Ten Images
 Each distribution has a minimal command-line image and an XFCE desktop image, for ten images in total.
@@ -32,23 +31,212 @@ Jammy also includes a BSP packaging rename to avoid a configuration-file conflic
 - HDMI audio is configured for playback only. Standard graphics, GStreamer, V4L2 and I/O tools are included.
 - gpiod, i2c-tools, Python GPIO/SPI tools and the bpi-h618-hw-info information command are provided. Tool availability is not proof of tested pin functionality. Users are not automatically added to the gpio group. That group does not provide per-pin isolation; do not reconfigure EMAC pins PA0-PA9 or PA12.
 
-4. Test Results and Unresolved Risks
-- Trixie minimal and XFCE each passed one complete 1 GiB memory-test round and six CPU cycles. Each cycle comprised 300 seconds of load and 300 seconds of idle time. These passes do not constitute full-image acceptance.
-- Trixie XFCE GPU: the naturally completed 33-scene test passed. However, TERM cancellation still reproduces Panfrost TRANSLATION_FAULT_3/JOB_BUS_FAULT. This remains unfixed; a normal-scene pass does not cancel out the termination-path fault.
-  The GPU application-termination fault is a known issue; further investigation is deferred this round pending an upstream fix, without blocking other functional testing or test-candidate delivery, but this item cannot be marked as passed while unfixed.
-- Trixie minimal GPU: the DRM/EGL benchmark exited naturally with code 0 after 33 scenes and 1000.01 seconds, with a score of 153 and an empty kernel-error log. However, final KMS mode validation made the overall test exit with code 2 at 09:17:04 (UTC+08:00).
-  The user reported changing monitors. At 09:21, the maximum reported display mode had changed from 1920x1080 to 800x600. The monitor change affected this test, so full acceptance is withheld. This is not evidence of a minimal GPU kernel fault and does not establish a fix for the XFCE TERM fault.
-  The same image subsequently rebooted normally, with a maximum detected display mode of 1920x1080. From 09:26:49 to 09:27:33 (UTC+08:00), Mali-G31/Panfrost completed a 30-second build scene and 10 seconds of post-exit observation. The check exited with code 0; kernel-error logs were empty before and after, and EDID was unchanged. This passes only the short check after the monitor change, not the complete test, and does not establish a fix for the XFCE TERM fault.
-- Trixie minimal and XFCE Cedrus: each decoded four 640x360, 8-bit, 60-frame samples. H.264, H.265 and VP8 matched the software reference bit for bit. MPEG-2 showed small pixel differences, with average PSNR of 70.809520 dB. These results do not cover all resolutions, videos or players.
-- Trixie minimal and XFCE each passed 256 AES-256-CBC round trips with fixed 4 KiB data. Hardware requests increased by 512, with no fallback increase. A 64 MiB regular-file synchronized write and direct read produced matching hashes. This does not certify every encryption algorithm, whole-device endurance or power-loss persistence.
-- Trixie minimal Wi-Fi connected using WPA2-PSK and automatically reconnected with a DHCP address after a normal reboot. This hardware rejected the automatically generated SAE configuration in this test. With Netplan, explicitly set auth.key-management: psk instead of supplying only password. WPA3 remains unverified.
-- Trixie XFCE networking: EMAC and Wi-Fi each have 60-second throughput results in both directions, but TCP retransmissions occurred, and Wi-Fi also had packet loss. This is neither a loss-free nor a performance guarantee, and it does not establish passes for minimal or the other eight images.
-- Trixie minimal networking: received throughput was approximately 89.5/93.9 Mbps for EMAC and 50.9/52.6 Mbps for Wi-Fi. Each direction ran for 60 seconds. Both interfaces received all ten ping replies, with zero TCP retransmissions in this round. Background data transfer occurred, so these are not maximum-performance guarantees. This short test does not cancel the XFCE packet-loss record or cover the other eight images.
-- Trixie XFCE HDMI audio: a 10-second test tone has limited evidence of stereo output. The complete 15-second capture failed with an I/O error. Full audio acceptance has not been achieved.
-- GPIO and other external interfaces have not completed fixture-based validation. Actual Bluetooth pairing is untested. The complete native SD boot sequence, reboot and cold-boot checks have not been completed for every image.
-- Cold-boot abnormalities have been observed with a specific USB peripheral connected; the cause is unresolved. Use the fewest peripherals for initial validation, then connect them one at a time after the system is stable.
+4. Per-Image Functional Evidence
 
-5. Verification and Evaluation
+bookworm-minimal
+Booted with identity evidence; not a full functional pass
+- Image/root identity and kernel: Limited test evidence recorded; not full functional acceptance
+- Wi-Fi connection: Limited test evidence recorded; not full functional acceptance
+- Bounded EMAC/Wi-Fi networking: Limited test evidence recorded; not full functional acceptance
+- Display and GPU renderer: Incomplete evidence; no pass established
+- VPU sample decoding: Limited test evidence recorded; not full functional acceptance
+- Single file write/readback: Limited test evidence recorded; not full functional acceptance
+- Fixed-data AES: Limited test evidence recorded; not full functional acceptance
+- Audio: Incomplete evidence; no pass established
+- Normal reboot: Executed; limited evidence reviewed, not complete evidence or functional acceptance
+- One cold boot: Executed; limited evidence reviewed, not complete evidence or functional acceptance
+- Bookworm minimal completed normal reboot and cold boot with limited identity, service, and network evidence. Complete kernel logs and per-command exit codes for those boots are missing, so complete evidence or full functional acceptance is not established. This round is closed with reviewed limits, without reruns for those gaps; the reboots were not left unperformed.
+
+bookworm-xfce_desktop
+Booted with identity evidence; not a full functional pass
+- Image/root identity and kernel: Limited test evidence recorded; not full functional acceptance
+- Wi-Fi connection: Limited test evidence recorded; not full functional acceptance
+- Bounded EMAC/Wi-Fi networking: Tested with issues or limits; no pass granted
+- Display and GPU renderer: Incomplete evidence; no pass established
+- VPU sample decoding: Limited test evidence recorded; not full functional acceptance
+- Single file write/readback: Limited test evidence recorded; not full functional acceptance
+- Fixed-data AES: Limited test evidence recorded; not full functional acceptance
+- Audio: Incomplete evidence; no pass established
+- Normal reboot: Executed; limited evidence reviewed, not complete evidence or functional acceptance
+- One cold boot: Limited test evidence recorded; not full functional acceptance
+- Bookworm XFCE completed normal reboot and cold boot. The original post-reboot query timeout remains recorded. A follow-up check in the same boot completed without its own timestamp; no time is invented and no original record is rewritten. Reboot evidence remains limited and reviewed; cold-boot evidence collection is complete. No rerun or full functional acceptance is implied.
+
+trixie-minimal
+Booted with identity evidence; not a full functional pass
+- Image/root identity and kernel: Limited test evidence recorded; not full functional acceptance
+- Wi-Fi connection: Limited test evidence recorded; not full functional acceptance
+- Bounded EMAC/Wi-Fi networking: Limited test evidence recorded; not full functional acceptance
+- Display and GPU renderer: Limited test evidence recorded; not full functional acceptance
+- VPU sample decoding: Limited test evidence recorded; not full functional acceptance
+- Single file write/readback: Limited test evidence recorded; not full functional acceptance
+- Fixed-data AES: Limited test evidence recorded; not full functional acceptance
+- Audio: No evidence for this round
+- Normal reboot: Limited test evidence recorded; not full functional acceptance
+- One cold boot: No evidence for this round
+
+trixie-xfce_desktop
+Booted with identity evidence; not a full functional pass
+- Image/root identity and kernel: Limited test evidence recorded; not full functional acceptance
+- Wi-Fi connection: Limited test evidence recorded; not full functional acceptance
+- Bounded EMAC/Wi-Fi networking: Tested with issues or limits; no pass granted
+- Display and GPU renderer: Incomplete evidence; no pass established
+- VPU sample decoding: Limited test evidence recorded; not full functional acceptance
+- Single file write/readback: Limited test evidence recorded; not full functional acceptance
+- Fixed-data AES: Limited test evidence recorded; not full functional acceptance
+- Audio: Incomplete evidence; no pass established
+- Normal reboot: Limited test evidence recorded; not full functional acceptance
+- One cold boot: Limited test evidence recorded; not full functional acceptance
+
+jammy-minimal
+Booted with identity evidence; not a full functional pass
+- Image/root identity and kernel: Limited test evidence recorded; not full functional acceptance
+- Wi-Fi connection: DHCP and short network connection evidence recorded; not full Wi-Fi acceptance
+- Bounded EMAC/Wi-Fi networking: Tested with issues or limits; no pass granted
+- Display and GPU renderer: Limited test evidence recorded; not full functional acceptance
+- VPU sample decoding: Tested with issues or limits; no pass granted
+- Single file write/readback: Limited test evidence recorded; not full functional acceptance
+- Fixed-data AES: Limited test evidence recorded; not full functional acceptance
+- Audio: Tested with issues or limits; no pass granted
+- Normal reboot: Limited test evidence recorded; not full functional acceptance
+- One cold boot: Limited test evidence recorded; not full functional acceptance
+- AV command alsa-cards exited 0; its individual result is retained, not overridden by the outer exit code.
+- AV command eglinfo-legacy exited 3; its individual result is retained, not overridden by the outer exit code.
+- Playback of a fixed 10-second audio sample exited 0, with 10.142 seconds observed. This records the playback command only; audible output and capture are unverified, and complete audio acceptance is not established.
+- AV records bounded playback/query observations only; audible output and capture are unverified. A failed platform query does not erase observations from other platforms or establish a GPU hardware fault.
+- H.264/VP8/MPEG-2 sample decoding was executed. H.265 remains unsupported_not_tested (unsupported and untested). This is not acceptance of all four formats, all media, or long-term stability.
+- An earlier network test stopped before traffic because the tool lacked required options. That record remains; it does not establish a network hardware fault.
+- A later four-direction network check completed at 10 seconds per direction with observations: 43 TCP retransmissions; combined RX errors/drops increased by 0/0, and TX errors/drops by 0/0, across both interfaces. This is not a retransmission-free, long-duration, or stability acceptance result.
+- Playback of a fixed 10-second audio sample exited 0, with 10.142 seconds observed. This records the playback command only; audible output and capture are unverified, and complete audio acceptance is not established.
+- An earlier eglinfo query was inconclusive about the renderer. Its nonzero overall exit code does not mean every platform failed or establish a GPU hardware fault. The original inconclusive result remains recorded.
+- A single GBM context query after cold boot observed Mali-G31 (Panfrost); the version string was OpenGL ES 3.1 Mesa 23.2.1-1ubuntu3.1~22.04.4+bpi1. This records strings only, not physical display, drawing, performance, or stability acceptance, and does not establish that cancellation faults are fixed.
+
+jammy-xfce_desktop
+Booted with identity evidence; not a full functional pass
+- Image/root identity and kernel: Limited test evidence recorded; not full functional acceptance
+- Wi-Fi connection: Limited test evidence recorded; not full functional acceptance
+- Bounded EMAC/Wi-Fi networking: Tested with issues or limits; no pass granted
+- Display and GPU renderer: Incomplete evidence; no pass established
+- VPU sample decoding: Tested with issues or limits; no pass granted
+- Single file write/readback: Limited test evidence recorded; not full functional acceptance
+- Fixed-data AES: Limited test evidence recorded; not full functional acceptance
+- Audio: Incomplete evidence; no pass established
+- Normal reboot: Limited test evidence recorded; not full functional acceptance
+- One cold boot: Limited test evidence recorded; not full functional acceptance
+- AV command alsa-cards exited -25; its individual result is retained, not overridden by the outer exit code.
+- AV command glxinfo exited 0; its individual result is retained, not overridden by the outer exit code.
+- Playback of a fixed 10-second audio sample exited -25, with 0.937 seconds observed. This records the playback command only; audible output and capture are unverified, and complete audio acceptance is not established.
+- The audio test is incomplete: the tool was terminated by SIGXFSZ and the root cause is unconfirmed. This does not establish an audio hardware fault.
+- glxinfo observed a Mali-G31 (Panfrost) renderer. This single query does not establish physical display, complete GUI, performance, or stability acceptance.
+- AV records bounded playback/query observations only; audible output and capture are unverified. A failed platform query does not erase observations from other platforms or establish a GPU hardware fault.
+- H.264/VP8/MPEG-2 sample decoding was executed. H.265 remains unsupported_not_tested (unsupported and untested). This is not acceptance of all four formats, all media, or long-term stability.
+- A later four-direction network check completed at 10 seconds per direction with observations: 43 TCP retransmissions; combined RX errors/drops increased by 0/0, and TX errors/drops by 0/0, across both interfaces. This is not a retransmission-free, long-duration, or stability acceptance result.
+
+noble-minimal
+Booted with identity evidence; not a full functional pass
+- Image/root identity and kernel: Limited test evidence recorded; not full functional acceptance
+- Wi-Fi connection: DHCP and short network connection evidence recorded; not full Wi-Fi acceptance
+- Bounded EMAC/Wi-Fi networking: Tested with issues or limits; no pass granted
+- Display and GPU renderer: Incomplete evidence; no pass established
+- VPU sample decoding: Limited test evidence recorded; not full functional acceptance
+- Single file write/readback: Limited test evidence recorded; not full functional acceptance
+- Fixed-data AES: Limited test evidence recorded; not full functional acceptance
+- Audio: Tested with issues or limits; no pass granted
+- Normal reboot: Limited test evidence recorded; not full functional acceptance
+- One cold boot: Limited test evidence recorded; not full functional acceptance
+- AV command alsa-cards exited 0; its individual result is retained, not overridden by the outer exit code.
+- AV command eglinfo-surfaceless exited 0; its individual result is retained, not overridden by the outer exit code.
+- AV command eglinfo-device exited 1; its individual result is retained, not overridden by the outer exit code.
+- Playback of a fixed 10-second audio sample exited 0, with 10.129 seconds observed. This records the playback command only; audible output and capture are unverified, and complete audio acceptance is not established.
+- eglinfo-surfaceless observed a Mali-G31 (Panfrost) renderer. This single query does not establish physical display, complete GUI, performance, or stability acceptance.
+- AV records bounded playback/query observations only; audible output and capture are unverified. A failed platform query does not erase observations from other platforms or establish a GPU hardware fault.
+- Noble minimal completed a four-direction TCP check at 10 seconds per direction with observations. Receiver rates: wired forward/reverse 94.181/94.152 Mbps; Wi-Fi forward/reverse 51.423/52.843 Mbps. Wired reverse traffic recorded 43 retransmissions; each other direction recorded 0. RX/TX errors/drops increased by 0 on both interfaces; ping received 10/10 on each. These are observations from this short check, not guaranteed rates, long-duration testing, or stability acceptance.
+- Noble minimal completed full evidence collection for its formal normal reboot and one cold boot: matching root identity, distinct new boot identities, 0 failed services, and working wired/Wi-Fi DHCP addressing. This is bounded functional evidence for an eMMC root system, not complete functional, long-term stability, or native full SD boot-chain acceptance.
+
+noble-xfce_desktop
+Booted with identity evidence; not a full functional pass
+- Image/root identity and kernel: Limited test evidence recorded; not full functional acceptance
+- Wi-Fi connection: Limited test evidence recorded; not full functional acceptance
+- Bounded EMAC/Wi-Fi networking: Tested with issues or limits; no pass granted
+- Display and GPU renderer: Incomplete evidence; no pass established
+- VPU sample decoding: Limited test evidence recorded; not full functional acceptance
+- Single file write/readback: Limited test evidence recorded; not full functional acceptance
+- Fixed-data AES: Limited test evidence recorded; not full functional acceptance
+- Audio: Incomplete evidence; no pass established
+- Normal reboot: Limited test evidence recorded; not full functional acceptance
+- One cold boot: Limited test evidence recorded; not full functional acceptance
+- AV command alsa-cards exited -25; its individual result is retained, not overridden by the outer exit code.
+- AV command glxinfo exited 0; its individual result is retained, not overridden by the outer exit code.
+- Playback of a fixed 10-second audio sample exited -25, with 1.025 seconds observed. This records the playback command only; audible output and capture are unverified, and complete audio acceptance is not established.
+- The audio test is incomplete: the tool was terminated by SIGXFSZ and the root cause is unconfirmed. This does not establish an audio hardware fault.
+- glxinfo observed a Mali-G31 (Panfrost) renderer. This single query does not establish physical display, complete GUI, performance, or stability acceptance.
+- AV records bounded playback/query observations only; audible output and capture are unverified. A failed platform query does not erase observations from other platforms or establish a GPU hardware fault.
+
+resolute-minimal
+Booted with identity evidence; not a full functional pass
+- Image/root identity and kernel: Limited test evidence recorded; not full functional acceptance
+- Wi-Fi connection: DHCP and short network connection evidence recorded; not full Wi-Fi acceptance
+- Bounded EMAC/Wi-Fi networking: Tested with issues or limits; no pass granted
+- Display and GPU renderer: Incomplete evidence; no pass established
+- VPU sample decoding: Limited test evidence recorded; not full functional acceptance
+- Single file write/readback: Failure recorded; no pass granted
+- Fixed-data AES: Limited test evidence recorded; not full functional acceptance
+- Audio: Tested with issues or limits; no pass granted
+- Normal reboot: Limited test evidence recorded; not full functional acceptance
+- One cold boot: Limited test evidence recorded; not full functional acceptance
+- AV command alsa-cards exited 0; its individual result is retained, not overridden by the outer exit code.
+- AV command eglinfo-surfaceless exited -25; its individual result is retained, not overridden by the outer exit code.
+- AV command eglinfo-device exited 1; its individual result is retained, not overridden by the outer exit code.
+- Playback of a fixed 10-second audio sample exited 0, with 10.027 seconds observed. This records the playback command only; audible output and capture are unverified, and complete audio acceptance is not established.
+- AV records bounded playback/query observations only; audible output and capture are unverified. A failed platform query does not erase observations from other platforms or establish a GPU hardware fault.
+
+resolute-xfce_desktop
+Booted with identity evidence; not a full functional pass
+- Image/root identity and kernel: Limited test evidence recorded; not full functional acceptance
+- Wi-Fi connection: Limited test evidence recorded; not full functional acceptance
+- Bounded EMAC/Wi-Fi networking: Tested with issues or limits; no pass granted
+- Display and GPU renderer: Incomplete evidence; no pass established
+- VPU sample decoding: Limited test evidence recorded; not full functional acceptance
+- Single file write/readback: Failure recorded; no pass granted
+- Fixed-data AES: Limited test evidence recorded; not full functional acceptance
+- Audio: Incomplete evidence; no pass established
+- Normal reboot: Limited test evidence recorded; not full functional acceptance
+- One cold boot: Limited test evidence recorded; not full functional acceptance
+- AV command alsa-cards exited -25; its individual result is retained, not overridden by the outer exit code.
+- AV command glxinfo exited 0; its individual result is retained, not overridden by the outer exit code.
+- Playback of a fixed 10-second audio sample exited -25, with 1.156 seconds observed. This records the playback command only; audible output and capture are unverified, and complete audio acceptance is not established.
+- The audio test is incomplete: the tool was terminated by SIGXFSZ and the root cause is unconfirmed. This does not establish an audio hardware fault.
+- glxinfo observed a Mali-G31 MC1 (Panfrost) renderer. This single query does not establish physical display, complete GUI, performance, or stability acceptance.
+- AV records bounded playback/query observations only; audible output and capture are unverified. A failed platform query does not erase observations from other platforms or establish a GPU hardware fault.
+
+5. Known Limitations
+- Trixie XFCE recorded TRANSLATION_FAULT_3/JOB_BUS_FAULT after TERM cancellation in Panfrost. Investigation is deferred; other successful tests do not resolve it.
+- Trixie XFCE recorded retransmissions, Wi-Fi packet loss, and incomplete audio capture. A monitor change affected Trixie minimal GPU testing. Later short tests do not establish complete acceptance.
+- GPIO/I2C/SPI fixtures, Bluetooth pairing, and peripheral compatibility lack complete acceptance. Installed tools do not prove working physical interfaces.
+- Cold-start failures occurred with a particular USB peripheral. The cause remains undetermined. Cold-boot tests exclude that peripheral.
+- Media results cover individual samples, not every codec, resolution, player, or 10-bit decode. AES and storage checks provide no endurance certification.
+- Separate CRA/SBOM materials support review only. They do not establish legal compliance, certification, or resolved vulnerabilities.
+- This update does not rebuild the ten images. Matching filenames do not transfer original hashes or test results to rebuilt images.
+- Bookworm minimal: GPU execution ended, but display modes changed. Audio capture was incomplete with an I/O error. Initial console-setup failure remains recorded.
+- Bookworm XFCE: reverse EMAC traffic recorded 129 TCP retransmissions and 8 additional receive drops. HDMI playback exited 0, but capture contained 0 frames. Audio acceptance remains unproven. Desktop panels and Mali-G31 rendering were observed; terminal drawing remains unaccepted. Initial console-setup failure remains recorded.
+- Jammy XFCE: aplay -l and playback both exited -25 (SIGXFSZ); each original log contains 0 bytes and is retained. ALSA card, PCM, and ELF version inventories exist, but the audio test is incomplete: the tool was terminated by SIGXFSZ and the root cause is unconfirmed. An AV outer exit of 0 does not establish audio acceptance or an audio hardware fault. glxinfo reported direct rendering: Yes, Accelerated: yes, Mali-G31 (Panfrost), and Mesa 23.2.1+bpi1. HDMI panels and the pointer were visible, but the background was black; this is not complete GUI acceptance. The four-direction network check ran for 10 seconds per direction with completed_with_observations: wired reverse traffic recorded 43 TCP retransmissions, and each other direction recorded 0. This is not long-duration or stability acceptance.
+- Noble minimal: HDMI showed a text login screen, not GUI acceptance. The original image did not include iperf3; the initial entry refused before traffic and created no result directory. Only the test environment received matching Ubuntu cached packages iperf3, libiperf0, and libsctp1; apt simulation showed 0 upgrades, 3 new packages, and 0 removals. This does not mean the original image included them. Installation does not establish network test completion; networking, normal reboot, and cold boot remain subject to their own results.
+- Noble XFCE: a single 64 MiB storage write/readback had matching SHA values over 5 seconds observed. The fixed AES sample recorded 512 additional hardware requests and 0 additional fallbacks. H.264/H.265/VP8/MPEG-2 each decoded 60 frames with a Cedrus IRQ increase of 60 and exit code 0; output SHA values for the first three formats matched the references. MPEG-2 records only PSNR average 70.809520 and minimum 68.021604, not bit-exact output. These individual samples do not establish storage performance, endurance, or acceptance of all cryptographic operations or media formats.
+- Noble XFCE: the desktop and background were observed. glxinfo reported Mali-G31 (Panfrost), direct rendering: Yes, Accelerated: yes, and Mesa 25.2.8-0ubuntu0.24.04.4; this does not establish complete GUI, performance, or stability acceptance. Both aplay -l and playback exited -25 (SIGXFSZ); each original log contains 0 bytes and is retained. The audio test is incomplete: the tool was terminated by SIGXFSZ and the root cause is unconfirmed. The outer exit code cannot override terminated child commands or establish an audio hardware fault.
+- Noble XFCE ran a four-direction TCP check at 10 seconds per direction, with 65 seconds observed overall and status completed_with_observations. Receiver rates: wired forward/reverse 94.151/94.047 Mbps; Wi-Fi forward/reverse 49.593/52.423 Mbps. Wired reverse traffic recorded 172 retransmissions; each other direction recorded 0. RX/TX errors/drops increased by 0 on both interfaces; ping received 10/10 on each. These short-check results do not establish retransmission-free operation, guaranteed rates, long-duration testing, or stability acceptance.
+- Resolute minimal showed an HDMI text login screen, not GUI acceptance. The original image lacked iperf3 and its dependencies. Only the test environment received iperf3, libiperf0, and libsctp1; apt simulation showed 0 upgrades, 3 new packages, and 0 removals, with the service inactive at installation. This does not establish that the original image included them or that Wi-Fi, network, audiovisual, or reboot tests completed; each requires its own evidence for this image.
+- Resolute minimal: aplay -l exited 0; playback was observed for 10.027 seconds and exited 0. Audible output and capture were not verified, so audio acceptance is not established. The eglinfo surfaceless query exited -25 (SIGXFSZ); the device query exited 1 with Unknown platform: device. Help also omits device, confirming an unsupported CLI platform option. No valid renderer value was obtained. The query-tool test is incomplete: neither GPU acceptance nor a GPU hardware fault is established. This round adds no benchmark or repeated reruns.
+- Resolute minimal ran a four-direction TCP check at 10 seconds per direction, with 69 seconds observed overall, tool exit code 0, and status completed_with_observations. Receiver rates: wired forward/reverse 94.145/94.152 Mbps; Wi-Fi forward/reverse 39.117/47.183 Mbps. Wired reverse traffic recorded 86 retransmissions; each other direction recorded 0. Ping received 10/10 on each interface, and RX/TX errors/drops increased by 0. Cumulative Wi-Fi TX drops were 2 both before and after; no increase does not mean no cumulative drops. The existing brcmf_set_channel reason -52 records remained at 7 and remain a known issue. These short-check results do not establish retransmission-free operation, guaranteed rates, long-term stability, or acceptance of other test items.
+- Resolute minimal: complete health evidence was collected after both a normal reboot and a cold boot. Root media identity and kernel matched this image, with 0 failed services each, successful console setup, and DHCP addresses on wired and Wi-Fi interfaces. The complete dmesg logs from these boots showed no brcmf_set_channel reason -52, Oops, or I/O errors. The earlier 7 scan errors remain a known issue; no root-cause fix is claimed. Complete evidence collection does not establish full functional acceptance or override the storage readback and renderer query limitations. Testing the eMMC root system does not validate the native SD boot chain.
+- Resolute minimal: the 64 MiB write command including fdatasync exited 0. Direct reading reported dd: IO error: Invalid input; dd exited 1, the child command reported 0 bytes, and the overall test exited 3. Complete readback and SHA comparison were not completed; storage has not passed. The tool was uutils coreutils 0.10.0. Empty kernel error logs and unchanged root identity do not establish a hardware fault. GNU dd has not been substituted and the test has not been rerun; the original failed result is retained.
+- Resolute minimal: the fixed AES sample recorded 512 additional hardware requests and 0 additional fallbacks. This covers only the sample, not all algorithms or long-term stability acceptance.
+- Resolute minimal: H.264/H.265/VP8/MPEG-2 each decoded 60 frames with a Cedrus IRQ increase of 60, exit code 0, and a complete output of 20736000 bytes. SHA values for this image's first three format outputs were verified against the software-decoded references. A new MPEG-2 comparison recorded PSNR average 70.809520 and minimum 68.021604, not bit-exact output. This covers only these fixed samples, not all media formats or long-term stability acceptance.
+- Resolute XFCE: the 64 MiB write command exited 0. Direct reading reported dd: IO error: Invalid input. dd exited 1; the child command reported 0 bytes. The overall test exited 3 over 6 seconds observed. Complete readback and SHA comparison were not completed; storage has not passed. The tool was uutils coreutils 0.10.0. Empty kernel error logs do not establish a hardware fault. The original failed result is retained; this round includes no rerun.
+- Resolute XFCE: the fixed AES sample recorded 512 additional hardware requests and 0 additional fallbacks. H.264/H.265/VP8/MPEG-2 each decoded 60 frames with a Cedrus IRQ increase of 60. Each command exited 0 and produced a complete output of 20736000 bytes. SHA values for this image's first three format outputs matched the software-decoded references. Its MPEG-2 comparison recorded PSNR average 70.809520 and minimum 68.021604, not bit-exact output. This covers only these fixed samples. These results do not establish acceptance of all cryptographic algorithms, media formats, or long-term stability.
+- Resolute XFCE: desktop panels and the background were observed. glxinfo exited 0. It reported direct rendering: Yes, Accelerated: yes, Mali-G31 MC1 (Panfrost), and Mesa 26.0.8-1ubuntu0.3. These are limited display and renderer observations. They do not establish complete GUI, performance, or stability acceptance. Both aplay -l and playback exited -25 (SIGXFSZ). Each original log contains 0 bytes and is retained. The audio test is incomplete. SIGXFSZ terminated the tool; the root cause is unconfirmed. The outer exit code cannot override terminated child commands or establish an audio hardware fault.
+- Resolute XFCE ran a four-direction TCP check at 10 seconds per direction. The overall observation lasted 70 seconds. The tool exited 0 with status completed_with_observations. Receiver rates: wired forward/reverse 94.103/94.047 Mbps; Wi-Fi forward/reverse 50.421/45.189 Mbps. Wired reverse traffic recorded 129 retransmissions; each other direction recorded 0. RX/TX errors/drops increased by 0 on both interfaces; ping received 10/10 on each. These short-check results do not establish retransmission-free operation, guaranteed rates, long-term stability, or acceptance of other test items. These results cannot replace normal-reboot and cold-boot evidence.
+- Resolute XFCE: complete health evidence was collected after both a normal reboot and a cold boot. Root media identity and kernel matched this image. Each boot recorded 0 failed services and successful console setup. Both wired and Wi-Fi interfaces acquired DHCP addresses. The complete dmesg logs from these boots showed no Oops or I/O errors. Complete evidence collection does not establish full functional acceptance. It does not override the storage readback failure, incomplete audio test, or other known limitations. Testing the eMMC root system does not validate the native SD boot chain.
+
+6. Verification and Evaluation
 1. Confirm that the hardware is the BPI-M4 Zero EMAC supported by this batch. Select the intended distribution and minimal/XFCE image. Do not use it on other boards without confirmed compatibility.
 2. In the directory containing the matching batch files, run:
    sha256sum -c SHA256SUMS.txt
@@ -61,3 +249,57 @@ Jammy also includes a BSP packaging rename to avoid a configuration-file conflic
 6. Check the kernel version, display, network and required peripherals separately. If GPU kernel errors, display abnormalities or storage I/O errors occur, stop the relevant workload and retain the records. Repeated runs are not a repair.
 
 These notes do not guarantee compatibility with every display, USB device, wireless environment or media format. They do not qualify this candidate for production use.
+
+7. Original Image Identity
+
+Filenames, byte counts, and hashes come from existing artifact evidence. This update does not reread large images or repeat XZ checks.
+
+Armbian-unofficial_26.11.0-trunk-opt3_Bananapim4zeroemac_bookworm_current_6.18.55_minimal.img.xz
+.img: 2294284288 bytes; .img.xz: 484212368 bytes
+.img SHA-256: d1243f727f3b1d28fc59eaaf33c2ddf2a375b91cd1ab6b177ff6e1b0c0700832
+.img.xz SHA-256: 14802a3de5cfc4c91b158d8ffaaab4d8a6220de9fd3be0cd23ec61d48724af36
+
+Armbian-unofficial_26.11.0-trunk-opt3_Bananapim4zeroemac_bookworm_current_6.18.55_xfce_desktop.img.xz
+.img: 5314183168 bytes; .img.xz: 1097342804 bytes
+.img SHA-256: e66c359d58b1744e195d4f7e595bbd8e6f72033e4ad42505024263e99b30b4ad
+.img.xz SHA-256: 10e9f951fca79bd31b3da05b5723f3048036ba621cc242ff96ebd3da7e590d1c
+
+Armbian-unofficial_26.11.0-trunk-opt3_Bananapim4zeroemac_trixie_current_6.18.55_minimal.img.xz
+.img: 2420113408 bytes; .img.xz: 504806256 bytes
+.img SHA-256: cc217826e64e29cfaa7030b9b1dd5510070bbeffd27cc35a76114a8e34a84a3d
+.img.xz SHA-256: bce4fc09f3f979926271ef50b201a7828ccb8d7dd8a43a74d48c668c53bb2fe7
+
+Armbian-unofficial_26.11.0-trunk-opt3_Bananapim4zeroemac_trixie_current_6.18.55_xfce_desktop.img.xz
+.img: 6060769280 bytes; .img.xz: 1212912056 bytes
+.img SHA-256: c7042d5903dedda919d7c1f77ce9d1291feba5d7a73f7fd21d16893ae9028a38
+.img.xz SHA-256: 3bfbaa6c186d951b95c7394dfd914913f01ebb9489150d821196d964b57adee2
+
+Armbian-unofficial_26.11.0-trunk-opt3_Bananapim4zeroemac_jammy_current_6.18.55_minimal.img.xz
+.img: 2076180480 bytes; .img.xz: 455404456 bytes
+.img SHA-256: ef20235e946ba4d76e80beb1a3991396101aef0f0611da366fb892a388735416
+.img.xz SHA-256: 2f423cd5170dca3f9f2d3ca50c5309c06d1993196d9a30ef87096896007fcbcc
+
+Armbian-unofficial_26.11.0-trunk-opt3_Bananapim4zeroemac_jammy_current_6.18.55_xfce_desktop.img.xz
+.img: 6576668672 bytes; .img.xz: 1102865760 bytes
+.img SHA-256: 83fd7407bda89e9a3f43b8e123566b6371805bd3963ed5108c18daf30643cc3d
+.img.xz SHA-256: 0ca22ff2ef025376872b35e25f7c04f809af42289b40899a92f853c59bc62a34
+
+Armbian-unofficial_26.11.0-trunk-opt3_Bananapim4zeroemac_noble_current_6.18.55_minimal.img.xz
+.img: 2256535552 bytes; .img.xz: 458012356 bytes
+.img SHA-256: dbf7ee2c692ba7b1806f3a187da552333ad7253901bf8849a33ce9e447c29dc3
+.img.xz SHA-256: ddab8dbf480995746f0dfa13f862990bf7df051c230639a70fccf6acefb3c102
+
+Armbian-unofficial_26.11.0-trunk-opt3_Bananapim4zeroemac_noble_current_6.18.55_xfce_desktop.img.xz
+.img: 5708447744 bytes; .img.xz: 1071856564 bytes
+.img SHA-256: 6a082efe08449a28d1f55a9848bde4e5de6d986fe454e6af31491207ce0241f0
+.img.xz SHA-256: fa8d7fb65b7922db3980be917e3b79df27a1a498d6af91ae6158daf4fd07c2fe
+
+Armbian-unofficial_26.11.0-trunk-opt3_Bananapim4zeroemac_resolute_current_6.18.55_minimal.img.xz
+.img: 2365587456 bytes; .img.xz: 494774272 bytes
+.img SHA-256: 04b886bfdd4e34cf6e99606096911315232738a4dfc144246855bc7643f8d82a
+.img.xz SHA-256: f1c1363345b13f8a92ef42b9e81efc14d3e651bad079000ea4ff0608aa8b78ed
+
+Armbian-unofficial_26.11.0-trunk-opt3_Bananapim4zeroemac_resolute_current_6.18.55_xfce_desktop.img.xz
+.img: 5913968640 bytes; .img.xz: 1144699024 bytes
+.img SHA-256: fa45ed970863faf3728deccdec463a71b4c1ac9326bcb1a481716137ad9eed1a
+.img.xz SHA-256: 7b8d0a9acfde5df0b244fe42338e4eb8ef3babc90a44758ba5dae13d13186fdd

@@ -1,4 +1,5 @@
 BPI-M4 Zero EMAC opt3 Public Source Build Guide
+Evidence snapshot time: 2026-10-11T19:47:36.101095+08:00
 
 Date: 2026-10-10
 Image version: 26.11.0-trunk-opt3
@@ -335,9 +336,12 @@ Record source, dependencies, hashes, and functional validation separately, even 
 
 This review covered documents, source settings, successful commands, filenames, sizes, and existing checksum manifests.
 This source publication did not rebuild all ten images or repeat existing hardware workloads. Source acquisition and document checks are not successful build evidence.
-Existing release notes report complete hardware acceptance at 0/10.
-Only Trixie minimal and XFCE have partial hardware tests.
-The other eight images cannot inherit acceptance from Trixie or the older macfix1 batch.
+Images booted with identity evidence: 10/10. Complete hardware acceptance: 0/10.
+This round uses bounded functional tests. It adds no memory stress, CPU stress, long GPU benchmarks, or endurance tests.
+Scope: image/root identity, kernel, EMAC/Wi-Fi, bounded networking, display/GPU renderer, VPU, storage, AES, audio, reboot, and one cold boot.
+These tests cover eMMC root filesystems. They do not establish native, complete SD boot-chain acceptance for each published image.
+“Limited test evidence recorded” means records exist for a limited scope of that item. This establishes neither a pass nor full functional acceptance. “No evidence for this round” does not mean the hardware is unsupported. Failures, incomplete results, and known limitations remain recorded.
+Results apply only to their identified image. They do not transfer between images or from the older macfix1 batch.
 The Panfrost TERM cancellation fault remains unresolved. The Mesa backport does not fix that fault.
 This guide grants no complete GPU, media, network, or GPIO acceptance. Consult the matching release notes.
 
@@ -350,3 +354,13 @@ Complete per-image source/cache mappings and immutable snapshots of all packages
 Publication does not pass clean rebuilds, full hardware acceptance, or the known GPU cancellation fault.
 Build and release notes are supplied as UTF-8 TXT in Traditional Chinese, Simplified Chinese, and English.
 Release documents also include searchable PDFs with embedded fonts. Copy commands from TXT; PDF lines may wrap for reading.
+
+9. Updated Functional Validation Summary
+
+Images booted with identity evidence: 10/10. Complete hardware acceptance: 0/10.
+This round uses bounded functional tests. It adds no memory stress, CPU stress, long GPU benchmarks, or endurance tests.
+Scope: image/root identity, kernel, EMAC/Wi-Fi, bounded networking, display/GPU renderer, VPU, storage, AES, audio, reboot, and one cold boot.
+These tests cover eMMC root filesystems. They do not establish native, complete SD boot-chain acceptance for each published image.
+“Limited test evidence recorded” means records exist for a limited scope of that item. This establishes neither a pass nor full functional acceptance. “No evidence for this round” does not mean the hardware is unsupported. Failures, incomplete results, and known limitations remain recorded.
+Results apply only to their identified image. They do not transfer between images or from the older macfix1 batch.
+Separate CRA/SBOM materials support review only. They do not establish legal compliance, certification, or resolved vulnerabilities.

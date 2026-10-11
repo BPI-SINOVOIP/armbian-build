@@ -1,20 +1,19 @@
 Banana Pi BPI-M4 Zero EMAC 發布說明
-發布日期：2026-10-10
-版本：26.11.0-trunk-opt3（opt3 測試候選）
-架構：arm64
-核心：6.18.55-current-sunxi64
+證據快照時間: 2026-10-11T19:47:36.101095+08:00
+26.11.0-trunk-opt3 / arm64 / 6.18.55-current-sunxi64
 
-一、發布定位
-本批是供客戶平行評估的測試候選，不是穩定版，不適用於生產環境。
-十套映像、XZ 壓縮檔與離線內容核對已完成；完整實機驗收為 0/10。
-下載後請使用同批 SHA256SUMS.txt 核對檔案完整性。
-目前只有 Trixie 的 minimal 與 XFCE 進行過部分實機測試，其餘八套尚未上板。
-本批與舊 macfix1 分開提供，不取代舊版，也不沿用舊版通過資格。
-標準板級來源、補丁與 Mesa 重建配方提供於以下公開分支；詳見同批 Build-Guide-zh-TW.txt。
-公開網址：https://github.com/BPI-SINOVOIP/armbian-build.git
-分支：bpi-m4zeroemac-opt3-20261010
-固定程式提交：170bc7a688deb6cd6f8bdf29f3f249883758efee
-公開來源已提供；尚未重新完成十套乾淨重建，亦不保證自建 SHA 等於本批發布檔案。
+1. 版本與驗證範圍
+本批為測試候選，不是穩定正式版，不授予生產使用資格。
+已上板並核對開機身分：10/10；完整實機驗收：0/10。
+本輪只做有界功能測試，不新增記憶體長測、CPU 長壓、長時間 GPU benchmark 或耐久測試。
+功能範圍：映像與根媒體身分、核心、EMAC／Wi-Fi、有限雙向網路、顯示與 GPU renderer、VPU、單次儲存、AES、音訊、正常重啟與一次冷開。
+以下實測以 eMMC 根檔案系統為範圍，不等於每套發布 SD 映像的原生完整開機鏈已通過。
+「已記錄有限測試證據」僅表示本項已有有限範圍紀錄，不等於判定通過或完整功能驗收。「未有本輪證據」不等於硬體不支援。失敗、不完整結果及已知限制均保留。
+各套結果僅屬該映像，不互相借用，也不沿用舊 macfix1 的資格。
+公開來源、固定程式提交及十套命令見同批 Build Guide。
+https://github.com/BPI-SINOVOIP/armbian-build.git
+bpi-m4zeroemac-opt3-20261010
+170bc7a688deb6cd6f8bdf29f3f249883758efee
 
 二、十套映像
 每個發行版各有 minimal 命令列版與 XFCE 桌面版，共十套。
@@ -32,23 +31,212 @@ Jammy 另含避免設定檔衝突的 BSP 封裝更名；不可假設十套的所
 - HDMI 音訊設定為僅播放；加入標準圖形、GStreamer、V4L2 與 I/O 工具。
 - 提供 gpiod、i2c-tools、Python GPIO／SPI 工具及 bpi-h618-hw-info 資訊命令。工具存在不等於腳位功能通過；未自動授予使用者 gpio 群組權限。該群組不是逐腳位隔離，不得重新配置 EMAC 使用的 PA0-PA9、PA12。
 
-四、已測結果與未解風險
-- Trixie minimal 與 XFCE：各完成 1 GiB 記憶體完整一輪，以及六輪 CPU 測試；每輪為 300 秒負載加 300 秒閒置。這些項目通過，不等於整套通過。
-- Trixie XFCE GPU：正常自然結束的 33 場景測試通過。但 TERM 取消後仍重現 Panfrost TRANSLATION_FAULT_3／JOB_BUS_FAULT，尚未修復；正常場景通過不能抵銷取消路徑故障。
-  GPU 程式中止故障列為已知問題，本輪暫緩追查、等待上游修正，不阻塞其他功能測試與測試候選交付；未修復前不能授予該項通過。
-- Trixie minimal GPU：DRM／EGL 本體自然退出 0，完成 33 場景、1000.01 秒，分數 153，核心錯誤紀錄空白。但收尾 KMS 模式檢查使整體流程於 09:17:04（UTC+08:00）退出 2。
-  使用者回報更換螢幕；09:21 實讀最大顯示模式由 1920x1080 變為 800x600。此次受換屏干擾，不授予完整通過，不能寫成 minimal GPU 核心故障，也不代表 XFCE TERM 故障已修復。
-  後續同映像已正常重啟；顯示模式重新辨識為最高 1920x1080。09:26:49–09:27:33（UTC+08:00）以 Mali-G31／Panfrost 完成 30 秒 build 場景及結束後 10 秒觀察，退出 0，前後核心錯誤紀錄空白且 EDID 相同。這只是換屏後的短時間驗證通過，不取代完整測試，也不代表 XFCE TERM 故障已修復。
-- Trixie minimal 與 XFCE Cedrus：各自完成四種 640x360、8 位元、60 幀樣本解碼。H.264／H.265／VP8 與軟體參考逐位元相同；MPEG-2 有小幅像素差異，平均 PSNR 70.809520 dB。不能外推所有解析度、影片或播放器。
-- Trixie minimal 與 XFCE：各自通過固定 4 KiB 資料的 AES-256-CBC 256 次往返，硬體請求增量 512、回退增量 0；64 MiB 一般檔案同步寫入及直接讀回摘要一致。不是所有加密演算法、全盤耐久或掉電持久性認證。
-- Trixie minimal Wi-Fi：使用 WPA2-PSK 成功連線，正常重啟後自動恢復並取得 DHCP 位址。此組硬體不接受本次自動產生的 SAE 設定；使用 Netplan 時須明確指定 auth.key-management: psk，不只填 password。未驗證 WPA3。
-- Trixie XFCE 網路：EMAC 與 Wi-Fi 均有雙向各 60 秒吞吐結果，但存在 TCP 重傳，Wi-Fi 亦有丟包；不是無損或效能保證，不代表 minimal 或其餘八套已通過。
-- Trixie minimal 網路：EMAC 雙向接收約 89.5／93.9 Mbps，Wi-Fi 約 50.9／52.6 Mbps，各方向 60 秒；兩介面各十次 ping 全收，本輪 TCP 重傳為 0。同期有背景資料傳輸，不作最大效能保證；短測結果不抵銷 XFCE 的丟包紀錄，也不外推其餘八套。
-- Trixie XFCE HDMI 音訊：10 秒測試音有有限的雙聲道輸出證據；完整 15 秒擷取因 I/O 錯誤未完成，未取得全面音訊通過資格。
-- GPIO 等外接介面尚未完成治具驗證；Bluetooth 真實配對未驗證。原生 SD 完整開機流程、重啟及冷開機尚未逐套完成。
-- 曾觀察到特定 USB 周邊接入時冷開機異常，原因未定；初次驗證使用最少周邊，待穩定後再逐件接入。
+4. 逐映像功能證據
 
-五、校驗與試用
+bookworm-minimal
+已開機並有身分證據，不代表全功能通過
+- 映像／根媒體身分與核心: 已記錄有限測試證據；非完整功能驗收
+- Wi-Fi 連線: 已記錄有限測試證據；非完整功能驗收
+- EMAC／Wi-Fi 有限網路: 已記錄有限測試證據；非完整功能驗收
+- 顯示與 GPU renderer: 證據不完整，不能判定通過
+- VPU 樣本解碼: 已記錄有限測試證據；非完整功能驗收
+- 單次檔案寫入／讀回: 已記錄有限測試證據；非完整功能驗收
+- AES 固定資料: 已記錄有限測試證據；非完整功能驗收
+- 音訊: 證據不完整，不能判定通過
+- 正常重啟: 已執行，有限收證已覆核；不代表完整收證或功能通過
+- 一次冷開: 已執行，有限收證已覆核；不代表完整收證或功能通過
+- Bookworm minimal 的正常重啟與冷開均已執行，身分、服務與網路已有有限證據。缺少對應開機的完整核心日誌及逐命令退出碼，不能提升為完整收證或全功能通過。本輪依有限收證覆核收尾，不因資料缺口重跑；不應解讀為尚未重啟。
+
+bookworm-xfce_desktop
+已開機並有身分證據，不代表全功能通過
+- 映像／根媒體身分與核心: 已記錄有限測試證據；非完整功能驗收
+- Wi-Fi 連線: 已記錄有限測試證據；非完整功能驗收
+- EMAC／Wi-Fi 有限網路: 已測但有異常／限制，未授予通過
+- 顯示與 GPU renderer: 證據不完整，不能判定通過
+- VPU 樣本解碼: 已記錄有限測試證據；非完整功能驗收
+- 單次檔案寫入／讀回: 已記錄有限測試證據；非完整功能驗收
+- AES 固定資料: 已記錄有限測試證據；非完整功能驗收
+- 音訊: 證據不完整，不能判定通過
+- 正常重啟: 已執行，有限收證已覆核；不代表完整收證或功能通過
+- 一次冷開: 已記錄有限測試證據；非完整功能驗收
+- Bookworm XFCE 已執行正常重啟與冷開。重啟後原查詢逾時紀錄保留，同次開機的補查已完成，但無獨立時間戳，不補造時間或改寫原件；暖開仍按有限收證覆核。冷開完整收證已完成。本輪不重跑，也不因此授予全功能通過。
+
+trixie-minimal
+已開機並有身分證據，不代表全功能通過
+- 映像／根媒體身分與核心: 已記錄有限測試證據；非完整功能驗收
+- Wi-Fi 連線: 已記錄有限測試證據；非完整功能驗收
+- EMAC／Wi-Fi 有限網路: 已記錄有限測試證據；非完整功能驗收
+- 顯示與 GPU renderer: 已記錄有限測試證據；非完整功能驗收
+- VPU 樣本解碼: 已記錄有限測試證據；非完整功能驗收
+- 單次檔案寫入／讀回: 已記錄有限測試證據；非完整功能驗收
+- AES 固定資料: 已記錄有限測試證據；非完整功能驗收
+- 音訊: 未有本輪證據
+- 正常重啟: 已記錄有限測試證據；非完整功能驗收
+- 一次冷開: 未有本輪證據
+
+trixie-xfce_desktop
+已開機並有身分證據，不代表全功能通過
+- 映像／根媒體身分與核心: 已記錄有限測試證據；非完整功能驗收
+- Wi-Fi 連線: 已記錄有限測試證據；非完整功能驗收
+- EMAC／Wi-Fi 有限網路: 已測但有異常／限制，未授予通過
+- 顯示與 GPU renderer: 證據不完整，不能判定通過
+- VPU 樣本解碼: 已記錄有限測試證據；非完整功能驗收
+- 單次檔案寫入／讀回: 已記錄有限測試證據；非完整功能驗收
+- AES 固定資料: 已記錄有限測試證據；非完整功能驗收
+- 音訊: 證據不完整，不能判定通過
+- 正常重啟: 已記錄有限測試證據；非完整功能驗收
+- 一次冷開: 已記錄有限測試證據；非完整功能驗收
+
+jammy-minimal
+已開機並有身分證據，不代表全功能通過
+- 映像／根媒體身分與核心: 已記錄有限測試證據；非完整功能驗收
+- Wi-Fi 連線: 已記錄 DHCP 與短網路連線證據；非完整 Wi-Fi 驗收
+- EMAC／Wi-Fi 有限網路: 已測但有異常／限制，未授予通過
+- 顯示與 GPU renderer: 已記錄有限測試證據；非完整功能驗收
+- VPU 樣本解碼: 已測但有異常／限制，未授予通過
+- 單次檔案寫入／讀回: 已記錄有限測試證據；非完整功能驗收
+- AES 固定資料: 已記錄有限測試證據；非完整功能驗收
+- 音訊: 已測但有異常／限制，未授予通過
+- 正常重啟: 已記錄有限測試證據；非完整功能驗收
+- 一次冷開: 已記錄有限測試證據；非完整功能驗收
+- AV 子命令 alsa-cards 退出 0；保留個別結果，不以外層退出碼抵銷。
+- AV 子命令 eglinfo-legacy 退出 3；保留個別結果，不以外層退出碼抵銷。
+- 固定 10 秒音訊樣本的播放命令退出 0，觀察時間 10.142 秒。只記播放命令結果；未驗證可聽聲音或擷取，不代表音訊全面驗收。
+- AV 僅保留有限播放／查詢觀察；未驗證可聽聲音或擷取。部分平台查詢失敗不抹除其他平台觀察，也不能直接判為 GPU 硬體故障。
+- 已執行 H.264／VP8／MPEG-2 三格式樣本解碼；H.265 為 unsupported_not_tested（未支援且未測）。不代表四格式、所有影音或長時間穩定驗收。
+- 先前網路測試因工具缺少必要選項而在傳輸前拒絕執行；該紀錄保留，不判為網路硬體故障。
+- 後續四向網路短測每向 10 秒，完成但保留觀察事項：TCP 重傳 43 次；兩介面合計 RX errors/drop 增量 0/0，TX errors/drop 增量 0/0。不代表無重傳、長測或穩定驗收。
+- 固定 10 秒音訊樣本的播放命令退出 0，觀察時間 10.142 秒。只記播放命令結果；未驗證可聽聲音或擷取，不代表音訊全面驗收。
+- 先前 eglinfo 未取得 renderer 結論；工具的總退出碼非零不代表所有平台失敗，也不代表 GPU 硬體故障。原未定紀錄保留。
+- 冷開後單次 GBM context 查詢觀察到 Mali-G31 (Panfrost)；版本字串為 OpenGL ES 3.1 Mesa 23.2.1-1ubuntu3.1~22.04.4+bpi1。僅確認字串觀察，不代表實體顯示、繪圖、效能或穩定驗收，亦不表示取消故障已修復。
+
+jammy-xfce_desktop
+已開機並有身分證據，不代表全功能通過
+- 映像／根媒體身分與核心: 已記錄有限測試證據；非完整功能驗收
+- Wi-Fi 連線: 已記錄有限測試證據；非完整功能驗收
+- EMAC／Wi-Fi 有限網路: 已測但有異常／限制，未授予通過
+- 顯示與 GPU renderer: 證據不完整，不能判定通過
+- VPU 樣本解碼: 已測但有異常／限制，未授予通過
+- 單次檔案寫入／讀回: 已記錄有限測試證據；非完整功能驗收
+- AES 固定資料: 已記錄有限測試證據；非完整功能驗收
+- 音訊: 證據不完整，不能判定通過
+- 正常重啟: 已記錄有限測試證據；非完整功能驗收
+- 一次冷開: 已記錄有限測試證據；非完整功能驗收
+- AV 子命令 alsa-cards 退出 -25；保留個別結果，不以外層退出碼抵銷。
+- AV 子命令 glxinfo 退出 0；保留個別結果，不以外層退出碼抵銷。
+- 固定 10 秒音訊樣本的播放命令退出 -25，觀察時間 0.937 秒。只記播放命令結果；未驗證可聽聲音或擷取，不代表音訊全面驗收。
+- 音訊測試未完成，工具受 SIGXFSZ 中止，根因未確認；不據此判定音訊硬體故障。
+- glxinfo 觀察到 Mali-G31 (Panfrost) renderer；僅為單次查詢，不代表實體畫面、完整 GUI、效能或穩定驗收。
+- AV 僅保留有限播放／查詢觀察；未驗證可聽聲音或擷取。部分平台查詢失敗不抹除其他平台觀察，也不能直接判為 GPU 硬體故障。
+- 已執行 H.264／VP8／MPEG-2 三格式樣本解碼；H.265 為 unsupported_not_tested（未支援且未測）。不代表四格式、所有影音或長時間穩定驗收。
+- 後續四向網路短測每向 10 秒，完成但保留觀察事項：TCP 重傳 43 次；兩介面合計 RX errors/drop 增量 0/0，TX errors/drop 增量 0/0。不代表無重傳、長測或穩定驗收。
+
+noble-minimal
+已開機並有身分證據，不代表全功能通過
+- 映像／根媒體身分與核心: 已記錄有限測試證據；非完整功能驗收
+- Wi-Fi 連線: 已記錄 DHCP 與短網路連線證據；非完整 Wi-Fi 驗收
+- EMAC／Wi-Fi 有限網路: 已測但有異常／限制，未授予通過
+- 顯示與 GPU renderer: 證據不完整，不能判定通過
+- VPU 樣本解碼: 已記錄有限測試證據；非完整功能驗收
+- 單次檔案寫入／讀回: 已記錄有限測試證據；非完整功能驗收
+- AES 固定資料: 已記錄有限測試證據；非完整功能驗收
+- 音訊: 已測但有異常／限制，未授予通過
+- 正常重啟: 已記錄有限測試證據；非完整功能驗收
+- 一次冷開: 已記錄有限測試證據；非完整功能驗收
+- AV 子命令 alsa-cards 退出 0；保留個別結果，不以外層退出碼抵銷。
+- AV 子命令 eglinfo-surfaceless 退出 0；保留個別結果，不以外層退出碼抵銷。
+- AV 子命令 eglinfo-device 退出 1；保留個別結果，不以外層退出碼抵銷。
+- 固定 10 秒音訊樣本的播放命令退出 0，觀察時間 10.129 秒。只記播放命令結果；未驗證可聽聲音或擷取，不代表音訊全面驗收。
+- eglinfo-surfaceless 觀察到 Mali-G31 (Panfrost) renderer；僅為單次查詢，不代表實體畫面、完整 GUI、效能或穩定驗收。
+- AV 僅保留有限播放／查詢觀察；未驗證可聽聲音或擷取。部分平台查詢失敗不抹除其他平台觀察，也不能直接判為 GPU 硬體故障。
+- Noble minimal 四向 TCP 短測每向 10 秒，完成但保留觀察事項。接收端速率：有線正向／反向 94.181/94.152 Mbps；Wi-Fi 正向／反向 51.423/52.843 Mbps。有線反向 43 次重傳，其餘方向各 0 次；兩介面 RX／TX errors/drop 增量均為 0，ping 各 10/10。僅為本次短測觀察，不是保證速率、長測或穩定驗收。
+- Noble minimal 的正式正常重啟與一次冷開均已完成完整收證：根身分一致、開機識別各自更新、失敗服務 0、有線與 Wi-Fi DHCP 位址正常。這是 eMMC 根系統的有限功能收證，不代表全功能、長期穩定或原生 SD 完整開機鏈已驗收。
+
+noble-xfce_desktop
+已開機並有身分證據，不代表全功能通過
+- 映像／根媒體身分與核心: 已記錄有限測試證據；非完整功能驗收
+- Wi-Fi 連線: 已記錄有限測試證據；非完整功能驗收
+- EMAC／Wi-Fi 有限網路: 已測但有異常／限制，未授予通過
+- 顯示與 GPU renderer: 證據不完整，不能判定通過
+- VPU 樣本解碼: 已記錄有限測試證據；非完整功能驗收
+- 單次檔案寫入／讀回: 已記錄有限測試證據；非完整功能驗收
+- AES 固定資料: 已記錄有限測試證據；非完整功能驗收
+- 音訊: 證據不完整，不能判定通過
+- 正常重啟: 已記錄有限測試證據；非完整功能驗收
+- 一次冷開: 已記錄有限測試證據；非完整功能驗收
+- AV 子命令 alsa-cards 退出 -25；保留個別結果，不以外層退出碼抵銷。
+- AV 子命令 glxinfo 退出 0；保留個別結果，不以外層退出碼抵銷。
+- 固定 10 秒音訊樣本的播放命令退出 -25，觀察時間 1.025 秒。只記播放命令結果；未驗證可聽聲音或擷取，不代表音訊全面驗收。
+- 音訊測試未完成，工具受 SIGXFSZ 中止，根因未確認；不據此判定音訊硬體故障。
+- glxinfo 觀察到 Mali-G31 (Panfrost) renderer；僅為單次查詢，不代表實體畫面、完整 GUI、效能或穩定驗收。
+- AV 僅保留有限播放／查詢觀察；未驗證可聽聲音或擷取。部分平台查詢失敗不抹除其他平台觀察，也不能直接判為 GPU 硬體故障。
+
+resolute-minimal
+已開機並有身分證據，不代表全功能通過
+- 映像／根媒體身分與核心: 已記錄有限測試證據；非完整功能驗收
+- Wi-Fi 連線: 已記錄 DHCP 與短網路連線證據；非完整 Wi-Fi 驗收
+- EMAC／Wi-Fi 有限網路: 已測但有異常／限制，未授予通過
+- 顯示與 GPU renderer: 證據不完整，不能判定通過
+- VPU 樣本解碼: 已記錄有限測試證據；非完整功能驗收
+- 單次檔案寫入／讀回: 結果記錄失敗，未授予通過
+- AES 固定資料: 已記錄有限測試證據；非完整功能驗收
+- 音訊: 已測但有異常／限制，未授予通過
+- 正常重啟: 已記錄有限測試證據；非完整功能驗收
+- 一次冷開: 已記錄有限測試證據；非完整功能驗收
+- AV 子命令 alsa-cards 退出 0；保留個別結果，不以外層退出碼抵銷。
+- AV 子命令 eglinfo-surfaceless 退出 -25；保留個別結果，不以外層退出碼抵銷。
+- AV 子命令 eglinfo-device 退出 1；保留個別結果，不以外層退出碼抵銷。
+- 固定 10 秒音訊樣本的播放命令退出 0，觀察時間 10.027 秒。只記播放命令結果；未驗證可聽聲音或擷取，不代表音訊全面驗收。
+- AV 僅保留有限播放／查詢觀察；未驗證可聽聲音或擷取。部分平台查詢失敗不抹除其他平台觀察，也不能直接判為 GPU 硬體故障。
+
+resolute-xfce_desktop
+已開機並有身分證據，不代表全功能通過
+- 映像／根媒體身分與核心: 已記錄有限測試證據；非完整功能驗收
+- Wi-Fi 連線: 已記錄有限測試證據；非完整功能驗收
+- EMAC／Wi-Fi 有限網路: 已測但有異常／限制，未授予通過
+- 顯示與 GPU renderer: 證據不完整，不能判定通過
+- VPU 樣本解碼: 已記錄有限測試證據；非完整功能驗收
+- 單次檔案寫入／讀回: 結果記錄失敗，未授予通過
+- AES 固定資料: 已記錄有限測試證據；非完整功能驗收
+- 音訊: 證據不完整，不能判定通過
+- 正常重啟: 已記錄有限測試證據；非完整功能驗收
+- 一次冷開: 已記錄有限測試證據；非完整功能驗收
+- AV 子命令 alsa-cards 退出 -25；保留個別結果，不以外層退出碼抵銷。
+- AV 子命令 glxinfo 退出 0；保留個別結果，不以外層退出碼抵銷。
+- 固定 10 秒音訊樣本的播放命令退出 -25，觀察時間 1.156 秒。只記播放命令結果；未驗證可聽聲音或擷取，不代表音訊全面驗收。
+- 音訊測試未完成，工具受 SIGXFSZ 中止，根因未確認；不據此判定音訊硬體故障。
+- glxinfo 觀察到 Mali-G31 MC1 (Panfrost) renderer；僅為單次查詢，不代表實體畫面、完整 GUI、效能或穩定驗收。
+- AV 僅保留有限播放／查詢觀察；未驗證可聽聲音或擷取。部分平台查詢失敗不抹除其他平台觀察，也不能直接判為 GPU 硬體故障。
+
+5. 已知限制
+- Trixie XFCE 的 Panfrost TERM 取消路徑仍曾出現 TRANSLATION_FAULT_3／JOB_BUS_FAULT。問題暫緩追查，未修復，不因其他測項成功而抵銷。
+- Trixie XFCE 網路曾有重傳及 Wi-Fi 丟包；HDMI 測試音有有限證據，但擷取不完整。Trixie minimal 的完整 GPU 測試受換屏干擾，後續短測不替代完整驗收。
+- GPIO／I2C／SPI 外接治具、Bluetooth 真實配對及所有周邊相容性未取得全面驗收。工具存在不等於接腳測試通過。
+- 曾觀察到特定 USB 周邊接入時冷開異常，原因未確定。冷開測試不含該周邊，不能宣稱已排除所有供電問題。
+- 影音僅能依個別樣本判定；不外推所有編碼、解析度、播放器或 10 位元硬解。固定 AES 與單次檔案讀寫不等於加密全面驗收或儲存耐久認證。
+- CRA／SBOM 另行提供審查材料；不構成法規合規、認證或漏洞已修復聲明。
+- 本次沒有乾淨重建十套映像。自建產物不得只憑檔名沿用原批次 SHA 或測試資格。
+- Bookworm minimal：GPU 程式自然結束，但顯示模式清單改變，未取得完整 GPU 通過資格。音訊有測試音證據，但擷取因 I/O 錯誤不完整。首開 console-setup 失敗保留。
+- Bookworm XFCE：EMAC 反向短測有 129 次 TCP 重傳及 8 個接收丟棄增量。HDMI 播放命令退出 0，但擷取為 0 幀，不能判音訊通過。桌面面板與 Mali-G31 renderer 可見，終端繪製尚未完整驗收。首開 console-setup 失敗保留。
+- Jammy XFCE：aplay -l 與播放命令均退出 -25（SIGXFSZ），兩份原始日誌各為 0 bytes，原件保留。ALSA 卡、PCM 與 ELF 版本有盤點紀錄，但音訊測試未完成，工具受 SIGXFSZ 中止，根因未確認；AV 外層退出 0 不代表音訊通過，也不據此判定音訊硬體故障。glxinfo 回報 direct rendering: Yes、Accelerated: yes、Mali-G31 (Panfrost) 與 Mesa 23.2.1+bpi1；HDMI 面板及游標可見但背景黑，並非完整 GUI 驗收。四向網路每向 10 秒，結果為 completed_with_observations；有線反向 43 次 TCP 重傳，其餘方向各 0 次，不代表長測或穩定驗收。
+- Noble minimal：HDMI 已觀察到文字登入畫面，不代表 GUI 驗收。原映像未預裝 iperf3，首次入口在送出流量前拒絕，未建立結果目錄。之後僅於測試環境補裝同版 Ubuntu 快取的 iperf3、libiperf0、libsctp1；apt 模擬為 0 升級／3 新裝／0 移除。不得宣稱原映像已預裝；補裝不代表網路測試完成，網路、正常重啟及冷開仍各依實際結果判定。
+- Noble XFCE：單次 64 MiB 儲存寫入／讀回 SHA 一致，觀察 5 秒；固定 AES 樣本的硬體請求增量 512、回退增量 0。H.264／H.265／VP8／MPEG-2 各解碼 60 幀、Cedrus IRQ 增量各 60、退出碼均 0；前三格式輸出 SHA 與參考一致。MPEG-2 僅記 PSNR 平均 70.809520、最低 68.021604，不宣稱逐位元一致。以上僅限個別樣本，不代表儲存效能、耐久性、所有加密或影音格式驗收。
+- Noble XFCE：已觀察到桌面與背景；glxinfo 回報 Mali-G31 (Panfrost)、direct rendering: Yes、Accelerated: yes、Mesa 25.2.8-0ubuntu0.24.04.4，仍不代表完整 GUI、效能或穩定驗收。aplay -l 與播放命令均退出 -25（SIGXFSZ），兩份原始日誌各為 0 bytes，原件保留。音訊測試未完成，工具受 SIGXFSZ 中止，根因未確認；外層退出碼不能抵銷子命令中止，也不能據此判定音訊硬體故障。
+- Noble XFCE 四向 TCP 短測每向 10 秒，總觀察 65 秒，結果為 completed_with_observations。接收端速率：有線正向／反向 94.151/94.047 Mbps；Wi-Fi 正向／反向 49.593/52.423 Mbps。有線反向 172 次重傳，其餘方向各 0 次；兩介面 RX／TX errors/drop 增量均為 0，ping 各 10/10。這是本次短測結果，不是無重傳、保證速率、長測或穩定驗收。
+- Resolute minimal 已觀察到 HDMI 文字登入畫面，不代表 GUI 驗收。原映像缺少 iperf3 及其相依套件；僅於測試環境補裝 iperf3、libiperf0、libsctp1，apt 模擬為 0 升級／3 新裝／0 移除，補裝時服務未啟動。不得宣稱原映像預裝或因補裝而推定 Wi-Fi、網路、影音及重啟測試完成；各項仍依本案實際證據判定。
+- Resolute minimal：aplay -l 退出 0，播放命令觀察 10.027 秒、退出 0；未聽測或擷取，不代表音訊驗收。eglinfo surfaceless 查詢退出 -25（SIGXFSZ），device 查詢退出 1，原文為 Unknown platform: device，help 亦未列出 device，屬 CLI 平台選項不支援；未取得有效 renderer 值。查詢工具測試未完成，不授予 GPU 通過，也不據此判定 GPU 硬體故障。本輪不追加 benchmark 或反覆重跑。
+- Resolute minimal 四向 TCP 短測每向 10 秒，總觀察 69 秒，工具退出 0，結果為 completed_with_observations。接收端速率：有線正向／反向 94.145/94.152 Mbps；Wi-Fi 正向／反向 39.117/47.183 Mbps。有線反向 86 次重傳，其餘方向各 0 次；兩介面 ping 各 10/10，RX／TX errors/drop 增量均為 0。Wi-Fi TX 丟棄累計在測前／測後均為 2，不能將零增量寫成累計零丟棄。既有 brcmf_set_channel reason -52 的 7 條紀錄未增加，仍保留已知問題。這些短測結果不代表無重傳、保證速率、長期穩定或其他測項驗收。
+- Resolute minimal：正常重啟與冷開均完成完整健康收證；根媒體身分與核心符合本案，失敗服務各 0，console 設定成功，有線及 Wi-Fi 均取得 DHCP 位址。這兩次開機的完整 dmesg 未觀察到 brcmf_set_channel reason -52、Oops 或 I/O 錯誤；先前 7 條掃描錯誤仍保留為已知問題，不宣稱根因已修復。完整收證不等於整套功能通過，亦不抵銷儲存讀回及 renderer 查詢限制；eMMC 根系統測試不代表原生 SD 全鏈。
+- Resolute minimal：64 MiB 寫入含 fdatasync 的命令退出 0；直接讀取時 dd 回報 IO error: Invalid input，dd 退出 1、子命令回報 0 bytes，總測試退出 3。未完成完整讀回或 SHA 比對，不能判儲存通過。當時 dd 為 uutils coreutils 0.10.0；核心錯誤紀錄為空、前後根身分相同，不足以證明硬體故障。尚未換用 GNU dd，也未重測，原失敗紀錄保留。
+- Resolute minimal：固定 AES 樣本的硬體請求增量 512、回退增量 0；僅限此樣本，不代表所有演算法或長期穩定驗收。
+- Resolute minimal：H.264／H.265／VP8／MPEG-2 各解碼 60 幀、Cedrus IRQ 增量各 60、退出碼均 0，完整輸出各 20736000 bytes。前三格式的本案輸出 SHA 已核對與軟體解碼參考相符；MPEG-2 重新比對 PSNR 平均 70.809520、最低 68.021604，不宣稱逐位元一致。僅限本案固定樣本，不代表所有影音格式或長期穩定驗收。
+- Resolute XFCE：64 MiB 寫入命令退出 0；直接讀取時 dd 回報 IO error: Invalid input，dd 退出 1、子命令回報 0 bytes，總測試退出 3、觀察 6 秒。未完成完整讀回或 SHA 比對，不能判儲存通過。當時 dd 為 uutils coreutils 0.10.0；核心錯誤紀錄為空，不足以證明硬體故障。原失敗紀錄保留，本輪不重測。
+- Resolute XFCE：固定 AES 樣本的硬體請求增量 512、回退增量 0。H.264／H.265／VP8／MPEG-2 各解碼 60 幀、Cedrus IRQ 增量各 60、退出碼均 0，完整輸出各 20736000 bytes。前三格式的本案輸出 SHA 已核對與軟體解碼參考相符；MPEG-2 本案 PSNR 平均 70.809520、最低 68.021604，不宣稱逐位元一致。僅限本案固定樣本，不代表所有加密演算法、影音格式或長期穩定驗收。
+- Resolute XFCE：已觀察到桌面面板與背景；glxinfo 退出 0，回報 direct rendering: Yes、Accelerated: yes、Mali-G31 MC1 (Panfrost)、Mesa 26.0.8-1ubuntu0.3。這些是有限顯示與 renderer 觀察，不代表完整 GUI、效能或穩定驗收。aplay -l 與播放命令均退出 -25（SIGXFSZ），兩份原始日誌各為 0 bytes，原件保留。音訊測試未完成，工具受 SIGXFSZ 中止，根因未確認；外層退出碼不能抵銷子命令中止，也不能據此判定音訊硬體故障。
+- Resolute XFCE 四向 TCP 短測每向 10 秒，總觀察 70 秒，工具退出 0，結果為 completed_with_observations。接收端速率：有線正向／反向 94.103/94.047 Mbps；Wi-Fi 正向／反向 50.421/45.189 Mbps。有線反向 129 次重傳，其餘方向各 0 次；兩介面 RX／TX errors/drop 增量均為 0，ping 各 10/10。這些短測結果不代表無重傳、保證速率、長期穩定或其他測項驗收，也不能代替正常重啟及冷開證據。
+- Resolute XFCE：正常重啟與冷開均完成完整健康收證；根媒體身分與核心符合本案，失敗服務各 0，console 設定成功，有線及 Wi-Fi 均取得 DHCP 位址。這兩次開機的完整 dmesg 未觀察到 Oops 或 I/O 錯誤。完整收證不等於整套功能通過，亦不抵銷儲存讀回失敗、音訊測試未完成及其他已知限制；eMMC 根系統測試不代表原生 SD 全鏈。
+
+六、校驗與試用
 1. 確認硬體為本批適用的 BPI-M4 Zero EMAC，並選對發行版及 minimal／XFCE。不要用於未確認相容的其他板型。
 2. 在同批檔案所在目錄執行：
    sha256sum -c SHA256SUMS.txt
@@ -61,3 +249,57 @@ Jammy 另含避免設定檔衝突的 BSP 封裝更名；不可假設十套的所
 6. 分別核對核心版本、顯示、網路及所需周邊。若出現 GPU 核心錯誤、顯示異常或儲存 I/O 錯誤，停止相關負載並保留紀錄，不以反覆重跑當成修復。
 
 本說明不保證所有顯示器、USB 裝置、無線環境或影音格式相容，也不授予生產使用資格。
+
+7. 原批次映像識別
+
+檔名、位元組數與 SHA 取自既有產物證據。本文件更新沒有重讀大型映像或重跑 XZ 檢查。
+
+Armbian-unofficial_26.11.0-trunk-opt3_Bananapim4zeroemac_bookworm_current_6.18.55_minimal.img.xz
+.img: 2294284288 bytes; .img.xz: 484212368 bytes
+.img SHA-256: d1243f727f3b1d28fc59eaaf33c2ddf2a375b91cd1ab6b177ff6e1b0c0700832
+.img.xz SHA-256: 14802a3de5cfc4c91b158d8ffaaab4d8a6220de9fd3be0cd23ec61d48724af36
+
+Armbian-unofficial_26.11.0-trunk-opt3_Bananapim4zeroemac_bookworm_current_6.18.55_xfce_desktop.img.xz
+.img: 5314183168 bytes; .img.xz: 1097342804 bytes
+.img SHA-256: e66c359d58b1744e195d4f7e595bbd8e6f72033e4ad42505024263e99b30b4ad
+.img.xz SHA-256: 10e9f951fca79bd31b3da05b5723f3048036ba621cc242ff96ebd3da7e590d1c
+
+Armbian-unofficial_26.11.0-trunk-opt3_Bananapim4zeroemac_trixie_current_6.18.55_minimal.img.xz
+.img: 2420113408 bytes; .img.xz: 504806256 bytes
+.img SHA-256: cc217826e64e29cfaa7030b9b1dd5510070bbeffd27cc35a76114a8e34a84a3d
+.img.xz SHA-256: bce4fc09f3f979926271ef50b201a7828ccb8d7dd8a43a74d48c668c53bb2fe7
+
+Armbian-unofficial_26.11.0-trunk-opt3_Bananapim4zeroemac_trixie_current_6.18.55_xfce_desktop.img.xz
+.img: 6060769280 bytes; .img.xz: 1212912056 bytes
+.img SHA-256: c7042d5903dedda919d7c1f77ce9d1291feba5d7a73f7fd21d16893ae9028a38
+.img.xz SHA-256: 3bfbaa6c186d951b95c7394dfd914913f01ebb9489150d821196d964b57adee2
+
+Armbian-unofficial_26.11.0-trunk-opt3_Bananapim4zeroemac_jammy_current_6.18.55_minimal.img.xz
+.img: 2076180480 bytes; .img.xz: 455404456 bytes
+.img SHA-256: ef20235e946ba4d76e80beb1a3991396101aef0f0611da366fb892a388735416
+.img.xz SHA-256: 2f423cd5170dca3f9f2d3ca50c5309c06d1993196d9a30ef87096896007fcbcc
+
+Armbian-unofficial_26.11.0-trunk-opt3_Bananapim4zeroemac_jammy_current_6.18.55_xfce_desktop.img.xz
+.img: 6576668672 bytes; .img.xz: 1102865760 bytes
+.img SHA-256: 83fd7407bda89e9a3f43b8e123566b6371805bd3963ed5108c18daf30643cc3d
+.img.xz SHA-256: 0ca22ff2ef025376872b35e25f7c04f809af42289b40899a92f853c59bc62a34
+
+Armbian-unofficial_26.11.0-trunk-opt3_Bananapim4zeroemac_noble_current_6.18.55_minimal.img.xz
+.img: 2256535552 bytes; .img.xz: 458012356 bytes
+.img SHA-256: dbf7ee2c692ba7b1806f3a187da552333ad7253901bf8849a33ce9e447c29dc3
+.img.xz SHA-256: ddab8dbf480995746f0dfa13f862990bf7df051c230639a70fccf6acefb3c102
+
+Armbian-unofficial_26.11.0-trunk-opt3_Bananapim4zeroemac_noble_current_6.18.55_xfce_desktop.img.xz
+.img: 5708447744 bytes; .img.xz: 1071856564 bytes
+.img SHA-256: 6a082efe08449a28d1f55a9848bde4e5de6d986fe454e6af31491207ce0241f0
+.img.xz SHA-256: fa8d7fb65b7922db3980be917e3b79df27a1a498d6af91ae6158daf4fd07c2fe
+
+Armbian-unofficial_26.11.0-trunk-opt3_Bananapim4zeroemac_resolute_current_6.18.55_minimal.img.xz
+.img: 2365587456 bytes; .img.xz: 494774272 bytes
+.img SHA-256: 04b886bfdd4e34cf6e99606096911315232738a4dfc144246855bc7643f8d82a
+.img.xz SHA-256: f1c1363345b13f8a92ef42b9e81efc14d3e651bad079000ea4ff0608aa8b78ed
+
+Armbian-unofficial_26.11.0-trunk-opt3_Bananapim4zeroemac_resolute_current_6.18.55_xfce_desktop.img.xz
+.img: 5913968640 bytes; .img.xz: 1144699024 bytes
+.img SHA-256: fa45ed970863faf3728deccdec463a71b4c1ac9326bcb1a481716137ad9eed1a
+.img.xz SHA-256: 7b8d0a9acfde5df0b244fe42338e4eb8ef3babc90a44758ba5dae13d13186fdd
