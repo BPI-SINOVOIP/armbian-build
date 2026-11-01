@@ -65,7 +65,11 @@ function calculate_rootfs_cache_id() {
 	# the filename readable while still giving us ~2^32 of
 	# collision resistance — same truncation style the rest of
 	# this file uses for the hash_hooks/bash_hash components.
-	if [[ ${BUILD_DESKTOP} == yes ]]; then
+	if [[ -n "${artifact_input_variables[CONFIGNG_M8_HASH]:-}" ]]; then
+		# M8's complete configng package is also present in CLI/minimal images.
+		local m8_configng_fp="${artifact_input_variables[CONFIGNG_M8_HASH]}"
+		cache_type="${cache_type}-m8config-${m8_configng_fp:0:12}"
+	elif [[ ${BUILD_DESKTOP} == yes ]]; then
 		declare _configng_fp="${artifact_input_variables[CONFIGNG_DESKTOPS_HASH]:-}"
 		if [[ -n "${_configng_fp}" \
 				&& "${_configng_fp}" != "undetermined" \

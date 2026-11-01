@@ -19,7 +19,12 @@ function artifact_rootfs_config_dump() {
 	# Any change to YAML, parser, or module code in tools/modules/desktops/
 	# invalidates the desktop rootfs cache — the package list, browser
 	# mapping, tier overrides, or branding may have changed.
-	if [[ "${BUILD_DESKTOP}" == "yes" ]]; then
+	if [[ "${LINUXFAMILY:-}" == sun60iw2 ]]; then
+		# Include upstream revision, local patches and packaging/installation
+		# policy. Git's last-desktop-commit alone cannot see our local patches.
+		m8_prepare_armbian_config
+		artifact_input_variables[CONFIGNG_M8_HASH]="${M8_CONFIGNG_INPUT_HASH}"
+	elif [[ "${BUILD_DESKTOP}" == "yes" ]]; then
 		declare configng_desktops_hash="undetermined"
 		local configng_dir="${SRC}/cache/sources/armbian-configng"
 		if [[ -d "${configng_dir}/.git" ]]; then
@@ -39,6 +44,12 @@ function artifact_rootfs_prepare_version() {
 	artifact_version_reason="undetermined" # outer scope
 
 	assert_requires_aggregation # Bombs if aggregation has not run
+	if [[ "${LINUXFAMILY:-}" == sun60iw2 ]]; then
+		# Image builds do not run artifact_config_dump before cache lookup.
+		m8_prepare_armbian_config
+		declare -g -A artifact_input_variables
+		artifact_input_variables[CONFIGNG_M8_HASH]="${M8_CONFIGNG_INPUT_HASH}"
+	fi
 
 	declare -g rootfs_cache_id="none_yet"
 
@@ -52,6 +63,9 @@ function artifact_rootfs_prepare_version() {
 		"type \"${cache_type}\""
 		"cache_id \"${rootfs_cache_id}\""
 	)
+	if [[ -n "${artifact_input_variables[CONFIGNG_M8_HASH]:-}" ]]; then
+		reasons+=("configng_m8 \"${artifact_input_variables[CONFIGNG_M8_HASH]}\"")
+	fi
 
 	# add more reasons for desktop stuff
 	if [[ "${DESKTOP_ENVIRONMENT}" != "" ]]; then

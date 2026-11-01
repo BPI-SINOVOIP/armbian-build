@@ -1,0 +1,4 @@
+interest-noawait /usr/lib/udev/rules.d/71-seat.rules
+interest-noawait /lib/udev/rules.d/71-seat.rules
+interest-noawait /usr/lib/xorg/Xorg
+interest-noawait /usr/bin/Xorg

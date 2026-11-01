@@ -1,0 +1,4 @@
+# Keep the login form on HDMI instead of following touches on the DSI screen.
+# This does not change the RandR primary output, modes, or extended layout.
+[x.dm.slick-greeter]
+only-on-monitor='HDMI-1'

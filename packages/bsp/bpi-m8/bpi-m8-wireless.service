@@ -1,0 +1,16 @@
+[Unit]
+Description=Banana Pi M8 wireless module detection
+After=systemd-modules-load.service systemd-udev-trigger.service
+Before=NetworkManager.service bpi-m8-bluetooth.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/lib/armbian/bpi-m8-wireless-select
+RemainAfterExit=yes
+TimeoutStartSec=20
+StandardOutput=journal+console
+StandardError=journal+console
+
+[Install]
+WantedBy=multi-user.target
+

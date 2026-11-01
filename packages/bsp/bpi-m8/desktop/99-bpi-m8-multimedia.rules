@@ -1,0 +1,3 @@
+KERNEL=="system", SUBSYSTEM=="dma_heap", GROUP="video", MODE="0660"
+KERNEL=="reserved", SUBSYSTEM=="dma_heap", GROUP="video", MODE="0660"
+KERNEL=="cedar_dev", GROUP="video", MODE="0660"

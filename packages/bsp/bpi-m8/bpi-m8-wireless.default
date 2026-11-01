@@ -1,0 +1,4 @@
+# Supported SDIO combo modules: auto, aic8800d80, rtl8852bs, off.
+# A module override takes effect after reboot; do not switch drivers live.
+BPI_M8_WIFI_MODULE=auto
+BPI_M8_BLUETOOTH=yes

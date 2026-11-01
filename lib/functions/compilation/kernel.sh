@@ -20,15 +20,19 @@ function compile_kernel() {
 	# alternative # LOG_SECTION="kernel_prepare_bare_repo_from_bundle" do_with_logging_unless_user_terminal do_with_hooks \
 	# alternative # 	kernel_prepare_bare_repo_from_bundle # this sets kernel_git_bare_tree
 
-	# @TODO: Decide which kind of gitball to use: shallow or full.
-	declare bare_tree_done_marker_file=".git/armbian-bare-tree-done"
-	declare git_bundles_dir
-	declare git_kernel_ball_fn
-	declare git_kernel_oras_ref
-	kernel_prepare_bare_repo_decide_shallow_or_full # sets kernel_git_bare_tree, git_bundles_dir, git_kernel_ball_fn, git_kernel_oras_ref
+	if [[ "${KERNEL_USE_MAINLINE_BARE_REPO:-yes}" == "yes" ]]; then
+		# @TODO: Decide which kind of gitball to use: shallow or full.
+		declare bare_tree_done_marker_file=".git/armbian-bare-tree-done"
+		declare git_bundles_dir
+		declare git_kernel_ball_fn
+		declare git_kernel_oras_ref
+		kernel_prepare_bare_repo_decide_shallow_or_full # sets kernel_git_bare_tree, git_bundles_dir, git_kernel_ball_fn, git_kernel_oras_ref
 
-	LOG_SECTION="kernel_prepare_bare_repo_from_oras_gitball" do_with_logging do_with_hooks \
-		kernel_prepare_bare_repo_from_oras_gitball # this sets kernel_git_bare_tree
+		LOG_SECTION="kernel_prepare_bare_repo_from_oras_gitball" do_with_logging do_with_hooks \
+			kernel_prepare_bare_repo_from_oras_gitball # this sets kernel_git_bare_tree
+	else
+		display_alert "Skipping mainline kernel bare tree" "KERNEL_USE_MAINLINE_BARE_REPO=no" "info"
+	fi
 
 	# prepare the working copy; this is the actual kernel source tree for this build
 	declare checked_out_revision_ts="" checked_out_revision="undetermined" # set by fetch_from_repo

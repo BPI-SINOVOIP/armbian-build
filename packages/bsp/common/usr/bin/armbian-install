@@ -46,6 +46,8 @@ else DEVICE_TYPE="a20"; fi
 BOOTLOADER="${CWD}/${DEVICE_TYPE}/bootloader"
 [ ! -d ${BOOTLOADER} ] && echo -e "### Board installation issue: Directory ${BOOTLOADER} does not exist or is not accessible!\n" && exit 1
 FIRSTSECTOR=32768
+# The primary sun60iw2 boot package starts at sector 32800 (16 MiB + 16 KiB).
+[[ ${LINUXFAMILY:-} == sun60iw2 ]] && FIRSTSECTOR=65536
 
 #recognize_root
 root_uuid=$(sed -e 's/^.*root=//' -e 's/ .*$//' < /proc/cmdline)
@@ -449,7 +451,7 @@ create_armbian()
 			echo "Error: no u-boot package found, exiting"
 			exit 6
 		fi
-		write_uboot_platform "$DIR" $emmccheck
+		write_uboot_platform "$DIR" "$emmccheck" || exit 6
 
 	fi
 
@@ -1094,14 +1096,14 @@ main()
 				;;
 			5)
 				show_warning "This script will update the bootloader on ${root_partition_device}.\n\n    Continue?"
-				write_uboot_platform "$DIR" "${root_partition_device}"
+				write_uboot_platform "$DIR" "${root_partition_device}" || exit 6
 				update_bootscript
 				dialog --backtitle "$backtitle" --title 'Writing bootloader' --msgbox '\n          Done.' 7 30
 				return
 				;;
 			6)
 				show_warning "This script will update the bootloader on ${BOOTPART}.\n\n    Continue?"
-				write_uboot_platform "$DIR" ${BOOTPART}
+				write_uboot_platform "$DIR" "${BOOTPART}" || exit 6
 				echo 'Done'
 				return
 				;;

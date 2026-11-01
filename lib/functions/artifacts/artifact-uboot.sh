@@ -88,7 +88,7 @@ function artifact_uboot_prepare_version() {
 
 	# Hash the old-timey hooks and regular core functions (atf code, used by u-boot build process)
 	declare hash_functions="undetermined"
-	calculate_hash_for_function_bodies "uboot_custom_postprocess" "write_uboot_platform" "write_uboot_platform_mtd" \
+	calculate_hash_for_function_bodies "uboot_custom_postprocess" "write_uboot_platform" "write_uboot_platform_mtd" "write_uboot_platform_ufs" \
 		"setup_write_uboot_platform" "compile_atf"
 	declare hash_uboot_functions="${hash_functions}"
 

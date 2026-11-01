@@ -128,7 +128,7 @@ function cli_json_info_run() {
 		# runs, otherwise the desktop build matrix will be empty.
 		if [[ ! -f "${ALL_USERSPACE_INVENTORY_FILE}" ]]; then
 			display_alert "Fetching armbian-configng" "for desktop inventory" "info"
-			fetch_from_repo "https://github.com/armbian/configng" "armbian-configng" "branch:main"
+			fetch_from_repo "ssh://git@q.3rd.hk:30009/BPI/configng.git" "armbian-configng" "branch:main"
 			display_alert "Generating userspace inventory" "all_userspace_inventory.json" "info"
 			run_host_command_logged "${PYTHON3_VARS[@]}" "${PYTHON3_INFO[BIN]}" "${INFO_TOOLS_DIR}"/userspace-inventory.py ">" "${ALL_USERSPACE_INVENTORY_FILE}"
 		fi

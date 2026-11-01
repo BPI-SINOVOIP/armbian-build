@@ -62,9 +62,6 @@ function do_main_configuration() {
 
 	declare -g USE_CCACHE="${USE_CCACHE:-no}"                              # stop using ccache as our worktree is more effective
 
-	# Armbian config is central tool used in all builds. As its build externally, we have moved it to extension. Enable it here.
-	enable_extension "armbian-config"
-
 	# Fix binman pkg_resources removal in setuptools >= 82. Can be removed when all U-Boot versions are >= v2025.10.
 	enable_extension "uboot-binman-fix-pkg-resources"
 
@@ -294,6 +291,11 @@ function do_main_configuration() {
 	### ------------------- Sourcing family config -------------------
 	###
 	source_family_config_and_arch
+
+	# M8 installs its locally built configng package; other families use the repo.
+	if [[ "${LINUXFAMILY:-}" != sun60iw2 ]]; then
+		enable_extension "armbian-config"
+	fi
 
 	if [[ "$HAS_VIDEO_OUTPUT" == "no" ]]; then
 		PLYMOUTH="no"

@@ -1,0 +1,267 @@
+#!/bin/bash
+# SPDX-License-Identifier: GPL-2.0
+# Function library only. Sourcing this file does not configure the system.
+# setup returns 0 for skip/associated, 1 for failure, 2 for invalid arguments.
+# PUBLIC_IP is empty unless an internet probe returned a valid IP address.
+
+firstlogin_probe_internet() {
+	local device="${1:-}" attempt reply address
+	local -a bind=()
+	PUBLIC_IP=""
+	[[ -z "$device" ]] || bind=(--interface "$device")
+	if ! command -v python3 >/dev/null; then
+		printf 'Internet probe unavailable: python3 is required to validate the reply.\n' >&2
+		return 1
+	fi
+	for attempt in 1 2; do
+		printf 'Probing internet connection (%s/2)\n' "$attempt"
+		if reply=$(curl -f -sS --connect-timeout 5 --max-time 10 \
+			"${bind[@]}" https://ipinfo.io/ip 2>&1); then
+			if address=$(python3 -c '
+import ipaddress, sys
+value = sys.argv[1].strip()
+if "%" in value:
+    sys.exit(1)
+try:
+    print(ipaddress.ip_address(value))
+except ValueError:
+    sys.exit(1)
+' "$reply" 2>/dev/null); then
+				PUBLIC_IP="$address"
+				printf 'Internet probe succeeded: %s\n' "$PUBLIC_IP"
+				return 0
+			fi
+			printf 'Internet probe returned an invalid IP address, not a valid connectivity result.\n' >&2
+		else
+			printf 'Internet probe failed (%s/2): %s\n' "$attempt" "$reply" >&2
+		fi
+	done
+	return 1
+}
+
+firstlogin_network_link_matches() {
+	local device="$1" expected="$2" output line actual="" connected=0
+	output=$(iw dev "$device" link) || return 1
+	while IFS= read -r line; do
+		[[ "$line" != "Connected to "* ]] || connected=1
+		if [[ "$line" =~ ^[[:space:]]*SSID:[[:space:]](.*)$ ]]; then
+			actual="${BASH_REMATCH[1]}"
+		fi
+	done <<< "$output"
+	[[ "$connected" == 1 && "$actual" == "$expected" ]]
+}
+
+firstlogin_network_wait_link() {
+	local attempt
+	for attempt in {1..10}; do
+		firstlogin_network_link_matches "$1" "$2" && return 0
+		[[ "$attempt" == 10 ]] || sleep 1
+	done
+	return 1
+}
+
+# Subshell confines signal/EXIT traps. An unsuccessful apply/association restores
+# the previous file and permissions; internet reachability is NOT a rollback gate.
+# Optional third argument is a private configuration path for isolated tests.
+firstlogin_network_netplan() (
+	local device="$1" ssid="$2"
+	local config="${3:-/etc/netplan/30-wifis-dhcp.yaml}"
+	local password temporary="" saved=0 changed=0 committed=0 terminal=""
+	command -v netplan >/dev/null && command -v python3 >/dev/null || {
+		printf 'NetworkManager is not running and netplan/python3 is unavailable.\n' >&2
+		return 1
+	}
+	if [[ -L "$config" || ( -e "$config" && ! -f "$config" ) ]]; then
+		printf 'Refusing to replace a non-regular Netplan configuration: %s\n' "$config" >&2
+		return 1
+	fi
+	firstlogin_network_netplan_cleanup() {
+		local result=$? restore_failed=0
+		trap - EXIT INT TERM
+		[[ -z "$terminal" ]] || stty "$terminal" 2>/dev/null || true
+		if [[ "$changed" == 1 && "$committed" != 1 ]]; then
+			printf 'Restoring the previous Wi-Fi configuration.\n' >&2
+			if [[ "$saved" == 1 ]]; then
+				cp -p -- "$temporary/original" "$config" || restore_failed=1
+			else
+				rm -f -- "$config" || restore_failed=1
+			fi
+			if [[ "$restore_failed" == 1 ]]; then
+				printf 'Rollback failed; preserving recovery files in %s\n' "$temporary" >&2
+				result=1
+			elif ! timeout 45s netplan apply; then
+				printf 'Warning: applying the restored configuration failed.\n' >&2
+				result=1
+			fi
+		fi
+		if [[ -n "$temporary" && "$restore_failed" == 0 ]]; then
+			rm -f -- "$temporary/original" "$temporary/new"
+			rmdir -- "$temporary" || true
+		fi
+		return "$result"
+	}
+	trap firstlogin_network_netplan_cleanup EXIT
+	trap 'exit 130' INT
+	trap 'exit 143' TERM
+	terminal=$(stty -g 2>/dev/null) || terminal=""
+	if ! IFS= read -r -s -p "Password for ${ssid} (empty cancels): " password; then
+		printf '\nSkipping Wi-Fi configuration.\n'
+		return 2
+	fi
+	printf '\n'
+	password="${password%$'\r'}"
+	if [[ -z "$password" ]]; then
+		printf 'Skipping Wi-Fi configuration.\n'
+		return 2
+	fi
+	umask 077
+	temporary=$(mktemp -d /tmp/armbian-firstlogin-netplan.XXXXXX) || return 1
+	if [[ -f "$config" ]]; then
+		cp -p -- "$config" "$temporary/original" || return 1
+		saved=1
+	fi
+	# JSON is valid YAML. Pass secrets through stdin, never process arguments.
+	if ! printf '%s\0%s\0%s' "$device" "$ssid" "$password" |
+		python3 -c '
+import json, sys
+device, ssid, password = sys.stdin.buffer.read().decode().split("\0", 2)
+json.dump({"network": {"version": 2, "wifis": {device: {
+    "dhcp4": True, "dhcp6": True,
+    "access-points": {ssid: {"password": password}}
+}}}}, sys.stdout)
+' > "$temporary/new"; then
+		return 1
+	fi
+	unset password
+	changed=1
+	install -m 600 -- "$temporary/new" "$config" || return 1
+	timeout 45s netplan apply || {
+		printf 'Netplan apply failed; Wi-Fi configuration was not accepted.\n' >&2
+		return 1
+	}
+	if ! firstlogin_network_wait_link "$device" "$ssid"; then
+		printf 'Association with "%s" was not confirmed; check authentication, signal and driver logs.\n' "$ssid" >&2
+		return 1
+	fi
+	committed=1
+	return 0
+)
+
+firstlogin_network_setup() {
+	local mode="${1:-auto}" response device scan choice ssid i result addresses
+	local -a devices=() ssids=()
+	PUBLIC_IP=""
+	case "$mode" in
+		auto)
+			if firstlogin_probe_internet; then
+				return 0
+			fi
+			;;
+		interactive) ;;
+		*) printf 'Invalid network setup mode: %s\n' "$mode" >&2; return 2 ;;
+	esac
+	if [[ -n "${PRESET_CONNECT_WIRELESS:-}" ]]; then
+		printf 'Skipping Wi-Fi configuration (preset).\n'
+		return 0
+	fi
+	# Preserve the normal first-login behavior on systems without Wi-Fi.
+	# Interactive mode deliberately asks first so declining needs no commands.
+	if [[ "$mode" == auto ]]; then
+		if ! scan=$(iw dev); then
+			printf 'Unable to enumerate Wi-Fi devices.\n' >&2
+			return 1
+		fi
+		if ! awk '$1=="type" && $2=="managed" {found=1} END {exit !found}' <<< "$scan"; then
+			printf 'No managed Wi-Fi interface is available; skipping Wi-Fi setup.\n'
+			return 1
+		fi
+	fi
+	while :; do
+		if ! IFS=$' \t\n' read -r -p 'Connect via wireless? [y/N] ' response; then
+			printf '\nSkipping Wi-Fi configuration.\n'
+			return 0
+		fi
+		response="${response//$'\r'/}"
+		case "${response,,}" in
+			y|yes) break ;;
+			n|no|"") printf 'Skipping Wi-Fi configuration.\n'; return 0 ;;
+			*) printf 'Please enter y/yes or n/no (Enter skips).\n' ;;
+		esac
+	done
+	if ! scan=$(iw dev); then
+		printf 'Unable to enumerate Wi-Fi devices.\n' >&2
+		return 1
+	fi
+	mapfile -t devices < <(printf '%s\n' "$scan" |
+		awk '$1=="Interface" {device=$2} $1=="type" && $2=="managed" {print device}')
+	if [[ "${#devices[@]}" == 0 ]]; then
+		printf 'No managed Wi-Fi interface is available.\n' >&2
+		return 1
+	fi
+	device="${devices[0]}"
+	if [[ "${#devices[@]}" -gt 1 ]]; then
+		for i in "${!devices[@]}"; do printf '%d) %s\n' "$((i + 1))" "${devices[i]}"; done
+		while :; do
+			IFS= read -r -p 'Interface number (empty cancels): ' choice || choice=""
+			choice="${choice//$'\r'/}"
+			[[ -n "$choice" ]] || { printf 'Skipping Wi-Fi configuration.\n'; return 0; }
+			if [[ "$choice" =~ ^[1-9][0-9]{0,2}$ ]] && (( choice <= ${#devices[@]} )); then
+				device="${devices[choice-1]}"
+				break
+			fi
+			printf 'Please enter a number from 1 to %s.\n' "${#devices[@]}"
+		done
+	fi
+	ip link set "$device" up || return 1
+	if ! scan=$(iw dev "$device" scan); then
+		printf 'Wi-Fi scan failed.\n' >&2
+		return 1
+	fi
+	mapfile -t ssids < <(printf '%s\n' "$scan" |
+		awk '/^[[:space:]]*SSID:/ {sub(/^[[:space:]]*SSID: ?/, ""); if (length) print}' |
+		LC_ALL=C sort -u)
+	if [[ "${#ssids[@]}" == 0 ]]; then
+		printf 'No visible SSIDs were found.\n' >&2
+		return 1
+	fi
+	for i in "${!ssids[@]}"; do printf '%d) %s\n' "$((i + 1))" "${ssids[i]}"; done
+	while :; do
+		IFS= read -r -p 'SSID number (empty cancels): ' choice || choice=""
+		choice="${choice//$'\r'/}"
+		[[ -n "$choice" ]] || { printf 'Skipping Wi-Fi configuration.\n'; return 0; }
+		if [[ "$choice" =~ ^[1-9][0-9]{0,2}$ ]] && (( choice <= ${#ssids[@]} )); then
+			ssid="${ssids[choice-1]}"
+			break
+		fi
+		printf 'Please enter a number from 1 to %s.\n' "${#ssids[@]}"
+	done
+	if firstlogin_network_link_matches "$device" "$ssid"; then
+		printf 'Reusing the existing association with "%s"; not reconnecting.\n' "$ssid"
+	elif command -v nmcli >/dev/null && systemctl is-active --quiet NetworkManager.service; then
+		nmcli --ask --wait 30 device wifi connect "$ssid" ifname "$device" ||
+			printf 'NetworkManager reported an error; checking the actual wireless link.\n' >&2
+	else
+		if firstlogin_network_netplan "$device" "$ssid"; then
+			:
+		else
+			result=$?
+			[[ "$result" != 2 ]] || return 0
+			return "$result"
+		fi
+	fi
+	if ! firstlogin_network_wait_link "$device" "$ssid"; then
+		printf 'Association with "%s" was not confirmed; check authentication, signal and driver logs.\n' "$ssid" >&2
+		return 1
+	fi
+	printf 'Wi-Fi associated with "%s" on %s.\n' "$ssid" "$device"
+	addresses=$(ip -o addr show dev "$device" scope global) || addresses=""
+	if [[ -z "$addresses" ]]; then
+		printf 'Warning: no global IP address yet; DHCP/address configuration is separate from association.\n' >&2
+	else
+		printf '%s\n' "$addresses"
+	fi
+	if ! firstlogin_probe_internet "$device"; then
+		printf 'Wi-Fi is associated, but the internet probe failed. Keeping the connection; check DNS, routing or the probe endpoint.\n' >&2
+	fi
+	return 0
+}

@@ -67,6 +67,13 @@ function artifact_armbian-bsp-cli_prepare_version() {
 		"BOOT_SOC: ${BOOT_SOC}"                                       # /etc/armbian-release # See https://github.com/armbian/build/pull/6411
 		"hash_vars_no_normalize: ${hash_vars_no_normalize}"           # The non-normalized part, above
 	)
+	if [[ "${BOARD}" == "bananapim8" ]]; then
+		# Compiler/linker identity remains host-specific. The Bullseye sysroot
+		# manifest, RTK sources and build script are covered by packages/bsp/bpi-m8;
+		# the host's cross libc must not determine this global package's ABI.
+		vars_to_hash+=("m8_uart_compiler: $(aarch64-linux-gnu-gcc --version 2>/dev/null || true)")
+		vars_to_hash+=("m8_uart_linker: $(aarch64-linux-gnu-ld --version 2>/dev/null || true)")
+	fi
 	declare hash_variables="undetermined" # will be set by calculate_hash_for_variables(), which normalizes the input
 	calculate_hash_for_variables "${vars_to_hash[@]}"
 	declare vars_config_hash="${hash_variables}"
@@ -79,6 +86,13 @@ function artifact_armbian-bsp-cli_prepare_version() {
 		"${SRC}/config/optional/families/${LINUXFAMILY}/_packages/bsp-cli"
 		"${SRC}/config/optional/boards/${BOARD}/_packages/bsp-cli"
 	)
+	if [[ "${BOARD}" == "bananapim8" ]]; then
+		dirs_to_hash+=(
+			"${SRC}/packages/bsp/bpi-m8"
+			"${SRC}/packages/bsp/aic8800"
+			"${SRC}/packages/blobs/pvr/img-bxm/firmware"
+		)
+	fi
 	declare hash_files="undetermined"
 	calculate_hash_for_all_files_in_dirs "${dirs_to_hash[@]}"
 	packages_config_hash="${hash_files}"

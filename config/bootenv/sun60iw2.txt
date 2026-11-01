@@ -1,0 +1,12 @@
+verbosity=8
+bootlogo=false
+console=both
+fdtfile=sunxi/sun60i-a733-bananapi-m8.dtb
+overlay_prefix=sun60i-a733
+kernel_addr_r=0x40080000
+ramdisk_addr_r=0x43000000
+fdt_addr_r=0x46000000
+fdt_high=0xffffffffffffffff
+initrd_high=0xffffffffffffffff
+earlycon=off
+docker_optimizations=off

@@ -264,8 +264,17 @@ function reversion_armbian-bsp-cli_deb_contents() {
 	if [[ "${KEEP_ORIGINAL_OS_RELEASE:-"no"}" == "yes" ]]; then
 		depends_base_files=""
 	fi
+	# Board hooks may package binaries with target-specific runtime dependencies.
+	# Store those in the hashed control so a cache hit cannot lose them; only
+	# packages declaring the internal field extend the normal BSP dependencies.
+	local depends_board
+	depends_board=$(sed -n 's/^Armbian-BSP-Depends: //p' "${control_file_new}")
+	if [[ -n "${depends_board}" ]]; then
+		depends_board=", ${depends_board}"
+	fi
+	sed -i '/^Armbian-BSP-Depends:/d' "${control_file_new}"
 	cat <<- EOF >> "${control_file_new}"
-		Depends: bash, linux-base, u-boot-tools, initramfs-tools, lsb-release, fping, device-tree-compiler${depends_base_files}
+		Depends: bash, linux-base, u-boot-tools, initramfs-tools, lsb-release, fping, device-tree-compiler${depends_base_files}${depends_board}
 		Replaces: zram-config, armbian-bsp-cli-${BOARD}${EXTRA_BSP_NAME} (<< ${REVISION})
 		Breaks: armbian-bsp-cli-${BOARD}${EXTRA_BSP_NAME} (<< ${REVISION})
 		Provides: armbian-bsp-cli

@@ -382,6 +382,12 @@ prepare_board() {
 } # prepare_board
 
 add_usb_storage_quirks() {
+	# The BPI-M8 uses a FAT /boot partition. Avoid rewriting armbianEnv.txt
+	# here: sed -i can truncate it during early boot and remove board overlays.
+	# The image already carries the required NS1066/NS1068 quirks.
+	if grep -q '^BOARD=bananapim8$' /etc/armbian-release 2>/dev/null; then
+		return
+	fi
 
 	# check for /boot/armbianEnv.txt existence
 	[ -f /boot/armbianEnv.txt ] || return

@@ -1,0 +1,171 @@
+diff --git a/tools/modules/desktops/yaml/common.yaml b/tools/modules/desktops/yaml/common.yaml
+index be6e29e..950f39e 100644
+--- a/tools/modules/desktops/yaml/common.yaml
++++ b/tools/modules/desktops/yaml/common.yaml
+@@ -101,6 +101,10 @@ tiers:
+       # Ubuntu jammy/noble/resolute across amd64/arm64/armhf/riscv64.
+       - libgl1-mesa-dri       # Mesa DRI drivers (OpenGL hardware path)
+       - libglx-mesa0          # Mesa GLX front-end for X11
++      - libepoxy0            # GL dispatch used by the M8 desktop stack
++      - libgbm1              # Generic Buffer Manager runtime
++      - libegl1              # EGL runtime
++      - libgles2             # OpenGL ES 2 runtime
+       - mesa-utils            # glxinfo, glxgears, es2_info, etc.
+       - mesa-vulkan-drivers   # Vulkan ICD drivers (Panfrost, Lima, Radeon, Intel, …)
+       - vulkan-tools          # vulkaninfo, vkcube
+@@ -165,6 +169,9 @@ tiers:
+ # and apt.armbian.com as of 2026-04. Update this map when new releases
+ # ship or when an arch dependency changes.
+ browser:
++  bullseye:
++    # Debian 11 has a native browser; do not silently drop the browser token.
++    arm64:   firefox-esr
+   bookworm:
+     amd64:   google-chrome-stable
+     arm64:   chromium
+@@ -172,12 +179,12 @@ browser:
+     # bookworm has no riscv64 port — no entry needed
+   trixie:
+     amd64:   google-chrome-stable
+-    arm64:   chromium
++    arm64:   epiphany-browser
+     armhf:   chromium
+     riscv64: firefox-esr     # 'firefox' does not exist in Debian
+   noble:
+     amd64:   google-chrome-stable
+-    arm64:   chromium        # apt.armbian.com real .deb (Ubuntu's is snap-shim)
++    arm64:   epiphany-browser
+     armhf:   chromium
+     # firefox / firefox-esr are not in the Ubuntu noble archive for
+     # riscv64 (Mozilla doesn't publish riscv64 binaries, and firefox-esr
+@@ -188,13 +195,13 @@ browser:
+     # Ubuntu 22.04 LTS — chromium / firefox apt names on Ubuntu are
+     # snap-shims; apt.armbian.com hosts real .debs of the same name.
+     amd64:   google-chrome-stable
+-    arm64:   chromium
++    arm64:   epiphany-browser
+     armhf:   chromium
+     riscv64: epiphany-browser   # same rationale as noble
+   resolute:
+     # Ubuntu 26.04 LTS
+     amd64:   google-chrome-stable
+-    arm64:   chromium
++    arm64:   epiphany-browser
+     armhf:   chromium
+     riscv64: epiphany-browser   # same rationale as noble
+   forky:
+@@ -268,6 +275,11 @@ releases:
+ tier_overrides:
+   minimal:
+     releases:
++      bullseye:
++        # Debian 11 predates the libcamera integrations. Keep V4L2 tools
++        # and the desktop's PulseAudio stack; use Debian's default fonts.
++        architectures:
++          arm64: { packages_remove: [pipewire-libcamera, gstreamer1.0-libcamera, fonts-ubuntu] }
+       bookworm:
+         # fonts-ubuntu is an Ubuntu-only package; Debian doesn't
+         # ship it. Strip it on every Debian release. The Ubuntu
+@@ -285,6 +297,10 @@ tier_overrides:
+           arm64:    { packages_remove: [fonts-ubuntu] }
+           armhf:    { packages_remove: [fonts-ubuntu] }
+           riscv64:  { packages_remove: [fonts-ubuntu] }
++      jammy:
++        # Ubuntu 22.04 does not publish these libcamera integrations.
++        architectures:
++          arm64:    { packages_remove: [pipewire-libcamera, gstreamer1.0-libcamera] }
+       forky:
+         # fonts-ubuntu: Ubuntu-only.
+         # printer-driver-all: obsoleted in Debian 14, has no installation
+@@ -310,6 +326,10 @@ tier_overrides:
+     # and arm64 — strip it on every other arch. Arch-wide so the
+     # exclusion applies across all releases.
+     architectures:
++      # M8 desktops must also work with SKIP_ARMBIAN_REPO=yes.
++      # This optional GUI flasher is separate from armbian-install.
++      arm64:
++        packages_remove: [armbian-imager]
+       armhf:
+         packages_remove: [armbian-imager]
+       riscv64:
+@@ -317,6 +337,14 @@ tier_overrides:
+       loong64:
+         packages_remove: [armbian-imager]
+     releases:
++      bullseye:
++        # Preserve editing and image viewing with native GTK applications.
++        # Bullseye has no glmark2 packages, including the unsuffixed names;
++        # Mesa/Vulkan runtimes and their diagnostic tools remain installed.
++        architectures:
++          arm64:
++            packages: [mousepad, viewnior]
++            packages_remove: [gnome-text-editor, loupe, glmark2-wayland, glmark2-es2-wayland, glmark2-x11, glmark2-es2-x11]
+       bookworm:
+         # loupe is GNOME 46+; bookworm shipped with GNOME 43 era and
+         # has no loupe package on any arch.
+@@ -326,10 +354,13 @@ tier_overrides:
+           armhf:  { packages_remove: [loupe] }
+       jammy:
+         # loupe was introduced with GNOME 44/45; Ubuntu 22.04 (jammy)
+-        # shipped GNOME 42 and has no loupe package on any arch.
++        # shipped GNOME 42 and has no loupe package on any arch. Jammy
++        # names the X11 glmark2 packages without an -x11 suffix.
+         architectures:
+           amd64:    { packages_remove: [loupe] }
+-          arm64:    { packages_remove: [loupe] }
++          arm64:
++            packages: [glmark2, glmark2-es2]
++            packages_remove: [loupe, glmark2-x11, glmark2-es2-x11]
+           armhf:    { packages_remove: [loupe] }
+           riscv64:  { packages_remove: [loupe] }
+       resolute:
+@@ -355,6 +386,11 @@ tier_overrides:
+     #              currently test armhf on those, so arch-wide is
+     #              simpler than a per-release allow-list.
+     architectures:
++      # M8 must build without apt.armbian.com. Keep a native development
++      # editor instead of requiring its third-party VS Code package.
++      arm64:
++        packages: [geany]
++        packages_remove: [code]
+       riscv64:
+         packages_remove: [code]
+       armhf:
+@@ -375,6 +411,11 @@ tier_overrides:
+         # have no upstream Ubuntu deb at all and we don't (yet) ship
+         # them via apt.armbian.com — strip on those arches only.
+         architectures:
++          # Ubuntu's Thunderbird is a snap transition package. Preserve
++          # mail/calendar functionality with a native .deb package.
++          arm64:
++            packages: [evolution]
++            packages_remove: [thunderbird]
+           armhf:    { packages_remove: [thunderbird] }
+           riscv64:  { packages_remove: [thunderbird] }
+       jammy:
+@@ -392,6 +433,9 @@ tier_overrides:
+           riscv64:  { packages_remove: [thunderbird, libreoffice, libreoffice-gtk3] }
+       resolute:
+         architectures:
++          arm64:
++            packages: [evolution]
++            packages_remove: [thunderbird]
+           armhf:    { packages_remove: [thunderbird] }
+           riscv64:  { packages_remove: [thunderbird] }
+       forky:
+diff --git a/tools/modules/desktops/yaml/xfce.yaml b/tools/modules/desktops/yaml/xfce.yaml
+index 153407b..e62c240 100644
+--- a/tools/modules/desktops/yaml/xfce.yaml
++++ b/tools/modules/desktops/yaml/xfce.yaml
+@@ -46,4 +46,11 @@ tiers:
+ releases:
++  bullseye:
++    # M8 compatibility: Debian 11 retains the PulseAudio desktop stack.
++    architectures: [arm64]
++    packages:
++      - accountsservice
++      - libu2f-udev
++
+   bookworm:
+     architectures: [arm64, amd64, armhf]
+     packages:

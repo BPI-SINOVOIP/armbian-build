@@ -1,0 +1,85 @@
+#!/bin/sh
+# SPDX-License-Identifier: GPL-2.0
+set -eu
+
+BPI_M8_BLUETOOTH=yes
+[ ! -r /etc/default/bpi-m8-wireless ] || . /etc/default/bpi-m8-wireless
+module=$(cat /run/bpi-m8-wifi-module 2>/dev/null || true)
+
+fail()
+{
+	printf 'bpi-m8-bluetooth: %s\n' "$*" >&2
+	exit 1
+}
+
+supported()
+{
+	[ "$BPI_M8_BLUETOOTH" = yes ] || return 1
+	case "$module" in aic8800d80|rtl8852bs) return 0 ;; esac
+	return 1
+}
+
+unblock_radio()
+{
+	name=$1
+	for radio in /sys/class/rfkill/rfkill*; do
+		[ -r "$radio/name" ] || continue
+		[ "$(cat "$radio/name")" = "$name" ] || continue
+		[ "$(cat "$radio/type")" = bluetooth ] || continue
+		rfkill unblock "${radio##*rfkill}"
+		return 0
+	done
+	fail "missing Bluetooth rfkill device: $name"
+}
+
+case "${1:-}" in
+	check)
+		supported
+		exit $?
+		;;
+	wait)
+		# N_HCI parents its controller beneath the UART's tty device.
+		attempt=0
+		while [ "$attempt" -lt 50 ]; do
+			for controller in /sys/class/bluetooth/hci*; do
+				[ -e "$controller" ] || continue
+				case "$(readlink -f "$controller")" in
+					*/ttyS1/hci[0-9]*|*/ttyS1/bluetooth/hci[0-9]*) exit 0 ;;
+				esac
+			done
+			sleep 0.2
+			attempt=$((attempt + 1))
+		done
+		fail "no HCI controller registered on ttyS1 within 10 seconds"
+		;;
+	start)
+		supported || fail "no supported combo module selected ($module)"
+		[ -c /dev/ttyS1 ] || fail "UART /dev/ttyS1 is missing"
+		modprobe hci_uart
+		case "$module" in
+			aic8800d80)
+				[ ! -d /sys/module/rtl_btlpm ] || fail "rtl_btlpm already owns the wake pins"
+				modprobe aic8800_btlpm
+				[ -w /proc/bluetooth/sleep/btwrite ] || fail "AIC BT_WAKE control is missing"
+				printf '0\n' > /proc/bluetooth/sleep/lpm
+				printf '1\n' > /proc/bluetooth/sleep/btwrite
+				# Wi-Fi already loaded combo firmware. Only acquire BT's power
+				# references; do not reset/reprobe the shared SDIO device.
+				unblock_radio sunxi-bt
+				unblock_radio bluetooth
+				sleep 0.2
+				exec /usr/lib/armbian/bpi-m8-aic-hciattach /dev/ttyS1 /sys/class/addr_mgt/addr_bt
+				;;
+			rtl8852bs)
+				[ ! -d /sys/module/aic8800_btlpm ] || fail "aic8800_btlpm already owns the wake pins"
+				modprobe rtl_btlpm
+				[ -w /proc/bluetooth/sleep/lpm ] || fail "BT wake control is missing"
+				printf '0\n' > /proc/bluetooth/sleep/lpm
+				unblock_radio sunxi-bt
+				sleep 0.2
+				exec /usr/bin/rtk_hciattach -n -s 115200 /dev/ttyS1 rtk_h5 1500000 flow
+				;;
+		esac
+		;;
+	*) fail "usage: $0 check|start|wait" ;;
+esac

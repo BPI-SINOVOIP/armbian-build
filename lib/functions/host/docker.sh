@@ -444,8 +444,10 @@ function docker_cli_prepare_launch() {
 		# Pass proxy args
  		"--env" "http_proxy=${http_proxy:-${HTTP_PROXY}}"
  		"--env" "https_proxy=${https_proxy:-${HTTPS_PROXY}}"
- 		"--env" "HTTP_PROXY=${HTTP_PROXY}"
+		"--env" "HTTP_PROXY=${HTTP_PROXY}"
 		"--env" "HTTPS_PROXY=${HTTPS_PROXY}"
+		"--env" "no_proxy=${no_proxy:-${NO_PROXY}}"
+		"--env" "NO_PROXY=${NO_PROXY}"
 		"--env" "APT_PROXY_ADDR=${APT_PROXY_ADDR}"
 	)
 
@@ -478,6 +480,13 @@ function docker_cli_prepare_launch() {
 	if [[ -n "${BUILD_REPOSITORY_COMMIT}" ]]; then
 		display_alert "Git info" "Passing down BUILD_REPOSITORY_COMMIT as an env var..." "debug"
 		DOCKER_ARGS+=("--env" "BUILD_REPOSITORY_COMMIT=${BUILD_REPOSITORY_COMMIT}")
+	fi
+
+	# Optional private source access when an ssh-agent is unavailable.
+	# Never expose the host's identities to the container by default.
+	declare ssh_dir_path="${HOME}/.ssh"
+	if [[ "${DOCKER_MOUNT_SSH_DIR:-no}" == "yes" && -d "${ssh_dir_path}" ]]; then
+		DOCKER_ARGS+=("--mount" "type=bind,source=${ssh_dir_path},target=/root/.ssh,readonly")
 	fi
 
 	if [[ "${DOCKER_PASS_SSH_AGENT}" == "yes" ]]; then

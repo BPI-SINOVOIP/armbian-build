@@ -1,0 +1,108 @@
+diff --git a/tools/modules/functions/module_install_engine.sh b/tools/modules/functions/module_install_engine.sh
+index c149b59..72bd547 100644
+--- a/tools/modules/functions/module_install_engine.sh
++++ b/tools/modules/functions/module_install_engine.sh
+@@ -27,8 +27,8 @@ module_options+=(
+ # Design notes / bugs this shape fixes:
+ #   * install_detect_targets emits one TAB-separated record per device and never
+ #     space-joins names -> multi-disk concatenation (build#8738).
+-#   * install_plan_layout is a pure function of (boot_mode, fs, uefi, capacity,
+-#     sector_size, has_swap); it selects GPT when uefi | >2TiB | 4Kn and emits
++#   * install_plan_layout takes explicit geometry and platform inputs; it
++#     selects GPT when uefi | >2TiB | 4Kn and emits
+ #     explicit ESP/boot flags -> MBR-only & missing-boot-flag installs
+ #     (build#9454, #9794, #6905).
+ #   * install_apply_partitions lays partitions in MiB units so alignment is
+@@ -169,9 +169,11 @@ install_detect_targets() {
+ # ---- partition planning (pure) ---------------------------------------------
+ 
+ install_plan_layout() {
+-	# install_plan_layout <boot_mode> <fs> <is_uefi> <capacity_bytes> <sector_size> [has_swap] [table_pref]
++	# install_plan_layout <boot_mode> <fs> <is_uefi> <capacity_bytes> <sector_size> [has_swap] [table_pref] [linux_family]
+ 	#
+ 	# table_pref (gpt|msdos): preferred partition table when capacity/sector/uefi
+ 	# don't force GPT - used to replicate the running image's table type on an
+ 	# eMMC/SD target so the board's u-boot can read it. Empty = default (msdos).
++	# linux_family selects the platform's raw bootloader reservation. Empty keeps
++	# the default 16MiB; sun60iw2 needs 32MiB for its package at 16MiB + 16KiB.
+ 	#
+@@ -188,6 +190,7 @@ install_plan_layout() {
+ 	# where size is an absolute "<N>MiB" or "100%" (fill), and flags is a
+ 	# comma-separated subset of {esp,boot,bios_grub} ("" for none). Pure: no device I/O.
+ 	local boot_mode="$1" fs="$2" is_uefi="$3" cap="${4:-0}" sec="${5:-512}" has_swap="${6:-0}" table_pref="${7:-}"
++	local linux_family="${8:-}"
+ 	local table
+ 	table="$(install_table_type "$is_uefi" "$cap" "$sec" "$table_pref")"
+ 
+@@ -224,7 +227,7 @@ install_plan_layout() {
+ 		emmc-boot)
+ 			# eMMC used as the BOOT device in a split install: the root filesystem
+ 			# lives on another disk (e.g. NVMe, which the SoC bootrom cannot load
+-			# u-boot from). eMMC carries u-boot in the 16MiB gap, a dedicated ext4
++			# u-boot from). eMMC carries u-boot in the reserved gap, a dedicated ext4
+ 			# /boot the board's u-boot can always read, and the remainder as a data
+ 			# partition auto-mounted at /emmc_storage (the fs is fixed to ext4 here;
+ 			# the <fs> argument applies to the root device, planned separately).
+@@ -241,15 +244,14 @@ install_plan_layout() {
+ 			;;
+ 	esac
+ 
+-	# First-partition start offset, in MiB. emmc is the only mode that writes
+-	# u-boot to raw sectors of this same device (idbloader at 32KiB, u-boot.itb
+-	# at 8MiB on Rockchip et al.), so its first partition must clear that region
+-	# or the filesystem and the bootloader overwrite each other and the board
+-	# won't boot. 16MiB matches the classic installer's FIRSTSECTOR=32768 and
+-	# covers every SoC's bootloader area. All other modes keep u-boot off this
+-	# device (SPI/UFS) or on removable media, so 1MiB alignment is fine.
++	# emmc/emmc-boot write u-boot to raw sectors on this device. Reserve the
++	# complete platform bootloader area before creating any filesystem. Other
++	# modes keep u-boot elsewhere, so their target starts at 1MiB.
+ 	local start_mib=1
+-	[[ "$boot_mode" == emmc || "$boot_mode" == emmc-boot ]] && start_mib=16
++	if [[ "$boot_mode" == emmc || "$boot_mode" == emmc-boot ]]; then
++		start_mib=16
++		[[ "$linux_family" == sun60iw2 ]] && start_mib=32
++	fi
+ 
+ 	echo "start=$start_mib"
+ 	echo "table=$table"
+@@ -299,7 +301,7 @@ install_apply_partitions() {
+ 	parted -s "$device" mklabel "$table" >>"$INSTALL_LOG" 2>&1 \
+ 		|| { install_log ERR "apply_partitions: mklabel $table failed"; return "$INSTALL_EX_PARTITION"; }
+ 
+-	# Honour the plan's start offset (emmc reserves 16MiB for on-device u-boot);
++	# Honour the plan's platform-specific reservation for on-device u-boot;
+ 	# default to 1MiB when a plan predates the directive.
+ 	local start_mib="${start_override:-1}" idx=0
+ 	local spec role size fstype flags hint end
+@@ -1057,7 +1059,7 @@ install_run_scenario() {
+ 			[[ -n "$table_pref" ]] && install_log INFO "scenario: inheriting source partition table '$table_pref' for $boot_mode" ;;
+ 	esac
+ 
+-	local plan; plan="$(install_plan_layout "$boot_mode" "$fs" "$is_uefi" "$cap" "$sec" "$has_swap" "$table_pref")" \
++	local plan; plan="$(install_plan_layout "$boot_mode" "$fs" "$is_uefi" "$cap" "$sec" "$has_swap" "$table_pref" "${LINUXFAMILY:-}")" \
+ 		|| { install_log ERR "scenario: planning failed"; return "$INSTALL_EX_PARTITION"; }
+ 	install_log INFO "scenario: $boot_mode on $disk (${cap}B, ${sec}B sectors) fs=$fs"$'\n'"$plan"
+ 
+@@ -1218,7 +1220,7 @@ install_run_split() {
+ 	local table_pref; table_pref="$(install_source_table_type)"
+ 
+ 	local bplan rplan
+-	bplan="$(install_plan_layout emmc-boot ext4 0 "$bcap" "$bsec" 0 "$table_pref")" \
++	bplan="$(install_plan_layout emmc-boot ext4 0 "$bcap" "$bsec" 0 "$table_pref" "${LINUXFAMILY:-}")" \
+ 		|| { install_log ERR "split: eMMC boot planning failed"; return "$INSTALL_EX_PARTITION"; }
+ 	rplan="$(install_plan_layout sd "$fs" 0 "$rcap" "$rsec" 0 "$table_pref")" \
+ 		|| { install_log ERR "split: root planning failed"; return "$INSTALL_EX_PARTITION"; }
+diff --git a/tools/modules/system/module_partitioner.sh b/tools/modules/system/module_partitioner.sh
+index eb059ef..db16f05 100644
+--- a/tools/modules/system/module_partitioner.sh
++++ b/tools/modules/system/module_partitioner.sh
+@@ -552,7 +552,7 @@ partitioner_api() {
+ 				sec="$(cat "/sys/block/$(basename "$target")/queue/physical_block_size" 2>/dev/null || echo 512)"
+ 			fi
+ 			[[ "$boot" == uefi ]] && uefi=1
+-			install_plan_layout "$boot" "$fs" "$uefi" "$cap" "$sec" 0 ;;
++			install_plan_layout "$boot" "$fs" "$uefi" "$cap" "$sec" 0 "" "${LINUXFAMILY:-}" ;;
+ 		*)
+ 			echo "usage: armbian-install --api {detect|plan}" >&2; return "$INSTALL_EX_USAGE" ;;
+ 	esac

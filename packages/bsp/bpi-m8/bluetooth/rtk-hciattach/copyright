@@ -1,0 +1,25 @@
+Upstream-Name: Realtek hciattach
+Upstream-Version: 3.1.d5a90fd.20250328-105046
+Source: Allwinner Tina AIOT V1.4.8 SDK
+ platform/thirdparty/wireless/rtk_hciattach/src
+ SDK source commit: f6ffa027e439f5dee3eac52750837c0ad1618da0
+ The seven C/header files are imported unchanged. This is the same version
+ as packages/blobs/bt/hciattach/rtk_hciattach_arm64, rebuilt for M8 against
+ Bullseye glibc 2.31. The SDK Makefile is replaced by build-uart-helper.sh.
+
+Files: hciattach.c hciattach.h
+Copyright: 2000-2001 Qualcomm Incorporated
+ 2002-2003 Maxim Krasnyansky
+ 2002-2010 Marcel Holtmann
+License: GPL-2.0-or-later
+
+Files: hciattach_rtk.c rtb_fwc.c rtb_fwc.h
+Copyright: 2013, 2018 Realtek Semiconductor Corporation
+License: GPL-2.0-or-later
+
+Files: hciattach_h4.c hciattach_h4.h
+License: GPL-2.0
+Comment: hciattach_h4.c carries the upstream GPL-2.0 SPDX identifier;
+ its companion header is part of the same driver.
+
+The GNU General Public License version 2 is included in COPYING.

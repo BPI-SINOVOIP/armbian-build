@@ -190,8 +190,14 @@ function compile_uboot_target() {
 		"-Wno-error=maybe-uninitialized"
 		"-Wno-error=misleading-indentation"   # patches have mismatching indentation
 		"-Wno-error=attributes"               # for very old-uboots
-		"-Wno-error=address-of-packed-member" # for very old-uboots
 	)
+	# GCC 7.x (used by some vendor BSP u-boot trees) does not know
+	# -Waddress-of-packed-member and errors out on -Wno-error=... variant.
+	if linux-version compare "${gcc_version_main}" ge "9.0"; then
+		uboot_cflags_array+=(
+			"-Wno-error=address-of-packed-member" # for very old-uboots
+		)
+	fi
 	if linux-version compare "${gcc_version_main}" ge "11.0"; then
 		uboot_cflags_array+=(
 			"-Wno-error=array-parameter" # very old uboots

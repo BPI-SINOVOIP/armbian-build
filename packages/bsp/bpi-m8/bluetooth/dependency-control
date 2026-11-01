@@ -1,0 +1,8 @@
+Source: bpi-m8-uart-helper
+Section: misc
+Priority: optional
+Maintainer: Qubot <qubot@banana-pi.com>
+
+Package: bpi-m8-uart-helper
+Architecture: arm64
+Description: Bluetooth UART helper dependency probe

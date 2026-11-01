@@ -45,6 +45,11 @@ function kernel_config() {
 	fi
 
 	LOG_SECTION="kernel_config_finalize" do_with_logging do_with_hooks kernel_config_finalize
+	call_extension_method "post_kernel_config" <<- 'POST_KERNEL_CONFIG'
+		*Validate the final kernel configuration after olddefconfig and user edits*
+		The resolved .config is available in ${kernel_work_dir}. This hook is for
+		platform invariants; it must not silently rewrite user configuration.
+	POST_KERNEL_CONFIG
 }
 
 function kernel_config_initialize() {

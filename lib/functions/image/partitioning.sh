@@ -97,6 +97,8 @@ function prepare_partitions() {
 	UEFI_FS_LABEL="${UEFI_FS_LABEL:-armbi_efi}"
 	ROOT_FS_LABEL="${ROOT_FS_LABEL:-armbi_root}"
 	BOOT_FS_LABEL="${BOOT_FS_LABEL:-armbi_boot}"
+	BOOT_PARTITION_NAME="${BOOT_PARTITION_NAME:-bootfs}"
+	ROOT_PARTITION_NAME="${ROOT_PARTITION_NAME:-rootfs}"
 
 	call_extension_method "pre_prepare_partitions" "prepare_partitions_custom" <<- 'PRE_PREPARE_PARTITIONS'
 		*allow custom options for mkfs*
@@ -210,13 +212,23 @@ function prepare_partitions() {
 				if [[ -n "$bootpart" ]]; then
 					# dos: Linux extended boot (see https://github.com/util-linux/util-linux/commit/d0c430068206e1215222792e3aa10689f8c632a6)
 					# gpt: Linux extended boot
-					[[ "$IMAGE_PARTITION_TABLE" != "gpt" ]] && local type="ea" || local type="BC13C2FF-59E6-4262-A352-B275FD6F7172"
+					if [[ "$IMAGE_PARTITION_TABLE" != "gpt" ]]; then
+						# Keep legacy default unless board/family explicitly uses FAT /boot.
+						# FAT-LBA (0c) is friendlier with vendor boot flows on some sunxi boards.
+						if [[ "$bootfs" == "fat" || "$bootfs" == "vfat" ]]; then
+							local type="0c"
+						else
+							local type="ea"
+						fi
+					else
+						local type="BC13C2FF-59E6-4262-A352-B275FD6F7172"
+					fi
 					if [[ -n "$rootpart" ]]; then
-						echo "$bootpart : name=\"bootfs\", start=${next}MiB, size=${BOOTSIZE}MiB, type=${type}"
+						echo "$bootpart : name=\"${BOOT_PARTITION_NAME}\", start=${next}MiB, size=${BOOTSIZE}MiB, type=${type}"
 						local next=$(($next + $BOOTSIZE))
 					else
 						# No 'size' argument means "expand as much as possible"
-						echo "$bootpart : name=\"bootfs\", start=${next}MiB, type=${type}"
+						echo "$bootpart : name=\"${BOOT_PARTITION_NAME}\", start=${next}MiB, type=${type}"
 					fi
 				fi
 
@@ -238,7 +250,7 @@ function prepare_partitions() {
 						exit_with_error "Missing 'PARTITION_TYPE_UUID_ROOT' variable while partitioning the root filesystem!"
 					fi
 					# No 'size' argument means "expand as much as possible"
-					echo "$rootpart : name=\"rootfs\", start=${next}MiB, type=${type}"
+					echo "$rootpart : name=\"${ROOT_PARTITION_NAME}\", start=${next}MiB, type=${type}"
 				fi
 			}
 		)

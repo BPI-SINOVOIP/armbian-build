@@ -1,0 +1,157 @@
+#!/bin/sh
+
+set -eu
+
+config=/etc/default/bpi-m8-wireless
+result=/run/bpi-m8-wifi-module
+state_path=
+scan_path=
+
+# A failed restart must not leave a previous module identity for Bluetooth.
+printf 'unknown\n' > "$result"
+
+BPI_M8_WIFI_MODULE=auto
+if [ -r "$config" ]; then
+	. "$config"
+fi
+
+log()
+{
+	message="bpi-m8-wireless: $*"
+	printf '%s\n' "$message" >&2
+	if [ -w /dev/kmsg ]; then
+		printf '<6>%s\n' "$message" > /dev/kmsg
+	fi
+}
+
+find_control_paths()
+{
+	for base in \
+		/sys/devices/virtual/misc/sunxi-rfkill/wlan \
+		/sys/devices/virtual/misc/sunxi-wlan/rf-ctrl
+	do
+		if [ -w "$base/state" ] && [ -w "$base/scan" ]; then
+			state_path=$base/state
+			scan_path=$base/scan
+			return 0
+		fi
+		if [ -w "$base/power_state" ] && [ -w "$base/scan_device" ]; then
+			state_path=$base/power_state
+			scan_path=$base/scan_device
+			return 0
+		fi
+	done
+	return 1
+}
+
+read_sdio_module()
+{
+	for event in /sys/bus/sdio/devices/*/uevent; do
+		[ -r "$event" ] || continue
+		id=$(sed -n 's/^SDIO_ID=//p' "$event" | tr '[:lower:]' '[:upper:]')
+		case "$id" in
+			C8A1:0182|C8A1:0082)
+				printf '%s\n' aic8800d80
+				return 0
+				;;
+			024C:B852)
+				printf '%s\n' rtl8852bs
+				return 0
+				;;
+		esac
+	done
+	return 1
+}
+
+keep_sdio_awake()
+{
+	# The A733 vendor MMC host and both supported combo modules share a
+	# non-standard board power sequence. Do not let generic runtime PM race
+	# the vendor driver's firmware transfers or system shutdown path.
+	for control in \
+		/sys/bus/sdio/devices/*/power/control \
+		/sys/class/mmc_host/mmc2/device/power/control
+	do
+		[ -w "$control" ] || continue
+		printf 'on\n' > "$control"
+	done
+}
+
+detect_module()
+{
+	module=$(read_sdio_module || true)
+	if [ -n "$module" ]; then
+		printf '%s\n' "$module"
+		return 0
+	fi
+
+	for unused in 1 2 3 4 5; do
+		find_control_paths && break
+		sleep 0.2
+	done
+	if [ -z "$state_path" ] || [ -z "$scan_path" ]; then
+		log "sunxi-rfkill WLAN controls not found"
+		return 1
+	fi
+
+	log "powering SDIO module for identification"
+	printf '1\n' > "$state_path"
+	sleep 0.1
+	log "rescanning SDIO bus for module ID"
+	printf '1\n' > "$scan_path"
+
+	module=
+	for unused in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20; do
+		module=$(read_sdio_module || true)
+		[ -n "$module" ] && break
+		sleep 0.1
+	done
+
+	[ -n "$module" ] || return 1
+	# The scan control always rescans regardless of its value. Keep the card
+	# powered and enumerated so that the selected driver can bind to it.
+	log "identified $module; keeping SDIO powered for driver bind"
+	printf '%s\n' "$module"
+}
+
+module=$BPI_M8_WIFI_MODULE
+case "$module" in
+	auto)
+		module=$(detect_module || true)
+		;;
+	aic8800d80|rtl8852bs|off)
+		;;
+	*)
+		log "unsupported BPI_M8_WIFI_MODULE=$module"
+		module=
+		;;
+esac
+
+case "$module" in
+	aic8800d80)
+		[ ! -d /sys/module/8852bs ] || { log "8852bs is already loaded; reboot to change modules"; exit 1; }
+		log "selected AIC8800D80"
+		keep_sdio_awake
+		modprobe aic8800_bsp
+		modprobe aic8800_fdrv
+		keep_sdio_awake
+		;;
+	rtl8852bs)
+		[ ! -d /sys/module/aic8800_bsp ] || { log "aic8800_bsp is already loaded; reboot to change modules"; exit 1; }
+		log "selected RTL8852BS"
+		keep_sdio_awake
+		modprobe 8852bs
+		keep_sdio_awake
+		;;
+	off)
+		log "wireless disabled by configuration"
+		;;
+	*)
+		log "no supported SDIO Wi-Fi module detected"
+		module=unknown
+		;;
+esac
+
+printf '%s\n' "$module" > "${result}.new"
+mv -f "${result}.new" "$result"
+

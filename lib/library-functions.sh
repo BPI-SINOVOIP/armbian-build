@@ -393,6 +393,15 @@ source "${SRC}"/lib/functions/compilation/kernel.sh
 #set -o nounset   ## set -u : exit the script if you try to use an uninitialised variable - one day will be enabled
 set -o errtrace # trace ERR through - enabled
 set -o errexit  ## set -e : exit the script if any statement returns a non-true return value - enabled
+### lib/functions/compilation/packages/armbian-config-deb.sh
+# shellcheck source=lib/functions/compilation/packages/armbian-config-deb.sh
+source "${SRC}"/lib/functions/compilation/packages/armbian-config-deb.sh
+
+# no errors tolerated. invoked before each sourced file to make sure.
+#set -o pipefail  # trace ERR through pipes - will be enabled "soon"
+#set -o nounset   ## set -u : exit the script if you try to use an uninitialised variable - one day will be enabled
+set -o errtrace # trace ERR through - enabled
+set -o errexit  ## set -e : exit the script if any statement returns a non-true return value - enabled
 ### lib/functions/compilation/packages/armbian-plymouth-theme-deb.sh
 # shellcheck source=lib/functions/compilation/packages/armbian-plymouth-theme-deb.sh
 source "${SRC}"/lib/functions/compilation/packages/armbian-plymouth-theme-deb.sh
@@ -1062,6 +1071,15 @@ set -o errexit  ## set -e : exit the script if any statement returns a non-true 
 ### lib/functions/rootfs/distro-specific.sh
 # shellcheck source=lib/functions/rootfs/distro-specific.sh
 source "${SRC}"/lib/functions/rootfs/distro-specific.sh
+
+# no errors tolerated. invoked before each sourced file to make sure.
+#set -o pipefail  # trace ERR through pipes - will be enabled "soon"
+#set -o nounset   ## set -u : exit the script if you try to use an uninitialised variable - one day will be enabled
+set -o errtrace # trace ERR through - enabled
+set -o errexit  ## set -e : exit the script if any statement returns a non-true return value - enabled
+### lib/functions/rootfs/install-armbian-config.sh
+# shellcheck source=lib/functions/rootfs/install-armbian-config.sh
+source "${SRC}"/lib/functions/rootfs/install-armbian-config.sh
 
 # no errors tolerated. invoked before each sourced file to make sure.
 #set -o pipefail  # trace ERR through pipes - will be enabled "soon"

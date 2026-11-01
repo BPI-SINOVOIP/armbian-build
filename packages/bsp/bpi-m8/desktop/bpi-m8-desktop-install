@@ -1,0 +1,82 @@
+#!/bin/sh
+# SPDX-License-Identifier: GPL-2.0
+# Configure the next Xorg session only; never restart a running desktop.
+set -eu
+
+if [ ! -x /usr/lib/xorg/Xorg ] && [ ! -x /usr/bin/Xorg ]; then
+	echo "bpi-m8-desktop: Xorg is absent; leaving desktop configuration unchanged."
+	exit 0
+fi
+
+template=/usr/share/armbian/bpi-m8/desktop/20-bpi-m8-modesetting.conf
+upstream=/usr/lib/udev/rules.d/71-seat.rules
+# Bullseye can still use an unmerged /usr; newer distributions put the
+# same systemd seat rules under /usr/lib. Do not require usrmerge to install.
+[ -f "$upstream" ] || upstream=/lib/udev/rules.d/71-seat.rules
+rules=/etc/udev/rules.d
+xorg=/etc/X11/xorg.conf.d/20-bpi-m8-modesetting.conf
+backup_root=/var/lib/armbian/bpi-m8-desktop-backup
+
+[ -r "$template" ] || { echo "bpi-m8-desktop: packaged Xorg template is missing" >&2; exit 1; }
+if [ ! -f "$upstream" ] || ! grep -Eq '^[[:space:]]*LABEL="seat_end"([[:space:]]|$)' "$upstream"; then
+	echo "bpi-m8-desktop: systemd 71-seat.rules is missing or has no seat_end label" >&2
+	exit 1
+fi
+
+archive()
+{
+	path=$1
+	[ -e "$path" ] || [ -L "$path" ] || return 0
+	install -d -m 0700 "$backup_root"
+	base="$backup_root/${path#/}"
+	saved=$base
+	index=1
+	while [ -e "$saved" ] || [ -L "$saved" ]; do
+		saved="$base.$index"
+		index=$((index + 1))
+	done
+	install -d "$(dirname "$saved")"
+	mv -- "$path" "$saved"
+	echo "bpi-m8-desktop: archived $path to $saved"
+}
+
+install -d "$rules" "$(dirname "$xorg")"
+staged=$(mktemp "$rules/.bpi-m8-seat.XXXXXX")
+trap 'rm -f -- "$staged"' EXIT
+trap 'exit 1' HUP INT TERM
+{
+	echo '# BPI-M8: keep the render-only GPU out of the display seat.'
+	echo 'SUBSYSTEM=="drm", KERNEL=="card[0-9]*", DRIVERS=="pvrsrvkm", GOTO="seat_end"'
+	cat "$upstream"
+} > "$staged"
+
+refresh_libraries=no
+for path in \
+	/etc/X11/xorg.conf.d/20-pvr-modesetting.conf \
+	/etc/lightdm/lightdm.conf.d/50-xserver-pvr.conf \
+	/etc/ld.so.conf.d/00-pvr-bxm.conf \
+	/etc/udev/rules.d/99-pvrsrvkm-render-only.rules \
+	/etc/profile.d/bpi-m8-disable-dpms.sh \
+	/etc/xdg/autostart/bpi-m8-disable-dpms.desktop
+do
+	if [ "$path" = /etc/ld.so.conf.d/00-pvr-bxm.conf ] && { [ -e "$path" ] || [ -L "$path" ]; }; then
+		refresh_libraries=yes
+	fi
+	archive "$path"
+done
+
+if ! cmp -s "$template" "$xorg"; then
+	archive "$xorg"
+	install -m 0644 "$template" "$xorg"
+fi
+if ! cmp -s "$staged" "$rules/71-seat.rules"; then
+	archive "$rules/71-seat.rules"
+	install -m 0644 "$staged" "$rules/71-seat.rules"
+fi
+
+# Refresh only the dynamic loader's on-disk cache after retiring the old
+# product-specific override. No Mesa libraries or user-wide configs are removed.
+if [ "$refresh_libraries" = yes ] && command -v ldconfig >/dev/null 2>&1; then
+	ldconfig
+fi
+echo "bpi-m8-desktop: software modesetting configured; reboot to apply seat rules."

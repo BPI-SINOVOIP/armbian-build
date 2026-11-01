@@ -1,0 +1,22 @@
+[Unit]
+Description=Banana Pi M8 Bluetooth UART attach
+Requires=bpi-m8-wireless.service
+After=bpi-m8-wireless.service dev-ttyS1.device
+Before=bluetooth.service
+Conflicts=serial-getty@ttyS1.service bpi-rtk-bluetooth.service aic-bluetooth.service
+StartLimitIntervalSec=60
+StartLimitBurst=3
+
+[Service]
+Type=simple
+ExecCondition=/usr/lib/armbian/bpi-m8-bluetooth check
+ExecStart=/usr/lib/armbian/bpi-m8-bluetooth start
+ExecStartPost=/usr/lib/armbian/bpi-m8-bluetooth wait
+Restart=on-failure
+RestartSec=3
+TimeoutStartSec=25
+TimeoutStopSec=5
+KillMode=control-group
+
+[Install]
+WantedBy=multi-user.target

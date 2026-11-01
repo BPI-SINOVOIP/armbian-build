@@ -10,17 +10,22 @@
 function kernel_prepare_git() {
 	[[ "${KERNELSOURCE}" == 'none' ]] && return 0 # do nothing if no kernel source... but again, why were we called then?
 
-	# validate kernel_git_bare_tree is set
-	if [[ -z "${kernel_git_bare_tree}" ]]; then
-		exit_with_error "kernel_git_bare_tree is not set"
-	fi
-
 	display_alert "Downloading sources" "kernel" "git"
 
-	GIT_FIXED_WORKDIR="${LINUXSOURCEDIR}" \
-		GIT_BARE_REPO_FOR_WORKTREE="${kernel_git_bare_tree}" \
-		GIT_BARE_REPO_INITIAL_BRANCH="master" \
-		fetch_from_repo "${KERNELSOURCE}" "kernel:${KERNEL_MAJOR_MINOR}" "${KERNELBRANCH}" "yes"
+	if [[ "${KERNEL_USE_MAINLINE_BARE_REPO:-yes}" == "yes" ]]; then
+		# validate kernel_git_bare_tree is set
+		if [[ -z "${kernel_git_bare_tree}" ]]; then
+			exit_with_error "kernel_git_bare_tree is not set"
+		fi
+
+		GIT_FIXED_WORKDIR="${LINUXSOURCEDIR}" \
+			GIT_BARE_REPO_FOR_WORKTREE="${kernel_git_bare_tree}" \
+			GIT_BARE_REPO_INITIAL_BRANCH="master" \
+			fetch_from_repo "${KERNELSOURCE}" "kernel:${KERNEL_MAJOR_MINOR}" "${KERNELBRANCH}" "yes"
+	else
+		GIT_FIXED_WORKDIR="${LINUXSOURCEDIR}" \
+			fetch_from_repo "${KERNELSOURCE}" "kernel:${KERNEL_MAJOR_MINOR}" "${KERNELBRANCH}" "yes"
+	fi
 	# second parameter, "dir", is ignored, since we've passed GIT_FIXED_WORKDIR
 }
 

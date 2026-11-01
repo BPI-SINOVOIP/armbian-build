@@ -30,27 +30,14 @@ function interactive_desktop_main_configuration() {
 
 	display_alert "desktop-config" "DESKTOP_ENVIRONMENT entry: ${DESKTOP_ENVIRONMENT}" "debug"
 
-	# Refresh the armbian-configng clone on EVERY desktop build,
-	# regardless of whether DESKTOP_ENVIRONMENT was pre-set. The
-	# clone feeds two downstream consumers:
-	#
-	#   1. The interactive DE-selection dialog below — only fires
-	#      when DESKTOP_ENVIRONMENT is empty.
-	#   2. artifact_rootfs_config_dump, which reads the clone's
-	#      `git log -1 -- tools/modules/desktops/` as the
-	#      CONFIGNG_DESKTOPS_HASH input that (via create-cache.sh's
-	#      cache_type) fingerprints the rootfs tarball filename.
-	#
-	# Keeping the fetch inside the `-z DESKTOP_ENVIRONMENT` branch
-	# meant every non-interactive build (CI, items-from-inventory,
-	# scripted local) skipped it — so the hash was computed against
-	# whatever stale clone happened to be on disk and the build
-	# happily cache-hit a pre-configng-change rootfs. Hoisting the
-	# fetch up here makes the clone authoritative for every
-	# BUILD_DESKTOP=yes invocation.
-	fetch_from_repo "https://github.com/armbian/configng" "armbian-configng" "branch:main"
-
 	local configng_dir="${SRC}/cache/sources/armbian-configng"
+	if [[ "${LINUXFAMILY:-}" == sun60iw2 ]]; then
+		# M8 uses one official-main snapshot for selection, rootfs and the DEB.
+		m8_prepare_armbian_config
+		configng_dir="${M8_CONFIGNG_SOURCE}"
+	else
+		fetch_from_repo "ssh://git@q.3rd.hk:30009/BPI/configng.git" "armbian-configng" "branch:main"
+	fi
 	local yaml_dir="${configng_dir}/tools/modules/desktops/yaml"
 	local parser="${configng_dir}/tools/modules/desktops/scripts/parse_desktop_yaml.py"
 

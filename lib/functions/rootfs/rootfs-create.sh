@@ -229,9 +229,21 @@ function create_new_rootfs_cache_via_debootstrap() {
 	# rootfs cache. The Armbian apt repo was configured above by
 	# create_sources_list_and_deploy_repo_key, so armbian-config is
 	# installable from apt.armbian.com at this point.
+	if [[ "${LINUXFAMILY:-}" == sun60iw2 ]]; then
+		# Install the same complete package used for desktop selection, including
+		# its declared dependencies. Also needed in CLI/minimal rootfs caches.
+		m8_install_armbian_config
+	fi
 	if [[ $BUILD_DESKTOP == "yes" ]]; then
 		display_alert "Installing desktop via armbian-config" "${DESKTOP_ENVIRONMENT} tier=${DESKTOP_TIER:-mid}" "info"
-		chroot_sdcard_apt_get_install armbian-config
+		if [[ "${LINUXFAMILY:-}" != sun60iw2 ]]; then
+			chroot_sdcard_apt_get_install armbian-config
+			local configng_desktops_src="${SRC}/cache/sources/armbian-configng/tools/modules/desktops"
+			local configng_desktops_dst="${SDCARD}/usr/share/armbian-config/desktops"
+			[[ -d "${configng_desktops_src}" ]] || exit_with_error "Missing armbian-configng desktop modules" "${configng_desktops_src}"
+			run_host_command_logged mkdir -pv "${configng_desktops_dst}"
+			run_host_command_logged rsync -a --delete "${configng_desktops_src}/" "${configng_desktops_dst}/"
+		fi
 		chroot_sdcard "SUDO_USER= DEBIAN_FRONTEND=noninteractive DIALOG=read armbian-config --api module_desktops install de=${DESKTOP_ENVIRONMENT} tier=${DESKTOP_TIER:-mid} mode=build"
 	fi
 

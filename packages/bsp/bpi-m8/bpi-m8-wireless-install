@@ -1,0 +1,51 @@
+#!/bin/sh
+# SPDX-License-Identifier: GPL-2.0
+# File/service migration only: do not restart a working radio during upgrades.
+set -eu
+
+mode=${1:-configure}
+case "$mode" in
+	configure | triggered) ;;
+	*) echo "usage: $0 [configure|triggered]" >&2; exit 1 ;;
+esac
+
+source=/usr/share/armbian/firmware/aic8800d80
+target=/lib/firmware/aic8800d80
+
+[ -r "$source/aichw.conf" ] || {
+	echo "bpi-m8-wireless: packaged UART firmware configuration is missing" >&2
+	exit 1
+}
+
+# Some older firmware packages used a symlink to a different revision. Replace
+# that exact link, never delete its target or other firmware directories.
+if [ -L "$target" ]; then
+	unlink "$target"
+fi
+install -d "$target"
+if [ -f "$target/aichw.conf" ] && ! cmp -s "$source/aichw.conf" "$target/aichw.conf"; then
+	# Preserve the first pre-migration configuration for troubleshooting/rollback.
+	[ -e "$target/aichw.conf.before-bpi-m8-uart" ] || \
+		cp -p "$target/aichw.conf" "$target/aichw.conf.before-bpi-m8-uart"
+fi
+cp -a "$source/." "$target/"
+
+if [ "$mode" = triggered ]; then
+	echo "bpi-m8-wireless: restored matched D80 firmware after firmware package update."
+	exit 0
+fi
+
+if command -v systemctl >/dev/null 2>&1; then
+	# Disabling removes boot activation only. A live old attach process is not
+	# killed mid-session; Conflicts= arbitrates ownership at the next start.
+	systemctl --no-reload disable bpi-rtk-bluetooth.service aic-bluetooth.service 2>/dev/null || true
+	systemctl --no-reload enable bpi-m8-wireless.service bpi-m8-bluetooth.service
+	if [ -f /lib/systemd/system/bluetooth.service ]; then
+		systemctl --no-reload enable bluetooth.service
+	fi
+	if [ -d /run/systemd/system ]; then
+		systemctl daemon-reload || true
+	fi
+fi
+
+echo "bpi-m8-wireless: module-selected Bluetooth configured; reboot to apply firmware and drivers."
