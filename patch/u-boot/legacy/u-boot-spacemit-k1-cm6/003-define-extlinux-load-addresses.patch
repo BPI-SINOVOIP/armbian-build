@@ -1,0 +1,34 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: BPI-SINOVOIP <support@banana-pi.org>
+Date: Wed, 4 Nov 2026 20:30:00 +0800
+Subject: [PATCH] k1-x: define ramdisk_addr_r and fdt_addr_r for extlinux boot
+
+The extlinux fallback added for Armbian images runs sysboot, and
+pxe_utils needs ramdisk_addr_r and fdt_addr_r whenever a label has
+initrd or fdt lines.  The default environment only carried the
+vendor names ramdisk_addr and dtb_addr, so the Armbian label was
+skipped with "failure retrieving initrd" and an MBR SD card stopped
+at the U-Boot prompt.
+
+Point both variables at the existing RAMDISK_LOAD_ADDR and
+DTB_LOAD_ADDR so the extlinux path uses the same layout as the
+vendor boot flow.
+
+Signed-off-by: BPI-SINOVOIP <support@banana-pi.org>
+---
+ include/configs/k1-x.h | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/include/configs/k1-x.h b/include/configs/k1-x.h
+index 3e83e03..1660667 100644
+--- a/include/configs/k1-x.h
++++ b/include/configs/k1-x.h
+@@ -194,6 +194,8 @@ struct boot_storage_op
+ 	"kernel_addr_r=" __stringify(CONFIG_FASTBOOT_BUF_ADDR) "\0" \
+ 	"ramdisk_addr=" __stringify(RAMDISK_LOAD_ADDR) "\0" \
+ 	"dtb_addr=" __stringify(DTB_LOAD_ADDR) "\0" \
++	"ramdisk_addr_r=" __stringify(RAMDISK_LOAD_ADDR) "\0" \
++	"fdt_addr_r=" __stringify(DTB_LOAD_ADDR) "\0" \
+ 	"scriptaddr=0x2c100000\0" \
+ 	"pxefile_addr_r=0x0c200000\0" \
+ 	"splashimage=" __stringify(CONFIG_FASTBOOT_BUF_ADDR) "\0" \
